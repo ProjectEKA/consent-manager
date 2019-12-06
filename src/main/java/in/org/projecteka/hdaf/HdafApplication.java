@@ -1,13 +1,15 @@
 package in.org.projecteka.hdaf;
 
+import in.org.projecteka.hdaf.link.ClientRegistryProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
+@EnableConfigurationProperties(ClientRegistryProperties.class)
 public class HdafApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(HdafApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(HdafApplication.class, args);
+    }
 }

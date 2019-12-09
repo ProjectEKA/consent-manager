@@ -1,6 +1,6 @@
 package in.org.projecteka.hdaf;
 
-import in.org.projecteka.hdaf.link.ClientRegistryClientImpl;
+import in.org.projecteka.hdaf.link.ClientRegistryClient;
 import in.org.projecteka.hdaf.link.ClientRegistryProperties;
 import in.org.projecteka.hdaf.link.discovery.Discovery;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +12,6 @@ public class HdafConfiguration {
 
     @Bean
     public Discovery discovery(WebClient.Builder builder, ClientRegistryProperties clientRegistryProperties) {
-        return new Discovery(new ClientRegistryClientImpl(builder, clientRegistryProperties));
+        return new Discovery(new ClientRegistryClient(builder, clientRegistryProperties));
     }
 }

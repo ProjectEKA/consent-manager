@@ -12,7 +12,7 @@ public class Discovery {
     }
 
     public Flux<ProviderRepresentation> providersFrom(String name) {
-       return client.providersOf(name)
-               .map(Transformer::to);
+        return client.providersOf(name)
+                .map(Transformer::to);
     }
 }

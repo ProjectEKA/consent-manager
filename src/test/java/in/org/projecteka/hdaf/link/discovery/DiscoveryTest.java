@@ -13,17 +13,15 @@ import reactor.test.StepVerifier;
 import java.util.List;
 
 import static in.org.projecteka.hdaf.link.discovery.TestBuilders.*;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class DiscoveryTest {
 
-    private Discovery discovery;
-
     @Mock
     ClientRegistryClient clientRegistryClient;
+
+    private Discovery discovery;
 
     @BeforeEach
     public void setUp() {

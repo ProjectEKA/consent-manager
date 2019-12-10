@@ -12,28 +12,25 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.codec.json.Jackson2JsonDecoder;
-import org.springframework.http.codec.json.Jackson2JsonEncoder;
-import org.springframework.web.reactive.function.client.*;
+import org.springframework.web.reactive.function.client.ClientRequest;
+import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.ExchangeFunction;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.io.IOException;
 import java.util.List;
 
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ClientRegistryClientTest {
     @Captor
     ArgumentCaptor<ClientRequest> captor;
-
+    ClientRegistryClient clientRegistryClient;
     @Mock
     private ExchangeFunction exchangeFunction;
-
-    ClientRegistryClient clientRegistryClient;
 
     @BeforeEach
     void init() {
@@ -49,10 +46,12 @@ public class ClientRegistryClientTest {
     void getProvidersByGivenName() throws IOException {
         var source = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readValue(
                 ClassLoader.getSystemClassLoader().getResource("provider.json"),
-                new TypeReference<List<Provider>>(){});
+                new TypeReference<List<Provider>>() {
+                });
         var jsonNode = new ObjectMapper().readValue(
                 ClassLoader.getSystemClassLoader().getResource("provider.json"),
-                new TypeReference<List<JsonNode>>(){});
+                new TypeReference<List<JsonNode>>() {
+                });
 
         when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
                 .header("Content-Type", "application/json")

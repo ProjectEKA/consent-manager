@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 @ContextConfiguration(initializers = DiscoveryUserJourneyTest.ContextInitializer.class)
 public class DiscoveryUserJourneyTest {

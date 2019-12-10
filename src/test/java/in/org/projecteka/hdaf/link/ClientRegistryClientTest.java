@@ -1,6 +1,7 @@
 package in.org.projecteka.hdaf.link;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.org.projecteka.hdaf.link.discovery.model.Provider;
@@ -11,6 +12,8 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.codec.json.Jackson2JsonDecoder;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.web.reactive.function.client.*;
 
 import java.io.IOException;
@@ -37,14 +40,14 @@ public class ClientRegistryClientTest {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder()
                 .exchangeFunction(exchangeFunction);
-        ClientRegistryProperties clientRegistryProperties = new ClientRegistryProperties();
+        ClientRegistryProperties clientRegistryProperties = new ClientRegistryProperties("localhost:8000", "", "");
         clientRegistryClient = new ClientRegistryClient(webClientBuilder, clientRegistryProperties);
     }
 
 
     @Test
     void getProvidersByGivenName() throws IOException {
-        var source = new ObjectMapper().readValue(
+        var source = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readValue(
                 ClassLoader.getSystemClassLoader().getResource("provider.json"),
                 new TypeReference<List<Provider>>(){});
         var jsonNode = new ObjectMapper().readValue(
@@ -58,9 +61,12 @@ public class ClientRegistryClientTest {
         StepVerifier.create(clientRegistryClient.providersOf("Max"))
                 .assertNext(provider -> {
                     assertThat(provider.getName()).isEqualTo(source.get(0).getName());
+                    assertThat(provider.getAddresses().get(0).getCity()).isEqualTo(source.get(0).getAddresses().get(0).getCity());
+                    assertThat(provider.getTelecoms().get(0).getValue()).isEqualTo(source.get(0).getTelecoms().get(0).getValue());
+                    assertThat(provider.getTypes().get(0).getCoding().get(0).getCode()).isEqualTo(source.get(0).getTypes().get(0).getCoding().get(0).getCode());
                 })
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("null/providers?name=Max");
+        assertThat(captor.getValue().url().toString()).isEqualTo("localhost:8000/providers?name=Max");
     }
 }

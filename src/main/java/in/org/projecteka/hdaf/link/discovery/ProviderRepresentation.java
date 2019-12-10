@@ -2,9 +2,11 @@ package in.org.projecteka.hdaf.link.discovery;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Value;
 
 @AllArgsConstructor
 @Getter
+@Value
 public class ProviderRepresentation {
     private String name;
     private String city;

@@ -1,9 +1,7 @@
 package in.org.projecteka.hdaf.link;
 
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -11,7 +9,8 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "hdaf.clientregistry")
 @Getter
 @Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PACKAGE)
+@AllArgsConstructor
 public class ClientRegistryProperties {
     private String url;
     private String XAuthToken;

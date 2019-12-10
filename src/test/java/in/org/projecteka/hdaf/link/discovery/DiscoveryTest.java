@@ -8,11 +8,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 import java.util.List;
 
 import static in.org.projecteka.hdaf.link.discovery.TestBuilders.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,13 +40,10 @@ public class DiscoveryTest {
                 .telecoms(List.of(telecom))
                 .name("Max")
                 .build();
-        when(clientRegistryClient.providersOf("Max")).thenReturn(Flux.just(provider));
+        when(clientRegistryClient.providersOf(eq("Max"))).thenReturn(Flux.just(provider));
 
-        discovery.providersFrom("Max");
-
-        verify(clientRegistryClient).providersOf("Max");
-        assertThat(clientRegistryClient.providersOf("Max").collectList().block().get(0)).isEqualTo(provider);
-
+        StepVerifier.create(discovery.providersFrom("Max"))
+                .expectNext(Transformer.to(provider))
+                .verifyComplete();
     }
-
 }

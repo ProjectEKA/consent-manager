@@ -2,9 +2,7 @@ package in.org.projecteka.hdaf.link.discovery.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 
 import java.util.List;
 
@@ -12,6 +10,8 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 @Builder
+@NoArgsConstructor
+@Setter
 public class Provider {
     private String resourceType;
     @JsonAlias("identifier")

@@ -1,0 +1,39 @@
+[
+  {
+    "resourceType": "Organization",
+    "identifier": [
+      {
+        "system": "https://tmc.gov.in/ncg/",
+        "type": "12345"
+      }
+    ],
+    "name": "Max Health Care",
+    "active": true,
+    "type": [
+      {
+        "coding": [
+          {
+            "system": "http://hl7.org/fhir/ValueSet/organization-type",
+            "code": "prov",
+            "display": "Healthcare Provider"
+          }
+        ]
+      }
+    ],
+    "telecom": [
+      {
+        "use": "work",
+        "value": "08080887876",
+        "system": "phone"
+      }
+    ],
+    "address": [
+      {
+        "use": "work",
+        "type": "both",
+        "city": "Bangalore",
+        "state": "Karnataka"
+      }
+    ]
+  }
+]

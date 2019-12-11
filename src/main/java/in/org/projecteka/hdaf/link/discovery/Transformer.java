@@ -25,7 +25,8 @@ public class Transformer {
         }
 
         return new ProviderRepresentation(provider.getName(), address.getCity(),
-                telecom.getValue(), provider.getTypes().get(0).getCoding().get(0).getCode());
+                telecom.getValue(), (provider.getTypes().size() > 0 && provider.getTypes().get(0).getCoding().size() > 0)
+                ? provider.getTypes().get(0).getCoding().get(0).getCode() : "");
 
     }
 }

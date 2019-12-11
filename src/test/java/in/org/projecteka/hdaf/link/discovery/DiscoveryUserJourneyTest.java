@@ -56,7 +56,8 @@ public class DiscoveryUserJourneyTest {
                 .expectBody()
                 .jsonPath("$.[0].name").isEqualTo("Max Health Care")
                 .jsonPath("$.[0].city").isEqualTo("Bangalore")
-                .jsonPath("$.[0].telephone").isEqualTo("08080887876");
+                .jsonPath("$.[0].telephone").isEqualTo("08080887876")
+                .jsonPath("$.[0].type").isEqualTo("prov");
 
         mockWebServer.shutdown();
     }

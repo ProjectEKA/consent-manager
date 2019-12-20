@@ -4,4 +4,4 @@ hdaf:
   clientregistry:
     XAuthToken: ${Auth_Token}
     clientId: 6
-    url: http://localhost:8080/api/1.0
+    url: ${Client_Registry_Url}

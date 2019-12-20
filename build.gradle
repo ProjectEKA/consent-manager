@@ -2,6 +2,7 @@ plugins {
 	id 'org.springframework.boot' version '2.2.1.RELEASE'
 	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
 	id 'java'
+	id 'com.avast.gradle.docker-compose' version '0.10.7'
 }
 
 group = 'in.org.projecteka'
@@ -10,6 +11,20 @@ sourceCompatibility = '11'
 
 repositories {
 	mavenCentral()
+}
+
+
+dockerCompose {
+	useComposeFiles = ['docker-compose.yml']
+}
+
+task up(type: Exec) {
+	dependsOn(build)
+	commandLine './gradlew', 'composeUp'
+}
+
+task down(type: Exec) {
+	commandLine './gradlew', 'composeDown'
 }
 
 dependencies {

@@ -10,9 +10,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TransformerTest {
 
-
     @Test
-    public void shouldTransformProviderToProviderRepresentation() {
+    void shouldTransformProviderToProviderRepresentation() {
         Address address = address().build();
         Telecom telecom = telecom().build();
         Coding coding = coding().build();
@@ -32,7 +31,7 @@ class TransformerTest {
     }
 
     @Test
-    public void pickWorkTelephoneWhenAvailable() {
+    void pickWorkTelephoneWhenAvailable() {
         Telecom work = telecom().use("work").build();
         Telecom another = telecom().build();
         var provider = provider()
@@ -45,7 +44,7 @@ class TransformerTest {
     }
 
     @Test
-    public void pickFirstWorkTelephoneWhenMultipleAvailable() {
+    void pickFirstWorkTelephoneWhenMultipleAvailable() {
         Telecom work = telecom().use("work").build();
         Telecom another = telecom().use("work").build();
         var provider = provider()
@@ -58,7 +57,7 @@ class TransformerTest {
     }
 
     @Test
-    public void returnsEmptyTelephoneWhenSourceIsEmpty() {
+    void returnsEmptyTelephoneWhenSourceIsEmpty() {
         var provider = provider()
                 .telecoms(List.of())
                 .build();
@@ -69,7 +68,7 @@ class TransformerTest {
     }
 
     @Test
-    public void pickWorkCityWhenAvailable() {
+    void pickWorkCityWhenAvailable() {
         Address work = address().use("work").build();
         Address another = address().build();
         var provider = provider()
@@ -82,7 +81,7 @@ class TransformerTest {
     }
 
     @Test
-    public void pickFirstWorkCityWhenMultipleAvailable() {
+    void pickFirstWorkCityWhenMultipleAvailable() {
         Address work = address().use("work").build();
         Address another = address().use("Work").build();
         var provider = provider()
@@ -95,7 +94,7 @@ class TransformerTest {
     }
 
     @Test
-    public void returnsEmptyCityWhenSourceIsEmpty() {
+    void returnsEmptyCityWhenSourceIsEmpty() {
         var provider = provider()
                 .addresses(List.of())
                 .build();
@@ -106,21 +105,19 @@ class TransformerTest {
     }
 
     @Test
-    public void pickWorkCityAndWorkTelphonewhenAvailable() {
+    void pickWorkCityAndWorkTelephoneWhenAvailable() {
         Address address = address().use("work").build();
         Address anotherAddress = address().build();
-        Telecom telcom = telecom().use("work").build();
-        Telecom anotherTelcom = telecom().build();
+        Telecom telecom = telecom().use("work").build();
+        Telecom anotherTelecom = telecom().build();
         var provider = provider()
                 .addresses(List.of(address, anotherAddress))
-                .telecoms(List.of(telcom, anotherTelcom))
+                .telecoms(List.of(telecom, anotherTelecom))
                 .build();
 
         ProviderRepresentation providerRepresentation = Transformer.to(provider);
 
         assertThat(providerRepresentation.getCity()).isEqualTo(address.getCity());
-        assertThat(providerRepresentation.getTelephone()).isEqualTo(telcom.getValue());
+        assertThat(providerRepresentation.getTelephone()).isEqualTo(telecom.getValue());
     }
-
-
 }

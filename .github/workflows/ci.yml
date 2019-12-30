@@ -12,4 +12,17 @@ jobs:
         with:
           java-version: 12
       - name: Build and unit tests
-        run: ./gradlew build
+        run: ./gradlew clean build
+      - name: Docker Registry
+        env:
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_REGISTRY_URL: docker.io
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY_URL
+      - name: Build docker image
+        run: docker build -t "ganesan92/hdaf:$(echo $GITHUB_SHA)" .
+      - name: Push Docker Container to Registry
+        env:
+          CONTAINER_IMAGE_NAME: hdaf
+          DOCKER_REGISTRY_NAME: ${{ secrets.DOCKER_USERNAME }}
+        run: docker push $DOCKER_REGISTRY_NAME/$CONTAINER_IMAGE_NAME:$GITHUB_SHA

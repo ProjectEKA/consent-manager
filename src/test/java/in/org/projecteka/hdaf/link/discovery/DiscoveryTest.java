@@ -1,6 +1,6 @@
 package in.org.projecteka.hdaf.link.discovery;
 
-import in.org.projecteka.hdaf.link.ClientRegistryClient;
+import in.org.projecteka.hdaf.clients.ClientRegistryClient;
 import in.org.projecteka.hdaf.link.discovery.model.Address;
 import in.org.projecteka.hdaf.link.discovery.model.Telecom;
 import org.junit.jupiter.api.BeforeEach;

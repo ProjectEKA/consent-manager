@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import in.org.projecteka.hdaf.clients.ClientRegistryClient;
+import in.org.projecteka.hdaf.clients.properties.ClientRegistryProperties;
 import in.org.projecteka.hdaf.link.discovery.model.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

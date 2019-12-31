@@ -1,8 +1,10 @@
-package in.org.projecteka.hdaf.link;
+package in.org.projecteka.hdaf.clients;
 
+import in.org.projecteka.hdaf.clients.properties.ClientRegistryProperties;
 import in.org.projecteka.hdaf.link.discovery.model.Provider;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public class ClientRegistryClient {
 
@@ -24,5 +26,15 @@ public class ClientRegistryClient {
                 .header("X-Auth-Token", clientRegistryProperties.getXAuthToken())
                 .retrieve()
                 .bodyToFlux(Provider.class);
+    }
+
+    public Mono<Provider> providerOf(String providerId) {
+        return webClientBuilder.build()
+                .get()
+                .uri(String.format("%s/providers/%s", clientRegistryProperties.getUrl(), providerId))
+                .header("client_id", clientRegistryProperties.getClientId())
+                .header("X-Auth-Token", clientRegistryProperties.getXAuthToken())
+                .retrieve()
+                .bodyToMono(Provider.class);
     }
 }

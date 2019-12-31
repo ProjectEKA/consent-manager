@@ -14,13 +14,15 @@ servers:
     description: Dev
 
 tags:
-  - name: link
+  - name: discover
+  - name: consent
 
 paths:
+  # discovery service
   /patients/discover:
     post:
       tags:
-        - link
+        - discover
       summary: Discover patient
       description: >
         Return only one patient record with (potentially masked) associated care contexts
@@ -32,7 +34,7 @@ paths:
         - $ref: "#/components/parameters/authorization"
       requestBody:
         required: true
-        description: A object
+        description: A patient discovery request.
         content:
           application/json:
             schema:
@@ -43,7 +45,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientDiscoveryResponse'
+                $ref: '#/components/schemas/PatientDiscoveryRepresentation'
+
+  # consent-service
+  /consent-requests:
+    get:
+      tags:
+        - consent
+      summary: List consent requests
+      description: Return list of consent requests which are matching filter criteria.
+      operationId: listConsentRequests
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/filters'
+      responses:
+        '200':
+          description: List of consent requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentRequestsRepresentation'
 
   /patients/link:
     post:
@@ -188,9 +211,39 @@ components:
       description: Bearer token which was issued after successful login.
       schema:
         type: string
+    limit:
+      name: limit
+      in: query
+      description: How many items to return at one time (max 100) (recommended to sent always)
+      required: false
+      schema:
+        type: integer
+        format: int32
+    offset:
+      name: offset
+      in: query
+      description: How many items out of line.
+      required: false
+      schema:
+        type: integer
+        format: int32
+    filters:
+      name: filters
+      in: query
+      schema:
+        type: string
+      description: >
+        1. Query string parameter restricts the data returned from your request.
+        2. Values in filters need to be encoded.
+      examples:
+        except_denied:
+          value: "filters=cm:status%21%3DDDENIED"
+        either_granted_or_denied:
+          value: "filters=cm:status%3D%3DDDENIED,cm:status%3D%3DGRANTED"
+      required: false
 
   schemas:
-    PatientDiscoveryResponse:
+    PatientDiscoveryRepresentation:
       type: object
       properties:
         patient:
@@ -345,3 +398,86 @@ components:
       xml:
         name: Error
 
+    ConsentRequestsRepresentation:
+      type: object
+      properties:
+        limit:
+          type: integer
+        size:
+          type: integer
+        offset:
+          type: integer
+        requests:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ConsentRequestRepresentation'
+
+    ConsentRequestRepresentation:
+      type: object
+      properties:
+        purpose:
+          type: object
+          properties:
+            description:
+              type: string
+        hitypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/HITypeRepresentation'
+        requester:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 496413f0-7b63-4f80-9bb0-9382cc3108d3
+            name:
+              type: string
+              example: "Dr. Karuppan"
+            orgName:
+              type: string
+              example: "TMH"
+            contact:
+              type: object
+              properties:
+                mobile:
+                  type: string
+                  example: '+9199999x9999'
+        duration:
+          type: object
+          properties:
+            from:
+              type: string
+              format: date-time
+            to:
+              type: string
+              format: date-time
+        expiry:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - REQUESTED
+            - EXPIRED
+            - DENIED
+            - GRANTED
+
+    HITypeRepresentation:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/HITypeEnum'
+        description:
+          type: string
+          example: HIType Description2
+
+    HITypeEnum:
+      type: string
+      enum:
+        - HIType1
+        - HIType2
+        - HIType3
+        - HIType4
+        - HIType5

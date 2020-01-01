@@ -39,6 +39,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatientDiscoveryRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/PatientDiscoveryRequest'
       responses:
         '200':
           description: Found a patient.
@@ -209,7 +212,39 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentRequestRepresentation'
-
+  /consent-requests/{request-id}/approve:
+    post:
+      tags:
+        - consent
+      summary: Approve Request
+      description: User approves the consent request with preferred data access parameters.
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+        - name: request-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentsApproveRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/ConsentsApproveRequest'
+      responses:
+        '200':
+          description: Successful creation of consent artefact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentApprovalRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ConsentApprovalRepresentation'
 components:
   parameters:
     authorization:
@@ -260,7 +295,6 @@ components:
         type: string
         format: uuid
       required: true
-
   schemas:
     PatientDiscoveryRepresentation:
       type: object
@@ -273,7 +307,6 @@ components:
         createdAt:
           type: string
           format: date-time
-
     PatientRepresentation:
       type: object
       properties:
@@ -287,7 +320,6 @@ components:
             $ref: '#/components/schemas/CareContextRepresentation'
       xml:
         name: PatientRepresentation
-
     Patient:
       type: object
       properties:
@@ -297,9 +329,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CareContext'
+          xml:
+            wrapped: true
       xml:
         name: Patient
-
     CareContextRepresentation:
       type: object
       properties:
@@ -309,7 +342,6 @@ components:
           type: string
       xml:
         name: CareContextRepresentation
-
     CareContext:
       type: object
       properties:
@@ -317,14 +349,12 @@ components:
           type: string
       xml:
         name: CareContext
-
     PatientDiscoveryRequest:
       type: object
       properties:
         hipId:
           type: string
           description: Identifier of the health information provider where patient record needs to be looked up.
-
     PatientLinkReferenceRequest:
       type: object
       properties:
@@ -334,7 +364,6 @@ components:
           $ref: '#/components/schemas/Patient'
       xml:
         name: PatientLinkReferenceRequest
-
     PatientLinkReferenceResponse:
       type: object
       properties:
@@ -344,7 +373,6 @@ components:
           $ref: '#/components/schemas/link'
       xml:
         name: PatientLinkReferenceResponse
-
     link:
       type: object
       properties:
@@ -357,7 +385,6 @@ components:
           $ref: '#/components/schemas/Meta'
       xml:
         name: link
-
     Meta:
       type: object
       required:
@@ -374,7 +401,6 @@ components:
           example: "2019-12-30T12:01:55Z"
       xml:
         name: Meta
-
     PatientLinkReferenceErrResponse:
       type: object
       properties:
@@ -382,7 +408,6 @@ components:
           $ref: '#/components/schemas/Error'
       xml:
         name: PatientLinkReferenceErrResponse
-
     PatientLinkRequest:
       type: object
       properties:
@@ -392,7 +417,6 @@ components:
           type: string
       xml:
         name: PatientLinkRequest
-
     PatientLinkResponse:
       type: object
       properties:
@@ -400,7 +424,6 @@ components:
           $ref: '#/components/schemas/PatientRepresentation'
       xml:
         name: PatientLinkResponse
-
     PatientLinkErrorResponse:
       type: object
       properties:
@@ -408,7 +431,6 @@ components:
           $ref: '#/components/schemas/Error'
       xml:
         name: PatientLinkErrResponse
-
     Error:
       type: object
       properties:
@@ -422,7 +444,6 @@ components:
           type: string
       xml:
         name: Error
-
     ConsentRequestsRepresentation:
       type: object
       properties:
@@ -437,7 +458,10 @@ components:
           maxItems: 100
           items:
             $ref: '#/components/schemas/ConsentRequestRepresentation'
-
+          xml:
+            wrapped: true
+      xml:
+        name: ConsentRequestsResponse
     ConsentRequestRepresentation:
       type: object
       required:
@@ -467,16 +491,17 @@ components:
         patient:
           $ref: '#/components/schemas/Patient'
         hip:
-          $ref: '#/components/schemas/Organization'
+          $ref: '#/components/schemas/OrganizationRepresentation'
         hiu:
-          $ref: '#/components/schemas/Organization'
+          $ref: '#/components/schemas/OrganizationRepresentation'
         requester:
           $ref: '#/components/schemas/Requester'
         hiTypes:
           type: array
           items:
             $ref: '#/components/schemas/HITypeRepresentation'
-
+          xml:
+            wrapped: true
         permission:
           type: object
           properties:
@@ -510,7 +535,8 @@ components:
             - EXPIRED
             - DENIED
             - GRANTED
-
+      xml:
+        name: ConsentRequestResponse
     Requester:
       type: object
       required:
@@ -520,8 +546,7 @@ components:
           type: string
         identifier:
           $ref: '#/components/schemas/Identifier'
-
-    Organization:
+    OrganizationRepresentation:
       type: object
       required:
         - id
@@ -534,7 +559,17 @@ components:
           type: string
           xml:
             attribute: true
-
+      xml:
+        name: OrganizationResponse
+    Organization:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          xml:
+            attribute: true
     Identifier:
       type: object
       required:
@@ -549,12 +584,17 @@ components:
           format: uri
     HITypeRepresentation:
       type: object
+      required:
+        - type
+        - description
       properties:
         type:
           $ref: '#/components/schemas/HITypeEnum'
         description:
           type: string
           example: Medication Request
+      xml:
+        name: HITypeResponse
     HITypeEnum:
       type: string
       enum:
@@ -562,3 +602,62 @@ components:
         - Observation
         - MedicationRequest
         - DiagnosticReport
+    ConsentsApproveRequest:
+      type: object
+      properties:
+        consents:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsentApproveRequest'
+          xml:
+            wrapped: true
+    ConsentApproveRequest:
+      type: object
+      properties:
+        hiTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/HITypeEnum'
+          xml:
+            wrapped: true
+        hip:
+          $ref: '#/components/schemas/Organization'
+        permission:
+          type: object
+          properties:
+            accessMode:
+              type: string
+              enum: [VIEW, STORE, QUERY, STREAM]
+            dateRange:
+              type: object
+              properties:
+                from:
+                  type: string
+                  format: date-time
+                to:
+                  type: string
+                  format: date-time
+            dataExpiryAt:
+              type: string
+              format: date-time
+            frequency:
+              type: object
+              properties:
+                unit:
+                  type: string
+                  enum: [HOUR, WEEK, DAY, MONTH, YEAR]
+                value:
+                  type: integer
+      xml:
+        name: ConsentApproveRequest
+    ConsentApprovalRepresentation:
+      type: object
+      properties:
+        consent:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+      xml:
+        name: ConsentApprovalResponse

@@ -230,7 +230,7 @@ components:
       type: object
       properties:
         patient:
-          $ref: '#/components/schemas/PatientRepresentation
+          $ref: '#/components/schemas/PatientRepresentation'
       xml:
         name: PatientLinkResponse
 

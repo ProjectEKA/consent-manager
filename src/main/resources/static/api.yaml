@@ -209,7 +209,7 @@ components:
             $ref: '#/components/schemas/CareContextRepresentation'
       xml:
         name: PatientRepresentation
-        
+
     Patient:
       type: object
       properties:
@@ -259,9 +259,6 @@ components:
 
     PatientLinkReferenceResponse:
       type: object
-      required:
-        - referenceNumber
-        - authenticationType
       properties:
         transactionId:
           type: string
@@ -286,8 +283,8 @@ components:
     Meta:
       type: object
       required:
-        - mode
-        - value
+        - communicationMedium
+        - communicationHint
       properties:
         communicationMedium:
           type: string

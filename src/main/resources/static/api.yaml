@@ -52,7 +52,7 @@ paths:
       summary: Link patient's care contexts
       description: >
         Links care contexts associated with only one patient
-          1. **Validates HIP Id**
+          1. **Validates Transaction Id**
       operationId: linkPatient
       parameters:
         - $ref: "#/components/parameters/authorization"
@@ -76,12 +76,47 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/PatientLinkReferenceResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Account reference number is invalid
+              * Care context reference numbers are invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: >
+            **Causes:**
+              * Unauthorized request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /patients/link/{linkRefNumber}:
     post:
       tags:
         - link
-      summary: Link validates the token for expiry and sends the request for authentication to HIP.
+      summary: Link validates the token for expiry and sends the request to HIP.
       description: >
         Returns a list of linked care contexts with patient reference number.
           1. **Validate token for expiry**
@@ -109,6 +144,41 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/PatientLinkResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Link reference number is invalid
+              * Token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: >
+            **Causes:**
+              * Unauthorized request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   parameters:
@@ -233,4 +303,18 @@ components:
           $ref: '#/components/schemas/PatientRepresentation'
       xml:
         name: PatientLinkResponse
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          enum: [1000, 10001]
+          description: >
+            1. Error code 1000 : No patient found
+            2. Error code 1001: Multiple patients found
+        message:
+          type: string
+      xml:
+        name: Error
 

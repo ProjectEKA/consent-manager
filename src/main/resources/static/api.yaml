@@ -65,6 +65,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatientLinkReferenceRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/PatientLinkReferenceRequest'
       responses:
         '200':
           description: A successful link request.
@@ -72,12 +75,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PatientLinkReferenceResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientLinkReferenceResponse'
 
   /patients/link/{linkRefNumber}:
     post:
       tags:
         - link
-      summary: Link Authenticates the token submitted by Consent Manager and links the account if authentication issuccessful.
+      summary: Link Authenticates the token submitted by Consent Manager and links the account if authentication is successful.
       description: >
         Returns a list of linked care contexts with patient reference number.
           1. **Validate linked account reference number**
@@ -94,11 +100,17 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatientLinkRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/PatientLinkRequest'
       responses:
         '200':
           description: List of linked care contexts of a patient with patient reference number.
           content:
             application/json:
+              schema:
+                $ref: '#/components/schemas/PatientLinkResponse'
+            application/xml:
               schema:
                 $ref: '#/components/schemas/PatientLinkResponse'
 
@@ -208,6 +220,8 @@ components:
       properties:
         token:
           type: string
+      xml:
+        name: PatientLinkRequest
 
     PatientLinkResponse:
       type: object
@@ -221,4 +235,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CareContextRepresentation'
+      xml:
+        name: PatientLinkResponse
 

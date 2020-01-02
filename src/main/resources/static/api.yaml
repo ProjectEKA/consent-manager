@@ -84,10 +84,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
         '401':
           description: >
             **Causes:**
@@ -95,10 +95,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
         '500':
           description: >
             **Causes:**
@@ -107,10 +107,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
 
   /patients/link/{linkRefNumber}:
     post:
@@ -152,10 +152,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PatientLinkErrResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PatientLinkErrResponse'
         '401':
           description: >
             **Causes:**
@@ -163,10 +163,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PatientLinkErrResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PatientLinkErrResponse'
         '500':
           description: >
             **Causes:**
@@ -175,10 +175,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PatientLinkErrResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PatientLinkErrResponse'
 
 components:
   parameters:
@@ -207,7 +207,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CareContextRepresentation'
-
+      xml:
+        name: PatientRepresentation
+        
     Patient:
       type: object
       properties:
@@ -217,6 +219,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CareContext'
+      xml:
+        name: Patient
 
     CareContextRepresentation:
       type: object
@@ -261,6 +265,14 @@ components:
       properties:
         transactionId:
           type: string
+        link:
+          $ref: '#/components/schemas/link'
+      xml:
+        name: PatientLinkReferenceResponse
+
+    link:
+      type: object
+      properties:
         referenceNumber:
           type: string
         authenticationType:
@@ -268,6 +280,8 @@ components:
           enum: ['DIRECT', 'MEDIATED']
         meta:
           $ref: '#/components/schemas/Meta'
+      xml:
+        name: link
 
     Meta:
       type: object
@@ -286,6 +300,14 @@ components:
       xml:
         name: Meta
 
+    PatientLinkReferenceErrResponse:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/Error'
+      xml:
+        name: PatientLinkReferenceErrResponse
+
     PatientLinkRequest:
       type: object
       properties:
@@ -303,6 +325,14 @@ components:
           $ref: '#/components/schemas/PatientRepresentation'
       xml:
         name: PatientLinkResponse
+
+    PatientLinkErrResponse:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/Error'
+      xml:
+        name: PatientLinkErrResponse
 
     Error:
       type: object

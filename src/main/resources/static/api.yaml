@@ -46,27 +46,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PatientDiscoveryRepresentation'
-
-  # consent-service
-  /consent-requests:
-    get:
-      tags:
-        - consent
-      summary: List consent requests
-      description: Return list of consent requests which are matching filter criteria.
-      operationId: listConsentRequests
-      parameters:
-        - $ref: '#/components/parameters/authorization'
-        - $ref: '#/components/parameters/limit'
-        - $ref: '#/components/parameters/offset'
-        - $ref: '#/components/parameters/filters'
-      responses:
-        '200':
-          description: List of consent requests.
-          content:
-            application/json:
+            application/xml:
               schema:
-                $ref: '#/components/schemas/ConsentRequestsRepresentation'
+                $ref: '#/components/schemas/PatientDiscoveryRepresentation'
 
   /patients/link:
     post:
@@ -144,9 +126,10 @@ paths:
         Returns a list of linked care contexts with patient reference number.
           1. **Validate token for expiry**
           3. **Returns a list of unmasked linked care contexts with patient reference number**
-      operationId: linkPatient
+      operationId: linkPatientConfirmation
       parameters:
         - $ref: "#/components/parameters/authorization"
+        - $ref: "#/components/parameters/linkRefNumber"
       requestBody:
         required: true
         description: A object
@@ -203,11 +186,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/PatientLinkErrResponse'
 
+  # consent-service
+  /consent-requests:
+    get:
+      tags:
+        - consent
+      summary: List consent requests
+      description: Return list of consent requests which are matching filter criteria.
+      operationId: listConsentRequests
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/filters'
+      responses:
+        '200':
+          description: List of consent requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentRequestsRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ConsentRequestRepresentation'
+
 components:
   parameters:
     authorization:
       name: Authorization
       in: header
+      required: true
       description: Bearer token which was issued after successful login.
       schema:
         type: string
@@ -235,12 +243,23 @@ components:
       description: >
         1. Query string parameter restricts the data returned from your request.
         2. Values in filters need to be encoded.
+            | filter   | logic|
+            | ------- | ----------------    |
+            | status%21%3DDENIED     | status != DENIED  |
+            | status%3D%3DDENIED,status%3D%3DGRANTED  | status == DENIED **or** status == GRANTED |
       examples:
         except_denied:
-          value: "filters=cm:status%21%3DDDENIED"
+          value: "filters=cm:status%21%3DDENIED"
         either_granted_or_denied:
-          value: "filters=cm:status%3D%3DDDENIED,cm:status%3D%3DGRANTED"
+          value: "filters=cm:status%3D%3DDENIED,cm:status%3D%3DGRANTED"
       required: false
+    linkRefNumber:
+      name: linkRefNumber
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
 
   schemas:
     PatientDiscoveryRepresentation:
@@ -416,11 +435,19 @@ components:
     ConsentRequestRepresentation:
       type: object
       properties:
+        id:
+          type: string
+          format: uuid
         purpose:
           type: object
           properties:
-            description:
+            text:
               type: string
+            code:
+              type: string
+            refUri:
+              type: string
+              format: uri
         hitypes:
           type: array
           items:
@@ -438,12 +465,6 @@ components:
             orgName:
               type: string
               example: "TMH"
-            contact:
-              type: object
-              properties:
-                mobile:
-                  type: string
-                  example: '+9199999x9999'
         duration:
           type: object
           properties:
@@ -471,13 +492,12 @@ components:
           $ref: '#/components/schemas/HITypeEnum'
         description:
           type: string
-          example: HIType Description2
+          example: Medication Request
 
     HITypeEnum:
       type: string
       enum:
-        - HIType1
-        - HIType2
-        - HIType3
-        - HIType4
-        - HIType5
+        - Condition
+        - Observation
+        - MedicationRequest
+        - DiagnosticReport

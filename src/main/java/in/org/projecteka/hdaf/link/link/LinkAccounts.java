@@ -1,6 +1,7 @@
 package in.org.projecteka.hdaf.link.link;
 
 import in.org.projecteka.hdaf.link.ClientRegistryClient;
+import in.org.projecteka.hdaf.link.HIPClient;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
 import reactor.core.publisher.Flux;

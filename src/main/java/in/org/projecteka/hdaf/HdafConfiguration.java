@@ -2,9 +2,9 @@ package in.org.projecteka.hdaf;
 
 import in.org.projecteka.hdaf.link.ClientRegistryClient;
 import in.org.projecteka.hdaf.link.ClientRegistryProperties;
+import in.org.projecteka.hdaf.link.HIPClient;
 import in.org.projecteka.hdaf.link.discovery.Discovery;
 import in.org.projecteka.hdaf.link.link.FetchUserId;
-import in.org.projecteka.hdaf.link.link.HIPClient;
 import in.org.projecteka.hdaf.link.link.LinkAccounts;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

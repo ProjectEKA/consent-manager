@@ -1,5 +1,6 @@
-package in.org.projecteka.hdaf.link.link;
+package in.org.projecteka.hdaf.link;
 
+import in.org.projecteka.hdaf.link.link.FetchUserId;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequestHIP;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;

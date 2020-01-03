@@ -17,7 +17,8 @@ public class LinkController {
 
     @PostMapping("/patients/link")
     public Flux<PatientLinkReferenceResponse> linkCareContexts(@RequestHeader(value="Authorization") String authorization, @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
-        return link.linkCareContexts(authorization, patientLinkReferenceRequest);
+        String patientId = TokenUtils.readUserId(authorization);
+        return link.patientWith(patientId, patientLinkReferenceRequest);
     }
 
 }

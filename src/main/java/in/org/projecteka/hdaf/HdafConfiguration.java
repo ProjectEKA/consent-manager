@@ -18,7 +18,7 @@ public class HdafConfiguration {
     }
 
     @Bean
-    public Link link(WebClient.Builder builder) {
-        return new Link(new HIPClient(builder));
+    public Link link(WebClient.Builder builder, ClientRegistryProperties clientRegistryProperties) {
+        return new Link(new HIPClient(builder), new ClientRegistryClient(builder, clientRegistryProperties));
     }
 }

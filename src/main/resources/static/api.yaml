@@ -158,10 +158,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrResponse'
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrResponse'
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
         '401':
           description: >
             **Causes:**
@@ -169,10 +169,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrResponse'
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrResponse'
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
         '500':
           description: >
             **Causes:**
@@ -181,10 +181,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrResponse'
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrResponse'
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
 
   # consent-service
   /consent-requests:
@@ -265,8 +265,14 @@ components:
     PatientDiscoveryRepresentation:
       type: object
       properties:
+        transactionId:
+          type: string
+          format: uuid
         patient:
           $ref: '#/components/schemas/PatientRepresentation'
+        createdAt:
+          type: string
+          format: date-time
 
     PatientRepresentation:
       type: object
@@ -395,7 +401,7 @@ components:
       xml:
         name: PatientLinkResponse
 
-    PatientLinkErrResponse:
+    PatientLinkErrorResponse:
       type: object
       properties:
         error:
@@ -514,7 +520,6 @@ components:
           type: string
         identifier:
           $ref: '#/components/schemas/Identifier'
-
 
     Organization:
       type: object

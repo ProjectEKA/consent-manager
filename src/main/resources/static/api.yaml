@@ -434,10 +434,20 @@ components:
 
     ConsentRequestRepresentation:
       type: object
+      required:
+        - createdAt
+        - purpose
+        - patient
+        - hiu
+        - permission
+        - status
       properties:
         id:
           type: string
           format: uuid
+        createdAt:
+          type: string
+          format: date-time
         purpose:
           type: object
           properties:
@@ -448,35 +458,45 @@ components:
             refUri:
               type: string
               format: uri
-        hitypes:
+        patient:
+          $ref: '#/components/schemas/Patient'
+        hip:
+          $ref: '#/components/schemas/Organization'
+        hiu:
+          $ref: '#/components/schemas/Organization'
+        requester:
+          $ref: '#/components/schemas/Requester'
+        hiTypes:
           type: array
           items:
             $ref: '#/components/schemas/HITypeRepresentation'
-        requester:
+
+        permission:
           type: object
           properties:
-            id:
+            accessMode:
               type: string
-              format: uuid
-              example: 496413f0-7b63-4f80-9bb0-9382cc3108d3
-            name:
-              type: string
-              example: "Dr. Karuppan"
-            orgName:
-              type: string
-              example: "TMH"
-        duration:
-          type: object
-          properties:
-            from:
-              type: string
-              format: date-time
-            to:
+              enum: [VIEW, STORE, QUERY, STREAM]
+            dateRange:
+              type: object
+              properties:
+                from:
+                  type: string
+                  format: date-time
+                to:
+                  type: string
+                  format: date-time
+            dataExpiryAt:
               type: string
               format: date-time
-        expiry:
-          type: string
-          format: date-time
+            frequency:
+              type: object
+              properties:
+                unit:
+                  type: string
+                  enum: [HOUR, WEEK, DAY, MONTH, YEAR]
+                value:
+                  type: integer
         status:
           type: string
           enum:
@@ -484,6 +504,44 @@ components:
             - EXPIRED
             - DENIED
             - GRANTED
+
+    Requester:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        identifier:
+          $ref: '#/components/schemas/Identifier'
+
+
+    Organization:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          xml:
+            attribute: true
+        name:
+          type: string
+          xml:
+            attribute: true
+
+    Identifier:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+        type:
+          type: string
+        system:
+          type: string
+          format: uri
 
     HITypeRepresentation:
       type: object

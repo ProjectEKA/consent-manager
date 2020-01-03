@@ -1,6 +1,6 @@
 package in.org.projecteka.hdaf.link;
 
-import in.org.projecteka.hdaf.link.link.FetchUserId;
+import in.org.projecteka.hdaf.link.link.TokenReader;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequestHIP;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
@@ -10,16 +10,14 @@ import reactor.core.publisher.Mono;
 
 public class HIPClient {
 
-    private final FetchUserId fetchUserId;
     private final WebClient.Builder webClientBuilder;
 
-    public HIPClient(FetchUserId fetchUserId, WebClient.Builder webClientBuilder) {
-        this.fetchUserId = fetchUserId;
+    public HIPClient(WebClient.Builder webClientBuilder) {
         this.webClientBuilder = webClientBuilder;
     }
 
     public Flux<PatientLinkReferenceResponse> linkPatientCareContext(String authorization, PatientLinkReferenceRequest patientLinkReferenceRequest) {
-        String userId = fetchUserId.fetchUserIdFromHeader(authorization);
+        String userId = TokenReader.readUserId(authorization);
         PatientLinkReferenceRequestHIP patientLinkReferenceRequestHIP = new PatientLinkReferenceRequestHIP(userId, patientLinkReferenceRequest.getPatient());
         return webClientBuilder.build()
                 .post()

@@ -5,15 +5,15 @@ import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
 import reactor.core.publisher.Flux;
 
-public class LinkAccounts {
+public class Link {
 
     private final HIPClient hipClient;
 
-    public LinkAccounts(HIPClient hipClient) {
+    public Link(HIPClient hipClient) {
         this.hipClient = hipClient;
     }
 
-    public Flux<PatientLinkReferenceResponse> linkAccounts(String authorization, PatientLinkReferenceRequest patientLinkReferenceRequest) {
+    public Flux<PatientLinkReferenceResponse> linkCareContexts(String authorization, PatientLinkReferenceRequest patientLinkReferenceRequest) {
         //providerid to be fetched from DB using transactionID
 //        return clientRegistryClient.providersOf(providerId)
 //                .map(provider -> provider.getIdentifiers()

@@ -11,13 +11,13 @@ import reactor.core.publisher.Flux;
 
 @RestController
 @AllArgsConstructor
-public class LinkAccountController {
+public class LinkController {
 
-    private LinkAccounts linkAccounts;
+    private Link link;
 
     @PostMapping("/patients/link")
-    public Flux<PatientLinkReferenceResponse> linkAccounts(@RequestHeader(value="Authorization") String authorization,  @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
-        return linkAccounts.linkAccounts(authorization, patientLinkReferenceRequest);
+    public Flux<PatientLinkReferenceResponse> linkCareContexts(@RequestHeader(value="Authorization") String authorization, @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
+        return link.linkCareContexts(authorization, patientLinkReferenceRequest);
     }
 
 }

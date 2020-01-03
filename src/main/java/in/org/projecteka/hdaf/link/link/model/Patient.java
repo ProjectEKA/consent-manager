@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
 @AllArgsConstructor
@@ -15,5 +17,5 @@ import lombok.NoArgsConstructor;
 @Setter
 public class Patient {
     private String referenceNumber;
-    private CareContext[] careContexts;
+    private List<CareContext> careContexts;
 }

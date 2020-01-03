@@ -9,11 +9,9 @@ import reactor.core.publisher.Flux;
 public class LinkAccounts {
 
     private final HIPClient hipClient;
-    private final ClientRegistryClient clientRegistryClient;
 
-    public LinkAccounts(HIPClient hipClient, ClientRegistryClient clientRegistryClient) {
+    public LinkAccounts(HIPClient hipClient) {
         this.hipClient = hipClient;
-        this.clientRegistryClient = clientRegistryClient;
     }
 
     public Flux<PatientLinkReferenceResponse> linkAccounts(String authorization, PatientLinkReferenceRequest patientLinkReferenceRequest) {

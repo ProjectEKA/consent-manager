@@ -19,8 +19,8 @@ public class HdafConfiguration {
     }
 
     @Bean
-    public LinkAccounts linkAccounts(FetchUserId fetchUserId, WebClient.Builder builder, ClientRegistryProperties clientRegistryProperties) {
-        return new LinkAccounts(new HIPClient(fetchUserId, builder), new ClientRegistryClient(builder, clientRegistryProperties));
+    public LinkAccounts linkAccounts(FetchUserId fetchUserId, WebClient.Builder builder) {
+        return new LinkAccounts(new HIPClient(fetchUserId, builder));
     }
 
     @Bean

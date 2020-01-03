@@ -14,13 +14,15 @@ servers:
     description: Dev
 
 tags:
-  - name: link
+  - name: discover
+  - name: consent
 
 paths:
+  # discovery service
   /patients/discover:
     post:
       tags:
-        - link
+        - discover
       summary: Discover patient
       description: >
         Return only one patient record with (potentially masked) associated care contexts
@@ -32,7 +34,7 @@ paths:
         - $ref: "#/components/parameters/authorization"
       requestBody:
         required: true
-        description: A object
+        description: A patient discovery request.
         content:
           application/json:
             schema:
@@ -43,7 +45,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientDiscoveryResponse'
+                $ref: '#/components/schemas/PatientDiscoveryRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientDiscoveryRepresentation'
 
   /patients/link:
     post:
@@ -121,9 +126,10 @@ paths:
         Returns a list of linked care contexts with patient reference number.
           1. **Validate token for expiry**
           3. **Returns a list of unmasked linked care contexts with patient reference number**
-      operationId: linkPatient
+      operationId: linkPatientConfirmation
       parameters:
         - $ref: "#/components/parameters/authorization"
+        - $ref: "#/components/parameters/linkRefNumber"
       requestBody:
         required: true
         description: A object
@@ -152,10 +158,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrResponse'
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrResponse'
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
         '401':
           description: >
             **Causes:**
@@ -163,10 +169,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrResponse'
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrResponse'
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
         '500':
           description: >
             **Causes:**
@@ -175,26 +181,98 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrResponse'
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrResponse'
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
+
+  # consent-service
+  /consent-requests:
+    get:
+      tags:
+        - consent
+      summary: List consent requests
+      description: Return list of consent requests which are matching filter criteria.
+      operationId: listConsentRequests
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/filters'
+      responses:
+        '200':
+          description: List of consent requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentRequestsRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ConsentRequestRepresentation'
 
 components:
   parameters:
     authorization:
       name: Authorization
       in: header
+      required: true
       description: Bearer token which was issued after successful login.
       schema:
         type: string
+    limit:
+      name: limit
+      in: query
+      description: How many items to return at one time (max 100) (recommended to sent always)
+      required: false
+      schema:
+        type: integer
+        format: int32
+    offset:
+      name: offset
+      in: query
+      description: How many items out of line.
+      required: false
+      schema:
+        type: integer
+        format: int32
+    filters:
+      name: filters
+      in: query
+      schema:
+        type: string
+      description: >
+        1. Query string parameter restricts the data returned from your request.
+        2. Values in filters need to be encoded.
+            | filter   | logic|
+            | ------- | ----------------    |
+            | status%21%3DDENIED     | status != DENIED  |
+            | status%3D%3DDENIED,status%3D%3DGRANTED  | status == DENIED **or** status == GRANTED |
+      examples:
+        except_denied:
+          value: "filters=cm:status%21%3DDENIED"
+        either_granted_or_denied:
+          value: "filters=cm:status%3D%3DDENIED,cm:status%3D%3DGRANTED"
+      required: false
+    linkRefNumber:
+      name: linkRefNumber
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
 
   schemas:
-    PatientDiscoveryResponse:
+    PatientDiscoveryRepresentation:
       type: object
       properties:
+        transactionId:
+          type: string
+          format: uuid
         patient:
           $ref: '#/components/schemas/PatientRepresentation'
+        createdAt:
+          type: string
+          format: date-time
 
     PatientRepresentation:
       type: object
@@ -323,7 +401,7 @@ components:
       xml:
         name: PatientLinkResponse
 
-    PatientLinkErrResponse:
+    PatientLinkErrorResponse:
       type: object
       properties:
         error:
@@ -345,3 +423,144 @@ components:
       xml:
         name: Error
 
+    ConsentRequestsRepresentation:
+      type: object
+      properties:
+        limit:
+          type: integer
+        size:
+          type: integer
+        offset:
+          type: integer
+        requests:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ConsentRequestRepresentation'
+
+    ConsentRequestRepresentation:
+      type: object
+      required:
+        - createdAt
+        - purpose
+        - patient
+        - hiu
+        - permission
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        purpose:
+          type: object
+          properties:
+            text:
+              type: string
+            code:
+              type: string
+            refUri:
+              type: string
+              format: uri
+        patient:
+          $ref: '#/components/schemas/Patient'
+        hip:
+          $ref: '#/components/schemas/Organization'
+        hiu:
+          $ref: '#/components/schemas/Organization'
+        requester:
+          $ref: '#/components/schemas/Requester'
+        hiTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/HITypeRepresentation'
+
+        permission:
+          type: object
+          properties:
+            accessMode:
+              type: string
+              enum: [VIEW, STORE, QUERY, STREAM]
+            dateRange:
+              type: object
+              properties:
+                from:
+                  type: string
+                  format: date-time
+                to:
+                  type: string
+                  format: date-time
+            dataExpiryAt:
+              type: string
+              format: date-time
+            frequency:
+              type: object
+              properties:
+                unit:
+                  type: string
+                  enum: [HOUR, WEEK, DAY, MONTH, YEAR]
+                value:
+                  type: integer
+        status:
+          type: string
+          enum:
+            - REQUESTED
+            - EXPIRED
+            - DENIED
+            - GRANTED
+
+    Requester:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        identifier:
+          $ref: '#/components/schemas/Identifier'
+
+    Organization:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          xml:
+            attribute: true
+        name:
+          type: string
+          xml:
+            attribute: true
+
+    Identifier:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+        type:
+          type: string
+        system:
+          type: string
+          format: uri
+
+    HITypeRepresentation:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/HITypeEnum'
+        description:
+          type: string
+          example: Medication Request
+
+    HITypeEnum:
+      type: string
+      enum:
+        - Condition
+        - Observation
+        - MedicationRequest
+        - DiagnosticReport

@@ -13,3 +13,5 @@ jobs:
           java-version: 12
       - name: Build and unit tests
         run: ./gradlew clean build
+      - name: Sonarcube Analysis
+        run: ./gradlew sonarqube

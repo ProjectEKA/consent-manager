@@ -318,6 +318,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CareContextRepresentation'
+          xml:
+            wrapped: true
       xml:
         name: PatientRepresentation
     Patient:
@@ -341,7 +343,7 @@ components:
         display:
           type: string
       xml:
-        name: CareContextRepresentation
+        name: CareContextResponse
     CareContext:
       type: object
       properties:
@@ -511,31 +513,7 @@ components:
           xml:
             wrapped: true
         permission:
-          type: object
-          properties:
-            accessMode:
-              type: string
-              enum: [VIEW, STORE, QUERY, STREAM]
-            dateRange:
-              type: object
-              properties:
-                from:
-                  type: string
-                  format: date-time
-                to:
-                  type: string
-                  format: date-time
-            dataExpiryAt:
-              type: string
-              format: date-time
-            frequency:
-              type: object
-              properties:
-                unit:
-                  type: string
-                  enum: [HOUR, WEEK, DAY, MONTH, YEAR]
-                value:
-                  type: integer
+          $ref: '#/components/schemas/Permission'
         status:
           type: string
           enum:
@@ -554,6 +532,8 @@ components:
           type: string
         identifier:
           $ref: '#/components/schemas/Identifier'
+      xml:
+        Requester
     OrganizationRepresentation:
       type: object
       required:
@@ -590,6 +570,8 @@ components:
         system:
           type: string
           format: uri
+      xml:
+        Identifier
     HITypeRepresentation:
       type: object
       required:
@@ -610,6 +592,8 @@ components:
         - Observation
         - MedicationRequest
         - DiagnosticReport
+      xml:
+        name: HIType
     ConsentsApproveRequest:
       type: object
       properties:
@@ -635,40 +619,18 @@ components:
             - xml:
                 name: hip
         permission:
-          type: object
-          properties:
-            accessMode:
-              type: string
-              enum: [VIEW, STORE, QUERY, STREAM]
-            dateRange:
-              type: object
-              properties:
-                from:
-                  type: string
-                  format: date-time
-                to:
-                  type: string
-                  format: date-time
-            dataExpiryAt:
-              type: string
-              format: date-time
-            frequency:
-              type: object
-              properties:
-                unit:
-                  type: string
-                  enum: [HOUR, WEEK, DAY, MONTH, YEAR]
-                value:
-                  type: integer
+          $ref: '#/components/schemas/Permission'
       xml:
         name: ConsentApproveRequest
     ConsentApprovalRepresentation:
       type: object
       properties:
-        consent:
+        consents:
           type: array
           items:
             $ref: '#/components/schemas/Consent'
+          xml:
+            wrapped: true
       xml:
         name: ConsentApprovalResponse
     Consent:
@@ -677,3 +639,33 @@ components:
         id:
           type: string
           format: uuid
+      xml:
+        name: Consent
+    Permission:
+      type: object
+      properties:
+        accessMode:
+          type: string
+          enum: [VIEW, STORE, QUERY, STREAM]
+        dateRange:
+          type: object
+          properties:
+            from:
+              type: string
+              format: date-time
+            to:
+              type: string
+              format: date-time
+        dataExpiryAt:
+          type: string
+          format: date-time
+        frequency:
+          type: object
+          properties:
+            unit:
+              type: string
+              enum: [HOUR, WEEK, DAY, MONTH, YEAR]
+            value:
+              type: integer
+      xml:
+        name: Permission

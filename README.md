@@ -46,27 +46,27 @@ all the dependencies automatically.
 
 ## :tada: Language/Frameworks
 
--   [JAVA](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/)
--   [spring webflux](https://docs.microsoft.com/en-us/aspnet/core/?view=aspnetcore-3.1)
--   [Easy Random](https://github.com/j-easy/easy-random)
--   [Vavr](https://www.vavr.io/vavr-docs/)
--   [gradle](https://docs.gradle.org/5.6.4/userguide/userguide.html)
+*   [JAVA](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/)
+*   [spring webflux](https://docs.microsoft.com/en-us/aspnet/core/?view=aspnetcore-3.1)
+*   [Easy Random](https://github.com/j-easy/easy-random)
+*   [Vavr](https://www.vavr.io/vavr-docs/)
+*   [gradle](https://docs.gradle.org/5.6.4/userguide/userguide.html)
 
 ## :checkered_flag: Requirements
 
--   [docker >= 19.03.5](https://www.docker.com/)
+*   [docker >= 19.03.5](https://www.docker.com/)
 
 ## :whale: Running From The Docker Image
 
 Create docker image
 
-```
+```alpha
 docker build -t consent-manager .
 ```
 
 To run the image
 
-```
+```alpha
 docker run -d -p 8000:8000 consent-manager
 ```
 
@@ -74,14 +74,14 @@ docker run -d -p 8000:8000 consent-manager
 
 To run
 
-```
+```alpha
 ./gradlew bootRun
 ```
 
 ## Running The Tests
 
 To run the tests
-```
+```alpha
 ./grdlew test
 ```
 

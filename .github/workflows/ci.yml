@@ -15,8 +15,6 @@ jobs:
           java-version: 12
       - name: Build and unit tests
         run: ./gradlew clean build
-      - name: GITHUB TOKEN
-        run: echo $GITHUB_TOKEN
       - name: Code analysis
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

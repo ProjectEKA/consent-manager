@@ -491,9 +491,17 @@ components:
         patient:
           $ref: '#/components/schemas/Patient'
         hip:
-          $ref: '#/components/schemas/OrganizationRepresentation'
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/OrganizationRepresentation'
+            - xml:
+                name: hip
         hiu:
-          $ref: '#/components/schemas/OrganizationRepresentation'
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/OrganizationRepresentation'
+            - xml:
+                name: hiu
         requester:
           $ref: '#/components/schemas/Requester'
         hiTypes:
@@ -621,7 +629,11 @@ components:
           xml:
             wrapped: true
         hip:
-          $ref: '#/components/schemas/Organization'
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/Organization'
+            - xml:
+                name: hip
         permission:
           type: object
           properties:
@@ -654,10 +666,14 @@ components:
       type: object
       properties:
         consent:
-          type: object
-          properties:
-            id:
-              type: string
-              format: uuid
+          type: array
+          items:
+            $ref: '#/components/schemas/Consent'
       xml:
         name: ConsentApprovalResponse
+    Consent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid

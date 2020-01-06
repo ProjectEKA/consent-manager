@@ -1,0 +1,14 @@
+version: '3'
+services:
+  consent-manager:
+    image: "ganesan92/consent-manager:${CM_IMAGE_TAG}"
+    ports:
+      - "9051:8000"
+    environment:
+      - Auth_Token=${Auth_Token}
+      - Client_Registry_Url=${Client_Registry_Url}
+    networks:
+      - consent-manager
+networks:
+  consent-manager:
+    driver: bridge

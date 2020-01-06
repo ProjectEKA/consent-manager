@@ -3,7 +3,7 @@ info:
   version: 0.0.1
   title: Health Information Consent Manager
   description: >
-    Entity which provides health information aggregation services to customers of healthcare services.
+    Entity which provides health information aggregation services to customers of health care services.
     It enables customers to fetch their health information from one or more Health Information Providers
     (e.g., Hospitals, Diagnostic Labs, Medical Device Companies), based on their explicit Consent and to share such
     aggregated information with Health Information Users i.e. entities in need of such data (e.g., Insurers,
@@ -37,6 +37,9 @@ paths:
         description: A patient discovery request.
         content:
           application/json:
+            schema:
+              $ref: '#/components/schemas/PatientDiscoveryRequest'
+          application/xml:
             schema:
               $ref: '#/components/schemas/PatientDiscoveryRequest'
       responses:
@@ -209,7 +212,39 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentRequestRepresentation'
-
+  /consent-requests/{request-id}/approve:
+    post:
+      tags:
+        - consent
+      summary: Approve Request
+      description: User approves the consent request with preferred data access parameters.
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+        - name: request-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentsApproveRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/ConsentsApproveRequest'
+      responses:
+        '200':
+          description: Successful creation of consent artefact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentApprovalRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ConsentApprovalRepresentation'
 components:
   parameters:
     authorization:
@@ -260,7 +295,6 @@ components:
         type: string
         format: uuid
       required: true
-
   schemas:
     PatientDiscoveryRepresentation:
       type: object
@@ -273,7 +307,6 @@ components:
         createdAt:
           type: string
           format: date-time
-
     PatientRepresentation:
       type: object
       properties:
@@ -285,9 +318,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CareContextRepresentation'
+          xml:
+            wrapped: true
       xml:
         name: PatientRepresentation
-
     Patient:
       type: object
       properties:
@@ -297,9 +331,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CareContext'
+          xml:
+            wrapped: true
       xml:
         name: Patient
-
     CareContextRepresentation:
       type: object
       properties:
@@ -308,8 +343,7 @@ components:
         display:
           type: string
       xml:
-        name: CareContextRepresentation
-
+        name: CareContextResponse
     CareContext:
       type: object
       properties:
@@ -317,14 +351,12 @@ components:
           type: string
       xml:
         name: CareContext
-
     PatientDiscoveryRequest:
       type: object
       properties:
         hipId:
           type: string
           description: Identifier of the health information provider where patient record needs to be looked up.
-
     PatientLinkReferenceRequest:
       type: object
       properties:
@@ -334,7 +366,6 @@ components:
           $ref: '#/components/schemas/Patient'
       xml:
         name: PatientLinkReferenceRequest
-
     PatientLinkReferenceResponse:
       type: object
       properties:
@@ -344,7 +375,6 @@ components:
           $ref: '#/components/schemas/link'
       xml:
         name: PatientLinkReferenceResponse
-
     link:
       type: object
       properties:
@@ -357,7 +387,6 @@ components:
           $ref: '#/components/schemas/Meta'
       xml:
         name: link
-
     Meta:
       type: object
       required:
@@ -374,7 +403,6 @@ components:
           example: "2019-12-30T12:01:55Z"
       xml:
         name: Meta
-
     PatientLinkReferenceErrResponse:
       type: object
       properties:
@@ -382,7 +410,6 @@ components:
           $ref: '#/components/schemas/Error'
       xml:
         name: PatientLinkReferenceErrResponse
-
     PatientLinkRequest:
       type: object
       properties:
@@ -392,7 +419,6 @@ components:
           type: string
       xml:
         name: PatientLinkRequest
-
     PatientLinkResponse:
       type: object
       properties:
@@ -400,7 +426,6 @@ components:
           $ref: '#/components/schemas/PatientRepresentation'
       xml:
         name: PatientLinkResponse
-
     PatientLinkErrorResponse:
       type: object
       properties:
@@ -408,7 +433,6 @@ components:
           $ref: '#/components/schemas/Error'
       xml:
         name: PatientLinkErrResponse
-
     Error:
       type: object
       properties:
@@ -422,7 +446,6 @@ components:
           type: string
       xml:
         name: Error
-
     ConsentRequestsRepresentation:
       type: object
       properties:
@@ -437,7 +460,10 @@ components:
           maxItems: 100
           items:
             $ref: '#/components/schemas/ConsentRequestRepresentation'
-
+          xml:
+            wrapped: true
+      xml:
+        name: ConsentRequestsResponse
     ConsentRequestRepresentation:
       type: object
       required:
@@ -467,42 +493,27 @@ components:
         patient:
           $ref: '#/components/schemas/Patient'
         hip:
-          $ref: '#/components/schemas/Organization'
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/OrganizationRepresentation'
+            - xml:
+                name: hip
         hiu:
-          $ref: '#/components/schemas/Organization'
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/OrganizationRepresentation'
+            - xml:
+                name: hiu
         requester:
           $ref: '#/components/schemas/Requester'
         hiTypes:
           type: array
           items:
             $ref: '#/components/schemas/HITypeRepresentation'
-
+          xml:
+            wrapped: true
         permission:
-          type: object
-          properties:
-            accessMode:
-              type: string
-              enum: [VIEW, STORE, QUERY, STREAM]
-            dateRange:
-              type: object
-              properties:
-                from:
-                  type: string
-                  format: date-time
-                to:
-                  type: string
-                  format: date-time
-            dataExpiryAt:
-              type: string
-              format: date-time
-            frequency:
-              type: object
-              properties:
-                unit:
-                  type: string
-                  enum: [HOUR, WEEK, DAY, MONTH, YEAR]
-                value:
-                  type: integer
+          $ref: '#/components/schemas/Permission'
         status:
           type: string
           enum:
@@ -510,7 +521,8 @@ components:
             - EXPIRED
             - DENIED
             - GRANTED
-
+      xml:
+        name: ConsentRequestResponse
     Requester:
       type: object
       required:
@@ -520,8 +532,9 @@ components:
           type: string
         identifier:
           $ref: '#/components/schemas/Identifier'
-
-    Organization:
+      xml:
+        Requester
+    OrganizationRepresentation:
       type: object
       required:
         - id
@@ -534,7 +547,17 @@ components:
           type: string
           xml:
             attribute: true
-
+      xml:
+        name: OrganizationResponse
+    Organization:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          xml:
+            attribute: true
     Identifier:
       type: object
       required:
@@ -547,16 +570,21 @@ components:
         system:
           type: string
           format: uri
-
+      xml:
+        Identifier
     HITypeRepresentation:
       type: object
+      required:
+        - type
+        - description
       properties:
         type:
           $ref: '#/components/schemas/HITypeEnum'
         description:
           type: string
           example: Medication Request
-
+      xml:
+        name: HITypeResponse
     HITypeEnum:
       type: string
       enum:
@@ -564,3 +592,80 @@ components:
         - Observation
         - MedicationRequest
         - DiagnosticReport
+      xml:
+        name: HIType
+    ConsentsApproveRequest:
+      type: object
+      properties:
+        consents:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsentApproveRequest'
+          xml:
+            wrapped: true
+    ConsentApproveRequest:
+      type: object
+      properties:
+        hiTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/HITypeEnum'
+          xml:
+            wrapped: true
+        hip:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/Organization'
+            - xml:
+                name: hip
+        permission:
+          $ref: '#/components/schemas/Permission'
+      xml:
+        name: ConsentApproveRequest
+    ConsentApprovalRepresentation:
+      type: object
+      properties:
+        consents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Consent'
+          xml:
+            wrapped: true
+      xml:
+        name: ConsentApprovalResponse
+    Consent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+      xml:
+        name: Consent
+    Permission:
+      type: object
+      properties:
+        accessMode:
+          type: string
+          enum: [VIEW, STORE, QUERY, STREAM]
+        dateRange:
+          type: object
+          properties:
+            from:
+              type: string
+              format: date-time
+            to:
+              type: string
+              format: date-time
+        dataExpiryAt:
+          type: string
+          format: date-time
+        frequency:
+          type: object
+          properties:
+            unit:
+              type: string
+              enum: [HOUR, WEEK, DAY, MONTH, YEAR]
+            value:
+              type: integer
+      xml:
+        name: Permission

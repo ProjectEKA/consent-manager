@@ -15,7 +15,11 @@ jobs:
           java-version: 12
       - name: Build and unit tests
         run: ./gradlew clean build
-      - name: Sonarcube Analysis
+      - name: GITHUB TOKEN
+        run: echo $GITHUB_TOKEN
+      - name: Code analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew sonarqube
       - name: Set env
         run: echo ::set-env name=RELEASE_VERSION::$(echo $GITHUB_SHA | head -c7)

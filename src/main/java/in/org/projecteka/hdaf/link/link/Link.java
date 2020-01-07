@@ -7,7 +7,6 @@ import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public class Link {
@@ -32,17 +31,17 @@ public class Link {
                         .orElse(Mono.error(new Throwable("Invalid HIP")))));
     }
 
-    public Flux<PatientLinkResponse> verifyToken(String patientId, String linkRefNumber, PatientLinkRequest patientLinkRequest) {
+    public Mono<PatientLinkResponse> verifyToken(String patientId, String linkRefNumber, PatientLinkRequest patientLinkRequest) {
         //from linkRefNumber get TransactionId
         //from transactionID get providerID
         String providerId = "Max";
         //Check otp for expiry
-        return clientRegistryClient.providersOf(providerId)
+        return Mono.from(clientRegistryClient.providersOf(providerId)
                 .map(provider -> provider.getIdentifiers()
                         .stream()
                         .findFirst()
                         .map(Identifier::getSystem))
                 .flatMap(s -> s.map(url -> hipClient.validateToken(patientId, linkRefNumber, patientLinkRequest, url))
-                        .orElse(Flux.error(new Throwable("Invalid HIP"))));
+                        .orElse(Mono.error(new Throwable("Invalid HIP")))));
     }
 }

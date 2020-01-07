@@ -7,6 +7,7 @@ import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
 @AllArgsConstructor
@@ -15,7 +16,7 @@ public class LinkController {
     private Link link;
 
     @PostMapping("/patients/link")
-    public Flux<PatientLinkReferenceResponse> linkCareContexts(@RequestHeader(value="Authorization") String authorization, @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
+    public Mono<PatientLinkReferenceResponse> linkCareContexts(@RequestHeader(value="Authorization") String authorization, @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
         String patientId = TokenUtils.readUserId(authorization);
         return link.patientWith(patientId, patientLinkReferenceRequest);
     }

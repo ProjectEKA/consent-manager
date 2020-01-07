@@ -13,14 +13,15 @@ public class HIPClient {
         this.webClientBuilder = webClientBuilder;
     }
 
-    public Flux<PatientLinkReferenceResponse> linkPatientCareContext(String patientId, PatientLinkReferenceRequest patientLinkReferenceRequest, String url) {
-        PatientLinkReferenceRequestHIP patientLinkReferenceRequestHIP = new PatientLinkReferenceRequestHIP(patientId, patientLinkReferenceRequest.getPatient());
+    public Mono<PatientLinkReferenceResponse> linkPatientCareContext(String patientId, PatientLinkReferenceRequest patientLinkReferenceRequest, String url) {
+        PatientLinkReferenceRequestHIP patientLinkReferenceRequestHIP = new PatientLinkReferenceRequestHIP(
+                patientLinkReferenceRequest.getTransactionId(), new PatientInHIP(patientId,patientLinkReferenceRequest.getPatient()));
         return webClientBuilder.build()
                 .post()
                 .uri(String.format("%s/patients/link", url))
                 .body(Mono.just(patientLinkReferenceRequestHIP), PatientLinkReferenceRequestHIP.class)
                 .retrieve()
-                .bodyToFlux(PatientLinkReferenceResponse.class);
+                .bodyToMono(PatientLinkReferenceResponse.class);
     }
 
     public Flux<PatientLinkResponse> validateToken(String patientId, String linkRefNumber, PatientLinkRequest patientLinkRequest, String url) {

@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Setter
 public class Link {
-    private String referenceNUmber;
+    private String referenceNumber;
     private String authenticationType;
     private Meta meta;
 }

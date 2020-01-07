@@ -8,6 +8,7 @@ import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public class Link {
 
@@ -19,16 +20,16 @@ public class Link {
         this.clientRegistryClient = clientRegistryClient;
     }
 
-    public Flux<PatientLinkReferenceResponse> patientWith(String patientId, PatientLinkReferenceRequest patientLinkReferenceRequest) {
+    public Mono<PatientLinkReferenceResponse> patientWith(String patientId, PatientLinkReferenceRequest patientLinkReferenceRequest) {
         //providerid to be fetched from DB using transactionID
         String providerId = "Max";
-        return clientRegistryClient.providersOf(providerId)
+        return Mono.from(clientRegistryClient.providersOf(providerId)
                 .map(provider -> provider.getIdentifiers()
                         .stream()
                         .findFirst()
                         .map(Identifier::getSystem))
-                        .flatMap(s -> s.map(url -> hipClient.linkPatientCareContext(patientId,patientLinkReferenceRequest, url))
-                                .orElse(Flux.error(new Throwable("Invalid HIP"))));
+                .flatMap(s -> s.map(url -> hipClient.linkPatientCareContext(patientId, patientLinkReferenceRequest, url))
+                        .orElse(Mono.error(new Throwable("Invalid HIP")))));
     }
 
     public Flux<PatientLinkResponse> verifyToken(String patientId, String linkRefNumber, PatientLinkRequest patientLinkRequest) {

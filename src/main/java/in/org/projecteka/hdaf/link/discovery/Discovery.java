@@ -2,14 +2,16 @@ package in.org.projecteka.hdaf.link.discovery;
 
 import in.org.projecteka.hdaf.clients.ClientRegistryClient;
 import in.org.projecteka.hdaf.clients.HipServiceClient;
-import in.org.projecteka.hdaf.link.discovery.model.patient.PatientRequest;
 import in.org.projecteka.hdaf.clients.UserServiceClient;
 import in.org.projecteka.hdaf.link.discovery.model.Identifier;
-import in.org.projecteka.hdaf.link.discovery.model.patient.Patient;
+import in.org.projecteka.hdaf.link.discovery.model.patient.request.Patient;
+import in.org.projecteka.hdaf.link.discovery.model.patient.request.PatientRequest;
+import in.org.projecteka.hdaf.link.discovery.model.patient.response.PatientResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 public class Discovery {
 
@@ -31,26 +33,32 @@ public class Discovery {
                 .map(Transformer::to);
     }
 
-    public Mono<Patient> patientFor(String providerId, String patientId) {
-        return client.providerOf(providerId)
+    public Mono<PatientResponse> patientFor(String providerId, String patientId) {
+        return userServiceClient.userOf(patientId)
+                .flatMap(user -> client.providerOf(providerId)
                                 .map(provider -> provider.getIdentifiers()
                                         .stream()
-                                        .filter(identifier -> identifier.getSystem().equals("http://localhost:8081"))
+                                        .filter(identifier -> identifier.getUse().equals("official"))
                                         .findFirst()
                                         .map(Identifier::getSystem))
-                                        .flatMap(s -> s.map(url ->
-                                        hipServiceClient.patientFor(new PatientRequest("John", Arrays.asList(new in.org.projecteka.hdaf.link.discovery.model.patient.Identifier("Mobile", "9999999999"))), url))
-                                            .orElse(Mono.error(new Throwable("Invalid HIP"))));
-//        return userServiceClient.userOf(patientId)
-//                .flatMap(user ->
-//                        client.providerOf(providerId)
-//                                .map(provider -> provider.getIdentifiers()
-//                                        .stream()
-//                                        .filter(identifier -> identifier.getSystem().equals("asa"))
-//                                        .findFirst()
-//                                        .map(Identifier::getSystem))
-//                                        .flatMap(s -> s.map(url ->
-//                                        hipServiceClient.patientFor(new PatientRequest(), url))
-//                                            .orElse(Mono.error(new Throwable("Invalid HIP")))));
+                                .flatMap(s -> s.map(url -> {
+                                    in.org.projecteka.hdaf.link.discovery.model.patient.request.Identifier phoneNumber = in.org.projecteka.hdaf.link.discovery.model.patient.request.Identifier.builder()
+                                            .type("MOBILE")
+                                            .value(user.getPhoneNumber())
+                                            .build();
+                                    Patient patient = Patient.builder()
+                                            .id(user.getIdentifier())
+                                            .firstName(user.getFirstName())
+                                            .lastName(user.getLastName())
+                                            .gender(user.getGender())
+                                            .dateOfBirth(user.getDateOfBirth())
+                                            .verifiedIdentifiers(List.of(phoneNumber))
+                                            .unVerifiedIdentifiers(List.of())
+                                            .build();
+
+                                    PatientRequest patientRequest = PatientRequest.builder().patient(patient).transactionId("transaction-id").build();
+                                    return hipServiceClient.patientFor(patientRequest, url);
+                                }).orElse(Mono.error(new Throwable("Invalid HIP")))));
+
     }
 }

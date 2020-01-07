@@ -1,8 +1,8 @@
 package in.org.projecteka.hdaf.clients;
 
 import in.org.projecteka.hdaf.clients.properties.HipServiceProperties;
-import in.org.projecteka.hdaf.link.discovery.model.patient.PatientRequest;
-import in.org.projecteka.hdaf.link.discovery.model.patient.Patient;
+import in.org.projecteka.hdaf.link.discovery.model.patient.request.PatientRequest;
+import in.org.projecteka.hdaf.link.discovery.model.patient.response.PatientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -18,13 +18,14 @@ public class HipServiceClient {
         this.hipServiceProperties = hipServiceProperties;
     }
 
-    public Mono<Patient> patientFor(PatientRequest request, String url) {
+    public Mono<PatientResponse> patientFor(PatientRequest request, String url) {
         return webClientBuilder.build()
                 .post()
-                .uri(url)
+                .uri(url + "/patients/discover/")
                 .header("X-Auth-Token", hipServiceProperties.getXAuthToken())
-                .body(request, PatientRequest.class)
+                .bodyValue(request)
                 .retrieve()
-                .bodyToMono(Patient.class);
+                .onStatus(httpStatus -> httpStatus.value() == 404, clientResponse -> Mono.error(new Throwable("Hip returned 404")))
+                .bodyToMono(PatientResponse.class);
     }
 }

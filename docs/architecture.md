@@ -6,4 +6,4 @@ for further details on the level of diagrams.
 ## System Context
 
 Health Information Transfer Management is composed of few capabilities sub-domains and available via
-Mobile App to the patient.
+Mobile App to the patientResponse.

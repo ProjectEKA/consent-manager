@@ -1,4 +1,4 @@
-package in.org.projecteka.hdaf.link;
+package in.org.projecteka.hdaf.link.clients;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;

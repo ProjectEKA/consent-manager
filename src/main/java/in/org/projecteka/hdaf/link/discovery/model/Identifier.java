@@ -10,4 +10,5 @@ import lombok.*;
 public class Identifier {
     private String system;
     private String type;
+    private String use;
 }

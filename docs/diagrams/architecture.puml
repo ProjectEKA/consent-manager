@@ -9,8 +9,8 @@ LAYOUT_TOP_DOWN
 Container(hdaf_client, "HDAF CLIENT", "Andriod", "Used by patients, for signing up with HDAF, linking HIP identifiers, granting/managing consent, see history of access, view health info")
 
 System_Boundary(c1, "HDAF") {
-    Container(hdaf_auth, "AUTH Server", "Java, Spring Webflux, Spring Security, Netty, Postgres", "Manages patient profile information and authenticate them")
-    Container(hdaf_core, "CORE", "Java, Spring Webflux, Spring Security, Netty, Postgres, RabbitMQ", "Fiduciary that manages patient consents, information flow between HIP and HIU")
+    Container(hdaf_auth, "AUTH Server", "Java, Spring Webflux, Spring Security, Netty, Postgres", "Manages patientResponse profile information and authenticate them")
+    Container(hdaf_core, "CORE", "Java, Spring Webflux, Spring Security, Netty, Postgres, RabbitMQ", "Fiduciary that manages patientResponse consents, information flow between HIP and HIU")
 }
 
 System_Boundary(c2, "HIP") {
@@ -24,8 +24,8 @@ System_Boundary(c3, "HIU") {
 }
 
 System_Ext(registry, "Central Registry", "Key Registry for HIPs, HDAFs - for digital signatures and certificates")
-System_Ext(firebase, "Firebase", "Push notification to patient about new consents")
-System_Ext(sms_service, "SMS sender", "sending OTP to the patient for verification")
+System_Ext(firebase, "Firebase", "Push notification to patientResponse about new consents")
+System_Ext(sms_service, "SMS sender", "sending OTP to the patientResponse for verification")
 
 Rel_Down(hdaf_client, hdaf_auth, "Uses to create profile/authenticate", "HTTPS")
 Rel_Down(hdaf_client, hdaf_core, "Uses to discover HIPs/manage consents", "HTTPS")

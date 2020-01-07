@@ -1,6 +1,6 @@
 # HDAF [![ci/cd](https://github.com/ProjectEKA/hdaf/workflows/GitHub%20Actions/badge.svg)](https://github.com/ProjectEKA/hdaf/actions)
 
-Fiduciary/Trustee that manages patient consents, information flow between HIP and HDAF Clients
+Fiduciary/Trustee that manages patientResponse consents, information flow between HIP and HDAF Clients
 (HIU and Patient centric Mobile App)
 
 ## Components

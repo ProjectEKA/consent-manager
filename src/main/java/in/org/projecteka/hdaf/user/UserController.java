@@ -1,6 +1,6 @@
 package in.org.projecteka.hdaf.user;
 
-import in.org.projecteka.hdaf.link.discovery.model.User;
+import in.org.projecteka.hdaf.user.model.User;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

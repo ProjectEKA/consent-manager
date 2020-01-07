@@ -1,0 +1,27 @@
+package in.org.projecteka.hdaf.link.discovery.model.patient.request;
+
+
+import in.org.projecteka.hdaf.link.discovery.model.Gender;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Value;
+
+
+import java.util.Date;
+import java.util.List;
+
+@AllArgsConstructor
+@Getter
+@Value
+@Builder
+public class Patient {
+    private String id;
+    private String firstName;
+    private String lastName;
+    private Gender gender;
+    private Date dateOfBirth;
+    private List<Identifier> verifiedIdentifiers;
+    private List<Identifier> unVerifiedIdentifiers;
+}
+

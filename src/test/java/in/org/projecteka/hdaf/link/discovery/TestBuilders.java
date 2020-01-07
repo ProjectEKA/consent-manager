@@ -27,4 +27,8 @@ public class TestBuilders {
         return easyRandom.nextObject(Address.AddressBuilder.class);
     }
 
+    static Identifier.IdentifierBuilder identifier() {
+        return easyRandom.nextObject(Identifier.IdentifierBuilder.class);
+    }
+
 }

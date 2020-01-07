@@ -22,6 +22,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @ExtendWith(SpringExtension.class)
@@ -43,7 +44,7 @@ public class DiscoveryUserJourneyTest {
     @Test
     public void shouldGetProvidersByName() throws IOException {
         var jsonNode = new ObjectMapper().readValue(
-                ClassLoader.getSystemClassLoader().getResource("provider.json"),
+                Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource("provider.json")),
                 new TypeReference<List<JsonNode>>() {
                 });
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(jsonNode.toString()));
@@ -54,7 +55,8 @@ public class DiscoveryUserJourneyTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
-                .jsonPath("$.[0].name").isEqualTo("Max Health Care")
+                .jsonPath("$.[0].identifier.name").isEqualTo("Max Health Care")
+                .jsonPath("$.[0].identifier.id").isEqualTo("12345")
                 .jsonPath("$.[0].city").isEqualTo("Bangalore")
                 .jsonPath("$.[0].telephone").isEqualTo("08080887876")
                 .jsonPath("$.[0].type").isEqualTo("prov");

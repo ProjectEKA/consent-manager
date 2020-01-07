@@ -4,10 +4,12 @@ import in.org.projecteka.hdaf.clients.ClientRegistryClient;
 import in.org.projecteka.hdaf.clients.HipServiceClient;
 import in.org.projecteka.hdaf.clients.UserServiceClient;
 import in.org.projecteka.hdaf.link.discovery.model.Identifier;
+import in.org.projecteka.hdaf.link.discovery.model.Provider;
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.Patient;
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.PatientRequest;
 import in.org.projecteka.hdaf.link.discovery.model.patient.response.PatientResponse;
-import in.org.projecteka.hdaf.link.discovery.model.Provider;
+import io.vertx.core.AsyncResult;
+import io.vertx.pgclient.PgPool;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -19,14 +21,17 @@ public class Discovery {
     private final ClientRegistryClient client;
     private UserServiceClient userServiceClient;
     private HipServiceClient hipServiceClient;
+    private PgPool dbClient;
 
     public Discovery(
             ClientRegistryClient client,
             UserServiceClient userServiceClient,
-            HipServiceClient hipServiceClient) {
+            HipServiceClient hipServiceClient,
+            PgPool dbClient) {
         this.client = client;
         this.userServiceClient = userServiceClient;
         this.hipServiceClient = hipServiceClient;
+        this.dbClient = dbClient;
     }
 
     public Flux<ProviderRepresentation> providersFrom(String name) {
@@ -58,8 +63,11 @@ public class Discovery {
                                     .unVerifiedIdentifiers(List.of())
                                     .build();
 
-                            PatientRequest patientRequest = PatientRequest.builder().patient(patient).transactionId("transaction-id").build();
-                            return hipServiceClient.patientFor(patientRequest, url);
+                            PatientRequest patientRequest = PatientRequest.builder().patient(patient).transactionId(UUID.randomUUID().toString()).build();
+                            return hipServiceClient.patientFor(patientRequest, url).doOnSuccess(patientResponse -> {
+                                String sql = String.format("insert into discovery_request (transaction_id, patient_id, hip_id) values ('%s', '%s', '%s')", patientRequest.getTransactionId(), patientId, providerId);
+                                dbClient.query(sql, AsyncResult::succeeded);
+                            });
                         }).orElse(Mono.error(new Throwable("Invalid HIP")))));
     }
 

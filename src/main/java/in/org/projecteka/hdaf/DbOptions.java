@@ -1,5 +1,4 @@
-package in.org.projecteka.hdaf.clients.properties;
-
+package in.org.projecteka.hdaf;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -10,12 +9,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "hdaf.userservice")
+@ConfigurationProperties(prefix = "hdaf.db")
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 @AllArgsConstructor
-public class UserServiceProperties {
-    private String url;
-    private String XAuthToken;
+public class DbOptions {
+    private String host;
+    private int port;
+    private String schema;
+    private String user;
+    private String password;
+    private int poolSize;
 }

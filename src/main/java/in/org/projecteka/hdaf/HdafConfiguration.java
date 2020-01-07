@@ -10,6 +10,9 @@ import in.org.projecteka.hdaf.link.discovery.Discovery;
 import in.org.projecteka.hdaf.user.UserService;
 import in.org.projecteka.hdaf.link.HIPClient;
 import in.org.projecteka.hdaf.link.link.Link;
+import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.pgclient.PgPool;
+import io.vertx.sqlclient.PoolOptions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -21,12 +24,22 @@ public class HdafConfiguration {
     public Discovery discovery(WebClient.Builder builder,
                                ClientRegistryProperties clientRegistryProperties,
                                UserServiceProperties userServiceProperties,
-                               HipServiceProperties hipServiceProperties) {
+                               HipServiceProperties hipServiceProperties,
+                               DbOptions dbOptions) {
         ClientRegistryClient clientRegistryClient = new ClientRegistryClient(builder, clientRegistryProperties);
         UserServiceClient userServiceClient = new UserServiceClient(builder, userServiceProperties);
         HipServiceClient hipServiceClient = new HipServiceClient(builder, hipServiceProperties);
+        PgConnectOptions connectOptions = new PgConnectOptions()
+                .setPort(dbOptions.getPort())
+                .setHost(dbOptions.getHost())
+                .setDatabase(dbOptions.getSchema())
+                .setUser(dbOptions.getUser())
+                .setPassword(dbOptions.getPassword());
 
-        return new Discovery(clientRegistryClient, userServiceClient, hipServiceClient);
+        PoolOptions poolOptions = new PoolOptions()
+                .setMaxSize(dbOptions.getPoolSize());
+
+        return new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, PgPool.pool(connectOptions, poolOptions));
     }
 
     @Bean

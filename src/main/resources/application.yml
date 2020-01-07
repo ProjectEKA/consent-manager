@@ -10,3 +10,10 @@ hdaf:
     url: http://localhost:9000
   hipservice:
     XAuthToken: 8e983a1719e20913be6c61e9b552e88fc6032c21e1030f1abda986d17326b2b0
+  db:
+    host: localhost
+    port: 5432
+    schema: consent_manager
+    user: postgres
+    password: postgres
+    poolSize: 5

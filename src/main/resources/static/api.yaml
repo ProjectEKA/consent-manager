@@ -57,7 +57,7 @@ paths:
     post:
       tags:
         - link
-      summary: Link patient's care contexts
+      summary: Link care contexts
       description: >
         Links care contexts associated with only one patient
           1. **Validates Transaction Id**
@@ -124,7 +124,7 @@ paths:
     post:
       tags:
         - link
-      summary: Link validates the token for expiry and sends the request to HIP.
+      summary: Verify link
       description: >
         Returns a list of linked care contexts with patient reference number.
           1. **Validate token for expiry**
@@ -188,7 +188,41 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/PatientLinkErrorResponse'
-
+  /providers:
+    get:
+      tags:
+        - discovery
+      summary: List providers
+      description: >
+        Returns a list of linked care contexts with patient reference number.
+          1. **Validate token for expiry**
+          3. **Returns a list of providers which contains the name**
+      operationId: listProviders
+      parameters:
+        - $ref: "#/components/parameters/authorization"
+        - $ref: "#/components/parameters/providerName"
+      responses:
+        '200':
+          description: List of health information providers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProvidersRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ProvidersRepresentation'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
   # consent-service
   /consent-requests:
     get:
@@ -294,6 +328,13 @@ components:
       schema:
         type: string
         format: uuid
+      required: true
+    providerName:
+      name: name
+      in: query
+      schema:
+        type: string
+        example: max
       required: true
   schemas:
     PatientDiscoveryRepresentation:
@@ -532,8 +573,6 @@ components:
           type: string
         identifier:
           $ref: '#/components/schemas/Identifier'
-      xml:
-        Requester
     OrganizationRepresentation:
       type: object
       required:
@@ -570,8 +609,6 @@ components:
         system:
           type: string
           format: uri
-      xml:
-        Identifier
     HITypeRepresentation:
       type: object
       required:
@@ -669,3 +706,21 @@ components:
               type: integer
       xml:
         name: Permission
+    ProvidersRepresentation:
+      type: array
+      items:
+        $ref: '#/components/schemas/ProviderRepresentation'
+      xml:
+        name: ProvidersResponse
+    ProviderRepresentation:
+      type: object
+      properties:
+        identifier:
+          allOf:
+            - $ref: '#/components/schemas/OrganizationRepresentation'
+        city:
+          type: string
+        telephone:
+          type: string
+        type:
+          type: string

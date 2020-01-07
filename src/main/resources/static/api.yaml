@@ -1,0 +1,726 @@
+openapi: 3.0.0
+info:
+  version: 0.0.1
+  title: Health Information Consent Manager
+  description: >
+    Entity which provides health information aggregation services to customers of health care services.
+    It enables customers to fetch their health information from one or more Health Information Providers
+    (e.g., Hospitals, Diagnostic Labs, Medical Device Companies), based on their explicit Consent and to share such
+    aggregated information with Health Information Users i.e. entities in need of such data (e.g., Insurers,
+    Doctors, Medical Researchers).
+
+servers:
+  - url: http://localhost:8000
+    description: Dev
+
+tags:
+  - name: discover
+  - name: consent
+
+paths:
+  # discovery service
+  /patients/discover:
+    post:
+      tags:
+        - discover
+      summary: Discover patient
+      description: >
+        Return only one patient record with (potentially masked) associated care contexts
+        1. **At least one of the verified identifier matches.**
+        2. **Filter out records using unverified, firstName, secondName, gender and dob
+        if there are more than one patient records found from step 1.**
+      operationId: discoverPatient
+      parameters:
+        - $ref: "#/components/parameters/authorization"
+      requestBody:
+        required: true
+        description: A patient discovery request.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientDiscoveryRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/PatientDiscoveryRequest'
+      responses:
+        '200':
+          description: Found a patient.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientDiscoveryRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientDiscoveryRepresentation'
+
+  /patients/link:
+    post:
+      tags:
+        - link
+      summary: Link care contexts
+      description: >
+        Links care contexts associated with only one patient
+          1. **Validates Transaction Id**
+      operationId: linkPatient
+      parameters:
+        - $ref: "#/components/parameters/authorization"
+      requestBody:
+        required: true
+        description: A object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientLinkReferenceRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/PatientLinkReferenceRequest'
+      responses:
+        '200':
+          description: A successful link request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientLinkReferenceResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientLinkReferenceResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Account reference number is invalid
+              * Care context reference numbers are invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Unauthorized request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
+
+  /patients/link/{linkRefNumber}:
+    post:
+      tags:
+        - link
+      summary: Verify link
+      description: >
+        Returns a list of linked care contexts with patient reference number.
+          1. **Validate token for expiry**
+          3. **Returns a list of unmasked linked care contexts with patient reference number**
+      operationId: linkPatientConfirmation
+      parameters:
+        - $ref: "#/components/parameters/authorization"
+        - $ref: "#/components/parameters/linkRefNumber"
+      requestBody:
+        required: true
+        description: A object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientLinkRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/PatientLinkRequest'
+      responses:
+        '200':
+          description: List of linked care contexts of a patient with patient reference number.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientLinkResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientLinkResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Link reference number is invalid
+              * Token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Unauthorized request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
+  /providers:
+    get:
+      tags:
+        - discovery
+      summary: List providers
+      description: >
+        Returns a list of linked care contexts with patient reference number.
+          1. **Validate token for expiry**
+          3. **Returns a list of providers which contains the name**
+      operationId: listProviders
+      parameters:
+        - $ref: "#/components/parameters/authorization"
+        - $ref: "#/components/parameters/providerName"
+      responses:
+        '200':
+          description: List of health information providers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProvidersRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ProvidersRepresentation'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientLinkErrorResponse'
+  # consent-service
+  /consent-requests:
+    get:
+      tags:
+        - consent
+      summary: List consent requests
+      description: Return list of consent requests which are matching filter criteria.
+      operationId: listConsentRequests
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/filters'
+      responses:
+        '200':
+          description: List of consent requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentRequestsRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ConsentRequestRepresentation'
+  /consent-requests/{request-id}/approve:
+    post:
+      tags:
+        - consent
+      summary: Approve Request
+      description: User approves the consent request with preferred data access parameters.
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+        - name: request-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentsApproveRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/ConsentsApproveRequest'
+      responses:
+        '200':
+          description: Successful creation of consent artefact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentApprovalRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ConsentApprovalRepresentation'
+components:
+  parameters:
+    authorization:
+      name: Authorization
+      in: header
+      required: true
+      description: Bearer token which was issued after successful login.
+      schema:
+        type: string
+    limit:
+      name: limit
+      in: query
+      description: How many items to return at one time (max 100) (recommended to sent always)
+      required: false
+      schema:
+        type: integer
+        format: int32
+    offset:
+      name: offset
+      in: query
+      description: How many items out of line.
+      required: false
+      schema:
+        type: integer
+        format: int32
+    filters:
+      name: filters
+      in: query
+      schema:
+        type: string
+      description: >
+        1. Query string parameter restricts the data returned from your request.
+        2. Values in filters need to be encoded.
+            | filter   | logic|
+            | ------- | ----------------    |
+            | status%21%3DDENIED     | status != DENIED  |
+            | status%3D%3DDENIED,status%3D%3DGRANTED  | status == DENIED **or** status == GRANTED |
+      examples:
+        except_denied:
+          value: "filters=cm:status%21%3DDENIED"
+        either_granted_or_denied:
+          value: "filters=cm:status%3D%3DDENIED,cm:status%3D%3DGRANTED"
+      required: false
+    linkRefNumber:
+      name: linkRefNumber
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    providerName:
+      name: name
+      in: query
+      schema:
+        type: string
+        example: max
+      required: true
+  schemas:
+    PatientDiscoveryRepresentation:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        patient:
+          $ref: '#/components/schemas/PatientRepresentation'
+        createdAt:
+          type: string
+          format: date-time
+    PatientRepresentation:
+      type: object
+      properties:
+        referenceNumber:
+          type: string
+        display:
+          type: string
+        careContexts:
+          type: array
+          items:
+            $ref: '#/components/schemas/CareContextRepresentation'
+          xml:
+            wrapped: true
+      xml:
+        name: PatientRepresentation
+    Patient:
+      type: object
+      properties:
+        referenceNumber:
+          type: string
+        careContexts:
+          type: array
+          items:
+            $ref: '#/components/schemas/CareContext'
+          xml:
+            wrapped: true
+      xml:
+        name: Patient
+    CareContextRepresentation:
+      type: object
+      properties:
+        referenceNumber:
+          type: string
+        display:
+          type: string
+      xml:
+        name: CareContextResponse
+    CareContext:
+      type: object
+      properties:
+        referenceNumber:
+          type: string
+      xml:
+        name: CareContext
+    PatientDiscoveryRequest:
+      type: object
+      properties:
+        hipId:
+          type: string
+          description: Identifier of the health information provider where patient record needs to be looked up.
+    PatientLinkReferenceRequest:
+      type: object
+      properties:
+        transactionId:
+          type: string
+        patient:
+          $ref: '#/components/schemas/Patient'
+      xml:
+        name: PatientLinkReferenceRequest
+    PatientLinkReferenceResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+        link:
+          $ref: '#/components/schemas/link'
+      xml:
+        name: PatientLinkReferenceResponse
+    link:
+      type: object
+      properties:
+        referenceNumber:
+          type: string
+        authenticationType:
+          type: string
+          enum: ['DIRECT', 'MEDIATED']
+        meta:
+          $ref: '#/components/schemas/Meta'
+      xml:
+        name: link
+    Meta:
+      type: object
+      required:
+        - communicationMedium
+        - communicationHint
+      properties:
+        communicationMedium:
+          type: string
+          enum: ['M0BILE', 'EMAIL']
+        communicationHint:
+          type: string
+        communicationExpiry:
+          type: string
+          example: "2019-12-30T12:01:55Z"
+      xml:
+        name: Meta
+    PatientLinkReferenceErrResponse:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/Error'
+      xml:
+        name: PatientLinkReferenceErrResponse
+    PatientLinkRequest:
+      type: object
+      properties:
+        transactionId:
+          type: string
+        token:
+          type: string
+      xml:
+        name: PatientLinkRequest
+    PatientLinkResponse:
+      type: object
+      properties:
+        patient:
+          $ref: '#/components/schemas/PatientRepresentation'
+      xml:
+        name: PatientLinkResponse
+    PatientLinkErrorResponse:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/Error'
+      xml:
+        name: PatientLinkErrResponse
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          enum: [1000, 10001]
+          description: >
+            1. Error code 1000 : No patient found
+            2. Error code 1001: Multiple patients found
+        message:
+          type: string
+      xml:
+        name: Error
+    ConsentRequestsRepresentation:
+      type: object
+      properties:
+        limit:
+          type: integer
+        size:
+          type: integer
+        offset:
+          type: integer
+        requests:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ConsentRequestRepresentation'
+          xml:
+            wrapped: true
+      xml:
+        name: ConsentRequestsResponse
+    ConsentRequestRepresentation:
+      type: object
+      required:
+        - createdAt
+        - purpose
+        - patient
+        - hiu
+        - permission
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        purpose:
+          type: object
+          properties:
+            text:
+              type: string
+            code:
+              type: string
+            refUri:
+              type: string
+              format: uri
+        patient:
+          $ref: '#/components/schemas/Patient'
+        hip:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/OrganizationRepresentation'
+            - xml:
+                name: hip
+        hiu:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/OrganizationRepresentation'
+            - xml:
+                name: hiu
+        requester:
+          $ref: '#/components/schemas/Requester'
+        hiTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/HITypeRepresentation'
+          xml:
+            wrapped: true
+        permission:
+          $ref: '#/components/schemas/Permission'
+        status:
+          type: string
+          enum:
+            - REQUESTED
+            - EXPIRED
+            - DENIED
+            - GRANTED
+      xml:
+        name: ConsentRequestResponse
+    Requester:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        identifier:
+          $ref: '#/components/schemas/Identifier'
+    OrganizationRepresentation:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          xml:
+            attribute: true
+        name:
+          type: string
+          xml:
+            attribute: true
+      xml:
+        name: OrganizationResponse
+    Organization:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          xml:
+            attribute: true
+    Identifier:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+        type:
+          type: string
+        system:
+          type: string
+          format: uri
+    HITypeRepresentation:
+      type: object
+      required:
+        - type
+        - description
+      properties:
+        type:
+          $ref: '#/components/schemas/HITypeEnum'
+        description:
+          type: string
+          example: Medication Request
+      xml:
+        name: HITypeResponse
+    HITypeEnum:
+      type: string
+      enum:
+        - Condition
+        - Observation
+        - MedicationRequest
+        - DiagnosticReport
+      xml:
+        name: HIType
+    ConsentsApproveRequest:
+      type: object
+      properties:
+        consents:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsentApproveRequest'
+          xml:
+            wrapped: true
+    ConsentApproveRequest:
+      type: object
+      properties:
+        hiTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/HITypeEnum'
+          xml:
+            wrapped: true
+        hip:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/Organization'
+            - xml:
+                name: hip
+        permission:
+          $ref: '#/components/schemas/Permission'
+      xml:
+        name: ConsentApproveRequest
+    ConsentApprovalRepresentation:
+      type: object
+      properties:
+        consents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Consent'
+          xml:
+            wrapped: true
+      xml:
+        name: ConsentApprovalResponse
+    Consent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+      xml:
+        name: Consent
+    Permission:
+      type: object
+      properties:
+        accessMode:
+          type: string
+          enum: [VIEW, STORE, QUERY, STREAM]
+        dateRange:
+          type: object
+          properties:
+            from:
+              type: string
+              format: date-time
+            to:
+              type: string
+              format: date-time
+        dataExpiryAt:
+          type: string
+          format: date-time
+        frequency:
+          type: object
+          properties:
+            unit:
+              type: string
+              enum: [HOUR, WEEK, DAY, MONTH, YEAR]
+            value:
+              type: integer
+      xml:
+        name: Permission
+    ProvidersRepresentation:
+      type: array
+      items:
+        $ref: '#/components/schemas/ProviderRepresentation'
+      xml:
+        name: ProvidersResponse
+    ProviderRepresentation:
+      type: object
+      properties:
+        identifier:
+          allOf:
+            - $ref: '#/components/schemas/OrganizationRepresentation'
+        city:
+          type: string
+        telephone:
+          type: string
+        type:
+          type: string

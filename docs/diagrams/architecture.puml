@@ -6,11 +6,17 @@ skinparam maxMessageSize 200
 
 LAYOUT_TOP_DOWN
 
-Container(hdaf_client, "HDAF CLIENT", "Andriod", "Used by patients, for signing up with HDAF, linking HIP identifiers, granting/managing consent, see history of access, view health info")
+Container(consent_manager_client, "consent_manager CLIENT", "Andriod", "Used by patients, for signing up with consent_manager, linking HIP identifiers, granting/managing consent, see history of access, view health info")
 
+<<<<<<< HEAD
 System_Boundary(c1, "HDAF") {
     Container(hdaf_auth, "AUTH Server", "Java, Spring Webflux, Spring Security, Netty, Postgres", "Manages patientResponse profile information and authenticate them")
     Container(hdaf_core, "CORE", "Java, Spring Webflux, Spring Security, Netty, Postgres, RabbitMQ", "Fiduciary that manages patientResponse consents, information flow between HIP and HIU")
+=======
+System_Boundary(c1, "consent_manager") {
+    Container(consent_manager_auth, "AUTH Server", "Java, Spring Webflux, Spring Security, Netty, Postgres", "Manages patient profile information and authenticate them")
+    Container(consent_manager_core, "CORE", "Java, Spring Webflux, Spring Security, Netty, Postgres, RabbitMQ", "Fiduciary that manages patient consents, information flow between HIP and HIU")
+>>>>>>> master
 }
 
 System_Boundary(c2, "HIP") {
@@ -19,26 +25,32 @@ System_Boundary(c2, "HIP") {
 
 System_Boundary(c3, "HIU") {
     Container(hiu_auth, "AUTH Server", "Java, Spring Webflux, Spring Security, Netty, Postgres", "Authenticate doctors")
-    Container(hiu_server, "HIU SERVER", "Java, Spring Webflux, Netty, Postgres", "System that manages doctor requests and fetches information from hdaf")
+    Container(hiu_server, "HIU SERVER", "Java, Spring Webflux, Netty, Postgres", "System that manages doctor requests and fetches information from consent_manager")
     Container(hiu_client, "HIU CLIENT", "React", "SPA application for HIU users")
 }
 
+<<<<<<< HEAD
 System_Ext(registry, "Central Registry", "Key Registry for HIPs, HDAFs - for digital signatures and certificates")
 System_Ext(firebase, "Firebase", "Push notification to patientResponse about new consents")
 System_Ext(sms_service, "SMS sender", "sending OTP to the patientResponse for verification")
+=======
+System_Ext(registry, "Central Registry", "Key Registry for HIPs, consent_managers - for digital signatures and certificates")
+System_Ext(firebase, "Firebase", "Push notification to patient about new consents")
+System_Ext(sms_service, "SMS sender", "sending OTP to the patient for verification")
+>>>>>>> master
 
-Rel_Down(hdaf_client, hdaf_auth, "Uses to create profile/authenticate", "HTTPS")
-Rel_Down(hdaf_client, hdaf_core, "Uses to discover HIPs/manage consents", "HTTPS")
-Rel_L(hdaf_core, hip, "Fetches encrypted data from", "HTTPS")
-Rel(hip, hdaf_core, "Send index to", "HTTPS")
-Rel_L(hiu_server, hdaf_core, "Get encrypted data from", "HTTPS")
+Rel_Down(consent_manager_client, consent_manager_auth, "Uses to create profile/authenticate", "HTTPS")
+Rel_Down(consent_manager_client, consent_manager_core, "Uses to discover HIPs/manage consents", "HTTPS")
+Rel_L(consent_manager_core, hip, "Fetches encrypted data from", "HTTPS")
+Rel(hip, consent_manager_core, "Send index to", "HTTPS")
+Rel_L(hiu_server, consent_manager_core, "Get encrypted data from", "HTTPS")
 Rel_L(hiu_client, hiu_server, "Get encrypted/decrypted data from", "HTTPS")
 Rel_L(hiu_client, hiu_auth, "Uses to authenticate", "HTTPS")
-Rel_D(hip, registry, "Authenticates itself to communicate to HDAF", "HTTPS")
-Rel_D(hdaf_core, registry, "Authenticates itself to communicate to HIP", "HTTPS")
-Rel_D(hdaf_core, firebase, "sends push notification through", "HTTPS")
-Rel_D(hdaf_core, sms_service, "sends sms through", "HTTPS")
-Rel_U(firebase, hdaf_client, "sends push notification to", "HTTPS")
-Rel_U(sms_service, hdaf_client, "sends sms to", "HTTPS")
+Rel_D(hip, registry, "Authenticates itself to communicate to consent_manager", "HTTPS")
+Rel_D(consent_manager_core, registry, "Authenticates itself to communicate to HIP", "HTTPS")
+Rel_D(consent_manager_core, firebase, "sends push notification through", "HTTPS")
+Rel_D(consent_manager_core, sms_service, "sends sms through", "HTTPS")
+Rel_U(firebase, consent_manager_client, "sends push notification to", "HTTPS")
+Rel_U(sms_service, consent_manager_client, "sends sms to", "HTTPS")
 
 @enduml

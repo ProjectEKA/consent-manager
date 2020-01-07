@@ -55,4 +55,8 @@ public class TestBuilders {
         return easyRandom.nextObject(Patient.PatientBuilder.class);
     }
 
+    static in.org.projecteka.hdaf.link.discovery.model.Identifier.IdentifierBuilder identifier() {
+        return easyRandom.nextObject(in.org.projecteka.hdaf.link.discovery.model.Identifier.IdentifierBuilder.class);
+    }
+
 }

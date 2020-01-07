@@ -1,7 +1,9 @@
 name: GitHub Actions
 
-on: [push]
-
+on:
+  push:
+    branches:
+      - master
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,4 +14,26 @@ jobs:
         with:
           java-version: 12
       - name: Build and unit tests
-        run: ./gradlew build
+        run: ./gradlew clean build
+      - name: Code analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew sonarqube
+      - name: Set env
+        run: echo ::set-env name=RELEASE_VERSION::$(echo $GITHUB_SHA | head -c7)
+      - name: Docker Registry
+        env:
+          DOCKER_REGISTRY_URL: docker.io
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY_URL
+      - name: Build docker image
+        env:
+          CONTAINER_REPO_NAME: consent-manager
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: docker build -t $DOCKER_USERNAME/$CONTAINER_REPO_NAME:$RELEASE_VERSION .
+      - name: Push Docker Container to Registry
+        env:
+          CONTAINER_REPO_NAME: consent-manager
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: docker push $DOCKER_USERNAME/$CONTAINER_REPO_NAME:$RELEASE_VERSION

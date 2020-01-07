@@ -1,9 +1,11 @@
 version: '3'
 services:
-  hdaf:
+  consent-manager:
     build: .
     ports:
       - "9000:8000"
-    environment:
-      - Auth_Token=${Auth_Token}
-      - Client_Registry_Url=${Client_Registry_Url}
+    networks:
+      - consent-manager
+networks:
+  consent-manager:
+    driver: bridge

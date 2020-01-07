@@ -4,7 +4,8 @@
     "identifier": [
       {
         "system": "https://tmc.gov.in/ncg/",
-        "type": "12345"
+        "type": "12345",
+        "use": "official"
       }
     ],
     "name": "Max Health Care",

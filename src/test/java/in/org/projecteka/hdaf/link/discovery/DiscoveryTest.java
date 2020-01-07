@@ -14,16 +14,15 @@ import in.org.projecteka.hdaf.link.discovery.model.patient.response.PatientRespo
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
 import java.util.List;
-
 import static in.org.projecteka.hdaf.link.discovery.TestBuilders.*;
+import static java.util.List.of;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class DiscoveryTest {
 
@@ -36,21 +35,20 @@ public class DiscoveryTest {
     @Mock
     HipServiceClient hipServiceClient;
 
-    private Discovery discovery;
-
     @BeforeEach
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        initMocks(this);
     }
 
-    @Test
-    public void providersOfCalledWithMax() {
-        discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient);
-        Address address = address().use("work").build();
-        Telecom telecom = telecom().use("work").build();
+    public void returnProvidersWithOfficial() {
+        var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient);
+        var address = address().use("work").build();
+        var telecommunication = telecom().use("work").build();
+        var identifier = identifier().use(in.org.projecteka.hdaf.link.discovery.model.Identifier.IdentifierType.OFFICIAL.toString()).build();
         var provider = provider()
-                .addresses(List.of(address))
-                .telecoms(List.of(telecom))
+                .addresses(of(address))
+                .telecoms(of(telecommunication))
+                .identifiers(of(identifier))
                 .name("Max")
                 .build();
         when(clientRegistryClient.providersOf(eq("Max"))).thenReturn(Flux.just(provider));
@@ -62,7 +60,7 @@ public class DiscoveryTest {
 
     @Test
     public void patientForGivenProviderIdAndPatientId() {
-        discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient);
+        var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
         PatientResponse patientResponse = patientResponse().patient(new in.org.projecteka.hdaf.link.discovery.model.patient.response.Patient("123", "John Doe", List.of(), List.of())).build();
@@ -97,7 +95,7 @@ public class DiscoveryTest {
 
     @Test
     public void shouldGetInvalidHipErrorWhenIdentifierIsNotOfficial() {
-        discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient);
+        var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
         User user = user().identifier("1").firstName("first name").phoneNumber("9999999999").build();
@@ -114,5 +112,22 @@ public class DiscoveryTest {
 
         StepVerifier.create(discovery.patientFor("1", "1"))
                 .expectErrorMatches(error -> error.equals(new Throwable("Invalid HIP")));
+    }
+
+    public void returnEmptyProvidersWhenOfficialIdentifierIsUnavailable() {
+        var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient);
+        var address = address().use("work").build();
+        var telecommunication = telecom().use("work").build();
+        var identifier = identifier().build();
+        var provider = provider()
+                .addresses(of(address))
+                .telecoms(of(telecommunication))
+                .identifiers(of(identifier))
+                .name("Max")
+                .build();
+        when(clientRegistryClient.providersOf(eq("Max"))).thenReturn(Flux.just(provider));
+
+        StepVerifier.create(discovery.providersFrom("Max"))
+                .verifyComplete();
     }
 }

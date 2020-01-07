@@ -9,18 +9,19 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 @RestController
+@RequestMapping("/patients/link")
 @AllArgsConstructor
 public class LinkController {
 
     private Link link;
 
-    @PostMapping("/patients/link")
+    @PostMapping
     public Mono<PatientLinkReferenceResponse> linkCareContexts(@RequestHeader(value="Authorization") String authorization, @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
         String patientId = TokenUtils.readUserId(authorization);
         return link.patientWith(patientId, patientLinkReferenceRequest);
     }
 
-    @PostMapping("/patients/link/{linkRefNumber}")
+    @PostMapping("/{linkRefNumber}")
     public Mono<PatientLinkResponse> verifyToken(@RequestHeader(value = "Authorization") String authorization, @PathVariable("linkRefNumber") String linkRefNumber, @RequestBody PatientLinkRequest patientLinkRequest) {
         String patientId = TokenUtils.readUserId(authorization);
         return link.verifyToken(patientId, linkRefNumber, patientLinkRequest);

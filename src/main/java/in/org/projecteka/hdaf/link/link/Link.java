@@ -9,6 +9,8 @@ import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
+
 public class Link {
 
     private final HIPClient hipClient;
@@ -21,27 +23,30 @@ public class Link {
 
     public Mono<PatientLinkReferenceResponse> patientWith(String patientId, PatientLinkReferenceRequest patientLinkReferenceRequest) {
         //providerid to be fetched from DB using transactionID
-        String providerId = "Max";
-        return Mono.from(clientRegistryClient.providersOf(providerId)
-                .map(provider -> provider.getIdentifiers()
-                        .stream()
-                        .findFirst()
-                        .map(Identifier::getSystem))
+        String providerId = "10000005";
+
+        return providerUrl(providerId)
                 .flatMap(s -> s.map(url -> hipClient.linkPatientCareContext(patientId, patientLinkReferenceRequest, url))
-                        .orElse(Mono.error(new Throwable("Invalid HIP")))));
+                        .orElse(Mono.error(new Throwable("Invalid HIP")))
+                );
     }
 
     public Mono<PatientLinkResponse> verifyToken(String patientId, String linkRefNumber, PatientLinkRequest patientLinkRequest) {
         //from linkRefNumber get TransactionId
         //from transactionID get providerID
-        String providerId = "Max";
+        String providerId = "10000005";
         //Check otp for expiry
-        return Mono.from(clientRegistryClient.providersOf(providerId)
+        return providerUrl(providerId)
+                .flatMap(s -> s.map(url -> hipClient.validateToken(patientId, linkRefNumber, patientLinkRequest, url))
+                        .orElse(Mono.error(new Throwable("Invalid HIP")))
+                );
+    }
+
+    private Mono<Optional<String>> providerUrl(String providerId) {
+        return clientRegistryClient.providerWith(providerId)
                 .map(provider -> provider.getIdentifiers()
                         .stream()
                         .findFirst()
-                        .map(Identifier::getSystem))
-                .flatMap(s -> s.map(url -> hipClient.validateToken(patientId, linkRefNumber, patientLinkRequest, url))
-                        .orElse(Mono.error(new Throwable("Invalid HIP")))));
+                        .map(Identifier::getSystem));
     }
 }

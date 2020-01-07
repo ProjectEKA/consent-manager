@@ -1,8 +1,9 @@
-package in.org.projecteka.hdaf.link.link.model;
+package in.org.projecteka.hdaf.link.link.model.hip;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import lombok.*;
+
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
@@ -10,8 +11,8 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @Setter
-public class PatientInHIP {
+public class Patient {
     private String consentManagerUserID;
-    @JsonUnwrapped
-    private Patient patient;
+    private String referenceNumber;
+    private List<CareContext> careContexts;
 }

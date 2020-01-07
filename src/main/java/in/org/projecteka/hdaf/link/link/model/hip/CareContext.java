@@ -1,9 +1,7 @@
-package in.org.projecteka.hdaf.link.link.model;
+package in.org.projecteka.hdaf.link.link.model.hip;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
-
-import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
@@ -11,8 +9,6 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @Setter
-public class PatientRepresentation {
+public class CareContext {
     private String referenceNumber;
-    private String Display;
-    private List<CareContextRepresentation> careContexts;
 }

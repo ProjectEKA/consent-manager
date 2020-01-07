@@ -5,6 +5,8 @@ import in.org.projecteka.hdaf.link.HIPClient;
 import in.org.projecteka.hdaf.link.discovery.model.Identifier;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
+import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
+import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
 import reactor.core.publisher.Flux;
 
 public class Link {
@@ -27,5 +29,19 @@ public class Link {
                         .map(Identifier::getSystem))
                         .flatMap(s -> s.map(url -> hipClient.linkPatientCareContext(patientId,patientLinkReferenceRequest, url))
                                 .orElse(Flux.error(new Throwable("Invalid HIP"))));
+    }
+
+    public Flux<PatientLinkResponse> verifyToken(String patientId, String linkRefNumber, PatientLinkRequest patientLinkRequest) {
+        //from linkRefNumber get TransactionId
+        //from transactionID get providerID
+        String providerId = "Max";
+        //Check otp for expiry
+        return clientRegistryClient.providersOf(providerId)
+                .map(provider -> provider.getIdentifiers()
+                        .stream()
+                        .findFirst()
+                        .map(Identifier::getSystem))
+                .flatMap(s -> s.map(url -> hipClient.validateToken(patientId, linkRefNumber, patientLinkRequest, url))
+                        .orElse(Flux.error(new Throwable("Invalid HIP"))));
     }
 }

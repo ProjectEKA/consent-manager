@@ -2,11 +2,10 @@ package in.org.projecteka.hdaf.link.link;
 
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
+import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
+import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
 @RestController
@@ -21,4 +20,9 @@ public class LinkController {
         return link.patientWith(patientId, patientLinkReferenceRequest);
     }
 
+    @PostMapping("/patients/link/{linkRefNumber}")
+    public Flux<PatientLinkResponse> verifyToken(@RequestHeader(value = "Authorization") String authorization, @PathVariable("linkRefNumber") String linkRefNumber, @RequestBody PatientLinkRequest patientLinkRequest) {
+        String patientId = TokenUtils.readUserId(authorization);
+        return link.verifyToken(patientId, linkRefNumber, patientLinkRequest);
+    }
 }

@@ -55,6 +55,7 @@ all the dependencies automatically.
 ## :checkered_flag: Requirements
 
 *   [docker >= 19.03.5](https://www.docker.com/)
+*   [graphviz](https://graphviz.gitlab.io/download/)
 
 ## :whale: Running From The Docker Image
 

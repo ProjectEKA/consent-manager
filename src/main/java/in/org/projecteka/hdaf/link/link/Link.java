@@ -28,12 +28,12 @@ public class Link {
         //providerid to be fetched from DB using transactionID
         String providerId = "10000005";
 
-        Patient patientInHIP = toHIPPatient(patientId, patientLinkReferenceRequest);
-        in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest patientLinkReferenceRequestHIP =
+        Patient patient = toHIPPatient(patientId, patientLinkReferenceRequest);
+        in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest linkReferenceRequest =
                 new in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest(
-                        patientLinkReferenceRequest.getTransactionId(), patientInHIP);
+                        patientLinkReferenceRequest.getTransactionId(), patient);
         return providerUrl(providerId)
-                .flatMap(s -> s.map(url -> hipClient.linkPatientCareContext(patientLinkReferenceRequestHIP, url))
+                .flatMap(s -> s.map(url -> hipClient.linkPatientCareContext(linkReferenceRequest, url))
                         .orElse(Mono.error(new Throwable("Invalid HIP")))
                 );
     }

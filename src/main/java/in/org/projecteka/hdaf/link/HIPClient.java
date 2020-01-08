@@ -21,8 +21,8 @@ public class HIPClient {
     }
 
     public Mono<PatientLinkReferenceResponse> linkPatientCareContext(
-            PatientLinkReferenceRequest patientLinkReferenceRequest, String url) {
-
+            PatientLinkReferenceRequest patientLinkReferenceRequest,
+            String url) {
         return webClientBuilder.build()
                 .post()
                 .uri(String.format("%s/patients/link", url))
@@ -34,8 +34,10 @@ public class HIPClient {
                 .bodyToMono(PatientLinkReferenceResponse.class);
     }
 
-    public Mono<PatientLinkResponse> validateToken(String linkRefNumber,
-                                                   PatientLinkRequest patientLinkRequest, String url) {
+    public Mono<PatientLinkResponse> validateToken(
+            String linkRefNumber,
+            PatientLinkRequest patientLinkRequest,
+            String url) {
         return webClientBuilder.build()
                 .post()
                 .uri(String.format("%s/patients/link/%s", url, linkRefNumber))

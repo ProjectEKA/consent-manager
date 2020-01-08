@@ -12,6 +12,7 @@ class TransformerTest {
 
     @Test
     void shouldTransformProviderToProviderRepresentation() {
+        Identifier identifier = identifier().use(Identifier.IdentifierType.OFFICIAL.toString()).build();
         Address address = address().build();
         Telecom telecom = telecom().build();
         Coding coding = coding().build();
@@ -20,14 +21,16 @@ class TransformerTest {
                 .addresses(List.of(address))
                 .telecoms(List.of(telecom))
                 .types(List.of(type))
+                .identifiers(List.of(identifier))
                 .build();
 
         ProviderRepresentation providerRepresentation = Transformer.to(provider);
 
-        assertThat(providerRepresentation.getName()).isEqualTo(provider.getName());
+        assertThat(providerRepresentation.getIdentifier().getName()).isEqualTo(provider.getName());
         assertThat(providerRepresentation.getCity()).isEqualTo(address.getCity());
         assertThat(providerRepresentation.getTelephone()).isEqualTo(telecom.getValue());
         assertThat(providerRepresentation.getType()).isEqualTo(coding.getCode());
+        assertThat(providerRepresentation.getIdentifier().getId()).isEqualTo(identifier.getType());
     }
 
     @Test
@@ -102,6 +105,17 @@ class TransformerTest {
         ProviderRepresentation providerRepresentation = Transformer.to(provider);
 
         assertThat(providerRepresentation.getCity()).isEqualTo("");
+    }
+
+    @Test
+    void returnsEmptyIdentifierWhenOfficialIsUnavailable() {
+        var provider = provider()
+                .identifiers(List.of())
+                .build();
+
+        ProviderRepresentation providerRepresentation = Transformer.to(provider);
+
+        assertThat(providerRepresentation.getIdentifier()).isEqualTo(IdentifierRepresentation.builder().build());
     }
 
     @Test

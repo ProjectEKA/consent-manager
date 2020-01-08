@@ -31,13 +31,13 @@ public class Link {
                 );
     }
 
-    public Mono<PatientLinkResponse> verifyToken(String patientId, String linkRefNumber, PatientLinkRequest patientLinkRequest) {
+    public Mono<PatientLinkResponse> verifyToken(String linkRefNumber, PatientLinkRequest patientLinkRequest) {
         //from linkRefNumber get TransactionId
         //from transactionID get providerID
         String providerId = "10000005";
         //Check otp for expiry
         return providerUrl(providerId)
-                .flatMap(s -> s.map(url -> hipClient.validateToken(patientId, linkRefNumber, patientLinkRequest, url))
+                .flatMap(s -> s.map(url -> hipClient.validateToken(linkRefNumber, patientLinkRequest, url))
                         .orElse(Mono.error(new Throwable("Invalid HIP")))
                 );
     }

@@ -1,4 +1,4 @@
-package in.org.projecteka.hdaf.link.link.model;
+package in.org.projecteka.hdaf.link.link.model.hip;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @Setter
-public class PatientLinkReferenceRequestHIP {
-    private String consentManagerUserId;
+public class PatientLinkReferenceRequest {
+    private String transactionId;
     private Patient patient;
 }

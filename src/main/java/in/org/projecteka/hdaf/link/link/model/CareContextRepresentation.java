@@ -1,6 +1,7 @@
 package in.org.projecteka.hdaf.link.link.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,8 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @Setter
-public class Link {
+public class CareContextRepresentation {
     private String referenceNumber;
-    private String authenticationType;
-    private Meta meta;
+    private String display;
 }

@@ -1,6 +1,5 @@
 package in.org.projecteka.hdaf.link.link;
 
-import in.org.projecteka.hdaf.link.link.model.ErrorRepresentation;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;

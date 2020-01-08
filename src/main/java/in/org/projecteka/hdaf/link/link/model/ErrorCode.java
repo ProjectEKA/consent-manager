@@ -6,7 +6,6 @@ import lombok.Getter;
 
 import java.util.Arrays;
 
-@Getter(onMethod_ = @JsonValue)
 public enum ErrorCode {
     NoPatientFound(1000),
     MultiplePatientsFound(1001),
@@ -17,6 +16,12 @@ public enum ErrorCode {
     private int value;
     ErrorCode(int val) {
         value = val;
+    }
+
+    // Adding @JsonValue annotation that tells the 'value' to be of integer type while de-serializing.
+    @JsonValue
+    public int getValue() {
+        return value;
     }
 
     @JsonCreator

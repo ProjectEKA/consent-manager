@@ -9,26 +9,31 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ReactiveHttpOutputMessage;
 import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.server.*;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.RequestPredicates;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.RouterFunctions;
+import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
 public class ClientErrorExceptionHandler extends AbstractErrorWebExceptionHandler {
-    public ClientErrorExceptionHandler(ErrorAttributes errorAttributes, ResourceProperties resourceProperties, ApplicationContext applicationContext) {
+    public ClientErrorExceptionHandler(
+            ErrorAttributes errorAttributes,
+            ResourceProperties resourceProperties,
+            ApplicationContext applicationContext) {
         super(errorAttributes, resourceProperties, applicationContext);
     }
 
     @Override
-    protected RouterFunction<ServerResponse> getRoutingFunction(
-            ErrorAttributes errorAttributes) {
+    protected RouterFunction<ServerResponse> getRoutingFunction(ErrorAttributes errorAttributes) {
         return RouterFunctions.route(
                 RequestPredicates.all(), this::renderErrorResponse
         );
     }
 
-    private Mono<ServerResponse> renderErrorResponse(
-            ServerRequest request) {
+    private Mono<ServerResponse> renderErrorResponse(ServerRequest request) {
         Map<String, Object> errorPropertiesMap = getErrorAttributes(request, false);
         Throwable error = getError(request);
         // Default error response

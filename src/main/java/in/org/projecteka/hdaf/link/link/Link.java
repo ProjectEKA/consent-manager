@@ -7,9 +7,12 @@ import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
+import in.org.projecteka.hdaf.link.link.model.hip.Patient;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
+
+import static in.org.projecteka.hdaf.link.link.Transformer.toHIPPatient;
 
 public class Link {
 
@@ -25,8 +28,12 @@ public class Link {
         //providerid to be fetched from DB using transactionID
         String providerId = "10000005";
 
+        Patient patientInHIP = toHIPPatient(patientId, patientLinkReferenceRequest);
+        in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest patientLinkReferenceRequestHIP =
+                new in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest(
+                        patientLinkReferenceRequest.getTransactionId(), patientInHIP);
         return providerUrl(providerId)
-                .flatMap(s -> s.map(url -> hipClient.linkPatientCareContext(patientId, patientLinkReferenceRequest, url))
+                .flatMap(s -> s.map(url -> hipClient.linkPatientCareContext(patientLinkReferenceRequestHIP, url))
                         .orElse(Mono.error(new Throwable("Invalid HIP")))
                 );
     }

@@ -33,7 +33,7 @@ public class UserServiceClientTest {
     private ExchangeFunction exchangeFunction;
 
     @BeforeEach
-    void init() {
+    public void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder()
                 .exchangeFunction(exchangeFunction);
@@ -43,7 +43,7 @@ public class UserServiceClientTest {
 
 
     @Test
-    void shouldGetUser() throws IOException {
+    public void shouldGetUser() throws IOException {
         User user = user().firstName("first name").build();
         String patientResponseBody = new ObjectMapper().writeValueAsString(user);
         when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)

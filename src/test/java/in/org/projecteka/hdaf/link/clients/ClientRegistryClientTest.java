@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.org.projecteka.hdaf.clients.ClientRegistryClient;
 import in.org.projecteka.hdaf.clients.properties.ClientRegistryProperties;
+import in.org.projecteka.hdaf.link.TestBuilders;
 import in.org.projecteka.hdaf.link.discovery.model.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,18 +25,20 @@ import reactor.test.StepVerifier;
 import java.io.IOException;
 import java.util.List;
 
+import static in.org.projecteka.hdaf.link.TestBuilders.*;
+import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 public class ClientRegistryClientTest {
     @Captor
-    ArgumentCaptor<ClientRequest> captor;
-    ClientRegistryClient clientRegistryClient;
+    private ArgumentCaptor<ClientRequest> captor;
+    private ClientRegistryClient clientRegistryClient;
     @Mock
     private ExchangeFunction exchangeFunction;
 
     @BeforeEach
-    void init() {
+    public void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder()
                 .exchangeFunction(exchangeFunction);
@@ -45,7 +48,7 @@ public class ClientRegistryClientTest {
 
 
     @Test
-    void getProvidersByGivenName() throws IOException {
+    public void getProvidersByGivenName() throws IOException {
         var source = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readValue(
                 ClassLoader.getSystemClassLoader().getResource("provider.json"),
                 new TypeReference<List<Provider>>() {
@@ -72,26 +75,23 @@ public class ClientRegistryClientTest {
     }
 
     @Test
-    void getProviderByGivenId() throws IOException {
-        var source = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readValue(
-                ClassLoader.getSystemClassLoader().getResource("provider.json"),
-                new TypeReference<List<Provider>>() {
-                });
-        var jsonNode = new ObjectMapper().readValue(
-                ClassLoader.getSystemClassLoader().getResource("provider.json"),
-                new TypeReference<List<JsonNode>>() {
-                });
+    public void getProviderByGivenId() throws IOException {
+        Provider provider = provider().name("Provider")
+                .addresses(of(address().city("Provider City").build()))
+                .telecoms(of(telecom().value("Telecom").build()))
+                .types(of(type().coding(of(coding().code("Code").build())).build())).build();
 
+        String providerJsonResponse = new ObjectMapper().writeValueAsString(provider);
         when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
                 .header("Content-Type", "application/json")
-                .body(jsonNode.get(0).toString()).build()));
+                .body(providerJsonResponse).build()));
 
         StepVerifier.create(clientRegistryClient.providerWith("10000003"))
-                .assertNext(provider -> {
-                    assertThat(provider.getName()).isEqualTo(source.get(0).getName());
-                    assertThat(provider.getAddresses().get(0).getCity()).isEqualTo(source.get(0).getAddresses().get(0).getCity());
-                    assertThat(provider.getTelecoms().get(0).getValue()).isEqualTo(source.get(0).getTelecoms().get(0).getValue());
-                    assertThat(provider.getTypes().get(0).getCoding().get(0).getCode()).isEqualTo(source.get(0).getTypes().get(0).getCoding().get(0).getCode());
+                .assertNext(providerResponse -> {
+                    assertThat(providerResponse.getName()).isEqualTo(provider.getName());
+                    assertThat(providerResponse.getAddresses().get(0).getCity()).isEqualTo(provider.getAddresses().get(0).getCity());
+                    assertThat(providerResponse.getTelecoms().get(0).getValue()).isEqualTo(provider.getTelecoms().get(0).getValue());
+                    assertThat(providerResponse.getTypes().get(0).getCoding().get(0).getCode()).isEqualTo(provider.getTypes().get(0).getCoding().get(0).getCode());
                 })
                 .verifyComplete();
 

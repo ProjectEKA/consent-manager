@@ -35,7 +35,7 @@ public class HipServiceClientTest {
     private ExchangeFunction exchangeFunction;
 
     @BeforeEach
-    void init() {
+    public void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder()
                 .exchangeFunction(exchangeFunction);
@@ -44,7 +44,7 @@ public class HipServiceClientTest {
 
 
     @Test
-    void shouldDiscoverPatients() throws IOException {
+    public void shouldDiscoverPatients() throws IOException {
         Patient expectedPatient = patientInResponse().display("Patient Name").careContexts(List.of(careContext().display("Care context 1").build())).build();
         PatientResponse patientResponse = patientResponse().patient(expectedPatient).build();
         String patientResponseBody = new ObjectMapper().writeValueAsString(patientResponse);

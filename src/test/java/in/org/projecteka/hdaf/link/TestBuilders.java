@@ -12,6 +12,10 @@ import in.org.projecteka.hdaf.link.discovery.model.patient.request.PatientReques
 import in.org.projecteka.hdaf.link.discovery.model.patient.response.CareContext;
 import in.org.projecteka.hdaf.link.discovery.model.patient.response.DiscoveryResponse;
 import in.org.projecteka.hdaf.link.discovery.model.patient.response.PatientResponse;
+import in.org.projecteka.hdaf.link.link.model.ErrorRepresentation;
+import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
+import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
+import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
@@ -77,4 +81,27 @@ public class TestBuilders {
         return easyRandom.nextObject(in.org.projecteka.hdaf.link.discovery.model.Identifier.IdentifierBuilder.class);
     }
 
+    public static in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder patientLinkReferenceRequestForHIP() {
+        return easyRandom.nextObject(in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder.class);
+    }
+
+    public static in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder patientLinkReferenceRequest() {
+        return easyRandom.nextObject(in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder.class);
+    }
+
+    public static PatientLinkRequest.PatientLinkRequestBuilder patientLinkRequest() {
+        return easyRandom.nextObject(PatientLinkRequest.PatientLinkRequestBuilder.class);
+    }
+
+    public static PatientLinkReferenceResponse.PatientLinkReferenceResponseBuilder patientLinkReferenceResponse() {
+        return easyRandom.nextObject(PatientLinkReferenceResponse.PatientLinkReferenceResponseBuilder.class);
+    }
+
+    public static ErrorRepresentation.ErrorRepresentationBuilder errorRepresentation() {
+        return easyRandom.nextObject(ErrorRepresentation.ErrorRepresentationBuilder.class);
+    }
+
+    public static PatientLinkResponse.PatientLinkResponseBuilder patientLinkResponse() {
+        return easyRandom.nextObject(PatientLinkResponse.PatientLinkResponseBuilder.class);
+    }
 }

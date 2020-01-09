@@ -14,10 +14,6 @@ import lombok.Setter;
 public class Identifier {
     public enum IdentifierType {
         OFFICIAL;
-        @Override
-        public String toString() {
-            return super.toString();
-        }
     }
     private String system;
     private String type;

@@ -1,6 +1,5 @@
 package in.org.projecteka.hdaf.link.link;
 
-import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
 import in.org.projecteka.hdaf.link.link.model.hip.CareContext;
 import in.org.projecteka.hdaf.link.link.model.hip.Patient;
 
@@ -12,8 +11,7 @@ public class Transformer {
         return careContexts.stream().map(careContext -> new CareContext(careContext.getReferenceNumber())).collect(Collectors.toList());
     }
 
-    public static Patient toHIPPatient(String patientId, PatientLinkReferenceRequest patientLinkReferenceRequest) {
-        in.org.projecteka.hdaf.link.link.model.Patient patient = patientLinkReferenceRequest.getPatient();
+    public static Patient toHIPPatient(String patientId, in.org.projecteka.hdaf.link.link.model.Patient patient) {
         List<in.org.projecteka.hdaf.link.link.model.CareContext> careContexts = patient.getCareContexts();
         List<CareContext> careContextsInHIP = toHIPCareContext(careContexts);
         return new Patient(patientId, patient.getReferenceNumber(), careContextsInHIP);

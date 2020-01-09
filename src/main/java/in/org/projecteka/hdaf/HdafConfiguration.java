@@ -10,6 +10,7 @@ import in.org.projecteka.hdaf.link.HIPClient;
 import in.org.projecteka.hdaf.link.discovery.Discovery;
 import in.org.projecteka.hdaf.link.discovery.repository.DiscoveryRepository;
 import in.org.projecteka.hdaf.link.link.Link;
+import in.org.projecteka.hdaf.user.UserRepository;
 import in.org.projecteka.hdaf.user.UserService;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
@@ -54,8 +55,13 @@ public class HdafConfiguration {
     }
 
     @Bean
-    public UserService userService() {
-        return new UserService();
+    public UserService userService(UserRepository userRepository) {
+        return new UserService(userRepository);
+    }
+
+    @Bean
+    public UserRepository userRepository() {
+        return new UserRepository();
     }
 
     @Bean

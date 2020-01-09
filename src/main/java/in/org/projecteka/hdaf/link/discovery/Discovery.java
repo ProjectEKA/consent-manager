@@ -40,7 +40,7 @@ public class Discovery {
 
     public Mono<DiscoveryResponse> patientFor(String providerId, String patientId, String transactionId) {
         return userServiceClient.userOf(patientId)
-                .flatMap(user -> client.providerOf(providerId)
+                .flatMap(user -> client.providerWith(providerId)
                         .map(provider -> provider.getIdentifiers()
                                 .stream()
                                 .filter(identifier -> identifier.getUse().equals("official"))

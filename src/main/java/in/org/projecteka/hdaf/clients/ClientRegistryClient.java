@@ -28,10 +28,10 @@ public class ClientRegistryClient {
                 .bodyToFlux(Provider.class);
     }
 
-    public Mono<Provider> providerOf(String providerId) {
+    public Mono<Provider> providerWith(String id) {
         return webClientBuilder.build()
                 .get()
-                .uri(String.format("%s/providers/%s", clientRegistryProperties.getUrl(), providerId))
+                .uri(String.format("%s/providers/%s", clientRegistryProperties.getUrl(), id))
                 .header("client_id", clientRegistryProperties.getClientId())
                 .header("X-Auth-Token", clientRegistryProperties.getXAuthToken())
                 .retrieve()

@@ -13,8 +13,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @Setter
-public class Link {
-    private String referenceNumber;
-    private String authenticationType;
-    private Meta meta;
+public class PatientLinkRequest {
+    private String token;
 }

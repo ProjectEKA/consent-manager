@@ -105,7 +105,7 @@ public class DiscoveryTest {
         PatientRequest patientRequest = patientRequest().patient(patient).transactionId(transactionId).build();
         DiscoveryResponse discoveryResponse = discoveryResponse().patient(hipPatientResponse.getPatient()).transactionId(transactionId).build();
 
-        when(clientRegistryClient.providerOf(eq("1"))).thenReturn(Mono.just(provider));
+        when(clientRegistryClient.providerWith(eq("1"))).thenReturn(Mono.just(provider));
         when(userServiceClient.userOf(eq("1"))).thenReturn(Mono.just(user));
         when(hipServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl))).thenReturn(Mono.just(hipPatientResponse));
 
@@ -128,7 +128,7 @@ public class DiscoveryTest {
                 .name("Max")
                 .build();
 
-        when(clientRegistryClient.providerOf(eq("1"))).thenReturn(Mono.just(provider));
+        when(clientRegistryClient.providerWith(eq("1"))).thenReturn(Mono.just(provider));
         when(userServiceClient.userOf(eq("1"))).thenReturn(Mono.just(user));
 
         StepVerifier.create(discovery.patientFor("1", "1", UUID.randomUUID().toString()))

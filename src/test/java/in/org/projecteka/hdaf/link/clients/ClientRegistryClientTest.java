@@ -86,7 +86,7 @@ public class ClientRegistryClientTest {
                 .header("Content-Type", "application/json")
                 .body(jsonNode.get(0).toString()).build()));
 
-        StepVerifier.create(clientRegistryClient.providerOf("10000003"))
+        StepVerifier.create(clientRegistryClient.providerWith("10000003"))
                 .assertNext(provider -> {
                     assertThat(provider.getName()).isEqualTo(source.get(0).getName());
                     assertThat(provider.getAddresses().get(0).getCity()).isEqualTo(source.get(0).getAddresses().get(0).getCity());

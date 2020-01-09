@@ -37,7 +37,7 @@ public class UserServiceClientTest {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder()
                 .exchangeFunction(exchangeFunction);
-        UserServiceProperties userServiceProperties = new UserServiceProperties("http://user-service/", "x-auth-token");
+        UserServiceProperties userServiceProperties = new UserServiceProperties("http://user-service/");
         userServiceClient = new UserServiceClient(webClientBuilder, userServiceProperties);
     }
 

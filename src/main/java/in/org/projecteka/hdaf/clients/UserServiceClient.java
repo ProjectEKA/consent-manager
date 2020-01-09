@@ -21,7 +21,6 @@ public class UserServiceClient {
         return webClientBuilder.build()
                 .get()
                 .uri(String.format("%s/users/%s/", userServiceProperties.getUrl(), userId))
-                .header("X-Auth-Token", userServiceProperties.getXAuthToken())
                 .retrieve()
                 .onStatus(httpStatus -> httpStatus.value() == 404, clientResponse -> Mono.error(new Throwable("User not found")))
                 .bodyToMono(User.class);

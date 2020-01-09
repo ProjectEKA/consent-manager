@@ -1,0 +1,36 @@
+{
+	"info": {
+		"_postman_id": "5df9434c-b98f-48a9-ace7-67cac20edbd6",
+		"name": "NCG",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "ConsentManager",
+			"item": [
+				{
+					"name": "Providers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CM_HOST}}providers?name=max",
+							"host": [
+								"{{CM_HOST}}providers"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "max"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}

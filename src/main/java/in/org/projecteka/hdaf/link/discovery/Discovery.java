@@ -16,6 +16,7 @@ import java.util.List;
 
 public class Discovery {
 
+    private static final String MOBILE = "MOBILE";
     private final ClientRegistryClient client;
     private UserServiceClient userServiceClient;
     private HipServiceClient hipServiceClient;
@@ -43,13 +44,13 @@ public class Discovery {
                 .flatMap(user -> client.providerWith(providerId)
                         .map(provider -> provider.getIdentifiers()
                                 .stream()
-                                .filter(identifier -> identifier.getUse().equals("official"))
+                                .filter(Identifier::isOfficial)
                                 .findFirst()
                                 .map(Identifier::getSystem))
                         .flatMap(s -> s.map(url -> {
                             in.org.projecteka.hdaf.link.discovery.model.patient.request.Identifier phoneNumber = in.org.projecteka.hdaf.link.discovery.model.patient.request.Identifier.builder()
-                                    .type("MOBILE")
-                                    .value(user.getPhoneNumber())
+                                    .type(MOBILE)
+                                    .value(user.getPhone().getCountryCode() + user.getPhone().getNumber())
                                     .build();
                             Patient patient = Patient.builder()
                                     .id(user.getIdentifier())

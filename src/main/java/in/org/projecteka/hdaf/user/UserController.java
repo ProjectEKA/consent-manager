@@ -12,8 +12,8 @@ import reactor.core.publisher.Mono;
 public class UserController {
     private UserService userService;
 
-    @GetMapping("/users/{userId}")
-    public Mono<User> user(@PathVariable String userId) {
-        return userService.getUser(userId);
+    @GetMapping("/users/{userName}")
+    public Mono<User> userWith(@PathVariable String userName) {
+        return userService.getUser(userName);
     }
 }

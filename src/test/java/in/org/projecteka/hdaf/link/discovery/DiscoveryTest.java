@@ -4,6 +4,7 @@ import in.org.projecteka.hdaf.clients.ClientRegistryClient;
 import in.org.projecteka.hdaf.clients.HipServiceClient;
 import in.org.projecteka.hdaf.clients.UserServiceClient;
 import in.org.projecteka.hdaf.link.discovery.model.Address;
+import in.org.projecteka.hdaf.link.discovery.model.Phone;
 import in.org.projecteka.hdaf.link.discovery.model.Provider;
 import in.org.projecteka.hdaf.link.discovery.model.Telecom;
 import in.org.projecteka.hdaf.link.discovery.model.User;
@@ -80,7 +81,8 @@ public class DiscoveryTest {
                 .careContexts(of())
                 .build();
         PatientResponse patientResponse = patientResponse().patient(patientInResponse).build();
-        User user = user().identifier("1").firstName("first name").phoneNumber("9999999999").build();
+        Phone phone = Phone.builder().countryCode("+91").number("9999999999").build();
+        User user = user().identifier("1").firstName("first name").phone(phone).build();
         String hipClientUrl = "http://localhost:8001";
         Provider provider = provider()
                 .addresses(List.of(address))
@@ -88,7 +90,7 @@ public class DiscoveryTest {
                 .identifiers(List.of(providerIdentifier().system(hipClientUrl).use("official").build()))
                 .name("Max")
                 .build();
-        Identifier identifier = patientIdentifier().type("MOBILE").value("9999999999").build();
+        Identifier identifier = patientIdentifier().type("MOBILE").value("+919999999999").build();
         Patient patient = Patient.builder()
                 .id(user.getIdentifier())
                 .firstName(user.getFirstName())
@@ -102,11 +104,14 @@ public class DiscoveryTest {
         PatientRequest patientRequest = patientRequest().patient(patient).transactionId(transactionId).build();
         DiscoveryResponse discoveryResponse = discoveryResponse().patient(patientResponse.getPatient()).transactionId(transactionId).build();
 
-        when(clientRegistryClient.providerWith(eq("1"))).thenReturn(Mono.just(provider));
-        when(userServiceClient.userOf(eq("1"))).thenReturn(Mono.just(user));
+        String providerId = "1";
+        when(clientRegistryClient.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
+        String patientId = "1";
+        when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
         when(hipServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl))).thenReturn(Mono.just(patientResponse));
+        when(discoveryRepository.insert(providerId, patientId, transactionId)).thenReturn(Mono.empty());
 
-        StepVerifier.create(discovery.patientFor("1", "1", transactionId))
+        StepVerifier.create(discovery.patientFor(providerId, patientId, transactionId))
                 .expectNext(discoveryResponse)
                 .verifyComplete();
     }
@@ -116,7 +121,8 @@ public class DiscoveryTest {
         var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
-        User user = user().identifier("1").firstName("first name").phoneNumber("9999999999").build();
+        Phone phone = Phone.builder().build();
+        User user = user().identifier("1").firstName("first name").phone(phone).build();
         String hipClientUrl = "http://localhost:8001";
         Provider provider = provider()
                 .addresses(List.of(address))

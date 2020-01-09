@@ -4,7 +4,10 @@
     "firstName": "John",
     "lastName": "Doe",
     "gender": "M",
-    "phoneNumber": "9999999999",
+    "phone": {
+      "number": "9999999999",
+      "countryCode": "+91"
+    },
     "dateOfBirth": "2019-12-06"
   },
   {
@@ -12,7 +15,10 @@
     "firstName": "Jack",
     "lastName": "Doe",
     "gender": "F",
-    "phoneNumber": "8888888888",
+    "phone": {
+      "number": "8888888888",
+      "countryCode": "+91"
+    },
     "dateOfBirth": "2020-01-01"
   }
 ]

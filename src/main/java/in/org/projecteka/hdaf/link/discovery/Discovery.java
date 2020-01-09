@@ -64,8 +64,12 @@ public class Discovery {
                             PatientRequest patientRequest = PatientRequest.builder().patient(patient).transactionId(transactionId).build();
                             return hipServiceClient.
                                     patientFor(patientRequest, url)
-                                    .doOnSuccess(patientResponse -> discoveryRepository.insert(providerId, patientId, transactionId))
-                                    .map(hipPatientResponse -> DiscoveryResponse.builder().patient(hipPatientResponse.getPatient()).transactionId(transactionId).build());
+                                    .flatMap(patientResponse ->
+                                            discoveryRepository.insert(providerId, patientId, transactionId).
+                                                    then(Mono.just(
+                                                            DiscoveryResponse.builder().patient(patientResponse.getPatient()).transactionId(transactionId).build()))
+
+                                    );
                         }).orElse(Mono.error(new Throwable("Invalid HIP")))));
     }
 

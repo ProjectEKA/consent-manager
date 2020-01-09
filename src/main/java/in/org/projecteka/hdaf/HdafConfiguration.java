@@ -7,6 +7,7 @@ import in.org.projecteka.hdaf.clients.properties.ClientRegistryProperties;
 import in.org.projecteka.hdaf.clients.properties.HipServiceProperties;
 import in.org.projecteka.hdaf.clients.properties.UserServiceProperties;
 import in.org.projecteka.hdaf.link.discovery.Discovery;
+import in.org.projecteka.hdaf.link.discovery.repository.DiscoveryRepository;
 import in.org.projecteka.hdaf.user.UserService;
 import in.org.projecteka.hdaf.link.HIPClient;
 import in.org.projecteka.hdaf.link.link.Link;
@@ -25,10 +26,16 @@ public class HdafConfiguration {
                                ClientRegistryProperties clientRegistryProperties,
                                UserServiceProperties userServiceProperties,
                                HipServiceProperties hipServiceProperties,
-                               DbOptions dbOptions) {
+                               DiscoveryRepository discoveryRepository) {
         ClientRegistryClient clientRegistryClient = new ClientRegistryClient(builder, clientRegistryProperties);
         UserServiceClient userServiceClient = new UserServiceClient(builder, userServiceProperties);
         HipServiceClient hipServiceClient = new HipServiceClient(builder, hipServiceProperties);
+
+        return new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
+    }
+
+    @Bean
+    public DiscoveryRepository discoveryRepository(DbOptions dbOptions) {
         PgConnectOptions connectOptions = new PgConnectOptions()
                 .setPort(dbOptions.getPort())
                 .setHost(dbOptions.getHost())
@@ -39,7 +46,7 @@ public class HdafConfiguration {
         PoolOptions poolOptions = new PoolOptions()
                 .setMaxSize(dbOptions.getPoolSize());
 
-        return new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, PgPool.pool(connectOptions, poolOptions));
+        return new DiscoveryRepository(PgPool.pool(connectOptions, poolOptions));
     }
 
     @Bean

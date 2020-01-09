@@ -9,7 +9,6 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
-public class PatientResponse {
+public class HipPatientResponse {
     private Patient patient;
-    private String transactionId;
 }

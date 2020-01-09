@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static in.org.projecteka.hdaf.link.discovery.TestBuilders.*;
+import static in.org.projecteka.hdaf.link.TestBuilders.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TransformerTest {

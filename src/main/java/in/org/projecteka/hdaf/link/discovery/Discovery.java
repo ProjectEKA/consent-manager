@@ -7,31 +7,29 @@ import in.org.projecteka.hdaf.link.discovery.model.Identifier;
 import in.org.projecteka.hdaf.link.discovery.model.Provider;
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.Patient;
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.PatientRequest;
-import in.org.projecteka.hdaf.link.discovery.model.patient.response.PatientResponse;
-import io.vertx.core.AsyncResult;
-import io.vertx.pgclient.PgPool;
+import in.org.projecteka.hdaf.link.discovery.model.patient.response.DiscoveryResponse;
+import in.org.projecteka.hdaf.link.discovery.repository.DiscoveryRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.UUID;
 
 public class Discovery {
 
     private final ClientRegistryClient client;
     private UserServiceClient userServiceClient;
     private HipServiceClient hipServiceClient;
-    private PgPool dbClient;
+    private DiscoveryRepository discoveryRepository;
 
     public Discovery(
             ClientRegistryClient client,
             UserServiceClient userServiceClient,
             HipServiceClient hipServiceClient,
-            PgPool dbClient) {
+            DiscoveryRepository discoveryRepository) {
         this.client = client;
         this.userServiceClient = userServiceClient;
         this.hipServiceClient = hipServiceClient;
-        this.dbClient = dbClient;
+        this.discoveryRepository = discoveryRepository;
     }
 
     public Flux<ProviderRepresentation> providersFrom(String name) {
@@ -40,7 +38,7 @@ public class Discovery {
                 .map(Transformer::to);
     }
 
-    public Mono<PatientResponse> patientFor(String providerId, String patientId) {
+    public Mono<DiscoveryResponse> patientFor(String providerId, String patientId, String transactionId) {
         return userServiceClient.userOf(patientId)
                 .flatMap(user -> client.providerOf(providerId)
                         .map(provider -> provider.getIdentifiers()
@@ -63,11 +61,11 @@ public class Discovery {
                                     .unVerifiedIdentifiers(List.of())
                                     .build();
 
-                            PatientRequest patientRequest = PatientRequest.builder().patient(patient).transactionId(UUID.randomUUID().toString()).build();
-                            return hipServiceClient.patientFor(patientRequest, url).doOnSuccess(patientResponse -> {
-                                String sql = String.format("insert into discovery_request (transaction_id, patient_id, hip_id) values ('%s', '%s', '%s')", patientRequest.getTransactionId(), patientId, providerId);
-                                dbClient.query(sql, AsyncResult::succeeded);
-                            });
+                            PatientRequest patientRequest = PatientRequest.builder().patient(patient).transactionId(transactionId).build();
+                            return hipServiceClient.
+                                    patientFor(patientRequest, url)
+                                    .doOnSuccess(patientResponse -> discoveryRepository.insert(providerId, patientId, transactionId))
+                                    .map(hipPatientResponse -> DiscoveryResponse.builder().patient(hipPatientResponse.getPatient()).transactionId(transactionId).build());
                         }).orElse(Mono.error(new Throwable("Invalid HIP")))));
     }
 

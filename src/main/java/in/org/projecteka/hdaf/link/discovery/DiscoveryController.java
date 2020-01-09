@@ -1,10 +1,12 @@
 package in.org.projecteka.hdaf.link.discovery;
 
-import in.org.projecteka.hdaf.link.discovery.model.patient.response.PatientResponse;
+import in.org.projecteka.hdaf.link.discovery.model.patient.response.DiscoveryResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.UUID;
 
 @RestController
 @AllArgsConstructor
@@ -18,7 +20,7 @@ public class DiscoveryController {
     }
 
     @PostMapping("/patient")
-    public Mono<PatientResponse> findPatient(@RequestParam String providerId, @RequestHeader String patientId) {
-        return discovery.patientFor(providerId, patientId);
+    public Mono<DiscoveryResponse> findPatient(@RequestParam String providerId, @RequestHeader String patientId) {
+        return discovery.patientFor(providerId, patientId, UUID.randomUUID().toString());
     }
 }

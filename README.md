@@ -1,16 +1,11 @@
 # :convenience_store: Consent Manager
 
-<<<<<<< HEAD
-Fiduciary/Trustee that manages patientResponse consents, information flow between HIP and HDAF Clients
-(HIU and Patient centric Mobile App)
-=======
 > A Health Data Consent Manager (HDCM) is a new type of entity proposed here whose task is to provide
 > health information aggregation services to customers of health care services. It enables customers to
 > fetch their health information from one or more Health Information Providers (e.g., Hospitals,
 > Diagnostic Labs, Medical Device Companies), based on their explicit Consent and to share such
 > aggregated information with Health Information Users i.e. entities in need of such data (e.g., Insurers,
 > Doctors, Medical Researchers).
->>>>>>> master
 
 ## Components
 

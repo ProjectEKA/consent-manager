@@ -70,4 +70,31 @@ public class ClientRegistryClientTest {
 
         assertThat(captor.getValue().url().toString()).isEqualTo("localhost:8000/providers?name=Max");
     }
+
+    @Test
+    void getProviderByGivenId() throws IOException {
+        var source = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readValue(
+                ClassLoader.getSystemClassLoader().getResource("provider.json"),
+                new TypeReference<List<Provider>>() {
+                });
+        var jsonNode = new ObjectMapper().readValue(
+                ClassLoader.getSystemClassLoader().getResource("provider.json"),
+                new TypeReference<List<JsonNode>>() {
+                });
+
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
+                .header("Content-Type", "application/json")
+                .body(jsonNode.get(0).toString()).build()));
+
+        StepVerifier.create(clientRegistryClient.providerOf("10000003"))
+                .assertNext(provider -> {
+                    assertThat(provider.getName()).isEqualTo(source.get(0).getName());
+                    assertThat(provider.getAddresses().get(0).getCity()).isEqualTo(source.get(0).getAddresses().get(0).getCity());
+                    assertThat(provider.getTelecoms().get(0).getValue()).isEqualTo(source.get(0).getTelecoms().get(0).getValue());
+                    assertThat(provider.getTypes().get(0).getCoding().get(0).getCode()).isEqualTo(source.get(0).getTypes().get(0).getCoding().get(0).getCode());
+                })
+                .verifyComplete();
+
+        assertThat(captor.getValue().url().toString()).isEqualTo("localhost:8000/providers/10000003");
+    }
 }

@@ -25,13 +25,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static in.org.projecteka.hdaf.link.TestBuilders.user;
+
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 @ContextConfiguration(initializers = DiscoveryUserJourneyTest.ContextInitializer.class)
 public class DiscoveryUserJourneyTest {
 
-    static MockWebServer mockWebServer = new MockWebServer();
+    private static MockWebServer mockWebServer = new MockWebServer();
 
     @Autowired
     private WebTestClient webTestClient;

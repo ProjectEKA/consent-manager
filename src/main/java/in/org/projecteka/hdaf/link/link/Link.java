@@ -1,7 +1,7 @@
 package in.org.projecteka.hdaf.link.link;
 
+import in.org.projecteka.hdaf.clients.ClientRegistryClient;
 import in.org.projecteka.hdaf.link.ClientError;
-import in.org.projecteka.hdaf.link.ClientRegistryClient;
 import in.org.projecteka.hdaf.link.HIPClient;
 import in.org.projecteka.hdaf.link.link.model.ErrorCode;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;

@@ -1,0 +1,24 @@
+[
+  {
+    "identifier": "1",
+    "firstName": "John",
+    "lastName": "Doe",
+    "gender": "M",
+    "phone": {
+      "number": "9999999999",
+      "countryCode": "+91"
+    },
+    "dateOfBirth": "2019-12-06"
+  },
+  {
+    "identifier": "2",
+    "firstName": "Jack",
+    "lastName": "Doe",
+    "gender": "F",
+    "phone": {
+      "number": "8888888888",
+      "countryCode": "+91"
+    },
+    "dateOfBirth": "2020-01-01"
+  }
+]

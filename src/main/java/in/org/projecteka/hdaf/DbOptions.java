@@ -1,22 +1,24 @@
-package in.org.projecteka.hdaf.link;
+package in.org.projecteka.hdaf;
 
-
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.AccessLevel;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "hdaf.clientregistry")
+@ConfigurationProperties(prefix = "hdaf.db")
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 @AllArgsConstructor
-public class ClientRegistryProperties {
-    private String url;
-    private String XAuthToken;
-    private String clientId;
+public class DbOptions {
+    private String host;
+    private int port;
+    private String schema;
+    private String user;
+    private String password;
+    private int poolSize;
 }

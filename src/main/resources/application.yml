@@ -1,7 +1,16 @@
 server:
-  port: 8000
+  port: 9000
 hdaf:
   clientregistry:
-    XAuthToken: ${Auth_Token}
+    XAuthToken: 8e983a1719e20913be6c61e9b552e88fc6032c21e1030f1abda986d17326b2b0
     clientId: 6
-    url: ${Client_Registry_Url}
+    url: http://localhost:8080/api/1.0
+  userservice:
+    url: http://localhost:9000
+  db:
+    host: localhost
+    port: 5432
+    schema: consent_manager
+    user: postgres
+    password: postgres
+    poolSize: 5

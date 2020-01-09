@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 @ContextConfiguration(initializers = DiscoveryUserJourneyTest.ContextInitializer.class)
 public class DiscoveryUserJourneyTest {
 
-    static MockWebServer mockWebServer = new MockWebServer();
+    private static MockWebServer mockWebServer = new MockWebServer();
 
     @Autowired
     private WebTestClient webTestClient;

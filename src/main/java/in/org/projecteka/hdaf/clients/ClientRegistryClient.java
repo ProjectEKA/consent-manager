@@ -1,5 +1,6 @@
-package in.org.projecteka.hdaf.link;
+package in.org.projecteka.hdaf.clients;
 
+import in.org.projecteka.hdaf.clients.properties.ClientRegistryProperties;
 import in.org.projecteka.hdaf.link.discovery.model.Provider;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -36,5 +37,4 @@ public class ClientRegistryClient {
                 .retrieve()
                 .bodyToMono(Provider.class);
     }
-
 }

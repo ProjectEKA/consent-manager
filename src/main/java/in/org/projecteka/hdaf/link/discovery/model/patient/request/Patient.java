@@ -4,15 +4,12 @@ package in.org.projecteka.hdaf.link.discovery.model.patient.request;
 import in.org.projecteka.hdaf.link.discovery.model.Gender;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.Value;
-
 
 import java.util.Date;
 import java.util.List;
 
 @AllArgsConstructor
-@Getter
 @Value
 @Builder
 public class Patient {
@@ -24,4 +21,3 @@ public class Patient {
     private List<Identifier> verifiedIdentifiers;
     private List<Identifier> unVerifiedIdentifiers;
 }
-

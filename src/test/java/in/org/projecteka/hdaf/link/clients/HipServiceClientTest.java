@@ -3,7 +3,7 @@ package in.org.projecteka.hdaf.link.clients;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.org.projecteka.hdaf.clients.HipServiceClient;
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.PatientRequest;
-import in.org.projecteka.hdaf.link.discovery.model.patient.response.HipPatientResponse;
+import in.org.projecteka.hdaf.link.discovery.model.patient.response.PatientResponse;
 import in.org.projecteka.hdaf.link.discovery.model.patient.response.Patient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,8 +46,8 @@ public class HipServiceClientTest {
     @Test
     void shouldDiscoverPatients() throws IOException {
         Patient expectedPatient = patientInResponse().display("Patient Name").careContexts(List.of(careContext().display("Care context 1").build())).build();
-        HipPatientResponse hipPatientResponse = hipPatientResponse().patient(expectedPatient).build();
-        String patientResponseBody = new ObjectMapper().writeValueAsString(hipPatientResponse);
+        PatientResponse patientResponse = patientResponse().patient(expectedPatient).build();
+        String patientResponseBody = new ObjectMapper().writeValueAsString(patientResponse);
         when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
                 .header("Content-Type", "application/json")
                 .body(patientResponseBody).build()));

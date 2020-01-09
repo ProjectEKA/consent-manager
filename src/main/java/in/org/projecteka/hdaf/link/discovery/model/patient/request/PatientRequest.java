@@ -1,13 +1,10 @@
 package in.org.projecteka.hdaf.link.discovery.model.patient.request;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
-@EqualsAndHashCode
+@Data
 public class PatientRequest {
     private Patient patient;
     private String transactionId;

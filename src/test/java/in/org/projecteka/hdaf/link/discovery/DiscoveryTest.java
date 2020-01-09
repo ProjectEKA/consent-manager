@@ -11,7 +11,7 @@ import in.org.projecteka.hdaf.link.discovery.model.patient.request.Identifier;
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.Patient;
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.PatientRequest;
 import in.org.projecteka.hdaf.link.discovery.model.patient.response.DiscoveryResponse;
-import in.org.projecteka.hdaf.link.discovery.model.patient.response.HipPatientResponse;
+import in.org.projecteka.hdaf.link.discovery.model.patient.response.PatientResponse;
 import in.org.projecteka.hdaf.link.discovery.repository.DiscoveryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,16 +23,7 @@ import reactor.test.StepVerifier;
 import java.util.List;
 import java.util.UUID;
 
-import static in.org.projecteka.hdaf.link.TestBuilders.address;
-import static in.org.projecteka.hdaf.link.TestBuilders.discoveryResponse;
-import static in.org.projecteka.hdaf.link.TestBuilders.hipPatientResponse;
-import static in.org.projecteka.hdaf.link.TestBuilders.identifier;
-import static in.org.projecteka.hdaf.link.TestBuilders.patientIdentifier;
-import static in.org.projecteka.hdaf.link.TestBuilders.patientRequest;
-import static in.org.projecteka.hdaf.link.TestBuilders.provider;
-import static in.org.projecteka.hdaf.link.TestBuilders.providerIdentifier;
-import static in.org.projecteka.hdaf.link.TestBuilders.telecom;
-import static in.org.projecteka.hdaf.link.TestBuilders.user;
+import static in.org.projecteka.hdaf.link.TestBuilders.*;
 import static java.util.List.of;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -82,7 +73,13 @@ public class DiscoveryTest {
         var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
-        HipPatientResponse hipPatientResponse = hipPatientResponse().patient(new in.org.projecteka.hdaf.link.discovery.model.patient.response.Patient("123", "John Doe", List.of(), List.of())).build();
+        in.org.projecteka.hdaf.link.discovery.model.patient.response.Patient patientInResponse = patientInResponse()
+                .display("John Doe")
+                .referenceNumber("123")
+                .matchedBy(of())
+                .careContexts(of())
+                .build();
+        PatientResponse patientResponse = patientResponse().patient(patientInResponse).build();
         User user = user().identifier("1").firstName("first name").phoneNumber("9999999999").build();
         String hipClientUrl = "http://localhost:8001";
         Provider provider = provider()
@@ -103,11 +100,11 @@ public class DiscoveryTest {
                 .build();
         String transactionId = "transaction-id";
         PatientRequest patientRequest = patientRequest().patient(patient).transactionId(transactionId).build();
-        DiscoveryResponse discoveryResponse = discoveryResponse().patient(hipPatientResponse.getPatient()).transactionId(transactionId).build();
+        DiscoveryResponse discoveryResponse = discoveryResponse().patient(patientResponse.getPatient()).transactionId(transactionId).build();
 
         when(clientRegistryClient.providerWith(eq("1"))).thenReturn(Mono.just(provider));
         when(userServiceClient.userOf(eq("1"))).thenReturn(Mono.just(user));
-        when(hipServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl))).thenReturn(Mono.just(hipPatientResponse));
+        when(hipServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl))).thenReturn(Mono.just(patientResponse));
 
         StepVerifier.create(discovery.patientFor("1", "1", transactionId))
                 .expectNext(discoveryResponse)

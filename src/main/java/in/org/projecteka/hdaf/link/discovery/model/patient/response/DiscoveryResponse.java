@@ -1,18 +1,10 @@
 package in.org.projecteka.hdaf.link.discovery.model.patient.response;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Getter
-@Setter
+@Data
 @Builder
-@EqualsAndHashCode
 public class DiscoveryResponse {
     private Patient patient;
     private String transactionId;

@@ -2,15 +2,13 @@ package in.org.projecteka.hdaf.link.discovery.model.patient.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
+@Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
-@Builder
 public class CareContext {
     private String referenceNumber;
     private String display;

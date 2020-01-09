@@ -11,7 +11,7 @@ import in.org.projecteka.hdaf.link.discovery.model.patient.request.Patient;
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.PatientRequest;
 import in.org.projecteka.hdaf.link.discovery.model.patient.response.CareContext;
 import in.org.projecteka.hdaf.link.discovery.model.patient.response.DiscoveryResponse;
-import in.org.projecteka.hdaf.link.discovery.model.patient.response.HipPatientResponse;
+import in.org.projecteka.hdaf.link.discovery.model.patient.response.PatientResponse;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
@@ -46,8 +46,8 @@ public class TestBuilders {
         return easyRandom.nextObject(PatientRequest.PatientRequestBuilder.class);
     }
 
-    public static HipPatientResponse.HipPatientResponseBuilder hipPatientResponse() {
-        return easyRandom.nextObject(HipPatientResponse.HipPatientResponseBuilder.class);
+    public static PatientResponse.PatientResponseBuilder patientResponse() {
+        return easyRandom.nextObject(PatientResponse.PatientResponseBuilder.class);
     }
 
     public static DiscoveryResponse.DiscoveryResponseBuilder discoveryResponse() {

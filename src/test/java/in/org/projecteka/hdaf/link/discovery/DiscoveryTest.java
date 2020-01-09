@@ -71,6 +71,9 @@ public class DiscoveryTest {
 
     @Test
     public void patientForGivenProviderIdAndPatientId() {
+        String providerId = "1";
+        String transactionId = "transaction-id";
+        String patientId = "1";
         var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
@@ -100,13 +103,10 @@ public class DiscoveryTest {
                 .verifiedIdentifiers(List.of(identifier))
                 .unVerifiedIdentifiers(List.of())
                 .build();
-        String transactionId = "transaction-id";
         PatientRequest patientRequest = patientRequest().patient(patient).transactionId(transactionId).build();
         DiscoveryResponse discoveryResponse = discoveryResponse().patient(patientResponse.getPatient()).transactionId(transactionId).build();
 
-        String providerId = "1";
         when(clientRegistryClient.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
-        String patientId = "1";
         when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
         when(hipServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl))).thenReturn(Mono.just(patientResponse));
         when(discoveryRepository.insert(providerId, patientId, transactionId)).thenReturn(Mono.empty());
@@ -118,6 +118,8 @@ public class DiscoveryTest {
 
     @Test
     public void shouldGetInvalidHipErrorWhenIdentifierIsNotOfficial() {
+        String providerId = "1";
+        String userName = "1";
         var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
@@ -131,10 +133,10 @@ public class DiscoveryTest {
                 .name("Max")
                 .build();
 
-        when(clientRegistryClient.providerWith(eq("1"))).thenReturn(Mono.just(provider));
-        when(userServiceClient.userOf(eq("1"))).thenReturn(Mono.just(user));
+        when(clientRegistryClient.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
+        when(userServiceClient.userOf(eq(userName))).thenReturn(Mono.just(user));
 
-        StepVerifier.create(discovery.patientFor("1", "1", UUID.randomUUID().toString()))
+        StepVerifier.create(discovery.patientFor(providerId, userName, UUID.randomUUID().toString()))
                 .expectErrorMatches(error -> error.equals(new Throwable("Invalid HIP")));
     }
 

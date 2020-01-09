@@ -19,7 +19,7 @@ public class DiscoveryController {
         return discovery.providersFrom(name);
     }
 
-    @PostMapping("/patient")
+    @PostMapping("/patients/discover") 
     public Mono<DiscoveryResponse> findPatient(@RequestParam String providerId, @RequestHeader String patientId) {
         return discovery.patientFor(providerId, patientId, UUID.randomUUID().toString());
     }

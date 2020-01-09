@@ -24,8 +24,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 class LinkTest {
 
-  @Mock
-  ClientRegistryClient clientRegistryClient;
+  @Mock ClientRegistryClient clientRegistryClient;
 
   @Mock HIPClient hipClient;
 

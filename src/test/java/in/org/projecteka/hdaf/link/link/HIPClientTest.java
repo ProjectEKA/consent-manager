@@ -1,11 +1,14 @@
-package in.org.projecteka.hdaf.link;
+package in.org.projecteka.hdaf.link.link;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import in.org.projecteka.hdaf.link.ClientError;
+import in.org.projecteka.hdaf.link.HIPClient;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
 import in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -79,7 +82,7 @@ public class HIPClientTest {
     StepVerifier.create(hipClient.linkPatientCareContext(request, baseUrl))
         .expectErrorSatisfies(
             errorRes -> {
-              assertThat(((ClientError) errorRes).getError().getError().getCode().getValue())
+              Assertions.assertThat(((ClientError) errorRes).getError().getError().getCode().getValue())
                   .isEqualTo(errorResponse.getError().getCode().getValue());
               assertThat(((ClientError) errorRes).getError().getError().getMessage())
                   .isEqualTo(errorResponse.getError().getMessage());

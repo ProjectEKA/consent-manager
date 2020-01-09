@@ -2,6 +2,7 @@ package in.org.projecteka.hdaf.link.discovery;
 
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.DiscoveryRequest;
 import in.org.projecteka.hdaf.link.discovery.model.patient.response.DiscoveryResponse;
+import in.org.projecteka.hdaf.link.link.TokenUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,7 +27,8 @@ public class DiscoveryController {
     }
 
     @PostMapping("/patients/discover")
-    public Mono<DiscoveryResponse> findPatient(@RequestBody DiscoveryRequest discoveryRequest, @RequestHeader String patientId) {
+    public Mono<DiscoveryResponse> findPatient(@RequestHeader(value = "Authorization") String authorization, @RequestBody DiscoveryRequest discoveryRequest) {
+        String patientId = TokenUtils.readUserId(authorization);
         return discovery.patientFor(discoveryRequest.getProviderId(), patientId, generateNewTransaction());
     }
 

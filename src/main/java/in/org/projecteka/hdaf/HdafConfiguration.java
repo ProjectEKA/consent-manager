@@ -4,7 +4,7 @@ import in.org.projecteka.hdaf.link.ClientRegistryClient;
 import in.org.projecteka.hdaf.link.ClientRegistryProperties;
 import in.org.projecteka.hdaf.link.HIPClient;
 import in.org.projecteka.hdaf.link.discovery.Discovery;
-import in.org.projecteka.hdaf.link.link.ClientErrorExceptionHandler;
+import in.org.projecteka.hdaf.link.ClientErrorExceptionHandler;
 import in.org.projecteka.hdaf.link.link.Link;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;

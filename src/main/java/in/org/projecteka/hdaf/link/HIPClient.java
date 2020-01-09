@@ -1,6 +1,5 @@
 package in.org.projecteka.hdaf.link;
 
-import in.org.projecteka.hdaf.link.link.ClientError;
 import in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;

@@ -2,15 +2,9 @@ package in.org.projecteka.hdaf.link.link;
 
 import in.org.projecteka.hdaf.link.ClientRegistryClient;
 import in.org.projecteka.hdaf.link.HIPClient;
-import in.org.projecteka.hdaf.link.discovery.model.Identifier;
-import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
-import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
-import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
-import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
+import in.org.projecteka.hdaf.link.link.model.*;
 import in.org.projecteka.hdaf.link.link.model.hip.Patient;
 import reactor.core.publisher.Mono;
-
-import java.util.Optional;
 
 import static in.org.projecteka.hdaf.link.link.Transformer.toHIPPatient;
 
@@ -27,15 +21,13 @@ public class Link {
     public Mono<PatientLinkReferenceResponse> patientWith(String patientId, PatientLinkReferenceRequest patientLinkReferenceRequest) {
         //providerid to be fetched from DB using transactionID
         String providerId = "10000005";
-
         Patient patient = toHIPPatient(patientId, patientLinkReferenceRequest);
-        in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest linkReferenceRequest =
-                new in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest(
-                        patientLinkReferenceRequest.getTransactionId(), patient);
+        var linkReferenceRequest = new in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest(
+                patientLinkReferenceRequest.getTransactionId(),
+                patient);
         return providerUrl(providerId)
-                .flatMap(s -> s.map(url -> hipClient.linkPatientCareContext(linkReferenceRequest, url))
-                        .orElse(Mono.error(new Throwable("Invalid HIP")))
-                );
+                .flatMap(url -> hipClient.linkPatientCareContext(linkReferenceRequest, url))
+                .switchIfEmpty(Mono.error(new Throwable("Invalid HIP")));
     }
 
     public Mono<PatientLinkResponse> verifyToken(String linkRefNumber, PatientLinkRequest patientLinkRequest) {
@@ -44,16 +36,16 @@ public class Link {
         String providerId = "10000005";
         //Check otp for expiry
         return providerUrl(providerId)
-                .flatMap(s -> s.map(url -> hipClient.validateToken(linkRefNumber, patientLinkRequest, url))
-                        .orElse(Mono.error(new Throwable("Invalid HIP")))
-                );
+                .flatMap(url -> hipClient.validateToken(linkRefNumber, patientLinkRequest, url))
+                .switchIfEmpty(Mono.error(new Throwable("Invalid HIP")));
     }
 
-    private Mono<Optional<String>> providerUrl(String providerId) {
+    private Mono<String> providerUrl(String providerId) {
         return clientRegistryClient.providerWith(providerId)
-                .map(provider -> provider.getIdentifiers()
+                .flatMap(provider -> provider.getIdentifiers()
                         .stream()
                         .findFirst()
-                        .map(Identifier::getSystem));
+                        .map(identifier -> Mono.just(identifier.getSystem()))
+                        .orElse(Mono.empty()));
     }
 }

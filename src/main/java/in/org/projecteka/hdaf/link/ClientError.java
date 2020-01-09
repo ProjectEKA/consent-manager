@@ -1,4 +1,4 @@
-package in.org.projecteka.hdaf.link.link;
+package in.org.projecteka.hdaf.link;
 
 import in.org.projecteka.hdaf.link.link.model.ErrorRepresentation;
 import lombok.Getter;

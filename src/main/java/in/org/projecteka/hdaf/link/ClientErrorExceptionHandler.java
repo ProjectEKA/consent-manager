@@ -1,4 +1,4 @@
-package in.org.projecteka.hdaf.link.link;
+package in.org.projecteka.hdaf.link;
 
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler;

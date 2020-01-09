@@ -1,9 +1,17 @@
 package in.org.projecteka.hdaf.link.link;
 
+import in.org.projecteka.hdaf.link.ClientError;
 import in.org.projecteka.hdaf.link.ClientRegistryClient;
 import in.org.projecteka.hdaf.link.HIPClient;
-import in.org.projecteka.hdaf.link.link.model.*;
+import in.org.projecteka.hdaf.link.link.model.ErrorCode;
+import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
+import in.org.projecteka.hdaf.link.link.model.Error;
+import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
+import in.org.projecteka.hdaf.link.link.model.ErrorRepresentation;
+import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
+import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
 import in.org.projecteka.hdaf.link.link.model.hip.Patient;
+import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 
 import static in.org.projecteka.hdaf.link.link.Transformer.toHIPPatient;
@@ -27,7 +35,11 @@ public class Link {
                 patient);
         return providerUrl(providerId)
                 .flatMap(url -> hipClient.linkPatientCareContext(linkReferenceRequest, url))
-                .switchIfEmpty(Mono.error(new Throwable("Invalid HIP")));
+                .switchIfEmpty(Mono.error(new ClientError(
+                        HttpStatus.NOT_FOUND,
+                        new ErrorRepresentation(new Error(
+                                ErrorCode.NotHIPFound,
+                                "No HIP found with given transaction ID")))));
     }
 
     public Mono<PatientLinkResponse> verifyToken(String linkRefNumber, PatientLinkRequest patientLinkRequest) {
@@ -37,7 +49,11 @@ public class Link {
         //Check otp for expiry
         return providerUrl(providerId)
                 .flatMap(url -> hipClient.validateToken(linkRefNumber, patientLinkRequest, url))
-                .switchIfEmpty(Mono.error(new Throwable("Invalid HIP")));
+                .switchIfEmpty(Mono.error(new ClientError(
+                        HttpStatus.NOT_FOUND,
+                        new ErrorRepresentation(new Error(
+                                ErrorCode.NotHIPFound,
+                                "No HIP found with given link reference number")))));
     }
 
     private Mono<String> providerUrl(String providerId) {

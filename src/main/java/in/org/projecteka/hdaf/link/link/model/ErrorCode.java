@@ -10,7 +10,8 @@ public enum ErrorCode {
     MultiplePatientsFound(1001),
     CareContextNotFound(1002),
     OtpInValid(1003),
-    OtpExpired(1004);
+    OtpExpired(1004),
+    NotHIPFound(1005);
 
     private int value;
     ErrorCode(int val) {

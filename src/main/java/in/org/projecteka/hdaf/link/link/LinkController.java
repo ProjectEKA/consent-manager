@@ -23,7 +23,6 @@ public class LinkController {
 
     @PostMapping("/{linkRefNumber}")
     public Mono<PatientLinkResponse> verifyToken(@RequestHeader(value = "Authorization") String authorization, @PathVariable("linkRefNumber") String linkRefNumber, @RequestBody PatientLinkRequest patientLinkRequest) {
-        String patientId = TokenUtils.readUserId(authorization);
-        return link.verifyToken(patientId, linkRefNumber, patientLinkRequest);
+        return link.verifyToken(linkRefNumber, patientLinkRequest);
     }
 }

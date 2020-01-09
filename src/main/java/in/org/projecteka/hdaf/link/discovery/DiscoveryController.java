@@ -1,8 +1,14 @@
 package in.org.projecteka.hdaf.link.discovery;
 
+import in.org.projecteka.hdaf.link.discovery.model.patient.request.DiscoveryRequest;
 import in.org.projecteka.hdaf.link.discovery.model.patient.response.DiscoveryResponse;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -20,8 +26,8 @@ public class DiscoveryController {
     }
 
     @PostMapping("/patients/discover")
-    public Mono<DiscoveryResponse> findPatient(@RequestParam String providerId, @RequestHeader String patientId) {
-        return discovery.patientFor(providerId, patientId, generateNewTransaction());
+    public Mono<DiscoveryResponse> findPatient(@RequestBody DiscoveryRequest discoveryRequest, @RequestHeader String patientId) {
+        return discovery.patientFor(discoveryRequest.getProviderId(), patientId, generateNewTransaction());
     }
 
     private String generateNewTransaction() {

@@ -21,7 +21,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.List;
 import java.util.UUID;
 
 import static in.org.projecteka.hdaf.link.TestBuilders.*;
@@ -88,9 +87,9 @@ public class DiscoveryTest {
         User user = user().identifier("1").firstName("first name").phone(phone).build();
         String hipClientUrl = "http://localhost:8001";
         Provider provider = provider()
-                .addresses(List.of(address))
-                .telecoms(List.of(telecom))
-                .identifiers(List.of(providerIdentifier().system(hipClientUrl).use("official").build()))
+                .addresses(of(address))
+                .telecoms(of(telecom))
+                .identifiers(of(providerIdentifier().system(hipClientUrl).use("official").build()))
                 .name("Max")
                 .build();
         Identifier identifier = patientIdentifier().type("MOBILE").value("+919999999999").build();
@@ -100,8 +99,8 @@ public class DiscoveryTest {
                 .lastName(user.getLastName())
                 .gender(user.getGender())
                 .dateOfBirth(user.getDateOfBirth())
-                .verifiedIdentifiers(List.of(identifier))
-                .unVerifiedIdentifiers(List.of())
+                .verifiedIdentifiers(of(identifier))
+                .unVerifiedIdentifiers(of())
                 .build();
         PatientRequest patientRequest = patientRequest().patient(patient).transactionId(transactionId).build();
         DiscoveryResponse discoveryResponse = discoveryResponse().patient(patientResponse.getPatient()).transactionId(transactionId).build();
@@ -127,9 +126,9 @@ public class DiscoveryTest {
         User user = user().identifier("1").firstName("first name").phone(phone).build();
         String hipClientUrl = "http://localhost:8001";
         Provider provider = provider()
-                .addresses(List.of(address))
-                .telecoms(List.of(telecom))
-                .identifiers(List.of(providerIdentifier().system(hipClientUrl).use("random").build()))
+                .addresses(of(address))
+                .telecoms(of(telecom))
+                .identifiers(of(providerIdentifier().system(hipClientUrl).use("random").build()))
                 .name("Max")
                 .build();
 

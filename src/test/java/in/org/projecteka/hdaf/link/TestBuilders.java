@@ -1,6 +1,11 @@
 package in.org.projecteka.hdaf.link;
 
-import in.org.projecteka.hdaf.link.discovery.model.*;
+import in.org.projecteka.hdaf.link.discovery.model.Address;
+import in.org.projecteka.hdaf.link.discovery.model.Coding;
+import in.org.projecteka.hdaf.link.discovery.model.Provider;
+import in.org.projecteka.hdaf.link.discovery.model.Telecom;
+import in.org.projecteka.hdaf.link.discovery.model.Type;
+import in.org.projecteka.hdaf.link.discovery.model.User;
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.Identifier;
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.Patient;
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.PatientRequest;

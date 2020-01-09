@@ -11,6 +11,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @Setter
+@EqualsAndHashCode
 public class Patient {
     private String consentManagerUserID;
     private String referenceNumber;

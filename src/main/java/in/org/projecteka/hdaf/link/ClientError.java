@@ -1,6 +1,7 @@
 package in.org.projecteka.hdaf.link;
 
 import in.org.projecteka.hdaf.link.link.model.ErrorRepresentation;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 

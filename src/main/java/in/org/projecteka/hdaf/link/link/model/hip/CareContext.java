@@ -9,6 +9,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @Setter
+@EqualsAndHashCode
 public class CareContext {
     private String referenceNumber;
 }

@@ -2,10 +2,9 @@ package in.org.projecteka.hdaf.link.clients;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.org.projecteka.hdaf.clients.HipServiceClient;
-import in.org.projecteka.hdaf.clients.properties.HipServiceProperties;
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.PatientRequest;
-import in.org.projecteka.hdaf.link.discovery.model.patient.response.Patient;
 import in.org.projecteka.hdaf.link.discovery.model.patient.response.HipPatientResponse;
+import in.org.projecteka.hdaf.link.discovery.model.patient.response.Patient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -40,8 +39,7 @@ public class HipServiceClientTest {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder()
                 .exchangeFunction(exchangeFunction);
-        HipServiceProperties hipServiceProperties = new HipServiceProperties("x-auth-token");
-        hipServiceClient = new HipServiceClient(webClientBuilder, hipServiceProperties);
+        hipServiceClient = new HipServiceClient(webClientBuilder);
     }
 
 

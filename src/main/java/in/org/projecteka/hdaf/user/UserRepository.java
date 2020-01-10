@@ -1,14 +1,19 @@
 package in.org.projecteka.hdaf.user;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.org.projecteka.hdaf.user.model.User;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 public class UserRepository {
 
@@ -16,19 +21,22 @@ public class UserRepository {
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            Path path = Paths.get("src/main/java/in/org/projecteka/hdaf/user/users.json");
-            byte[] jsonData = Files.readAllBytes(path);
-            User[] users = mapper.readValue(jsonData, User[].class);
+            URL resource = ClassLoader.getSystemClassLoader().getResource("users.json");
+            if (resource != null) {
+                Path path = Paths.get(resource.getPath());
+                byte[] jsonData = Files.readAllBytes(path);
+                User[] users = mapper.readValue(jsonData, User[].class);
 
-            return Arrays.stream(users)
-                    .filter(user -> user.getIdentifier().equals(userName))
-                    .findFirst()
-                    .map(Mono::just)
-                    .orElse(Mono.empty());
+                return Arrays.stream(users)
+                        .filter(user -> user.getIdentifier().equals(userName))
+                        .findFirst()
+                        .map(Mono::just)
+                        .orElse(Mono.empty());
+            }
+            return Mono.empty();
 
         } catch (IOException e) {
-            e.printStackTrace();
+            return Mono.error(new Exception("Something went wrong"));
         }
-        return null;
     }
 }

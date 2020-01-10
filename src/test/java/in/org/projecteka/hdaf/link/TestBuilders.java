@@ -16,6 +16,7 @@ import in.org.projecteka.hdaf.link.link.model.ErrorRepresentation;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
+import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
@@ -85,8 +86,8 @@ public class TestBuilders {
         return easyRandom.nextObject(in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder.class);
     }
 
-    public static in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder patientLinkReferenceRequest() {
-        return easyRandom.nextObject(in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder.class);
+    public static PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder patientLinkReferenceRequest() {
+        return easyRandom.nextObject(PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder.class);
     }
 
     public static PatientLinkRequest.PatientLinkRequestBuilder patientLinkRequest() {

@@ -1,15 +1,16 @@
 package in.org.projecteka.hdaf.link.link.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Getter
 @AllArgsConstructor
 @Builder
 @NoArgsConstructor
-@Setter
-@EqualsAndHashCode
+@Data
 public class Error {
     private ErrorCode code;
     private String message;

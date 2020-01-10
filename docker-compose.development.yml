@@ -9,7 +9,7 @@ services:
       - Client_Registry_Url=${Client_Registry_Url}
       - User_Service_Url=${User_Service_Url}
       - POSTGRES_HOST=${POSTGRES_HOST}
-      - POSTGRES_PORT=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
       - CONSENT_MANAGER_DB_NAME=${CONSENT_MANAGER_DB_NAME}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}

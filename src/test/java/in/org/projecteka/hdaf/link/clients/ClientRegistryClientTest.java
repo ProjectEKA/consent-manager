@@ -32,7 +32,7 @@ public class ClientRegistryClientTest {
   @Mock private ExchangeFunction exchangeFunction;
 
   @BeforeEach
-  void init() {
+  public void init() {
     MockitoAnnotations.initMocks(this);
     WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
     ClientRegistryProperties clientRegistryProperties =
@@ -41,7 +41,7 @@ public class ClientRegistryClientTest {
   }
 
   @Test
-  void getProvidersByGivenName() throws IOException {
+  public void getProvidersByGivenName() throws IOException {
     var address = address().use("work").build();
     var telecommunication = telecom().use("work").build();
     var identifier = identifier().use(Identifier.IdentifierType.OFFICIAL.toString()).build();
@@ -78,7 +78,7 @@ public class ClientRegistryClientTest {
   }
 
   @Test
-  void getProviderById() throws IOException {
+  public void getProviderById() throws IOException {
     var address = address().use("work").build();
     var telecommunication = telecom().use("work").build();
     var identifier = identifier().use(Identifier.IdentifierType.OFFICIAL.toString()).build();

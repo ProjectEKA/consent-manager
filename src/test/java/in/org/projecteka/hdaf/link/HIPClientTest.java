@@ -22,7 +22,7 @@ public class HIPClientTest {
     private String baseUrl;
 
     @BeforeEach
-    void init() {
+    public void init() {
         mockWebServer = new MockWebServer();
         baseUrl = mockWebServer.url("/").toString();
         WebClient.Builder webClientBuilder = WebClient.builder().baseUrl(baseUrl);
@@ -30,7 +30,7 @@ public class HIPClientTest {
     }
 
     @Test
-    void shouldCreateLinkReference() throws IOException, InterruptedException {
+    public void shouldCreateLinkReference() throws IOException, InterruptedException {
         var linkReference = patientLinkReferenceResponse().build();
         var linkReferenceJson = new ObjectMapper().writeValueAsString(linkReference);
 
@@ -65,7 +65,7 @@ public class HIPClientTest {
     }
 
     @Test
-    void shouldReturnPatientNotFoundError() throws IOException, InterruptedException {
+    public void shouldReturnPatientNotFoundError() throws IOException, InterruptedException {
         var errorResponse = errorRepresentation().build();
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
 
@@ -94,7 +94,7 @@ public class HIPClientTest {
     }
 
     @Test
-    void shouldLinkCareContexts() throws IOException, InterruptedException {
+    public void shouldLinkCareContexts() throws IOException, InterruptedException {
         var linkRes = patientLinkResponse().build();
         var linkResJson = new ObjectMapper().writeValueAsString(linkRes);
 
@@ -134,7 +134,7 @@ public class HIPClientTest {
     }
 
     @Test
-    void shouldReturnOTPInvalidError() throws IOException, InterruptedException {
+    public void shouldReturnOTPInvalidError() throws IOException, InterruptedException {
         var errorResponse = errorRepresentation().build();
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
         mockWebServer.enqueue(

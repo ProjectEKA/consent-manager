@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DiscoveryRequest {
-    private String providerId;
+    private String hipId;
 }

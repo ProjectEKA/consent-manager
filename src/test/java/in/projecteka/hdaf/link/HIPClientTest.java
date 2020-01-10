@@ -79,9 +79,9 @@ public class HIPClientTest {
         StepVerifier.create(hipClient.linkPatientCareContext(request, baseUrl))
                 .expectErrorSatisfies(
                         errorRes -> {
-                            Assertions.assertThat(((ClientError) errorRes).getError().getError().getCode().getValue())
+                            assertThat(((ClientError) errorRes).getError().getError().getCode().getValue())
                                     .isEqualTo(errorResponse.getError().getCode().getValue());
-                            Assertions.assertThat(((ClientError) errorRes).getError().getError().getMessage())
+                            assertThat(((ClientError) errorRes).getError().getError().getMessage())
                                     .isEqualTo(errorResponse.getError().getMessage());
                         })
                 .verify();
@@ -109,18 +109,18 @@ public class HIPClientTest {
         StepVerifier.create(hipClient.validateToken(linkRefNumber, request, baseUrl))
                 .assertNext(
                         patientLinkResponse -> {
-                            Assertions.assertThat(patientLinkResponse.getPatient().getReferenceNumber())
+                            assertThat(patientLinkResponse.getPatient().getReferenceNumber())
                                     .isEqualTo(linkRes.getPatient().getReferenceNumber());
-                            Assertions.assertThat(patientLinkResponse.getPatient().getDisplay())
+                            assertThat(patientLinkResponse.getPatient().getDisplay())
                                     .isEqualTo(linkRes.getPatient().getDisplay());
-                            Assertions.assertThat(
+                            assertThat(
                                     patientLinkResponse
                                             .getPatient()
                                             .getCareContexts()
                                             .get(0)
                                             .getReferenceNumber())
                                     .isEqualTo(linkRes.getPatient().getCareContexts().get(0).getReferenceNumber());
-                            Assertions.assertThat(patientLinkResponse.getPatient().getCareContexts().get(0).getDisplay())
+                            assertThat(patientLinkResponse.getPatient().getCareContexts().get(0).getDisplay())
                                     .isEqualTo(linkRes.getPatient().getCareContexts().get(0).getDisplay());
                         })
                 .verifyComplete();
@@ -148,9 +148,9 @@ public class HIPClientTest {
         StepVerifier.create(hipClient.validateToken(linkRefNumber, request, baseUrl))
                 .expectErrorSatisfies(
                         errorRes -> {
-                            Assertions.assertThat(((ClientError) errorRes).getError().getError().getCode().getValue())
+                            assertThat(((ClientError) errorRes).getError().getError().getCode().getValue())
                                     .isEqualTo(errorResponse.getError().getCode().getValue());
-                            Assertions.assertThat(((ClientError) errorRes).getError().getError().getMessage())
+                            assertThat(((ClientError) errorRes).getError().getError().getMessage())
                                     .isEqualTo(errorResponse.getError().getMessage());
                         })
                 .verify();

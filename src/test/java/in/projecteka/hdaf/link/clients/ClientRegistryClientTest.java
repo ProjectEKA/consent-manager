@@ -70,12 +70,12 @@ public class ClientRegistryClientTest {
     StepVerifier.create(clientRegistryClient.providersOf("Max"))
         .assertNext(
             provider -> {
-              Assertions.assertThat(provider.getName()).isEqualTo(source.getName());
-              Assertions.assertThat(provider.getAddresses().get(0).getCity())
+              assertThat(provider.getName()).isEqualTo(source.getName());
+              assertThat(provider.getAddresses().get(0).getCity())
                   .isEqualTo(source.getAddresses().get(0).getCity());
-              Assertions.assertThat(provider.getTelecoms().get(0).getValue())
+              assertThat(provider.getTelecoms().get(0).getValue())
                   .isEqualTo(source.getTelecoms().get(0).getValue());
-              Assertions.assertThat(provider.getTypes().get(0).getCoding().get(0).getCode())
+              assertThat(provider.getTypes().get(0).getCoding().get(0).getCode())
                   .isEqualTo(source.getTypes().get(0).getCoding().get(0).getCode());
             })
         .verifyComplete();
@@ -107,12 +107,12 @@ public class ClientRegistryClientTest {
     StepVerifier.create(clientRegistryClient.providerWith("10000005"))
         .assertNext(
             provider -> {
-              Assertions.assertThat(provider.getName()).isEqualTo(source.getName());
-              Assertions.assertThat(provider.getAddresses().get(0).getCity())
+              assertThat(provider.getName()).isEqualTo(source.getName());
+              assertThat(provider.getAddresses().get(0).getCity())
                   .isEqualTo(source.getAddresses().get(0).getCity());
-              Assertions.assertThat(provider.getTelecoms().get(0).getValue())
+              assertThat(provider.getTelecoms().get(0).getValue())
                   .isEqualTo(source.getTelecoms().get(0).getValue());
-              Assertions.assertThat(provider.getTypes().get(0).getCoding().get(0).getCode())
+              assertThat(provider.getTypes().get(0).getCoding().get(0).getCode())
                   .isEqualTo(source.getTypes().get(0).getCoding().get(0).getCode());
             })
         .verifyComplete();
@@ -142,12 +142,12 @@ public class ClientRegistryClientTest {
     StepVerifier.create(clientRegistryClient.providerWith("10000003"))
         .assertNext(
             providerResponse -> {
-              Assertions.assertThat(providerResponse.getName()).isEqualTo(provider.getName());
-              Assertions.assertThat(providerResponse.getAddresses().get(0).getCity())
+              assertThat(providerResponse.getName()).isEqualTo(provider.getName());
+              assertThat(providerResponse.getAddresses().get(0).getCity())
                   .isEqualTo(provider.getAddresses().get(0).getCity());
-              Assertions.assertThat(providerResponse.getTelecoms().get(0).getValue())
+              assertThat(providerResponse.getTelecoms().get(0).getValue())
                   .isEqualTo(provider.getTelecoms().get(0).getValue());
-              Assertions.assertThat(providerResponse.getTypes().get(0).getCoding().get(0).getCode())
+              assertThat(providerResponse.getTypes().get(0).getCoding().get(0).getCode())
                   .isEqualTo(provider.getTypes().get(0).getCoding().get(0).getCode());
             })
         .verifyComplete();

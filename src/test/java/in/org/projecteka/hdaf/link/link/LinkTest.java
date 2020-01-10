@@ -24,9 +24,10 @@ import static org.mockito.MockitoAnnotations.initMocks;
 class LinkTest {
 
   @Mock
-  ClientRegistryClient clientRegistryClient;
+  private ClientRegistryClient clientRegistryClient;
 
-  @Mock HIPClient hipClient;
+  @Mock
+  private HIPClient hipClient;
 
   @BeforeEach
   public void setUp() {

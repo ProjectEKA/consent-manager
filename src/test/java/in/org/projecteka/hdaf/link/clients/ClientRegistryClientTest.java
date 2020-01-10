@@ -27,8 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 public class ClientRegistryClientTest {
-  @Captor ArgumentCaptor<ClientRequest> captor;
-  ClientRegistryClient clientRegistryClient;
+  private @Captor ArgumentCaptor<ClientRequest> captor;
+  private ClientRegistryClient clientRegistryClient;
   @Mock private ExchangeFunction exchangeFunction;
 
   @BeforeEach

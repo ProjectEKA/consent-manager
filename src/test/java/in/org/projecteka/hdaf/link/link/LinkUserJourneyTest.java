@@ -28,8 +28,8 @@ import static java.util.List.of;
 @AutoConfigureWebTestClient
 @ContextConfiguration(initializers = LinkUserJourneyTest.ContextInitializer.class)
 public class LinkUserJourneyTest {
-  static MockWebServer clientRegistryServer = new MockWebServer();
-  static MockWebServer hipServer = new MockWebServer();
+  private static MockWebServer clientRegistryServer = new MockWebServer();
+  private static MockWebServer hipServer = new MockWebServer();
 
   @Autowired private WebTestClient webTestClient;
 

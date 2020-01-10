@@ -8,9 +8,9 @@ hdaf:
   userservice:
     url: ${User_Service_Url}
   db:
-    host: localhost
-    port: 5432
-    schema: consent_manager
-    user: postgres
-    password: postgres
-    poolSize: 5
+    host: ${POSTGRES_HOST}
+    port: ${POSTGRES_PORT}
+    schema: ${CONSENT_MANAGER_DB_NAME}
+    user: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    poolSize: ${DB_CONNECTION_POOL_SIZE}

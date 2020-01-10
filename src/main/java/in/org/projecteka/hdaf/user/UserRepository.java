@@ -1,7 +1,5 @@
 package in.org.projecteka.hdaf.user;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.org.projecteka.hdaf.user.model.User;
 import reactor.core.publisher.Mono;
@@ -12,8 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 
 public class UserRepository {
 

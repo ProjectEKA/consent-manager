@@ -12,7 +12,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static in.org.projecteka.hdaf.link.TestBuilders.*;
-import static in.org.projecteka.hdaf.link.link.Link.HIP_NOT_FOUND;
 import static in.org.projecteka.hdaf.link.link.Transformer.toHIPPatient;
 import static java.util.Arrays.asList;
 import static java.util.List.of;
@@ -126,7 +125,7 @@ class LinkTest {
         String patientId = "patient";
         PatientLinkReferenceRequest patientLinkReferenceRequest = patientLinkReferenceRequest().build();
 
-        ClientError clientError = HIP_NOT_FOUND;
+        ClientError clientError = ClientError.unableToConnectToProvider();
         StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
                 .expectErrorSatisfies(error -> {
                     assertThat(((ClientError)error).getError()).isEqualTo(clientError.getError());

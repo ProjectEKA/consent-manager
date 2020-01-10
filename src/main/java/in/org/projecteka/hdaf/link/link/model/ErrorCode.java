@@ -11,7 +11,7 @@ public enum ErrorCode {
     CareContextNotFound(1002),
     OtpInValid(1003),
     OtpExpired(1004),
-    HIPNotFound(1005);
+    UnableToConnectToProvider(1005);
 
     private int value;
     ErrorCode(int val) {

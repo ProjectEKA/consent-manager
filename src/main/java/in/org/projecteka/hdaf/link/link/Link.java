@@ -4,25 +4,16 @@ import in.org.projecteka.hdaf.link.ClientError;
 import in.org.projecteka.hdaf.link.ClientRegistryClient;
 import in.org.projecteka.hdaf.link.HIPClient;
 import in.org.projecteka.hdaf.link.discovery.model.Identifier;
-import in.org.projecteka.hdaf.link.link.model.ErrorCode;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
-import in.org.projecteka.hdaf.link.link.model.Error;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
-import in.org.projecteka.hdaf.link.link.model.ErrorRepresentation;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
 import in.org.projecteka.hdaf.link.link.model.hip.Patient;
-import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 
 import static in.org.projecteka.hdaf.link.link.Transformer.toHIPPatient;
 
 public class Link {
-    public static final ClientError HIP_NOT_FOUND = new ClientError(
-            HttpStatus.NOT_FOUND,
-            new ErrorRepresentation(new Error(
-                    ErrorCode.HIPNotFound,
-                    "HIP not found")));
     private final HIPClient hipClient;
     private final ClientRegistryClient clientRegistryClient;
 
@@ -40,7 +31,7 @@ public class Link {
                 patient);
         return providerUrl(providerId)
                 .flatMap(url -> hipClient.linkPatientCareContext(linkReferenceRequest, url))
-                .switchIfEmpty(Mono.error(HIP_NOT_FOUND));
+                .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()));
     }
 
     public Mono<PatientLinkResponse> verifyToken(String linkRefNumber, PatientLinkRequest patientLinkRequest) {
@@ -50,7 +41,7 @@ public class Link {
         //Check otp for expiry
         return providerUrl(providerId)
                 .flatMap(url -> hipClient.validateToken(linkRefNumber, patientLinkRequest, url))
-                .switchIfEmpty(Mono.error(HIP_NOT_FOUND));
+                .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()));
     }
 
     private Mono<String> providerUrl(String providerId) {

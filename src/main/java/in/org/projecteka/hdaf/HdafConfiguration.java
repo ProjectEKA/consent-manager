@@ -60,8 +60,8 @@ public class HdafConfiguration {
     }
 
     @Bean
-    public UserRepository userRepository() {
-        return new UserRepository();
+    public UserRepository userRepository(WebClient.Builder builder, UserServiceProperties properties) {
+        return new UserRepository(builder, properties);
     }
 
     @Bean

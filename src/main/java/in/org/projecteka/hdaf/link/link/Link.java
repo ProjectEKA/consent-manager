@@ -3,7 +3,6 @@ package in.org.projecteka.hdaf.link.link;
 import in.org.projecteka.hdaf.clients.ClientRegistryClient;
 import in.org.projecteka.hdaf.link.ClientError;
 import in.org.projecteka.hdaf.link.HIPClient;
-import in.org.projecteka.hdaf.link.discovery.model.Identifier;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
@@ -48,7 +47,7 @@ public class Link {
         return clientRegistryClient.providerWith(providerId)
                 .flatMap(provider -> provider.getIdentifiers()
                         .stream()
-                        .filter(identifier -> identifier.getUse().equalsIgnoreCase(Identifier.IdentifierType.OFFICIAL.toString()))
+                        .filter(identifier -> identifier.isOfficial())
                         .findFirst()
                         .map(identifier -> Mono.just(identifier.getSystem()))
                         .orElse(Mono.empty()));

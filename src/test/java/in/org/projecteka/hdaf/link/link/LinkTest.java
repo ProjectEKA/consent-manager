@@ -8,6 +8,7 @@ import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceResponse;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkResponse;
+import in.org.projecteka.hdaf.link.link.repository.LinkRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -32,6 +33,9 @@ class LinkTest {
   @Mock
   private HIPClient hipClient;
 
+  @Mock
+  private LinkRepository linkRepository;
+
   @BeforeEach
   public void setUp() {
     initMocks(this);
@@ -39,42 +43,41 @@ class LinkTest {
 
   @Test
   public void createsLinkReference() {
-    var link = new Link(hipClient, clientRegistryClient);
-    var address = address().use("work").build();
-    var telecommunication = telecom().use("work").build();
-    String providerUrl = "http://localhost:8001";
-    var identifier =
-        identifier().use(Identifier.IdentifierType.OFFICIAL.toString()).system(providerUrl).build();
-    var provider =
-        provider()
-            .addresses(of(address))
-            .telecoms(of(telecommunication))
-            .identifiers(of(identifier))
-            .name("Max")
-            .build();
+      var link = new Link(hipClient, clientRegistryClient, linkRepository);
+      var address = address().use("work").build();
+      var telecommunication = telecom().use("work").build();
+      String providerUrl = "http://localhost:8001";
+      var identifier = identifier().use(Identifier.IdentifierType.OFFICIAL.toString()).system(providerUrl).build();
+      var provider = provider()
+              .addresses(of(address))
+              .telecoms(of(telecommunication))
+              .identifiers(of(identifier))
+              .name("Max")
+              .build();
+      PatientLinkReferenceResponse patientLinkReferenceResponse = patientLinkReferenceResponse().build();
+      String patientId = "patient";
+      PatientLinkReferenceRequest patientLinkReferenceRequest = patientLinkReferenceRequest().build();
+      var patientLinkReferenceRequestForHIP = new in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest(
+              patientLinkReferenceRequest.getTransactionId(),
+              toHIPPatient(patientId, patientLinkReferenceRequest.getPatient()));
+      String hipId = "10000005";
+      patientLinkReferenceResponse.setTransactionId(patientLinkReferenceRequest.getTransactionId());
 
-    when(clientRegistryClient.providerWith(eq("10000005"))).thenReturn(Mono.just(provider));
+      when(hipClient.linkPatientCareContext(patientLinkReferenceRequestForHIP, providerUrl))
+              .thenReturn(Mono.just(patientLinkReferenceResponse));
+      when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
+      when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
+              .thenReturn(Mono.just(hipId));
+      when(linkRepository.insertToLinkReference(patientLinkReferenceResponse, hipId)).thenReturn(Mono.empty());
 
-    PatientLinkReferenceResponse patientLinkReferenceResponse =
-        PatientLinkReferenceResponse.builder().build();
-    String patientId = "patient";
-    PatientLinkReferenceRequest patientLinkReferenceRequest = patientLinkReferenceRequest().build();
-
-      var patientLinkReferenceRequestForHIP =
-        new in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest(
-            patientLinkReferenceRequest.getTransactionId(),
-            toHIPPatient(patientId, patientLinkReferenceRequest.getPatient()));
-    when(hipClient.linkPatientCareContext(patientLinkReferenceRequestForHIP, providerUrl))
-        .thenReturn(Mono.just(patientLinkReferenceResponse));
-
-    StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
-        .expectNext(patientLinkReferenceResponse)
-        .verifyComplete();
+      StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
+              .expectNext(patientLinkReferenceResponse)
+              .verifyComplete();
   }
 
   @Test
   public void shouldGetSystemUrlForOfficialIdentifier() {
-      var link = new Link(hipClient, clientRegistryClient);
+      var link = new Link(hipClient, clientRegistryClient, linkRepository);
       var address = address().use("work").build();
       var telecommunication = telecom().use("work").build();
       String providerUrl = "http://localhost:8001";
@@ -90,57 +93,61 @@ class LinkTest {
                       .name("Max")
                       .build();
 
-      when(clientRegistryClient.providerWith(eq("10000005"))).thenReturn(Mono.just(provider));
-
+      String hipId = "10000005";
+      when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
       PatientLinkReferenceResponse patientLinkReferenceResponse =
               PatientLinkReferenceResponse.builder().build();
       String patientId = "patient";
       PatientLinkReferenceRequest patientLinkReferenceRequest = patientLinkReferenceRequest().build();
-
       var patientLinkReferenceRequestForHIP =
               new in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest(
                       patientLinkReferenceRequest.getTransactionId(),
                       toHIPPatient(patientId, patientLinkReferenceRequest.getPatient()));
+
       when(hipClient.linkPatientCareContext(patientLinkReferenceRequestForHIP, providerUrl))
               .thenReturn(Mono.just(patientLinkReferenceResponse));
+      when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
+              .thenReturn(Mono.just(hipId));
+      when(linkRepository.insertToLinkReference(patientLinkReferenceResponse, hipId)).thenReturn(Mono.empty());
 
       StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
               .expectNext(patientLinkReferenceResponse)
               .verifyComplete();
-
       verify(hipClient).linkPatientCareContext(patientLinkReferenceRequestForHIP, providerUrl);
   }
 
-    @Test
-    public void shouldGetErrorWhenProviderUrlIsEmpty() {
-        var link = new Link(hipClient, clientRegistryClient);
-        var address = address().use("work").build();
-        var telecommunication = telecom().use("work").build();
-        var provider =
-                provider()
-                        .addresses(of(address))
-                        .telecoms(of(telecommunication))
-                        .identifiers(asList())
-                        .name("Max")
-                        .build();
+  @Test
+  public void shouldGetErrorWhenProviderUrlIsEmpty() {
+      var link = new Link(hipClient, clientRegistryClient, linkRepository);
+      var address = address().use("work").build();
+      var telecommunication = telecom().use("work").build();
+      var provider =
+              provider()
+                      .addresses(of(address))
+                      .telecoms(of(telecommunication))
+                      .identifiers(asList())
+                      .name("Max")
+                      .build();
+      String patientId = "patient";
+      PatientLinkReferenceRequest patientLinkReferenceRequest = patientLinkReferenceRequest().build();
+      ClientError clientError = ClientError.unableToConnectToProvider();
 
-        when(clientRegistryClient.providerWith(eq("10000005"))).thenReturn(Mono.just(provider));
+      String hipId = "10000005";
+      when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
+      when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
+              .thenReturn(Mono.just(hipId));
 
-        String patientId = "patient";
-        PatientLinkReferenceRequest patientLinkReferenceRequest = patientLinkReferenceRequest().build();
-
-        ClientError clientError = ClientError.unableToConnectToProvider();
-        StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
-                .expectErrorSatisfies(error -> {
-                    assertThat(((ClientError)error).getError()).isEqualTo(clientError.getError());
-                    assertThat(((ClientError)error).getHttpStatus()).isEqualTo(clientError.getHttpStatus());
-                })
-                .verify();
-    }
+      StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
+              .expectErrorSatisfies(error -> {
+                  assertThat(((ClientError)error).getError()).isEqualTo(clientError.getError());
+                  assertThat(((ClientError)error).getHttpStatus()).isEqualTo(clientError.getHttpStatus());
+              })
+              .verify();
+  }
 
   @Test
   public void linksPatientsCareContexts() {
-      var link = new Link(hipClient, clientRegistryClient);
+      var link = new Link(hipClient, clientRegistryClient, linkRepository);
       var address = address().use("work").build();
       var telecommunication = telecom().use("work").build();
       String providerUrl = "http://localhost:8001";
@@ -153,16 +160,22 @@ class LinkTest {
                       .identifiers(of(identifier))
                       .name("Max")
                       .build();
-      when(clientRegistryClient.providerWith(eq("10000005"))).thenReturn(Mono.just(provider));
-
       PatientLinkResponse patientLinkResponse =
               PatientLinkResponse.builder().build();
       PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
       String linkRefNumber = "link-ref-num";
+      String patientId = "patient";
+
       when(hipClient.validateToken(linkRefNumber, patientLinkRequest, providerUrl))
               .thenReturn(Mono.just(patientLinkResponse));
+      String hipId = "10000005";
+      when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
+      String transactionId = "transactionId";
+      when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber)).thenReturn(Mono.just(transactionId));
+      when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
+      when(linkRepository.insertToLink(hipId, patientId, linkRefNumber, patientLinkResponse.getPatient())).thenReturn(Mono.empty());
 
-      StepVerifier.create(link.verifyToken(linkRefNumber, patientLinkRequest))
+      StepVerifier.create(link.verifyToken(linkRefNumber, patientLinkRequest, patientId))
               .expectNext(patientLinkResponse)
               .verifyComplete();
   }

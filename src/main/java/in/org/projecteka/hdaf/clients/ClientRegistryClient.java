@@ -28,7 +28,7 @@ public class ClientRegistryClient {
                 .bodyToFlux(Provider.class);
     }
 
-    public Mono<Provider> providerWith(String id) {
+    public Mono<Provider>  providerWith(String id) {
         return webClientBuilder.build()
                 .get()
                 .uri(String.format("%s/providers/%s", clientRegistryProperties.getUrl(), id))

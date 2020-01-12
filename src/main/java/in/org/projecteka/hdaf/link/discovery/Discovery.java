@@ -63,8 +63,7 @@ public class Discovery {
                                     .build();
 
                             PatientRequest patientRequest = PatientRequest.builder().patient(patient).transactionId(transactionId).build();
-                            return hipServiceClient.
-                                    patientFor(patientRequest, url)
+                            return hipServiceClient.patientFor(patientRequest, url)
                                     .flatMap(patientResponse ->
                                             discoveryRepository.insert(providerId, patientId, transactionId).
                                                     then(Mono.just(

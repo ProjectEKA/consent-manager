@@ -100,7 +100,7 @@ public class LinkUserJourneyTest {
     }
 
     @Test
-    public void shouldGivePatientNotFound() throws IOException {
+    public void shouldGiveErrorFromHIP() throws IOException {
         var official = identifier().use("official").system(hipServer.url("").toString()).build();
         var provider = provider().identifiers(of(official)).build();
         var providerAsJson = new ObjectMapper().writeValueAsString(provider);

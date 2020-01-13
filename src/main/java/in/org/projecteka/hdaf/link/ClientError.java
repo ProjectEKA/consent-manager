@@ -9,8 +9,8 @@ import org.springframework.http.HttpStatus;
 @Getter
 public class ClientError extends Throwable {
 
-    private HttpStatus httpStatus;
-    private ErrorRepresentation error;
+    private final HttpStatus httpStatus;
+    private final ErrorRepresentation error;
 
     public ClientError(HttpStatus httpStatus, ErrorRepresentation errorRepresentation) {
         this.httpStatus = httpStatus;

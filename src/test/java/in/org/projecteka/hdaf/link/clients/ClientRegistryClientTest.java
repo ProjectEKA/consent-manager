@@ -21,7 +21,12 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 
-import static in.org.projecteka.hdaf.link.TestBuilders.*;
+import static in.org.projecteka.hdaf.link.clients.TestBuilders.address;
+import static in.org.projecteka.hdaf.link.clients.TestBuilders.coding;
+import static in.org.projecteka.hdaf.link.clients.TestBuilders.identifier;
+import static in.org.projecteka.hdaf.link.clients.TestBuilders.provider;
+import static in.org.projecteka.hdaf.link.clients.TestBuilders.telecom;
+import static in.org.projecteka.hdaf.link.clients.TestBuilders.type;
 import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;

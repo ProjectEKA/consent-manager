@@ -1,11 +1,18 @@
 package in.org.projecteka.hdaf.link.discovery;
 
-import in.org.projecteka.hdaf.link.discovery.model.*;
+import in.org.projecteka.hdaf.link.discovery.model.Address;
+import in.org.projecteka.hdaf.link.discovery.model.Coding;
+import in.org.projecteka.hdaf.link.discovery.model.Identifier;
+import in.org.projecteka.hdaf.link.discovery.model.Telecom;
+import in.org.projecteka.hdaf.link.discovery.model.Type;
 import org.junit.jupiter.api.Test;
-
 import java.util.List;
-
-import static in.org.projecteka.hdaf.link.TestBuilders.*;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.address;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.coding;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.identifier;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.provider;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.telecom;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.type;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TransformerTest {

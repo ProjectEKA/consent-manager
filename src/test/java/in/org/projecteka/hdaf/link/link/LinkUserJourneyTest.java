@@ -20,7 +20,12 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import java.io.IOException;
 import java.util.stream.Stream;
 
-import static in.org.projecteka.hdaf.link.TestBuilders.*;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.errorRepresentation;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.identifier;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.patientLinkReferenceRequest;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.patientLinkReferenceResponse;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.patientLinkResponse;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.provider;
 import static java.util.List.of;
 
 @ExtendWith(SpringExtension.class)

@@ -48,7 +48,7 @@ public class Link {
     public Mono<PatientLinkResponse> verifyToken(String linkRefNumber, PatientLinkRequest patientLinkRequest, String patientId) {
         //Check otp for expiry
         return linkRepository.getTransactionIdFromLinkReference(linkRefNumber)
-                .flatMap(transactionId -> linkRepository.getHIPIdFromDiscovery(transactionId))
+                .flatMap(linkRepository::getHIPIdFromDiscovery)
                 .flatMap(hipId -> providerUrl(hipId)
                         .flatMap(url -> hipClient.validateToken(linkRefNumber, patientLinkRequest, url)
                                 .flatMap(patientLinkResponse -> linkRepository.insertToLink(

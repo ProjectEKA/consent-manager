@@ -1,7 +1,7 @@
 package in.org.projecteka.hdaf;
 
 import in.org.projecteka.hdaf.clients.ClientRegistryClient;
-import in.org.projecteka.hdaf.clients.HipServiceClient;
+import in.org.projecteka.hdaf.clients.DiscoveryServiceClient;
 import in.org.projecteka.hdaf.clients.UserServiceClient;
 import in.org.projecteka.hdaf.clients.properties.ClientRegistryProperties;
 import in.org.projecteka.hdaf.clients.properties.UserServiceProperties;
@@ -34,9 +34,9 @@ public class HdafConfiguration {
                                DiscoveryRepository discoveryRepository) {
         ClientRegistryClient clientRegistryClient = new ClientRegistryClient(builder, clientRegistryProperties);
         UserServiceClient userServiceClient = new UserServiceClient(builder, userServiceProperties);
-        HipServiceClient hipServiceClient = new HipServiceClient(builder);
+        DiscoveryServiceClient discoveryServiceClient = new DiscoveryServiceClient(builder);
 
-        return new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
+        return new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
     }
 
     @Bean

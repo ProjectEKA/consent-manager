@@ -1,7 +1,7 @@
 package in.org.projecteka.hdaf.link.discovery;
 
 import in.org.projecteka.hdaf.clients.ClientRegistryClient;
-import in.org.projecteka.hdaf.clients.HipServiceClient;
+import in.org.projecteka.hdaf.clients.DiscoveryServiceClient;
 import in.org.projecteka.hdaf.clients.UserServiceClient;
 import in.org.projecteka.hdaf.link.discovery.model.Address;
 import in.org.projecteka.hdaf.link.discovery.model.Phone;
@@ -39,7 +39,7 @@ public class DiscoveryTest {
     UserServiceClient userServiceClient;
 
     @Mock
-    HipServiceClient hipServiceClient;
+    DiscoveryServiceClient discoveryServiceClient;
 
     @Mock
     DiscoveryRepository discoveryRepository;
@@ -51,7 +51,7 @@ public class DiscoveryTest {
 
     @Test
     public void returnProvidersWithOfficial() {
-        var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
+        var discovery = new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var identifier = identifier().use(in.org.projecteka.hdaf.link.discovery.model.Identifier.IdentifierType.OFFICIAL.toString()).build();
@@ -73,7 +73,7 @@ public class DiscoveryTest {
         String providerId = "1";
         String transactionId = "transaction-id";
         String patientId = "1";
-        var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
+        var discovery = new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
         in.org.projecteka.hdaf.link.discovery.model.patient.response.Patient patientInResponse = patientInResponse()
@@ -107,7 +107,7 @@ public class DiscoveryTest {
 
         when(clientRegistryClient.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
         when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
-        when(hipServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl))).thenReturn(Mono.just(patientResponse));
+        when(discoveryServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl))).thenReturn(Mono.just(patientResponse));
         when(discoveryRepository.insert(providerId, patientId, transactionId)).thenReturn(Mono.empty());
 
         StepVerifier.create(discovery.patientFor(providerId, patientId, transactionId))
@@ -119,7 +119,7 @@ public class DiscoveryTest {
     public void shouldGetInvalidHipErrorWhenIdentifierIsNotOfficial() {
         String providerId = "1";
         String userName = "1";
-        var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
+        var discovery = new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
         Phone phone = Phone.builder().build();
@@ -141,7 +141,7 @@ public class DiscoveryTest {
 
     @Test
     public void returnEmptyProvidersWhenOfficialIdentifierIsUnavailable() {
-        var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
+        var discovery = new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var identifier = identifier().build();

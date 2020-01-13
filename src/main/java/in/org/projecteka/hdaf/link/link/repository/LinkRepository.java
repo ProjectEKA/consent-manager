@@ -68,4 +68,16 @@ public class LinkRepository {
                 monoSink.success();
         }));
     }
+
+    public Mono<String> getExpiryFromLinkReference(String linkRefNumber) {
+        String sql = String.format("select patient_link_reference ->> 'communicationExpiry' as communicationExpiry from link_reference where patient_link_reference -> 'link' ->> 'referenceNumber' = '%s';", linkRefNumber);
+        return Mono.create(monoSink -> dbClient.query(sql, handler -> {
+            if (handler.failed()) {
+                monoSink.error(new Exception("Failed to get communicationExpiry from link reference"));
+            } else {
+                RowSet<Row> result = handler.result();
+                monoSink.success(result.iterator().next().getString(0));
+            }
+        }));
+    }
 }

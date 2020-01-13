@@ -24,4 +24,12 @@ public class ClientError extends Throwable {
                         ErrorCode.UnableToConnectToProvider,
                         "Cannot link at the moment, please try later.")));
     }
+
+    public static ClientError otpExpired() {
+        return new ClientError(
+                HttpStatus.UNAUTHORIZED,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.OtpExpired,
+                        "OTP Expired, please try again")));
+    }
 }

@@ -1,6 +1,9 @@
 package in.org.projecteka.hdaf.link.link;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import in.org.projecteka.hdaf.link.link.model.Error;
+import in.org.projecteka.hdaf.link.link.model.ErrorCode;
+import in.org.projecteka.hdaf.link.link.model.ErrorRepresentation;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkReferenceRequest;
 import in.org.projecteka.hdaf.link.link.model.PatientLinkRequest;
 import in.org.projecteka.hdaf.link.link.repository.LinkRepository;
@@ -26,6 +29,8 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.io.IOException;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.stream.Stream;
 
 import static in.org.projecteka.hdaf.link.TestBuilders.*;
@@ -147,6 +152,8 @@ public class LinkUserJourneyTest {
         String transactionId = "transactionId";
         String hipId = "10000005";
         String linkRefNumber = "link-ref-num";
+        ZonedDateTime zonedDateTime = ZonedDateTime.now(ZoneOffset.UTC).withNano(0).plusHours(1);
+        when(linkRepository.getExpiryFromLinkReference(linkRefNumber)).thenReturn(Mono.just(zonedDateTime.toString()));
         when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber)).thenReturn(Mono.just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
         when(linkRepository.insertToLink(hipId, "123456789", linkRefNumber, linkRes.getPatient()))
@@ -166,36 +173,34 @@ public class LinkUserJourneyTest {
     }
 
     @Test
-    public void shouldGiveOtpInvalidError() throws IOException {
+    public void shouldGiveOtpExpiredError() throws IOException {
         var official = identifier().use("official").system(hipServer.url("").toString()).build();
         var provider = provider().identifiers(of(official)).build();
         var providerAsJson = new ObjectMapper().writeValueAsString(provider);
         clientRegistryServer.enqueue(
                 new MockResponse().setHeader("Content-Type", "application/json").setBody(providerAsJson));
 
-        var errorResponse = errorRepresentation().build();
+        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.OtpExpired, "OTP Expired, please try again"));
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
-        hipServer.enqueue(
-                new MockResponse()
-                        .setHeader("Content-Type", "application/json")
-                        .setStatus("HTTP/1.1 404")
-                        .setBody(errorResponseJson));
         PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
         String transactionId = "transactionId";
         String hipId = "10000005";
-        when(linkRepository.getTransactionIdFromLinkReference("link-ref-num"))
+        String linkRefNumber = "link-ref";
+        ZonedDateTime zonedDateTime = ZonedDateTime.now(ZoneOffset.UTC).withNano(0);
+        when(linkRepository.getExpiryFromLinkReference(linkRefNumber)).thenReturn(Mono.just(zonedDateTime.toString()));
+        when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber))
                 .thenReturn(Mono.just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
         webTestClient
                 .post()
-                .uri("/patients/link/link-ref-num")
+                .uri("/patients/link/link-ref")
                 .header("Authorization", "MTIzNDU2Nzg5")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus()
-                .isNotFound()
+                .isUnauthorized()
                 .expectBody()
                 .json(errorResponseJson);
     }

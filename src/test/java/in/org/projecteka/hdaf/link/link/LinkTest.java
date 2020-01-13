@@ -15,6 +15,9 @@ import org.mockito.Mock;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+
 import static in.org.projecteka.hdaf.link.TestBuilders.*;
 import static in.org.projecteka.hdaf.link.link.Transformer.toHIPPatient;
 import static java.util.Arrays.asList;
@@ -171,6 +174,8 @@ class LinkTest {
       String hipId = "10000005";
       when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
       String transactionId = "transactionId";
+      ZonedDateTime zonedDateTime = ZonedDateTime.now(ZoneOffset.UTC).withNano(0).plusHours(1);
+      when(linkRepository.getExpiryFromLinkReference(linkRefNumber)).thenReturn(Mono.just(zonedDateTime.toString()));
       when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber)).thenReturn(Mono.just(transactionId));
       when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
       when(linkRepository.insertToLink(hipId, patientId, linkRefNumber, patientLinkResponse.getPatient())).thenReturn(Mono.empty());

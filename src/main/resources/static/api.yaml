@@ -395,9 +395,11 @@ components:
     PatientDiscoveryRequest:
       type: object
       properties:
-        hipId:
-          type: string
-          description: Identifier of the health information provider where patient record needs to be looked up.
+        hip:
+          type: object
+          properties:
+            id: string
+            description: Identifier of the health information provider where patient record needs to be looked up.
     PatientLinkReferenceRequest:
       type: object
       properties:

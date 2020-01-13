@@ -5,7 +5,6 @@ import in.projecteka.hdaf.clients.ClientRegistryClient;
 import in.projecteka.hdaf.clients.properties.ClientRegistryProperties;
 import in.projecteka.hdaf.link.discovery.model.Identifier;
 import in.projecteka.hdaf.link.discovery.model.Provider;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

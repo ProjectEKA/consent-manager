@@ -23,6 +23,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoSink;
 
 import java.io.IOException;
 import java.util.stream.Stream;
@@ -36,54 +37,62 @@ import static org.mockito.Mockito.when;
 @AutoConfigureWebTestClient
 @ContextConfiguration(initializers = LinkUserJourneyTest.ContextInitializer.class)
 public class LinkUserJourneyTest {
-  private static MockWebServer clientRegistryServer = new MockWebServer();
-  private static MockWebServer hipServer = new MockWebServer();
+    private static MockWebServer clientRegistryServer = new MockWebServer();
+    private static MockWebServer hipServer = new MockWebServer();
 
-  @Autowired private WebTestClient webTestClient;
+    @Autowired
+    private WebTestClient webTestClient;
 
-  @MockBean
-    LinkRepository linkRepository;
+    @MockBean
+    private LinkRepository linkRepository;
+
+    @AfterAll
+    public static void tearDown() throws IOException {
+        clientRegistryServer.shutdown();
+        hipServer.shutdown();
+    }
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
     }
 
-  @Test
-  public void shouldGetLinkReference() throws IOException {
-    var official = identifier().use("official").system(hipServer.url("").toString()).build();
-    var provider = provider().identifiers(of(official)).build();
-    var providerAsJson = new ObjectMapper().writeValueAsString(provider);
-    clientRegistryServer.enqueue(
-        new MockResponse().setHeader("Content-Type", "application/json").setBody(providerAsJson));
+    @Test
+    public void shouldGetLinkReference() throws IOException {
+        var official = identifier().use("official").system(hipServer.url("").toString()).build();
+        var provider = provider().identifiers(of(official)).build();
+        var providerAsJson = new ObjectMapper().writeValueAsString(provider);
+        clientRegistryServer.enqueue(
+                new MockResponse().setHeader("Content-Type", "application/json").setBody(providerAsJson));
 
-      PatientLinkReferenceRequest patientLinkReferenceRequest = patientLinkReferenceRequest().build();
-      String hipId = "10000005";
-      var linkReference = patientLinkReferenceResponse().build();
-      linkReference.setTransactionId(patientLinkReferenceRequest.getTransactionId());
-      var linkReferenceJson = new ObjectMapper().writeValueAsString(linkReference);
-      hipServer.enqueue(
-        new MockResponse()
-            .setHeader("Content-Type", "application/json")
-            .setBody(linkReferenceJson));
+        PatientLinkReferenceRequest patientLinkReferenceRequest = patientLinkReferenceRequest().build();
+        String hipId = "10000005";
+        var linkReference = patientLinkReferenceResponse().build();
+        linkReference.setTransactionId(patientLinkReferenceRequest.getTransactionId());
+        var linkReferenceJson = new ObjectMapper().writeValueAsString(linkReference);
+        hipServer.enqueue(
+                new MockResponse()
+                        .setHeader("Content-Type", "application/json")
+                        .setBody(linkReferenceJson));
 
-      when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
-              .thenReturn(Mono.just(hipId));
-      when(linkRepository.insertToLinkReference(linkReference,hipId)).thenReturn(Mono.empty());
+        when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
+                .thenReturn(Mono.just(hipId));
 
-      webTestClient
-        .post()
-        .uri("/patients/link")
-        .header("Authorization", "MTIzNDU2Nzg5")
-        .contentType(MediaType.APPLICATION_JSON)
-        .bodyValue(patientLinkReferenceRequest)
-        .accept(MediaType.APPLICATION_JSON)
-        .exchange()
-        .expectStatus()
-        .isOk()
-        .expectBody()
-        .json(linkReferenceJson);
-  }
+        when(linkRepository.insertToLinkReference(linkReference, hipId)).thenReturn(Mono.create(MonoSink::success));
+
+        webTestClient
+                .post()
+                .uri("/patients/link")
+                .header("Authorization", "MTIzNDU2Nzg5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(patientLinkReferenceRequest)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .json(linkReferenceJson);
+    }
 
     @Test
     public void shouldGivePatientNotFound() throws IOException {
@@ -140,7 +149,7 @@ public class LinkUserJourneyTest {
         String linkRefNumber = "link-ref-num";
         when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber)).thenReturn(Mono.just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
-        when(linkRepository.insertToLink(hipId,"patientId",linkRefNumber,linkRes.getPatient()))
+        when(linkRepository.insertToLink(hipId, "123456789", linkRefNumber, linkRes.getPatient()))
                 .thenReturn(Mono.empty());
         webTestClient
                 .post()
@@ -191,20 +200,14 @@ public class LinkUserJourneyTest {
                 .json(errorResponseJson);
     }
 
-    @AfterAll
-    public static void tearDown() throws IOException {
-        clientRegistryServer.shutdown();
-        hipServer.shutdown();
+    public static class ContextInitializer
+            implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            TestPropertyValues values =
+                    TestPropertyValues.of(
+                            Stream.of("hdaf.clientregistry.url=" + clientRegistryServer.url("")));
+            values.applyTo(applicationContext);
+        }
     }
-
-  public static class ContextInitializer
-      implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-    @Override
-    public void initialize(ConfigurableApplicationContext applicationContext) {
-      TestPropertyValues values =
-          TestPropertyValues.of(
-              Stream.of("hdaf.clientregistry.url=" + clientRegistryServer.url("")));
-      values.applyTo(applicationContext);
-    }
-  }
 }

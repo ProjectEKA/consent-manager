@@ -58,7 +58,7 @@ public class LinkRepository {
 
     @SneakyThrows
     public Mono<Void> insertToLink(String hipId, String consentManagerUserId, String linkRefNumber, PatientRepresentation patient) {
-        String sql = String.format("insert into link (hip_id, consent_manager_use_id, link_reference, patient) " +
+        String sql = String.format("insert into link (hip_id, consent_manager_user_id, link_reference, patient) " +
                         "values ('%s', '%s', '%s', '%s')",
                 hipId, consentManagerUserId, linkRefNumber, new ObjectMapper().writeValueAsString(patient));
         return Mono.create(monoSink -> dbClient.query(sql, handler -> {

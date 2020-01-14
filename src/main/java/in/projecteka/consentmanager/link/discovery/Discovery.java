@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.link.discovery;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.link.ClientError;
 import in.projecteka.consentmanager.link.discovery.model.Identifier;
 import in.projecteka.consentmanager.link.discovery.model.Provider;
 import in.projecteka.consentmanager.link.discovery.model.User;
@@ -43,11 +44,11 @@ public class Discovery {
     }
 
     public Mono<DiscoveryResponse> patientFor(String providerId, String userName, String transactionId) {
-        return userWith(userName).flatMap(user -> providerWith(providerId)
-                .map(this::getDiscoveryServiceUrl)
-                .flatMap(optionalSystem -> optionalSystem.map(url -> patientIn(url, user, transactionId)
-                        .flatMap(patientResponse -> insertDiscoveryRequest(patientResponse, providerId, userName, transactionId))
-                ).orElse(Mono.error(new Throwable("Invalid HIP")))));
+        return userWith(userName)
+                .flatMap(user -> providerUrl(providerId)
+                        .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
+                        .flatMap(url -> patientIn(url, user, transactionId)
+                                .flatMap(patientResponse -> insertDiscoveryRequest(patientResponse, providerId, userName, transactionId))));
     }
 
     private Mono<Provider> providerWith(String providerId) {
@@ -58,12 +59,14 @@ public class Discovery {
         return userServiceClient.userOf(patientId);
     }
 
-    private Optional<String> getDiscoveryServiceUrl(Provider provider) {
-        return provider.getIdentifiers()
-                .stream()
-                .filter(Identifier::isOfficial)
-                .findFirst()
-                .map(Identifier::getSystem);
+    private Mono<String> providerUrl(String providerId) {
+        return providerWith(providerId)
+                .flatMap(provider -> provider.getIdentifiers()
+                        .stream()
+                        .filter(Identifier::isOfficial)
+                        .findFirst()
+                        .map(identifier -> Mono.just(identifier.getSystem()))
+                        .orElse(Mono.empty()));
     }
 
     private Mono<PatientResponse> patientIn(String url, User user, String transactionId) {
@@ -91,8 +94,7 @@ public class Discovery {
                         builder().
                         patient(patientResponse.getPatient()).
                         transactionId(transactionId)
-                        .build())
-                );
+                        .build()));
     }
 
     private boolean isValid(Provider provider) {

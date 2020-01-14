@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.clients;
 
+import in.projecteka.consentmanager.link.ClientError;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -20,7 +21,7 @@ public class DiscoveryServiceClient {
                 .uri(url + "/patients/discover/")
                 .bodyValue(request)
                 .retrieve()
-                .onStatus(httpStatus -> httpStatus.value() == 404, clientResponse -> Mono.error(new Throwable("Hip returned 404")))
+                .onStatus(httpStatus -> httpStatus.value() == 404, clientResponse -> Mono.error(ClientError.userNotFound()))
                 .bodyToMono(PatientResponse.class);
     }
 }

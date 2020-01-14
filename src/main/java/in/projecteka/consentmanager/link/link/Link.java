@@ -38,8 +38,9 @@ public class Link {
                 patient);
         return linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId())
                 .flatMap(hipId -> providerUrl(hipId)
+                        .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
                         .flatMap(url -> getPatientLinkReferenceResponse(patientLinkReferenceRequest, linkReferenceRequest, hipId, url)
-                        )).switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()));
+                        ));
     }
 
     private Mono<PatientLinkReferenceResponse> getPatientLinkReferenceResponse(
@@ -73,8 +74,8 @@ public class Link {
         return linkRepository.getTransactionIdFromLinkReference(linkRefNumber)
                 .flatMap(linkRepository::getHIPIdFromDiscovery)
                 .flatMap(hipId -> providerUrl(hipId)
-                        .flatMap(url -> getPatientLinkResponse(patientLinkRequest, linkRefNumber, patientId, hipId, url))
-                        .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider())));
+                        .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
+                        .flatMap(url -> getPatientLinkResponse(patientLinkRequest, linkRefNumber, patientId, hipId, url)));
     }
 
     private Mono<PatientLinkResponse> getPatientLinkResponse(

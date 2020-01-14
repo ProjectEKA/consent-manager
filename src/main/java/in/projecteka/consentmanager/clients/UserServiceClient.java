@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
+import in.projecteka.consentmanager.link.ClientError;
 import in.projecteka.consentmanager.link.discovery.model.User;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -22,7 +23,7 @@ public class UserServiceClient {
                 .get()
                 .uri(String.format("%s/users/%s/", userServiceProperties.getUrl(), userId))
                 .retrieve()
-                .onStatus(httpStatus -> httpStatus.value() == 404, clientResponse -> Mono.error(new Throwable("User not found")))
+                .onStatus(httpStatus -> httpStatus.value() == 404, clientResponse -> Mono.error(ClientError.userNotFound()))
                 .bodyToMono(User.class);
     }
 }

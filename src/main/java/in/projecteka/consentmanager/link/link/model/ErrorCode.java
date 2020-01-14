@@ -6,12 +6,14 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Arrays;
 
 public enum ErrorCode {
-    NoPatientFound(1000),
-    MultiplePatientsFound(1001),
-    CareContextNotFound(1002),
-    OtpInValid(1003),
-    OtpExpired(1004),
-    UnableToConnectToProvider(1005);
+    NO_PATIENT_FOUND(1000),
+    MULTIPLE_PATIENTS_FOUND(1001),
+    CARE_CONTEXT_NOT_FOUND(1002),
+    OTP_INVALID(1003),
+    OTP_EXPIRED(1004),
+    UNABLE_TO_CONNECT_TO_PROVIDER(1005),
+    USER_NOT_FOUND(1006),
+    DB_OPERATION_FAILED(1007);
 
     private int value;
     ErrorCode(int val) {
@@ -29,6 +31,6 @@ public enum ErrorCode {
         return Arrays.stream(ErrorCode.values())
                 .filter(errorCode -> errorCode.value == value)
                 .findAny()
-                .orElse(ErrorCode.OtpExpired);
+                .orElse(ErrorCode.OTP_EXPIRED);
     }
 }

@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.link.discovery;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.link.ClientError;
 import in.projecteka.consentmanager.link.discovery.model.Address;
 import in.projecteka.consentmanager.link.discovery.model.Phone;
 import in.projecteka.consentmanager.link.discovery.model.Provider;
@@ -147,7 +148,12 @@ public class DiscoveryTest {
         when(userServiceClient.userOf(eq(userName))).thenReturn(Mono.just(user));
 
         StepVerifier.create(discovery.patientFor(providerId, userName, UUID.randomUUID().toString()))
-                .expectErrorMatches(error -> error.equals(new Throwable("Invalid HIP")));
+                .expectErrorMatches(error -> ((ClientError) error)
+                        .getError()
+                        .getError()
+                        .getMessage()
+                        .equals("Cannot process the request at the moment, please try later."))
+                .verify();
     }
 
     @Test

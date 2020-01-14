@@ -21,15 +21,31 @@ public class ClientError extends Throwable {
         return new ClientError(
                 HttpStatus.NOT_FOUND,
                 new ErrorRepresentation(new Error(
-                        ErrorCode.UnableToConnectToProvider,
-                        "Cannot link at the moment, please try later.")));
+                        ErrorCode.UNABLE_TO_CONNECT_TO_PROVIDER,
+                        "Cannot process the request at the moment, please try later.")));
+    }
+
+    public static ClientError userNotFound(){
+        return new ClientError(
+                HttpStatus.NOT_FOUND,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.USER_NOT_FOUND,
+                        "Cannot find the user")));
+    }
+
+    public static ClientError dbOperationFailed(){
+        return new ClientError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.DB_OPERATION_FAILED,
+                        "Cannot process the request at the moment, please try later.")));
     }
 
     public static ClientError otpExpired() {
         return new ClientError(
                 HttpStatus.UNAUTHORIZED,
                 new ErrorRepresentation(new Error(
-                        ErrorCode.OtpExpired,
+                        ErrorCode.OTP_EXPIRED,
                         "OTP Expired, please try again")));
     }
 }

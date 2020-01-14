@@ -181,7 +181,7 @@ public class LinkUserJourneyTest {
         clientRegistryServer.enqueue(
                 new MockResponse().setHeader("Content-Type", "application/json").setBody(providerAsJson));
 
-        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.OtpExpired, "OTP Expired, please try again"));
+        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.OTP_EXPIRED, "OTP Expired, please try again"));
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
         PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
         String transactionId = "transactionId";

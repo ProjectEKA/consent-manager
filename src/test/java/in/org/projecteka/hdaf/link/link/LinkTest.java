@@ -14,7 +14,12 @@ import org.mockito.Mock;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import static in.org.projecteka.hdaf.link.TestBuilders.*;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.address;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.identifier;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.patientLinkReferenceRequest;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.patientLinkRequest;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.provider;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.telecom;
 import static in.org.projecteka.hdaf.link.link.Transformer.toHIPPatient;
 import static java.util.Arrays.asList;
 import static java.util.List.of;

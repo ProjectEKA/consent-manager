@@ -20,7 +20,7 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 
-import static in.org.projecteka.hdaf.link.TestBuilders.user;
+import static in.org.projecteka.hdaf.link.clients.TestBuilders.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 

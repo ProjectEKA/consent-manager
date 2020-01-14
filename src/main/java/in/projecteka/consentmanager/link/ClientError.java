@@ -21,7 +21,7 @@ public class ClientError extends Throwable {
         return new ClientError(
                 HttpStatus.NOT_FOUND,
                 new ErrorRepresentation(new Error(
-                        ErrorCode.UnableToConnectToProvider,
+                        ErrorCode.UNABLE_TO_CONNECT_TO_PROVIDER,
                         "Cannot process the request at the moment, please try later.")));
     }
 
@@ -29,7 +29,7 @@ public class ClientError extends Throwable {
         return new ClientError(
                 HttpStatus.NOT_FOUND,
                 new ErrorRepresentation(new Error(
-                        ErrorCode.UserNotFound,
+                        ErrorCode.USER_NOT_FOUND,
                         "Cannot find the user")));
     }
 
@@ -37,7 +37,7 @@ public class ClientError extends Throwable {
         return new ClientError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 new ErrorRepresentation(new Error(
-                        ErrorCode.DbOperationFailed,
+                        ErrorCode.DB_OPERATION_FAILED,
                         "Cannot process the request at the moment, please try later.")));
     }
 
@@ -45,7 +45,7 @@ public class ClientError extends Throwable {
         return new ClientError(
                 HttpStatus.UNAUTHORIZED,
                 new ErrorRepresentation(new Error(
-                        ErrorCode.OtpExpired,
+                        ErrorCode.OTP_EXPIRED,
                         "OTP Expired, please try again")));
     }
 }

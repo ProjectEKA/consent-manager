@@ -224,6 +224,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/PatientLinkErrorResponse'
   # consent-service
+  /consent-request:
+    post:
+      tags:
+        - consent
+      summary: Create consent request
+      description: Creates a consent request to get data about a patient by HIU user.
+      operationId: createConsentRequest
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/ConsentRequest'
+      responses:
+        '200':
+          description: Request created in the consent manager
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consentRequest:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
   /consent-requests:
     get:
       tags:
@@ -724,3 +756,59 @@ components:
           type: string
         type:
           type: string
+    ConsentRequest:
+      type: object
+      properties:
+        consent:
+          type: object
+          properties:
+            purpose:
+              type: object
+              properties:
+                code:
+                  type: integer
+                  enum: [100]
+            patient:
+              allOf:
+                - $ref: '#/components/schemas/ConsentManagerPatientID'
+            hip:
+              type: object
+              allOf:
+                - $ref: '#/components/schemas/OrganizationRepresentation'
+                - xml:
+                    name: hip
+            hiu:
+              type: object
+              allOf:
+                - $ref: '#/components/schemas/OrganizationRepresentation'
+                - xml:
+                    name: hiu
+            requester:
+              $ref: '#/components/schemas/Requester'
+            hitypes:
+              type: array
+              items:
+                $ref: '#/components/schemas/HITypeEnum'
+            permission:
+              type: object
+              properties:
+                dateRange:
+                  type: object
+                  properties:
+                    from:
+                      type: string
+                      format: datetime
+                    to:
+                      type: string
+                      format: datetime
+                dataExpiryAt:
+                  type: string
+                  format: date-time
+
+    ConsentManagerPatientID:
+      type: object
+      properties:
+        id:
+          type: string
+          format: <user-id>@<ncg-id>
+          example: batman@ncg

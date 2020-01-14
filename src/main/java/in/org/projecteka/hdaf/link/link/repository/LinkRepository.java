@@ -21,39 +21,18 @@ public class LinkRepository {
     public Mono<Void> insertToLinkReference(PatientLinkReferenceResponse patientLinkReferenceResponse, String hipId) {
         String sql = String.format("insert into link_reference (patient_link_reference, hip_id) values ('%s', '%s')",
                 new ObjectMapper().writeValueAsString(patientLinkReferenceResponse), hipId);
-
-        return Mono.create(monoSink -> dbClient.query(sql, handler -> {
-            if (handler.failed())
-                monoSink.error(new Exception("Failed to insert link reference"));
-            else
-                monoSink.success();
-        }));
+        return insert(sql, "Failed to insert link reference");
     }
 
     public Mono<String> getHIPIdFromDiscovery(String transactionId) {
         String sql = String.format("select hip_id from discovery_request where transaction_id='%s';", transactionId);
-
-        return Mono.create(monoSink -> dbClient.query(sql, handler -> {
-            if (handler.failed()) {
-                monoSink.error(new Exception("Failed to get HIP Id from transaction Id"));
-            } else {
-                RowSet<Row> result = handler.result();
-                monoSink.success(result.iterator().next().getString(0));
-            }
-        }));
+        return get(sql, "Failed to get HIP Id from transaction Id");
     }
 
     public Mono<String> getTransactionIdFromLinkReference(String linkRefNumber) {
         String sql = String.format("select patient_link_reference ->> 'transactionId' as transactionId " +
                 "from link_reference where patient_link_reference -> 'link' ->> 'referenceNumber' = '%s';", linkRefNumber);
-        return Mono.create(monoSink -> dbClient.query(sql, handler -> {
-            if (handler.failed()) {
-                monoSink.error(new Exception("Failed to get transaction id from link reference"));
-            } else {
-                RowSet<Row> result = handler.result();
-                monoSink.success(result.iterator().next().getString(0));
-            }
-        }));
+        return get(sql, "Failed to get transaction id from link reference");
     }
 
     @SneakyThrows
@@ -61,19 +40,28 @@ public class LinkRepository {
         String sql = String.format("insert into link (hip_id, consent_manager_user_id, link_reference, patient) " +
                         "values ('%s', '%s', '%s', '%s')",
                 hipId, consentManagerUserId, linkRefNumber, new ObjectMapper().writeValueAsString(patient));
+        return insert(sql, "Failed to insert link");
+    }
+
+    public Mono<String> getExpiryFromLinkReference(String linkRefNumber) {
+        String sql = String.format("select patient_link_reference ->> 'communicationExpiry' as communicationExpiry " +
+                "from link_reference where patient_link_reference -> 'link' ->> 'referenceNumber' = '%s';", linkRefNumber);
+        return get(sql, "Failed to get communicationExpiry from link reference");
+    }
+
+    private Mono<Void> insert(String sql, String s) {
         return Mono.create(monoSink -> dbClient.query(sql, handler -> {
             if (handler.failed())
-                monoSink.error(new Exception("Failed to insert link"));
+                monoSink.error(new Exception(s));
             else
                 monoSink.success();
         }));
     }
 
-    public Mono<String> getExpiryFromLinkReference(String linkRefNumber) {
-        String sql = String.format("select patient_link_reference ->> 'communicationExpiry' as communicationExpiry from link_reference where patient_link_reference -> 'link' ->> 'referenceNumber' = '%s';", linkRefNumber);
+    private Mono<String> get(String sql, String s) {
         return Mono.create(monoSink -> dbClient.query(sql, handler -> {
             if (handler.failed()) {
-                monoSink.error(new Exception("Failed to get communicationExpiry from link reference"));
+                monoSink.error(new Exception(s));
             } else {
                 RowSet<Row> result = handler.result();
                 monoSink.success(result.iterator().next().getString(0));

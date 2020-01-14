@@ -33,7 +33,13 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.stream.Stream;
 
-import static in.org.projecteka.hdaf.link.link.TestBuilders.*;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.identifier;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.provider;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.patientLinkReferenceRequest;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.patientLinkReferenceResponse;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.errorRepresentation;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.patientLinkRequest;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.patientLinkResponse;
 import static java.util.List.of;
 import static org.mockito.Mockito.when;
 

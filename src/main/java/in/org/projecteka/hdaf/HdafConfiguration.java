@@ -61,18 +61,8 @@ public class HdafConfiguration {
     }
 
     @Bean
-    public LinkRepository linkRepository(DbOptions dbOptions) {
-        PgConnectOptions connectOptions = new PgConnectOptions()
-                .setPort(dbOptions.getPort())
-                .setHost(dbOptions.getHost())
-                .setDatabase(dbOptions.getSchema())
-                .setUser(dbOptions.getUser())
-                .setPassword(dbOptions.getPassword());
-
-        PoolOptions poolOptions = new PoolOptions()
-                .setMaxSize(dbOptions.getPoolSize());
-
-        return new LinkRepository(PgPool.pool(connectOptions, poolOptions));
+    public LinkRepository linkRepository(PgPool pgPool) {
+        return new LinkRepository(pgPool);
     }
 
     @Bean

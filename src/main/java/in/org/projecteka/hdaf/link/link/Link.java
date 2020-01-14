@@ -38,38 +38,59 @@ public class Link {
                 patient);
         return linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId())
                 .flatMap(hipId -> providerUrl(hipId)
-                        .flatMap(url -> hipClient.linkPatientCareContext(linkReferenceRequest, url)
-                                .flatMap(linkReferenceResponse -> {
-                                    linkReferenceResponse.setTransactionId(patientLinkReferenceRequest.getTransactionId());
-                                    return linkRepository.insertToLinkReference(
-                                            linkReferenceResponse, hipId)
-                                            .then(Mono.just(
-                                                    PatientLinkReferenceResponse.builder()
-                                                            .transactionId(
-                                                                    linkReferenceResponse.getTransactionId())
-                                                            .link(linkReferenceResponse.getLink()).build()));
-                                })
+                        .flatMap(url -> getPatientLinkReferenceResponse(patientLinkReferenceRequest, linkReferenceRequest, hipId, url)
                         )).switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()));
+    }
+
+    private Mono<PatientLinkReferenceResponse> getPatientLinkReferenceResponse(
+            PatientLinkReferenceRequest patientLinkReferenceRequest,
+            in.org.projecteka.hdaf.link.link.model.hip.PatientLinkReferenceRequest linkReferenceRequest,
+            String hipId,
+            String url) {
+        return hipClient.linkPatientCareContext(linkReferenceRequest, url)
+                .flatMap(linkReferenceResponse -> {
+                    linkReferenceResponse.setTransactionId(patientLinkReferenceRequest.getTransactionId());
+                    return linkRepository.insertToLinkReference(
+                            linkReferenceResponse, hipId)
+                            .then(Mono.just(
+                                    PatientLinkReferenceResponse.builder()
+                                            .transactionId(
+                                                    linkReferenceResponse.getTransactionId())
+                                            .link(linkReferenceResponse.getLink()).build()));
+                });
     }
 
     public Mono<PatientLinkResponse> verifyToken(String linkRefNumber, PatientLinkRequest patientLinkRequest, String patientId) {
         return isOTPExpired(linkRefNumber).flatMap(expiry -> {
             if(!expiry){
-                return linkRepository.getTransactionIdFromLinkReference(linkRefNumber)
-                        .flatMap(linkRepository::getHIPIdFromDiscovery)
-                        .flatMap(hipId -> providerUrl(hipId)
-                                .flatMap(url -> hipClient.validateToken(linkRefNumber, patientLinkRequest, url)
-                                        .flatMap(patientLinkResponse -> linkRepository.insertToLink(
-                                                hipId,
-                                                patientId,
-                                                linkRefNumber,
-                                                patientLinkResponse.getPatient()
-                                        ).then(Mono.just(
-                                                PatientLinkResponse.builder().patient(patientLinkResponse.getPatient()).build()))))
-                                .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider())));
-                }
+                return linkCareContexts(patientLinkRequest, linkRefNumber, patientId);
+            }
                 return Mono.error(ClientError.otpExpired());
         });
+    }
+
+    private Mono<PatientLinkResponse> linkCareContexts(PatientLinkRequest patientLinkRequest, String linkRefNumber, String patientId) {
+        return linkRepository.getTransactionIdFromLinkReference(linkRefNumber)
+                .flatMap(linkRepository::getHIPIdFromDiscovery)
+                .flatMap(hipId -> providerUrl(hipId)
+                        .flatMap(url -> getPatientLinkResponse(patientLinkRequest, linkRefNumber, patientId, hipId, url))
+                        .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider())));
+    }
+
+    private Mono<PatientLinkResponse> getPatientLinkResponse(
+            PatientLinkRequest patientLinkRequest,
+            String linkRefNumber,
+            String patientId,
+            String hipId,
+            String url) {
+        return hipClient.validateToken(linkRefNumber, patientLinkRequest, url)
+                .flatMap(patientLinkResponse -> linkRepository.insertToLink(
+                        hipId,
+                        patientId,
+                        linkRefNumber,
+                        patientLinkResponse.getPatient()
+                ).then(Mono.just(
+                        PatientLinkResponse.builder().patient(patientLinkResponse.getPatient()).build())));
     }
 
     private Mono<String> providerUrl(String providerId) {

@@ -9,8 +9,8 @@ import org.springframework.http.HttpStatus;
 @Getter
 public class ClientError extends Throwable {
 
-    private HttpStatus httpStatus;
-    private ErrorRepresentation error;
+    private final HttpStatus httpStatus;
+    private final ErrorRepresentation error;
 
     public ClientError(HttpStatus httpStatus, ErrorRepresentation errorRepresentation) {
         this.httpStatus = httpStatus;
@@ -23,5 +23,13 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(
                         ErrorCode.UnableToConnectToProvider,
                         "Cannot link at the moment, please try later.")));
+    }
+
+    public static ClientError otpExpired() {
+        return new ClientError(
+                HttpStatus.UNAUTHORIZED,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.OtpExpired,
+                        "OTP Expired, please try again")));
     }
 }

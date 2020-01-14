@@ -10,6 +10,7 @@ import in.org.projecteka.hdaf.link.HIPClient;
 import in.org.projecteka.hdaf.link.discovery.Discovery;
 import in.org.projecteka.hdaf.link.discovery.repository.DiscoveryRepository;
 import in.org.projecteka.hdaf.link.link.Link;
+import in.org.projecteka.hdaf.link.link.repository.LinkRepository;
 import in.org.projecteka.hdaf.user.UserRepository;
 import in.org.projecteka.hdaf.user.UserService;
 import io.vertx.pgclient.PgConnectOptions;
@@ -60,6 +61,11 @@ public class HdafConfiguration {
     }
 
     @Bean
+    public LinkRepository linkRepository(PgPool pgPool) {
+        return new LinkRepository(pgPool);
+    }
+
+    @Bean
     public UserService userService(UserRepository userRepository) {
         return new UserService(userRepository);
     }
@@ -70,8 +76,12 @@ public class HdafConfiguration {
     }
 
     @Bean
-    public Link link(WebClient.Builder builder, ClientRegistryProperties clientRegistryProperties) {
-        return new Link(new HIPClient(builder), new ClientRegistryClient(builder, clientRegistryProperties));
+    public Link link(WebClient.Builder builder,
+                     ClientRegistryProperties clientRegistryProperties,
+                     LinkRepository linkRepository) {
+        return new Link(new HIPClient(builder),
+                        new ClientRegistryClient(builder, clientRegistryProperties),
+                        linkRepository);
     }
 
     @Bean

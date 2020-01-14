@@ -21,12 +21,12 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 
-import static in.projecteka.consentmanager.link.TestBuilders.address;
-import static in.projecteka.consentmanager.link.TestBuilders.coding;
-import static in.projecteka.consentmanager.link.TestBuilders.identifier;
-import static in.projecteka.consentmanager.link.TestBuilders.provider;
-import static in.projecteka.consentmanager.link.TestBuilders.telecom;
-import static in.projecteka.consentmanager.link.TestBuilders.type;
+import static in.projecteka.consentmanager.link.clients.TestBuilders.address;
+import static in.projecteka.consentmanager.link.clients.TestBuilders.coding;
+import static in.projecteka.consentmanager.link.clients.TestBuilders.identifier;
+import static in.projecteka.consentmanager.link.clients.TestBuilders.provider;
+import static in.projecteka.consentmanager.link.clients.TestBuilders.telecom;
+import static in.projecteka.consentmanager.link.clients.TestBuilders.type;
 import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;

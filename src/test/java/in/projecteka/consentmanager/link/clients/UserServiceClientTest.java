@@ -20,7 +20,7 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 
-import static in.projecteka.consentmanager.link.TestBuilders.user;
+import static in.projecteka.consentmanager.link.clients.TestBuilders.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 

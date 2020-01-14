@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.link.clients;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import in.projecteka.consentmanager.clients.HipServiceClient;
+import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
-import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.Patient;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -22,19 +22,15 @@ import reactor.test.StepVerifier;
 import java.io.IOException;
 import java.util.List;
 
-import static in.projecteka.consentmanager.link.TestBuilders.careContext;
-import static in.projecteka.consentmanager.link.TestBuilders.patientInRequest;
-import static in.projecteka.consentmanager.link.TestBuilders.patientInResponse;
-import static in.projecteka.consentmanager.link.TestBuilders.patientRequest;
-import static in.projecteka.consentmanager.link.TestBuilders.patientResponse;
+import static in.projecteka.consentmanager.link.clients.TestBuilders.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 
-public class HipServiceClientTest {
+public class DiscoveryServiceClientTest {
     @Captor
     private ArgumentCaptor<ClientRequest> captor;
-    private HipServiceClient hipServiceClient;
+    private DiscoveryServiceClient discoveryServiceClient;
     @Mock
     private ExchangeFunction exchangeFunction;
 
@@ -43,7 +39,7 @@ public class HipServiceClientTest {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder()
                 .exchangeFunction(exchangeFunction);
-        hipServiceClient = new HipServiceClient(webClientBuilder);
+        discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder);
     }
 
 
@@ -57,7 +53,7 @@ public class HipServiceClientTest {
                 .body(patientResponseBody).build()));
 
         PatientRequest patientRequest = patientRequest().patient(patientInRequest().build()).transactionId("transaction-id-1").build();
-        StepVerifier.create(hipServiceClient.patientFor(patientRequest, "http://hip-url/"))
+        StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/"))
                 .assertNext(response -> {
                     assertThat(response.getPatient().getDisplay()).isEqualTo(expectedPatient.getDisplay());
                     assertThat(response.getPatient().getReferenceNumber()).isEqualTo(expectedPatient.getReferenceNumber());

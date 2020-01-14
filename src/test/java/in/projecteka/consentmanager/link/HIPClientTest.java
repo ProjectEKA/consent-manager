@@ -13,6 +13,11 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 
+import static in.projecteka.consentmanager.link.TestBuilders.errorRepresentation;
+import static in.projecteka.consentmanager.link.TestBuilders.patientLinkReferenceRequestForHIP;
+import static in.projecteka.consentmanager.link.TestBuilders.patientLinkReferenceResponse;
+import static in.projecteka.consentmanager.link.TestBuilders.patientLinkRequest;
+import static in.projecteka.consentmanager.link.TestBuilders.patientLinkResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class HIPClientTest {
@@ -30,7 +35,7 @@ public class HIPClientTest {
 
     @Test
     public void shouldCreateLinkReference() throws IOException, InterruptedException {
-        var linkReference = TestBuilders.patientLinkReferenceResponse().build();
+        var linkReference = patientLinkReferenceResponse().build();
         var linkReferenceJson = new ObjectMapper().writeValueAsString(linkReference);
 
         mockWebServer.enqueue(
@@ -39,7 +44,7 @@ public class HIPClientTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(linkReferenceJson));
 
-        PatientLinkReferenceRequest request = TestBuilders.patientLinkReferenceRequestForHIP().build();
+        PatientLinkReferenceRequest request = patientLinkReferenceRequestForHIP().build();
         StepVerifier.create(hipClient.linkPatientCareContext(request, baseUrl))
                 .assertNext(
                         patientLinkReferenceResponse -> {
@@ -65,7 +70,7 @@ public class HIPClientTest {
 
     @Test
     public void shouldReturnPatientNotFoundError() throws IOException, InterruptedException {
-        var errorResponse = TestBuilders.errorRepresentation().build();
+        var errorResponse = errorRepresentation().build();
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
 
         mockWebServer.enqueue(
@@ -74,7 +79,7 @@ public class HIPClientTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(errorResponseJson));
 
-        PatientLinkReferenceRequest request = TestBuilders.patientLinkReferenceRequestForHIP().build();
+        PatientLinkReferenceRequest request = patientLinkReferenceRequestForHIP().build();
         StepVerifier.create(hipClient.linkPatientCareContext(request, baseUrl))
                 .expectErrorSatisfies(
                         errorRes -> {
@@ -94,7 +99,7 @@ public class HIPClientTest {
 
     @Test
     public void shouldLinkCareContexts() throws IOException, InterruptedException {
-        var linkRes = TestBuilders.patientLinkResponse().build();
+        var linkRes = patientLinkResponse().build();
         var linkResJson = new ObjectMapper().writeValueAsString(linkRes);
 
         mockWebServer.enqueue(
@@ -103,7 +108,7 @@ public class HIPClientTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(linkResJson));
 
-        PatientLinkRequest request = TestBuilders.patientLinkRequest().build();
+        PatientLinkRequest request = patientLinkRequest().build();
         String linkRefNumber = "test-ref-number";
         StepVerifier.create(hipClient.validateToken(linkRefNumber, request, baseUrl))
                 .assertNext(
@@ -134,7 +139,7 @@ public class HIPClientTest {
 
     @Test
     public void shouldReturnOTPInvalidError() throws IOException, InterruptedException {
-        var errorResponse = TestBuilders.errorRepresentation().build();
+        var errorResponse = errorRepresentation().build();
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
         mockWebServer.enqueue(
                 new MockResponse()
@@ -142,7 +147,7 @@ public class HIPClientTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(errorResponseJson));
 
-        PatientLinkRequest request = TestBuilders.patientLinkRequest().build();
+        PatientLinkRequest request = patientLinkRequest().build();
         String linkRefNumber = "test-ref-number";
         StepVerifier.create(hipClient.validateToken(linkRefNumber, request, baseUrl))
                 .expectErrorSatisfies(

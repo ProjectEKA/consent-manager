@@ -4,16 +4,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Getter
 @AllArgsConstructor
 @Builder
 @NoArgsConstructor
-@Setter
+@Data
 public class CareContextRepresentation {
     private String referenceNumber;
     private String display;

@@ -5,11 +5,11 @@ import in.projecteka.consentmanager.link.discovery.model.patient.response.Patien
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-public class HipServiceClient {
+public class DiscoveryServiceClient {
 
     private final WebClient.Builder webClientBuilder;
 
-    public HipServiceClient(
+    public DiscoveryServiceClient(
             WebClient.Builder webClientBuilder) {
         this.webClientBuilder = webClientBuilder;
     }

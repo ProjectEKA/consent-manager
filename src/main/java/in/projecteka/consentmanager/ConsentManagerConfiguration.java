@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager;
 
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
-import in.projecteka.consentmanager.clients.HipServiceClient;
+import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.link.discovery.repository.DiscoveryRepositor
 import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.user.UserRepository;
 import in.projecteka.consentmanager.user.UserService;
+import in.projecteka.consentmanager.link.link.repository.LinkRepository;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
@@ -34,13 +35,13 @@ public class ConsentManagerConfiguration {
                                DiscoveryRepository discoveryRepository) {
         ClientRegistryClient clientRegistryClient = new ClientRegistryClient(builder, clientRegistryProperties);
         UserServiceClient userServiceClient = new UserServiceClient(builder, userServiceProperties);
-        HipServiceClient hipServiceClient = new HipServiceClient(builder);
+        DiscoveryServiceClient discoveryServiceClient = new DiscoveryServiceClient(builder);
 
-        return new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
+        return new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
     }
 
     @Bean
-    public DiscoveryRepository discoveryRepository(DbOptions dbOptions) {
+    public PgPool pgPool(DbOptions dbOptions) {
         PgConnectOptions connectOptions = new PgConnectOptions()
                 .setPort(dbOptions.getPort())
                 .setHost(dbOptions.getHost())
@@ -51,7 +52,17 @@ public class ConsentManagerConfiguration {
         PoolOptions poolOptions = new PoolOptions()
                 .setMaxSize(dbOptions.getPoolSize());
 
-        return new DiscoveryRepository(PgPool.pool(connectOptions, poolOptions));
+        return PgPool.pool(connectOptions, poolOptions);
+    }
+
+    @Bean
+    public DiscoveryRepository discoveryRepository(PgPool pgPool) {
+        return new DiscoveryRepository(pgPool);
+    }
+
+    @Bean
+    public LinkRepository linkRepository(PgPool pgPool) {
+        return new LinkRepository(pgPool);
     }
 
     @Bean
@@ -65,8 +76,12 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public Link link(WebClient.Builder builder, ClientRegistryProperties clientRegistryProperties) {
-        return new Link(new HIPClient(builder), new ClientRegistryClient(builder, clientRegistryProperties));
+    public Link link(WebClient.Builder builder,
+                     ClientRegistryProperties clientRegistryProperties,
+                     LinkRepository linkRepository) {
+        return new Link(new HIPClient(builder),
+                        new ClientRegistryClient(builder, clientRegistryProperties),
+                        linkRepository);
     }
 
     @Bean

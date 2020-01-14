@@ -1,27 +1,27 @@
 package in.projecteka.consentmanager.link.discovery;
 
-import in.projecteka.consentmanager.link.TestBuilders;
 import in.projecteka.consentmanager.link.discovery.model.Address;
 import in.projecteka.consentmanager.link.discovery.model.Coding;
 import in.projecteka.consentmanager.link.discovery.model.Identifier;
 import in.projecteka.consentmanager.link.discovery.model.Telecom;
 import in.projecteka.consentmanager.link.discovery.model.Type;
-import org.junit.jupiter.api.Test;
 
+import org.junit.jupiter.api.Test;
 import java.util.List;
 
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TransformerTest {
 
     @Test
     void shouldTransformProviderToProviderRepresentation() {
-        Identifier identifier = TestBuilders.identifier().use(Identifier.IdentifierType.OFFICIAL.toString()).build();
-        Address address = TestBuilders.address().build();
-        Telecom telecom = TestBuilders.telecom().build();
-        Coding coding = TestBuilders.coding().build();
-        Type type = TestBuilders.type().coding(List.of(coding)).build();
-        var provider = TestBuilders.provider()
+        Identifier identifier = identifier().use(Identifier.IdentifierType.OFFICIAL.toString()).build();
+        Address address = address().build();
+        Telecom telecom = telecom().build();
+        Coding coding = coding().build();
+        Type type = type().coding(List.of(coding)).build();
+        var provider = provider()
                 .addresses(List.of(address))
                 .telecoms(List.of(telecom))
                 .types(List.of(type))
@@ -39,9 +39,9 @@ class TransformerTest {
 
     @Test
     void pickWorkTelephoneWhenAvailable() {
-        Telecom work = TestBuilders.telecom().use("work").build();
-        Telecom another = TestBuilders.telecom().build();
-        var provider = TestBuilders.provider()
+        Telecom work = telecom().use("work").build();
+        Telecom another = telecom().build();
+        var provider = provider()
                 .telecoms(List.of(another,work))
                 .build();
 
@@ -52,9 +52,9 @@ class TransformerTest {
 
     @Test
     void pickFirstWorkTelephoneWhenMultipleAvailable() {
-        Telecom work = TestBuilders.telecom().use("work").build();
-        Telecom another = TestBuilders.telecom().use("work").build();
-        var provider = TestBuilders.provider()
+        Telecom work = telecom().use("work").build();
+        Telecom another = telecom().use("work").build();
+        var provider = provider()
                 .telecoms(List.of(another,work))
                 .build();
 
@@ -65,7 +65,7 @@ class TransformerTest {
 
     @Test
     void returnsEmptyTelephoneWhenSourceIsEmpty() {
-        var provider = TestBuilders.provider()
+        var provider = provider()
                 .telecoms(List.of())
                 .build();
 
@@ -76,9 +76,9 @@ class TransformerTest {
 
     @Test
     void pickWorkCityWhenAvailable() {
-        Address work = TestBuilders.address().use("work").build();
-        Address another = TestBuilders.address().build();
-        var provider = TestBuilders.provider()
+        Address work = address().use("work").build();
+        Address another = address().build();
+        var provider = provider()
                 .addresses(List.of(another,work))
                 .build();
 
@@ -89,9 +89,9 @@ class TransformerTest {
 
     @Test
     void pickFirstWorkCityWhenMultipleAvailable() {
-        Address work = TestBuilders.address().use("work").build();
-        Address another = TestBuilders.address().use("Work").build();
-        var provider = TestBuilders.provider()
+        Address work = address().use("work").build();
+        Address another = address().use("Work").build();
+        var provider = provider()
                 .addresses(List.of(another,work))
                 .build();
 
@@ -102,7 +102,7 @@ class TransformerTest {
 
     @Test
     void returnsEmptyCityWhenSourceIsEmpty() {
-        var provider = TestBuilders.provider()
+        var provider = provider()
                 .addresses(List.of())
                 .build();
 
@@ -113,7 +113,7 @@ class TransformerTest {
 
     @Test
     void returnsEmptyIdentifierWhenOfficialIsUnavailable() {
-        var provider = TestBuilders.provider()
+        var provider = provider()
                 .identifiers(List.of())
                 .build();
 
@@ -124,11 +124,11 @@ class TransformerTest {
 
     @Test
     void pickWorkCityAndWorkTelephoneWhenAvailable() {
-        Address address = TestBuilders.address().use("work").build();
-        Address anotherAddress = TestBuilders.address().build();
-        Telecom telecom = TestBuilders.telecom().use("work").build();
-        Telecom anotherTelecom = TestBuilders.telecom().build();
-        var provider = TestBuilders.provider()
+        Address address = address().use("work").build();
+        Address anotherAddress = address().build();
+        Telecom telecom = telecom().use("work").build();
+        Telecom anotherTelecom = telecom().build();
+        var provider = provider()
                 .addresses(List.of(address, anotherAddress))
                 .telecoms(List.of(telecom, anotherTelecom))
                 .build();

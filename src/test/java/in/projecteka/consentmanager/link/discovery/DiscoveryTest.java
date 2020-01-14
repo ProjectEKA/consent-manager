@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.link.discovery;
 
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
-import in.projecteka.consentmanager.clients.HipServiceClient;
+import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.link.discovery.model.Address;
 import in.projecteka.consentmanager.link.discovery.model.Phone;
@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
 import in.projecteka.consentmanager.link.discovery.repository.DiscoveryRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -23,17 +24,17 @@ import reactor.test.StepVerifier;
 
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.link.TestBuilders.address;
-import static in.projecteka.consentmanager.link.TestBuilders.discoveryResponse;
-import static in.projecteka.consentmanager.link.TestBuilders.identifier;
-import static in.projecteka.consentmanager.link.TestBuilders.patientIdentifier;
-import static in.projecteka.consentmanager.link.TestBuilders.patientInResponse;
-import static in.projecteka.consentmanager.link.TestBuilders.patientRequest;
-import static in.projecteka.consentmanager.link.TestBuilders.patientResponse;
-import static in.projecteka.consentmanager.link.TestBuilders.provider;
-import static in.projecteka.consentmanager.link.TestBuilders.providerIdentifier;
-import static in.projecteka.consentmanager.link.TestBuilders.telecom;
-import static in.projecteka.consentmanager.link.TestBuilders.user;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResponse;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.identifier;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientIdentifier;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientInResponse;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientRequest;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientResponse;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.provider;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.providerIdentifier;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.telecom;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.user;
 import static java.util.List.of;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -49,7 +50,7 @@ public class DiscoveryTest {
     UserServiceClient userServiceClient;
 
     @Mock
-    HipServiceClient hipServiceClient;
+    DiscoveryServiceClient discoveryServiceClient;
 
     @Mock
     DiscoveryRepository discoveryRepository;
@@ -61,7 +62,7 @@ public class DiscoveryTest {
 
     @Test
     public void returnProvidersWithOfficial() {
-        var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
+        var discovery = new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var identifier = identifier().use(in.projecteka.consentmanager.link.discovery.model.Identifier.IdentifierType.OFFICIAL.toString()).build();
@@ -83,7 +84,7 @@ public class DiscoveryTest {
         String providerId = "1";
         String transactionId = "transaction-id";
         String patientId = "1";
-        var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
+        var discovery = new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
         in.projecteka.consentmanager.link.discovery.model.patient.response.Patient patientInResponse = patientInResponse()
@@ -117,7 +118,7 @@ public class DiscoveryTest {
 
         when(clientRegistryClient.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
         when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
-        when(hipServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl))).thenReturn(Mono.just(patientResponse));
+        when(discoveryServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl))).thenReturn(Mono.just(patientResponse));
         when(discoveryRepository.insert(providerId, patientId, transactionId)).thenReturn(Mono.empty());
 
         StepVerifier.create(discovery.patientFor(providerId, patientId, transactionId))
@@ -129,7 +130,7 @@ public class DiscoveryTest {
     public void shouldGetInvalidHipErrorWhenIdentifierIsNotOfficial() {
         String providerId = "1";
         String userName = "1";
-        var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
+        var discovery = new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
         Phone phone = Phone.builder().build();
@@ -151,7 +152,7 @@ public class DiscoveryTest {
 
     @Test
     public void returnEmptyProvidersWhenOfficialIdentifierIsUnavailable() {
-        var discovery = new Discovery(clientRegistryClient, userServiceClient, hipServiceClient, discoveryRepository);
+        var discovery = new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var identifier = identifier().build();

@@ -244,9 +244,19 @@ paths:
               $ref: '#/components/schemas/ConsentRequest'
       responses:
         '200':
-          description: Request created in the consent manager
+          description: Successful creation of consent request
           content:
             application/json:
+              schema:
+                type: object
+                properties:
+                  consentRequest:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+            application/xml:
               schema:
                 type: object
                 properties:

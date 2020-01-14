@@ -41,7 +41,7 @@ public class HdafConfiguration {
     }
 
     @Bean
-    public DiscoveryRepository discoveryRepository(DbOptions dbOptions) {
+    public PgPool pgPool(DbOptions dbOptions) {
         PgConnectOptions connectOptions = new PgConnectOptions()
                 .setPort(dbOptions.getPort())
                 .setHost(dbOptions.getHost())
@@ -52,7 +52,12 @@ public class HdafConfiguration {
         PoolOptions poolOptions = new PoolOptions()
                 .setMaxSize(dbOptions.getPoolSize());
 
-        return new DiscoveryRepository(PgPool.pool(connectOptions, poolOptions));
+        return PgPool.pool(connectOptions, poolOptions);
+    }
+
+    @Bean
+    public DiscoveryRepository discoveryRepository(PgPool pgPool) {
+        return new DiscoveryRepository(pgPool);
     }
 
     @Bean

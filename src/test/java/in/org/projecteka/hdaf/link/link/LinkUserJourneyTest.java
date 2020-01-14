@@ -33,7 +33,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.stream.Stream;
 
-import static in.org.projecteka.hdaf.link.TestBuilders.*;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.*;
 import static java.util.List.of;
 import static org.mockito.Mockito.when;
 

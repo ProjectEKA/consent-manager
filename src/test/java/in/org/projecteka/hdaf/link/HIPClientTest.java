@@ -13,7 +13,11 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 
-import static in.org.projecteka.hdaf.link.TestBuilders.*;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.errorRepresentation;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.patientLinkReferenceRequestForHIP;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.patientLinkReferenceResponse;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.patientLinkRequest;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.patientLinkResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class HIPClientTest {

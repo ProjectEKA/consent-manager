@@ -18,7 +18,7 @@ import reactor.test.StepVerifier;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
-import static in.org.projecteka.hdaf.link.TestBuilders.*;
+import static in.org.projecteka.hdaf.link.link.TestBuilders.*;
 import static in.org.projecteka.hdaf.link.link.Transformer.toHIPPatient;
 import static java.util.Arrays.asList;
 import static java.util.List.of;

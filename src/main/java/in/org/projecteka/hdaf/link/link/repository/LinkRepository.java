@@ -49,19 +49,19 @@ public class LinkRepository {
         return get(sql, "Failed to get communicationExpiry from link reference");
     }
 
-    private Mono<Void> insert(String sql, String s) {
+    private Mono<Void> insert(String sql, String msg) {
         return Mono.create(monoSink -> dbClient.query(sql, handler -> {
             if (handler.failed())
-                monoSink.error(new Exception(s));
+                monoSink.error(new Exception(msg));
             else
                 monoSink.success();
         }));
     }
 
-    private Mono<String> get(String sql, String s) {
+    private Mono<String> get(String sql, String msg) {
         return Mono.create(monoSink -> dbClient.query(sql, handler -> {
             if (handler.failed()) {
-                monoSink.error(new Exception(s));
+                monoSink.error(new Exception(msg));
             } else {
                 RowSet<Row> result = handler.result();
                 monoSink.success(result.iterator().next().getString(0));

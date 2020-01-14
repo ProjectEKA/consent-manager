@@ -20,10 +20,18 @@ import org.mockito.Mock;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
 import java.util.UUID;
-
-import static in.org.projecteka.hdaf.link.TestBuilders.*;
+import static in.org.projecteka.hdaf.link.discovery.TestBuilders.address;
+import static in.org.projecteka.hdaf.link.discovery.TestBuilders.discoveryResponse;
+import static in.org.projecteka.hdaf.link.discovery.TestBuilders.identifier;
+import static in.org.projecteka.hdaf.link.discovery.TestBuilders.patientIdentifier;
+import static in.org.projecteka.hdaf.link.discovery.TestBuilders.patientInResponse;
+import static in.org.projecteka.hdaf.link.discovery.TestBuilders.patientRequest;
+import static in.org.projecteka.hdaf.link.discovery.TestBuilders.patientResponse;
+import static in.org.projecteka.hdaf.link.discovery.TestBuilders.provider;
+import static in.org.projecteka.hdaf.link.discovery.TestBuilders.providerIdentifier;
+import static in.org.projecteka.hdaf.link.discovery.TestBuilders.telecom;
+import static in.org.projecteka.hdaf.link.discovery.TestBuilders.user;
 import static java.util.List.of;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;

@@ -22,7 +22,11 @@ import reactor.test.StepVerifier;
 import java.io.IOException;
 import java.util.List;
 
-import static in.org.projecteka.hdaf.link.TestBuilders.*;
+import static in.org.projecteka.hdaf.link.clients.TestBuilders.careContext;
+import static in.org.projecteka.hdaf.link.clients.TestBuilders.patientInRequest;
+import static in.org.projecteka.hdaf.link.clients.TestBuilders.patientInResponse;
+import static in.org.projecteka.hdaf.link.clients.TestBuilders.patientRequest;
+import static in.org.projecteka.hdaf.link.clients.TestBuilders.patientResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 

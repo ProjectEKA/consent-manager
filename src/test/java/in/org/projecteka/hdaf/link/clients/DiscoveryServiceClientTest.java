@@ -1,7 +1,7 @@
 package in.org.projecteka.hdaf.link.clients;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import in.org.projecteka.hdaf.clients.HipServiceClient;
+import in.org.projecteka.hdaf.clients.DiscoveryServiceClient;
 import in.org.projecteka.hdaf.link.discovery.model.patient.request.PatientRequest;
 import in.org.projecteka.hdaf.link.discovery.model.patient.response.PatientResponse;
 import in.org.projecteka.hdaf.link.discovery.model.patient.response.Patient;
@@ -31,10 +31,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 
-public class HipServiceClientTest {
+public class DiscoveryServiceClientTest {
     @Captor
     private ArgumentCaptor<ClientRequest> captor;
-    private HipServiceClient hipServiceClient;
+    private DiscoveryServiceClient discoveryServiceClient;
     @Mock
     private ExchangeFunction exchangeFunction;
 
@@ -43,7 +43,7 @@ public class HipServiceClientTest {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder()
                 .exchangeFunction(exchangeFunction);
-        hipServiceClient = new HipServiceClient(webClientBuilder);
+        discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder);
     }
 
 
@@ -57,7 +57,7 @@ public class HipServiceClientTest {
                 .body(patientResponseBody).build()));
 
         PatientRequest patientRequest = patientRequest().patient(patientInRequest().build()).transactionId("transaction-id-1").build();
-        StepVerifier.create(hipServiceClient.patientFor(patientRequest, "http://hip-url/"))
+        StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/"))
                 .assertNext(response -> {
                     assertThat(response.getPatient().getDisplay()).isEqualTo(expectedPatient.getDisplay());
                     assertThat(response.getPatient().getReferenceNumber()).isEqualTo(expectedPatient.getReferenceNumber());

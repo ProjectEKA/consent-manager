@@ -1,7 +1,7 @@
 package in.org.projecteka.hdaf.link.discovery;
 
 import in.org.projecteka.hdaf.clients.ClientRegistryClient;
-import in.org.projecteka.hdaf.clients.HipServiceClient;
+import in.org.projecteka.hdaf.clients.DiscoveryServiceClient;
 import in.org.projecteka.hdaf.clients.UserServiceClient;
 import in.org.projecteka.hdaf.link.discovery.model.Identifier;
 import in.org.projecteka.hdaf.link.discovery.model.Provider;
@@ -22,17 +22,17 @@ public class Discovery {
     private static final String MOBILE = "MOBILE";
     private final ClientRegistryClient clientRegistryClient;
     private UserServiceClient userServiceClient;
-    private HipServiceClient hipServiceClient;
+    private DiscoveryServiceClient discoveryServiceClient;
     private DiscoveryRepository discoveryRepository;
 
     public Discovery(
             ClientRegistryClient clientRegistryClient,
             UserServiceClient userServiceClient,
-            HipServiceClient hipServiceClient,
+            DiscoveryServiceClient discoveryServiceClient,
             DiscoveryRepository discoveryRepository) {
         this.clientRegistryClient = clientRegistryClient;
         this.userServiceClient = userServiceClient;
-        this.hipServiceClient = hipServiceClient;
+        this.discoveryServiceClient = discoveryServiceClient;
         this.discoveryRepository = discoveryRepository;
     }
 
@@ -82,7 +82,7 @@ public class Discovery {
                 .build();
 
         PatientRequest patientRequest = PatientRequest.builder().patient(patient).transactionId(transactionId).build();
-        return hipServiceClient.patientFor(patientRequest, url);
+        return discoveryServiceClient.patientFor(patientRequest, url);
     }
 
     private Mono<DiscoveryResponse> insertDiscoveryRequest(PatientResponse patientResponse, String providerId, String patientId, String transactionId) {

@@ -1,6 +1,6 @@
 server:
   port: 8000
-hdaf:
+consentmanager:
   clientregistry:
     XAuthToken: ${Auth_Token}
     clientId: 6

@@ -1,4 +1,4 @@
-# HDAF
+# Consent Manager
 
 The following diagrams use the [C4 Model](http://c4model.com), check the link
 for further details on the level of diagrams.

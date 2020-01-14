@@ -1,6 +1,6 @@
 server:
   port: 8000
-hdaf:
+consentmanager:
   clientregistry:
     XAuthToken: dummy-auth-token
     clientId: dummy-client-id

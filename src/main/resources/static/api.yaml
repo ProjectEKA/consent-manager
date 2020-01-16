@@ -771,6 +771,13 @@ components:
       properties:
         consent:
           type: object
+          required:
+            - purpose
+            - patient
+            - hiu
+            - requester
+            - hitypes
+            - permission
           properties:
             purpose:
               type: object
@@ -791,7 +798,6 @@ components:
                 - $ref: '#/components/schemas/ConsentManagerPatientID'
             hip:
               type: object
-              required: false
               allOf:
                 - $ref: '#/components/schemas/OrganizationRepresentation'
                 - xml:

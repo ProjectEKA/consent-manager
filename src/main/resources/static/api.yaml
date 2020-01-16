@@ -794,8 +794,11 @@ components:
                   type: string
                   format: uri
             patient:
+              type: object
               allOf:
                 - $ref: '#/components/schemas/ConsentManagerPatientID'
+                - xml:
+                    name: patient
             hip:
               type: object
               allOf:
@@ -821,5 +824,7 @@ components:
       properties:
         id:
           type: string
+          xml:
+            attribute: true
           format: <user-id>@<ncg-id>
           example: batman@ncg

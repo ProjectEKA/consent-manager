@@ -774,6 +774,9 @@ components:
           properties:
             purpose:
               type: object
+              required:
+                - text
+                - code
               properties:
                 text:
                   type: string
@@ -783,7 +786,6 @@ components:
                 refUri:
                   type: string
                   format: uri
-                  required: false
             patient:
               allOf:
                 - $ref: '#/components/schemas/ConsentManagerPatientID'

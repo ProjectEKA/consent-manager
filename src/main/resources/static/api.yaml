@@ -779,14 +779,17 @@ components:
                   type: string
                 code:
                   type: string
+                  description: From the fixed set, documented at refUri
                 refUri:
                   type: string
-                  ormat: uri
+                  format: uri
+                  required: false
             patient:
               allOf:
                 - $ref: '#/components/schemas/ConsentManagerPatientID'
             hip:
               type: object
+              required: false
               allOf:
                 - $ref: '#/components/schemas/OrganizationRepresentation'
                 - xml:
@@ -804,21 +807,7 @@ components:
               items:
                 $ref: '#/components/schemas/HITypeEnum'
             permission:
-              type: object
-              properties:
-                dateRange:
-                  type: object
-                  properties:
-                    from:
-                      type: string
-                      format: datetime
-                    to:
-                      type: string
-                      format: datetime
-                dataExpiryAt:
-                  type: string
-                  format: date-time
-
+                $ref: '#/components/schemas/Permission'
     ConsentManagerPatientID:
       type: object
       properties:

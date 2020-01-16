@@ -250,12 +250,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  consentRequest:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
+                  id:
+                    type: string
+                    format: uuid
             application/xml:
               schema:
                 type: object

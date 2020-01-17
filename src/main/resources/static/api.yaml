@@ -14,7 +14,7 @@ servers:
     description: Dev
 
 tags:
-  - name: discover
+  - name: discovery
   - name: consent
 
 paths:
@@ -22,7 +22,7 @@ paths:
   /patients/discover:
     post:
       tags:
-        - discover
+        - discovery
       summary: Discover patient
       description: >
         Return only one patient record with (potentially masked) associated care contexts
@@ -439,6 +439,7 @@ components:
           properties:
             id:
               type: string
+              description: Identifier of the health information provider where patient record needs to be looked up.
     PatientLinkReferenceRequest:
       type: object
       properties:

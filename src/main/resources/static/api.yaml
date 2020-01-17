@@ -437,8 +437,8 @@ components:
         hip:
           type: object
           properties:
-            id: string
-            description: Identifier of the health information provider where patient record needs to be looked up.
+            id:
+              type: string
     PatientLinkReferenceRequest:
       type: object
       properties:
@@ -815,7 +815,7 @@ components:
               items:
                 $ref: '#/components/schemas/HITypeEnum'
             permission:
-                $ref: '#/components/schemas/Permission'
+              $ref: '#/components/schemas/Permission'
     ConsentManagerPatientID:
       type: object
       properties:

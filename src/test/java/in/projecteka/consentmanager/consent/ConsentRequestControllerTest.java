@@ -23,10 +23,10 @@ import static org.mockito.Mockito.when;
 @Import(ConsentRequestRepository.class)
 public class ConsentRequestControllerTest {
     @Autowired
-    WebTestClient webTestClient;
+    private WebTestClient webTestClient;
 
     @MockBean
-    ConsentRequestRepository repository;
+    private ConsentRequestRepository repository;
 
 
 
@@ -81,7 +81,7 @@ public class ConsentRequestControllerTest {
                 "  }\n" +
                 "}";
         webTestClient.post()
-                .uri("/consent-request")
+                .uri("/consent-requests")
                 .accept(MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "somevalue")

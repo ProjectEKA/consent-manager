@@ -19,9 +19,9 @@ import java.util.UUID;
 public class ConsentRequestController {
 
     @Autowired
-    ConsentRequestRepository requestRepository;
+    private ConsentRequestRepository requestRepository;
 
-    @PostMapping(value = "/consent-request")
+    @PostMapping(value = "/consent-requests")
     public Mono<ConsentRequestResponse> askForConsent(
             @RequestHeader(value = "Authorization") String authorization,
             @Valid @RequestBody Mono<ConsentRequest> request) {

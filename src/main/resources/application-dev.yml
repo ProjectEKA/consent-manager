@@ -1,0 +1,16 @@
+server:
+  port: 9000
+consentmanager:
+  clientregistry:
+    XAuthToken: 123ChangeThis
+    clientId: 6
+    url: http://localhost:8080/api/1.0
+  userservice:
+    url: http://localhost:9000
+  db:
+    host: localhost
+    port: 5432
+    schema: consent_manager
+    user: postgres
+    password: postgres
+    poolSize: 5

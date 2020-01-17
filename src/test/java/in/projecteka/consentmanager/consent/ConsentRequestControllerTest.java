@@ -1,6 +1,5 @@
-package in.projecteka.consentmanager.link.consent;
+package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.consent.ConsentRequestController;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestResponse;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import org.hamcrest.Matchers;

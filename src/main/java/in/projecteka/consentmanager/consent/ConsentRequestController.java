@@ -22,7 +22,7 @@ public class ConsentRequestController {
     private ConsentRequestRepository requestRepository;
 
     @PostMapping(value = "/consent-requests")
-    public Mono<ConsentRequestResponse> askForConsent(
+    public Mono<ConsentRequestResponse> requestConsent(
             @RequestHeader(value = "Authorization") String authorization,
             @Valid @RequestBody Mono<ConsentRequest> request) {
 

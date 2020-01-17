@@ -35,6 +35,7 @@ public class ConsentRequestControllerTest {
 
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
 
+
         String body = "" +
                 "{\n" +
                 "  \"consent\": {\n" +

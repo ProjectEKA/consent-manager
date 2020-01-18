@@ -1,5 +1,7 @@
 package in.projecteka.consentmanager.link.discovery;
 
+import in.projecteka.consentmanager.clients.model.Provider;
+import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.link.discovery.model.*;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;

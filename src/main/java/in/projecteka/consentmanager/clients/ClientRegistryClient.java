@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
-import in.projecteka.consentmanager.link.discovery.model.Provider;
+import in.projecteka.consentmanager.clients.model.Provider;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

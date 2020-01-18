@@ -1,7 +1,11 @@
-package in.projecteka.consentmanager.link.discovery.model;
+package in.projecteka.consentmanager.clients.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import in.projecteka.consentmanager.link.discovery.model.Address;
+import in.projecteka.consentmanager.link.discovery.model.Identifier;
+import in.projecteka.consentmanager.link.discovery.model.Telecom;
+import in.projecteka.consentmanager.link.discovery.model.Type;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

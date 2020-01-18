@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.link.discovery;
 import in.projecteka.consentmanager.link.discovery.model.Address;
 import in.projecteka.consentmanager.link.discovery.model.Coding;
 import in.projecteka.consentmanager.link.discovery.model.Identifier;
-import in.projecteka.consentmanager.link.discovery.model.Provider;
+import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.link.discovery.model.Telecom;
 
 public class Transformer {

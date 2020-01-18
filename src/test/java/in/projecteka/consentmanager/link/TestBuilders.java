@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.link;
 
-import in.projecteka.consentmanager.link.discovery.model.Provider;
+import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.link.discovery.model.Type;
 import in.projecteka.consentmanager.link.link.model.ErrorRepresentation;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;

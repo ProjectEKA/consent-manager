@@ -16,9 +16,7 @@ import org.mockito.Mock;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -27,12 +25,12 @@ import static org.mockito.MockitoAnnotations.initMocks;
 class ConsentManagerTest {
 
     @Mock
-    ConsentRequestRepository repository;
+    private ConsentRequestRepository repository;
     @Mock
-    ClientRegistryClient providerClient;
+    private ClientRegistryClient providerClient;
 
     @Mock
-    UserServiceClient userClient;
+    private UserServiceClient userClient;
 
     @BeforeEach
     void setUp() {

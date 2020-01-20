@@ -52,6 +52,41 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/PatientDiscoveryRepresentation'
+        '401':
+          description: >
+            **Causes:**
+              * Unauthorized request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientDiscoveryErrResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientDiscoveryErrResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientDiscoveryErrResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientDiscoveryErrResponse'
+        '404':
+          description: >
+            **Causes:**
+              * No Patients found in HIP
+              * Multiple patients found in HIP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientDiscoveryErrResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientDiscoveryErrResponse'
 
   /patients/link:
     post:
@@ -440,6 +475,13 @@ components:
             id:
               type: string
               description: Identifier of the health information provider where patient record needs to be looked up.
+    PatientDiscoveryErrResponse:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/Error'
+      xml:
+        name: PatientDiscoveryErrResponse
     PatientLinkReferenceRequest:
       type: object
       properties:

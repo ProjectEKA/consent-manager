@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
+import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.link.HIPClient;
 import in.projecteka.consentmanager.link.discovery.Discovery;
@@ -96,5 +97,10 @@ public class ConsentManagerConfiguration {
                 resourceProperties, applicationContext);
         clientErrorExceptionHandler.setMessageWriters(serverCodecConfigurer.getWriters());
         return clientErrorExceptionHandler;
+    }
+
+    @Bean
+    public ConsentRequestRepository consentRequestRepository(PgPool pgPool) {
+        return new ConsentRequestRepository(pgPool);
     }
 }

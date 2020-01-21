@@ -34,7 +34,7 @@ class ConsentManagerTest {
     private UserServiceClient userClient;
 
     @BeforeEach
-    private void setUp() {
+    public void setUp() {
         initMocks(this);
     }
 

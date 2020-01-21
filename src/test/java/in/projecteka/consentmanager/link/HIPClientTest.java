@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.link;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
 import in.projecteka.consentmanager.link.link.model.hip.PatientLinkReferenceRequest;
 import okhttp3.mockwebserver.MockResponse;

@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.link;
 
+import in.projecteka.consentmanager.clients.ClientError;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;

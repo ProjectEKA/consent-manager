@@ -259,7 +259,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   # consent-service
-  /consent-request:
+  /consent-requests:
     post:
       tags:
         - consent
@@ -771,6 +771,8 @@ components:
               type: string
               enum: [HOUR, WEEK, DAY, MONTH, YEAR]
             value:
+              type: integer
+            repeats:
               type: integer
       xml:
         name: Permission

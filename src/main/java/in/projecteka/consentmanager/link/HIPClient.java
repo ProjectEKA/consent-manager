@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.link;
 
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.link.link.model.hip.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;

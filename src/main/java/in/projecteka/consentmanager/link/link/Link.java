@@ -1,9 +1,9 @@
 package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
-import in.projecteka.consentmanager.link.ClientError;
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.link.HIPClient;
-import in.projecteka.consentmanager.link.discovery.model.Identifier;
+import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.link.link.model.PatientLinkResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;

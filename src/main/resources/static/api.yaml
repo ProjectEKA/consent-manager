@@ -89,6 +89,23 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /patients/link:
+    get:
+      tags:
+        - link
+      summary: Get linked care contexts
+      description: Get all linked care contexts from all HIPs for a patient.
+      parameters:
+        - $ref: "#/components/parameters/authorization"
+      responses:
+        '200':
+          description: All linked care contexts of a patient.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkedCareContexts'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/LinkedCareContexts'
     post:
       tags:
         - link
@@ -854,3 +871,34 @@ components:
             attribute: true
           format: <user-id>@<ncg-id>
           example: batman@ncg
+
+    LinkedCareContexts:
+      type: object
+      properties:
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/CareContextsByHIP'
+    CareContextsByHIP:
+      type: object
+      properties:
+        hip:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        careContexts:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaskedCareContexts'
+    MaskedCareContexts:
+      type: object
+      properties:
+        referenceNumber:
+          type: string
+        hint:
+          type: string
+        display:
+          type: string

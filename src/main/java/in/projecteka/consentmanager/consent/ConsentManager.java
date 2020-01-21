@@ -24,7 +24,7 @@ public class ConsentManager {
     }
 
 
-    public Mono<String> askForConsent(String requestingHIUId, @Valid @NotNull(message = "Consent detail is not specified.") ConsentDetail consentDetail) {
+    public Mono<String> askForConsent(String requestingHIUId, ConsentDetail consentDetail) {
         final String requestId = UUID.randomUUID().toString();
         return validatePatient(consentDetail).then(validateHIPAndHIU(consentDetail)).flatMap( result -> {
             return saveRequest(consentDetail, requestId);

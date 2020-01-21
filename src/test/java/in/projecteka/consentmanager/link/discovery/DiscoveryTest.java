@@ -5,7 +5,7 @@ import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.model.Address;
-import in.projecteka.consentmanager.link.discovery.model.Phone;
+import in.projecteka.consentmanager.clients.model.Phone;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.User;

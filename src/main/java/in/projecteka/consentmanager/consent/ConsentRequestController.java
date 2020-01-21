@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.consent.model.ConsentRequestValidator;
 import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -11,9 +11,9 @@ import reactor.core.publisher.Mono;
 import javax.validation.*;
 
 @RestController
+@AllArgsConstructor
 public class ConsentRequestController {
 
-    @Autowired
     private ConsentManager hdcm;
 
     @InitBinder
@@ -30,7 +30,7 @@ public class ConsentRequestController {
     }
 
     private Mono<ConsentRequestResponse> buildResponse(String requestId) {
-        return Mono.just(ConsentRequestResponse.builder().requestId(requestId).build());
+        return Mono.just(ConsentRequestResponse.builder().consentRequestId(requestId).build());
     }
 
 }

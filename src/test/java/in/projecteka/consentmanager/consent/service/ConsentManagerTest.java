@@ -72,13 +72,4 @@ class ConsentManagerTest {
         StepVerifier.create(consentManager.askForConsent(requestingHIUId, consentDetail))
                 .expectErrorMatches(e -> (e instanceof ClientError) && ((ClientError) e).getHttpStatus().is4xxClientError());
     }
-
-
-
-//    StepVerifier
-//            .create(error)
-//            .expectNextCount(4)
-//  .expectErrorMatches(throwable -> throwable instanceof IllegalArgumentException &&
-//            throwable.getMessage().equals("Our message")
-//  ).verify();
 }

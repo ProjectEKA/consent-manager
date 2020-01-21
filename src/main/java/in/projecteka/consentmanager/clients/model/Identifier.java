@@ -16,7 +16,7 @@ public class Identifier {
         OFFICIAL;
     }
     private String system;
-    private String type;
+    private String value;
     private String use;
 
     public boolean isOfficial() {

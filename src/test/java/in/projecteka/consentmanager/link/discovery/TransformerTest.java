@@ -34,7 +34,7 @@ class TransformerTest {
         assertThat(providerRepresentation.getCity()).isEqualTo(address.getCity());
         assertThat(providerRepresentation.getTelephone()).isEqualTo(telecom.getValue());
         assertThat(providerRepresentation.getType()).isEqualTo(coding.getCode());
-        assertThat(providerRepresentation.getIdentifier().getId()).isEqualTo(identifier.getType());
+        assertThat(providerRepresentation.getIdentifier().getId()).isEqualTo(identifier.getValue());
     }
 
     @Test

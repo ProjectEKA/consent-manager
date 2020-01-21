@@ -39,7 +39,7 @@ public class Transformer {
                 .stream()
                 .filter(Identifier::isOfficial)
                 .findFirst()
-                .map(identifier -> new IdentifierRepresentation(provider.getName(), identifier.getType()))
+                .map(identifier -> new IdentifierRepresentation(provider.getName(), identifier.getValue()))
                 .orElse(IdentifierRepresentation.builder().build());
     }
 

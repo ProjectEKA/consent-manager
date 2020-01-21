@@ -15,8 +15,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 public class ConsentRequestResponse {
-
     @JsonProperty("id")
     private String consentRequestId;
-
 }

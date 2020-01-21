@@ -14,7 +14,7 @@ import javax.validation.*;
 @AllArgsConstructor
 public class ConsentRequestController {
 
-    private ConsentManager hdcm;
+    private ConsentManager consentManager;
 
     @InitBinder
     protected void initBinder(WebDataBinder binder) {
@@ -23,14 +23,12 @@ public class ConsentRequestController {
 
     @PostMapping(value = "/consent-requests")
     public Mono<ConsentRequestResponse> requestConsent(
-            @RequestHeader(value = "Authorization", required = true) String authorization,
-            @RequestBody @Valid Mono<ConsentRequest> request) {
-
-        return request.flatMap(r -> hdcm.askForConsent(authorization, r.getConsent())).flatMap(this::buildResponse);
+            @RequestHeader(value = "Authorization") String authorization,
+            @RequestBody @Valid ConsentRequest request) {
+        return consentManager.askForConsent(authorization, request.getConsent()).map(this::buildResponse);
     }
 
-    private Mono<ConsentRequestResponse> buildResponse(String requestId) {
-        return Mono.just(ConsentRequestResponse.builder().consentRequestId(requestId).build());
+    private ConsentRequestResponse buildResponse(String requestId) {
+        return new ConsentRequestResponse(requestId);
     }
-
 }

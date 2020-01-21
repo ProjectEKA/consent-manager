@@ -878,8 +878,8 @@ components:
         links:
           type: array
           items:
-            $ref: '#/components/schemas/CareContextsByHIP'
-    CareContextsByHIP:
+            $ref: '#/components/schemas/links'
+    links:
       type: object
       properties:
         hip:

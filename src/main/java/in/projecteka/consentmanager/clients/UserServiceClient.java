@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
-import in.projecteka.consentmanager.link.ClientError;
 import in.projecteka.consentmanager.clients.model.User;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;

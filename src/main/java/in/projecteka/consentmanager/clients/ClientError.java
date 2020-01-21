@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.link;
+package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.link.link.model.Error;
 import in.projecteka.consentmanager.link.link.model.ErrorCode;
@@ -47,5 +47,21 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(
                         ErrorCode.OTP_EXPIRED,
                         "OTP Expired, please try again")));
+    }
+
+    public static ClientError networkServiceCallFailed() {
+        return new ClientError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.NETWORK_SERVICE_ERROR,
+                        "Cannot process the request at the moment, please try later.")));
+    }
+
+    public static ClientError providerNotFound() {
+        return new ClientError(
+                HttpStatus.NOT_FOUND,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.USER_NOT_FOUND,
+                        "Cannot find the user")));
     }
 }

@@ -52,6 +52,14 @@ class ConsentManagerTest {
 
         String requestingHIUId = "hiu1";
         StepVerifier.create(consentManager.askForConsent(requestingHIUId, consentDetail)).expectNextMatches(r -> r != null).verifyComplete();
-
     }
+
+
+
+//    StepVerifier
+//            .create(error)
+//            .expectNextCount(4)
+//  .expectErrorMatches(throwable -> throwable instanceof IllegalArgumentException &&
+//            throwable.getMessage().equals("Our message")
+//  ).verify();
 }

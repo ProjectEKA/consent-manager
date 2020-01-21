@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.link.discovery;
 
-import in.projecteka.consentmanager.link.discovery.model.Address;
+import in.projecteka.consentmanager.clients.model.Address;
 import in.projecteka.consentmanager.link.discovery.model.Coding;
-import in.projecteka.consentmanager.link.discovery.model.Identifier;
+import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Provider;
-import in.projecteka.consentmanager.link.discovery.model.Telecom;
+import in.projecteka.consentmanager.clients.model.Telecom;
 
 public class Transformer {
 

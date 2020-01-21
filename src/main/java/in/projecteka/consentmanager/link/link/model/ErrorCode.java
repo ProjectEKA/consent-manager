@@ -13,7 +13,9 @@ public enum ErrorCode {
     OTP_EXPIRED(1004),
     UNABLE_TO_CONNECT_TO_PROVIDER(1005),
     USER_NOT_FOUND(1006),
-    DB_OPERATION_FAILED(1007);
+    DB_OPERATION_FAILED(1007),
+    PROVIDER_NOT_FOUND(1008),
+    NETWORK_SERVICE_ERROR(2000);
 
     private int value;
     ErrorCode(int val) {

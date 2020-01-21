@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.model.Provider;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -35,6 +36,8 @@ public class ClientRegistryClient {
                 .header("client_id", clientRegistryProperties.getClientId())
                 .header("X-Auth-Token", clientRegistryProperties.getXAuthToken())
                 .retrieve()
+                .onStatus(httpStatus -> httpStatus.value() == 404, clientResponse -> Mono.error(ClientError.providerNotFound()))
+                .onStatus(HttpStatus::is5xxServerError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(Provider.class);
     }
 }

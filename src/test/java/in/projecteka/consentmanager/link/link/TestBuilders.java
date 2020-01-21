@@ -1,9 +1,6 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.link.discovery.model.Address;
-import in.projecteka.consentmanager.clients.model.Provider;
-import in.projecteka.consentmanager.link.discovery.model.Telecom;
-import in.projecteka.consentmanager.link.discovery.model.Type;
+import in.projecteka.consentmanager.clients.model.*;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
 import org.jeasy.random.EasyRandom;
@@ -28,8 +25,8 @@ public class TestBuilders {
         return easyRandom.nextObject(Address.AddressBuilder.class);
     }
 
-    public static in.projecteka.consentmanager.link.discovery.model.Identifier.IdentifierBuilder identifier() {
-        return easyRandom.nextObject(in.projecteka.consentmanager.link.discovery.model.Identifier.IdentifierBuilder.class);
+    public static Identifier.IdentifierBuilder identifier() {
+        return easyRandom.nextObject(Identifier.IdentifierBuilder.class);
     }
 
     public static in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder patientLinkReferenceRequest() {

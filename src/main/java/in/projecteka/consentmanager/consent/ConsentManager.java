@@ -9,6 +9,7 @@ import reactor.core.scheduler.Schedulers;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.Objects;
 import java.util.UUID;
 
 public class ConsentManager {
@@ -26,20 +27,20 @@ public class ConsentManager {
 
     public Mono<String> askForConsent(String requestingHIUId, ConsentDetail consentDetail) {
         final String requestId = UUID.randomUUID().toString();
-        return validatePatient(consentDetail).then(validateHIPAndHIU(consentDetail)).flatMap( result -> {
-            return saveRequest(consentDetail, requestId);
-        }).then(Mono.just(requestId));
-//        return validProviders.then(saveRequest(consentDetail, requestId)).then(Mono.just(requestId));
+        return validatePatient(consentDetail)
+                .then(validateHIPAndHIU(consentDetail))
+                .then(saveRequest(consentDetail, requestId))
+                .thenReturn(requestId);
     }
 
     private Mono<Boolean> validatePatient(ConsentDetail consentDetail) {
-        return userServiceClient.userOf(consentDetail.getPatient().getId()).flatMap(p -> Mono.just(p != null));
+        return userServiceClient.userOf(consentDetail.getPatient().getId()).map(Objects::nonNull);
     }
 
     private Mono<Boolean> validateHIPAndHIU(ConsentDetail consentDetail) {
         Mono<Boolean> checkHIU = isValidHIU(consentDetail).subscribeOn(Schedulers.elastic());
         Mono<Boolean> checkHIP = isValidHIP(consentDetail).subscribeOn(Schedulers.elastic());
-        return Mono.zip(checkHIU, checkHIP, (validHIU, validHIP) -> validHIU & validHIP);
+        return Mono.zip(checkHIU, checkHIP, (validHIU, validHIP) -> validHIU && validHIP);
     }
 
 

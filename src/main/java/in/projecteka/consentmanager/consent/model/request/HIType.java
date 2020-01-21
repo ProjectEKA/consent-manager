@@ -11,8 +11,6 @@ public enum HIType {
     DIAGNOSTIC_REPORT("DiagnosticReport"),
     MEDICATION_REQUEST("MedicationRequest");
 
-
-
     private final String resourceType;
     HIType(String value) {
         resourceType = value;

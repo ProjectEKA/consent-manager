@@ -14,8 +14,10 @@ import javax.validation.constraints.Positive;
 public class DataFrequency {
     @NotNull(message = "Frequency unit is not specified.")
     private DataFrequencyUnit unit;
+
     @Positive(message = "Frequency value is not valid.")
     private int value;
+
     @Min(value = 0, message = "Frequency repeat is not valid.")
     private int repeats;
 }

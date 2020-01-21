@@ -12,6 +12,7 @@ import javax.validation.constraints.NotEmpty;
 public class ConsentPurpose {
     @NotEmpty(message = "Purpose reason is not specified.")
     private String text;
+
     @NotEmpty(message = "Purpose code is not specified.")
     private String code;
     private String refUri;

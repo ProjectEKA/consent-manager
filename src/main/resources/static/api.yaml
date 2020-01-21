@@ -14,7 +14,7 @@ servers:
     description: Dev
 
 tags:
-  - name: discover
+  - name: discovery
   - name: consent
 
 paths:
@@ -22,7 +22,7 @@ paths:
   /patients/discover:
     post:
       tags:
-        - discover
+        - discovery
       summary: Discover patient
       description: >
         Return only one patient record with (potentially masked) associated care contexts
@@ -52,6 +52,41 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/PatientDiscoveryRepresentation'
+        '401':
+          description: >
+            **Causes:**
+              * Unauthorized request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: >
+            **Causes:**
+              * No Patients found in HIP
+              * Multiple patients found in HIP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /patients/link:
     post:
@@ -92,10 +127,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
+                $ref: '#/components/schemas/ErrorResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: >
             **Causes:**
@@ -103,10 +138,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
+                $ref: '#/components/schemas/ErrorResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: >
             **Causes:**
@@ -115,10 +150,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
+                $ref: '#/components/schemas/ErrorResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/PatientLinkReferenceErrResponse'
+                $ref: '#/components/schemas/ErrorResponse'
 
   /patients/link/{linkRefNumber}:
     post:
@@ -161,10 +196,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: >
             **Causes:**
@@ -172,10 +207,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: >
             **Causes:**
@@ -184,10 +219,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
   /providers:
     get:
       tags:
@@ -219,10 +254,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/PatientLinkErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
   # consent-service
   /consent-requests:
     post:
@@ -437,8 +472,9 @@ components:
         hip:
           type: object
           properties:
-            id: string
-            description: Identifier of the health information provider where patient record needs to be looked up.
+            id:
+              type: string
+              description: Identifier of the health information provider where patient record needs to be looked up.
     PatientLinkReferenceRequest:
       type: object
       properties:
@@ -485,13 +521,6 @@ components:
           example: "2019-12-30T12:01:55Z"
       xml:
         name: Meta
-    PatientLinkReferenceErrResponse:
-      type: object
-      properties:
-        error:
-          $ref: '#/components/schemas/Error'
-      xml:
-        name: PatientLinkReferenceErrResponse
     PatientLinkRequest:
       type: object
       properties:
@@ -506,13 +535,13 @@ components:
           $ref: '#/components/schemas/PatientRepresentation'
       xml:
         name: PatientLinkResponse
-    PatientLinkErrorResponse:
+    ErrorResponse:
       type: object
       properties:
         error:
           $ref: '#/components/schemas/Error'
       xml:
-        name: PatientLinkErrResponse
+        name: ErrorResponse
     Error:
       type: object
       properties:
@@ -817,7 +846,7 @@ components:
               items:
                 $ref: '#/components/schemas/HITypeEnum'
             permission:
-                $ref: '#/components/schemas/Permission'
+              $ref: '#/components/schemas/Permission'
     ConsentManagerPatientID:
       type: object
       properties:

@@ -1,8 +1,7 @@
 package in.projecteka.consentmanager.consent.model.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Future;
@@ -12,6 +11,9 @@ import java.util.Date;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class ConsentPermission {
     @NotNull(message = "Access mode is not specified.")
     private AccessMode accessMode;

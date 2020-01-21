@@ -7,8 +7,6 @@ import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.Objects;
 import java.util.UUID;
 

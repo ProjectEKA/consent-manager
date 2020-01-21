@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 public class ClientError extends Throwable {
 
+    private static final String CANNOT_PROCESS_REQUEST_TRY_LATER = "Cannot process the request at the moment, please try later.";
     private final HttpStatus httpStatus;
     private final ErrorRepresentation error;
 
@@ -22,7 +23,7 @@ public class ClientError extends Throwable {
                 HttpStatus.NOT_FOUND,
                 new ErrorRepresentation(new Error(
                         ErrorCode.UNABLE_TO_CONNECT_TO_PROVIDER,
-                        "Cannot process the request at the moment, please try later.")));
+                        CANNOT_PROCESS_REQUEST_TRY_LATER)));
     }
 
     public static ClientError userNotFound(){
@@ -38,7 +39,7 @@ public class ClientError extends Throwable {
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 new ErrorRepresentation(new Error(
                         ErrorCode.DB_OPERATION_FAILED,
-                        "Cannot process the request at the moment, please try later.")));
+                        CANNOT_PROCESS_REQUEST_TRY_LATER)));
     }
 
     public static ClientError otpExpired() {
@@ -54,7 +55,7 @@ public class ClientError extends Throwable {
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 new ErrorRepresentation(new Error(
                         ErrorCode.NETWORK_SERVICE_ERROR,
-                        "Cannot process the request at the moment, please try later.")));
+                        CANNOT_PROCESS_REQUEST_TRY_LATER)));
     }
 
     public static ClientError providerNotFound() {

@@ -26,7 +26,7 @@ public class ConsentRequestController {
             @RequestHeader(value = "Authorization", required = true) String authorization,
             @RequestBody @Valid Mono<ConsentRequest> request) {
 
-        return request.flatMap(r -> hdcm.askForConsent(authorization, r.getConsent())).flatMap(requestId -> buildResponse(requestId));
+        return request.flatMap(r -> hdcm.askForConsent(authorization, r.getConsent())).flatMap(this::buildResponse);
     }
 
     private Mono<ConsentRequestResponse> buildResponse(String requestId) {

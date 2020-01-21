@@ -23,7 +23,6 @@ public class ConsentManager {
         this.userServiceClient = userServiceClient;
     }
 
-
     public Mono<String> askForConsent(String requestingHIUId, ConsentDetail consentDetail) {
         final String requestId = UUID.randomUUID().toString();
         return validatePatient(consentDetail).then(validateHIPAndHIU(consentDetail)).flatMap( result -> {

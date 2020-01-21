@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.link.link;
+package in.projecteka.consentmanager.common;
 
 import java.util.Base64;
 

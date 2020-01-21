@@ -3,10 +3,12 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.consent.model.request.ConsentDetail;
+import in.projecteka.consentmanager.consent.model.response.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -67,5 +69,9 @@ public class ConsentManager {
 
     private String getHIUId(ConsentDetail consentDetail) {
         return consentDetail.getHiu().getId();
+    }
+
+    public Mono<List<ConsentRequestDetail>> findRequestsForPatient(String patientId, int limit, int offset) {
+        return repository.requestsForPatient(patientId, limit, offset);
     }
 }

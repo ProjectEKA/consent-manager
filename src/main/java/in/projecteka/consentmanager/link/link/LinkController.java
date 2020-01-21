@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.link.link;
 
+import in.projecteka.consentmanager.common.TokenUtils;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;

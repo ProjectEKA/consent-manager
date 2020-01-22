@@ -315,7 +315,6 @@ paths:
                       id:
                         type: string
                         format: uuid
-  /consent-requests:
     get:
       tags:
         - consent

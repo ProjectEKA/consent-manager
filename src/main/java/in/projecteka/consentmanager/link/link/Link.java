@@ -62,12 +62,7 @@ public class Link {
     }
 
     public Mono<PatientLinkResponse> verifyToken(String linkRefNumber, PatientLinkRequest patientLinkRequest, String patientId) {
-        return isOTPExpired(linkRefNumber).flatMap(expiry -> {
-            if(!expiry){
-                return linkCareContexts(patientLinkRequest, linkRefNumber, patientId);
-            }
-                return Mono.error(ClientError.otpExpired());
-        });
+        return isOTPExpired(linkRefNumber).flatMap(expiry -> linkCareContexts(patientLinkRequest, linkRefNumber, patientId));
     }
 
     private Mono<PatientLinkResponse> linkCareContexts(PatientLinkRequest patientLinkRequest, String linkRefNumber, String patientId) {
@@ -107,7 +102,7 @@ public class Link {
     private Mono<Boolean> isOTPExpired(String linkRefNumber){
         return linkRepository.getExpiryFromLinkReference(linkRefNumber)
                 .flatMap(this::isExpired)
-                .switchIfEmpty(Mono.empty());
+                .switchIfEmpty(Mono.error(ClientError.otpExpired()));
     }
 
     @SneakyThrows

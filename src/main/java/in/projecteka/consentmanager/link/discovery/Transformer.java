@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.link.discovery;
 
-import in.projecteka.consentmanager.link.discovery.model.Address;
+import in.projecteka.consentmanager.clients.model.Address;
 import in.projecteka.consentmanager.link.discovery.model.Coding;
-import in.projecteka.consentmanager.link.discovery.model.Identifier;
-import in.projecteka.consentmanager.link.discovery.model.Provider;
-import in.projecteka.consentmanager.link.discovery.model.Telecom;
+import in.projecteka.consentmanager.clients.model.Identifier;
+import in.projecteka.consentmanager.clients.model.Provider;
+import in.projecteka.consentmanager.clients.model.Telecom;
 
 public class Transformer {
 
@@ -39,7 +39,7 @@ public class Transformer {
                 .stream()
                 .filter(Identifier::isOfficial)
                 .findFirst()
-                .map(identifier -> new IdentifierRepresentation(provider.getName(), identifier.getType()))
+                .map(identifier -> new IdentifierRepresentation(provider.getName(), identifier.getValue()))
                 .orElse(IdentifierRepresentation.builder().build());
     }
 

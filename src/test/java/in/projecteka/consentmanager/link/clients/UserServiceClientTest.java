@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.link.clients;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
-import in.projecteka.consentmanager.link.discovery.model.User;
+import in.projecteka.consentmanager.clients.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

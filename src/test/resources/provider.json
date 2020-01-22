@@ -4,7 +4,7 @@
     "identifier": [
       {
         "system": "https://tmc.gov.in/ncg/",
-        "type": "12345",
+        "value": "12345",
         "use": "official"
       }
     ],

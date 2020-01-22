@@ -876,10 +876,19 @@ components:
     LinkedCareContexts:
       type: object
       properties:
+        patient:
+          $ref: '#/components/schemas/patient'
         links:
           type: array
           items:
             $ref: '#/components/schemas/links'
+    patient:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
     links:
       type: object
       properties:

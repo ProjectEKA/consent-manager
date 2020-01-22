@@ -88,12 +88,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /patients/link:
+  /patients/links:
     get:
       tags:
         - link
       summary: Get linked care contexts
-      description: Get all linked care contexts from all HIPs for a patient.
+      description: >
+        Get all linked care contexts from all HIPs for a patient.
+        This api is to be consumed by patient.
       parameters:
         - $ref: "#/components/parameters/authorization"
       responses:
@@ -106,6 +108,7 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/LinkedCareContexts'
+  /patients/link:
     post:
       tags:
         - link
@@ -893,22 +896,18 @@ components:
       type: object
       properties:
         hip:
-          type: object
-          properties:
-            id:
-              type: string
-            name:
-              type: string
+          $ref: '#/components/schemas/hip'
         careContexts:
           type: array
           items:
-            $ref: '#/components/schemas/MaskedCareContexts'
-    MaskedCareContexts:
+            $ref: '#/components/schemas/CareContextRepresentation'
+    hip:
       type: object
+      required:
+        - id
+        - name
       properties:
-        referenceNumber:
+        id:
           type: string
-        hint:
-          type: string
-        display:
+        name:
           type: string

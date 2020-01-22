@@ -887,20 +887,25 @@ components:
             $ref: '#/components/schemas/links'
     patient:
       type: object
+      required:
+        - id
+        - firstName
       properties:
         id:
           type: string
-        name:
+        firstName:
+          type: string
+        lastName:
           type: string
     links:
       type: object
       properties:
         hip:
           $ref: '#/components/schemas/hip'
-        careContexts:
+        patient:
           type: array
           items:
-            $ref: '#/components/schemas/CareContextRepresentation'
+            $ref: '#/components/schemas/PatientRepresentation'
     hip:
       type: object
       required:

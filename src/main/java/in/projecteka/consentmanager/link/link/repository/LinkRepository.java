@@ -44,7 +44,7 @@ public class LinkRepository {
     }
 
     public Mono<String> getExpiryFromLinkReference(String linkRefNumber) {
-        String sql = String.format("select patient_link_reference ->> 'communicationExpiry' as communicationExpiry " +
+        String sql = String.format("select patient_link_reference -> 'link' -> 'meta' ->> 'communicationExpiry' as communicationExpiry " +
                 "from link_reference where patient_link_reference -> 'link' ->> 'referenceNumber' = '%s';", linkRefNumber);
         return get(sql, "Failed to get communicationExpiry from link reference");
     }

@@ -881,10 +881,6 @@ components:
       properties:
         patient:
           $ref: '#/components/schemas/patient'
-        links:
-          type: array
-          items:
-            $ref: '#/components/schemas/links'
     patient:
       type: object
       required:
@@ -897,15 +893,25 @@ components:
           type: string
         lastName:
           type: string
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/links'
     links:
       type: object
       properties:
         hip:
           $ref: '#/components/schemas/hip'
-        patient:
+        referenceNumber:
+          type: string
+        display:
+          type: string
+        careContexts:
           type: array
           items:
-            $ref: '#/components/schemas/PatientRepresentation'
+            $ref: '#/components/schemas/CareContextRepresentation'
+          xml:
+            wrapped: true
     hip:
       type: object
       required:

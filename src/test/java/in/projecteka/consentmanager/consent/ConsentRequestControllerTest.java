@@ -128,7 +128,7 @@ public class ConsentRequestControllerTest {
                 .expectBody(ConsentRequestsRepresentation.class)
                 .value(response -> response.getLimit(), Matchers.is(20))
                 .value(response -> response.getOffset(), Matchers.is(0))
-                .value(response -> response.getRequests().size(), Matchers.is(0));;
+                .value(response -> response.getRequests().size(), Matchers.is(0));
     }
 
 

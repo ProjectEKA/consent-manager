@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.common.TokenUtils;
 import in.projecteka.consentmanager.consent.model.ConsentRequestValidator;
 import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
-import in.projecteka.consentmanager.consent.model.response.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
 import lombok.AllArgsConstructor;
@@ -11,8 +10,7 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import javax.validation.*;
-import java.util.List;
+import javax.validation.Valid;
 
 @RestController
 @AllArgsConstructor

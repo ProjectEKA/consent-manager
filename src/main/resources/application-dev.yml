@@ -1,6 +1,9 @@
 server:
   port: 9000
 consentmanager:
+  consentservice:
+    defaultPageSize: 20
+    maxPageSize: 100
   clientregistry:
     XAuthToken: 123ChangeThis
     clientId: 6

@@ -733,6 +733,10 @@ components:
     ConsentApproveRequest:
       type: object
       properties:
+        careContexts:
+          type: array
+          items:
+            $ref: '#/components/schemas/CareContext'
         hiTypes:
           type: array
           items:

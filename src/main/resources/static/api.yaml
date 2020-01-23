@@ -619,7 +619,10 @@ components:
               type: string
               format: uri
         patient:
-          $ref: '#/components/schemas/Patient'
+          allOf:
+            - $ref: '#/components/schemas/ConsentManagerPatientID'
+            - xml:
+                name: patient
         hip:
           type: object
           allOf:

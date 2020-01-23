@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
+import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
@@ -106,12 +107,18 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
+    public ConsentArtefactRepository consentArtefactRepository(PgPool pgPool) {
+        return new ConsentArtefactRepository(pgPool);
+    }
+
+    @Bean
     public ConsentManager consentRequestService(WebClient.Builder builder,
                                                 ConsentRequestRepository repository,
                                                 ClientRegistryProperties clientRegistryProperties,
-                                                UserServiceProperties userServiceProperties) {
+                                                UserServiceProperties userServiceProperties,
+                                                ConsentArtefactRepository consentArtefactRepository) {
         return new ConsentManager(repository,
                 new ClientRegistryClient(builder, clientRegistryProperties),
-                new UserServiceClient(builder, userServiceProperties));
+                new UserServiceClient(builder, userServiceProperties), consentArtefactRepository);
     }
 }

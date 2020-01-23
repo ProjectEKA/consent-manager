@@ -23,7 +23,7 @@ public enum HIType {
 
     public HIType findByValue(String input) {
         return Arrays.stream(HIType.values())
-                .filter(hiType -> hiType.resourceType == input)
+                .filter(hiType -> hiType.resourceType.equals(input))
                 .findAny().get();
     }
 

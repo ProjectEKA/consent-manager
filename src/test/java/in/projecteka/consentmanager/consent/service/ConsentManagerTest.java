@@ -45,7 +45,7 @@ class ConsentManagerTest {
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
         ConsentDetail consentDetail = ConsentDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
 
-        ConsentManager consentManager = new ConsentManager(repository, providerClient, userClient);
+        ConsentManager consentManager = new ConsentManager(repository, providerClient, userClient, consentArtefactRepository);
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when (providerClient.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when (providerClient.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
@@ -62,7 +62,7 @@ class ConsentManagerTest {
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
         ConsentDetail consentDetail = ConsentDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
 
-        ConsentManager consentManager = new ConsentManager(repository, providerClient, userClient);
+        ConsentManager consentManager = new ConsentManager(repository, providerClient, userClient, consentArtefactRepository);
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when (providerClient.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when (providerClient.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));

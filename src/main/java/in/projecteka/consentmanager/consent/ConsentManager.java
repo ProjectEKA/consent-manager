@@ -1,9 +1,17 @@
 package in.projecteka.consentmanager.consent;
 
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.common.TokenUtils;
+import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.request.ConsentDetail;
+import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
+import in.projecteka.consentmanager.consent.model.response.Consent;
+import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.response.ConsentStatus;
+import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -11,29 +19,35 @@ import reactor.core.scheduler.Schedulers;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class ConsentManager {
 
     private final ClientRegistryClient providerClient;
     private UserServiceClient userServiceClient;
-    private final ConsentRequestRepository repository;
+    private final ConsentRequestRepository consentRequestRepository;
+    private final ConsentArtefactRepository consentArtefactRepository;
 
-    public ConsentManager(ConsentRequestRepository requestRepository, ClientRegistryClient providerClient, UserServiceClient userServiceClient) {
-        this.repository =  requestRepository;
+    public ConsentManager(ConsentRequestRepository consentRequestRepository,
+                          ClientRegistryClient providerClient,
+                          UserServiceClient userServiceClient,
+                          ConsentArtefactRepository consentArtefactRepository) {
+        this.consentRequestRepository = consentRequestRepository;
         this.providerClient = providerClient;
         this.userServiceClient = userServiceClient;
+        this.consentArtefactRepository = consentArtefactRepository;
     }
 
     public Mono<String> askForConsent(String requestingHIUId, ConsentDetail consentDetail) {
         final String requestId = UUID.randomUUID().toString();
-        return validatePatient(consentDetail)
+        return validatePatient(consentDetail.getPatient().getId())
                 .then(validateHIPAndHIU(consentDetail))
                 .then(saveRequest(consentDetail, requestId))
                 .thenReturn(requestId);
     }
 
-    private Mono<Boolean> validatePatient(ConsentDetail consentDetail) {
-        return userServiceClient.userOf(consentDetail.getPatient().getId()).map(Objects::nonNull);
+    private Mono<Boolean> validatePatient(String patientId) {
+        return userServiceClient.userOf(patientId).map(Objects::nonNull);
     }
 
     private Mono<Boolean> validateHIPAndHIU(ConsentDetail consentDetail) {
@@ -44,7 +58,7 @@ public class ConsentManager {
 
 
     private Mono<Void> saveRequest(ConsentDetail consentDetail, String requestId) {
-        return repository.insert(consentDetail, requestId);
+        return consentRequestRepository.insert(consentDetail, requestId);
     }
 
 
@@ -72,6 +86,43 @@ public class ConsentManager {
     }
 
     public Mono<List<ConsentRequestDetail>> findRequestsForPatient(String patientId, int limit, int offset) {
-        return repository.requestsForPatient(patientId, limit, offset);
+        return consentRequestRepository.requestsForPatient(patientId, limit, offset);
+    }
+
+    public Mono<ConsentApprovalResponse> approveConsent(String authorization,
+                                                        String requestId,
+                                                        List<GrantedConsent> consents) {
+        String patientId = TokenUtils.readUserId(authorization);
+        return validatePatient(patientId)
+                .then(validateConsentRequest(requestId))
+                .flatMap(consentRequest -> {
+                    List<Consent> consentArtefacts = consents.stream().map(consent -> {
+                        String consentArtefactId = UUID.randomUUID().toString();
+                        ConsentArtefact consentArtefact = mapToConsentArtefact(consentRequest, consent);
+                        consentArtefactRepository.insert(consentArtefact, consentArtefactId, requestId, patientId, "");
+                        consentRequestRepository.updateStatus(requestId, ConsentStatus.GRANTED.toString());
+                        return Consent.builder().id(consentArtefactId).build();
+                    }).collect(Collectors.toList());
+                    return Mono.just(ConsentApprovalResponse.builder().consents(consentArtefacts).build());
+                });
+    }
+
+    private ConsentArtefact mapToConsentArtefact(ConsentRequestDetail consentRequest, GrantedConsent consent) {
+        return ConsentArtefact.builder()
+                .requestId(consentRequest.getRequestId())
+                .createdAt(consentRequest.getCreatedAt())
+                .purpose(consentRequest.getPurpose())
+                .patient(consentRequest.getPatient())
+                .hiu(consentRequest.getHiu())
+                .requester(consentRequest.getRequester())
+                .hip(consent.getHip())
+                .hiTypes(consent.getHiTypes())
+                .permission(consent.getPermission())
+                .build();
+    }
+
+    private Mono<ConsentRequestDetail> validateConsentRequest(String requestId) {
+        return consentRequestRepository.requestOf(requestId, ConsentStatus.REQUESTED.toString())
+                .switchIfEmpty(Mono.error(ClientError.consentRequestNotFound()));
     }
 }

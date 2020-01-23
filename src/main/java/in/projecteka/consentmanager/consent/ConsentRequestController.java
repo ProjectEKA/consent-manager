@@ -2,16 +2,21 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.common.TokenUtils;
 import in.projecteka.consentmanager.consent.model.ConsentRequestValidator;
+import in.projecteka.consentmanager.consent.model.request.ConsentApprovalRequest;
 import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
+import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
+
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -19,6 +24,7 @@ import reactor.core.publisher.Mono;
 import javax.validation.Valid;
 
 @RestController
+@RequestMapping(value = "/consent-requests")
 @AllArgsConstructor
 public class ConsentRequestController {
 
@@ -30,7 +36,7 @@ public class ConsentRequestController {
         binder.addValidators(new ConsentRequestValidator());
     }
 
-    @PostMapping(value = "/consent-requests")
+    @PostMapping
     public Mono<RequestCreatedRepresentation> requestConsent(
             @RequestHeader(value = "Authorization", required = true) String authorization,
             @RequestBody @Valid Mono<ConsentRequest> request) {
@@ -68,5 +74,12 @@ public class ConsentRequestController {
     private RequestCreatedRepresentation buildResponse(String requestId) {
         return RequestCreatedRepresentation.builder().consentRequestId(requestId).build();
     }
-    
+
+    @PostMapping(value = "/{request-id}/approve")
+    public Mono<ConsentApprovalResponse> approveConsent(
+            @PathVariable(value = "request-id") String requestId,
+            @RequestHeader(value = "Authorization") String authorization,
+            @Valid @RequestBody ConsentApprovalRequest consentApprovalRequest) {
+        return hdcm.approveConsent(authorization, requestId, consentApprovalRequest.getConsents());
+    }
 }

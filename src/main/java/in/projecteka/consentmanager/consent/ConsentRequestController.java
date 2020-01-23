@@ -62,7 +62,5 @@ public class ConsentRequestController {
     private RequestCreatedRepresentation buildResponse(String requestId) {
         return RequestCreatedRepresentation.builder().consentRequestId(requestId).build();
     }
-
-
-
+    
 }

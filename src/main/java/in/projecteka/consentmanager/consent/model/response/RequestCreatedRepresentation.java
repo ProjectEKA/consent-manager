@@ -16,8 +16,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 public class RequestCreatedRepresentation {
-
     @JsonProperty("id")
     private String consentRequestId;
-
 }

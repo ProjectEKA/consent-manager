@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.link.link.model.hip.Patient;
 import reactor.core.publisher.Mono;
 
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
+
 import in.projecteka.consentmanager.link.link.repository.LinkRepository;
 import lombok.SneakyThrows;
 
@@ -63,10 +64,10 @@ public class Link {
 
     public Mono<PatientLinkResponse> verifyToken(String linkRefNumber, PatientLinkRequest patientLinkRequest, String patientId) {
         return isOTPExpired(linkRefNumber).flatMap(expiry -> {
-            if(!expiry){
+            if (!expiry) {
                 return linkCareContexts(patientLinkRequest, linkRefNumber, patientId);
             }
-                return Mono.error(ClientError.otpExpired());
+            return Mono.error(ClientError.otpExpired());
         });
     }
 
@@ -104,7 +105,7 @@ public class Link {
                         .orElse(Mono.empty()));
     }
 
-    private Mono<Boolean> isOTPExpired(String linkRefNumber){
+    private Mono<Boolean> isOTPExpired(String linkRefNumber) {
         return linkRepository.getExpiryFromLinkReference(linkRefNumber)
                 .flatMap(this::isExpired)
                 .switchIfEmpty(Mono.empty());

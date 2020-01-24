@@ -108,7 +108,8 @@ public class LinkRepository {
                                     convertToPatientRepresentation(row.getString("patient"));
                             if (hipIdToLinksMap.containsKey(hipId)){
                                 Links links = hipIdToLinksMap.get(hipId);
-                                links.getPatientRepresentations().getCareContexts().addAll(patientRepresentation.getCareContexts());
+                                links.getPatientRepresentations().getCareContexts()
+                                        .addAll(patientRepresentation.getCareContexts());
                             } else {
                                 Links links = Links.builder()
                                         .hip(Hip.builder().id(hipId).name("").build())
@@ -117,9 +118,7 @@ public class LinkRepository {
                                 hipIdToLinksMap.put(hipId, links);
                             }
                         }
-                        hipIdToLinksMap.forEach((key, link) -> {
-                            linksList.add(link);
-                        });
+                        hipIdToLinksMap.forEach((key, link) -> linksList.add(link));
                         monoSink.success(
                                 PatientLinks.builder().id(patientId).firstName("").lastName("").links(linksList).build());
                     }

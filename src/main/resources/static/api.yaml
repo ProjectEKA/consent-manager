@@ -640,7 +640,7 @@ components:
         hiTypes:
           type: array
           items:
-            $ref: '#/components/schemas/HITypeRepresentation'
+            $ref: '#/components/schemas/HITypeEnum'
           xml:
             wrapped: true
         permission:
@@ -699,19 +699,6 @@ components:
         system:
           type: string
           format: uri
-    HITypeRepresentation:
-      type: object
-      required:
-        - type
-        - description
-      properties:
-        type:
-          $ref: '#/components/schemas/HITypeEnum'
-        description:
-          type: string
-          example: Medication Request
-      xml:
-        name: HITypeResponse
     HITypeEnum:
       type: string
       enum:

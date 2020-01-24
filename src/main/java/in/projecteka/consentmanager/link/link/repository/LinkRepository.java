@@ -14,6 +14,7 @@ import lombok.SneakyThrows;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class LinkRepository {
@@ -100,16 +101,25 @@ public class LinkRepository {
                     } else {
                         RowSet<Row> results = handler.result();
                         List<Links> linksList = new ArrayList<>();
+                        HashMap<String,Links> hipIdToLinksMap = new HashMap<>();
                         for (Row row : results) {
                             String hipId = row.getString("hip_id");
                             PatientRepresentation patientRepresentation =
                                     convertToPatientRepresentation(row.getString("patient"));
-                            Links links = Links.builder()
-                                    .hip(Hip.builder().id(hipId).name("").build())
-                                    .patientRepresentations(patientRepresentation)
-                                    .build();
-                            linksList.add(links);
+                            if (hipIdToLinksMap.containsKey(hipId)){
+                                Links links = hipIdToLinksMap.get(hipId);
+                                links.getPatientRepresentations().getCareContexts().addAll(patientRepresentation.getCareContexts());
+                            } else {
+                                Links links = Links.builder()
+                                        .hip(Hip.builder().id(hipId).name("").build())
+                                        .patientRepresentations(patientRepresentation)
+                                        .build();
+                                hipIdToLinksMap.put(hipId, links);
+                            }
                         }
+                        hipIdToLinksMap.forEach((key, link) -> {
+                            linksList.add(link);
+                        });
                         monoSink.success(
                                 PatientLinks.builder().id(patientId).firstName("").lastName("").links(linksList).build());
                     }

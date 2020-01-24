@@ -24,7 +24,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
-import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 
@@ -140,11 +139,11 @@ public class Link {
                 .flatMap(patientLinks -> getLinks(patientLinks.getLinks())
                         .flatMap(links -> userWith(patientId)
                                 .flatMap(user -> Mono.just(PatientLinks.builder()
-                                .id(patientLinks.getId())
-                                .firstName(user.getFirstName())
-                                .lastName(user.getLastName())
-                                .links(links)
-                                .build()))));
+                                        .id(patientLinks.getId())
+                                        .firstName(user.getFirstName())
+                                        .lastName(user.getLastName())
+                                        .links(links)
+                                        .build()))));
     }
 
     private Mono<User> userWith(String patientId) {
@@ -161,9 +160,9 @@ public class Link {
         return getProviderName(links.getHip().getId())
                 .flatMap(name ->
                         Mono.just(Links.builder()
-                .hip(Hip.builder().id(links.getHip().getId()).name(name).build())
-                .patientRepresentations(links.getPatientRepresentations())
-                .build()));
+                                .hip(Hip.builder().id(links.getHip().getId()).name(name).build())
+                                .patientRepresentations(links.getPatientRepresentations())
+                                .build()));
     }
 
     private Mono<String> getProviderName(String providerId) {

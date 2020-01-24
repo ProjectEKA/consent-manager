@@ -1,11 +1,14 @@
 package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.common.TokenUtils;
+import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkResponse;
+import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import lombok.AllArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,5 +34,11 @@ public class LinkController {
     public Mono<PatientLinkResponse> verifyToken(@RequestHeader(value = "Authorization") String authorization, @PathVariable("linkRefNumber") String linkRefNumber, @RequestBody PatientLinkRequest patientLinkRequest) {
         String patientId = TokenUtils.readUserId(authorization);
         return link.verifyToken(linkRefNumber, patientLinkRequest, patientId);
+    }
+
+    @GetMapping
+    public Mono<PatientLinks> getLinkedCareContexts(@RequestHeader(value = "Authorization") String authorization){
+        String patientId = TokenUtils.readUserId(authorization);
+        return link.getLinkedCareContexts(patientId);
     }
 }

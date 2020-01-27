@@ -19,11 +19,10 @@ import java.util.List;
 
 public class ConsentRequestRepository {
     private static final String INSERT_CONSENT_REQUEST_QUERY = "INSERT INTO consent_request (request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";
-    private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status =$1 WHERE request_id =$2";
     private static final String SELECT_CONSENT_REQUEST_QUERY = "SELECT request_id, status, details, timestamp FROM consent_request where request_id=$1 and status=$2";
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent request";
-    public static final String SELECT_CONSENT_DETAILS_FOR_PATIENT = "SELECT request_id, status, details, timestamp FROM consent_request where patient_id=$1 LIMIT $2 OFFSET $3";
-    public static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
+    private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT = "SELECT request_id, status, details, timestamp FROM consent_request where patient_id=$1 LIMIT $2 OFFSET $3";
+    private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
     private PgPool dbClient;
 
     public ConsentRequestRepository(PgPool dbClient) {
@@ -108,21 +107,5 @@ public class ConsentRequestRepository {
     private ConsentDetail convertToConsentDetail(String details) {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(details.getBytes(), ConsentDetail.class);
-    }
-
-    @SneakyThrows
-    public Mono<Void> updateStatus(String requestId, String status) {
-        return Mono.create(monoSink ->
-                dbClient.preparedQuery(
-                        UPDATE_CONSENT_REQUEST_STATUS_QUERY,
-                        Tuple.of(status, requestId),
-                        handler -> {
-                            if (handler.failed()){
-                                monoSink.error(new Exception(UNKNOWN_ERROR_OCCURRED));
-                            }
-                            else
-                                monoSink.success();
-                        })
-        );
     }
 }

@@ -99,8 +99,7 @@ public class ConsentManager {
                         Flux.fromIterable(grantedConsents)
                                 .flatMap(grantedConsent -> {
                                     var consentArtefact = mapToConsentArtefact(consentRequest, grantedConsent);
-                                    return consentArtefactRepository.insert(consentArtefact, requestId, patientId, "")
-                                            .then(consentRequestRepository.updateStatus(requestId, ConsentStatus.GRANTED.toString()))
+                                    return consentArtefactRepository.addConsentArtefactAndUpdateStatus(consentArtefact, requestId, patientId, "")
                                             .thenReturn(Consent.builder().id(consentArtefact.getId()).build());
                                 }).collectList())
                 .map(consents -> ConsentApprovalResponse.builder().consents(consents).build());

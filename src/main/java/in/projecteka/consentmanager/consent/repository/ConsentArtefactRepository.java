@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.consent.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
-import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
@@ -19,7 +18,6 @@ public class ConsentArtefactRepository {
 
     @SneakyThrows
     public Mono<Void> insert(ConsentArtefact consentArtefact,
-                             String consentArtefactId,
                              String consentRequestId,
                              String patientId,
                              String signature) {
@@ -27,7 +25,7 @@ public class ConsentArtefactRepository {
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(
                         INSERT_CONSENT_QUERY,
-                        Tuple.of(consentRequestId, consentArtefactId, patientId, consentArtefactJson, signature),
+                        Tuple.of(consentRequestId, consentArtefact.getId(), patientId, consentArtefactJson, signature),
                         handler -> {
                             if (handler.failed())
                                 monoSink.error(new Exception(FAILED_TO_SAVE_CONSENT_REQUEST));

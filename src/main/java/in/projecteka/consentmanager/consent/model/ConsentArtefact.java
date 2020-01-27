@@ -15,6 +15,7 @@ import java.util.Date;
 @Builder
 @Data
 public class ConsentArtefact {
+    private String id;
     private String requestId;
     private Date createdAt;
     private ConsentPurpose purpose;

@@ -1,14 +1,10 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.consent.model.db.ConsentRequest;
 import in.projecteka.consentmanager.link.link.model.Error;
 import in.projecteka.consentmanager.link.link.model.ErrorCode;
 import in.projecteka.consentmanager.link.link.model.ErrorRepresentation;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
-import reactor.core.publisher.Mono;
-
-import java.util.Optional;
 
 @Getter
 public class ClientError extends Throwable {

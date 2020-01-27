@@ -24,7 +24,6 @@ import reactor.core.publisher.Mono;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping(value = "/consent-requests")
 @AllArgsConstructor
 public class ConsentRequestController {
 
@@ -37,6 +36,7 @@ public class ConsentRequestController {
     }
 
     @PostMapping
+    @RequestMapping(value = "/consent-requests")
     public Mono<RequestCreatedRepresentation> requestConsent(
             @RequestHeader(value = "Authorization", required = true) String authorization,
             @RequestBody @Valid Mono<ConsentRequest> request) {
@@ -75,7 +75,7 @@ public class ConsentRequestController {
         return RequestCreatedRepresentation.builder().consentRequestId(requestId).build();
     }
 
-    @PostMapping(value = "/{request-id}/approve")
+    @PostMapping(value = "/consent-requests/{request-id}/approve")
     public Mono<ConsentApprovalResponse> approveConsent(
             @PathVariable(value = "request-id") String requestId,
             @RequestHeader(value = "Authorization") String authorization,

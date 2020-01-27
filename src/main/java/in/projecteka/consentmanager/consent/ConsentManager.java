@@ -13,6 +13,7 @@ import in.projecteka.consentmanager.consent.model.response.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentStatus;
 import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -20,6 +21,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
 
 public class ConsentManager {
 
@@ -91,24 +95,25 @@ public class ConsentManager {
 
     public Mono<ConsentApprovalResponse> approveConsent(String authorization,
                                                         String requestId,
-                                                        List<GrantedConsent> consents) {
+                                                        List<GrantedConsent> grantedConsents) {
         String patientId = TokenUtils.readUserId(authorization);
         return validatePatient(patientId)
                 .then(validateConsentRequest(requestId))
-                .flatMap(consentRequest -> {
-                    List<Consent> consentArtefacts = consents.stream().map(consent -> {
-                        String consentArtefactId = UUID.randomUUID().toString();
-                        ConsentArtefact consentArtefact = mapToConsentArtefact(consentRequest, consent);
-                        consentArtefactRepository.insert(consentArtefact, consentArtefactId, requestId, patientId, "");
-                        consentRequestRepository.updateStatus(requestId, ConsentStatus.GRANTED.toString());
-                        return Consent.builder().id(consentArtefactId).build();
-                    }).collect(Collectors.toList());
-                    return Mono.just(ConsentApprovalResponse.builder().consents(consentArtefacts).build());
-                });
+                .flatMap(consentRequest ->
+                        Flux.fromIterable(grantedConsents)
+                                .flatMap(grantedConsent -> {
+                                    var consentArtefact = mapToConsentArtefact(consentRequest, grantedConsent);
+                                    return consentArtefactRepository.insert(consentArtefact, requestId, patientId, "")
+                                            .then(consentRequestRepository.updateStatus(requestId, ConsentStatus.GRANTED.toString()))
+                                            .thenReturn(Consent.builder().id(consentArtefact.getId()).build());
+                                }).collectList())
+                .map(consents -> ConsentApprovalResponse.builder().consents(consents).build());
     }
 
     private ConsentArtefact mapToConsentArtefact(ConsentRequestDetail consentRequest, GrantedConsent consent) {
+        String consentArtefactId = UUID.randomUUID().toString();
         return ConsentArtefact.builder()
+                .id(consentArtefactId)
                 .requestId(consentRequest.getRequestId())
                 .createdAt(consentRequest.getCreatedAt())
                 .purpose(consentRequest.getPurpose())

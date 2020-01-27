@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.consent.model.request.ConsentDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentStatus;
@@ -20,8 +21,8 @@ import java.util.Optional;
 
 public class ConsentRequestRepository {
     private static final String INSERT_CONSENT_REQUEST_QUERY = "INSERT INTO consent_request (request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";
-    private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status = '$1' WHERE request_id = '$2'";
-    private static final String SELECT_CONSENT_REQUEST_QUERY = "SELECT id, details from consent_request where request_id='$5' and status='$6'";
+    private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status =$1 WHERE request_id =$2";
+    private static final String SELECT_CONSENT_REQUEST_QUERY = "SELECT request_id, status, details, timestamp FROM consent_request where request_id=$1 and status=$2";
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent request";
     public static final String SELECT_CONSENT_DETAILS_FOR_PATIENT = "SELECT request_id, status, details, timestamp FROM consent_request where patient_id=$1 LIMIT $2 OFFSET $3";
     public static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
@@ -69,14 +70,14 @@ public class ConsentRequestRepository {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_REQUEST_QUERY, Tuple.of(requestId, status),
                 handler -> {
                     if (handler.failed()) {
-                        monoSink.error(new RuntimeException(UNKNOWN_ERROR_OCCURRED));
+                        monoSink.error(new RuntimeException(handler.cause().getMessage()));
                     } else {
                         RowSet<Row> results = handler.result();
-                        if (results.size() == 1) {
-                            Row result = results.iterator().next();
-                            ConsentRequestDetail consentRequestDetail = mapToConsentRequestDetail(result);
-                            monoSink.success(consentRequestDetail);
+                        ConsentRequestDetail consentRequestDetail = null;
+                        for (Row result : results) {
+                            consentRequestDetail = mapToConsentRequestDetail(result);
                         }
+                        monoSink.success(consentRequestDetail);
                     }
                 }));
     }

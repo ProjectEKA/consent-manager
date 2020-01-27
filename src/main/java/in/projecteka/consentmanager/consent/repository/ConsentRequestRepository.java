@@ -24,7 +24,6 @@ public class ConsentRequestRepository {
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent request";
     public static final String SELECT_CONSENT_DETAILS_FOR_PATIENT = "SELECT request_id, status, details, timestamp FROM consent_request where patient_id=$1 LIMIT $2 OFFSET $3";
     public static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
-    private static final String FAILED_TO_UPDATE_CONSENT_REQUEST = "Failed to save consent request";
     private PgPool dbClient;
 
     public ConsentRequestRepository(PgPool dbClient) {

@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
+import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import in.projecteka.consentmanager.clients.model.Provider;
 import org.hamcrest.Matchers;
@@ -36,13 +37,16 @@ import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
 @WebFluxTest(ConsentRequestController.class)
 @ContextConfiguration(initializers = ConsentRequestControllerTest.PropertyInitializer.class)
-@Import({ConsentRequestRepository.class, ConsentManager.class, ClientRegistryClient.class, UserServiceClient.class, ConsentServiceProperties.class})
+@Import({ConsentRequestRepository.class, ConsentManager.class, ClientRegistryClient.class, UserServiceClient.class, ConsentServiceProperties.class, ConsentArtefactRepository.class})
 public class ConsentRequestControllerTest {
     @Autowired
     private WebTestClient webTestClient;
 
     @MockBean
     private ConsentRequestRepository repository;
+
+    @MockBean
+    private ConsentArtefactRepository consentArtefactRepository;
 
     @MockBean
     private ClientRegistryClient providerClient;
@@ -54,9 +58,9 @@ public class ConsentRequestControllerTest {
     @Test
     public void shouldAcceptConsentRequest() {
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
-        when (providerClient.providerWith(eq("MAX-ID"))).thenReturn(Mono.just(new Provider()));
-        when (providerClient.providerWith(eq("TMH-ID"))).thenReturn(Mono.just(new Provider()));
-        when (userServiceClient.userOf(eq("batman@ncg"))).thenReturn(Mono.just(new User()));
+        when(providerClient.providerWith(eq("MAX-ID"))).thenReturn(Mono.just(new Provider()));
+        when(providerClient.providerWith(eq("TMH-ID"))).thenReturn(Mono.just(new Provider()));
+        when(userServiceClient.userOf(eq("batman@ncg"))).thenReturn(Mono.just(new User()));
 
         String body = "" +
                 "{\n" +

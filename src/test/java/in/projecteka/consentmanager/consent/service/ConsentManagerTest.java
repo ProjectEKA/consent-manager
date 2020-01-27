@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.consent.model.request.ConsentDetail;
 import in.projecteka.consentmanager.consent.model.request.HIPReference;
 import in.projecteka.consentmanager.consent.model.request.HIUReference;
 import in.projecteka.consentmanager.consent.model.request.PatientReference;
+import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,8 @@ class ConsentManagerTest {
 
     @Mock
     private ConsentRequestRepository repository;
+    @Mock
+    private ConsentArtefactRepository consentArtefactRepository;
     @Mock
     private ClientRegistryClient providerClient;
 

@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.link.discovery.model;
+package in.projecteka.consentmanager.clients.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +16,7 @@ public class Identifier {
         OFFICIAL;
     }
     private String system;
-    private String type;
+    private String value;
     private String use;
 
     public boolean isOfficial() {

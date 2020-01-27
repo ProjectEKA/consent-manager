@@ -1,6 +1,11 @@
 package in.projecteka.consentmanager.link.discovery;
 
-import in.projecteka.consentmanager.link.discovery.model.*;
+import in.projecteka.consentmanager.clients.model.Address;
+import in.projecteka.consentmanager.clients.model.Provider;
+import in.projecteka.consentmanager.clients.model.Telecom;
+import in.projecteka.consentmanager.clients.model.Type;
+import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.consentmanager.link.discovery.model.Coding;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
@@ -50,15 +55,15 @@ public class TestBuilders {
         return easyRandom.nextObject(Identifier.IdentifierBuilder.class);
     }
 
-    public static in.projecteka.consentmanager.link.discovery.model.Identifier.IdentifierBuilder providerIdentifier() {
-        return easyRandom.nextObject(in.projecteka.consentmanager.link.discovery.model.Identifier.IdentifierBuilder.class);
+    public static in.projecteka.consentmanager.clients.model.Identifier.IdentifierBuilder providerIdentifier() {
+        return easyRandom.nextObject(in.projecteka.consentmanager.clients.model.Identifier.IdentifierBuilder.class);
     }
 
     public static in.projecteka.consentmanager.link.discovery.model.patient.response.Patient.PatientBuilder patientInResponse() {
         return easyRandom.nextObject(in.projecteka.consentmanager.link.discovery.model.patient.response.Patient.PatientBuilder.class);
     }
 
-    public static in.projecteka.consentmanager.link.discovery.model.Identifier.IdentifierBuilder identifier() {
-        return easyRandom.nextObject(in.projecteka.consentmanager.link.discovery.model.Identifier.IdentifierBuilder.class);
+    public static in.projecteka.consentmanager.clients.model.Identifier.IdentifierBuilder identifier() {
+        return easyRandom.nextObject(in.projecteka.consentmanager.clients.model.Identifier.IdentifierBuilder.class);
     }
 }

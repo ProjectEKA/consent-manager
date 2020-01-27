@@ -3,12 +3,12 @@ package in.projecteka.consentmanager.link.discovery;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.link.ClientError;
-import in.projecteka.consentmanager.link.discovery.model.Address;
-import in.projecteka.consentmanager.link.discovery.model.Phone;
-import in.projecteka.consentmanager.link.discovery.model.Provider;
-import in.projecteka.consentmanager.link.discovery.model.Telecom;
-import in.projecteka.consentmanager.link.discovery.model.User;
+import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.model.Address;
+import in.projecteka.consentmanager.clients.model.Phone;
+import in.projecteka.consentmanager.clients.model.Provider;
+import in.projecteka.consentmanager.clients.model.Telecom;
+import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
@@ -66,7 +66,7 @@ public class DiscoveryTest {
         var discovery = new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
-        var identifier = identifier().use(in.projecteka.consentmanager.link.discovery.model.Identifier.IdentifierType.OFFICIAL.toString()).build();
+        var identifier = identifier().use(in.projecteka.consentmanager.clients.model.Identifier.IdentifierType.OFFICIAL.toString()).build();
         var provider = provider()
                 .addresses(of(address))
                 .telecoms(of(telecommunication))

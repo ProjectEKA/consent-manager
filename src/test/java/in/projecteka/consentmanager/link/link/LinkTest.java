@@ -1,9 +1,10 @@
 package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
-import in.projecteka.consentmanager.link.ClientError;
+import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.link.HIPClient;
-import in.projecteka.consentmanager.link.discovery.model.Identifier;
+import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
@@ -45,6 +46,9 @@ class LinkTest {
   @Mock
   private LinkRepository linkRepository;
 
+  @Mock
+  private UserServiceClient userServiceClient;
+
   @BeforeEach
   public void setUp() {
     initMocks(this);
@@ -52,7 +56,7 @@ class LinkTest {
 
   @Test
   public void createsLinkReference() {
-      var link = new Link(hipClient, clientRegistryClient, linkRepository);
+      var link = new Link(hipClient, clientRegistryClient, linkRepository, userServiceClient);
       var address = address().use("work").build();
       var telecommunication = telecom().use("work").build();
       String providerUrl = "http://localhost:8001";
@@ -86,7 +90,7 @@ class LinkTest {
 
   @Test
   public void shouldGetSystemUrlForOfficialIdentifier() {
-      var link = new Link(hipClient, clientRegistryClient, linkRepository);
+      var link = new Link(hipClient, clientRegistryClient, linkRepository, userServiceClient);
       var address = address().use("work").build();
       var telecommunication = telecom().use("work").build();
       String providerUrl = "http://localhost:8001";
@@ -127,7 +131,7 @@ class LinkTest {
 
   @Test
   public void shouldGetErrorWhenProviderUrlIsEmpty() {
-      var link = new Link(hipClient, clientRegistryClient, linkRepository);
+      var link = new Link(hipClient, clientRegistryClient, linkRepository, userServiceClient);
       var address = address().use("work").build();
       var telecommunication = telecom().use("work").build();
       var provider =
@@ -156,7 +160,7 @@ class LinkTest {
 
   @Test
   public void linksPatientsCareContexts() {
-      var link = new Link(hipClient, clientRegistryClient, linkRepository);
+      var link = new Link(hipClient, clientRegistryClient, linkRepository, userServiceClient);
       var address = address().use("work").build();
       var telecommunication = telecom().use("work").build();
       String providerUrl = "http://localhost:8001";

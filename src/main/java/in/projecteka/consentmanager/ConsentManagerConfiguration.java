@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
+import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.link.HIPClient;
 import in.projecteka.consentmanager.link.discovery.Discovery;
@@ -79,10 +80,11 @@ public class ConsentManagerConfiguration {
     @Bean
     public Link link(WebClient.Builder builder,
                      ClientRegistryProperties clientRegistryProperties,
-                     LinkRepository linkRepository) {
+                     LinkRepository linkRepository,
+                     UserServiceProperties userServiceProperties) {
         return new Link(new HIPClient(builder),
                         new ClientRegistryClient(builder, clientRegistryProperties),
-                        linkRepository);
+                        linkRepository, new UserServiceClient(builder, userServiceProperties));
     }
 
     @Bean
@@ -102,5 +104,15 @@ public class ConsentManagerConfiguration {
     @Bean
     public ConsentRequestRepository consentRequestRepository(PgPool pgPool) {
         return new ConsentRequestRepository(pgPool);
+    }
+
+    @Bean
+    public ConsentManager consentRequestService(WebClient.Builder builder,
+                                                ConsentRequestRepository repository,
+                                                ClientRegistryProperties clientRegistryProperties,
+                                                UserServiceProperties userServiceProperties) {
+        return new ConsentManager(repository,
+                new ClientRegistryClient(builder, clientRegistryProperties),
+                new UserServiceClient(builder, userServiceProperties));
     }
 }

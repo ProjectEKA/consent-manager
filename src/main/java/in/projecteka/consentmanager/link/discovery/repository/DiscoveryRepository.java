@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.link.discovery.repository;
 
-import in.projecteka.consentmanager.link.ClientError;
+import in.projecteka.consentmanager.clients.ClientError;
 import io.vertx.pgclient.PgPool;
 import reactor.core.publisher.Mono;
 

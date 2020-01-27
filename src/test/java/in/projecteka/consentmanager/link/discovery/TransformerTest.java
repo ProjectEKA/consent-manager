@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.link.discovery;
 
-import in.projecteka.consentmanager.link.discovery.model.Address;
+import in.projecteka.consentmanager.clients.model.Address;
 import in.projecteka.consentmanager.link.discovery.model.Coding;
-import in.projecteka.consentmanager.link.discovery.model.Identifier;
-import in.projecteka.consentmanager.link.discovery.model.Telecom;
-import in.projecteka.consentmanager.link.discovery.model.Type;
+import in.projecteka.consentmanager.clients.model.Identifier;
+import in.projecteka.consentmanager.clients.model.Telecom;
+import in.projecteka.consentmanager.clients.model.Type;
 
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -34,7 +34,7 @@ class TransformerTest {
         assertThat(providerRepresentation.getCity()).isEqualTo(address.getCity());
         assertThat(providerRepresentation.getTelephone()).isEqualTo(telecom.getValue());
         assertThat(providerRepresentation.getType()).isEqualTo(coding.getCode());
-        assertThat(providerRepresentation.getIdentifier().getId()).isEqualTo(identifier.getType());
+        assertThat(providerRepresentation.getIdentifier().getId()).isEqualTo(identifier.getValue());
     }
 
     @Test

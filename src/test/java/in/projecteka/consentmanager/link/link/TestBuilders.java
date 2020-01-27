@@ -1,11 +1,10 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.link.discovery.model.Address;
-import in.projecteka.consentmanager.link.discovery.model.Provider;
-import in.projecteka.consentmanager.link.discovery.model.Telecom;
-import in.projecteka.consentmanager.link.discovery.model.Type;
+import in.projecteka.consentmanager.clients.model.*;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
+import in.projecteka.consentmanager.link.link.model.PatientLinks;
+import in.projecteka.consentmanager.link.link.model.PatientRepresentation;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
@@ -28,8 +27,8 @@ public class TestBuilders {
         return easyRandom.nextObject(Address.AddressBuilder.class);
     }
 
-    public static in.projecteka.consentmanager.link.discovery.model.Identifier.IdentifierBuilder identifier() {
-        return easyRandom.nextObject(in.projecteka.consentmanager.link.discovery.model.Identifier.IdentifierBuilder.class);
+    public static Identifier.IdentifierBuilder identifier() {
+        return easyRandom.nextObject(Identifier.IdentifierBuilder.class);
     }
 
     public static in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder patientLinkReferenceRequest() {
@@ -42,5 +41,17 @@ public class TestBuilders {
 
     public static PatientLinkReferenceResponse.PatientLinkReferenceResponseBuilder patientLinkReferenceResponse() {
         return easyRandom.nextObject(PatientLinkReferenceResponse.PatientLinkReferenceResponseBuilder.class);
+    }
+
+    public static PatientLinks.PatientLinksBuilder patientLinks() {
+        return easyRandom.nextObject(PatientLinks.PatientLinksBuilder.class);
+    }
+
+    public static PatientRepresentation.PatientRepresentationBuilder patientRepresentation() {
+        return easyRandom.nextObject(PatientRepresentation.PatientRepresentationBuilder.class);
+    }
+
+    public static User.UserBuilder user() {
+        return easyRandom.nextObject(User.UserBuilder.class);
     }
 }

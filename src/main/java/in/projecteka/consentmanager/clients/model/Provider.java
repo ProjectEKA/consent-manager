@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.link.discovery.model;
+package in.projecteka.consentmanager.clients.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

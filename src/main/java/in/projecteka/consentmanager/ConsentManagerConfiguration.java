@@ -81,10 +81,11 @@ public class ConsentManagerConfiguration {
     @Bean
     public Link link(WebClient.Builder builder,
                      ClientRegistryProperties clientRegistryProperties,
-                     LinkRepository linkRepository) {
+                     LinkRepository linkRepository,
+                     UserServiceProperties userServiceProperties) {
         return new Link(new HIPClient(builder),
                         new ClientRegistryClient(builder, clientRegistryProperties),
-                        linkRepository);
+                        linkRepository, new UserServiceClient(builder, userServiceProperties));
     }
 
     @Bean

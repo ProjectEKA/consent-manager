@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.consent.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.consent.model.request.ConsentDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentStatus;
@@ -17,7 +16,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 public class ConsentRequestRepository {
     private static final String INSERT_CONSENT_REQUEST_QUERY = "INSERT INTO consent_request (request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";

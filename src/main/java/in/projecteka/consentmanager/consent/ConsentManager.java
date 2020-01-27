@@ -20,10 +20,6 @@ import reactor.core.scheduler.Schedulers;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
 
 public class ConsentManager {
 

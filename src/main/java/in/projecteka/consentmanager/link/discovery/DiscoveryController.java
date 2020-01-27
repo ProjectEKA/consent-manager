@@ -1,8 +1,8 @@
 package in.projecteka.consentmanager.link.discovery;
 
+import in.projecteka.consentmanager.common.TokenUtils;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.DiscoveryRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
-import in.projecteka.consentmanager.common.TokenUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;

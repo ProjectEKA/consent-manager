@@ -4,10 +4,9 @@ import in.projecteka.consentmanager.common.TokenUtils;
 import in.projecteka.consentmanager.consent.model.ConsentRequestValidator;
 import in.projecteka.consentmanager.consent.model.request.ConsentApprovalRequest;
 import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
+import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
-import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
-
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;

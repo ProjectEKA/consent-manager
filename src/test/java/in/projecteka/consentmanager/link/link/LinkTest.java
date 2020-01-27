@@ -222,12 +222,12 @@ class LinkTest {
               .build();
       var listOfLinksResponse = new ArrayList<Links>();
       listOfLinksResponse.add(linksResponse);
-      var patientLinksResponse = patientLinks()
+      var patientLinksResponse = new PatientLinksResponse(patientLinks()
               .id(patientId)
               .firstName(user.getFirstName())
               .lastName(user.getLastName())
               .links(listOfLinksResponse)
-              .build();
+              .build());
 
       when(linkRepository.getLinkedCareContextsForAllHip(patientId)).thenReturn(Mono.just(patientLinks));
       when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));

@@ -1,8 +1,7 @@
 package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.model.*;
-import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
-import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
+import in.projecteka.consentmanager.link.link.model.*;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
@@ -39,5 +38,19 @@ public class TestBuilders {
 
     public static PatientLinkReferenceResponse.PatientLinkReferenceResponseBuilder patientLinkReferenceResponse() {
         return easyRandom.nextObject(PatientLinkReferenceResponse.PatientLinkReferenceResponseBuilder.class);
+    }
+
+    public static PatientLinks.PatientLinksBuilder patientLinks() {
+        return easyRandom.nextObject(PatientLinks.PatientLinksBuilder.class);
+    }
+
+    public static User.UserBuilder user(){
+        return easyRandom.nextObject(User.UserBuilder.class);
+    }
+
+    public static Links.LinksBuilder links(){ return easyRandom.nextObject(Links.LinksBuilder.class); }
+
+    public static PatientRepresentation.PatientRepresentationBuilder patientRepresentation(){
+        return easyRandom.nextObject(PatientRepresentation.PatientRepresentationBuilder.class);
     }
 }

@@ -63,6 +63,6 @@ public class ClientError extends Throwable {
                 HttpStatus.NOT_FOUND,
                 new ErrorRepresentation(new Error(
                         ErrorCode.USER_NOT_FOUND,
-                        "Cannot find the user")));
+                        "Cannot find the provider")));
     }
 }

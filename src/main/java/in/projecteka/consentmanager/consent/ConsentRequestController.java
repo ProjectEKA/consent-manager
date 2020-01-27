@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,7 +30,7 @@ public class ConsentRequestController {
     private ConsentManager hdcm;
     private ConsentServiceProperties serviceProperties;
 
-    @InitBinder
+    @InitBinder("consentRequest")
     protected void initBinder(WebDataBinder binder) {
         binder.addValidators(new ConsentRequestValidator());
     }
@@ -38,9 +39,9 @@ public class ConsentRequestController {
     @RequestMapping(value = "/consent-requests")
     public Mono<RequestCreatedRepresentation> requestConsent(
             @RequestHeader(value = "Authorization", required = true) String authorization,
-            @RequestBody @Valid Mono<ConsentRequest> request) {
+            @RequestBody @Valid @ModelAttribute("consentRequest") ConsentRequest request) {
 
-        return request.flatMap(r -> hdcm.askForConsent(authorization, r.getConsent())).map(this::buildResponse);
+        return hdcm.askForConsent(authorization, request.getConsent()).map(this::buildResponse);
     }
 
 

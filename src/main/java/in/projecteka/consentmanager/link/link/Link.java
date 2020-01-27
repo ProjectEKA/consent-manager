@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkResponse;
+import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import in.projecteka.consentmanager.link.link.model.hip.Patient;
 import in.projecteka.consentmanager.link.link.repository.LinkRepository;
@@ -134,16 +135,18 @@ public class Link {
         return Mono.just(date.before(new Date()));
     }
 
-    public Mono<PatientLinks> getLinkedCareContexts(String patientId) {
+    public Mono<PatientLinksResponse> getLinkedCareContexts(String patientId) {
         return linkRepository.getLinkedCareContextsForAllHip(patientId)
                 .flatMap(patientLinks -> getLinks(patientLinks.getLinks())
                         .flatMap(links -> userWith(patientId)
-                                .flatMap(user -> Mono.just(PatientLinks.builder()
-                                        .id(patientLinks.getId())
-                                        .firstName(user.getFirstName())
-                                        .lastName(user.getLastName())
-                                        .links(links)
-                                        .build()))));
+                                .flatMap(user -> Mono.just(PatientLinksResponse.builder().
+                                        patient(PatientLinks.builder()
+                                                .id(patientLinks.getId())
+                                                .firstName(user.getFirstName())
+                                                .lastName(user.getLastName())
+                                                .links(links)
+                                                .build())
+                                .build()))));
     }
 
     private Mono<User> userWith(String patientId) {

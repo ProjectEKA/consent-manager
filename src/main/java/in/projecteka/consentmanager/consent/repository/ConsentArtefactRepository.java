@@ -19,10 +19,8 @@ public class ConsentArtefactRepository {
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent artefact";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status =$1 WHERE request_id =$2";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
-
     private PgPool dbClient;
 
-    @SneakyThrows
     public Mono<Void> addConsentArtefactAndUpdateStatus(ConsentArtefact consentArtefact,
                                                         String consentRequestId,
                                                         String patientId,
@@ -31,7 +29,7 @@ public class ConsentArtefactRepository {
                     if (connection.succeeded()) {
                         SqlConnection sqlConnection = connection.result();
                         Transaction transaction = sqlConnection.begin();
-                        final String consentArtefactJson = new ObjectMapper().writeValueAsString(consentArtefact);
+                        final String consentArtefactJson = getConsentArtefactJson(consentArtefact);
 
                         transaction.preparedQuery(
                                 INSERT_CONSENT_QUERY,
@@ -60,4 +58,8 @@ public class ConsentArtefactRepository {
         );
     }
 
+    @SneakyThrows
+    private String getConsentArtefactJson(ConsentArtefact consentArtefact) {
+        return new ObjectMapper().writeValueAsString(consentArtefact);
+    }
 }

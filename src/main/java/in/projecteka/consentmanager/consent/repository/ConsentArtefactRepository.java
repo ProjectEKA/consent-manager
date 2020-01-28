@@ -2,14 +2,18 @@ package in.projecteka.consentmanager.consent.repository;
 
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.response.ConsentStatus;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Transaction;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoSink;
 
 @AllArgsConstructor
 public class ConsentArtefactRepository {
@@ -26,35 +30,47 @@ public class ConsentArtefactRepository {
                                                         String patientId,
                                                         byte[] signature) {
         return Mono.create(monoSink -> dbClient.getConnection(connection -> {
-                    if (connection.succeeded()) {
-                        SqlConnection sqlConnection = connection.result();
-                        Transaction transaction = sqlConnection.begin();
-
-                        transaction.preparedQuery(
-                                INSERT_CONSENT_QUERY,
-                                Tuple.of(consentRequestId, consentArtefact.getId(), patientId, JsonObject.mapFrom(consentArtefact), Buffer.buffer(signature)),
-                                handler -> {
-                                    if (handler.failed()) {
-                                        sqlConnection.close();
-                                        monoSink.error(new Exception(FAILED_TO_SAVE_CONSENT_REQUEST));
-                                    } else {
-                                        transaction.preparedQuery(
-                                                UPDATE_CONSENT_REQUEST_STATUS_QUERY,
-                                                Tuple.of(ConsentStatus.GRANTED.toString(), consentRequestId),
-                                                updateConsentRequestHandler -> {
-                                                    if (updateConsentRequestHandler.failed()) {
-                                                        sqlConnection.close();
-                                                        monoSink.error(new Exception(UNKNOWN_ERROR_OCCURRED));
-                                                    } else {
-                                                        transaction.commit();
-                                                        monoSink.success();
-                                                    }
-                                                });
-                                    }
-                                });
-                    }
+                    if (connection.failed()) return;
+                    SqlConnection sqlConnection = connection.result();
+                    Transaction transaction = sqlConnection.begin();
+                    transaction.preparedQuery(
+                            INSERT_CONSENT_QUERY,
+                            Tuple.of(consentRequestId,
+                                    consentArtefact.getId(),
+                                    patientId, JsonObject.mapFrom(consentArtefact),
+                                    Buffer.buffer(signature)),
+                            handler -> updateConsentRequest(
+                                    consentRequestId,
+                                    monoSink,
+                                    sqlConnection,
+                                    transaction,
+                                    handler));
                 })
         );
+    }
+
+    private void updateConsentRequest(String consentRequestId,
+                                      MonoSink<Void> monoSink,
+                                      SqlConnection sqlConnection,
+                                      Transaction transaction,
+                                      AsyncResult<RowSet<Row>> handler) {
+        if (handler.failed()) {
+            sqlConnection.close();
+            monoSink.error(new Exception(FAILED_TO_SAVE_CONSENT_REQUEST));
+        } else {
+            transaction.preparedQuery(
+                    UPDATE_CONSENT_REQUEST_STATUS_QUERY,
+                    Tuple.of(ConsentStatus.GRANTED.toString(), consentRequestId),
+                    updateConsentRequestHandler -> {
+                        if (updateConsentRequestHandler.failed()) {
+                            sqlConnection.close();
+                            monoSink.error(new Exception(UNKNOWN_ERROR_OCCURRED));
+                        } else {
+                            transaction.commit();
+                            monoSink.success();
+                        }
+                    });
+        }
     }
 
 }

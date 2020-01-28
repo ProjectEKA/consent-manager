@@ -1,7 +1,6 @@
-package in.projecteka.consentmanager.link.clients;
+package in.projecteka.consentmanager.clients;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +19,7 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 
-import static in.projecteka.consentmanager.link.clients.TestBuilders.user;
+import static in.projecteka.consentmanager.clients.TestBuilders.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 

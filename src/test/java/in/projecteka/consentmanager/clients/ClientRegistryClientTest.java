@@ -1,7 +1,6 @@
-package in.projecteka.consentmanager.link.clients;
+package in.projecteka.consentmanager.clients;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
@@ -21,12 +20,12 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 
-import static in.projecteka.consentmanager.link.clients.TestBuilders.address;
-import static in.projecteka.consentmanager.link.clients.TestBuilders.coding;
-import static in.projecteka.consentmanager.link.clients.TestBuilders.identifier;
-import static in.projecteka.consentmanager.link.clients.TestBuilders.provider;
-import static in.projecteka.consentmanager.link.clients.TestBuilders.telecom;
-import static in.projecteka.consentmanager.link.clients.TestBuilders.type;
+import static in.projecteka.consentmanager.clients.TestBuilders.address;
+import static in.projecteka.consentmanager.clients.TestBuilders.coding;
+import static in.projecteka.consentmanager.clients.TestBuilders.identifier;
+import static in.projecteka.consentmanager.clients.TestBuilders.provider;
+import static in.projecteka.consentmanager.clients.TestBuilders.telecom;
+import static in.projecteka.consentmanager.clients.TestBuilders.type;
 import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;

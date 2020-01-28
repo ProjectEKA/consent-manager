@@ -65,11 +65,9 @@ public class ConsentManager {
         return Mono.zip(checkHIU, checkHIP, (validHIU, validHIP) -> validHIU && validHIP);
     }
 
-
     private Mono<Void> saveRequest(ConsentDetail consentDetail, String requestId) {
         return consentRequestRepository.insert(consentDetail, requestId);
     }
-
 
     private Mono<Boolean> isValidHIU(ConsentDetail consentDetail) {
         return providerClient.providerWith(getHIUId(consentDetail)).flatMap(hiu -> Mono.just(hiu != null));

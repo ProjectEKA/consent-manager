@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import in.projecteka.consentmanager.link.link.model.PatientRepresentation;
+import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
@@ -23,6 +24,16 @@ public class LinkRepository {
             "consent_manager_user_id=$1";
     private static final String INSERT_TO_LINK = "INSERT INTO link (hip_id, consent_manager_user_id, link_reference," +
             "patient) VALUES ($1, $2, $3, $4)";
+    private static final String INSERT_TO_LINK_REFERENCE = "INSERT INTO link_reference (patient_link_reference, " +
+            "hip_id) VALUES ($1, $2)";
+    private static final String SELECT_HIP_ID_FROM_DISCOVERY = "SELECT hip_id FROM discovery_request WHERE " +
+            "transaction_id=$1";
+    private static final String SELECT_TRANSACTION_ID_FROM_LINK_REFERENCE = "SELECT patient_link_reference ->> " +
+            "'transactionId' as transactionId FROM link_reference WHERE patient_link_reference -> 'link' ->> " +
+            "'referenceNumber' = $1";
+    private static final String SELECT_EXPIRY_FROM_LINK_REFERENCE = "SELECT patient_link_reference -> 'link' -> " +
+            "'meta' ->> 'communicationExpiry' as communicationExpiry FROM link_reference WHERE " +
+            "patient_link_reference -> 'link' ->> 'referenceNumber' = $1";
     private PgPool dbClient;
 
     public LinkRepository(PgPool dbClient) {
@@ -31,31 +42,50 @@ public class LinkRepository {
 
     @SneakyThrows
     public Mono<Void> insertToLinkReference(PatientLinkReferenceResponse patientLinkReferenceResponse, String hipId) {
-        String sql = String.format("insert into link_reference (patient_link_reference, hip_id) values ('%s', '%s')",
-                new ObjectMapper().writeValueAsString(patientLinkReferenceResponse), hipId);
-        return insert(sql, "Failed to insert link reference");
+        JsonObject patientLinkReferenceResponseJson =
+                new JsonObject(new ObjectMapper().writeValueAsString(patientLinkReferenceResponse));
+        return Mono.create(monoSink ->
+                dbClient.preparedQuery(
+                        INSERT_TO_LINK_REFERENCE,
+                        Tuple.of(patientLinkReferenceResponseJson, hipId),
+                        handler -> {
+                            if (handler.failed())
+                                monoSink.error(new Exception("Failed to insert link reference"));
+                            else
+                                monoSink.success();
+                        })
+        );
     }
 
     public Mono<String> getHIPIdFromDiscovery(String transactionId) {
-        String sql = String.format("select hip_id from discovery_request where transaction_id='%s';", transactionId);
-        return get(sql, "Failed to get HIP Id from transaction Id");
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_HIP_ID_FROM_DISCOVERY, Tuple.of(transactionId),
+                handler -> {
+                    if (handler.failed()) {
+                        monoSink.error(new Exception("Failed to get HIP Id from transaction Id"));
+                    } else {
+                        monoSink.success(handler.result().iterator().next().getString(0));
+                    }
+                }));
     }
 
     public Mono<String> getTransactionIdFromLinkReference(String linkRefNumber) {
-        String sql = String.format("select patient_link_reference ->> 'transactionId' as transactionId " +
-                        "from link_reference where patient_link_reference -> 'link' ->> 'referenceNumber' = '%s';",
-                linkRefNumber);
-        return get(sql, "Failed to get transaction id from link reference");
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_TRANSACTION_ID_FROM_LINK_REFERENCE, Tuple.of(linkRefNumber),
+                handler -> {
+                    if (handler.failed()) {
+                        monoSink.error(new Exception("Failed to get transaction id from link reference"));
+                    } else {
+                        monoSink.success(handler.result().iterator().next().getString(0));
+                    }
+                }));
     }
 
     @SneakyThrows
     public Mono<Void> insertToLink(String hipId, String consentManagerUserId, String linkRefNumber,
                                    PatientRepresentation patient) {
-        final String patientAsString = new ObjectMapper().writeValueAsString(patient);
+        JsonObject patientJson = new JsonObject(new ObjectMapper().writeValueAsString(patient));
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(
-                        INSERT_TO_LINK,
-                        Tuple.of(hipId, consentManagerUserId, linkRefNumber, patientAsString),
+                        INSERT_TO_LINK, Tuple.of(hipId, consentManagerUserId, linkRefNumber, patientJson),
                         handler -> {
                             if (handler.failed())
                                 monoSink.error(new Exception("Failed to insert link"));
@@ -66,31 +96,14 @@ public class LinkRepository {
     }
 
     public Mono<String> getExpiryFromLinkReference(String linkRefNumber) {
-        String sql = String.format("select patient_link_reference -> 'link' -> 'meta' ->> 'communicationExpiry' as " +
-                        "communicationExpiry " +
-                        "from link_reference where patient_link_reference -> 'link' ->> 'referenceNumber' = '%s';",
-                linkRefNumber);
-        return get(sql, "Failed to get communicationExpiry from link reference");
-    }
-
-    private Mono<Void> insert(String sql, String msg) {
-        return Mono.create(monoSink -> dbClient.query(sql, handler -> {
-            if (handler.failed())
-                monoSink.error(new Exception(msg));
-            else
-                monoSink.success();
-        }));
-    }
-
-    private Mono<String> get(String sql, String msg) {
-        return Mono.create(monoSink -> dbClient.query(sql, handler -> {
-            if (handler.failed()) {
-                monoSink.error(new Exception(msg));
-            } else {
-                RowSet<Row> result = handler.result();
-                monoSink.success(result.iterator().next().getString(0));
-            }
-        }));
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_EXPIRY_FROM_LINK_REFERENCE, Tuple.of(linkRefNumber),
+                handler -> {
+                    if (handler.failed()) {
+                        monoSink.error(new Exception("Failed to get communicationExpiry from link reference"));
+                    } else {
+                        monoSink.success(handler.result().iterator().next().getString(0));
+                    }
+                }));
     }
 
     public Mono<PatientLinks> getLinkedCareContextsForAllHip(String patientId) {
@@ -105,7 +118,7 @@ public class LinkRepository {
                         for (Row row : results) {
                             String hipId = row.getString("hip_id");
                             PatientRepresentation patientRepresentation =
-                                    convertToPatientRepresentation(row.getString("patient"));
+                                    convertToPatientRepresentation(row.getValue("patient").toString());
                             if (hipIdToLinksMap.containsKey(hipId)){
                                 Links links = hipIdToLinksMap.get(hipId);
                                 links.getPatientRepresentations().getCareContexts()

@@ -1,14 +1,18 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.link.HIPClient;
 import in.projecteka.consentmanager.clients.model.Identifier;
+import in.projecteka.consentmanager.link.HIPClient;
+import in.projecteka.consentmanager.link.link.model.Links;
+import in.projecteka.consentmanager.link.link.model.PatientLinkResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
-import in.projecteka.consentmanager.link.link.model.PatientLinkResponse;
+import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
+import in.projecteka.consentmanager.link.link.model.Hip;
+
 import in.projecteka.consentmanager.link.link.repository.LinkRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,14 +22,20 @@ import reactor.test.StepVerifier;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 
 import static in.projecteka.consentmanager.link.link.TestBuilders.address;
 import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResponse;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkRequest;
-import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
+import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinks;
+import static in.projecteka.consentmanager.link.link.TestBuilders.patientRepresentation;
 import static in.projecteka.consentmanager.link.link.TestBuilders.telecom;
+import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
+import static in.projecteka.consentmanager.link.link.TestBuilders.links;
+import static in.projecteka.consentmanager.link.link.TestBuilders.user;
+
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 import static java.util.Arrays.asList;
 import static java.util.List.of;
@@ -192,6 +202,58 @@ class LinkTest {
 
       StepVerifier.create(link.verifyToken(linkRefNumber, patientLinkRequest, patientId))
               .expectNext(patientLinkResponse)
+              .verifyComplete();
+  }
+
+  @Test
+  public void shouldReturnLinkedCareContext(){
+      var patientId = "5@ncg.com";
+      String hipId = "10000005";
+      var patientRepresentation = patientRepresentation().build();
+      var links = links()
+              .hip(Hip.builder()
+                      .name("")
+                      .id(hipId)
+                      .build())
+              .patientRepresentations(patientRepresentation)
+              .build();
+      var listOfLinks = new ArrayList<Links>();
+      listOfLinks.add(links);
+      var patientLinks = patientLinks()
+                            .id(patientId)
+                            .firstName("")
+                            .lastName("")
+                            .links(listOfLinks)
+                            .build();
+      var provider =
+              provider().build();
+      var user = user()
+              .identifier(patientLinks.getId())
+              .build();
+
+      var linksResponse = links()
+              .hip(Hip.builder()
+                      .name(provider.getName())
+                      .id(hipId)
+                      .build())
+              .patientRepresentations(patientRepresentation)
+              .build();
+      var listOfLinksResponse = new ArrayList<Links>();
+      listOfLinksResponse.add(linksResponse);
+      var patientLinksResponse = new PatientLinksResponse(patientLinks()
+              .id(patientId)
+              .firstName(user.getFirstName())
+              .lastName(user.getLastName())
+              .links(listOfLinksResponse)
+              .build());
+
+      when(linkRepository.getLinkedCareContextsForAllHip(patientId)).thenReturn(Mono.just(patientLinks));
+      when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
+      when(userServiceClient.userOf(patientId)).thenReturn(Mono.just(user));
+      var link = new Link(hipClient, clientRegistryClient, linkRepository, userServiceClient);
+
+      StepVerifier.create(link.getLinkedCareContexts(patientId))
+              .expectNext(patientLinksResponse)
               .verifyComplete();
   }
 }

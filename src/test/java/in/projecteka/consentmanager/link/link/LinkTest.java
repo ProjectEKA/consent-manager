@@ -5,7 +5,14 @@ import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.link.HIPClient;
-import in.projecteka.consentmanager.link.link.model.*;
+import in.projecteka.consentmanager.link.link.model.Links;
+import in.projecteka.consentmanager.link.link.model.PatientLinkResponse;
+import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
+import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
+import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
+import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
+import in.projecteka.consentmanager.link.link.model.Hip;
+
 import in.projecteka.consentmanager.link.link.repository.LinkRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +24,18 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 
-import static in.projecteka.consentmanager.link.link.TestBuilders.*;
+import static in.projecteka.consentmanager.link.link.TestBuilders.address;
+import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
+import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
+import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResponse;
+import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkRequest;
+import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinks;
+import static in.projecteka.consentmanager.link.link.TestBuilders.patientRepresentation;
+import static in.projecteka.consentmanager.link.link.TestBuilders.telecom;
+import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
+import static in.projecteka.consentmanager.link.link.TestBuilders.links;
+import static in.projecteka.consentmanager.link.link.TestBuilders.user;
+
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 import static java.util.Arrays.asList;
 import static java.util.List.of;

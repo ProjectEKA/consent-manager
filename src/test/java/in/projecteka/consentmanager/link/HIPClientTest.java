@@ -13,12 +13,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.test.StepVerifier;
 
 import java.io.IOException;
+import java.util.Objects;
 
-import static in.projecteka.consentmanager.link.TestBuilders.errorRepresentation;
-import static in.projecteka.consentmanager.link.TestBuilders.patientLinkReferenceRequestForHIP;
-import static in.projecteka.consentmanager.link.TestBuilders.patientLinkReferenceResponse;
-import static in.projecteka.consentmanager.link.TestBuilders.patientLinkRequest;
-import static in.projecteka.consentmanager.link.TestBuilders.patientLinkResponse;
+import static in.projecteka.consentmanager.link.TestBuilders.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class HIPClientTest {
@@ -64,7 +61,8 @@ public class HIPClientTest {
 
         RecordedRequest recordedRequest = mockWebServer.takeRequest();
 
-        assertThat(recordedRequest.getRequestUrl().toString()).isEqualTo(baseUrl + "patients/link");
+        assertThat(Objects.requireNonNull(recordedRequest.getRequestUrl()).toString())
+                .isEqualTo(baseUrl + "patients/link");
         assertThat(recordedRequest.getBody().readUtf8())
                 .isEqualTo(new ObjectMapper().writeValueAsString(request));
     }
@@ -93,7 +91,8 @@ public class HIPClientTest {
 
         RecordedRequest recordedRequest = mockWebServer.takeRequest();
 
-        assertThat(recordedRequest.getRequestUrl().toString()).isEqualTo(baseUrl + "patients/link");
+        assertThat(Objects.requireNonNull(recordedRequest.getRequestUrl()).toString())
+                .isEqualTo(baseUrl + "patients/link");
         assertThat(recordedRequest.getBody().readUtf8())
                 .isEqualTo(new ObjectMapper().writeValueAsString(request));
     }
@@ -132,7 +131,7 @@ public class HIPClientTest {
 
         RecordedRequest recordedRequest = mockWebServer.takeRequest();
 
-        assertThat(recordedRequest.getRequestUrl().toString())
+        assertThat(Objects.requireNonNull(recordedRequest.getRequestUrl()).toString())
                 .isEqualTo(baseUrl + "patients/link/test-ref-number");
         assertThat(recordedRequest.getBody().readUtf8())
                 .isEqualTo(new ObjectMapper().writeValueAsString(request));

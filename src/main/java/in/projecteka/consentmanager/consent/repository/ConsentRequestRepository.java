@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.consent.model.request.ConsentDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentStatus;
+import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
@@ -32,10 +33,11 @@ public class ConsentRequestRepository {
     @SneakyThrows
     public Mono<Void> insert(ConsentDetail consentDetail, String requestId) {
         final String detailAsString = new ObjectMapper().writeValueAsString(consentDetail);
+        JsonObject detailsJson = new JsonObject(detailAsString);
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(
                         INSERT_CONSENT_REQUEST_QUERY,
-                        Tuple.of(requestId, consentDetail.getPatient().getId(), ConsentStatus.REQUESTED.name(), detailAsString),
+                        Tuple.of(requestId, consentDetail.getPatient().getId(), ConsentStatus.REQUESTED.name(), detailsJson),
                         handler -> {
                             if (handler.failed())
                                 monoSink.error(new Exception(FAILED_TO_SAVE_CONSENT_REQUEST));
@@ -79,7 +81,7 @@ public class ConsentRequestRepository {
     }
 
     private ConsentRequestDetail mapToConsentRequestDetail(Row result) {
-        ConsentDetail details = convertToConsentDetail(result.getString("details"));
+        ConsentDetail details = convertToConsentDetail(result.getValue("details").toString());
         return ConsentRequestDetail
                 .builder()
                 .requestId(result.getString("request_id"))

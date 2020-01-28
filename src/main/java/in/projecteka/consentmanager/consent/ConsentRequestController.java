@@ -35,8 +35,7 @@ public class ConsentRequestController {
         binder.addValidators(new ConsentRequestValidator());
     }
 
-    @PostMapping
-    @RequestMapping(value = "/consent-requests")
+    @PostMapping(value = "/consent-requests")
     public Mono<RequestCreatedRepresentation> requestConsent(
             @RequestHeader(value = "Authorization", required = true) String authorization,
             @RequestBody @Valid @ModelAttribute("consentRequest") ConsentRequest request) {

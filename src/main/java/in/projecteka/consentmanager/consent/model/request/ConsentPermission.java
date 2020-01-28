@@ -1,7 +1,11 @@
 package in.projecteka.consentmanager.consent.model.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Future;

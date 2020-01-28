@@ -15,8 +15,11 @@ import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import java.security.KeyPair;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -35,6 +38,9 @@ class ConsentManagerTest {
     @Mock
     private UserServiceClient userClient;
 
+    @MockBean
+    private KeyPair keyPair;
+
     @BeforeEach
     public void setUp() {
         initMocks(this);
@@ -47,7 +53,7 @@ class ConsentManagerTest {
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
         ConsentDetail consentDetail = ConsentDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
 
-        ConsentManager consentManager = new ConsentManager(repository, providerClient, userClient, consentArtefactRepository);
+        ConsentManager consentManager = new ConsentManager(repository, providerClient, userClient, consentArtefactRepository, keyPair);
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when (providerClient.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when (providerClient.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
@@ -64,7 +70,7 @@ class ConsentManagerTest {
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
         ConsentDetail consentDetail = ConsentDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
 
-        ConsentManager consentManager = new ConsentManager(repository, providerClient, userClient, consentArtefactRepository);
+        ConsentManager consentManager = new ConsentManager(repository, providerClient, userClient, consentArtefactRepository, keyPair);
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when (providerClient.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when (providerClient.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));

@@ -19,6 +19,7 @@ import in.projecteka.consentmanager.user.UserService;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import lombok.SneakyThrows;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.context.ApplicationContext;
@@ -27,6 +28,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 
 @Configuration
 public class ConsentManagerConfiguration {
@@ -117,9 +121,18 @@ public class ConsentManagerConfiguration {
                                                 ConsentRequestRepository repository,
                                                 ClientRegistryProperties clientRegistryProperties,
                                                 UserServiceProperties userServiceProperties,
-                                                ConsentArtefactRepository consentArtefactRepository) {
+                                                ConsentArtefactRepository consentArtefactRepository,
+                                                KeyPair keyPair) {
         return new ConsentManager(repository,
                 new ClientRegistryClient(builder, clientRegistryProperties),
-                new UserServiceClient(builder, userServiceProperties), consentArtefactRepository);
+                new UserServiceClient(builder, userServiceProperties), consentArtefactRepository, keyPair);
+    }
+
+    @SneakyThrows
+    @Bean
+    public KeyPair keyPair() {
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+        keyGen.initialize(2048);
+        return keyGen.generateKeyPair();
     }
 }

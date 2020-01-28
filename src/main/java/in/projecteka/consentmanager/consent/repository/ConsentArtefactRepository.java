@@ -1,14 +1,14 @@
 package in.projecteka.consentmanager.consent.repository;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.response.ConsentStatus;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Transaction;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import reactor.core.publisher.Mono;
 
 @AllArgsConstructor
@@ -24,16 +24,15 @@ public class ConsentArtefactRepository {
     public Mono<Void> addConsentArtefactAndUpdateStatus(ConsentArtefact consentArtefact,
                                                         String consentRequestId,
                                                         String patientId,
-                                                        String signature) {
+                                                        byte[] signature) {
         return Mono.create(monoSink -> dbClient.getConnection(connection -> {
                     if (connection.succeeded()) {
                         SqlConnection sqlConnection = connection.result();
                         Transaction transaction = sqlConnection.begin();
-                        final String consentArtefactJson = getConsentArtefactJson(consentArtefact);
 
                         transaction.preparedQuery(
                                 INSERT_CONSENT_QUERY,
-                                Tuple.of(consentRequestId, consentArtefact.getId(), patientId, consentArtefactJson, signature),
+                                Tuple.of(consentRequestId, consentArtefact.getId(), patientId, JsonObject.mapFrom(consentArtefact), Buffer.buffer(signature)),
                                 handler -> {
                                     if (handler.failed()) {
                                         sqlConnection.close();
@@ -58,8 +57,4 @@ public class ConsentArtefactRepository {
         );
     }
 
-    @SneakyThrows
-    private String getConsentArtefactJson(ConsentArtefact consentArtefact) {
-        return new ObjectMapper().writeValueAsString(consentArtefact);
-    }
 }

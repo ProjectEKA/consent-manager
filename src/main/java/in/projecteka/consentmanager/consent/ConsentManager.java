@@ -13,29 +13,38 @@ import in.projecteka.consentmanager.consent.model.response.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentStatus;
 import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
+import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.Signature;
+import java.security.SignedObject;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
 public class ConsentManager {
 
+    public static final String SHA_1_WITH_RSA = "SHA1withRSA";
     private final ClientRegistryClient providerClient;
     private UserServiceClient userServiceClient;
     private final ConsentRequestRepository consentRequestRepository;
     private final ConsentArtefactRepository consentArtefactRepository;
+    private KeyPair keyPair;
 
     public ConsentManager(ConsentRequestRepository consentRequestRepository,
                           ClientRegistryClient providerClient,
                           UserServiceClient userServiceClient,
-                          ConsentArtefactRepository consentArtefactRepository) {
+                          ConsentArtefactRepository consentArtefactRepository,
+                          KeyPair keyPair) {
         this.consentRequestRepository = consentRequestRepository;
         this.providerClient = providerClient;
         this.userServiceClient = userServiceClient;
         this.consentArtefactRepository = consentArtefactRepository;
+        this.keyPair = keyPair;
     }
 
     public Mono<String> askForConsent(String requestingHIUId, ConsentDetail consentDetail) {
@@ -99,10 +108,19 @@ public class ConsentManager {
                         Flux.fromIterable(grantedConsents)
                                 .flatMap(grantedConsent -> {
                                     var consentArtefact = mapToConsentArtefact(consentRequest, grantedConsent);
-                                    return consentArtefactRepository.addConsentArtefactAndUpdateStatus(consentArtefact, requestId, patientId, "")
+                                    byte[] consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
+                                    return consentArtefactRepository.addConsentArtefactAndUpdateStatus(consentArtefact, requestId, patientId, consentArtefactSignature)
                                             .thenReturn(Consent.builder().id(consentArtefact.getId()).build());
                                 }).collectList())
                 .map(consents -> ConsentApprovalResponse.builder().consents(consents).build());
+    }
+
+    @SneakyThrows
+    private byte[] getConsentArtefactSignature(ConsentArtefact consentArtefact) {
+        PrivateKey privateKey = keyPair.getPrivate();
+        Signature signature = Signature.getInstance(SHA_1_WITH_RSA);
+        SignedObject signedObject = new SignedObject(consentArtefact.toString().getBytes(), privateKey, signature);
+        return signedObject.getSignature();
     }
 
     private ConsentArtefact mapToConsentArtefact(ConsentRequestDetail consentRequest, GrantedConsent consent) {

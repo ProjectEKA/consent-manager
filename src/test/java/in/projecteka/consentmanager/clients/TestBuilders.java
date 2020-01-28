@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.link.clients;
+package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.*;
 import in.projecteka.consentmanager.link.discovery.model.Coding;

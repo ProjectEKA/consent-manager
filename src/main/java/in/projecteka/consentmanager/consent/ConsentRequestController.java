@@ -22,7 +22,7 @@ import javax.validation.Valid;
 @AllArgsConstructor
 public class ConsentRequestController {
 
-    private ConsentManager hdcm;
+    private ConsentManager consentManager;
     private ConsentServiceProperties serviceProperties;
 
     @InitBinder
@@ -32,12 +32,13 @@ public class ConsentRequestController {
 
     @PostMapping(value = "/consent-requests")
     public Mono<RequestCreatedRepresentation> requestConsent(
-            @RequestHeader(value = "Authorization", required = true) String authorization,
+            @RequestHeader(value = "Authorization") String authorization,
             @RequestBody @Valid Mono<ConsentRequest> request) {
 
-        return request.flatMap(r -> hdcm.askForConsent(authorization, r.getConsent())).map(this::buildResponse);
+        return request
+                .flatMap(r -> consentManager.askForConsent(authorization, r.getConsent()))
+                .map(ConsentRequestController::buildResponse);
     }
-
 
     @GetMapping(value = "/consent-requests")
     public Mono<ConsentRequestsRepresentation> allConsents(
@@ -46,7 +47,7 @@ public class ConsentRequestController {
             @RequestParam(defaultValue = "0") int offset) {
         String patientId = TokenUtils.readUserId(authorization);
         int pageSize = getPageSize(limit);
-        return hdcm.findRequestsForPatient(patientId, pageSize, offset)
+        return consentManager.findRequestsForPatient(patientId, pageSize, offset)
                 .flatMap(results -> Mono.just(ConsentRequestsRepresentation.builder()
                         .size(results.size())
                         .requests(results)
@@ -59,13 +60,10 @@ public class ConsentRequestController {
         if (limit < 0) {
             return serviceProperties.getDefaultPageSize();
         }
-        if (limit > serviceProperties.getMaxPageSize()) {
-            return serviceProperties.getMaxPageSize();
-        }
-        return limit;
+        return Math.min(limit, serviceProperties.getMaxPageSize());
     }
 
-    private RequestCreatedRepresentation buildResponse(String requestId) {
+    private static RequestCreatedRepresentation buildResponse(String requestId) {
         return RequestCreatedRepresentation.builder().consentRequestId(requestId).build();
     }
     

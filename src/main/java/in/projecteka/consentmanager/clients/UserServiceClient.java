@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import org.springframework.web.reactive.function.client.WebClient;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 

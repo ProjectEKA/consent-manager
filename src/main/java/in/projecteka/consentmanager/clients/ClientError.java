@@ -65,4 +65,12 @@ public class ClientError extends Throwable {
                         ErrorCode.PROVIDER_NOT_FOUND,
                         "Cannot find the provider")));
     }
+
+    public static ClientError consentRequestNotFound() {
+        return new ClientError(
+                HttpStatus.NOT_FOUND,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.CONSENT_REQUEST_NOT_FOUND,
+                        "Cannot find the consent request")));
+    }
 }

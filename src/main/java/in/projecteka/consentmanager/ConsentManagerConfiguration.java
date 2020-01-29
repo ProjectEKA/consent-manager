@@ -5,19 +5,21 @@ import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
-import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import in.projecteka.consentmanager.consent.ConsentManager;
+import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
+import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.link.HIPClient;
 import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.repository.DiscoveryRepository;
 import in.projecteka.consentmanager.link.link.Link;
+import in.projecteka.consentmanager.link.link.repository.LinkRepository;
 import in.projecteka.consentmanager.user.UserRepository;
 import in.projecteka.consentmanager.user.UserService;
-import in.projecteka.consentmanager.link.link.repository.LinkRepository;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import lombok.SneakyThrows;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.context.ApplicationContext;
@@ -26,6 +28,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 
 @Configuration
 public class ConsentManagerConfiguration {
@@ -107,12 +112,27 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
+    public ConsentArtefactRepository consentArtefactRepository(PgPool pgPool) {
+        return new ConsentArtefactRepository(pgPool);
+    }
+
+    @Bean
     public ConsentManager consentRequestService(WebClient.Builder builder,
                                                 ConsentRequestRepository repository,
                                                 ClientRegistryProperties clientRegistryProperties,
-                                                UserServiceProperties userServiceProperties) {
+                                                UserServiceProperties userServiceProperties,
+                                                ConsentArtefactRepository consentArtefactRepository,
+                                                KeyPair keyPair) {
         return new ConsentManager(repository,
                 new ClientRegistryClient(builder, clientRegistryProperties),
-                new UserServiceClient(builder, userServiceProperties));
+                new UserServiceClient(builder, userServiceProperties), consentArtefactRepository, keyPair);
+    }
+
+    @SneakyThrows
+    @Bean
+    public KeyPair keyPair() {
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+        keyGen.initialize(2048);
+        return keyGen.generateKeyPair();
     }
 }

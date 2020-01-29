@@ -27,7 +27,8 @@ public class DiscoveryController {
     }
 
     @PostMapping("/patients/discover")
-    public Mono<DiscoveryResponse> findPatient(@RequestHeader(value = "Authorization") String authorization, @RequestBody DiscoveryRequest discoveryRequest) {
+    public Mono<DiscoveryResponse> findPatient(@RequestHeader(value = "Authorization") String authorization,
+                                               @RequestBody DiscoveryRequest discoveryRequest) {
         String patientId = TokenUtils.readUserId(authorization);
         return discovery.patientFor(discoveryRequest.getHip().getId(), patientId, generateNewTransaction());
     }

@@ -29,8 +29,10 @@ public class SecurityConfiguration {
             ReactiveAuthenticationManager authenticationManager,
             ServerSecurityContextRepository securityContextRepository) {
         return httpSecurity
-                .authorizeExchange(authorizeExchangeSpec ->
-                        authorizeExchangeSpec.anyExchange().authenticated())
+                .authorizeExchange()
+                .pathMatchers("/**.json").permitAll()
+                .pathMatchers("/**").authenticated()
+                .and()
                 .httpBasic().disable()
                 .formLogin().disable()
                 .csrf().disable()

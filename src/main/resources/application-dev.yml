@@ -17,3 +17,7 @@ consentmanager:
     user: postgres
     password: postgres
     poolSize: 5
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672

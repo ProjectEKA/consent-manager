@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.consent.model.request;
+package in.projecteka.consentmanager.consent.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

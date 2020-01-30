@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 @Builder
-public class Consent {
+public class ConsentArtefactReference {
     private String id;
 }

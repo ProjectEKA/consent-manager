@@ -73,4 +73,12 @@ public class ClientError extends Throwable {
                         ErrorCode.CONSENT_REQUEST_NOT_FOUND,
                         "Cannot find the consent request")));
     }
+
+    public static ClientError consentArtefactNotFound() {
+        return new ClientError(
+                HttpStatus.NOT_FOUND,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.CONSENT_ARTEFACT_NOT_FOUND,
+                        "Cannot find the consent artefact")));
+    }
 }

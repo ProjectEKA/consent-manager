@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.consent.model.request;
+package in.projecteka.consentmanager.consent.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,8 +13,8 @@ import javax.validation.constraints.NotEmpty;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class HIPReference {
-    @NotEmpty(message = "HIP identifier is not specified.")
+public class HIUReference {
+    @NotEmpty(message = "HIU identifier is not specified.")
     private String id;
     private String name;
 }

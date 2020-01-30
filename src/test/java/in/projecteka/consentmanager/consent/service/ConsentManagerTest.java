@@ -6,10 +6,10 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.consent.ConsentManager;
-import in.projecteka.consentmanager.consent.model.request.ConsentDetail;
-import in.projecteka.consentmanager.consent.model.request.HIPReference;
-import in.projecteka.consentmanager.consent.model.request.HIUReference;
-import in.projecteka.consentmanager.consent.model.request.PatientReference;
+import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
+import in.projecteka.consentmanager.consent.model.HIPReference;
+import in.projecteka.consentmanager.consent.model.HIUReference;
+import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +51,7 @@ class ConsentManagerTest {
         HIPReference hip1 = HIPReference.builder().id("hip1").build();
         HIUReference hiu1 = HIUReference.builder().id("hiu1").build();
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
-        ConsentDetail consentDetail = ConsentDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
+        RequestedDetail requestedDetail = RequestedDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
 
         ConsentManager consentManager = new ConsentManager(repository, providerClient, userClient, consentArtefactRepository, keyPair);
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
@@ -60,7 +60,7 @@ class ConsentManagerTest {
         when (userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
 
         String requestingHIUId = "hiu1";
-        StepVerifier.create(consentManager.askForConsent(requestingHIUId, consentDetail)).expectNextMatches(r -> r != null).verifyComplete();
+        StepVerifier.create(consentManager.askForConsent(requestingHIUId, requestedDetail)).expectNextMatches(r -> r != null).verifyComplete();
     }
 
     @Test
@@ -68,7 +68,7 @@ class ConsentManagerTest {
         HIPReference hip1 = HIPReference.builder().id("hip1").build();
         HIUReference hiu1 = HIUReference.builder().id("hiu1").build();
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
-        ConsentDetail consentDetail = ConsentDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
+        RequestedDetail requestedDetail = RequestedDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
 
         ConsentManager consentManager = new ConsentManager(repository, providerClient, userClient, consentArtefactRepository, keyPair);
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
@@ -77,7 +77,7 @@ class ConsentManagerTest {
         when (userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
 
         String requestingHIUId = "hiu1";
-        StepVerifier.create(consentManager.askForConsent(requestingHIUId, consentDetail))
+        StepVerifier.create(consentManager.askForConsent(requestingHIUId, requestedDetail))
                 .expectErrorMatches(e -> (e instanceof ClientError) && ((ClientError) e).getHttpStatus().is4xxClientError());
     }
 }

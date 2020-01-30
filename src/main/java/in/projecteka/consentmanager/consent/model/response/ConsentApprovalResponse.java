@@ -10,5 +10,5 @@ import java.util.List;
 @Data
 @Builder
 public class ConsentApprovalResponse {
-    private List<Consent> consents;
+    private List<ConsentArtefactReference> consents;
 }

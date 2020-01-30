@@ -974,7 +974,7 @@ components:
     ConsentArtefactRepresentation:
       type: object
       properties:
-        id:
+        consentId:
           type: string
           format: uuid
         createdAt:
@@ -987,7 +987,6 @@ components:
           properties:
             patient:
               $ref: '#/components/schemas/LinkedPatientRepresentation'
-
             purpose:
               $ref: '#/components/schemas/UsePurpose'
             hip:

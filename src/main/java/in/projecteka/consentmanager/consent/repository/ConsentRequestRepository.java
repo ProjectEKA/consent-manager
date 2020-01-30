@@ -1,9 +1,9 @@
 package in.projecteka.consentmanager.consent.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import in.projecteka.consentmanager.consent.model.request.ConsentDetail;
-import in.projecteka.consentmanager.consent.model.response.ConsentRequestDetail;
-import in.projecteka.consentmanager.consent.model.response.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
@@ -31,13 +31,13 @@ public class ConsentRequestRepository {
     }
 
     @SneakyThrows
-    public Mono<Void> insert(ConsentDetail consentDetail, String requestId) {
-        final String detailAsString = new ObjectMapper().writeValueAsString(consentDetail);
+    public Mono<Void> insert(RequestedDetail requestedDetail, String requestId) {
+        final String detailAsString = new ObjectMapper().writeValueAsString(requestedDetail);
         JsonObject detailsJson = new JsonObject(detailAsString);
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(
                         INSERT_CONSENT_REQUEST_QUERY,
-                        Tuple.of(requestId, consentDetail.getPatient().getId(), ConsentStatus.REQUESTED.name(), detailsJson),
+                        Tuple.of(requestId, requestedDetail.getPatient().getId(), ConsentStatus.REQUESTED.name(), detailsJson),
                         handler -> {
                             if (handler.failed())
                                 monoSink.error(new Exception(FAILED_TO_SAVE_CONSENT_REQUEST));
@@ -81,7 +81,7 @@ public class ConsentRequestRepository {
     }
 
     private ConsentRequestDetail mapToConsentRequestDetail(Row result) {
-        ConsentDetail details = convertToConsentDetail(result.getValue("details").toString());
+        RequestedDetail details = convertToConsentDetail(result.getValue("details").toString());
         return ConsentRequestDetail
                 .builder()
                 .requestId(result.getString("request_id"))
@@ -106,8 +106,8 @@ public class ConsentRequestRepository {
     }
 
     @SneakyThrows
-    private ConsentDetail convertToConsentDetail(String details) {
+    private RequestedDetail convertToConsentDetail(String details) {
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(details.getBytes(), ConsentDetail.class);
+        return mapper.readValue(details.getBytes(), RequestedDetail.class);
     }
 }

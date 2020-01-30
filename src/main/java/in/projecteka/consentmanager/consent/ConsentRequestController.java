@@ -74,6 +74,10 @@ public class ConsentRequestController {
             @PathVariable(value = "request-id") String requestId,
             @RequestHeader(value = "Authorization") String authorization,
             @Valid @RequestBody ConsentApprovalRequest consentApprovalRequest) {
-        return consentManager.approveConsent(authorization, requestId, consentApprovalRequest.getConsents());
+        return consentManager.approveConsent(
+                authorization,
+                requestId,
+                consentApprovalRequest.getConsents(),
+                consentApprovalRequest.getCallBackUrl());
     }
 }

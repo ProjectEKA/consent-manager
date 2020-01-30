@@ -730,6 +730,9 @@ components:
             $ref: '#/components/schemas/ConsentApproveRequest'
           xml:
             wrapped: true
+        callBackUrl:
+          type: string
+          example: 'http://tmh-hiu.com/'
     ConsentApproveRequest:
       type: object
       properties:

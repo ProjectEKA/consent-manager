@@ -14,12 +14,21 @@ import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.repository.DiscoveryRepository;
 import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.link.link.repository.LinkRepository;
+import in.projecteka.consentmanager.consent.notification.ConsentArtefactBroadcastListener;
 import in.projecteka.consentmanager.user.UserRepository;
 import in.projecteka.consentmanager.user.UserService;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import lombok.SneakyThrows;
+import org.springframework.amqp.core.AmqpAdmin;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Exchange;
+import org.springframework.amqp.core.ExchangeBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.context.ApplicationContext;
@@ -31,9 +40,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.util.HashMap;
 
 @Configuration
 public class ConsentManagerConfiguration {
+    public static final String HIU_NOTIFICATION_QUEUE = "hiu-notification-queue";
 
     @Bean
     public Discovery discovery(WebClient.Builder builder,
@@ -127,6 +138,45 @@ public class ConsentManagerConfiguration {
                 new ClientRegistryClient(builder, clientRegistryProperties),
                 new UserServiceClient(builder, userServiceProperties), consentArtefactRepository, keyPair);
     }
+
+    @Bean
+    public DestinationsConfig destinationsConfig(AmqpAdmin amqpAdmin) {
+        HashMap<String, DestinationsConfig.DestinationInfo> queues = new HashMap<>();
+        queues.put(HIU_NOTIFICATION_QUEUE, new DestinationsConfig.DestinationInfo("exchange", HIU_NOTIFICATION_QUEUE));
+
+        DestinationsConfig destinationsConfig = new DestinationsConfig(queues, null);
+        destinationsConfig.getQueues()
+                .forEach((key, destination) -> {
+                    Exchange ex = ExchangeBuilder.directExchange(
+                            destination.getExchange())
+                            .durable(true)
+                            .build();
+                    amqpAdmin.declareExchange(ex);
+                    Queue q = QueueBuilder.durable(
+                            destination.getRoutingKey())
+                            .build();
+                    amqpAdmin.declareQueue(q);
+                    Binding b = BindingBuilder.bind(q)
+                            .to(ex)
+                            .with(destination.getRoutingKey())
+                            .noargs();
+                    amqpAdmin.declareBinding(b);
+                });
+
+        return destinationsConfig;
+    }
+
+    @Bean
+    public ConsentArtefactBroadcastListener hiuNotificationListener() {
+        return new ConsentArtefactBroadcastListener();
+    }
+
+    @Bean
+    public Jackson2JsonMessageConverter converter() {
+        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
+        return converter;
+    }
+
 
     @SneakyThrows
     @Bean

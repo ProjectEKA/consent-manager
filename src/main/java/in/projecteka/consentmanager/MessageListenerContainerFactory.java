@@ -17,8 +17,6 @@ public class MessageListenerContainerFactory {
     @Autowired
     private Jackson2JsonMessageConverter converter;
 
-    public MessageListenerContainerFactory() {}
-
     public MessageListenerContainer createMessageListenerContainer(String queueName) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(connectionFactory);
         container.addQueueNames(queueName);

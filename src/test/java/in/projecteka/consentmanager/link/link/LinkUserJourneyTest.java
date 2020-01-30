@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.link.link;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.link.TestBuilders;
 import in.projecteka.consentmanager.link.link.model.Error;
@@ -63,6 +64,9 @@ public class LinkUserJourneyTest {
     private static MockWebServer clientRegistryServer = new MockWebServer();
     private static MockWebServer hipServer = new MockWebServer();
     private static MockWebServer userServer = new MockWebServer();
+
+    @MockBean
+    private DestinationsConfig destinationsConfig;
 
     @Autowired
     private WebTestClient webTestClient;

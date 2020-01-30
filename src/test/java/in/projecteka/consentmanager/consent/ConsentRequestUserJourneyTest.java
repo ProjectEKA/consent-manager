@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
+import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
@@ -39,6 +40,9 @@ import static org.mockito.Mockito.when;
 public class ConsentRequestUserJourneyTest {
     @Autowired
     private WebTestClient webTestClient;
+
+    @MockBean
+    private DestinationsConfig destinationsConfig;
 
     @MockBean
     private ConsentRequestRepository repository;

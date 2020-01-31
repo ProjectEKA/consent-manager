@@ -379,7 +379,7 @@ paths:
       summary: Request for health information
       description: The HIU submits the Consent Artifact ID of the consent required for fetching helath information from the HIP(s). A transaction ID is generated and returned.
       parameters:
-        - $ref: '#/components/parameters/authorization'
+        - $ref: '#/components/parameters/hiuAuthorization'
       requestBody:
         required: true
         content:
@@ -428,6 +428,13 @@ components:
       in: header
       required: true
       description: Bearer token which was issued after successful login.
+      schema:
+        type: string
+    hiuAuthorization:
+      name: Authorization
+      in: header
+      required: true
+      description: Authorization token which was issued by central registery.
       schema:
         type: string
     limit:
@@ -982,11 +989,11 @@ components:
       properties:
         consent:
           $ref: '#/components/schemas/consent'
-        HIDataRange:
-          $ref: '#/components/schemas/HIDataRange'
+        hiDataRange:
+          $ref: '#/components/schemas/hiDataRange'
         callBackUrl:
           type: string
-        KeyMaterial:
+        keyMaterial:
           type: object
     HealthInformationRequestResponse:
       type: object
@@ -1005,7 +1012,7 @@ components:
           type: string
         digitalSignature:
           type: string
-    HIDataRange:
+    hiDataRange:
       type: object
       required:
         - from

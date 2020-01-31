@@ -399,6 +399,28 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/HealthInformationRequestResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Consent artifact Id is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Unauthorized HIU
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   parameters:
     authorization:
@@ -958,8 +980,10 @@ components:
         - consentArtefactId
         - callBackUrl
       properties:
-        consentArtefactId:
-          type: string
+        consent:
+          $ref: '#/components/schemas/consent'
+        HIDataRange:
+          $ref: '#/components/schemas/HIDataRange'
         callBackUrl:
           type: string
         KeyMaterial:
@@ -971,3 +995,25 @@ components:
       properties:
         transactionId:
           type: string
+    consent:
+      type: object
+      required:
+        - id
+        - digitalSignature
+      properties:
+        id:
+          type: string
+        digitalSignature:
+          type: string
+    HIDataRange:
+      type: object
+      required:
+        - from
+        - to
+      properties:
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time

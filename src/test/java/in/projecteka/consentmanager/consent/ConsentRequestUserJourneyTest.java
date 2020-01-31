@@ -1,23 +1,22 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
-import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
-import in.projecteka.consentmanager.clients.model.Provider;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -25,39 +24,52 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
-@WebFluxTest(ConsentRequestController.class)
-@ContextConfiguration(initializers = ConsentRequestControllerTest.PropertyInitializer.class)
-@Import({ConsentRequestRepository.class, ConsentManager.class, ClientRegistryClient.class, UserServiceClient.class, ConsentServiceProperties.class})
-public class ConsentRequestControllerTest {
+@AutoConfigureWebTestClient
+@ContextConfiguration(initializers = ConsentRequestUserJourneyTest.PropertyInitializer.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+public class ConsentRequestUserJourneyTest {
     @Autowired
     private WebTestClient webTestClient;
 
     @MockBean
     private ConsentRequestRepository repository;
 
-    @MockBean
-    private ClientRegistryClient providerClient;
+    private static MockWebServer clientRegistryServer = new MockWebServer();
+    private static MockWebServer userServer = new MockWebServer();
 
-    @MockBean
-    private UserServiceClient userServiceClient;
-
+    @AfterAll
+    public static void tearDown() throws IOException {
+        clientRegistryServer.shutdown();
+        userServer.shutdown();
+    }
 
     @Test
     public void shouldAcceptConsentRequest() {
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
-        when (providerClient.providerWith(eq("MAX-ID"))).thenReturn(Mono.just(new Provider()));
-        when (providerClient.providerWith(eq("TMH-ID"))).thenReturn(Mono.just(new Provider()));
-        when (userServiceClient.userOf(eq("batman@ncg"))).thenReturn(Mono.just(new User()));
-
+        clientRegistryServer.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setBody("{}")
+                .setHeader("content-type",
+                        "application/json"));
+        clientRegistryServer.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setBody("{}")
+                .setHeader("content-type",
+                        "application/json"));
+        userServer.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setBody("{}")
+                .setHeader("content-type",
+                        "application/json"));
         String body = "" +
                 "{\n" +
                 "  \"consent\": {\n" +
@@ -112,7 +124,7 @@ public class ConsentRequestControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(RequestCreatedRepresentation.class)
-                .value(response -> response.getConsentRequestId(), Matchers.notNullValue());
+                .value(RequestCreatedRepresentation::getConsentRequestId, Matchers.notNullValue());
     }
 
     @Test
@@ -126,20 +138,18 @@ public class ConsentRequestControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ConsentRequestsRepresentation.class)
-                .value(response -> response.getLimit(), Matchers.is(20))
-                .value(response -> response.getOffset(), Matchers.is(0))
+                .value(ConsentRequestsRepresentation::getLimit, Matchers.is(20))
+                .value(ConsentRequestsRepresentation::getOffset, Matchers.is(0))
                 .value(response -> response.getRequests().size(), Matchers.is(0));
     }
-
 
     public static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(ConfigurableApplicationContext applicationContext) {
             TestPropertyValues values = TestPropertyValues.of(
-                    Stream.of(
-                            "consentmanager.consentservice.maxPageSize=50"
-                    )
-            );
+                    Stream.of("consentmanager.clientregistry.url=" + clientRegistryServer.url(""),
+                            "consentmanager.userservice.url=" + userServer.url(""),
+                            "consentmanager.consentservice.maxPageSize=50"));
             values.applyTo(applicationContext);
         }
     }

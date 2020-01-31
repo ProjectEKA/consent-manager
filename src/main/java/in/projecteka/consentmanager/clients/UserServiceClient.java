@@ -1,11 +1,16 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import org.springframework.web.reactive.function.client.WebClient;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+
 import reactor.core.publisher.Mono;
 
+
 public class UserServiceClient {
+
+    private static final String AuthorizationClientToken = "ClientToken";
 
     private final WebClient.Builder webClientBuilder;
     private final UserServiceProperties userServiceProperties;
@@ -21,6 +26,7 @@ public class UserServiceClient {
         return webClientBuilder.build()
                 .get()
                 .uri(String.format("%s/users/%s/", userServiceProperties.getUrl(), userId))
+                .header(AUTHORIZATION, AuthorizationClientToken)
                 .retrieve()
                 .onStatus(httpStatus -> httpStatus.value() == 404, clientResponse -> Mono.error(ClientError.userNotFound()))
                 .bodyToMono(User.class);

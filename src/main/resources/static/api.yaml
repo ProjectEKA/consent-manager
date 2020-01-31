@@ -372,6 +372,55 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentApprovalRepresentation'
+  /health-information/request:
+    post:
+      tags:
+        - data flow
+      summary: Request for health information
+      description: The HIU submits the Consent Artifact ID of the consent required for fetching helath information from the HIP(s). A transaction ID is generated and returned.
+      parameters:
+        - $ref: '#/components/parameters/hiuAuthorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthInformationRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/HealthInformationRequest'
+      responses:
+        '200':
+          description: A transaction ID is generated and returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthInformationRequestResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/HealthInformationRequestResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Consent artifact Id is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Unauthorized HIU
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   parameters:
     authorization:
@@ -379,6 +428,13 @@ components:
       in: header
       required: true
       description: Bearer token which was issued after successful login.
+      schema:
+        type: string
+    hiuAuthorization:
+      name: Authorization
+      in: header
+      required: true
+      description: Authorization token which was issued by central registery.
       schema:
         type: string
     limit:
@@ -925,3 +981,46 @@ components:
           type: string
         name:
           type: string
+    HealthInformationRequest:
+      type: object
+      required:
+        - consentArtefactId
+        - callBackUrl
+      properties:
+        consent:
+          $ref: '#/components/schemas/consent'
+        hiDataRange:
+          $ref: '#/components/schemas/hiDataRange'
+        callBackUrl:
+          type: string
+        keyMaterial:
+          type: object
+    HealthInformationRequestResponse:
+      type: object
+      required:
+        - transactionId
+      properties:
+        transactionId:
+          type: string
+    consent:
+      type: object
+      required:
+        - id
+        - digitalSignature
+      properties:
+        id:
+          type: string
+        digitalSignature:
+          type: string
+    hiDataRange:
+      type: object
+      required:
+        - from
+        - to
+      properties:
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time

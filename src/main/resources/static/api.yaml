@@ -372,6 +372,33 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentApprovalRepresentation'
+  /health-information/request:
+    post:
+      tags:
+        - data flow
+      summary: Request for health information
+      description: The HIU submits the Consent Artifact ID of the consent required for fetching helath information from the HIP(s). A transaction ID is generated and returned.
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthInformationRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/HealthInformationRequest'
+      responses:
+        '200':
+          description: A transaction ID is generated and returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthInformationRequestResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/HealthInformationRequestResponse'
 components:
   parameters:
     authorization:
@@ -924,4 +951,23 @@ components:
         id:
           type: string
         name:
+          type: string
+    HealthInformationRequest:
+      type: object
+      required:
+        - consentArtefactId
+        - callBackUrl
+      properties:
+        consentArtefactId:
+          type: string
+        callBackUrl:
+          type: string
+        KeyMaterial:
+          type: object
+    HealthInformationRequestResponse:
+      type: object
+      required:
+        - transactionId
+      properties:
+        transactionId:
           type: string

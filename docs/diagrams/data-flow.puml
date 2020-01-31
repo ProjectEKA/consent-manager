@@ -1,0 +1,37 @@
+@startuml
+entity HIU
+entity CR
+entity HIP
+entity HDCM
+
+header Thoughtworks
+title Data Flow
+HIP --> HIP: Prepared data
+activate HIP
+HIP -> CR: 1. Authentication Request
+CR --> HIP: 1. Authentication Response
+
+HIP -> HIU: 2. Invokes Callback URL with Transaction ID
+activate HIU
+HIP -> HDCM: 3. Notifies about data transfer status
+note left of HDCM
+Header: Authentication Token
+With TransactionID
+end note
+loop n (number of links) times
+HIU -> HIP: 4. Get data
+HIP --> HIU: 4. Response
+end loop
+
+HIU -> HDCM: 5. Notifies about data transfer complete
+note right of HIU
+Transaction ID
+end note
+deactivate HIU
+
+HIP --> HIP: 6. Post successful data transfer processing
+rnote over HIP
+* Clean up if required
+end note
+deactivate HIP
+@enduml

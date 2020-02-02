@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.common.TokenUtils;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
@@ -101,10 +100,9 @@ public class ConsentManager {
         return consentRequestRepository.requestsForPatient(patientId, limit, offset);
     }
 
-    public Mono<ConsentApprovalResponse> approveConsent(String authorization,
+    public Mono<ConsentApprovalResponse> approveConsent(String patientId,
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
-        String patientId = TokenUtils.readUserId(authorization);
         //TODO validate Carecontexts for the patient
         //also need to fetch HIP patient reference
         return validatePatient(patientId)
@@ -112,7 +110,7 @@ public class ConsentManager {
                 .flatMap(consentRequest ->
                         Flux.fromIterable(grantedConsents)
                                 .flatMap(grantedConsent -> {
-                                    var consentArtefact = mapToConsentArtefact(consentRequest, grantedConsent);
+                                    var consentArtefact = from(consentRequest, grantedConsent);
                                     String consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
                                     return consentArtefactRepository.addConsentArtefactAndUpdateStatus(consentArtefact, requestId, patientId, consentArtefactSignature)
                                             .thenReturn(ConsentArtefactReference.builder().id(consentArtefact.getConsentId()).build());
@@ -128,7 +126,7 @@ public class ConsentManager {
         return Base64.getEncoder().encodeToString(signedObject.getSignature());
     }
 
-    private ConsentArtefact mapToConsentArtefact(ConsentRequestDetail requestDetail, GrantedConsent granted) {
+    private ConsentArtefact from(ConsentRequestDetail requestDetail, GrantedConsent granted) {
         PatientLinkedContext linkedPatientInfo = PatientLinkedContext.builder()
                 .id(requestDetail.getPatient().getId())
                 .careContexts(getLinkedCareContext(granted, requestDetail.getPatient().getId()))

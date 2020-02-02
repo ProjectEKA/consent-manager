@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.consent.repository;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
@@ -13,7 +12,6 @@ import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Transaction;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
@@ -92,7 +90,7 @@ public class ConsentArtefactRepository {
                             ConsentArtefact consentArtefact = artefact.mapTo(ConsentArtefact.class);
                             ConsentArtefactRepresentation representation = ConsentArtefactRepresentation
                                     .builder()
-                                    .status(getConsentStatus(row.getString("status")))
+                                    .status(ConsentStatus.valueOf(row.getString("status")))
                                     .consentDetail(consentArtefact)
                                     .signature(row.getString("signature"))
                                     .build();
@@ -102,15 +100,5 @@ public class ConsentArtefactRepository {
                         }
                     }
                 }));
-    }
-
-    private ConsentStatus getConsentStatus(String status) {
-        return ConsentStatus.valueOf(status);
-    }
-
-    @SneakyThrows
-    private ConsentArtefact convertToConsentDetail(String jsonStr) {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(jsonStr.getBytes(), ConsentArtefact.class);
     }
 }

@@ -18,14 +18,13 @@ import reactor.core.publisher.MonoSink;
 @AllArgsConstructor
 public class ConsentArtefactRepository {
     private static final String INSERT_CONSENT_QUERY = "INSERT INTO consent_artefact" +
-            " (consent_request_id, consent_artefact_id, patient_id, consent_artefact, signature) VALUES" +
-            " ($1, $2, $3, $4, $5)";
+            " (consent_request_id, consent_artefact_id, patient_id, consent_artefact, signature, status) VALUES" +
+            " ($1, $2, $3, $4, $5, $6)";
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent artefact";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status =$1 WHERE request_id =$2";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
-    private static final String SELECT_CONSENT_QUERY = "SELECT cr.status, ca.consent_artefact, ca.signature " +
-            "FROM consent_request cr INNER JOIN consent_artefact ca ON cr.request_id = ca.consent_request_id " +
-            "WHERE ca.consent_artefact_id = $1";
+    private static final String SELECT_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
+            "FROM consent_artefact WHERE consent_artefact_id = $1";
     private PgPool dbClient;
 
     public Mono<Void> addConsentArtefactAndUpdateStatus(ConsentArtefact consentArtefact,
@@ -42,7 +41,8 @@ public class ConsentArtefactRepository {
                                     consentArtefact.getConsentId(),
                                     patientId,
                                     JsonObject.mapFrom(consentArtefact),
-                                    signature),
+                                    signature,
+                                    ConsentStatus.GRANTED.toString()),
                             handler -> updateConsentRequest(
                                     consentRequestId,
                                     monoSink,

@@ -86,7 +86,7 @@ public class ClientError extends Throwable {
         return new ClientError(
                 HttpStatus.FORBIDDEN,
                 new ErrorRepresentation(new Error(
-                        ErrorCode.CONSENT_ARTEFACT_NOT_FOUND,
+                        ErrorCode.CONSENT_ARTEFACT_FORBIDDEN,
                         "Cannot retrieve Consent artefact. Forbidden")));
     }
 }

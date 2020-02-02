@@ -5,15 +5,15 @@ import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.common.TokenUtils;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
+import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.LinkedContext;
 import in.projecteka.consentmanager.consent.model.PatientLinkedContext;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
-import in.projecteka.consentmanager.consent.model.response.ConsentArtefactReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
+import in.projecteka.consentmanager.consent.model.response.ConsentArtefactReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
-import in.projecteka.consentmanager.consent.model.ConsentStatus;
-import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import lombok.SneakyThrows;
@@ -25,6 +25,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignedObject;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -112,7 +113,7 @@ public class ConsentManager {
                         Flux.fromIterable(grantedConsents)
                                 .flatMap(grantedConsent -> {
                                     var consentArtefact = mapToConsentArtefact(consentRequest, grantedConsent);
-                                    byte[] consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
+                                    String consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
                                     return consentArtefactRepository.addConsentArtefactAndUpdateStatus(consentArtefact, requestId, patientId, consentArtefactSignature)
                                             .thenReturn(ConsentArtefactReference.builder().id(consentArtefact.getConsentId()).build());
                                 }).collectList())
@@ -120,11 +121,11 @@ public class ConsentManager {
     }
 
     @SneakyThrows
-    private byte[] getConsentArtefactSignature(ConsentArtefact consentArtefact) {
+    private String getConsentArtefactSignature(ConsentArtefact consentArtefact) {
         PrivateKey privateKey = keyPair.getPrivate();
         Signature signature = Signature.getInstance(SHA_1_WITH_RSA);
-        SignedObject signedObject = new SignedObject(consentArtefact.toString().getBytes(), privateKey, signature);
-        return signedObject.getSignature();
+        SignedObject signedObject = new SignedObject(consentArtefact, privateKey, signature);
+        return Base64.getEncoder().encodeToString(signedObject.getSignature());
     }
 
     private ConsentArtefact mapToConsentArtefact(ConsentRequestDetail requestDetail, GrantedConsent granted) {
@@ -161,12 +162,13 @@ public class ConsentManager {
     }
 
     public Mono<ConsentArtefactRepresentation> getConsent(String consentId, String hiuId) {
-        return consentArtefactRepository.getConsentArtefact(consentId).doOnSuccess(r -> {
-            if (r == null) {
-                Mono.error(ClientError.consentArtefactNotFound());
-            } else if (!r.getConsentDetail().getHiu().getId().equals(hiuId)) {
-                    Mono.error(ClientError.consentArtefactNotFound());
-            }
-        });
+        return consentArtefactRepository.getConsentArtefact(consentId)
+                .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()))
+                .flatMap(r -> {
+                    if (!r.getConsentDetail().getHiu().getId().equals(hiuId)) {
+                        return Mono.error(ClientError.consentArtefactForbidden());
+                    }
+                    return Mono.just(r);
+                });
     }
 }

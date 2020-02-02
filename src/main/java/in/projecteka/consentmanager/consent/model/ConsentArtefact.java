@@ -1,13 +1,22 @@
 package in.projecteka.consentmanager.consent.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Builder
 @Data
-public class ConsentArtefact {
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+public class ConsentArtefact implements Serializable {
     private String consentId;
     private Date createdAt;
     private ConsentPurpose purpose;

@@ -6,12 +6,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @Builder
-public class PatientLinkedContext {
+public class PatientLinkedContext implements Serializable {
     private String id;
     private LinkedContext[] careContexts;
 }

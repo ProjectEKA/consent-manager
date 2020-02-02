@@ -1003,7 +1003,7 @@ components:
                     name: hiu
             requester:
               $ref: '#/components/schemas/Requester'
-            hitypes:
+            hiTypes:
               type: array
               items:
                 $ref: '#/components/schemas/HITypeEnum'
@@ -1011,4 +1011,4 @@ components:
               $ref: '#/components/schemas/Permission'
         signature:
           type: string
-          example: Signature of AA as defined in W3C standards; Base64 encoded
+          example: Signature of CM as defined in W3C standards; Base64 encoded

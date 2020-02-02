@@ -5,7 +5,6 @@ import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import io.vertx.core.AsyncResult;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
@@ -34,7 +33,7 @@ public class ConsentArtefactRepository {
     public Mono<Void> addConsentArtefactAndUpdateStatus(ConsentArtefact consentArtefact,
                                                         String consentRequestId,
                                                         String patientId,
-                                                        byte[] signature) {
+                                                        String signature) {
         return Mono.create(monoSink -> dbClient.getConnection(connection -> {
                     if (connection.failed()) return;
                     SqlConnection sqlConnection = connection.result();
@@ -45,7 +44,7 @@ public class ConsentArtefactRepository {
                                     consentArtefact.getConsentId(),
                                     patientId,
                                     JsonObject.mapFrom(consentArtefact),
-                                    Buffer.buffer(signature)),
+                                    signature),
                             handler -> updateConsentRequest(
                                     consentRequestId,
                                     monoSink,
@@ -99,7 +98,6 @@ public class ConsentArtefactRepository {
                                     .build();
                             monoSink.success(representation);
                         } else {
-                            //monoSink.error(new RuntimeException("No such information exists."));
                             monoSink.success(null);
                         }
                     }

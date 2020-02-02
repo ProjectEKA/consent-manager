@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.Date;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -17,7 +18,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AccessPeriod {
+public class AccessPeriod implements Serializable {
     @JsonProperty("from")
     @NotNull(message = "From Date is not specified.")
     private Date fromDate;

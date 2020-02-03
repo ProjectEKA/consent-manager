@@ -22,4 +22,10 @@ public class ConsentArtefactsController {
         String requesterId = TokenUtils.readUserId(authorization);
         return consentManager.getConsent(consentId, requesterId);
     }
+
+    @GetMapping(value = "/internal/consents/{consentId}")
+    public Mono<ConsentArtefactRepresentation> getConsent(
+            @PathVariable(value = "consentId") String consentId) {
+        return consentManager.getConsentArtefact(consentId);
+    }
 }

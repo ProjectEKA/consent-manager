@@ -377,7 +377,7 @@ paths:
     get:
       tags:
         - consent
-      summary: List consent requests
+      summary: Get a specific consent
       description: Fetch a consent artefact associated with the consent-id
       operationId: fetchConsentArtefact
       parameters:
@@ -756,6 +756,18 @@ components:
             - $ref: '#/components/schemas/Organization'
             - xml:
                 name: hip
+        careContexts:
+          type: array
+          items:
+            type: object
+            required:
+              - patientReference
+              - careContextReference
+            properties:
+              patientReference:
+                type: string
+              careContextReference:
+                type: string
         permission:
           $ref: '#/components/schemas/Permission'
       xml:
@@ -950,43 +962,41 @@ components:
         - ROVKED
 
 
-    LinkedPatientRepresentation:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: patient id in CM
-          example: batman@ncg
-        careContexts:
-          type: array
-          items:
-            type: object
-            properties:
-              patientReference:
-                type: string
-                example: batman@tmh
-              contextReference:
-                type: string
-                example: episode1
+
 
 
     ConsentArtefactRepresentation:
       type: object
       properties:
-        consentId:
-          type: string
-          format: uuid
-        createdAt:
-          type: string
-          format: date-time
         status:
           $ref: '#/components/schemas/ConsentStatus'
         consentDetail:
           type: object
           properties:
+            consentId:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
             patient:
-              $ref: '#/components/schemas/LinkedPatientRepresentation'
+              $ref: '#/components/schemas/ConsentManagerPatientID'
+            careContexts:
+              type: array
+              items:
+                type: object
+                required:
+                  - patientReference
+                  - careContextReference
+                properties:
+                  patientReference:
+                    type: string
+                    example: batman@tmh
+                  careContextReference:
+                    type: string
+                    example: Episode1
+
+
             purpose:
               $ref: '#/components/schemas/UsePurpose'
             hip:

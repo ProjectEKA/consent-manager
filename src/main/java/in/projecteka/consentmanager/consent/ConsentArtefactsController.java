@@ -15,7 +15,7 @@ public class ConsentArtefactsController {
 
     private ConsentManager consentManager;
 
-    @GetMapping(value = "/consent-artefacts/{consentId}")
+    @GetMapping(value = "/consents/{consentId}")
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(
             @RequestHeader(value = "Authorization") String authorization,
             @PathVariable(value = "consentId") String consentId) {

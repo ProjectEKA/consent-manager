@@ -20,7 +20,7 @@ import java.util.List;
 
 public class ConsentRequestRepository {
     private static final String INSERT_CONSENT_REQUEST_QUERY = "INSERT INTO consent_request (request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";
-    private static final String SELECT_CONSENT_REQUEST_QUERY = "SELECT request_id, status, details, date_created FROM consent_request where request_id=$1 and status=$2";
+    private static final String SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS = "SELECT request_id, status, details, date_created FROM consent_request where request_id=$1 and status=$2";
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent request";
     private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT = "SELECT request_id, status, details, date_created FROM consent_request where patient_id=$1 LIMIT $2 OFFSET $3";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
@@ -65,7 +65,7 @@ public class ConsentRequestRepository {
     }
 
     public Mono<ConsentRequestDetail> requestOf(String requestId, String status) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_REQUEST_QUERY, Tuple.of(requestId, status),
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS, Tuple.of(requestId, status),
                 handler -> {
                     if (handler.failed()) {
                         monoSink.error(new RuntimeException(handler.cause().getMessage()));

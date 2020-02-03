@@ -6,8 +6,8 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
-import in.projecteka.consentmanager.consent.model.LinkedContext;
-import in.projecteka.consentmanager.consent.model.PatientLinkedContext;
+import in.projecteka.consentmanager.consent.model.GrantedContext;
+import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
@@ -103,8 +103,7 @@ public class ConsentManager {
     public Mono<ConsentApprovalResponse> approveConsent(String patientId,
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
-        //TODO validate Carecontexts for the patient
-        //also need to fetch HIP patient reference
+        //TODO validate CareContexts for the patient
         return validatePatient(patientId)
                 .then(validateConsentRequest(requestId))
                 .flatMap(consentRequest ->
@@ -127,17 +126,15 @@ public class ConsentManager {
     }
 
     private ConsentArtefact from(ConsentRequestDetail requestDetail, GrantedConsent granted) {
-        PatientLinkedContext linkedPatientInfo = PatientLinkedContext.builder()
-                .id(requestDetail.getPatient().getId())
-                .careContexts(getLinkedCareContext(granted, requestDetail.getPatient().getId()))
-                .build();
+        PatientReference patientReference = PatientReference.builder().id(requestDetail.getPatient().getId()).build();
         String consentArtefactId = UUID.randomUUID().toString();
         //TODO: need to store also the CC
         return ConsentArtefact.builder()
                 .consentId(consentArtefactId)
                 .createdAt(new Date())
                 .purpose(requestDetail.getPurpose())
-                .patient(linkedPatientInfo)
+                .careContexts(granted.getCareContexts())
+                .patient(patientReference)
                 .hiu(requestDetail.getHiu())
                 .requester(requestDetail.getRequester())
                 .hip(granted.getHip())
@@ -146,12 +143,14 @@ public class ConsentManager {
                 .build();
     }
 
-    private LinkedContext[] getLinkedCareContext(GrantedConsent granted, String id) {
-        //TODO - should include HIP patient reference
-        LinkedContext[] linkedContexts = granted.getCareContexts().stream().map(cc -> {
-            return LinkedContext.builder().contextReference(cc.getContextReference()).build();
-        }).toArray(LinkedContext[]::new);
-        return linkedContexts;
+    private GrantedContext[] getLinkedCareContext(GrantedConsent granted, String id) {
+        GrantedContext[] grantedContexts = granted.getCareContexts().stream().map(cc -> {
+            return GrantedContext.builder()
+                    .careContextReference(cc.getCareContextReference())
+                    .patientReference(cc.getPatientReference())
+                    .build();
+        }).toArray(GrantedContext[]::new);
+        return grantedContexts;
     }
 
     private Mono<ConsentRequestDetail> validateConsentRequest(String requestId) {
@@ -159,14 +158,18 @@ public class ConsentManager {
                 .switchIfEmpty(Mono.error(ClientError.consentRequestNotFound()));
     }
 
-    public Mono<ConsentArtefactRepresentation> getConsent(String consentId, String hiuId) {
+    public Mono<ConsentArtefactRepresentation> getConsent(String consentId, String requesterId) {
         return consentArtefactRepository.getConsentArtefact(consentId)
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()))
                 .flatMap(r -> {
-                    if (!r.getConsentDetail().getHiu().getId().equals(hiuId)) {
+                    if (!isValidRequester(r.getConsentDetail(), requesterId)) {
                         return Mono.error(ClientError.consentArtefactForbidden());
                     }
                     return Mono.just(r);
                 });
+    }
+
+    private static boolean isValidRequester(ConsentArtefact consentDetail, String requesterId) {
+        return consentDetail.getHiu().getId().equals(requesterId) || consentDetail.getPatient().getId().equals(requesterId);
     }
 }

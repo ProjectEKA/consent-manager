@@ -14,8 +14,9 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @Data
-public class LinkedContext implements Serializable {
+public class GrantedContext implements Serializable {
+    @NotNull(message = "Patient reference not specified.")
     private String patientReference;
     @NotNull(message = "Care context reference not specified.")
-    private String contextReference;
+    private String careContextReference;
 }

@@ -338,7 +338,7 @@ paths:
                 $ref: '#/components/schemas/ConsentRequestsRepresentation'
             application/xml:
               schema:
-                $ref: '#/components/schemas/ConsentRequestRepresentation'
+                $ref: '#/components/schemas/ConsentRequestsRepresentation'
   /consent-requests/{request-id}/approve:
     post:
       tags:
@@ -372,6 +372,33 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentApprovalRepresentation'
+
+  /consents/{consent-id}:
+    get:
+      tags:
+        - consent
+      summary: Get a specific consent
+      description: Fetch a consent artefact associated with the consent-id
+      operationId: fetchConsentArtefact
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+        - name: consent-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: a consent artefact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentArtefactRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ConsentArtefactRepresentation'
+
   /health-information/request:
     post:
       tags:
@@ -421,6 +448,7 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
 components:
   parameters:
     authorization:
@@ -665,15 +693,7 @@ components:
           type: string
           format: date-time
         purpose:
-          type: object
-          properties:
-            text:
-              type: string
-            code:
-              type: string
-            refUri:
-              type: string
-              format: uri
+          $ref: "#/components/schemas/UsePurpose"
         patient:
           allOf:
             - $ref: '#/components/schemas/ConsentManagerPatientID'
@@ -702,12 +722,7 @@ components:
         permission:
           $ref: '#/components/schemas/Permission'
         status:
-          type: string
-          enum:
-            - REQUESTED
-            - EXPIRED
-            - DENIED
-            - GRANTED
+          $ref: '#/components/schemas/ConsentStatus'
       xml:
         name: ConsentRequestResponse
     Requester:
@@ -788,6 +803,18 @@ components:
             - $ref: '#/components/schemas/Organization'
             - xml:
                 name: hip
+        careContexts:
+          type: array
+          items:
+            type: object
+            required:
+              - patientReference
+              - careContextReference
+            properties:
+              patientReference:
+                type: string
+              careContextReference:
+                type: string
         permission:
           $ref: '#/components/schemas/Permission'
       xml:
@@ -869,23 +896,11 @@ components:
             - patient
             - hiu
             - requester
-            - hitypes
+            - hiTypes
             - permission
           properties:
             purpose:
-              type: object
-              required:
-                - text
-                - code
-              properties:
-                text:
-                  type: string
-                code:
-                  type: string
-                  description: From the fixed set, documented at refUri
-                refUri:
-                  type: string
-                  format: uri
+              $ref: '#/components/schemas/UsePurpose'
             patient:
               type: object
               allOf:
@@ -906,7 +921,7 @@ components:
                     name: hiu
             requester:
               $ref: '#/components/schemas/Requester'
-            hitypes:
+            hiTypes:
               type: array
               items:
                 $ref: '#/components/schemas/HITypeEnum'
@@ -968,6 +983,92 @@ components:
           type: string
         name:
           type: string
+
+    UsePurpose:
+      type: object
+      required:
+        - text
+        - code
+      properties:
+        text:
+          type: string
+        code:
+          type: string
+          description: From the fixed set, documented at refUri
+        refUri:
+          type: string
+          format: uri
+
+    ConsentStatus:
+      type: string
+      enum:
+        - REQUESTED
+        - EXPIRED
+        - DENIED
+        - GRANTED
+        - ROVKED
+
+
+
+
+
+    ConsentArtefactRepresentation:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ConsentStatus'
+        consentDetail:
+          type: object
+          properties:
+            consentId:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            patient:
+              $ref: '#/components/schemas/ConsentManagerPatientID'
+            careContexts:
+              type: array
+              items:
+                type: object
+                required:
+                  - patientReference
+                  - careContextReference
+                properties:
+                  patientReference:
+                    type: string
+                    example: batman@tmh
+                  careContextReference:
+                    type: string
+                    example: Episode1
+
+
+            purpose:
+              $ref: '#/components/schemas/UsePurpose'
+            hip:
+              type: object
+              allOf:
+                - $ref: '#/components/schemas/OrganizationRepresentation'
+                - xml:
+                    name: hip
+            hiu:
+              type: object
+              allOf:
+                - $ref: '#/components/schemas/OrganizationRepresentation'
+                - xml:
+                    name: hiu
+            requester:
+              $ref: '#/components/schemas/Requester'
+            hiTypes:
+              type: array
+              items:
+                $ref: '#/components/schemas/HITypeEnum'
+            permission:
+              $ref: '#/components/schemas/Permission'
+        signature:
+          type: string
+          example: Signature of CM as defined in W3C standards; Base64 encoded
     HealthInformationRequest:
       type: object
       required:

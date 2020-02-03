@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.consent.model.request;
+package in.projecteka.consentmanager.consent.model;
 
 public enum DataFrequencyUnit {
     HOUR,

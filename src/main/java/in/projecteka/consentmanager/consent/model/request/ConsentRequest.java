@@ -13,5 +13,5 @@ import javax.validation.constraints.NotNull;
 public class ConsentRequest {
     @Valid
     @NotNull(message = "Consent detail is not specified.")
-    private ConsentDetail consent;
+    private RequestedDetail consent;
 }

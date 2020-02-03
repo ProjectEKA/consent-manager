@@ -28,10 +28,10 @@ import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignedObject;
 import java.util.Base64;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.Date;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_NOTIFICATION_QUEUE;
 
@@ -212,5 +212,10 @@ public class ConsentManager {
 
     private static boolean isValidRequester(ConsentArtefact consentDetail, String requesterId) {
         return consentDetail.getHiu().getId().equals(requesterId) || consentDetail.getPatient().getId().equals(requesterId);
+    }
+
+    public Mono<ConsentArtefactRepresentation> getConsentArtefact(String consentId) {
+        return consentArtefactRepository.getConsentArtefact(consentId)
+                .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()));
     }
 }

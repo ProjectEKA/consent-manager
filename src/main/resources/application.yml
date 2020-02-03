@@ -17,3 +17,6 @@ consentmanager:
     user: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
     poolSize: ${DB_CONNECTION_POOL_SIZE}
+  dataflow:
+    clientId: ${CLIENT_ID}
+    clientPassword: ${CLIENT_PASSWORD}

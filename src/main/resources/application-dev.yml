@@ -17,3 +17,6 @@ consentmanager:
     user: postgres
     password: postgres
     poolSize: 5
+  dataflow:
+    id: 1
+    name: NCG_CM

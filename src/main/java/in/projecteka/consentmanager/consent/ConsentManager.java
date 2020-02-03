@@ -6,7 +6,6 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
-import in.projecteka.consentmanager.consent.model.GrantedContext;
 import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
@@ -25,10 +24,10 @@ import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignedObject;
 import java.util.Base64;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.Date;
 
 public class ConsentManager {
 
@@ -161,5 +160,10 @@ public class ConsentManager {
 
     private static boolean isValidRequester(ConsentArtefact consentDetail, String requesterId) {
         return consentDetail.getHiu().getId().equals(requesterId) || consentDetail.getPatient().getId().equals(requesterId);
+    }
+
+    public Mono<ConsentArtefactRepresentation> getConsentArtefact(String consentId) {
+        return consentArtefactRepository.getConsentArtefact(consentId)
+                .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()));
     }
 }

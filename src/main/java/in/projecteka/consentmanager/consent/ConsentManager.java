@@ -143,16 +143,6 @@ public class ConsentManager {
                 .build();
     }
 
-    private GrantedContext[] getLinkedCareContext(GrantedConsent granted, String id) {
-        GrantedContext[] grantedContexts = granted.getCareContexts().stream().map(cc -> {
-            return GrantedContext.builder()
-                    .careContextReference(cc.getCareContextReference())
-                    .patientReference(cc.getPatientReference())
-                    .build();
-        }).toArray(GrantedContext[]::new);
-        return grantedContexts;
-    }
-
     private Mono<ConsentRequestDetail> validateConsentRequest(String requestId) {
         return consentRequestRepository.requestOf(requestId, ConsentStatus.REQUESTED.toString())
                 .switchIfEmpty(Mono.error(ClientError.consentRequestNotFound()));

@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager;
 
+import lombok.AllArgsConstructor;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
@@ -8,13 +9,9 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component
+@AllArgsConstructor
 public class MessageListenerContainerFactory {
-
-    @Autowired
     private ConnectionFactory connectionFactory;
-
-    @Autowired
     private Jackson2JsonMessageConverter converter;
 
     public MessageListenerContainer createMessageListenerContainer(String queueName) {

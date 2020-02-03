@@ -1,11 +1,9 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
-import in.projecteka.consentmanager.consent.model.ConsentArtefactsNotification;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.PatientReference;
@@ -16,9 +14,8 @@ import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRefere
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.amqp.core.AmqpTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -33,8 +30,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.Date;
 
-import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_NOTIFICATION_QUEUE;
-
+@AllArgsConstructor
 public class ConsentManager {
 
     public static final String SHA_1_WITH_RSA = "SHA1withRSA";
@@ -43,22 +39,7 @@ public class ConsentManager {
     private final ConsentRequestRepository consentRequestRepository;
     private final ConsentArtefactRepository consentArtefactRepository;
     private KeyPair keyPair;
-    @Autowired
-    private AmqpTemplate amqpTemplate;
-    @Autowired
-    private DestinationsConfig destinationsConfig;
-
-    public ConsentManager(ConsentRequestRepository consentRequestRepository,
-                          ClientRegistryClient providerClient,
-                          UserServiceClient userServiceClient,
-                          ConsentArtefactRepository consentArtefactRepository,
-                          KeyPair keyPair) {
-        this.consentRequestRepository = consentRequestRepository;
-        this.providerClient = providerClient;
-        this.userServiceClient = userServiceClient;
-        this.consentArtefactRepository = consentArtefactRepository;
-        this.keyPair = keyPair;
-    }
+    private PostConsentApproval postConsentApproval;
 
     public Mono<String> askForConsent(String requestingHIUId, RequestedDetail requestedDetail) {
         final String requestId = UUID.randomUUID().toString();
@@ -120,7 +101,8 @@ public class ConsentManager {
                     ConsentApprovalResponse consentApprovalResponse = ConsentApprovalResponse.builder()
                             .consents(consents)
                             .build();
-                    return broadcastConsentArtefacts("callBackUrl", consentApprovalResponse.getConsents())
+                    return postConsentApproval.
+                            broadcastConsentArtefacts("callBackUrl", consentApprovalResponse.getConsents())
                             .thenReturn(consentApprovalResponse);
                 });
     }
@@ -133,7 +115,7 @@ public class ConsentManager {
                 .flatMap(grantedConsent -> {
                     var consentArtefact = from(consentRequest, grantedConsent);
                     String consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
-                    return consentArtefactRepository.addConsentArtefactAndUpdateStatus(consentArtefact, requestId, patientId, consentArtefactSignature)
+                    return storeConsentArtefact(requestId, patientId, consentArtefact, consentArtefactSignature)
                             .thenReturn(ConsentArtefactReference.builder().id(consentArtefact.getConsentId()).build());
                 }).collectList();
 
@@ -147,25 +129,6 @@ public class ConsentManager {
                 requestId,
                 patientId,
                 consentArtefactSignature);
-    }
-
-    @SneakyThrows
-    private Mono<Void> broadcastConsentArtefacts(String callBackUrl, List<ConsentArtefactReference> consents) {
-        DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig.getQueues().get(HIU_NOTIFICATION_QUEUE);
-
-        if (destinationInfo == null) {
-            System.out.println("destination config is empty");
-            return Mono.empty();
-        }
-
-        return Mono.create(monoSink -> {
-            amqpTemplate.convertAndSend(
-                    destinationInfo.getExchange(),
-                    destinationInfo.getRoutingKey(),
-                    ConsentArtefactsNotification.builder().callBackUrl(callBackUrl).consents(consents).build());
-            System.out.println("Broadcasting consent artefact creation");
-            monoSink.success();
-        });
     }
 
     @SneakyThrows

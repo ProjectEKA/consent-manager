@@ -23,10 +23,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 public class AuthorizationTest {
-
-    @MockBean
-    private DestinationsConfig destinationsConfig;
-
     @Autowired
     private WebTestClient webTestClient;
 

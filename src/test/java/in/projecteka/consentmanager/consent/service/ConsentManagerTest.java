@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.consent.ConsentManager;
+import in.projecteka.consentmanager.consent.PostConsentApproval;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIUReference;
@@ -34,16 +35,23 @@ class ConsentManagerTest {
     private ConsentArtefactRepository consentArtefactRepository;
     @Mock
     private ClientRegistryClient providerClient;
-
     @Mock
     private UserServiceClient userClient;
-
+    @Mock
+    private PostConsentApproval postConsentApproval;
     @MockBean
     private KeyPair keyPair;
+    private ConsentManager consentManager;
 
     @BeforeEach
     public void setUp() {
         initMocks(this);
+        consentManager = new ConsentManager(providerClient,
+                userClient,
+                repository,
+                consentArtefactRepository,
+                keyPair,
+                postConsentApproval);
     }
 
     @Test
@@ -53,11 +61,10 @@ class ConsentManagerTest {
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
         RequestedDetail requestedDetail = RequestedDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
 
-        ConsentManager consentManager = new ConsentManager(repository, providerClient, userClient, consentArtefactRepository, keyPair);
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
-        when (providerClient.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
-        when (providerClient.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
-        when (userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
+        when(providerClient.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
+        when(providerClient.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
+        when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
 
         String requestingHIUId = "hiu1";
         StepVerifier.create(consentManager.askForConsent(requestingHIUId, requestedDetail)).expectNextMatches(r -> r != null).verifyComplete();
@@ -70,11 +77,10 @@ class ConsentManagerTest {
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
         RequestedDetail requestedDetail = RequestedDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
 
-        ConsentManager consentManager = new ConsentManager(repository, providerClient, userClient, consentArtefactRepository, keyPair);
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
-        when (providerClient.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
-        when (providerClient.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));
-        when (userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
+        when(providerClient.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
+        when(providerClient.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));
+        when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
 
         String requestingHIUId = "hiu1";
         StepVerifier.create(consentManager.askForConsent(requestingHIUId, requestedDetail))

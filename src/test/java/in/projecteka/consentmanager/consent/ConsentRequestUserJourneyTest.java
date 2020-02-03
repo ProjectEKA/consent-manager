@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.consent.model.response.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;

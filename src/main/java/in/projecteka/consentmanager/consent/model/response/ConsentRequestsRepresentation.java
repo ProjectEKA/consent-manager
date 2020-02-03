@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent.model.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

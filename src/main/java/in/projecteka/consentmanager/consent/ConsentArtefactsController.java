@@ -24,8 +24,7 @@ public class ConsentArtefactsController {
     }
 
     @GetMapping(value = "/internal/consents/{consentId}")
-    public Mono<ConsentArtefactRepresentation> getConsent(
-            @PathVariable(value = "consentId") String consentId) {
+    public Mono<ConsentArtefactRepresentation> getConsent(@PathVariable String consentId) {
         return consentManager.getConsentArtefact(consentId);
     }
 }

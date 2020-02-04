@@ -74,8 +74,7 @@ public class ConsentRequestUserJourneyTest {
                 .setBody("{}")
                 .setHeader("content-type",
                         "application/json"));
-        String body = "" +
-                "{\n" +
+        String body = "{\n" +
                 "  \"consent\": {\n" +
                 "    \"purpose\": {\n" +
                 "      \"text\": \"For Clinical Reference\",\n" +
@@ -116,9 +115,11 @@ public class ConsentRequestUserJourneyTest {
                 "        \"unit\": \"DAY\",\n" +
                 "        \"value\": 1\n" +
                 "      }\n" +
-                "    }\n" +
+                "    },\n" +
+                "    \"callBackUrl\": \"https://tmh-hiu/notify\"\n" +
                 "  }\n" +
                 "}";
+
         webTestClient.post()
                 .uri("/consent-requests")
                 .accept(MediaType.APPLICATION_JSON)

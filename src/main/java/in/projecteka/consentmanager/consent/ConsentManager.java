@@ -96,15 +96,16 @@ public class ConsentManager {
         return validatePatient(patientId)
                 .then(validateConsentRequest(requestId))
                 .flatMap(consentRequest ->
-                        generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest))
-                .flatMap(consents -> {
-                    ConsentApprovalResponse consentApprovalResponse = ConsentApprovalResponse.builder()
-                            .consents(consents)
-                            .build();
-                    return postConsentApproval.
-                            broadcastConsentArtefacts("callBackUrl", consentApprovalResponse.getConsents())
-                            .thenReturn(consentApprovalResponse);
-                });
+                        generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)
+                                .flatMap(consents -> {
+                                    ConsentApprovalResponse consentApprovalResponse = ConsentApprovalResponse.builder()
+                                            .consents(consents)
+                                            .build();
+                                    return postConsentApproval.broadcastConsentArtefacts(
+                                            consentRequest.getCallBackUrl(),
+                                            consentApprovalResponse.getConsents())
+                                            .thenReturn(consentApprovalResponse);
+                                }));
     }
 
     private Mono<List<ConsentArtefactReference>> generateConsentArtefacts(String requestId,

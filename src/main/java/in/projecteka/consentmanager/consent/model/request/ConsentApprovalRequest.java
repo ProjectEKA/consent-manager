@@ -11,7 +11,4 @@ public class ConsentApprovalRequest {
     @Valid
     @NotNull(message = "Consents are not specified")
     private List<GrantedConsent> consents;
-    @Valid
-    @NotNull(message = "Callback Url not specified")
-    private String callBackUrl;
 }

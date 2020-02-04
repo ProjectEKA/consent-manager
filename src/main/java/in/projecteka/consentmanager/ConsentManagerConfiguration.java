@@ -97,16 +97,6 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public UserService userService(UserRepository userRepository) {
-        return new UserService(userRepository);
-    }
-
-    @Bean
-    public UserRepository userRepository(WebClient.Builder builder, UserServiceProperties properties) {
-        return new UserRepository(builder, properties);
-    }
-
-    @Bean
     public Link link(WebClient.Builder builder,
                      ClientRegistryProperties clientRegistryProperties,
                      LinkRepository linkRepository,

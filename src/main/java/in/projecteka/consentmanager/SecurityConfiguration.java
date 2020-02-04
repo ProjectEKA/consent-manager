@@ -30,7 +30,7 @@ public class SecurityConfiguration {
             ServerSecurityContextRepository securityContextRepository) {
         return httpSecurity
                 .authorizeExchange()
-                .pathMatchers("/**.json").permitAll()
+                .pathMatchers("/**.json", "/users/verify").permitAll()
                 .pathMatchers("/**.html").permitAll()
                 .pathMatchers("/**.js").permitAll()
                 .pathMatchers("/**.png").permitAll()

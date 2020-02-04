@@ -10,6 +10,10 @@ consentmanager:
     url: ${Client_Registry_Url}
   userservice:
     url: ${User_Service_Url}
+  otpservice:
+    url: ${Otp_Service_Url}
+    identifiers:
+      - MOBILE
   db:
     host: ${POSTGRES_HOST}
     port: ${POSTGRES_PORT}

@@ -10,6 +10,10 @@ consentmanager:
     url: http://localhost:8080/api/1.0
   userservice:
     url: http://localhost:9000
+  otpservice:
+    url: http://localhost:5000/otp/link
+    identifiers:
+      - MOBILE
   db:
     host: localhost
     port: 5432

@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.consent.model.request;
+package in.projecteka.consentmanager.consent.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
@@ -10,6 +10,7 @@ import lombok.Setter;
 import javax.validation.Valid;
 import javax.validation.constraints.Future;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.Date;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -18,7 +19,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ConsentPermission {
+public class ConsentPermission implements Serializable {
     @NotNull(message = "Access mode is not specified.")
     private AccessMode accessMode;
 

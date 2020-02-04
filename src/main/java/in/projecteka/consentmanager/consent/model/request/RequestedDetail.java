@@ -1,6 +1,13 @@
 package in.projecteka.consentmanager.consent.model.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import in.projecteka.consentmanager.consent.model.ConsentPermission;
+import in.projecteka.consentmanager.consent.model.ConsentPurpose;
+import in.projecteka.consentmanager.consent.model.HIPReference;
+import in.projecteka.consentmanager.consent.model.HIType;
+import in.projecteka.consentmanager.consent.model.HIUReference;
+import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.Requester;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,7 +23,7 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ConsentDetail {
+public class RequestedDetail {
     @Valid
     @NotNull(message = "Purpose is not specified.")
     private ConsentPurpose purpose;

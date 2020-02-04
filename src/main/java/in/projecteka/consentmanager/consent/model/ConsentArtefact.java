@@ -1,22 +1,24 @@
 package in.projecteka.consentmanager.consent.model;
 
-import in.projecteka.consentmanager.consent.model.request.ConsentPermission;
-import in.projecteka.consentmanager.consent.model.request.ConsentPurpose;
-import in.projecteka.consentmanager.consent.model.request.HIPReference;
-import in.projecteka.consentmanager.consent.model.request.HIType;
-import in.projecteka.consentmanager.consent.model.request.HIUReference;
-import in.projecteka.consentmanager.consent.model.request.PatientReference;
-import in.projecteka.consentmanager.consent.model.request.Requester;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 @Builder
 @Data
-public class ConsentArtefact {
-    private String id;
-    private String requestId;
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+public class ConsentArtefact implements Serializable {
+    private String consentId;
     private Date createdAt;
     private ConsentPurpose purpose;
     private PatientReference patient;
@@ -25,4 +27,5 @@ public class ConsentArtefact {
     private Requester requester;
     private HIType[] hiTypes;
     private ConsentPermission permission;
+    private List<GrantedContext> careContexts;
 }

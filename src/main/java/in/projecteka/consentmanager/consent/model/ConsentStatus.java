@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.consent.model.response;
+package in.projecteka.consentmanager.consent.model;
 
 public enum ConsentStatus {
     REQUESTED,

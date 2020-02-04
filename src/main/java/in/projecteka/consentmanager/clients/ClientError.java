@@ -89,4 +89,20 @@ public class ClientError extends Throwable {
                         ErrorCode.CONSENT_ARTEFACT_FORBIDDEN,
                         "Cannot retrieve Consent artefact. Forbidden")));
     }
+
+    public static ClientError unknownErrorOccurred() {
+        return new ClientError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.UNKNOWN_ERROR_OCCURRED,
+                        "Unknown error occurred")));
+    }
+
+    public static ClientError queueNotFound() {
+        return new ClientError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.QUEUE_NOT_FOUND,
+                        "Queue not found")));
+    }
 }

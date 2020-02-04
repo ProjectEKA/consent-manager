@@ -103,7 +103,8 @@ public class ConsentManager {
                                             .build();
                                     return postConsentApproval.broadcastConsentArtefacts(
                                             consentRequest.getCallBackUrl(),
-                                            consentApprovalResponse.getConsents())
+                                            consentApprovalResponse.getConsents(),
+                                            requestId)
                                             .thenReturn(consentApprovalResponse);
                                 }));
     }
@@ -117,7 +118,10 @@ public class ConsentManager {
                     var consentArtefact = from(consentRequest, grantedConsent);
                     String consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
                     return storeConsentArtefact(requestId, patientId, consentArtefact, consentArtefactSignature)
-                            .thenReturn(ConsentArtefactReference.builder().id(consentArtefact.getConsentId()).build());
+                            .thenReturn(ConsentArtefactReference.builder()
+                                    .id(consentArtefact.getConsentId())
+                                    .consentStatus(ConsentStatus.GRANTED)
+                                    .build());
                 }).collectList();
 
     }

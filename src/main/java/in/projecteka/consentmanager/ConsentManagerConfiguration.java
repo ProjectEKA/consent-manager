@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager;
 
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
+import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
@@ -15,7 +16,7 @@ import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.repository.DiscoveryRepository;
 import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.link.link.repository.LinkRepository;
-import in.projecteka.consentmanager.consent.notification.ConsentArtefactBroadcastListener;
+import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
 import in.projecteka.consentmanager.user.UserRepository;
 import in.projecteka.consentmanager.user.UserService;
 import io.vertx.pgclient.PgConnectOptions;
@@ -191,12 +192,19 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
+    public ConsentArtefactNotifier consentArtefactClient(WebClient.Builder builder) {
+        return new ConsentArtefactNotifier(builder);
+    }
+
+    @Bean
     public ConsentArtefactBroadcastListener hiuNotificationListener(MessageListenerContainerFactory messageListenerContainerFactory,
                                                                     DestinationsConfig destinationsConfig,
-                                                                    Jackson2JsonMessageConverter jackson2JsonMessageConverter) {
+                                                                    Jackson2JsonMessageConverter jackson2JsonMessageConverter,
+                                                                    ConsentArtefactNotifier consentArtefactNotifier) {
         return new ConsentArtefactBroadcastListener(messageListenerContainerFactory,
                 destinationsConfig,
-                jackson2JsonMessageConverter);
+                jackson2JsonMessageConverter,
+                consentArtefactNotifier);
     }
 
     @SneakyThrows

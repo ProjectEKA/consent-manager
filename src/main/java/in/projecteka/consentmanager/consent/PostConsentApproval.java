@@ -1,7 +1,8 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.consent.model.ConsentArtefactsNotification;
+import in.projecteka.consentmanager.consent.model.ConsentArtefactsNotificationMessage;
+import in.projecteka.consentmanager.consent.model.request.ConsentArtefactNotificationRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactReference;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -18,7 +19,9 @@ public class PostConsentApproval {
     private DestinationsConfig destinationsConfig;
 
     @SneakyThrows
-    public Mono<Void> broadcastConsentArtefacts(String callBackUrl, List<ConsentArtefactReference> consents) {
+    public Mono<Void> broadcastConsentArtefacts(String callBackUrl,
+                                                List<ConsentArtefactReference> consents,
+                                                String requestId) {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig.getQueues().get(CONSENT_GRANTED_QUEUE);
 
         if (destinationInfo == null) {
@@ -29,7 +32,13 @@ public class PostConsentApproval {
             amqpTemplate.convertAndSend(
                     destinationInfo.getExchange(),
                     destinationInfo.getRoutingKey(),
-                    ConsentArtefactsNotification.builder().callBackUrl(callBackUrl).consents(consents).build());
+                    ConsentArtefactsNotificationMessage.builder()
+                            .consentArtefactNotificationRequest(ConsentArtefactNotificationRequest.builder()
+                                    .consentRequestId(requestId)
+                                    .consents(consents)
+                                    .build())
+                            .callBackUrl(callBackUrl)
+                            .build());
             monoSink.success();
         });
     }

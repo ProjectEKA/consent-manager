@@ -5,7 +5,7 @@ consentmanager:
     defaultPageSize: 20
     maxPageSize: 100
   clientregistry:
-    XAuthToken: 123ChangeThis
+    XAuthToken: 8e983a1719e20913be6c61e9b552e88fc6032c21e1030f1abda986d17326b2b0
     clientId: 6
     url: http://localhost:8080/api/1.0
   userservice:

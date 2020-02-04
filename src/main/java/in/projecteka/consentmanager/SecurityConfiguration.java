@@ -31,6 +31,11 @@ public class SecurityConfiguration {
         return httpSecurity
                 .authorizeExchange()
                 .pathMatchers("/**.json").permitAll()
+                .pathMatchers("/**.html").permitAll()
+                .pathMatchers("/**.js").permitAll()
+                .pathMatchers("/**.png").permitAll()
+                .pathMatchers("/**.css").permitAll()
+                .pathMatchers("/**.yaml").permitAll()
                 .pathMatchers("/**").authenticated()
                 .and()
                 .httpBasic().disable()

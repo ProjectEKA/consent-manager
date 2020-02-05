@@ -47,6 +47,9 @@ public class ConsentRequestUserJourneyTest {
     @MockBean
     private ConsentRequestRepository repository;
 
+    @MockBean
+    private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
+
     private static MockWebServer clientRegistryServer = new MockWebServer();
     private static MockWebServer userServer = new MockWebServer();
 

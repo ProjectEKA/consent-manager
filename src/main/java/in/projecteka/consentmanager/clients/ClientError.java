@@ -18,7 +18,7 @@ public class ClientError extends Throwable {
         error = errorRepresentation;
     }
 
-    public static ClientError unableToConnectToProvider(){
+    public static ClientError unableToConnectToProvider() {
         return new ClientError(
                 HttpStatus.NOT_FOUND,
                 new ErrorRepresentation(new Error(
@@ -26,7 +26,7 @@ public class ClientError extends Throwable {
                         CANNOT_PROCESS_REQUEST_TRY_LATER)));
     }
 
-    public static ClientError userNotFound(){
+    public static ClientError userNotFound() {
         return new ClientError(
                 HttpStatus.NOT_FOUND,
                 new ErrorRepresentation(new Error(
@@ -34,7 +34,7 @@ public class ClientError extends Throwable {
                         "Cannot find the user")));
     }
 
-    public static ClientError dbOperationFailed(){
+    public static ClientError dbOperationFailed() {
         return new ClientError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 new ErrorRepresentation(new Error(
@@ -88,6 +88,13 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(
                         ErrorCode.CONSENT_ARTEFACT_FORBIDDEN,
                         "Cannot retrieve Consent artefact. Forbidden")));
+    }
+
+    public static ClientError otpNotFound() {
+        return new ClientError(
+                HttpStatus.NOT_FOUND,
+                new ErrorRepresentation(new Error(ErrorCode.OTP_INVALID,
+                        "Invalid OTP entered")));
     }
 
     public static ClientError unknownErrorOccurred() {

@@ -1,11 +1,7 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
-import in.projecteka.consentmanager.user.model.DeviceIdentifier;
-import in.projecteka.consentmanager.user.model.OtpCommunicationData;
-import in.projecteka.consentmanager.user.model.OtpRequest;
-import in.projecteka.consentmanager.user.model.TemporarySession;
-import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.consentmanager.user.model.*;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -21,10 +17,10 @@ public class UserService {
         return userRepository.userWith(userName);
     }
 
-    public  Mono<TemporarySession> sendOtp(DeviceIdentifier deviceIdentifier) {
+    public Mono<TemporarySession> sendOtp(DeviceIdentifier deviceIdentifier) {
         String deviceType = deviceIdentifier.getIdentifierType().toUpperCase();
 
-        if(!otpServiceProperties.getIdentifiers().contains(deviceType)) {
+        if (!otpServiceProperties.getIdentifiers().contains(deviceType)) {
             throw new InvalidRequestException("invalid.identifier.type");
         }
 
@@ -33,5 +29,20 @@ public class UserService {
                 new OtpCommunicationData(deviceIdentifier.getIdentifierType(), deviceIdentifier.getIdentifier()));
 
         return otpServiceClient.sendOtpTo(otpRequest);
+    }
+
+    public Mono<Token> permitOtp(OtpVerification otpVerification) {
+        if (!validateOtpVerification(otpVerification)) {
+            throw new InvalidRequestException("invalid.request.body");
+        }
+
+        otpServiceClient.permitOtp(otpVerification);
+
+        return Mono.just(new Token());
+    }
+
+    private boolean validateOtpVerification(OtpVerification otpVerification) {
+        return null != otpVerification.getSessionId() && !otpVerification.getSessionId().isEmpty() &&
+                null != otpVerification.getValue() && !otpVerification.getValue().isEmpty();
     }
 }

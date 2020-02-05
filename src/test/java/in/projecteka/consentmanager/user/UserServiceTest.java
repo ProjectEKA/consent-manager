@@ -2,7 +2,9 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.DeviceIdentifier;
+import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.TemporarySession;
+import in.projecteka.consentmanager.user.model.Token;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,16 +26,18 @@ class UserServiceTest {
 
     @Mock
     private OtpServiceClient otpServiceClient;
+
     private UserService userService;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         OtpServiceProperties otpServiceProperties = new OtpServiceProperties("", Arrays.asList("MOBILE"));
-        userService = new UserService(userRepository,otpServiceProperties,otpServiceClient);
+        userService = new UserService(userRepository, otpServiceProperties, otpServiceClient);
         when(otpServiceClient.sendOtpTo(any())).thenReturn(Mono.just(
                 new TemporarySession("SOME_SESSION_ID")
         ));
+        when(otpServiceClient.permitOtp(any())).thenReturn(Mono.just(new Token("SOME_TEMPORARY_TOKEN")));
     }
 
     @Test
@@ -52,6 +56,31 @@ class UserServiceTest {
 
         Assertions.assertThrows(InvalidRequestException.class, () -> {
             userService.sendOtp(deviceIdentifier);
+        });
+    }
+
+    @Test
+    public void shouldReturnTokenReceivedFromClient() {
+        OtpVerification otpVerification = new OtpVerification("SOME_SESSION_ID", "1234");
+        StepVerifier.create(userService.permitOtp(otpVerification))
+                .assertNext(response -> {
+                    assertThat(response.getTemporaryToken()).isEqualTo("SOME_TEMPORARY_TOKEN");
+                });
+    }
+
+    @Test
+    public void shouldThrowInvalidRequestExceptionForInvalidOtpValue() {
+        OtpVerification otpVerification = new OtpVerification("SOME_SESSION_ID", "");
+        Assertions.assertThrows(InvalidRequestException.class, () -> {
+            userService.permitOtp(otpVerification);
+        });
+    }
+
+    @Test
+    public void shouldThrowInvalidRequestExceptionForInvalidOtpSessionId() {
+        OtpVerification otpVerification = new OtpVerification("", "1234");
+        Assertions.assertThrows(InvalidRequestException.class, () -> {
+            userService.permitOtp(otpVerification);
         });
     }
 

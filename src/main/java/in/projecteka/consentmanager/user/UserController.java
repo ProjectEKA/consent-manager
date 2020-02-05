@@ -1,6 +1,8 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.user.model.DeviceIdentifier;
+import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.TemporarySession;
 import in.projecteka.consentmanager.user.model.User;
 import lombok.AllArgsConstructor;
@@ -29,6 +31,11 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<TemporarySession> sendOtp(@RequestBody DeviceIdentifier request) {
         return userService.sendOtp(request);
+    }
+
+    @PostMapping("/permit")
+    public Mono<Token> permitOtp(@RequestBody OtpVerification request) {
+        return userService.permitOtp(request);
     }
 
 }

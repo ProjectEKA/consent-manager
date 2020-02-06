@@ -9,7 +9,6 @@ import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
 import java.util.Date;
-import java.util.Random;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -25,10 +24,10 @@ public class DataFlowRequest {
         return fetchConsentArtifact(dataFlowRequest.getConsent().getId())
                 .flatMap(consentArtefactRepresentation -> isValidHIU(hiuId, consentArtefactRepresentation)
                         .flatMap(validHiu -> validHiu ? isConsentExpired(consentArtefactRepresentation)
-                                    .flatMap(consentExpired -> consentExpired ?
-                                            Mono.error(ClientError.consentExpired()) :
-                                            validateHIDateRange(dataFlowRequest, transactionId,
-                                                    consentArtefactRepresentation)) :
+                                .flatMap(consentExpired -> consentExpired ?
+                                        Mono.error(ClientError.consentExpired()) :
+                                        validateHIDateRange(dataFlowRequest, transactionId,
+                                                consentArtefactRepresentation)) :
                                 Mono.error(ClientError.invalidHIU())));
     }
 
@@ -41,13 +40,13 @@ public class DataFlowRequest {
             String transactionId, ConsentArtefactRepresentation consentArtefactRepresentation) {
         return dataFlowRequest.getHiDataRange() == null ?
                 addDefaultHIDataRange(dataFlowRequest, consentArtefactRepresentation)
-                    .flatMap(request ->
-                            saveAndBroadcast(request, transactionId)) :
+                        .flatMap(request ->
+                                saveAndBroadcast(request, transactionId)) :
                 isValidHIDateRange(dataFlowRequest, consentArtefactRepresentation)
-                    .flatMap(validHIDateRange -> validHIDateRange ?
-                            saveAndBroadcast(dataFlowRequest, transactionId) :
-                            Mono.error(ClientError.invalidDateRange())
-                    );
+                        .flatMap(validHIDateRange -> validHIDateRange ?
+                                saveAndBroadcast(dataFlowRequest, transactionId) :
+                                Mono.error(ClientError.invalidDateRange())
+                        );
     }
 
     private Mono<DataFlowRequestResponse> saveAndBroadcast(
@@ -63,7 +62,7 @@ public class DataFlowRequest {
                 });
     }
 
-    private Mono<String> getDigitalSignatureForHIP(String consentArtifactId){
+    private Mono<String> getDigitalSignatureForHIP(String consentArtifactId) {
         //TODO: Need to create a hash out of consent without HIU info
         return Mono.just("new hash from consent artifact");
     }
@@ -98,7 +97,7 @@ public class DataFlowRequest {
                 dataFlowRequest.getHiDataRange().getFrom().before(dataFlowRequest.getHiDataRange().getTo()));
     }
 
-    private Mono<Boolean> isConsentExpired(ConsentArtefactRepresentation consentArtefactRepresentation){
+    private Mono<Boolean> isConsentExpired(ConsentArtefactRepresentation consentArtefactRepresentation) {
         return Mono.just(consentArtefactRepresentation.getConsentDetail().getPermission().getDataExpiryAt().before(new Date()));
     }
 

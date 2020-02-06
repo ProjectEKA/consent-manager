@@ -1,6 +1,9 @@
 package in.projecteka.consentmanager.dataflow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
+import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
@@ -24,6 +27,7 @@ import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.MediaType;
+import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -55,6 +59,15 @@ public class DataFlowRequestUserJourneyTest {
     @MockBean
     private DataFlowRequestRepository dataFlowRequestRepository;
 
+    @MockBean
+    private PostDataFlowRequestApproval postDataFlowRequestApproval;
+
+    @MockBean
+    private DestinationsConfig destinationsConfig;
+
+    @MockBean
+    private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
+
     @AfterAll
     public static void tearDown() throws IOException {
         consentManagerServer.shutdown();
@@ -82,6 +95,8 @@ public class DataFlowRequestUserJourneyTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(consentArtefactRepresentationJson));
 
+        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
+                .thenReturn(Mono.empty());
         when(dataFlowRequestRepository.addDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.create(MonoSink::success));
 

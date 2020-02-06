@@ -36,9 +36,7 @@ public class UserService {
             throw new InvalidRequestException("invalid.request.body");
         }
 
-        otpServiceClient.permitOtp(otpVerification);
-
-        return Mono.just(new Token());
+        return otpServiceClient.permitOtp(otpVerification);
     }
 
     private boolean validateOtpVerification(OtpVerification otpVerification) {

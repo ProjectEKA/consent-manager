@@ -11,7 +11,7 @@ consentmanager:
   userservice:
     url: http://localhost:9000
   otpservice:
-    url: http://localhost:5000/otp
+    url: http://localhost:5000
     identifiers:
       - MOBILE
   db:

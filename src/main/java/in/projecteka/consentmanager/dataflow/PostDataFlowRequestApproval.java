@@ -21,7 +21,6 @@ public class PostDataFlowRequestApproval {
         DestinationsConfig.DestinationInfo destinationInfo =
                 destinationsConfig.getQueues().get(HIP_DATA_FLOW_REQUEST_QUEUE);
         if (destinationInfo == null) {
-            System.out.println("destination config is empty");
             return Mono.empty();
         }
         return Mono.create(monoSink -> {
@@ -32,7 +31,6 @@ public class PostDataFlowRequestApproval {
                             .transactionId(transactionId)
                             .dataFlowRequest(dataFlowRequest)
                             .build());
-            System.out.println("Broadcasting data flow request to HIP");
             monoSink.success();
         });
     }

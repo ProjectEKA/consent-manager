@@ -20,3 +20,7 @@ consentmanager:
   dataflow:
     clientId: ${CLIENT_ID}
     clientPassword: ${CLIENT_PASSWORD}
+spring:
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}

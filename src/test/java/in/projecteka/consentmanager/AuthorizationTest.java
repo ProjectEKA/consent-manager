@@ -1,5 +1,8 @@
 package in.projecteka.consentmanager;
 
+import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
+import in.projecteka.consentmanager.consent.ConsentManager;
+import in.projecteka.consentmanager.consent.PostConsentApproval;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -12,6 +15,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -24,6 +28,18 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 public class AuthorizationTest {
     @Autowired
     private WebTestClient webTestClient;
+
+    @MockBean
+    private ConsentManager consentManager;
+
+    @MockBean
+    private PostConsentApproval postConsentApproval;
+
+    @MockBean
+    private DestinationsConfig destinationsConfig;
+
+    @MockBean
+    private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
 
     @BeforeEach
     public void setUp() {

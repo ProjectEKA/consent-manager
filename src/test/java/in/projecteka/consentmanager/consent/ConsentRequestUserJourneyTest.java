@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
+import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
@@ -41,7 +42,13 @@ public class ConsentRequestUserJourneyTest {
     private WebTestClient webTestClient;
 
     @MockBean
+    private DestinationsConfig destinationsConfig;
+
+    @MockBean
     private ConsentRequestRepository repository;
+
+    @MockBean
+    private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
 
     private static MockWebServer clientRegistryServer = new MockWebServer();
     private static MockWebServer userServer = new MockWebServer();
@@ -70,8 +77,7 @@ public class ConsentRequestUserJourneyTest {
                 .setBody("{}")
                 .setHeader("content-type",
                         "application/json"));
-        String body = "" +
-                "{\n" +
+        String body = "{\n" +
                 "  \"consent\": {\n" +
                 "    \"purpose\": {\n" +
                 "      \"text\": \"For Clinical Reference\",\n" +
@@ -112,9 +118,11 @@ public class ConsentRequestUserJourneyTest {
                 "        \"unit\": \"DAY\",\n" +
                 "        \"value\": 1\n" +
                 "      }\n" +
-                "    }\n" +
+                "    },\n" +
+                "    \"callBackUrl\": \"https://tmh-hiu/notify\"\n" +
                 "  }\n" +
                 "}";
+
         webTestClient.post()
                 .uri("/consent-requests")
                 .accept(MediaType.APPLICATION_JSON)

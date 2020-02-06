@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRefere
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -29,6 +30,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.Date;
 
+@AllArgsConstructor
 public class ConsentManager {
 
     public static final String SHA_1_WITH_RSA = "SHA1withRSA";
@@ -37,18 +39,7 @@ public class ConsentManager {
     private final ConsentRequestRepository consentRequestRepository;
     private final ConsentArtefactRepository consentArtefactRepository;
     private KeyPair keyPair;
-
-    public ConsentManager(ConsentRequestRepository consentRequestRepository,
-                          ClientRegistryClient providerClient,
-                          UserServiceClient userServiceClient,
-                          ConsentArtefactRepository consentArtefactRepository,
-                          KeyPair keyPair) {
-        this.consentRequestRepository = consentRequestRepository;
-        this.providerClient = providerClient;
-        this.userServiceClient = userServiceClient;
-        this.consentArtefactRepository = consentArtefactRepository;
-        this.keyPair = keyPair;
-    }
+    private PostConsentApproval postConsentApproval;
 
     public Mono<String> askForConsent(String requestingHIUId, RequestedDetail requestedDetail) {
         final String requestId = UUID.randomUUID().toString();
@@ -102,18 +93,47 @@ public class ConsentManager {
     public Mono<ConsentApprovalResponse> approveConsent(String patientId,
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
-        //TODO validate CareContexts for the patient
         return validatePatient(patientId)
                 .then(validateConsentRequest(requestId))
                 .flatMap(consentRequest ->
-                        Flux.fromIterable(grantedConsents)
-                                .flatMap(grantedConsent -> {
-                                    var consentArtefact = from(consentRequest, grantedConsent);
-                                    String consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
-                                    return consentArtefactRepository.addConsentArtefactAndUpdateStatus(consentArtefact, requestId, patientId, consentArtefactSignature)
-                                            .thenReturn(ConsentArtefactReference.builder().id(consentArtefact.getConsentId()).build());
-                                }).collectList())
-                .map(consents -> ConsentApprovalResponse.builder().consents(consents).build());
+                        generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)
+                                .flatMap(consents -> {
+                                    ConsentApprovalResponse consentApprovalResponse = ConsentApprovalResponse.builder()
+                                            .consents(consents)
+                                            .build();
+                                    return postConsentApproval.broadcastConsentArtefacts(
+                                            consentRequest.getCallBackUrl(),
+                                            consentApprovalResponse.getConsents(),
+                                            requestId)
+                                            .thenReturn(consentApprovalResponse);
+                                }));
+    }
+
+    private Mono<List<ConsentArtefactReference>> generateConsentArtefacts(String requestId,
+                                                                          List<GrantedConsent> grantedConsents,
+                                                                          String patientId,
+                                                                          ConsentRequestDetail consentRequest) {
+        return Flux.fromIterable(grantedConsents)
+                .flatMap(grantedConsent -> {
+                    var consentArtefact = from(consentRequest, grantedConsent);
+                    String consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
+                    return storeConsentArtefact(requestId, patientId, consentArtefact, consentArtefactSignature)
+                            .thenReturn(ConsentArtefactReference.builder()
+                                    .id(consentArtefact.getConsentId())
+                                    .status(ConsentStatus.GRANTED)
+                                    .build());
+                }).collectList();
+
+    }
+
+    private Mono<Void> storeConsentArtefact(String requestId,
+                                            String patientId,
+                                            ConsentArtefact consentArtefact,
+                                            String consentArtefactSignature) {
+        return consentArtefactRepository.addConsentArtefactAndUpdateStatus(consentArtefact,
+                requestId,
+                patientId,
+                consentArtefactSignature);
     }
 
     @SneakyThrows

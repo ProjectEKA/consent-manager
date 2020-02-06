@@ -94,6 +94,7 @@ public class ConsentRequestRepository {
                 .permission(details.getPermission())
                 .purpose(details.getPurpose())
                 .requester(details.getRequester())
+                .callBackUrl(details.getCallBackUrl())
                 .build();
     }
 

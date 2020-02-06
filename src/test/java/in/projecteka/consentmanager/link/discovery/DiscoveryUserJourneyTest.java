@@ -3,6 +3,8 @@ package in.projecteka.consentmanager.link.discovery;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +14,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -34,8 +37,14 @@ public class DiscoveryUserJourneyTest {
 
     private static MockWebServer mockWebServer = new MockWebServer();
 
+    @MockBean
+    private DestinationsConfig destinationsConfig;
+
     @Autowired
     private WebTestClient webTestClient;
+
+    @MockBean
+    private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
 
     @BeforeEach
     public void setUp() {

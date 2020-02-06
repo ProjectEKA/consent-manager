@@ -49,4 +49,7 @@ public class RequestedDetail {
     @Valid
     @NotNull(message = "Permission is not specified.")
     private ConsentPermission permission;
+
+    @NotNull(message = "Call back url not specified.")
+    private String callBackUrl;
 }

@@ -120,7 +120,7 @@ public class ConsentManager {
                     return storeConsentArtefact(requestId, patientId, consentArtefact, consentArtefactSignature)
                             .thenReturn(ConsentArtefactReference.builder()
                                     .id(consentArtefact.getConsentId())
-                                    .consentStatus(ConsentStatus.GRANTED)
+                                    .status(ConsentStatus.GRANTED)
                                     .build());
                 }).collectList();
 

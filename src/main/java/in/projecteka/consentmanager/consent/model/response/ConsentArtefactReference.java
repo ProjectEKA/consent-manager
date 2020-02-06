@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ConsentArtefactReference {
     private String id;
-    private ConsentStatus consentStatus;
+    private ConsentStatus status;
 }

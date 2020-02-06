@@ -20,6 +20,7 @@ consentmanager:
   dataflow:
     clientId: 1
     clientPassword: NCG_CM
+    url: http://localhost:9000
 spring:
   rabbitmq:
     host: localhost

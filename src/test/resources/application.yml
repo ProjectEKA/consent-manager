@@ -14,3 +14,7 @@ consentmanager:
     user: dummy
     password: dummy_pwd
     poolSize: 5
+  dataflow:
+    clientId: 1
+    clientPassword: NCG_CM
+    url: http://localhost:8002

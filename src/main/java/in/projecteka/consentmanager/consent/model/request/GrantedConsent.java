@@ -12,6 +12,7 @@ import java.util.List;
 
 @Data
 public class GrantedConsent {
+    @Valid
     @NotNull(message = "Care contexts are not specified.")
     private List<GrantedContext> careContexts;
 

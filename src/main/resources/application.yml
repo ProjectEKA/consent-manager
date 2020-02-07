@@ -18,9 +18,12 @@ consentmanager:
     password: ${POSTGRES_PASSWORD}
     poolSize: ${DB_CONNECTION_POOL_SIZE}
   dataflow:
-    clientId: ${CLIENT_ID}
-    clientPassword: ${CLIENT_PASSWORD}
-    url: ${DATA_FLOW_URL}
+    authserver:
+      clientId: ${CLIENT_ID}
+      clientSecret: ${CLIENT_Secret}
+      url: ${AUTH_SERVER_URL}
+    consentmanager:
+      url: ${CONSENT_MANAGER_URL}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}

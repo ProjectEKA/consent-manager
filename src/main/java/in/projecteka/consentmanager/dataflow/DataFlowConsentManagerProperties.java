@@ -9,13 +9,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "consentmanager.dataflow")
+@ConfigurationProperties(prefix = "consentmanager.dataflow.consentmanager")
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 @AllArgsConstructor
-public class DataFlowServiceProperties {
-    private String clientId;
-    private String clientPassword;
+public class DataFlowConsentManagerProperties {
     private String url;
 }

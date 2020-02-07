@@ -219,9 +219,10 @@ public class DataFlowRequestUserJourneyTest {
         public void initialize(ConfigurableApplicationContext applicationContext) {
             TestPropertyValues values =
                     TestPropertyValues.of(
-                            Stream.of("consentmanager.dataflow.url=" + consentManagerServer.url(""),
-                                    "consentmanager.dataflow.clientId=1",
-                                    "consentmanager.dataflow.clientPassword=NCG_CM"));
+                            Stream.of("consentmanager.dataflow.authserver.url=" + consentManagerServer.url(""),
+                                    "consentmanager.dataflow.authserver.clientId=1",
+                                    "consentmanager.dataflow.authserver.clientSecret=NCG_CM",
+                                    "consentmanager.dataflow.consentmanager.url=" + consentManagerServer.url("")));
             values.applyTo(applicationContext);
         }
     }

@@ -47,7 +47,7 @@ public class ConsentRequestController {
             @RequestHeader(value = "Authorization") String authorization,
             @RequestParam(defaultValue = "-1") int limit,
             @RequestParam(defaultValue = "0") int offset) {
-        String patientId = TokenUtils.readUserId(authorization);
+        String patientId = TokenUtils.getCallerId(authorization);
         int pageSize = getPageSize(limit);
         return consentManager.findRequestsForPatient(patientId, pageSize, offset)
                 .flatMap(results -> Mono.just(ConsentRequestsRepresentation.builder()
@@ -74,7 +74,7 @@ public class ConsentRequestController {
             @PathVariable(value = "request-id") String requestId,
             @RequestHeader(value = "Authorization") String authorization,
             @Valid @RequestBody ConsentApprovalRequest consentApprovalRequest) {
-        String patientId = TokenUtils.readUserId(authorization);
+        String patientId = TokenUtils.getCallerId(authorization);
         return consentManager.approveConsent(patientId, requestId, consentApprovalRequest.getConsents());
     }
 }

@@ -11,9 +11,10 @@ import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.PostConsentApproval;
 import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
+import in.projecteka.consentmanager.dataflow.DataFlowConsentManagerProperties;
 import in.projecteka.consentmanager.dataflow.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.DataFlowRequestRepository;
-import in.projecteka.consentmanager.dataflow.DataFlowServiceProperties;
+import in.projecteka.consentmanager.dataflow.DataFlowAuthServerProperties;
 import in.projecteka.consentmanager.dataflow.PostDataFlowRequestApproval;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.link.HIPClient;
@@ -231,9 +232,10 @@ public class ConsentManagerConfiguration {
     @Bean
     public DataFlowRequest dataRequest(WebClient.Builder builder,
                                        DataFlowRequestRepository dataFlowRequestRepository,
-                                       DataFlowServiceProperties dataFlowServiceProperties,
-                                       PostDataFlowRequestApproval postDataFlowRequestApproval) {
-        return new DataFlowRequest(new ConsentManagerClient(builder, dataFlowServiceProperties),
+                                       PostDataFlowRequestApproval postDataFlowRequestApproval,
+                                       DataFlowAuthServerProperties dataFlowAuthServerProperties,
+                                       DataFlowConsentManagerProperties dataFlowConsentManagerProperties) {
+        return new DataFlowRequest(new ConsentManagerClient(builder, dataFlowAuthServerProperties, dataFlowConsentManagerProperties),
                 dataFlowRequestRepository, postDataFlowRequestApproval);
     }
 

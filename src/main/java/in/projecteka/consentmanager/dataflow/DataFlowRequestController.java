@@ -18,7 +18,7 @@ public class DataFlowRequestController {
     public Mono<DataFlowRequestResponse> linkCareContexts(
             @RequestHeader(value = "Authorization") String authorization,
             @RequestBody in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest) {
-        String hiuId = TokenUtils.readUserId(authorization);
+        String hiuId = TokenUtils.getCallerId(authorization);
         return this.dataFlowRequest.validateDataTransferRequest(hiuId, dataFlowRequest);
     }
 }

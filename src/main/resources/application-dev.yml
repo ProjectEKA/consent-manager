@@ -18,9 +18,12 @@ consentmanager:
     password: postgres
     poolSize: 5
   dataflow:
-    clientId: 1
-    clientPassword: NCG_CM
-    url: http://localhost:9000
+    authserver:
+      clientId: 1
+      clientPassword: NCG_CM
+      url: http://localhost:9001
+    consentmanager:
+      url: http://localhost:9000
 spring:
   rabbitmq:
     host: localhost

@@ -23,7 +23,7 @@ public class LinkController {
 
     @PostMapping("/patients/link")
     public Mono<PatientLinkReferenceResponse> linkCareContexts(@RequestHeader(value = "Authorization") String authorization, @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
-        String patientId = TokenUtils.readUserId(authorization);
+        String patientId = TokenUtils.getCallerId(authorization);
         return link.patientWith(patientId, patientLinkReferenceRequest);
     }
 
@@ -31,13 +31,13 @@ public class LinkController {
     public Mono<PatientLinkResponse> verifyToken(@RequestHeader(value = "Authorization") String authorization,
                                                  @PathVariable("linkRefNumber") String linkRefNumber,
                                                  @RequestBody PatientLinkRequest patientLinkRequest) {
-        String patientId = TokenUtils.readUserId(authorization);
+        String patientId = TokenUtils.getCallerId(authorization);
         return link.verifyToken(linkRefNumber, patientLinkRequest, patientId);
     }
 
     @GetMapping("/patients/links")
     public Mono<PatientLinksResponse> getLinkedCareContexts(@RequestHeader(value = "Authorization") String authorization) {
-        String patientId = TokenUtils.readUserId(authorization);
+        String patientId = TokenUtils.getCallerId(authorization);
         return link.getLinkedCareContexts(patientId);
     }
 }

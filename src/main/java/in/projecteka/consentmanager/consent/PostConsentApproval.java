@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.consent.model.request.ConsentArtefactNotific
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactReference;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.log4j.Logger;
 import org.springframework.amqp.core.AmqpTemplate;
 import reactor.core.publisher.Mono;
 
@@ -15,6 +16,7 @@ import static in.projecteka.consentmanager.ConsentManagerConfiguration.CONSENT_G
 
 @AllArgsConstructor
 public class PostConsentApproval {
+    private static final Logger logger = Logger.getLogger(PostConsentApproval.class);
     private AmqpTemplate amqpTemplate;
     private DestinationsConfig destinationsConfig;
 
@@ -25,7 +27,9 @@ public class PostConsentApproval {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig.getQueues().get(CONSENT_GRANTED_QUEUE);
 
         if (destinationInfo == null) {
-            return Mono.error(new Exception("Queue doesn't exists"));
+            logger.error(CONSENT_GRANTED_QUEUE + " not found");
+            return Mono.error(new Exception(CONSENT_GRANTED_QUEUE + " not found"));
+
         }
 
         return Mono.create(monoSink -> {
@@ -39,6 +43,7 @@ public class PostConsentApproval {
                                     .build())
                             .callBackUrl(callBackUrl)
                             .build());
+            logger.info("Broadcasting consent artefact notification for Request Id: " + requestId);
             monoSink.success();
         });
     }

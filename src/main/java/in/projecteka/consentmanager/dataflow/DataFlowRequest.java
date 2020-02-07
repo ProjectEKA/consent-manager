@@ -54,7 +54,7 @@ public class DataFlowRequest {
     private Mono<DataFlowRequestResponse> validateHIDateRange(
             in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
             String transactionId,
-            Boolean validHIDateRange) {
+            boolean validHIDateRange) {
         return validHIDateRange
                 ? saveAndBroadcast(dataFlowRequest, transactionId)
                 : Mono.error(ClientError.invalidDateRange());
@@ -98,7 +98,7 @@ public class DataFlowRequest {
         return dataFlowRequest;
     }
 
-    private Boolean isValidHIDateRange(in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
+    private boolean isValidHIDateRange(in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
                                        ConsentArtefactRepresentation consentArtefactRepresentation) {
         return dataFlowRequest.getHiDataRange().getFrom()
                 .after(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getFromDate()) &&
@@ -107,11 +107,11 @@ public class DataFlowRequest {
                 dataFlowRequest.getHiDataRange().getFrom().before(dataFlowRequest.getHiDataRange().getTo());
     }
 
-    private Boolean isConsentExpired(ConsentArtefactRepresentation consentArtefactRepresentation) {
+    private boolean isConsentExpired(ConsentArtefactRepresentation consentArtefactRepresentation) {
         return consentArtefactRepresentation.getConsentDetail().getPermission().getDataExpiryAt().before(new Date());
     }
 
-    private Boolean isValidHIU(String hiuId, ConsentArtefactRepresentation consentArtefactRepresentation) {
+    private boolean isValidHIU(String hiuId, ConsentArtefactRepresentation consentArtefactRepresentation) {
         return consentArtefactRepresentation.getConsentDetail().getHiu().getId().equals(hiuId);
     }
 }

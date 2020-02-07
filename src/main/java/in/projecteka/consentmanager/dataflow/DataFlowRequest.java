@@ -23,9 +23,8 @@ public class DataFlowRequest {
         final String transactionId = UUID.randomUUID().toString();
         return fetchConsentArtifact(dataFlowRequest.getConsent().getId())
                 .flatMap(consentArtefactRepresentation -> isValidHIU(hiuId, consentArtefactRepresentation)
-                        .flatMap(validHiu -> validHiu ?
-                                validateConsentExpiry(dataFlowRequest, transactionId, consentArtefactRepresentation) :
-                                Mono.error(ClientError.invalidHIU())));
+                        ? validateConsentExpiry(dataFlowRequest, transactionId, consentArtefactRepresentation)
+                        : Mono.error(ClientError.invalidHIU()));
     }
 
     private Mono<DataFlowRequestResponse> validateConsentExpiry(
@@ -33,9 +32,8 @@ public class DataFlowRequest {
             String transactionId,
             ConsentArtefactRepresentation consentArtefactRepresentation) {
         return isConsentExpired(consentArtefactRepresentation)
-                .flatMap(consentExpired -> consentExpired ?
-                        Mono.error(ClientError.consentExpired()) :
-                        validateIfHIDateRangeIsProvided(dataFlowRequest, transactionId, consentArtefactRepresentation));
+                ? Mono.error(ClientError.consentExpired())
+                : validateIfHIDateRangeIsProvided(dataFlowRequest, transactionId, consentArtefactRepresentation);
     }
 
     private Mono<ConsentArtefactRepresentation> fetchConsentArtifact(String consentArtefactId) {
@@ -45,23 +43,21 @@ public class DataFlowRequest {
     private Mono<DataFlowRequestResponse> validateIfHIDateRangeIsProvided(
             in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
             String transactionId, ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return dataFlowRequest.getHiDataRange() == null ?
-                addDefaultHIDataRange(dataFlowRequest, consentArtefactRepresentation)
-                        .flatMap(request -> saveAndBroadcast(request, transactionId)) :
-                isValidHIDateRange(dataFlowRequest, consentArtefactRepresentation)
-                        .flatMap(validHIDateRange -> validateHIDateRange(
-                                dataFlowRequest,
-                                transactionId,
-                                validHIDateRange));
+        return dataFlowRequest.getHiDataRange() == null
+                ? saveAndBroadcast(addDefaultHIDataRange(dataFlowRequest, consentArtefactRepresentation), transactionId)
+                : validateHIDateRange(
+                        dataFlowRequest,
+                        transactionId,
+                        isValidHIDateRange(dataFlowRequest, consentArtefactRepresentation));
     }
 
     private Mono<DataFlowRequestResponse> validateHIDateRange(
             in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
             String transactionId,
             Boolean validHIDateRange) {
-        return validHIDateRange ?
-                saveAndBroadcast(dataFlowRequest, transactionId) :
-                Mono.error(ClientError.invalidDateRange());
+        return validHIDateRange
+                ? saveAndBroadcast(dataFlowRequest, transactionId)
+                : Mono.error(ClientError.invalidDateRange());
     }
 
     private Mono<DataFlowRequestResponse> saveAndBroadcast(
@@ -82,7 +78,7 @@ public class DataFlowRequest {
         return Mono.just("new hash from consent artifact");
     }
 
-    private Mono<in.projecteka.consentmanager.dataflow.model.DataFlowRequest> addDefaultHIDataRange(
+    private in.projecteka.consentmanager.dataflow.model.DataFlowRequest addDefaultHIDataRange(
             in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
             ConsentArtefactRepresentation consentArtefactRepresentation) {
         if (dataFlowRequest.getHiDataRange() == null)
@@ -99,24 +95,23 @@ public class DataFlowRequest {
                                     .getDateRange()
                                     .getToDate())
                             .build());
-        return Mono.just(dataFlowRequest);
+        return dataFlowRequest;
     }
 
-    private Mono<Boolean> isValidHIDateRange(
-            in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
-            ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return Mono.just(dataFlowRequest.getHiDataRange().getFrom()
+    private Boolean isValidHIDateRange(in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
+                                       ConsentArtefactRepresentation consentArtefactRepresentation) {
+        return dataFlowRequest.getHiDataRange().getFrom()
                 .after(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getFromDate()) &&
                 dataFlowRequest.getHiDataRange().getTo()
                         .before(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getToDate()) &&
-                dataFlowRequest.getHiDataRange().getFrom().before(dataFlowRequest.getHiDataRange().getTo()));
+                dataFlowRequest.getHiDataRange().getFrom().before(dataFlowRequest.getHiDataRange().getTo());
     }
 
-    private Mono<Boolean> isConsentExpired(ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return Mono.just(consentArtefactRepresentation.getConsentDetail().getPermission().getDataExpiryAt().before(new Date()));
+    private Boolean isConsentExpired(ConsentArtefactRepresentation consentArtefactRepresentation) {
+        return consentArtefactRepresentation.getConsentDetail().getPermission().getDataExpiryAt().before(new Date());
     }
 
-    private Mono<Boolean> isValidHIU(String hiuId, ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return Mono.just(consentArtefactRepresentation.getConsentDetail().getHiu().getId().equals(hiuId));
+    private Boolean isValidHIU(String hiuId, ConsentArtefactRepresentation consentArtefactRepresentation) {
+        return consentArtefactRepresentation.getConsentDetail().getHiu().getId().equals(hiuId);
     }
 }

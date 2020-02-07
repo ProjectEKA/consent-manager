@@ -4,13 +4,16 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.log4j.Logger;
 import org.springframework.amqp.core.AmqpTemplate;
 import reactor.core.publisher.Mono;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_DATA_FLOW_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class PostDataFlowRequestApproval {
+    final static Logger logger = Logger.getLogger(PostDataFlowRequestApproval.class);
     private AmqpTemplate amqpTemplate;
     private DestinationsConfig destinationsConfig;
 
@@ -21,7 +24,8 @@ public class PostDataFlowRequestApproval {
         DestinationsConfig.DestinationInfo destinationInfo =
                 destinationsConfig.getQueues().get(HIP_DATA_FLOW_REQUEST_QUEUE);
         if (destinationInfo == null) {
-            return Mono.empty();
+            logger.info(HIP_DATA_FLOW_REQUEST_QUEUE + " not found");
+            throw queueNotFound();
         }
         return Mono.create(monoSink -> {
             amqpTemplate.convertAndSend(
@@ -31,6 +35,7 @@ public class PostDataFlowRequestApproval {
                             .transactionId(transactionId)
                             .dataFlowRequest(dataFlowRequest)
                             .build());
+            logger.info("Broadcasting data flow request with transaction id : " + transactionId);
             monoSink.success();
         });
     }

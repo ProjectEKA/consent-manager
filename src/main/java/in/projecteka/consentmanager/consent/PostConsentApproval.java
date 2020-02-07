@@ -16,7 +16,7 @@ import static in.projecteka.consentmanager.ConsentManagerConfiguration.CONSENT_G
 
 @AllArgsConstructor
 public class PostConsentApproval {
-    final static Logger logger = Logger.getLogger(PostConsentApproval.class);
+    private static final Logger logger = Logger.getLogger(PostConsentApproval.class);
     private AmqpTemplate amqpTemplate;
     private DestinationsConfig destinationsConfig;
 

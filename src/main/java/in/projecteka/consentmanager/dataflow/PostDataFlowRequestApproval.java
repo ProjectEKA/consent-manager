@@ -13,7 +13,7 @@ import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class PostDataFlowRequestApproval {
-    final static Logger logger = Logger.getLogger(PostDataFlowRequestApproval.class);
+    private static final Logger logger = Logger.getLogger(PostDataFlowRequestApproval.class);
     private AmqpTemplate amqpTemplate;
     private DestinationsConfig destinationsConfig;
 

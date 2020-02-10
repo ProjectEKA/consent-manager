@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -27,6 +28,15 @@ public class Provider {
     @JsonAlias("address")
     private List<Address> addresses;
     private String name;
+
+    public Mono<String> getProviderUrl() {
+        return identifiers
+                .stream()
+                .filter(Identifier::isOfficial)
+                .findFirst()
+                .map(identifier -> Mono.just(identifier.getSystem()))
+                .orElse(Mono.empty());
+    }
 }
 
 

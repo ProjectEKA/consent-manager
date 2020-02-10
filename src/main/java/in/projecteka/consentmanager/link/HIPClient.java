@@ -1,11 +1,11 @@
 package in.projecteka.consentmanager.link;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.link.link.model.hip.PatientLinkReferenceRequest;
+import in.projecteka.consentmanager.link.link.model.ErrorRepresentation;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkResponse;
-import in.projecteka.consentmanager.link.link.model.ErrorRepresentation;
+import in.projecteka.consentmanager.link.link.model.hip.PatientLinkReferenceRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;

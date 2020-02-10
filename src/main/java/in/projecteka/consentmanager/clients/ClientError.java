@@ -65,4 +65,68 @@ public class ClientError extends Throwable {
                         ErrorCode.PROVIDER_NOT_FOUND,
                         "Cannot find the provider")));
     }
+
+    public static ClientError consentRequestNotFound() {
+        return new ClientError(
+                HttpStatus.NOT_FOUND,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.CONSENT_REQUEST_NOT_FOUND,
+                        "Cannot find the consent request")));
+    }
+
+    public static ClientError consentArtefactNotFound() {
+        return new ClientError(
+                HttpStatus.NOT_FOUND,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.CONSENT_ARTEFACT_NOT_FOUND,
+                        "Cannot find the consent artefact")));
+    }
+
+    public static ClientError consentArtefactForbidden() {
+        return new ClientError(
+                HttpStatus.FORBIDDEN,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.CONSENT_ARTEFACT_FORBIDDEN,
+                        "Cannot retrieve Consent artefact. Forbidden")));
+    }
+
+    public static ClientError unknownErrorOccurred() {
+        return new ClientError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.UNKNOWN_ERROR_OCCURRED,
+                        "Unknown error occurred")));
+    }
+
+    public static ClientError queueNotFound() {
+        return new ClientError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.QUEUE_NOT_FOUND,
+                        "Queue not found")));
+    }
+
+    public static ClientError invalidHIU() {
+        return new ClientError(
+                HttpStatus.UNAUTHORIZED,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.INVALID_HIU,
+                        "Not a valid HIU")));
+    }
+
+    public static ClientError invalidDateRange() {
+        return new ClientError(
+                HttpStatus.UNAUTHORIZED,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.INVALID_DATE_RANGE,
+                        "Date Range given is invalid")));
+    }
+
+    public static ClientError consentExpired() {
+        return new ClientError(
+                HttpStatus.UNAUTHORIZED,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.CONSENT_ARTEFACT_EXPIRED,
+                        "Consent artefact expired")));
+    }
 }

@@ -2,13 +2,17 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.common.TokenUtils;
 import in.projecteka.consentmanager.consent.model.ConsentRequestValidator;
+import in.projecteka.consentmanager.consent.model.request.ConsentApprovalRequest;
 import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
+import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -25,7 +29,7 @@ public class ConsentRequestController {
     private ConsentManager consentManager;
     private ConsentServiceProperties serviceProperties;
 
-    @InitBinder
+    @InitBinder("consentRequest")
     protected void initBinder(WebDataBinder binder) {
         binder.addValidators(new ConsentRequestValidator());
     }
@@ -33,10 +37,8 @@ public class ConsentRequestController {
     @PostMapping(value = "/consent-requests")
     public Mono<RequestCreatedRepresentation> requestConsent(
             @RequestHeader(value = "Authorization") String authorization,
-            @RequestBody @Valid Mono<ConsentRequest> request) {
-
-        return request
-                .flatMap(r -> consentManager.askForConsent(authorization, r.getConsent()))
+            @RequestBody @Valid @ModelAttribute("consentRequest") ConsentRequest request) {
+        return consentManager.askForConsent(authorization, request.getConsent())
                 .map(ConsentRequestController::buildResponse);
     }
 
@@ -45,7 +47,7 @@ public class ConsentRequestController {
             @RequestHeader(value = "Authorization") String authorization,
             @RequestParam(defaultValue = "-1") int limit,
             @RequestParam(defaultValue = "0") int offset) {
-        String patientId = TokenUtils.readUserId(authorization);
+        String patientId = TokenUtils.getCallerId(authorization);
         int pageSize = getPageSize(limit);
         return consentManager.findRequestsForPatient(patientId, pageSize, offset)
                 .flatMap(results -> Mono.just(ConsentRequestsRepresentation.builder()
@@ -66,5 +68,13 @@ public class ConsentRequestController {
     private static RequestCreatedRepresentation buildResponse(String requestId) {
         return RequestCreatedRepresentation.builder().consentRequestId(requestId).build();
     }
-    
+
+    @PostMapping(value = "/consent-requests/{request-id}/approve")
+    public Mono<ConsentApprovalResponse> approveConsent(
+            @PathVariable(value = "request-id") String requestId,
+            @RequestHeader(value = "Authorization") String authorization,
+            @Valid @RequestBody ConsentApprovalRequest consentApprovalRequest) {
+        String patientId = TokenUtils.getCallerId(authorization);
+        return consentManager.approveConsent(patientId, requestId, consentApprovalRequest.getConsents());
+    }
 }

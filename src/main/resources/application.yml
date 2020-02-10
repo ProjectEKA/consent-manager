@@ -17,3 +17,14 @@ consentmanager:
     user: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
     poolSize: ${DB_CONNECTION_POOL_SIZE}
+  dataflow:
+    authserver:
+      clientId: ${CLIENT_ID}
+      clientSecret: ${CLIENT_SECRET}
+      url: ${AUTH_SERVER_URL}
+    consentmanager:
+      url: ${CONSENT_MANAGER_URL}
+spring:
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}

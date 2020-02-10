@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.clients.properties;
 
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

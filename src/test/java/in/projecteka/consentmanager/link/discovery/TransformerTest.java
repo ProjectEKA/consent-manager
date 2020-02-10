@@ -1,15 +1,20 @@
 package in.projecteka.consentmanager.link.discovery;
 
 import in.projecteka.consentmanager.clients.model.Address;
-import in.projecteka.consentmanager.link.discovery.model.Coding;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.Type;
-
+import in.projecteka.consentmanager.link.discovery.model.Coding;
 import org.junit.jupiter.api.Test;
+
 import java.util.List;
 
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.*;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.coding;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.identifier;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.provider;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.telecom;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.type;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TransformerTest {

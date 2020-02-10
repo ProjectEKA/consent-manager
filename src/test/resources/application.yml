@@ -14,3 +14,10 @@ consentmanager:
     user: dummy
     password: dummy_pwd
     poolSize: 5
+  dataflow:
+    authserver:
+      clientId: 1
+      clientSecret: NCG_CM
+      url: http://localhost:9001
+    consentmanager:
+      url: http://localhost:8000

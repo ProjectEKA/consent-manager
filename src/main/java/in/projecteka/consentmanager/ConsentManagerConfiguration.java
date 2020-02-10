@@ -5,8 +5,10 @@ import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.DataFlowNotifier;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
+import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
 import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.PostConsentApproval;
 import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
@@ -16,13 +18,13 @@ import in.projecteka.consentmanager.dataflow.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.DataFlowRequestRepository;
 import in.projecteka.consentmanager.dataflow.DataFlowAuthServerProperties;
 import in.projecteka.consentmanager.dataflow.PostDataFlowRequestApproval;
+import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.link.HIPClient;
 import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.repository.DiscoveryRepository;
 import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.link.link.repository.LinkRepository;
-import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
 import in.projecteka.consentmanager.user.UserRepository;
 import in.projecteka.consentmanager.user.UserService;
 import io.vertx.pgclient.PgConnectOptions;
@@ -230,6 +232,23 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
+    public DataFlowBroadcastListener dataFlowBroadcastListener(MessageListenerContainerFactory messageListenerContainerFactory,
+                                                                    DestinationsConfig destinationsConfig,
+                                                                    Jackson2JsonMessageConverter jackson2JsonMessageConverter,
+                                                                    DataFlowNotifier dataFlowNotifier,
+                                                                    DataFlowRequestRepository dataFlowRequestRepository,
+                                                                    WebClient.Builder builder,
+                                                                    ClientRegistryProperties clientRegistryProperties) {
+        return new DataFlowBroadcastListener(messageListenerContainerFactory,
+                destinationsConfig,
+                jackson2JsonMessageConverter,
+                dataFlowNotifier,
+                dataFlowRequestRepository,
+                new ClientRegistryClient(builder, clientRegistryProperties)
+                );
+    }
+
+    @Bean
     public DataFlowRequest dataRequest(WebClient.Builder builder,
                                        DataFlowRequestRepository dataFlowRequestRepository,
                                        PostDataFlowRequestApproval postDataFlowRequestApproval,
@@ -243,4 +262,10 @@ public class ConsentManagerConfiguration {
     public DataFlowRequestRepository dataRequestRepository(PgPool pgPool) {
         return new DataFlowRequestRepository(pgPool);
     }
+
+    @Bean
+    public DataFlowNotifier dataFlowClient(WebClient.Builder builder) {
+        return new DataFlowNotifier(builder);
+    }
+
 }

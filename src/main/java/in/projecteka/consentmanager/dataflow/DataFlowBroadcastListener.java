@@ -4,11 +4,11 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
-import in.projecteka.consentmanager.clients.DataFlowNotifier;
+import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
-import in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
+import in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest;
 import lombok.AllArgsConstructor;
 import org.apache.log4j.Logger;
 import org.springframework.amqp.core.MessageListener;
@@ -27,7 +27,7 @@ public class DataFlowBroadcastListener {
     private MessageListenerContainerFactory messageListenerContainerFactory;
     private DestinationsConfig destinationsConfig;
     private Jackson2JsonMessageConverter converter;
-    private DataFlowNotifier dataFlowNotifier;
+    private DataRequestNotifier dataRequestNotifier;
     private DataFlowRequestRepository dataFlowRequestRepository;
     private ClientRegistryClient clientRegistryClient;
 
@@ -58,7 +58,7 @@ public class DataFlowBroadcastListener {
 
             dataFlowRequestRepository.getHipIdFor(dataFlowRequest.getConsent().getId())
                     .flatMap(hipId -> providerUrl(hipId))
-                    .flatMap(url -> dataFlowNotifier.notifyHip(dataFlowRequest, url))
+                    .flatMap(url -> dataRequestNotifier.notifyHip(dataFlowRequest, url))
                     .block();
 
         };
@@ -69,11 +69,18 @@ public class DataFlowBroadcastListener {
 
     private Mono<String> providerUrl(String providerId) {
         return clientRegistryClient.providerWith(providerId)
-                .flatMap(provider -> provider.getIdentifiers()
+                .flatMap(provider ->
+                        provider.getIdentifiers()
                         .stream()
                         .filter(Identifier::isOfficial)
                         .findFirst()
                         .map(identifier -> Mono.just(identifier.getSystem()))
-                        .orElse(Mono.empty()));
+                        .orElse(Mono.empty()))
+                .flatMap(url -> {
+                    if (url == null){
+                        logger.error("Hip Url not found for Hip Id");
+                    }
+                    return Mono.empty();
+                });
     }
 }

@@ -9,11 +9,10 @@ import reactor.core.publisher.Mono;
 import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
 
 @AllArgsConstructor
-public class DataFlowNotifier {
+public class DataRequestNotifier {
     private WebClient.Builder webClientBuilder;
 
-    public Mono<Void> notifyHip(DataFlowRequest dataFlowRequest,
-                                String hipUrl) {
+    public Mono<Void> notifyHip(DataFlowRequest dataFlowRequest, String hipUrl) {
         return webClientBuilder.build()
                 .post()
                 .uri(hipUrl + "/health-information/request")

@@ -5,7 +5,7 @@ import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.DataFlowNotifier;
+import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
@@ -235,17 +235,16 @@ public class ConsentManagerConfiguration {
     public DataFlowBroadcastListener dataFlowBroadcastListener(MessageListenerContainerFactory messageListenerContainerFactory,
                                                                     DestinationsConfig destinationsConfig,
                                                                     Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-                                                                    DataFlowNotifier dataFlowNotifier,
+                                                                    DataRequestNotifier dataRequestNotifier,
                                                                     DataFlowRequestRepository dataFlowRequestRepository,
                                                                     WebClient.Builder builder,
                                                                     ClientRegistryProperties clientRegistryProperties) {
         return new DataFlowBroadcastListener(messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
-                dataFlowNotifier,
+                dataRequestNotifier,
                 dataFlowRequestRepository,
-                new ClientRegistryClient(builder, clientRegistryProperties)
-                );
+                new ClientRegistryClient(builder, clientRegistryProperties));
     }
 
     @Bean
@@ -264,8 +263,8 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public DataFlowNotifier dataFlowClient(WebClient.Builder builder) {
-        return new DataFlowNotifier(builder);
+    public DataRequestNotifier dataFlowClient(WebClient.Builder builder) {
+        return new DataRequestNotifier(builder);
     }
 
 }

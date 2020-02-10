@@ -692,6 +692,9 @@ components:
         createdAt:
           type: string
           format: date-time
+        lastUpdated:
+          type: string
+          format: date-time
         purpose:
           $ref: "#/components/schemas/UsePurpose"
         patient:

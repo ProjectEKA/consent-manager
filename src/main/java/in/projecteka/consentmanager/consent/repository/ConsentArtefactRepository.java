@@ -15,13 +15,15 @@ import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
+import java.time.LocalDateTime;
+
 @AllArgsConstructor
 public class ConsentArtefactRepository {
     private static final String INSERT_CONSENT_QUERY = "INSERT INTO consent_artefact" +
             " (consent_request_id, consent_artefact_id, patient_id, consent_artefact, signature, status) VALUES" +
             " ($1, $2, $3, $4, $5, $6)";
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent artefact";
-    private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status =$1 WHERE request_id =$2";
+    private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, date_modified=$2 WHERE request_id=$3";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
     private static final String SELECT_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
             "FROM consent_artefact WHERE consent_artefact_id = $1";
@@ -64,7 +66,7 @@ public class ConsentArtefactRepository {
         } else {
             transaction.preparedQuery(
                     UPDATE_CONSENT_REQUEST_STATUS_QUERY,
-                    Tuple.of(ConsentStatus.GRANTED.toString(), consentRequestId),
+                    Tuple.of(ConsentStatus.GRANTED.toString(), LocalDateTime.now(), consentRequestId),
                     updateConsentRequestHandler -> {
                         if (updateConsentRequestHandler.failed()) {
                             sqlConnection.close();

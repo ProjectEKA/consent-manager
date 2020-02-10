@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -15,8 +15,8 @@ import java.io.Serializable;
 @NoArgsConstructor
 @Data
 public class GrantedContext implements Serializable {
-    @NotNull(message = "Patient reference not specified.")
+    @NotEmpty(message = "Patient reference not specified.")
     private String patientReference;
-    @NotNull(message = "Care context reference not specified.")
+    @NotEmpty(message = "Care context reference not specified.")
     private String careContextReference;
 }

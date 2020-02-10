@@ -105,4 +105,28 @@ public class ClientError extends Throwable {
                         ErrorCode.QUEUE_NOT_FOUND,
                         "Queue not found")));
     }
+
+    public static ClientError invalidHIU() {
+        return new ClientError(
+                HttpStatus.UNAUTHORIZED,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.INVALID_HIU,
+                        "Not a valid HIU")));
+    }
+
+    public static ClientError invalidDateRange() {
+        return new ClientError(
+                HttpStatus.UNAUTHORIZED,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.INVALID_DATE_RANGE,
+                        "Date Range given is invalid")));
+    }
+
+    public static ClientError consentExpired() {
+        return new ClientError(
+                HttpStatus.UNAUTHORIZED,
+                new ErrorRepresentation(new Error(
+                        ErrorCode.CONSENT_ARTEFACT_EXPIRED,
+                        "Consent artefact expired")));
+    }
 }

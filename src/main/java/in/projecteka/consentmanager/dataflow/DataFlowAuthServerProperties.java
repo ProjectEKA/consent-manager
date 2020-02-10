@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.clients.properties;
+package in.projecteka.consentmanager.dataflow;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -9,11 +9,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "consentmanager.userservice")
+@ConfigurationProperties(prefix = "consentmanager.dataflow.authserver")
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 @AllArgsConstructor
-public class UserServiceProperties {
+public class DataFlowAuthServerProperties {
+    private String clientId;
+    private String clientSecret;
     private String url;
 }

@@ -42,6 +42,7 @@ task down(type: Exec) {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	compile 'org.springframework.boot:spring-boot-starter-amqp'
+	compile group: 'log4j', name: 'log4j', version: '1.2.17'
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
@@ -52,7 +53,7 @@ dependencies {
 	compile group: 'org.jeasy', name: 'easy-random-core', version: '4.1.0'
 	testImplementation("com.squareup.okhttp3:okhttp:4.3.1")
 	testImplementation "com.squareup.okhttp3:mockwebserver:4.3.1"
-	compile 'io.vertx:vertx-pg-client:3.8.4'
+	compile 'io.vertx:vertx-pg-client:3.8.5'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 }
 

@@ -19,7 +19,7 @@ public class ConsentArtefactsController {
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(
             @RequestHeader(value = "Authorization") String authorization,
             @PathVariable(value = "consentId") String consentId) {
-        String requesterId = TokenUtils.readUserId(authorization);
+        String requesterId = TokenUtils.getCallerId(authorization);
         return consentManager.getConsent(consentId, requesterId);
     }
 

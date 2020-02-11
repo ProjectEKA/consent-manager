@@ -242,9 +242,9 @@ public class DataFlowRequestUserJourneyTest {
         when(dataFlowRequestRepository.getHipIdFor(dataFlowRequestMessage.getDataFlowRequest().getConsent().getId()))
                 .thenReturn(Mono.just("10000005"));
         when(clientRegistryClient.providerWith("10000005")).thenReturn(Mono.just(provider));
-        dataFlowBroadcastListener.configureAndSendDataRequestFor(dataFlowRequestMessage);
+        dataFlowBroadcastListener.configureAndSendDataRequestFor(dataFlowRequest);
 
-        verify(dataFlowBroadcastListener).configureAndSendDataRequestFor(dataFlowRequestMessage);
+        verify(dataFlowBroadcastListener).configureAndSendDataRequestFor(dataFlowRequest);
     }
 
     public static class ContextInitializer

@@ -49,20 +49,19 @@ public class DataFlowBroadcastListener {
                     (DataFlowRequestMessage) converter.fromMessage(message);
             logger.info("Received message for Request id : " + dataFlowRequestMessage
                     .getTransactionId());
-            configureAndSendDataRequestFor(dataFlowRequestMessage);
+            DataFlowRequest dataFlowRequest = DataFlowRequest.builder()
+                    .transactionId(dataFlowRequestMessage.getTransactionId())
+                    .callBackUrl(dataFlowRequestMessage.getDataFlowRequest().getCallBackUrl())
+                    .consent(dataFlowRequestMessage.getDataFlowRequest().getConsent())
+                    .hiDataRange(dataFlowRequestMessage.getDataFlowRequest().getHiDataRange())
+                    .build();
+            configureAndSendDataRequestFor(dataFlowRequest);
         };
         mlc.setupMessageListener(messageListener);
         mlc.start();
     }
 
-    public void configureAndSendDataRequestFor(DataFlowRequestMessage dataFlowRequestMessage) {
-        DataFlowRequest dataFlowRequest = DataFlowRequest.builder()
-                .transactionId(dataFlowRequestMessage.getTransactionId())
-                .callBackUrl(dataFlowRequestMessage.getDataFlowRequest().getCallBackUrl())
-                .consent(dataFlowRequestMessage.getDataFlowRequest().getConsent())
-                .hiDataRange(dataFlowRequestMessage.getDataFlowRequest().getHiDataRange())
-                .build();
-
+    public void configureAndSendDataRequestFor(DataFlowRequest dataFlowRequest) {
         dataFlowRequestRepository.getHipIdFor(dataFlowRequest.getConsent().getId())
                 .flatMap(hipId -> providerUrl(hipId))
                 .flatMap(url -> dataRequestNotifier.notifyHip(dataFlowRequest, url))

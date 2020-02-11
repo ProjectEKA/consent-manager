@@ -49,22 +49,24 @@ public class DataFlowBroadcastListener {
                     (DataFlowRequestMessage) converter.fromMessage(message);
             logger.info("Received message for Request id : " + dataFlowRequestMessage
                     .getTransactionId());
-            DataFlowRequest dataFlowRequest = DataFlowRequest.builder()
-                    .transactionId(dataFlowRequestMessage.getTransactionId())
-                    .callBackUrl(dataFlowRequestMessage.getDataFlowRequest().getCallBackUrl())
-                    .consent(dataFlowRequestMessage.getDataFlowRequest().getConsent())
-                    .hiDataRange(dataFlowRequestMessage.getDataFlowRequest().getHiDataRange())
-                    .build();
-
-            dataFlowRequestRepository.getHipIdFor(dataFlowRequest.getConsent().getId())
-                    .flatMap(hipId -> providerUrl(hipId))
-                    .flatMap(url -> dataRequestNotifier.notifyHip(dataFlowRequest, url))
-                    .block();
-
+            configureAndSendDataRequestFor(dataFlowRequestMessage);
         };
         mlc.setupMessageListener(messageListener);
-
         mlc.start();
+    }
+
+    public void configureAndSendDataRequestFor(DataFlowRequestMessage dataFlowRequestMessage) {
+        DataFlowRequest dataFlowRequest = DataFlowRequest.builder()
+                .transactionId(dataFlowRequestMessage.getTransactionId())
+                .callBackUrl(dataFlowRequestMessage.getDataFlowRequest().getCallBackUrl())
+                .consent(dataFlowRequestMessage.getDataFlowRequest().getConsent())
+                .hiDataRange(dataFlowRequestMessage.getDataFlowRequest().getHiDataRange())
+                .build();
+
+        dataFlowRequestRepository.getHipIdFor(dataFlowRequest.getConsent().getId())
+                .flatMap(hipId -> providerUrl(hipId))
+                .flatMap(url -> dataRequestNotifier.notifyHip(dataFlowRequest, url))
+                .block();
     }
 
     private Mono<String> providerUrl(String providerId) {
@@ -79,8 +81,10 @@ public class DataFlowBroadcastListener {
                 .flatMap(url -> {
                     if (url == null){
                         logger.error("Hip Url not found for Hip Id");
+                        return Mono.empty();
+                    } else {
+                        return Mono.just(url);
                     }
-                    return Mono.empty();
                 });
     }
 }

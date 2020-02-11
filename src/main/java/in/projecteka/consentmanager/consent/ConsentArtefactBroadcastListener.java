@@ -3,9 +3,11 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsNotificationMessage;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
 import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactReference;
 import lombok.AllArgsConstructor;
@@ -29,6 +31,7 @@ public class ConsentArtefactBroadcastListener {
     private DestinationsConfig destinationsConfig;
     private Jackson2JsonMessageConverter converter;
     private ConsentArtefactNotifier consentArtefactNotifier;
+    private ClientRegistryClient clientRegistryClient;
 
     @PostConstruct
     public void subscribe() throws ClientError {
@@ -50,6 +53,7 @@ public class ConsentArtefactBroadcastListener {
                     .getRequestId());
 
             notifyHiu(consentArtefactsNotificationMessage);
+            sendConsentArtefactToHips(consentArtefactsNotificationMessage);
         };
         mlc.setupMessageListener(messageListener);
 
@@ -61,6 +65,20 @@ public class ConsentArtefactBroadcastListener {
                 consentArtefactsNotificationMessage.getRequestId()),
                 consentArtefactsNotificationMessage.getHiuCallBackUrl())
                 .block();
+    }
+
+    private void sendConsentArtefactToHips(ConsentArtefactsNotificationMessage consentArtefactsNotificationMessage) {
+        consentArtefactsNotificationMessage
+                .getConsentArtefacts()
+                .forEach(consentArtefact -> clientRegistryClient.providerWith(consentArtefact.getHip().getId())
+                        .map(hip -> consentArtefactNotifier.notifyHip(
+                                HIPNotificationRequest
+                                        .builder()
+                                        .consentRequestId(consentArtefactsNotificationMessage.getRequestId())
+                                        .consent(consentArtefact)
+                                        .build(),
+                                hip.getProviderUrl())
+                                .block()));
     }
 
     private HIUNotificationRequest hiuNotificationRequest(

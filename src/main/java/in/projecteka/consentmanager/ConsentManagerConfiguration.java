@@ -208,11 +208,13 @@ public class ConsentManagerConfiguration {
     public ConsentArtefactBroadcastListener hiuNotificationListener(MessageListenerContainerFactory messageListenerContainerFactory,
                                                                     DestinationsConfig destinationsConfig,
                                                                     Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-                                                                    ConsentArtefactNotifier consentArtefactNotifier) {
+                                                                    ConsentArtefactNotifier consentArtefactNotifier,
+                                                                    ClientRegistryClient clientRegistryClient) {
         return new ConsentArtefactBroadcastListener(messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
-                consentArtefactNotifier);
+                consentArtefactNotifier,
+                clientRegistryClient);
     }
 
     @SneakyThrows

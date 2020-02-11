@@ -15,8 +15,6 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
 public class ConsentArtefact implements Serializable {
     private String consentId;
     private Date createdAt;

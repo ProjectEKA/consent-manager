@@ -5,6 +5,9 @@ import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsNotificationMessage;
+import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
+import in.projecteka.consentmanager.consent.model.response.ConsentArtefactReference;
 import lombok.AllArgsConstructor;
 import org.apache.log4j.Logger;
 import org.springframework.amqp.core.MessageListener;
@@ -12,6 +15,9 @@ import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 
 import javax.annotation.PostConstruct;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.CONSENT_GRANTED_QUEUE;
 import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
@@ -41,15 +47,39 @@ public class ConsentArtefactBroadcastListener {
             ConsentArtefactsNotificationMessage consentArtefactsNotificationMessage =
                     (ConsentArtefactsNotificationMessage) converter.fromMessage(message);
             logger.info("Received message for Request id : " + consentArtefactsNotificationMessage
-                    .getConsentArtefactNotificationRequest().getConsentRequestId());
+                    .getRequestId());
 
-            consentArtefactNotifier.notifyHiu(
-                    consentArtefactsNotificationMessage.getConsentArtefactNotificationRequest(),
-                    consentArtefactsNotificationMessage.getCallBackUrl())
-                    .block();
+            notifyHiu(consentArtefactsNotificationMessage);
         };
         mlc.setupMessageListener(messageListener);
 
         mlc.start();
+    }
+
+    private void notifyHiu(ConsentArtefactsNotificationMessage consentArtefactsNotificationMessage) {
+        consentArtefactNotifier.notifyHiu(hiuNotificationRequest(consentArtefactsNotificationMessage,
+                consentArtefactsNotificationMessage.getRequestId()),
+                consentArtefactsNotificationMessage.getHiuCallBackUrl())
+                .block();
+    }
+
+    private HIUNotificationRequest hiuNotificationRequest(
+            ConsentArtefactsNotificationMessage consentArtefactsNotificationMessage,
+            String requestId) {
+        List<ConsentArtefactReference> consentArtefactReferences = consentArtefactsNotificationMessage
+                .getConsentArtefacts()
+                .stream()
+                .map(consentArtefact -> ConsentArtefactReference
+                        .builder()
+                        .status(ConsentStatus.GRANTED)
+                        .id(consentArtefact.getConsentId())
+                        .build())
+                .collect(Collectors.toList());
+
+        return HIUNotificationRequest
+                .builder()
+                .consents(consentArtefactReferences)
+                .consentRequestId(requestId)
+                .build();
     }
 }

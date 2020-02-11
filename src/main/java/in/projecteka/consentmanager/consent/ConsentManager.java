@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public class ConsentManager {
@@ -97,33 +98,37 @@ public class ConsentManager {
                 .then(validateConsentRequest(requestId))
                 .flatMap(consentRequest ->
                         generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)
-                                .flatMap(consents -> {
-                                    ConsentApprovalResponse consentApprovalResponse = ConsentApprovalResponse.builder()
-                                            .consents(consents)
-                                            .build();
-                                    return postConsentApproval.broadcastConsentArtefacts(
-                                            consentRequest.getCallBackUrl(),
-                                            consentApprovalResponse.getConsents(),
-                                            requestId)
-                                            .thenReturn(consentApprovalResponse);
-                                }));
+                                .flatMap(consents -> postConsentApproval.broadcastConsentArtefacts(
+                                        consentRequest.getCallBackUrl(),
+                                        consents,
+                                        requestId)
+                                        .thenReturn(getConsentApprovalResponse(consents))));
     }
 
-    private Mono<List<ConsentArtefactReference>> generateConsentArtefacts(String requestId,
-                                                                          List<GrantedConsent> grantedConsents,
-                                                                          String patientId,
-                                                                          ConsentRequestDetail consentRequest) {
+    private ConsentApprovalResponse getConsentApprovalResponse(List<ConsentArtefact> consents) {
+        return ConsentApprovalResponse
+                .builder()
+                .consents(consents.stream()
+                        .map(consent -> ConsentArtefactReference.
+                                builder()
+                                .id(consent.getConsentId())
+                                .status(ConsentStatus.GRANTED)
+                                .build())
+                        .collect(Collectors.toList()))
+                .build();
+    }
+
+    private Mono<List<ConsentArtefact>> generateConsentArtefacts(String requestId,
+                                                                 List<GrantedConsent> grantedConsents,
+                                                                 String patientId,
+                                                                 ConsentRequestDetail consentRequest) {
         return Flux.fromIterable(grantedConsents)
                 .flatMap(grantedConsent -> {
                     var consentArtefact = from(consentRequest, grantedConsent);
                     String consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
                     return storeConsentArtefact(requestId, patientId, consentArtefact, consentArtefactSignature)
-                            .thenReturn(ConsentArtefactReference.builder()
-                                    .id(consentArtefact.getConsentId())
-                                    .status(ConsentStatus.GRANTED)
-                                    .build());
+                            .thenReturn(consentArtefact);
                 }).collectList();
-
     }
 
     private Mono<Void> storeConsentArtefact(String requestId,

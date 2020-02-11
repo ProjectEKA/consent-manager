@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.consent.model.request.ConsentArtefactNotificationRequest;
+import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -13,13 +13,13 @@ import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccur
 public class ConsentArtefactNotifier {
     private WebClient.Builder webClientBuilder;
 
-    public Mono<Void> notifyHiu(ConsentArtefactNotificationRequest consentArtefactNotificationRequest,
+    public Mono<Void> notifyHiu(HIUNotificationRequest HIUNotificationRequest,
                                 String callBackUrl) {
         return webClientBuilder.build()
                 .post()
                 .uri(callBackUrl + "/consent/notification/")
                 .header(HttpHeaders.AUTHORIZATION, "bmNn")//TODO: change it to jwt token
-                .bodyValue(consentArtefactNotificationRequest)
+                .bodyValue(HIUNotificationRequest)
                 .retrieve()
                 .onStatus(HttpStatus::is5xxServerError, clientResponse -> Mono.error(unknownErrorOccurred()))
                 .toBodilessEntity()

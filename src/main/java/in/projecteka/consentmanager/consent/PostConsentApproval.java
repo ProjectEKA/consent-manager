@@ -1,9 +1,8 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsNotificationMessage;
-import in.projecteka.consentmanager.consent.model.request.ConsentArtefactNotificationRequest;
-import in.projecteka.consentmanager.consent.model.response.ConsentArtefactReference;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.log4j.Logger;
@@ -21,8 +20,8 @@ public class PostConsentApproval {
     private DestinationsConfig destinationsConfig;
 
     @SneakyThrows
-    public Mono<Void> broadcastConsentArtefacts(String callBackUrl,
-                                                List<ConsentArtefactReference> consents,
+    public Mono<Void> broadcastConsentArtefacts(String hiuCallBackUrl,
+                                                List<ConsentArtefact> consents,
                                                 String requestId) {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig.getQueues().get(CONSENT_GRANTED_QUEUE);
 
@@ -37,11 +36,9 @@ public class PostConsentApproval {
                     destinationInfo.getExchange(),
                     destinationInfo.getRoutingKey(),
                     ConsentArtefactsNotificationMessage.builder()
-                            .consentArtefactNotificationRequest(ConsentArtefactNotificationRequest.builder()
-                                    .consentRequestId(requestId)
-                                    .consents(consents)
-                                    .build())
-                            .callBackUrl(callBackUrl)
+                            .consentArtefacts(consents)
+                            .hiuCallBackUrl(hiuCallBackUrl)
+                            .requestId(requestId)
                             .build());
             logger.info("Broadcasting consent artefact notification for Request Id: " + requestId);
             monoSink.success();

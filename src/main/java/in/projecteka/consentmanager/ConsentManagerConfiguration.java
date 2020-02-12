@@ -211,7 +211,8 @@ public class ConsentManagerConfiguration {
                                                                     DestinationsConfig destinationsConfig,
                                                                     Jackson2JsonMessageConverter jackson2JsonMessageConverter,
                                                                     ConsentArtefactNotifier consentArtefactNotifier) {
-        return new ConsentArtefactBroadcastListener(messageListenerContainerFactory,
+        return new ConsentArtefactBroadcastListener(
+                messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 consentArtefactNotifier);
@@ -233,12 +234,12 @@ public class ConsentManagerConfiguration {
 
     @Bean
     public DataFlowBroadcastListener dataFlowBroadcastListener(MessageListenerContainerFactory messageListenerContainerFactory,
-                                                                    DestinationsConfig destinationsConfig,
-                                                                    Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-                                                                    DataRequestNotifier dataRequestNotifier,
-                                                                    DataFlowRequestRepository dataFlowRequestRepository,
-                                                                    WebClient.Builder builder,
-                                                                    ClientRegistryProperties clientRegistryProperties) {
+                                                               DestinationsConfig destinationsConfig,
+                                                               Jackson2JsonMessageConverter jackson2JsonMessageConverter,
+                                                               DataRequestNotifier dataRequestNotifier,
+                                                               DataFlowRequestRepository dataFlowRequestRepository,
+                                                               WebClient.Builder builder,
+                                                               ClientRegistryProperties clientRegistryProperties) {
         return new DataFlowBroadcastListener(messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,

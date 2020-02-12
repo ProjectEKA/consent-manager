@@ -2,13 +2,17 @@ package in.projecteka.consentmanager.dataflow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.ClientRegistryClient;
+import in.projecteka.consentmanager.clients.DataRequestNotifier;
+import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
-import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
-import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
-import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
+import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.dataflow.model.HIDataRange;
+import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
 import in.projecteka.consentmanager.dataflow.model.HIUReference;
+import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
+import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
 import in.projecteka.consentmanager.link.link.model.Error;
 import in.projecteka.consentmanager.link.link.model.ErrorCode;
 import in.projecteka.consentmanager.link.link.model.ErrorRepresentation;
@@ -37,11 +41,14 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.stream.Stream;
 
-import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequestMessage;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.dataflow.Utils.toDate;
+import static in.projecteka.consentmanager.link.TestBuilders.provider;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -65,6 +72,15 @@ public class DataFlowRequestUserJourneyTest {
 
     @MockBean
     private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
+
+    @MockBean
+    private DataFlowBroadcastListener dataFlowBroadcastListener;
+
+    @MockBean
+    private ClientRegistryClient clientRegistryClient;
+
+    @MockBean
+    private DataRequestNotifier dataRequestNotifier;
 
     @AfterAll
     public static void tearDown() throws IOException {
@@ -211,6 +227,24 @@ public class DataFlowRequestUserJourneyTest {
                 .isUnauthorized()
                 .expectBody()
                 .json(errorResponseJson);
+    }
+
+    @Test
+    public void shouldSendDataRequestToHip() {
+        DataFlowRequestMessage dataFlowRequestMessage = dataFlowRequestMessage().build();
+        Provider provider = provider().build();
+
+        in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest dataFlowRequest = new in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest(dataFlowRequestMessage.getTransactionId(),
+                dataFlowRequestMessage.getDataFlowRequest().getConsent(),
+                dataFlowRequestMessage.getDataFlowRequest().getHiDataRange(),
+                dataFlowRequestMessage.getDataFlowRequest().getCallBackUrl());
+
+        when(dataFlowRequestRepository.getHipIdFor(dataFlowRequestMessage.getDataFlowRequest().getConsent().getId()))
+                .thenReturn(Mono.just("10000005"));
+        when(clientRegistryClient.providerWith("10000005")).thenReturn(Mono.just(provider));
+        dataFlowBroadcastListener.configureAndSendDataRequestFor(dataFlowRequest);
+
+        verify(dataFlowBroadcastListener).configureAndSendDataRequestFor(dataFlowRequest);
     }
 
     public static class ContextInitializer

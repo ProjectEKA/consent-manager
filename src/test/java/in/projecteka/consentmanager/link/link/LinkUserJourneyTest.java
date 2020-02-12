@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
+import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.link.TestBuilders;
 import in.projecteka.consentmanager.link.link.model.Error;
 import in.projecteka.consentmanager.link.link.model.ErrorCode;
@@ -77,6 +78,9 @@ public class LinkUserJourneyTest {
 
     @MockBean
     private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
+
+    @MockBean
+    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @AfterAll
     public static void tearDown() throws IOException {

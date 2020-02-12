@@ -67,7 +67,7 @@ public class DataFlowRequest {
                 .flatMap(signature -> {
                     dataFlowRequest.getConsent().setDigitalSignature(signature);
                     return dataFlowRequestRepository.addDataFlowRequest(transactionId, dataFlowRequest)
-                            .thenReturn(postDataFlowrequestApproval.broadcastDataFlowRequest(transactionId,
+                            .then(postDataFlowrequestApproval.broadcastDataFlowRequest(transactionId,
                                     dataFlowRequest))
                             .thenReturn(DataFlowRequestResponse.builder().transactionId(transactionId).build());
                 });

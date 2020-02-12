@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
+import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,6 +46,9 @@ public class DiscoveryUserJourneyTest {
 
     @MockBean
     private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
+
+    @MockBean
+    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @BeforeEach
     public void setUp() {

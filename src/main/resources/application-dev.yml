@@ -14,6 +14,8 @@ consentmanager:
     url: http://localhost:5000
     identifiers:
       - MOBILE
+  jwt:
+    secret: secret_salt
   db:
     host: localhost
     port: 5432

@@ -1,9 +1,11 @@
 package in.projecteka.consentmanager;
 
+import in.projecteka.consentmanager.user.AuthenticatorService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -53,14 +55,16 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public SecurityContextRepository contextRepository(ReactiveAuthenticationManager manager) {
-        return new SecurityContextRepository(manager);
+    public SecurityContextRepository contextRepository(ReactiveAuthenticationManager manager,
+                                                       AuthenticatorService authenticatorService) {
+        return new SecurityContextRepository(manager, authenticatorService);
     }
 
     @AllArgsConstructor
     private static class SecurityContextRepository implements ServerSecurityContextRepository {
 
         private ReactiveAuthenticationManager manager;
+        private AuthenticatorService authenticatorService;
 
         @Override
         public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {
@@ -70,6 +74,14 @@ public class SecurityConfiguration {
         @Override
         public Mono<SecurityContext> load(ServerWebExchange exchange) {
             var authToken = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            var notBlank = authToken != null && !authToken.trim().equals("");
+            var isSignUpRequest = exchange.getRequest().getPath().toString().equals("/users")
+                    && exchange.getRequest().getMethod().equals(HttpMethod.POST);
+
+            if(isSignUpRequest && notBlank && authenticatorService.validateToken(authToken)) {
+                return Mono.just(new UsernamePasswordAuthenticationToken(authToken, authToken, new ArrayList<SimpleGrantedAuthority>()))
+                        .map(SecurityContextImpl::new);
+            }
             if (authToken != null && !authToken.trim().equals("")) {
                 var token = new UsernamePasswordAuthenticationToken(authToken, authToken);
                 return manager.authenticate(token).map(SecurityContextImpl::new);

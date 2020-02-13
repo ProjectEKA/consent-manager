@@ -7,23 +7,23 @@ import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.util.UUID;
-
 
 public class OtpServiceClient {
 
     private final WebClient.Builder webClientBuilder;
     private final OtpServiceProperties otpServiceProperties;
+    private AuthenticatorService authenticatorService;
 
     public OtpServiceClient(WebClient.Builder webClientBuilder,
-                            OtpServiceProperties otpServiceProperties) {
+                            OtpServiceProperties otpServiceProperties,
+                            AuthenticatorService authenticatorService) {
         this.webClientBuilder = webClientBuilder;
         this.webClientBuilder.baseUrl(otpServiceProperties.getUrl());
         this.otpServiceProperties = otpServiceProperties;
+        this.authenticatorService = authenticatorService;
     }
 
     public Mono<TemporarySession> sendOtpTo(OtpRequest requestBody) {
-        TemporarySession temporarySession = new TemporarySession(requestBody.getSessionId());
         return webClientBuilder.build()
                 .post()
                 .uri(uriBuilder ->
@@ -33,11 +33,10 @@ public class OtpServiceClient {
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
-                .toBodilessEntity().thenReturn(temporarySession);
+                .toBodilessEntity().thenReturn(authenticatorService.cacheAndSendSession(requestBody));
     }
 
     public Mono<Token> permitOtp(OtpVerification requestBody) {
-        Token token = new Token(UUID.randomUUID().toString());
         Value valueOtp = new Value(requestBody.getValue());
         return webClientBuilder.build()
                 .post()
@@ -50,8 +49,7 @@ public class OtpServiceClient {
                 .retrieve()
                 .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(ClientError.otpNotFound()))
                 .onStatus(HttpStatus::is5xxServerError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
-                .toBodilessEntity().thenReturn(new Token(UUID.randomUUID().toString()));
-
+                .toBodilessEntity().thenReturn(authenticatorService.generateToken(requestBody));
     }
 
 }

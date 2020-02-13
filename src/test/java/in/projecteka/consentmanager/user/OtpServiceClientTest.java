@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.user.model.OtpCommunicationData;
 import in.projecteka.consentmanager.user.model.OtpRequest;
+import in.projecteka.consentmanager.user.model.TemporarySession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -20,6 +21,7 @@ import reactor.test.StepVerifier;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 class OtpServiceClientTest {
@@ -28,6 +30,8 @@ class OtpServiceClientTest {
     ArgumentCaptor<ClientRequest> captor;
     @Mock
     private ExchangeFunction exchangeFunction;
+    @Mock
+    private AuthenticatorService authenticatorService;
     private OtpServiceClient otpServiceClient;
     private OtpRequest otpRequest;
 
@@ -41,8 +45,9 @@ class OtpServiceClientTest {
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         final OtpServiceProperties otpServiceProperties
                 = new OtpServiceProperties("localhost:8000/otpservice", Arrays.asList());
-        otpServiceClient = new OtpServiceClient(webClientBuilder, otpServiceProperties);
-
+        otpServiceClient = new OtpServiceClient(webClientBuilder, otpServiceProperties, authenticatorService);
+        when(authenticatorService.cacheAndSendSession(any()))
+                .thenReturn(new TemporarySession("SOME_SESSION_ID"));
     }
 
     @Test

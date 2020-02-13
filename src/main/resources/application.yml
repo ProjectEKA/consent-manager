@@ -14,6 +14,8 @@ consentmanager:
     url: ${Otp_Service_Url}
     identifiers:
       - MOBILE
+  jwt:
+    secret: ${JWT_SECRET}
   db:
     host: ${POSTGRES_HOST}
     port: 5432

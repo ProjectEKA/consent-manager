@@ -3,6 +3,7 @@ package in.projecteka.consentmanager;
 import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
 import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.PostConsentApproval;
+import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,6 +41,9 @@ public class AuthorizationTest {
 
     @MockBean
     private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
+
+    @MockBean
+    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @BeforeEach
     public void setUp() {

@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
+import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -27,12 +27,12 @@ public class ConsentArtefactNotifier {
                 .then();
     }
 
-    public Mono<Void> notifyHip(HIPNotificationRequest request, String providerUrl) {
+    public Mono<Void> sendConsentArtefactTo(HIPConsentArtefactRepresentation consentArtefact, String providerUrl) {
         return webClientBuilder.build()
                 .post()
-                .uri(providerUrl + "/consents/granted")
+                .uri(providerUrl + "/consent/")
                 .header(HttpHeaders.AUTHORIZATION, "bmNn")//TODO: change it to jwt token
-                .bodyValue(request)
+                .bodyValue(consentArtefact)
                 .retrieve()
                 .onStatus(HttpStatus::is5xxServerError, clientResponse -> Mono.error(unknownErrorOccurred()))
                 .toBodilessEntity()

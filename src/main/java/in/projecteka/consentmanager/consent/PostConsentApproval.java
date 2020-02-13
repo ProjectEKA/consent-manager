@@ -1,15 +1,12 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsNotificationMessage;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.log4j.Logger;
 import org.springframework.amqp.core.AmqpTemplate;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.CONSENT_GRANTED_QUEUE;
 
@@ -20,9 +17,7 @@ public class PostConsentApproval {
     private DestinationsConfig destinationsConfig;
 
     @SneakyThrows
-    public Mono<Void> broadcastConsentArtefacts(String hiuCallBackUrl,
-                                                List<ConsentArtefact> consents,
-                                                String requestId) {
+    public Mono<Void> broadcastConsentArtefacts(ConsentArtefactsNotificationMessage message) {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig.getQueues().get(CONSENT_GRANTED_QUEUE);
 
         if (destinationInfo == null) {
@@ -32,15 +27,8 @@ public class PostConsentApproval {
         }
 
         return Mono.create(monoSink -> {
-            amqpTemplate.convertAndSend(
-                    destinationInfo.getExchange(),
-                    destinationInfo.getRoutingKey(),
-                    ConsentArtefactsNotificationMessage.builder()
-                            .consentArtefacts(consents)
-                            .hiuCallBackUrl(hiuCallBackUrl)
-                            .requestId(requestId)
-                            .build());
-            logger.info("Broadcasting consent artefact notification for Request Id: " + requestId);
+            amqpTemplate.convertAndSend(destinationInfo.getExchange(), destinationInfo.getRoutingKey(), message);
+            logger.info("Broadcasting consent artefact notification for Request Id: " + message.getRequestId());
             monoSink.success();
         });
     }

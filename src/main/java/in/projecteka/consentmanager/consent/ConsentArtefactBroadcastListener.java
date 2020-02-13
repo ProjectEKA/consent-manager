@@ -6,8 +6,7 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsNotificationMessage;
-import in.projecteka.consentmanager.consent.model.ConsentStatus;
-import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
+import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactReference;
 import lombok.AllArgsConstructor;
@@ -15,9 +14,9 @@ import org.apache.log4j.Logger;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,7 +52,7 @@ public class ConsentArtefactBroadcastListener {
                     .getRequestId());
 
             notifyHiu(consentArtefactsNotificationMessage);
-            sendConsentArtefactToHips(consentArtefactsNotificationMessage);
+            notifyHips(consentArtefactsNotificationMessage);
         };
         mlc.setupMessageListener(messageListener);
 
@@ -61,24 +60,32 @@ public class ConsentArtefactBroadcastListener {
     }
 
     private void notifyHiu(ConsentArtefactsNotificationMessage consentArtefactsNotificationMessage) {
-        consentArtefactNotifier.notifyHiu(hiuNotificationRequest(consentArtefactsNotificationMessage,
-                consentArtefactsNotificationMessage.getRequestId()),
-                consentArtefactsNotificationMessage.getHiuCallBackUrl())
+        HIUNotificationRequest hiuNotificationRequest = hiuNotificationRequest(
+                consentArtefactsNotificationMessage, consentArtefactsNotificationMessage.getRequestId());
+        String hiuCallBackUrl = consentArtefactsNotificationMessage.getHiuCallBackUrl();
+        consentArtefactNotifier.notifyHiu(hiuNotificationRequest, hiuCallBackUrl).block();
+    }
+
+    private void notifyHips(ConsentArtefactsNotificationMessage consentArtefactsNotificationMessage) {
+        consentArtefactsNotificationMessage
+                .getConsentArtefacts()
+                .forEach(this::sendConsentArtefact);
+    }
+
+    private void sendConsentArtefact(HIPConsentArtefactRepresentation consentArtefact) {
+        String hipId = consentArtefact.getConsentDetail().getHip().getId();
+        getProviderUrl(hipId)
+                .flatMap(providerUrl -> sendArtefactTo(consentArtefact, providerUrl))
                 .block();
     }
 
-    private void sendConsentArtefactToHips(ConsentArtefactsNotificationMessage consentArtefactsNotificationMessage) {
-        consentArtefactsNotificationMessage
-                .getConsentArtefacts()
-                .forEach(consentArtefact -> clientRegistryClient.providerWith(consentArtefact.getHip().getId())
-                        .map(hip -> consentArtefactNotifier.notifyHip(
-                                HIPNotificationRequest
-                                        .builder()
-                                        .consentRequestId(consentArtefactsNotificationMessage.getRequestId())
-                                        .consent(consentArtefact)
-                                        .build(),
-                                hip.getProviderUrl())
-                                .block()));
+    private Mono<Void> sendArtefactTo(HIPConsentArtefactRepresentation consentArtefact, String providerUrl) {
+        return consentArtefactNotifier.sendConsentArtefactTo(consentArtefact, providerUrl);
+    }
+
+    private Mono<String> getProviderUrl(String hipId) {
+        return clientRegistryClient.providerWith(hipId)
+                .flatMap(provider -> Mono.just(provider.getProviderUrl()));
     }
 
     private HIUNotificationRequest hiuNotificationRequest(
@@ -89,8 +96,8 @@ public class ConsentArtefactBroadcastListener {
                 .stream()
                 .map(consentArtefact -> ConsentArtefactReference
                         .builder()
-                        .status(ConsentStatus.GRANTED)
-                        .id(consentArtefact.getConsentId())
+                        .status(consentArtefact.getStatus())
+                        .id(consentArtefact.getConsentDetail().getConsentId())
                         .build())
                 .collect(Collectors.toList());
 

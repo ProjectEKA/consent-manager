@@ -59,14 +59,19 @@ public class ConsentManagerConfiguration {
 
     @Bean
     public Discovery discovery(WebClient.Builder builder,
-                               ClientRegistryProperties clientRegistryProperties,
+                               ClientRegistryClient clientRegistryClient,
                                UserServiceProperties userServiceProperties,
                                DiscoveryRepository discoveryRepository) {
-        ClientRegistryClient clientRegistryClient = new ClientRegistryClient(builder, clientRegistryProperties);
+
         UserServiceClient userServiceClient = new UserServiceClient(builder, userServiceProperties);
         DiscoveryServiceClient discoveryServiceClient = new DiscoveryServiceClient(builder);
-
         return new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
+    }
+
+    @Bean
+    public ClientRegistryClient clientRegistryClient(WebClient.Builder builder,
+                                                     ClientRegistryProperties clientRegistryProperties) {
+        return new ClientRegistryClient(builder, clientRegistryProperties);
     }
 
     @Bean

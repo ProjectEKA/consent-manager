@@ -13,6 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 public class ConsentArtefactsNotificationMessage {
     private String requestId;
-    private List<ConsentArtefact> consentArtefacts;
+    private List<HIPConsentArtefactRepresentation> consentArtefacts;
     private String hiuCallBackUrl;
 }

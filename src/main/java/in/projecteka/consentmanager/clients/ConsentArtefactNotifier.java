@@ -14,25 +14,22 @@ import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccur
 public class ConsentArtefactNotifier {
     private WebClient.Builder webClientBuilder;
 
-    public Mono<Void> notifyHiu(HIUNotificationRequest request,
-                                String callBackUrl) {
-        return webClientBuilder.build()
-                .post()
-                .uri(callBackUrl + "/consent/notification/")
-                .header(HttpHeaders.AUTHORIZATION, "bmNn")//TODO: change it to jwt token
-                .bodyValue(request)
-                .retrieve()
-                .onStatus(HttpStatus::is5xxServerError, clientResponse -> Mono.error(unknownErrorOccurred()))
-                .toBodilessEntity()
-                .then();
+    public Mono<Void> notifyHiu(HIUNotificationRequest request, String callBackUrl) {
+        String hiuNotificationUrl = String.format("%s/%s", callBackUrl, "consent/notification/");
+        return post(request, hiuNotificationUrl);
     }
 
     public Mono<Void> sendConsentArtefactTo(HIPConsentArtefactRepresentation consentArtefact, String providerUrl) {
+        String hipNotificationUrl = String.format("%s/%s", providerUrl, "consent/");
+        return post(consentArtefact, hipNotificationUrl);
+    }
+
+    private Mono<Void> post(Object body, String uri) {
         return webClientBuilder.build()
                 .post()
-                .uri(providerUrl + "/consent/")
+                .uri(uri)
                 .header(HttpHeaders.AUTHORIZATION, "bmNn")//TODO: change it to jwt token
-                .bodyValue(consentArtefact)
+                .bodyValue(body)
                 .retrieve()
                 .onStatus(HttpStatus::is5xxServerError, clientResponse -> Mono.error(unknownErrorOccurred()))
                 .toBodilessEntity()

@@ -1,6 +1,9 @@
 package in.projecteka.consentmanager.dataflow;
 
+import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
+import in.projecteka.consentmanager.dataflow.model.ConsentArtefact;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
+import in.projecteka.consentmanager.dataflow.model.ConsentPermission;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
@@ -28,5 +31,16 @@ public class TestBuilders {
 
     public static in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest.DataFlowRequestBuilder dataFlowRequestBuilder(){
         return easyRandom.nextObject(in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest.DataFlowRequestBuilder.class);
+    }
+
+    public static ConsentArtefact.ConsentArtefactBuilder consentArtefact() {
+        return easyRandom.nextObject(ConsentArtefact.ConsentArtefactBuilder.class);
+    }
+
+    public static ConsentPermission.ConsentPermissionBuilder consentPermission() {
+        return easyRandom.nextObject(ConsentPermission.ConsentPermissionBuilder.class);
+    }
+    public static AccessPeriod.AccessPeriodBuilder accessPeriod() {
+        return easyRandom.nextObject(AccessPeriod.AccessPeriodBuilder.class);
     }
 }

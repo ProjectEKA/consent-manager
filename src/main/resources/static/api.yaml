@@ -404,7 +404,7 @@ paths:
       tags:
         - data flow
       summary: Request for health information
-      description: The HIU submits the Consent Artifact ID of the consent required for fetching helath information from the HIP(s). A transaction ID is generated and returned.
+      description: The HIU submits the Consent Artefact ID of the consent required for fetching helath information from the HIP(s). A transaction ID is generated and returned.
       parameters:
         - $ref: '#/components/parameters/hiuAuthorization'
       requestBody:
@@ -429,7 +429,7 @@ paths:
         '400':
           description: >
             **Causes:**
-              * Consent artifact Id is invalid
+              * Consent artefact Id is invalid
           content:
             application/json:
               schema:

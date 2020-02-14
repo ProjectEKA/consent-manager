@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.common.TokenUtils;
+import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +25,7 @@ public class ConsentArtefactsController {
     }
 
     @GetMapping(value = "/internal/consents/{consentId}")
-    public Mono<ConsentArtefactRepresentation> getConsent(@PathVariable String consentId) {
-        return consentManager.getConsentArtefact(consentId);
+    public Mono<ConsentArtefactLightRepresentation> getConsent(@PathVariable String consentId) {
+        return consentManager.getConsentArtefactLight(consentId);
     }
 }

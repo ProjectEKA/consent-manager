@@ -21,14 +21,16 @@ public class PostConsentApproval {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig.getQueues().get(CONSENT_GRANTED_QUEUE);
 
         if (destinationInfo == null) {
-            logger.error(CONSENT_GRANTED_QUEUE + " not found");
-            return Mono.error(new Exception(CONSENT_GRANTED_QUEUE + " not found"));
+            String errorMessage = String.format("%s %s", CONSENT_GRANTED_QUEUE, " not found");
+            logger.error(errorMessage);
+            return Mono.error(new Exception(errorMessage));
 
         }
 
         return Mono.create(monoSink -> {
             amqpTemplate.convertAndSend(destinationInfo.getExchange(), destinationInfo.getRoutingKey(), message);
-            logger.info("Broadcasting consent artefact notification for Request Id: " + message.getRequestId());
+            logger.info(String.format("Broadcasting consent artefact notification for Request Id: %s",
+                    message.getRequestId()));
             monoSink.success();
         });
     }

@@ -48,8 +48,8 @@ public class ConsentArtefactBroadcastListener {
         MessageListener messageListener = message -> {
             ConsentArtefactsNotificationMessage consentArtefactsNotificationMessage =
                     (ConsentArtefactsNotificationMessage) converter.fromMessage(message);
-            logger.info("Received message for Request id : " + consentArtefactsNotificationMessage
-                    .getRequestId());
+            logger.info(String.format(
+                    "Received message for Request id : %s", consentArtefactsNotificationMessage.getRequestId()));
 
             notifyHiu(consentArtefactsNotificationMessage);
             notifyHips(consentArtefactsNotificationMessage);

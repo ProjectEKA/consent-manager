@@ -56,7 +56,7 @@ import java.util.HashMap;
 
 @Configuration
 public class ConsentManagerConfiguration {
-    public static final String CONSENT_GRANTED_QUEUE = "hiu-notification-queue";
+    public static final String CONSENT_GRANTED_QUEUE = "consent-granted-queue";
     public static final String HIP_DATA_FLOW_REQUEST_QUEUE = "hip-data-flow-request-queue";
 
     @Bean

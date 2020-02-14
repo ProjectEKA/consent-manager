@@ -3,8 +3,6 @@ package in.projecteka.consentmanager.user;
 import com.google.common.cache.LoadingCache;
 import in.projecteka.consentmanager.user.exception.CacheNotAccessibleException;
 import in.projecteka.consentmanager.user.exception.InvalidSessionException;
-import in.projecteka.consentmanager.user.model.OtpRequest;
-import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.TemporarySession;
 import in.projecteka.consentmanager.user.model.Token;
 import io.jsonwebtoken.Claims;
@@ -13,27 +11,27 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException  ;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
-public class AuthenticatorService {
+public class UserVerificationService {
 
     private JWTProperties jwtProperties;
-    private LoadingCache<String, Optional<String>> sessionCache;
-    private LoadingCache<String, Optional<String>> secondSessionCache;
+    private LoadingCache<String, Optional<String>> unverifiedSessions;
+    private LoadingCache<String, Optional<String>> verifiedSessions;
     public static final long JWT_TOKEN_VALIDITY = 5 * 60 * 60;
 
-    public AuthenticatorService(JWTProperties jwtProperties,
-                                LoadingCache<String, Optional<String>> sessionCache,
-                                LoadingCache<String, Optional<String>> secondSessionCache) {
+    public UserVerificationService(JWTProperties jwtProperties,
+                                   LoadingCache<String, Optional<String>> unverifiedSessions,
+                                   LoadingCache<String, Optional<String>> verifiedSessions) {
         this.jwtProperties = jwtProperties;
-        this.sessionCache = sessionCache;
-        this.secondSessionCache = secondSessionCache;
+        this.unverifiedSessions = unverifiedSessions;
+        this.verifiedSessions = verifiedSessions;
     }
 
-    public TemporarySession cacheAndSendSession(OtpRequest requestBody) {
-        TemporarySession temporarySession = new TemporarySession(requestBody.getSessionId());
-        sessionCache.put(temporarySession.getSessionId(), Optional.of(requestBody.getCommunication().getValue()));
+    public TemporarySession cacheAndSendSession(String sessionId, String mobileNumber) {
+        TemporarySession temporarySession = new TemporarySession(sessionId);
+        unverifiedSessions.put(temporarySession.getSessionId(), Optional.of(mobileNumber));
         return temporarySession;
     }
 
@@ -45,12 +43,12 @@ public class AuthenticatorService {
         return getClaimFromToken(token, Claims::getSubject);
     }
 
-    public Token generateToken(OtpVerification request) {
+    public Token generateToken(String sessionId) {
         try {
-            return sessionCache.get(request.getSessionId())
+            return unverifiedSessions.get(sessionId)
                     .map(number -> {
                         String newSession = UUID.randomUUID().toString();
-                        secondSessionCache.put(newSession, Optional.of(number));
+                        verifiedSessions.put(newSession, Optional.of(number));
                         return generateToken(new HashMap<>(), newSession);
                     })
                     .orElseThrow(() -> new InvalidSessionException("invalid.session.id"));
@@ -80,7 +78,7 @@ public class AuthenticatorService {
     }
 
 
-    public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
+    private <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = getAllClaimsFromToken(token);
         return claimsResolver.apply(claims);
     }
@@ -88,7 +86,4 @@ public class AuthenticatorService {
     private Claims getAllClaimsFromToken(String token) {
         return Jwts.parser().setSigningKey(jwtProperties.getSecret()).parseClaimsJws(token).getBody();
     }
-
-
-
 }

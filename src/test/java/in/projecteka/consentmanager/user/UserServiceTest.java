@@ -34,10 +34,10 @@ class UserServiceTest {
         MockitoAnnotations.initMocks(this);
         OtpServiceProperties otpServiceProperties = new OtpServiceProperties("", Arrays.asList("MOBILE"));
         userService = new UserService(userRepository, otpServiceProperties, otpServiceClient);
-        when(otpServiceClient.sendOtpTo(any())).thenReturn(Mono.just(
+        when(otpServiceClient.send(any())).thenReturn(Mono.just(
                 new TemporarySession("SOME_SESSION_ID")
         ));
-        when(otpServiceClient.permitOtp(any())).thenReturn(Mono.just(new Token("SOME_TEMPORARY_TOKEN")));
+        when(otpServiceClient.verify(any())).thenReturn(Mono.just(new Token("SOME_TEMPORARY_TOKEN")));
     }
 
     @Test

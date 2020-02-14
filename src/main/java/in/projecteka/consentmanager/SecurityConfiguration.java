@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager;
 
-import in.projecteka.consentmanager.user.AuthenticatorService;
+import in.projecteka.consentmanager.user.UserVerificationService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -56,15 +56,15 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityContextRepository contextRepository(ReactiveAuthenticationManager manager,
-                                                       AuthenticatorService authenticatorService) {
-        return new SecurityContextRepository(manager, authenticatorService);
+                                                       UserVerificationService userVerificationService) {
+        return new SecurityContextRepository(manager, userVerificationService);
     }
 
     @AllArgsConstructor
     private static class SecurityContextRepository implements ServerSecurityContextRepository {
 
         private ReactiveAuthenticationManager manager;
-        private AuthenticatorService authenticatorService;
+        private UserVerificationService userVerificationService;
 
         @Override
         public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {
@@ -75,10 +75,12 @@ public class SecurityConfiguration {
         public Mono<SecurityContext> load(ServerWebExchange exchange) {
             var authToken = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
             var notBlank = authToken != null && !authToken.trim().equals("");
-            var isSignUpRequest = exchange.getRequest().getPath().toString().equals("/users")
-                    && exchange.getRequest().getMethod().equals(HttpMethod.POST);
+            var isSignUpRequest = isSignUpRequest(
+                    exchange.getRequest().getPath().toString(),
+                    exchange.getRequest().getMethod()
+            );
 
-            if(isSignUpRequest && notBlank && authenticatorService.validateToken(authToken)) {
+            if(isSignUpRequest && notBlank && userVerificationService.validateToken(authToken)) {
                 return Mono.just(new UsernamePasswordAuthenticationToken(authToken, authToken, new ArrayList<SimpleGrantedAuthority>()))
                         .map(SecurityContextImpl::new);
             }
@@ -87,6 +89,10 @@ public class SecurityConfiguration {
                 return manager.authenticate(token).map(SecurityContextImpl::new);
             }
             return Mono.empty();
+        }
+
+        private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
+            return ("/users").equals(url) && HttpMethod.POST.equals(httpMethod);
         }
     }
 

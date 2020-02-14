@@ -11,19 +11,17 @@ import reactor.core.publisher.Mono;
 public class OtpServiceClient {
 
     private final WebClient.Builder webClientBuilder;
-    private final OtpServiceProperties otpServiceProperties;
-    private AuthenticatorService authenticatorService;
+    private UserVerificationService userVerificationService;
 
     public OtpServiceClient(WebClient.Builder webClientBuilder,
                             OtpServiceProperties otpServiceProperties,
-                            AuthenticatorService authenticatorService) {
+                            UserVerificationService userVerificationService) {
         this.webClientBuilder = webClientBuilder;
         this.webClientBuilder.baseUrl(otpServiceProperties.getUrl());
-        this.otpServiceProperties = otpServiceProperties;
-        this.authenticatorService = authenticatorService;
+        this.userVerificationService = userVerificationService;
     }
 
-    public Mono<TemporarySession> sendOtpTo(OtpRequest requestBody) {
+    public Mono<TemporarySession> send(OtpRequest requestBody) {
         return webClientBuilder.build()
                 .post()
                 .uri(uriBuilder ->
@@ -33,10 +31,14 @@ public class OtpServiceClient {
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
-                .toBodilessEntity().thenReturn(authenticatorService.cacheAndSendSession(requestBody));
+                .toBodilessEntity()
+                .thenReturn(userVerificationService.cacheAndSendSession(
+                        requestBody.getSessionId(),
+                        requestBody.getCommunication().getValue())
+                );
     }
 
-    public Mono<Token> permitOtp(OtpVerification requestBody) {
+    public Mono<Token> verify(OtpVerification requestBody) {
         Value valueOtp = new Value(requestBody.getValue());
         return webClientBuilder.build()
                 .post()
@@ -49,7 +51,7 @@ public class OtpServiceClient {
                 .retrieve()
                 .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(ClientError.otpNotFound()))
                 .onStatus(HttpStatus::is5xxServerError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
-                .toBodilessEntity().thenReturn(authenticatorService.generateToken(requestBody));
+                .toBodilessEntity().thenReturn(userVerificationService.generateToken(requestBody.getSessionId()));
     }
 
 }

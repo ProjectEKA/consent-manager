@@ -28,7 +28,7 @@ public class UserService {
         OtpRequest otpRequest = new OtpRequest(temporarySession,
                 new OtpCommunicationData(deviceIdentifier.getIdentifierType(), deviceIdentifier.getIdentifier()));
 
-        return otpServiceClient.sendOtpTo(otpRequest);
+        return otpServiceClient.send(otpRequest);
     }
 
     public Mono<Token> permitOtp(OtpVerification otpVerification) {
@@ -36,7 +36,7 @@ public class UserService {
             throw new InvalidRequestException("invalid.request.body");
         }
 
-        return otpServiceClient.permitOtp(otpVerification);
+        return otpServiceClient.verify(otpVerification);
     }
 
     private boolean validateOtpVerification(OtpVerification otpVerification) {

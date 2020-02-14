@@ -31,7 +31,7 @@ class OtpServiceClientTest {
     @Mock
     private ExchangeFunction exchangeFunction;
     @Mock
-    private AuthenticatorService authenticatorService;
+    private UserVerificationService userVerificationService;
     private OtpServiceClient otpServiceClient;
     private OtpRequest otpRequest;
 
@@ -45,8 +45,8 @@ class OtpServiceClientTest {
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         final OtpServiceProperties otpServiceProperties
                 = new OtpServiceProperties("localhost:8000/otpservice", Arrays.asList());
-        otpServiceClient = new OtpServiceClient(webClientBuilder, otpServiceProperties, authenticatorService);
-        when(authenticatorService.cacheAndSendSession(any()))
+        otpServiceClient = new OtpServiceClient(webClientBuilder, otpServiceProperties, userVerificationService);
+        when(userVerificationService.cacheAndSendSession(any(), any()))
                 .thenReturn(new TemporarySession("SOME_SESSION_ID"));
     }
 
@@ -55,7 +55,7 @@ class OtpServiceClientTest {
         when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
                 .header("Content-Type", "application/json").build()));
 
-        StepVerifier.create(otpServiceClient.sendOtpTo(otpRequest))
+        StepVerifier.create(otpServiceClient.send(otpRequest))
                 .assertNext(response -> {
                     assertThat(response.getSessionId()).isEqualTo(otpRequest.getSessionId());
                 });
@@ -66,7 +66,7 @@ class OtpServiceClientTest {
         when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.INTERNAL_SERVER_ERROR)
                 .header("Content-Type", "application/json").build()));
 
-        StepVerifier.create(otpServiceClient.sendOtpTo(otpRequest))
+        StepVerifier.create(otpServiceClient.send(otpRequest))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().is5xxServerError())
                 .verify();

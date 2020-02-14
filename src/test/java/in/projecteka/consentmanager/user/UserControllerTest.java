@@ -1,5 +1,10 @@
 package in.projecteka.consentmanager.user;
 
+import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
+import in.projecteka.consentmanager.consent.ConsentManager;
+import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.dataflow.DataFlowRequest;
 import in.projecteka.consentmanager.user.model.DeviceIdentifier;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.TemporarySession;
@@ -31,6 +36,21 @@ class UserControllerTest {
 
     @MockBean
     private UserService mockService;
+
+    @MockBean
+    private ConsentManager consentManager;
+
+    @MockBean
+    private DataFlowRequest dataFlowRequest;
+
+    @MockBean
+    private DestinationsConfig destinationsConfig;
+
+    @MockBean
+    private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
+
+    @MockBean
+    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @Autowired
     private WebTestClient webClient;

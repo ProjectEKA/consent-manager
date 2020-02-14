@@ -94,7 +94,7 @@ public class ClientError extends Throwable {
         return new ClientError(
                 HttpStatus.NOT_FOUND,
                 new ErrorRepresentation(new Error(ErrorCode.OTP_INVALID,
-                        "Invalid OTP entered")));
+                        "Invalid OTP")));
     }
 
     public static ClientError unknownErrorOccurred() {

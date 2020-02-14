@@ -29,18 +29,18 @@ public class UserConfiguration {
     @Bean
     public OtpServiceClient otpServiceClient(WebClient.Builder builder,
                                              OtpServiceProperties otpServiceProperties,
-                                             AuthenticatorService authenticatorService) {
-        return new OtpServiceClient(builder, otpServiceProperties, authenticatorService);
+                                             UserVerificationService userVerificationService) {
+        return new OtpServiceClient(builder, otpServiceProperties, userVerificationService);
     }
 
     @Bean
-    public AuthenticatorService authenticatorService(JWTProperties jwtProperties,
-                                                     LoadingCache<String, Optional<String>> sessionCache,
-                                                     LoadingCache<String, Optional<String>> secondSessionCache) {
-        return new AuthenticatorService(jwtProperties, sessionCache, secondSessionCache);
+    public UserVerificationService authenticatorService(JWTProperties jwtProperties,
+                                                        LoadingCache<String, Optional<String>> sessionCache,
+                                                        LoadingCache<String, Optional<String>> secondSessionCache) {
+        return new UserVerificationService(jwtProperties, sessionCache, secondSessionCache);
     }
 
-    @Bean({ "sessionCache", "secondSessionCache" })
+    @Bean({ "unverifiedSessions", "verifiedSessions" })
     public LoadingCache<String, Optional<String>> createSessionCache() {
         return CacheBuilder.newBuilder().
                 expireAfterWrite(5, TimeUnit.MINUTES).build(new CacheLoader<>() {

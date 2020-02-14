@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ConsentArtefactNotificationRequest {
+public class HIUNotificationRequest {
     private String consentRequestId;
     private List<ConsentArtefactReference> consents;
 }

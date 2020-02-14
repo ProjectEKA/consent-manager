@@ -56,19 +56,24 @@ import java.util.HashMap;
 
 @Configuration
 public class ConsentManagerConfiguration {
-    public static final String CONSENT_GRANTED_QUEUE = "hiu-notification-queue";
+    public static final String CONSENT_GRANTED_QUEUE = "consent-granted-queue";
     public static final String HIP_DATA_FLOW_REQUEST_QUEUE = "hip-data-flow-request-queue";
 
     @Bean
     public Discovery discovery(WebClient.Builder builder,
-                               ClientRegistryProperties clientRegistryProperties,
+                               ClientRegistryClient clientRegistryClient,
                                UserServiceProperties userServiceProperties,
                                DiscoveryRepository discoveryRepository) {
-        ClientRegistryClient clientRegistryClient = new ClientRegistryClient(builder, clientRegistryProperties);
+
         UserServiceClient userServiceClient = new UserServiceClient(builder, userServiceProperties);
         DiscoveryServiceClient discoveryServiceClient = new DiscoveryServiceClient(builder);
-
         return new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
+    }
+
+    @Bean
+    public ClientRegistryClient clientRegistryClient(WebClient.Builder builder,
+                                                     ClientRegistryProperties clientRegistryProperties) {
+        return new ClientRegistryClient(builder, clientRegistryProperties);
     }
 
     @Bean
@@ -200,12 +205,14 @@ public class ConsentManagerConfiguration {
     public ConsentArtefactBroadcastListener hiuNotificationListener(MessageListenerContainerFactory messageListenerContainerFactory,
                                                                     DestinationsConfig destinationsConfig,
                                                                     Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-                                                                    ConsentArtefactNotifier consentArtefactNotifier) {
+                                                                    ConsentArtefactNotifier consentArtefactNotifier,
+                                                                    ClientRegistryClient clientRegistryClient) {
         return new ConsentArtefactBroadcastListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
-                consentArtefactNotifier);
+                consentArtefactNotifier,
+                clientRegistryClient);
     }
 
     @SneakyThrows

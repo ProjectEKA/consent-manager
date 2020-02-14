@@ -29,13 +29,13 @@ public class Provider {
     private List<Address> addresses;
     private String name;
 
-    public Mono<String> getProviderUrl() {
+    public String getProviderUrl() {
         return identifiers
                 .stream()
                 .filter(Identifier::isOfficial)
                 .findFirst()
-                .map(identifier -> Mono.just(identifier.getSystem()))
-                .orElse(Mono.empty());
+                .map(Identifier::getSystem)
+                .orElse(null);
     }
 }
 

@@ -1,16 +1,18 @@
 package in.projecteka.consentmanager.consent.model;
 
-import in.projecteka.consentmanager.consent.model.request.ConsentArtefactNotificationRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ConsentArtefactsNotificationMessage {
-    private ConsentArtefactNotificationRequest consentArtefactNotificationRequest;
-    private String callBackUrl;
+    private String requestId;
+    private List<HIPConsentArtefactRepresentation> consentArtefacts;
+    private String hiuCallBackUrl;
 }

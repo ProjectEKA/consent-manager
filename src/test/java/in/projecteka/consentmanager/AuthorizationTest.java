@@ -22,7 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-
+@SuppressWarnings("ALL")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
@@ -65,7 +65,7 @@ public class AuthorizationTest {
                 .expectStatus().is4xxClientError();
     }
 
-    private static final class NullableConverter extends SimpleArgumentConverter {
+    public static final class NullableConverter extends SimpleArgumentConverter {
         @Override
         protected Object convert(Object source, Class<?> targetType) throws ArgumentConversionException {
             if ("null".equals(source)) {

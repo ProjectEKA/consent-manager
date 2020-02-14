@@ -10,13 +10,19 @@ consentmanager:
     url: ${Client_Registry_Url}
   userservice:
     url: ${User_Service_Url}
+  otpservice:
+    url: ${Otp_Service_Url}
+    identifiers:
+      - MOBILE
+  jwt:
+    secret: ${JWT_SECRET}
   db:
     host: ${POSTGRES_HOST}
-    port: ${POSTGRES_PORT}
+    port: 5432
     schema: ${CONSENT_MANAGER_DB_NAME}
     user: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
-    poolSize: ${DB_CONNECTION_POOL_SIZE}
+    poolSize: 5
   dataflow:
     authserver:
       clientId: ${CLIENT_ID}

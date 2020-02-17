@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DeviceIdentifier {
+public class UserSignUpEnquiry {
     private String identifierType;
     private String identifier;
 }

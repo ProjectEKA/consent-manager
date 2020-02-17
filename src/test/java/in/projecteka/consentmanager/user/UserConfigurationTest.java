@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.user;
 
+import in.projecteka.consentmanager.clients.OtpServiceClient;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
@@ -16,12 +17,18 @@ class UserConfigurationTest {
     @Mock
     private OtpServiceClient otpServiceClient;
 
-    private UserConfiguration userConfiguration = new UserConfiguration();
+    @Mock
+    private UserVerificationService userVerificationService;
 
+    private UserConfiguration userConfiguration = new UserConfiguration();
 
     @Test
     public void shouldReturnUserServiceInstance() {
-        assertThat(userConfiguration.userService(mockUserRepository, otpServiceProperties, otpServiceClient))
+        assertThat(userConfiguration.userService(
+                mockUserRepository,
+                otpServiceProperties,
+                otpServiceClient,
+                userVerificationService))
                 .isInstanceOf(UserService.class);
     }
 }

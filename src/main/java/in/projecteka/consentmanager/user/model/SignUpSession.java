@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TemporarySession {
+public class SignUpSession {
     private String sessionId;
 }

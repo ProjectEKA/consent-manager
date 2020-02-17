@@ -1085,7 +1085,7 @@ components:
         callBackUrl:
           type: string
         keyMaterial:
-          type: object
+          $ref: '#/components/schemas/keyMaterial'
     HealthInformationRequestResponse:
       type: object
       required:
@@ -1115,3 +1115,15 @@ components:
         to:
           type: string
           format: date-time
+    keyMaterial:
+      type: object
+      required:
+        - publicKey
+        - randomKey
+      properties:
+        publicKey:
+          type: string
+          format: string
+        randomKey:
+          type: string
+          format: string

@@ -1118,12 +1118,37 @@ components:
     keyMaterial:
       type: object
       required:
-        - publicKey
+        - cryptoAlg
+        - curve
+        - DHPublicKey
         - randomKey
       properties:
-        publicKey:
+        cryptoAlg:
           type: string
           format: string
+          example: ECDHE
+        curve:
+          type: string
+          format: string
+          example: Curve25519
+        dhPublicKey:
+          $ref: '#/components/schemas/keyObject'
         randomKey:
+          $ref: '#/components/schemas/keyObject'
+    keyObject:
+      type: object
+      required:
+        - expiry
+        - parameters
+        - keyValue
+      properties:
+        expiry:
+          type: string
+          format: date-time
+        parameters:
+          type: string
+          format: string
+          example: Curve25519/32byte random key
+        keyValue:
           type: string
           format: string

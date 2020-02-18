@@ -1085,7 +1085,7 @@ components:
         callBackUrl:
           type: string
         keyMaterial:
-          type: object
+          $ref: '#/components/schemas/keyMaterial'
     HealthInformationRequestResponse:
       type: object
       required:
@@ -1115,3 +1115,40 @@ components:
         to:
           type: string
           format: date-time
+    keyMaterial:
+      type: object
+      required:
+        - cryptoAlg
+        - curve
+        - DHPublicKey
+        - randomKey
+      properties:
+        cryptoAlg:
+          type: string
+          format: string
+          example: ECDHE
+        curve:
+          type: string
+          format: string
+          example: Curve25519
+        dhPublicKey:
+          $ref: '#/components/schemas/keyObject'
+        randomKey:
+          $ref: '#/components/schemas/keyObject'
+    keyObject:
+      type: object
+      required:
+        - expiry
+        - parameters
+        - keyValue
+      properties:
+        expiry:
+          type: string
+          format: date-time
+        parameters:
+          type: string
+          format: string
+          example: Curve25519/32byte random key
+        keyValue:
+          type: string
+          format: string

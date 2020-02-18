@@ -1,16 +1,19 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.user.model.OtpCommunicationData;
-import in.projecteka.consentmanager.user.model.OtpRequest;
-import in.projecteka.consentmanager.user.model.TemporarySession;
+import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
+import in.projecteka.consentmanager.clients.model.OtpRequest;
+import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeFunction;
@@ -18,10 +21,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.Arrays;
+import java.util.Collections;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 class OtpServiceClientTest {
@@ -30,41 +31,48 @@ class OtpServiceClientTest {
     ArgumentCaptor<ClientRequest> captor;
     @Mock
     private ExchangeFunction exchangeFunction;
-    @Mock
-    private UserVerificationService userVerificationService;
     private OtpServiceClient otpServiceClient;
-    private OtpRequest otpRequest;
+
+    private EasyRandom easyRandom;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
+        easyRandom = new EasyRandom();
         MockitoAnnotations.initMocks(this);
-        otpRequest = new OtpRequest(
-                "SOME_SESSION_ID",
-                new OtpCommunicationData("MOBILE", "1234567891")
-        );
-        WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
+
         final OtpServiceProperties otpServiceProperties
-                = new OtpServiceProperties("localhost:8000/otpservice", Arrays.asList());
-        otpServiceClient = new OtpServiceClient(webClientBuilder, otpServiceProperties, userVerificationService);
-        when(userVerificationService.cacheAndSendSession(any(), any()))
-                .thenReturn(new TemporarySession("SOME_SESSION_ID"));
+                = new OtpServiceProperties("localhost:8000/otpservice", Collections.emptyList());
+        WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
+        otpServiceClient = new OtpServiceClient(webClientBuilder, otpServiceProperties);
     }
 
     @Test
-    public void shouldReturnTemporaryTokenWhenOtpRequestSucceeds() {
-        when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
-                .header("Content-Type", "application/json").build()));
+    public void shouldSendOTPRequest() {
+        var sessionId = easyRandom.nextObject(String.class);
+        var value = easyRandom.nextObject(String.class);
+        var otpRequest = new OtpRequest(sessionId, new OtpCommunicationData("MOBILE", value));
+
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(
+                Mono.just(
+                        ClientResponse
+                                .create(HttpStatus.OK)
+                                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                .build()));
 
         StepVerifier.create(otpServiceClient.send(otpRequest))
-                .assertNext(response -> {
-                    assertThat(response.getSessionId()).isEqualTo(otpRequest.getSessionId());
-                });
+                .verifyComplete();
     }
 
     @Test
     public void shouldThrowClientErrorWhenOtpRequestFails() {
-        when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.INTERNAL_SERVER_ERROR)
-                .header("Content-Type", "application/json").build()));
+        var otpRequest = new OtpRequest(easyRandom.nextObject(String.class),
+                new OtpCommunicationData("MOBILE", easyRandom.nextObject(String.class)));
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(
+                Mono.just(
+                        ClientResponse
+                                .create(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                .build()));
 
         StepVerifier.create(otpServiceClient.send(otpRequest))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&

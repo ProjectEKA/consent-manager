@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.user;
 import com.google.common.cache.LoadingCache;
 import in.projecteka.consentmanager.user.exception.CacheNotAccessibleException;
 import in.projecteka.consentmanager.user.exception.InvalidSessionException;
-import in.projecteka.consentmanager.user.model.TemporarySession;
+import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -29,10 +29,10 @@ public class UserVerificationService {
         this.verifiedSessions = verifiedSessions;
     }
 
-    public TemporarySession cacheAndSendSession(String sessionId, String mobileNumber) {
-        TemporarySession temporarySession = new TemporarySession(sessionId);
-        unverifiedSessions.put(temporarySession.getSessionId(), Optional.of(mobileNumber));
-        return temporarySession;
+    public SignUpSession cacheAndSendSession(String sessionId, String mobileNumber) {
+        SignUpSession signupSession = new SignUpSession(sessionId);
+        unverifiedSessions.put(signupSession.getSessionId(), Optional.of(mobileNumber));
+        return signupSession;
     }
 
     public Boolean validateToken(String token) {
@@ -50,9 +50,7 @@ public class UserVerificationService {
                         String newSession = UUID.randomUUID().toString();
                         verifiedSessions.put(newSession, Optional.of(number));
                         return generateToken(new HashMap<>(), newSession);
-                    })
-                    .orElseThrow(() -> new InvalidSessionException("invalid.session.id"));
-
+                    }).orElseThrow(() -> new InvalidSessionException("invalid.session.id"));
         } catch (ExecutionException e) {
             throw new CacheNotAccessibleException("cache.not.accessible");
         }

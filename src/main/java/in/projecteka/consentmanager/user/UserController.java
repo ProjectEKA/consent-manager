@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.user;
 
+import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,7 +20,7 @@ public class UserController {
 
     @PostMapping("/verify")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<TemporarySession> sendOtp(@RequestBody DeviceIdentifier request) {
+    public Mono<SignUpSession> sendOtp(@RequestBody UserSignUpEnquiry request) {
         return userService.sendOtp(request);
     }
 

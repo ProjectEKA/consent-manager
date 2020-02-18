@@ -55,29 +55,20 @@ public class DataFlowRequestTest {
         in.projecteka.consentmanager.dataflow.model.DataFlowRequest request = dataFlowRequest().build();
         request.setHiDataRange(HIDataRange.builder().from(toDate("2020-01-16T08:47:48Z")).to(toDate("2020" +
                 "-01-20T08:47:48Z")).build());
-        AccessPeriod build = accessPeriod()
-                .fromDate(toDate("2020-01-15T08:47:48Z"))
-                .toDate(toDate("2020-01-29T08:47:48Z"))
-                .build();
-        ConsentPermission consentPermission = consentPermission()
-                .dateRange(build)
-                .build();
-        ConsentArtefact consentDetail = consentArtefact()
-                .hiu(HIUReference.builder().id(hiuId).name("MAX").build())
-                .permission(consentPermission)
-                .build();
-        ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation()
-                .consentDetail(consentDetail)
-                .signature("digital-signature")
-                .status(ConsentStatus.GRANTED)
-                .build();
-
+        ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
+        consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
+        consentArtefactRepresentation.getConsentDetail().getPermission().
+                setDateRange(AccessPeriod.builder()
+                        .fromDate(toDate("2020-01-15T08:47:48Z"))
+                        .toDate(toDate("2020-01-29T08:47:48Z"))
+                        .build());
         when(consentManagerClient.getConsentArtefact(request.getConsent().getId()))
                 .thenReturn(Mono.just(consentArtefactRepresentation));
         when(dataFlowRequestRepository.addDataFlowRequest(anyString(),
                 any(in.projecteka.consentmanager.dataflow.model.DataFlowRequest.class)))
                 .thenReturn(Mono.create(MonoSink::success));
-        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), eq(request))).thenReturn(Mono.empty());
+        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(),
+                any(in.projecteka.consentmanager.dataflow.model.DataFlowRequest.class))).thenReturn(Mono.empty());
 
         StepVerifier.create(dataFlowRequest.validateDataTransferRequest(hiuId, request))
                 .expectNextMatches(res -> res != null)

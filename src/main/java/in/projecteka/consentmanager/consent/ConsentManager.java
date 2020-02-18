@@ -13,6 +13,8 @@ import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
+import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLight;
+import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
@@ -215,7 +217,7 @@ public class ConsentManager {
     }
 
     public Mono<ConsentArtefactRepresentation> getConsent(String consentId, String requesterId) {
-        return consentArtefactRepository.getConsentArtefact(consentId)
+        return getConsentArtefact(consentId)
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()))
                 .flatMap(r -> {
                     if (!isValidRequester(r.getConsentDetail(), requesterId)) {
@@ -229,8 +231,33 @@ public class ConsentManager {
         return consentDetail.getHiu().getId().equals(requesterId) || consentDetail.getPatient().getId().equals(requesterId);
     }
 
-    public Mono<ConsentArtefactRepresentation> getConsentArtefact(String consentId) {
+    public Mono<ConsentArtefactLightRepresentation> getConsentArtefactLight(String consentId) {
+        return getHipConsentArtefact(consentId)
+                .flatMap(hipConsentArtefactRepresentation -> getConsentArtefact(consentId)
+                        .flatMap(consentArtefactRepresentation ->
+                                Mono.just(from(hipConsentArtefactRepresentation, consentArtefactRepresentation))));
+    }
+
+    private Mono<ConsentArtefactRepresentation> getConsentArtefact(String consentId) {
         return consentArtefactRepository.getConsentArtefact(consentId)
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()));
+    }
+
+    private Mono<HIPConsentArtefactRepresentation> getHipConsentArtefact(String consentId) {
+        return consentArtefactRepository.getHipConsentArtefact(consentId)
+                .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()));
+    }
+
+    private ConsentArtefactLightRepresentation from(HIPConsentArtefactRepresentation hipConsentArtefact,
+                                                    ConsentArtefactRepresentation consentArtefact) {
+        ConsentArtefactLight consentArtefactLight = ConsentArtefactLight.builder()
+                .hiu(consentArtefact.getConsentDetail().getHiu())
+                .permission(consentArtefact.getConsentDetail().getPermission())
+                .build();
+        return ConsentArtefactLightRepresentation.builder()
+                .status(consentArtefact.getStatus())
+                .consentDetail(consentArtefactLight)
+                .signature(hipConsentArtefact.getSignature())
+                .build();
     }
 }

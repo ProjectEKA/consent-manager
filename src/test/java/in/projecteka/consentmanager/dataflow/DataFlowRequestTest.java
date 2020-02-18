@@ -3,10 +3,7 @@ package in.projecteka.consentmanager.dataflow;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
-import in.projecteka.consentmanager.dataflow.model.ConsentArtefact;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
-import in.projecteka.consentmanager.dataflow.model.ConsentPermission;
-import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
 import in.projecteka.consentmanager.dataflow.model.HIDataRange;
 import in.projecteka.consentmanager.dataflow.model.HIUReference;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,15 +15,11 @@ import reactor.test.StepVerifier;
 
 import java.text.ParseException;
 
-import static in.projecteka.consentmanager.dataflow.TestBuilders.accessPeriod;
-import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefact;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
-import static in.projecteka.consentmanager.dataflow.TestBuilders.consentPermission;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.Utils.toDate;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 

@@ -452,7 +452,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /patients/identifiers/enquiry:
+  /patients/enquiries:
     post:
       tags:
         - account
@@ -499,12 +499,14 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /patients/identifiers/verify:
+  /patients/enquiries/{enquiryId}/verify:
     post:
       tags:
         - account
       summary: Verify identifier.
       description: Verify the identifier of a patient by validating an OTP.
+      parameters:
+        - $ref: '#/components/parameters/enquiryId'
       requestBody:
         required: true
         content:
@@ -620,6 +622,13 @@ components:
       schema:
         type: string
         example: max
+      required: true
+    enquiryId:
+      name: enquiryId
+      in: path
+      schema:
+        type: string
+        format: uuid
       required: true
   schemas:
     PatientDiscoveryRepresentation:
@@ -1265,18 +1274,18 @@ components:
       required:
         - idenitifierType
       properties:
-        sessionId:
-          type: string
-          format: uuid
-        value:
+        token:
           type: string
           description: 6 digits OTP
     IdentifierEnquiryResponse:
       type: object
       properties:
-        sessionId:
+        enquiryId:
           type: string
           format: uuid
+        expiredAt:
+          type: string
+          format: datetime
     IdentifierVerifyResponse:
       type: object
       properties:

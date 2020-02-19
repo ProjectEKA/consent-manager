@@ -1283,9 +1283,10 @@ components:
         enquiryId:
           type: string
           format: uuid
-        expiredAt:
-          type: string
-          format: datetime
+        expiresIn:
+          type: integer
+          example: 300
+          description: OTP expires in seconds.
     IdentifierVerifyResponse:
       type: object
       properties:

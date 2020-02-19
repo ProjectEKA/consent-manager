@@ -33,7 +33,7 @@ all the dependencies automatically.
 ## :muscle: Motivation
 
 > Consent Manager must provide its customers an interface using which they can view
-> and manage consent artifacts associated with them and, optionally, an interface for
+> and manage consent artefacts associated with them and, optionally, an interface for
 > the customers to view their aggregated health information.
 
 ## Build Status

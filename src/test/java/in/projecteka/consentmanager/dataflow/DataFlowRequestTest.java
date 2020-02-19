@@ -55,7 +55,8 @@ public class DataFlowRequestTest {
                         .fromDate(toDate("2020-01-15T08:47:48Z"))
                         .toDate(toDate("2020-01-29T08:47:48Z"))
                         .build());
-        when(consentManagerClient.getConsentArtifact(request.getConsent().getId()))
+
+        when(consentManagerClient.getConsentArtefact(request.getConsent().getId()))
                 .thenReturn(Mono.just(consentArtefactRepresentation));
         when(dataFlowRequestRepository.addDataFlowRequest(anyString(),
                 any(in.projecteka.consentmanager.dataflow.model.DataFlowRequest.class)))
@@ -70,12 +71,10 @@ public class DataFlowRequestTest {
 
     @Test
     public void shouldThrowInvalidHIU() {
-        String hiuId = "10000005";
         in.projecteka.consentmanager.dataflow.model.DataFlowRequest request = dataFlowRequest().build();
         ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
-        consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
 
-        when(consentManagerClient.getConsentArtifact(request.getConsent().getId()))
+        when(consentManagerClient.getConsentArtefact(request.getConsent().getId()))
                 .thenReturn(Mono.just(consentArtefactRepresentation));
 
         StepVerifier.create(dataFlowRequest.validateDataTransferRequest("1", request))

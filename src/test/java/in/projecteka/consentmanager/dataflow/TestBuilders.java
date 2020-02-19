@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.dataflow;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
-import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
@@ -16,10 +15,6 @@ public class TestBuilders {
 
     public static ConsentArtefactRepresentation.ConsentArtefactRepresentationBuilder consentArtefactRepresentation() {
         return easyRandom.nextObject(ConsentArtefactRepresentation.ConsentArtefactRepresentationBuilder.class);
-    }
-
-    public static DataFlowRequestResponse.DataFlowRequestResponseBuilder dataFlowRequestRespone() {
-        return easyRandom.nextObject(DataFlowRequestResponse.DataFlowRequestResponseBuilder.class);
     }
 
     public static DataFlowRequestMessage.DataFlowRequestMessageBuilder dataFlowRequestMessage(){

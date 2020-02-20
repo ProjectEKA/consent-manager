@@ -10,12 +10,15 @@ info:
     Doctors, Medical Researchers).
 
 servers:
-  - url: http://localhost:8000
+  - url: https://consent-manager-dev.projecteka.in
     description: Dev
 
 tags:
   - name: discovery
+  - name: link
   - name: consent
+  - name: data flow
+  - name: account
 
 paths:
   # discovery service
@@ -449,6 +452,113 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /patients/enquiries:
+    post:
+      tags:
+        - account
+      summary: Enquire identifier.
+      description: Enquire the identifier [Mobile] of a patient.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileNumberEnquiryRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/MobileNumberEnquiryRequest'
+      responses:
+        '200':
+          description: A session ID is returned and OTP will be sent to user mobile number.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentifierEnquiryResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/IdentifierEnquiryResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /patients/enquiries/{enquiryId}/verify:
+    post:
+      tags:
+        - account
+      summary: Verify identifier.
+      description: Verify the identifier of a patient by validating an OTP.
+      parameters:
+        - $ref: '#/components/parameters/enquiryId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileNumberVerifyRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/MobileNumberVerifyRequest'
+      responses:
+        '200':
+          description: A temporary token which will allow the user to create their profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentifierVerifyResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/IdentifierVerifyResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * OTP is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   parameters:
     authorization:
@@ -512,6 +622,13 @@ components:
       schema:
         type: string
         example: max
+      required: true
+    enquiryId:
+      name: enquiryId
+      in: path
+      schema:
+        type: string
+        format: uuid
       required: true
   schemas:
     PatientDiscoveryRepresentation:
@@ -939,7 +1056,6 @@ components:
             attribute: true
           format: <user-id>@<ncg-id>
           example: batman@ncg
-
     LinkedCareContexts:
       type: object
       properties:
@@ -986,7 +1102,6 @@ components:
           type: string
         name:
           type: string
-
     UsePurpose:
       type: object
       required:
@@ -1001,7 +1116,6 @@ components:
         refUri:
           type: string
           format: uri
-
     ConsentStatus:
       type: string
       enum:
@@ -1010,11 +1124,6 @@ components:
         - DENIED
         - GRANTED
         - ROVKED
-
-
-
-
-
     ConsentArtefactRepresentation:
       type: object
       properties:
@@ -1045,8 +1154,6 @@ components:
                   careContextReference:
                     type: string
                     example: Episode1
-
-
             purpose:
               $ref: '#/components/schemas/UsePurpose'
             hip:
@@ -1152,3 +1259,37 @@ components:
         keyValue:
           type: string
           format: string
+    MobileNumberEnquiryRequest:
+      type: object
+      required:
+        - idenitifierType
+      properties:
+        identifierType:
+          type: string
+          enum: [MOBILE]
+        identifier:
+          type: string
+    MobileNumberVerifyRequest:
+      type: object
+      required:
+        - idenitifierType
+      properties:
+        token:
+          type: string
+          description: 6 digits OTP
+    IdentifierEnquiryResponse:
+      type: object
+      properties:
+        enquiryId:
+          type: string
+          format: uuid
+        expiresIn:
+          type: integer
+          example: 300
+          description: OTP expires in seconds.
+    IdentifierVerifyResponse:
+      type: object
+      properties:
+        temporaryToken:
+          type: string
+          description: JWT Token

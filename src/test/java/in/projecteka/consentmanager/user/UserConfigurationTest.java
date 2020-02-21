@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.user;
 
+import in.projecteka.consentmanager.clients.KeycloakClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -20,6 +21,9 @@ class UserConfigurationTest {
     @Mock
     private UserVerificationService userVerificationService;
 
+    @Mock
+    private KeycloakClient keycloakClient;
+
     private UserConfiguration userConfiguration = new UserConfiguration();
 
     @Test
@@ -28,7 +32,8 @@ class UserConfigurationTest {
                 mockUserRepository,
                 otpServiceProperties,
                 otpServiceClient,
-                userVerificationService))
+                userVerificationService,
+                keycloakClient))
                 .isInstanceOf(UserService.class);
     }
 }

@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,4 +28,8 @@ public class UserController {
         return userService.permitOtp(request);
     }
 
+    @PostMapping
+    public Mono<KeycloakToken> create (@RequestBody SignUpRequest request) {
+        return userService.create(request);
+    }
 }

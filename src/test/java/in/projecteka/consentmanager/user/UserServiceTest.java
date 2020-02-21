@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.AuthorizationTest;
+import in.projecteka.consentmanager.clients.KeycloakClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
@@ -48,6 +49,9 @@ class UserServiceTest {
     @Mock
     private UserVerificationService userVerificationService;
 
+    @Mock
+    private KeycloakClient keycloakClient;
+
     EasyRandom easyRandom;
 
     private UserService userService;
@@ -59,7 +63,12 @@ class UserServiceTest {
         OtpServiceProperties otpServiceProperties = new OtpServiceProperties(
                 "",
                 Collections.singletonList("MOBILE"));
-        userService = new UserService(userRepository, otpServiceProperties, otpServiceClient, userVerificationService);
+        userService = new UserService(
+                userRepository,
+                otpServiceProperties,
+                otpServiceClient,
+                userVerificationService,
+                keycloakClient);
     }
 
     private static Stream<AbstractMap.SimpleEntry<String, String>> mobileNumberProvider() {

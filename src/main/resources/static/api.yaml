@@ -401,6 +401,31 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentArtefactRepresentation'
+  /consent/{consent-request-id}:
+    get:
+      tags:
+        - consent
+      summary: Get a specific consent
+      description: Fetch a consent artefact associated with the consent-request-id
+      operationId: consentArtefactDetails
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+        - name: consent-request-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: a consent artefact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentArtefactDetails'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ConsentArtefactDetails'
 
   /health-information/request:
     post:
@@ -1293,3 +1318,26 @@ components:
         temporaryToken:
           type: string
           description: JWT Token
+    ConsentArtefactDetails:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ConsentStatus'
+        requester:
+          $ref: '#/components/schemas/Requester'
+        hiu:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/OrganizationRepresentation'
+            - xml:
+                name: hiu
+        purpose:
+          $ref: '#/components/schemas/UsePurpose'
+        hiTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/HITypeEnum'
+        permission:
+          $ref: '#/components/schemas/Permission'
+        patient:
+          $ref: '#/components/schemas/patient'

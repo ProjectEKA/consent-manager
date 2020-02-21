@@ -21,7 +21,7 @@ public class DataFlowRequest {
             String hiuId,
             in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest) {
         final String transactionId = UUID.randomUUID().toString();
-        return fetchConsentArtifact(dataFlowRequest.getConsent().getId())
+        return fetchConsentArtefact(dataFlowRequest.getConsent().getId())
                 .flatMap(consentArtefactRepresentation -> isValidHIU(hiuId, consentArtefactRepresentation)
                         ? validateConsentExpiry(dataFlowRequest, transactionId, consentArtefactRepresentation)
                         : Mono.error(ClientError.invalidHIU()));
@@ -36,46 +36,45 @@ public class DataFlowRequest {
                 : validateIfHIDateRangeIsProvided(dataFlowRequest, transactionId, consentArtefactRepresentation);
     }
 
-    private Mono<ConsentArtefactRepresentation> fetchConsentArtifact(String consentArtefactId) {
-        return consentManagerClient.getConsentArtifact(consentArtefactId);
+    private Mono<ConsentArtefactRepresentation> fetchConsentArtefact(String consentArtefactId) {
+        return consentManagerClient.getConsentArtefact(consentArtefactId);
     }
 
     private Mono<DataFlowRequestResponse> validateIfHIDateRangeIsProvided(
             in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
-            String transactionId, ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return dataFlowRequest.getHiDataRange() == null
-                ? saveAndBroadcast(addDefaultHIDataRange(dataFlowRequest, consentArtefactRepresentation), transactionId)
-                : validateHIDateRange(
-                        dataFlowRequest,
-                        transactionId,
-                        isValidHIDateRange(dataFlowRequest, consentArtefactRepresentation));
+            String transactionId,
+            ConsentArtefactRepresentation consentArtefactRepresentation) {
+        if (dataFlowRequest.getHiDataRange() == null) {
+            return saveAndBroadcast(
+                    addDefaultHIDataRange(dataFlowRequest, consentArtefactRepresentation),
+                    transactionId,
+                    consentArtefactRepresentation.getSignature());
+        }
+        return validateHIDateRange(dataFlowRequest, transactionId, consentArtefactRepresentation);
     }
 
     private Mono<DataFlowRequestResponse> validateHIDateRange(
             in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
             String transactionId,
-            boolean validHIDateRange) {
+            ConsentArtefactRepresentation consentArtefactRepresentation) {
+        boolean validHIDateRange = isValidHIDateRange(dataFlowRequest, consentArtefactRepresentation);
         return validHIDateRange
-                ? saveAndBroadcast(dataFlowRequest, transactionId)
+                ? saveAndBroadcast(dataFlowRequest, transactionId, consentArtefactRepresentation.getSignature())
                 : Mono.error(ClientError.invalidDateRange());
     }
 
     private Mono<DataFlowRequestResponse> saveAndBroadcast(
             in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
-            String transactionId) {
-        return getDigitalSignatureForHIP(dataFlowRequest.getConsent().getId())
-                .flatMap(signature -> {
-                    dataFlowRequest.getConsent().setDigitalSignature(signature);
-                    return dataFlowRequestRepository.addDataFlowRequest(transactionId, dataFlowRequest)
-                            .then(postDataFlowrequestApproval.broadcastDataFlowRequest(transactionId,
-                                    dataFlowRequest))
-                            .thenReturn(DataFlowRequestResponse.builder().transactionId(transactionId).build());
-                });
+            String transactionId,
+            String signature) {
+        setConsentSignature(dataFlowRequest, signature);
+        return dataFlowRequestRepository.addDataFlowRequest(transactionId, dataFlowRequest)
+                .then(postDataFlowrequestApproval.broadcastDataFlowRequest(transactionId, dataFlowRequest))
+                .thenReturn(DataFlowRequestResponse.builder().transactionId(transactionId).build());
     }
 
-    private Mono<String> getDigitalSignatureForHIP(String consentArtifactId) {
-        //TODO: Need to create a hash out of consent without HIU info
-        return Mono.just("new hash from consent artifact");
+    private void setConsentSignature(in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest, String signature) {
+        dataFlowRequest.getConsent().setDigitalSignature(signature);
     }
 
     private in.projecteka.consentmanager.dataflow.model.DataFlowRequest addDefaultHIDataRange(

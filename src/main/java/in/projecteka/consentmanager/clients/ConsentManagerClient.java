@@ -17,7 +17,7 @@ public class ConsentManagerClient {
     private DataFlowAuthServerProperties dataFlowAuthServerProperties;
     private DataFlowConsentManagerProperties dataFlowConsentManagerProperties;
 
-    public Mono<ConsentArtefactRepresentation> getConsentArtifact(String consentArtefactId) {
+    public Mono<ConsentArtefactRepresentation> getConsentArtefact(String consentArtefactId) {
         return webClientBuilder.build()
                 .get()
                 .uri(String.format("%s/internal/consents/%s", dataFlowConsentManagerProperties.getUrl(), consentArtefactId))

@@ -21,13 +21,15 @@ public class UserConfiguration {
                                    OtpServiceProperties otpServiceProperties,
                                    OtpServiceClient otpServiceClient,
                                    UserVerificationService userVerificationService,
-                                   KeycloakClient keycloakClient) {
+                                   KeycloakClient keycloakClient,
+                                   TokenService tokenService) {
         return new UserService(
                 userRepository,
                 otpServiceProperties,
                 otpServiceClient,
                 userVerificationService,
-                keycloakClient
+                keycloakClient,
+                tokenService
         );
     }
 
@@ -65,5 +67,10 @@ public class UserConfiguration {
                         return Optional.empty();
                     }
                 });
+    }
+
+    @Bean
+    public TokenService tokenService(KeycloakProperties keycloakProperties, KeycloakClient keycloakClient) {
+        return new TokenService(keycloakProperties, keycloakClient);
     }
 }

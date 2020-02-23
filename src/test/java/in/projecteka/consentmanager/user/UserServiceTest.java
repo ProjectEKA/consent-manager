@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -52,6 +53,9 @@ class UserServiceTest {
     @Mock
     private KeycloakClient keycloakClient;
 
+    @Mock
+    private TokenService tokenService;
+
     EasyRandom easyRandom;
 
     private UserService userService;
@@ -68,7 +72,8 @@ class UserServiceTest {
                 otpServiceProperties,
                 otpServiceClient,
                 userVerificationService,
-                keycloakClient);
+                keycloakClient,
+                tokenService);
     }
 
     private static Stream<AbstractMap.SimpleEntry<String, String>> mobileNumberProvider() {
@@ -139,4 +144,45 @@ class UserServiceTest {
         OtpVerification otpVerification = new OtpVerification(sessionId, easyRandom.nextObject(String.class));
         Assertions.assertThrows(InvalidRequestException.class, () -> userService.permitOtp(otpVerification));
     }
+
+    @Test
+    public void shouldCreateUser() {
+        SignUpRequest signUpRequest = new SignUpRequest(
+                "SOME_NAME",
+                "SOME_LAST_NAME",
+                "SOME_USER_ID",
+                "SOME_PASSWORD");
+        KeycloakToken userToken = new KeycloakToken(
+                "SOME_ACCESS_TOKEN",
+                10,
+                30,
+                "SOME_REFRESH_TOKEN",
+                "bearer");
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new KeycloakToken()));
+        when(keycloakClient.createUser(any(), any())).thenReturn(Mono.empty());
+        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
+
+        StepVerifier.create(userService.create(signUpRequest))
+                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo("SOME_ACCESS_TOKEN"))
+                .verifyComplete();
+    }
+
+    @ParameterizedTest(name= "Invalid user name")
+    @CsvSource({
+            ",",
+            "empty",
+            "null"
+    })
+    public void shouldThrowInvalidRequestExceptionForInvalidUserId(
+            @ConvertWith(AuthorizationTest.NullableConverter.class) String userId
+    ) {
+
+        SignUpRequest signUpRequest = new SignUpRequest(
+                "SOME_NAME",
+                "SOME_LAST_NAME",
+                userId,
+                "SOME_PASSWORD");
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.create(signUpRequest));
+    }
+
 }

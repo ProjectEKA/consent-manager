@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.*;
 import lombok.AllArgsConstructor;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
@@ -19,6 +20,8 @@ public class UserService {
     private OtpServiceClient otpServiceClient;
     private UserVerificationService userVerificationService;
     private KeycloakClient keycloakClient;
+    private TokenService tokenService;
+
 
     public Mono<User> userWith(String userName) {
         return userRepository.userWith(userName);
@@ -55,6 +58,9 @@ public class UserService {
     }
 
     public Mono<KeycloakToken> create(SignUpRequest signUpRequest) {
+        if(!validateUserSignUp(signUpRequest)) {
+            throw new InvalidRequestException("invalid.request.body");
+        }
         UserCredential credential = new UserCredential(signUpRequest.getPassword());
         KeycloakCreateUserRequest createUserRequest =
                 new KeycloakCreateUserRequest(
@@ -65,10 +71,10 @@ public class UserService {
                         "true");
 
 
-        Mono<KeycloakToken> token = keycloakClient.tokenForAdmin();
+        Mono<KeycloakToken> token = tokenService.tokenForAdmin();
         return token
                 .flatMap(accessToken -> keycloakClient.createUser(accessToken, createUserRequest))
-                .then(keycloakClient.tokenForUser(signUpRequest.getUserName(), signUpRequest.getPassword()))
+                .then(tokenService.tokenForUser(signUpRequest.getUserName(), signUpRequest.getPassword()))
                 .map(keycloakToken -> keycloakToken);
     }
 
@@ -83,5 +89,12 @@ public class UserService {
         return mobileNumber.split("-").length > 1
                 ? mobileNumber.split("-")[1]
                 : mobileNumber;
+    }
+
+    private boolean validateUserSignUp(SignUpRequest signUpRequest) {
+        return !StringUtils.isEmpty(signUpRequest.getFirstName()) &&
+                !StringUtils.isEmpty(signUpRequest.getLastName()) &&
+                !StringUtils.isEmpty(signUpRequest.getUserName()) &&
+                !StringUtils.isEmpty(signUpRequest.getPassword());
     }
 }

@@ -24,6 +24,9 @@ class UserConfigurationTest {
     @Mock
     private KeycloakClient keycloakClient;
 
+    @Mock
+    private TokenService tokenService;
+
     private UserConfiguration userConfiguration = new UserConfiguration();
 
     @Test
@@ -33,7 +36,8 @@ class UserConfigurationTest {
                 otpServiceProperties,
                 otpServiceClient,
                 userVerificationService,
-                keycloakClient))
+                keycloakClient,
+                tokenService))
                 .isInstanceOf(UserService.class);
     }
 }

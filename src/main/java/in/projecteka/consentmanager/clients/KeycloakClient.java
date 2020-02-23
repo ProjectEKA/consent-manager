@@ -5,7 +5,6 @@ import in.projecteka.consentmanager.user.model.KeycloakCreateUserRequest;
 import in.projecteka.consentmanager.user.model.KeycloakToken;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -24,30 +23,6 @@ public class KeycloakClient {
 
     }
 
-    public Mono<KeycloakToken> tokenForAdmin() {
-        MultiValueMap<String, String> formData= new LinkedMultiValueMap<>();
-        formData.add("grant_type", "password");
-        formData.add("scope", "openid");
-        formData.add("client_id", keyCloakProperties.getClientId());
-        formData.add("client_secret", keyCloakProperties.getClientSecret());
-        formData.add("username", keyCloakProperties.getUserName());
-        formData.add("password", keyCloakProperties.getPassword());
-
-        return getToken(formData);
-    }
-
-    public Mono<KeycloakToken> tokenForUser(String userName, String password) {
-        MultiValueMap<String, String> formData= new LinkedMultiValueMap<>();
-        formData.add("grant_type", "password");
-        formData.add("scope", "openid");
-        formData.add("client_id", keyCloakProperties.getClientId());
-        formData.add("client_secret", keyCloakProperties.getClientSecret());
-        formData.add("username", userName);
-        formData.add("password", password);
-
-        return getToken(formData);
-    }
-
     public Mono<?> createUser(KeycloakToken keycloakToken, KeycloakCreateUserRequest request) {
         String accessToken = String.format("Bearer %s", keycloakToken.getAccessToken());
         return webClientBuilder.build()
@@ -60,10 +35,11 @@ public class KeycloakClient {
                 .body(Mono.just(request), KeycloakCreateUserRequest.class)
                 .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
-                .toBodilessEntity();
+                .toBodilessEntity()
+                .then();
     }
 
-    private Mono<KeycloakToken> getToken(MultiValueMap<String, String> formData) {
+    public Mono<KeycloakToken> getToken(MultiValueMap<String, String> formData) {
         return webClientBuilder.build()
                 .post()
                 .uri(uriBuilder ->
@@ -72,6 +48,7 @@ public class KeycloakClient {
                 .accept( MediaType.APPLICATION_JSON )
                 .body( BodyInserters.fromFormData(formData))
                 .retrieve()
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(KeycloakToken.class);
     }
 }

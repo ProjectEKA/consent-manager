@@ -422,10 +422,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConsentArtefactDetails'
+                $ref: '#/components/schemas/ConsentArtefacts'
             application/xml:
               schema:
-                $ref: '#/components/schemas/ConsentArtefactDetails'
+                $ref: '#/components/schemas/ConsentArtefacts'
 
   /health-information/request:
     post:
@@ -1318,26 +1318,7 @@ components:
         temporaryToken:
           type: string
           description: JWT Token
-    ConsentArtefactDetails:
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/ConsentStatus'
-        requester:
-          $ref: '#/components/schemas/Requester'
-        hiu:
-          type: object
-          allOf:
-            - $ref: '#/components/schemas/OrganizationRepresentation'
-            - xml:
-                name: hiu
-        purpose:
-          $ref: '#/components/schemas/UsePurpose'
-        hiTypes:
-          type: array
-          items:
-            $ref: '#/components/schemas/HITypeEnum'
-        permission:
-          $ref: '#/components/schemas/Permission'
-        patient:
-          $ref: '#/components/schemas/patient'
+    ConsentArtefacts:
+      type: array
+      items:
+        $ref: '#/components/schemas/ConsentArtefactRepresentation'

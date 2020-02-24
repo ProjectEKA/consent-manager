@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -27,5 +28,13 @@ public class ConsentArtefactsController {
     @GetMapping(value = "/internal/consents/{consentId}")
     public Mono<ConsentArtefactLightRepresentation> getConsent(@PathVariable String consentId) {
         return consentManager.getConsentArtefactLight(consentId);
+    }
+
+    @GetMapping(value = "/consent-requests/{request-id}/consent-artefacts")
+    public Flux<ConsentArtefactRepresentation> getConsents(
+            @PathVariable(value = "request-id") String requestId,
+            @RequestHeader(value = "Authorization") String authorization) {
+        String requesterId = TokenUtils.getCallerId(authorization);
+        return consentManager.getConsents(requestId, requesterId);
     }
 }

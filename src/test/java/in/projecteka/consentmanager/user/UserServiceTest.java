@@ -1,15 +1,16 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.AuthorizationTest;
-import in.projecteka.consentmanager.clients.KeycloakClient;
+import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
+import in.projecteka.consentmanager.clients.model.KeycloakToken;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
-import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,10 @@ import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.user.TestBuilders.keycloakToken;
+import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
+import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -51,19 +56,16 @@ class UserServiceTest {
     private UserVerificationService userVerificationService;
 
     @Mock
-    private KeycloakClient keycloakClient;
+    private IdentityServiceClient identityServiceClient;
 
     @Mock
     private TokenService tokenService;
-
-    EasyRandom easyRandom;
 
     private UserService userService;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        easyRandom = new EasyRandom();
         OtpServiceProperties otpServiceProperties = new OtpServiceProperties(
                 "",
                 Collections.singletonList("MOBILE"));
@@ -72,45 +74,39 @@ class UserServiceTest {
                 otpServiceProperties,
                 otpServiceClient,
                 userVerificationService,
-                keycloakClient,
+                identityServiceClient,
                 tokenService);
-    }
-
-    private static Stream<AbstractMap.SimpleEntry<String, String>> mobileNumberProvider() {
-        return Stream.of(new AbstractMap.SimpleEntry<>("9788888", "9788888"),
-                new AbstractMap.SimpleEntry<>("+91-9788888", "9788888"));
     }
 
     @ParameterizedTest
     @MethodSource("mobileNumberProvider")
-    public void shouldReturnTemporarySessionReceivedFromClient(AbstractMap.SimpleEntry<String, String> mobileNumber) {
+    public void shouldReturnTemporarySessionReceivedFromClient(
+            AbstractMap.SimpleEntry<String, String> mobileNumber) {
         var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", mobileNumber.getKey());
-        when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
-        var sessionId = easyRandom.nextObject(String.class);
+        var sessionId = string();
         var signUpSession = new SignUpSession(sessionId);
+        when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
         when(userVerificationService.cacheAndSendSession(sessionCaptor.capture(), eq(mobileNumber.getValue())))
                 .thenReturn(signUpSession);
 
-        Mono<SignUpSession> response = userService.sendOtp(userSignUpEnquiry);
+        Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
 
         assertThat(otpRequestArgumentCaptor.getValue().getSessionId()).isEqualTo(sessionCaptor.getValue());
-        StepVerifier.create(response)
+        StepVerifier.create(signUp)
                 .assertNext(session -> assertThat(session).isEqualTo(signUpSession))
                 .verifyComplete();
     }
 
     @Test
     public void shouldThrowInvalidRequestExceptionForInvalidDeviceType() {
-        UserSignUpEnquiry userSignupEnquiry = new UserSignUpEnquiry("INVALID_DEVICE", "1234567891");
-
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.sendOtp(userSignupEnquiry));
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.sendOtp(userSignUpEnquiry().build()));
     }
 
     @Test
     public void shouldReturnTokenReceivedFromClient() {
-        String sessionId = easyRandom.nextObject(String.class);
-        String otp = easyRandom.nextObject(String.class);
-        String token = easyRandom.nextObject(String.class);
+        var sessionId = string();
+        var otp = string();
+        var token = string();
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(sessionId, otp)).thenReturn(Mono.empty());
         when(userVerificationService.generateToken(sessionId))
@@ -129,7 +125,7 @@ class UserServiceTest {
     })
     public void shouldThrowInvalidRequestExceptionForInvalidOtpValue(
             @ConvertWith(AuthorizationTest.NullableConverter.class) String value) {
-        OtpVerification otpVerification = new OtpVerification(easyRandom.nextObject(String.class), value);
+        OtpVerification otpVerification = new OtpVerification(string(), value);
         Assertions.assertThrows(InvalidRequestException.class, () -> userService.permitOtp(otpVerification));
     }
 
@@ -141,33 +137,24 @@ class UserServiceTest {
     })
     public void shouldThrowInvalidRequestExceptionForInvalidOtpSessionId(
             @ConvertWith(AuthorizationTest.NullableConverter.class) String sessionId) {
-        OtpVerification otpVerification = new OtpVerification(sessionId, easyRandom.nextObject(String.class));
+        OtpVerification otpVerification = new OtpVerification(sessionId, string());
         Assertions.assertThrows(InvalidRequestException.class, () -> userService.permitOtp(otpVerification));
     }
 
     @Test
     public void shouldCreateUser() {
-        SignUpRequest signUpRequest = new SignUpRequest(
-                "SOME_NAME",
-                "SOME_LAST_NAME",
-                "SOME_USER_ID",
-                "SOME_PASSWORD");
-        KeycloakToken userToken = new KeycloakToken(
-                "SOME_ACCESS_TOKEN",
-                10,
-                30,
-                "SOME_REFRESH_TOKEN",
-                "bearer");
+        var signUpRequest = signUpRequest().build();
+        var userToken = keycloakToken().build();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new KeycloakToken()));
-        when(keycloakClient.createUser(any(), any())).thenReturn(Mono.empty());
+        when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 
         StepVerifier.create(userService.create(signUpRequest))
-                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo("SOME_ACCESS_TOKEN"))
+                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
                 .verifyComplete();
     }
 
-    @ParameterizedTest(name= "Invalid user name")
+    @ParameterizedTest(name = "Invalid user name")
     @CsvSource({
             ",",
             "empty",
@@ -176,13 +163,12 @@ class UserServiceTest {
     public void shouldThrowInvalidRequestExceptionForInvalidUserId(
             @ConvertWith(AuthorizationTest.NullableConverter.class) String userId
     ) {
-
-        SignUpRequest signUpRequest = new SignUpRequest(
-                "SOME_NAME",
-                "SOME_LAST_NAME",
-                userId,
-                "SOME_PASSWORD");
+        var signUpRequest = signUpRequest().userName(userId).build();
         Assertions.assertThrows(InvalidRequestException.class, () -> userService.create(signUpRequest));
     }
 
+    private static Stream<AbstractMap.SimpleEntry<String, String>> mobileNumberProvider() {
+        return Stream.of(new AbstractMap.SimpleEntry<>("9788888", "9788888"),
+                new AbstractMap.SimpleEntry<>("+91-9788888", "9788888"));
+    }
 }

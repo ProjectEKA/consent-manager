@@ -1,8 +1,9 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.user.KeycloakProperties;
-import in.projecteka.consentmanager.user.model.KeycloakCreateUserRequest;
-import in.projecteka.consentmanager.user.model.KeycloakToken;
+import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
+import in.projecteka.consentmanager.clients.model.KeycloakCreateUserRequest;
+import in.projecteka.consentmanager.clients.model.KeycloakToken;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
@@ -10,17 +11,14 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-public class KeycloakClient {
+public class IdentityServiceClient {
 
     private final WebClient.Builder webClientBuilder;
-    private final KeycloakProperties keyCloakProperties;
 
-    public KeycloakClient(WebClient.Builder webClientBuilder,
-                            KeycloakProperties keycloakProperties) {
+    public IdentityServiceClient(WebClient.Builder webClientBuilder,
+                                 IdentityServiceProperties identityServiceProperties) {
         this.webClientBuilder = webClientBuilder;
-        this.keyCloakProperties = keycloakProperties;
-        this.webClientBuilder.baseUrl(keycloakProperties.getBaseUrl());
-
+        this.webClientBuilder.baseUrl(identityServiceProperties.getBaseUrl());
     }
 
     public Mono<?> createUser(KeycloakToken keycloakToken, KeycloakCreateUserRequest request) {
@@ -29,9 +27,9 @@ public class KeycloakClient {
                 .post()
                 .uri(uriBuilder ->
                         uriBuilder.path("/admin/realms/consent-manager/users").build())
-                .header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
-                .header("Authorization", accessToken)
-                .accept( MediaType.APPLICATION_JSON )
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(HttpHeaders.AUTHORIZATION, accessToken)
+                .accept(MediaType.APPLICATION_JSON)
                 .body(Mono.just(request), KeycloakCreateUserRequest.class)
                 .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
@@ -45,8 +43,8 @@ public class KeycloakClient {
                 .uri(uriBuilder ->
                         uriBuilder.path("/realms/consent-manager/protocol/openid-connect/token").build())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .accept( MediaType.APPLICATION_JSON )
-                .body( BodyInserters.fromFormData(formData))
+                .accept(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromFormData(formData))
                 .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(KeycloakToken.class);

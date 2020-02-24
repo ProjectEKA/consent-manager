@@ -1,16 +1,25 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.KeycloakClient;
+import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
-import in.projecteka.consentmanager.user.model.*;
+import in.projecteka.consentmanager.clients.model.KeycloakCreateUserRequest;
+import in.projecteka.consentmanager.clients.model.KeycloakToken;
+import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.SignUpRequest;
+import in.projecteka.consentmanager.user.model.SignUpSession;
+import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.consentmanager.user.model.UserCredential;
+import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import lombok.AllArgsConstructor;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -19,7 +28,7 @@ public class UserService {
     private OtpServiceProperties otpServiceProperties;
     private OtpServiceClient otpServiceClient;
     private UserVerificationService userVerificationService;
-    private KeycloakClient keycloakClient;
+    private IdentityServiceClient identityServiceClient;
     private TokenService tokenService;
 
 
@@ -58,7 +67,7 @@ public class UserService {
     }
 
     public Mono<KeycloakToken> create(SignUpRequest signUpRequest) {
-        if(!validateUserSignUp(signUpRequest)) {
+        if (!validateUserSignUp(signUpRequest)) {
             throw new InvalidRequestException("invalid.request.body");
         }
         UserCredential credential = new UserCredential(signUpRequest.getPassword());
@@ -67,13 +76,11 @@ public class UserService {
                         signUpRequest.getFirstName(),
                         signUpRequest.getLastName(),
                         signUpRequest.getUserName(),
-                        Arrays.asList(credential),
-                        "true");
+                        Collections.singletonList(credential),
+                        Boolean.TRUE.toString());
 
-
-        Mono<KeycloakToken> token = tokenService.tokenForAdmin();
-        return token
-                .flatMap(accessToken -> keycloakClient.createUser(accessToken, createUserRequest))
+        return tokenService.tokenForAdmin()
+                .flatMap(accessToken -> identityServiceClient.createUser(accessToken, createUserRequest))
                 .then(tokenService.tokenForUser(signUpRequest.getUserName(), signUpRequest.getPassword()))
                 .map(keycloakToken -> keycloakToken);
     }
@@ -86,9 +93,10 @@ public class UserService {
     }
 
     private String removeCountryCodeFrom(String mobileNumber) {
-        return mobileNumber.split("-").length > 1
-                ? mobileNumber.split("-")[1]
-                : mobileNumber;
+        var countryCodeSeparator = "-";
+        return mobileNumber.split(countryCodeSeparator).length > 1
+               ? mobileNumber.split(countryCodeSeparator)[1]
+               : mobileNumber;
     }
 
     private boolean validateUserSignUp(SignUpRequest signUpRequest) {

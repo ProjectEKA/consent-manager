@@ -2,15 +2,18 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.Address;
 import in.projecteka.consentmanager.clients.model.Identifier;
+import in.projecteka.consentmanager.clients.model.KeycloakToken;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.Type;
 import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.link.discovery.model.Coding;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.CareContext;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
+import in.projecteka.consentmanager.clients.model.KeycloakCreateUserRequest;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
@@ -61,5 +64,17 @@ public class TestBuilders {
 
     public static Identifier.IdentifierBuilder identifier() {
         return easyRandom.nextObject(Identifier.IdentifierBuilder.class);
+    }
+
+    public static KeycloakCreateUserRequest.KeycloakCreateUserRequestBuilder keycloakCreateUserRequest() {
+        return easyRandom.nextObject(KeycloakCreateUserRequest.KeycloakCreateUserRequestBuilder.class);
+    }
+
+    public static IdentityServiceProperties.IdentityServicePropertiesBuilder keycloakProperties() {
+        return easyRandom.nextObject(IdentityServiceProperties.IdentityServicePropertiesBuilder.class);
+    }
+
+    public static KeycloakToken.KeycloakTokenBuilder keycloakToken() {
+        return easyRandom.nextObject(KeycloakToken.KeycloakTokenBuilder.class);
     }
 }

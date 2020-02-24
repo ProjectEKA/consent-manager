@@ -401,13 +401,13 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentArtefactRepresentation'
-  /consent/{consent-request-id}:
+  /consent-requests/{request-id}/consent-artefacts:
     get:
       tags:
         - consent
-      summary: Get a specific consent
+      summary: Gets list of consents given a request id
       description: Fetch a consent artefact associated with the consent-request-id
-      operationId: consentArtefactDetails
+      operationId: consentArtefacts
       parameters:
         - $ref: '#/components/parameters/authorization'
         - name: consent-request-id
@@ -418,7 +418,7 @@ paths:
             format: uuid
       responses:
         '200':
-          description: a consent artefact.
+          description: list of consent artefacts.
           content:
             application/json:
               schema:
@@ -426,7 +426,6 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentArtefacts'
-
   /health-information/request:
     post:
       tags:

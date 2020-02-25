@@ -4,10 +4,7 @@
     "firstName": "John",
     "lastName": "Doe",
     "gender": "M",
-    "phone": {
-      "number": "9999999999",
-      "countryCode": "+91"
-    },
+    "phone": "+91-9999999999",
     "dateOfBirth": "2019-12-06"
   },
   {
@@ -15,10 +12,7 @@
     "firstName": "Akbar",
     "lastName": "Tickner",
     "gender": "M",
-    "phone": {
-      "number": "8888888888",
-      "countryCode": "+91"
-    },
+    "phone": "+91-8888888888",
     "dateOfBirth": "2020-01-01"
   },
   {
@@ -26,10 +20,7 @@
     "firstName": "Favian",
     "lastName": "Sharma",
     "gender": "M",
-    "phone": {
-      "number": "8340289040",
-      "countryCode": "+91"
-    },
+    "phone": "+91-8340289040",
     "dateOfBirth": "1980-12-03"
   },
   {
@@ -37,10 +28,7 @@
     "firstName": "Shreya",
     "lastName": "TMH",
     "gender": "F",
-    "phone": {
-      "number": "9969800193",
-      "countryCode": "+91"
-    },
+    "phone": "+91-9969800193",
     "dateOfBirth": "1980-12-03"
   },
   {
@@ -48,10 +36,7 @@
     "firstName": "Kumar",
     "lastName": "Swamy",
     "gender": "M",
-    "phone": {
-      "number": "8340289040",
-      "countryCode": "+91"
-    },
+    "phone": "+91-8340289040",
     "dateOfBirth": "1976-12-03"
   }
 ]

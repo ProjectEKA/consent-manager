@@ -17,7 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import static in.projecteka.consentmanager.clients.TestBuilders.keycloakCreateUserRequest;
+import static in.projecteka.consentmanager.clients.TestBuilders.keycloakCreateUser;
 import static in.projecteka.consentmanager.clients.TestBuilders.keycloakProperties;
 import static in.projecteka.consentmanager.clients.TestBuilders.keycloakToken;
 import static java.lang.String.format;
@@ -69,7 +69,7 @@ class IdentityServiceClientTest {
 
     @Test
     public void shouldCreateUserAccountInKeycloak() {
-        var request = keycloakCreateUserRequest().build();
+        var request = keycloakCreateUser().build();
         var token = keycloakToken().build();
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
                 Mono.just(ClientResponse
@@ -85,7 +85,7 @@ class IdentityServiceClientTest {
 
     @Test
     public void shouldThrowExceptionIfUserCreationRequestFails() {
-        var request = keycloakCreateUserRequest().build();
+        var request = keycloakCreateUser().build();
         var token = keycloakToken().build();
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
                 Mono.just(ClientResponse

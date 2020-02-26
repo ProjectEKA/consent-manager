@@ -66,8 +66,8 @@ public class TestBuilders {
         return easyRandom.nextObject(Identifier.IdentifierBuilder.class);
     }
 
-    public static KeycloakUser.KeycloakCreateUserRequestBuilder keycloakCreateUserRequest() {
-        return easyRandom.nextObject(KeycloakUser.KeycloakCreateUserRequestBuilder.class);
+    public static KeycloakUser.KeycloakUserBuilder keycloakCreateUser() {
+        return easyRandom.nextObject(KeycloakUser.KeycloakUserBuilder.class);
     }
 
     public static IdentityServiceProperties.IdentityServicePropertiesBuilder keycloakProperties() {

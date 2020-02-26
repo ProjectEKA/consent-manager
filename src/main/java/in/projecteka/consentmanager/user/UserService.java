@@ -6,7 +6,7 @@ import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
-import in.projecteka.consentmanager.clients.model.KeycloakCreateUserRequest;
+import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.KeycloakToken;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
@@ -71,16 +71,15 @@ public class UserService {
             throw new InvalidRequestException("invalid.request.body");
         }
         UserCredential credential = new UserCredential(signUpRequest.getPassword());
-        KeycloakCreateUserRequest createUserRequest =
-                new KeycloakCreateUserRequest(
-                        signUpRequest.getFirstName(),
-                        signUpRequest.getLastName(),
-                        signUpRequest.getUserName(),
-                        Collections.singletonList(credential),
-                        Boolean.TRUE.toString());
+        KeycloakUser user = new KeycloakUser(
+                signUpRequest.getFirstName(),
+                signUpRequest.getLastName(),
+                signUpRequest.getUserName(),
+                Collections.singletonList(credential),
+                Boolean.TRUE.toString());
 
         return tokenService.tokenForAdmin()
-                .flatMap(accessToken -> identityServiceClient.createUser(accessToken, createUserRequest))
+                .flatMap(accessToken -> identityServiceClient.createUser(accessToken, user))
                 .then(tokenService.tokenForUser(signUpRequest.getUserName(), signUpRequest.getPassword()))
                 .map(keycloakToken -> keycloakToken);
     }

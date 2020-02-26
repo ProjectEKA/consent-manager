@@ -10,7 +10,7 @@ import java.util.List;
 @Builder
 @Data
 @AllArgsConstructor
-public class KeycloakCreateUserRequest {
+public class KeycloakUser {
     private String firstName;
     private String lastName;
     private String username;

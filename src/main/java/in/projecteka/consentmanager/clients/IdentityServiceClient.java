@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
-import in.projecteka.consentmanager.clients.model.KeycloakCreateUserRequest;
+import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.KeycloakToken;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -21,7 +21,7 @@ public class IdentityServiceClient {
         this.webClientBuilder.baseUrl(identityServiceProperties.getBaseUrl());
     }
 
-    public Mono<?> createUser(KeycloakToken keycloakToken, KeycloakCreateUserRequest request) {
+    public Mono<?> createUser(KeycloakToken keycloakToken, KeycloakUser request) {
         String accessToken = String.format("Bearer %s", keycloakToken.getAccessToken());
         return webClientBuilder.build()
                 .post()
@@ -30,7 +30,7 @@ public class IdentityServiceClient {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(HttpHeaders.AUTHORIZATION, accessToken)
                 .accept(MediaType.APPLICATION_JSON)
-                .body(Mono.just(request), KeycloakCreateUserRequest.class)
+                .body(Mono.just(request), KeycloakUser.class)
                 .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .toBodilessEntity()

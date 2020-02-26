@@ -13,7 +13,7 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.CareContext;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
-import in.projecteka.consentmanager.clients.model.KeycloakCreateUserRequest;
+import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
@@ -66,8 +66,8 @@ public class TestBuilders {
         return easyRandom.nextObject(Identifier.IdentifierBuilder.class);
     }
 
-    public static KeycloakCreateUserRequest.KeycloakCreateUserRequestBuilder keycloakCreateUserRequest() {
-        return easyRandom.nextObject(KeycloakCreateUserRequest.KeycloakCreateUserRequestBuilder.class);
+    public static KeycloakUser.KeycloakCreateUserRequestBuilder keycloakCreateUserRequest() {
+        return easyRandom.nextObject(KeycloakUser.KeycloakCreateUserRequestBuilder.class);
     }
 
     public static IdentityServiceProperties.IdentityServicePropertiesBuilder keycloakProperties() {

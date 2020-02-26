@@ -87,7 +87,7 @@ public class ConsentArtefactRepository {
                     Tuple.of(consentRequestId,
                             consentArtefact.getConsentDetail().getConsentId(),
                             patientId,
-                            JsonObject.mapFrom(consentArtefact),
+                            JsonObject.mapFrom(consentArtefact.getConsentDetail()),
                             signature,
                             ConsentStatus.GRANTED.toString()),
                     insertHipConsentArtefactHandler -> updateConsentRequest(

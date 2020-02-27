@@ -5,7 +5,6 @@ import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Address;
-import in.projecteka.consentmanager.clients.model.Phone;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.User;
@@ -102,8 +101,7 @@ public class DiscoveryTest {
                 .careContexts(of())
                 .build();
         PatientResponse patientResponse = patientResponse().patient(patientInResponse).build();
-        Phone phone = Phone.builder().countryCode("+91").number("9999999999").build();
-        User user = user().identifier("1").firstName("first name").phone(phone).build();
+        User user = user().identifier("1").firstName("first name").phone("+91-9999999999").build();
         String hipClientUrl = "http://localhost:8001";
         Provider provider = provider()
                 .addresses(of(address))
@@ -149,8 +147,7 @@ public class DiscoveryTest {
                 discoveryRepository);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
-        Phone phone = Phone.builder().build();
-        User user = user().identifier("1").firstName("first name").phone(phone).build();
+        User user = user().identifier("1").firstName("first name").build();
         String hipClientUrl = "http://localhost:8001";
         Provider provider = provider()
                 .addresses(of(address))

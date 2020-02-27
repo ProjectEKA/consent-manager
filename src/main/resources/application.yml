@@ -16,6 +16,12 @@ consentmanager:
       - MOBILE
   jwt:
     secret: ${JWT_SECRET}
+  keycloak:
+    baseUrl: ${KEY_CLOAK_URL}
+    clientId: ${KEY_CLOAK_CONSENT_CLIENT_ID}
+    clientSecret: ${KEY_CLOAK_CONSENT_CLIENT_SECRET}
+    userName: ${KEY_CLOAK_CONSENT_USER_NAME}
+    password: ${KEY_CLOAK_CONSENT_PASSWORD}
   db:
     host: ${POSTGRES_HOST}
     port: 5432

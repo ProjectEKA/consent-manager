@@ -53,16 +53,5 @@
       "countryCode": "+91"
     },
     "dateOfBirth": "1976-12-03"
-  },
-  {
-    "identifier": "1@ncg",
-    "firstName": "Kumar",
-    "lastName": "Swamy",
-    "gender": "M",
-    "phone": {
-      "number": "8340289040",
-      "countryCode": "+91"
-    },
-    "dateOfBirth": "1976-12-03"
   }
 ]

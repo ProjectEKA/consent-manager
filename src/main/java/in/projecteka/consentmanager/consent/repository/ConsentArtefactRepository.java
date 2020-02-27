@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.consent.repository;
 
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
+import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
-import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
@@ -14,10 +14,12 @@ import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Transaction;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.time.LocalDateTime;
+import java.util.stream.StreamSupport;
 
 @AllArgsConstructor
 public class ConsentArtefactRepository {
@@ -28,12 +30,15 @@ public class ConsentArtefactRepository {
             " (consent_request_id, consent_artefact_id, patient_id, consent_artefact, signature, status) VALUES" +
             " ($1, $2, $3, $4, $5, $6)";
     private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
-    private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, date_modified=$2 WHERE request_id=$3";
+    private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
+            "date_modified=$2 WHERE request_id=$3";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
     private static final String SELECT_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
             "FROM consent_artefact WHERE consent_artefact_id = $1";
     private static final String SELECT_HIP_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
             "FROM hip_consent_artefact WHERE consent_artefact_id = $1";
+    private static final String SELECT_CONSENT_IDS_FROM_CONSENT_ARTEFACT = "SELECT consent_artefact_id " +
+            "FROM consent_artefact WHERE consent_request_id=$1";
     private PgPool dbClient;
 
     public Mono<Void> addConsentArtefactAndUpdateStatus(ConsentArtefact consentArtefact,
@@ -165,6 +170,21 @@ public class ConsentArtefactRepository {
                         } else {
                             monoSink.success(null);
                         }
+                    }
+                }));
+    }
+
+    public Flux<String> getConsentArtefacts(String consentRequestId) {
+        return Flux.create(fluxSink -> dbClient.preparedQuery(SELECT_CONSENT_IDS_FROM_CONSENT_ARTEFACT,
+                Tuple.of(consentRequestId),
+                handler -> {
+                    if (handler.failed()) {
+                        fluxSink.error(new Exception("Failed to get consent id from consent request Id"));
+                    } else {
+                        StreamSupport.stream(handler.result().spliterator(), false)
+                                .map(row -> row.getString("consent_artefact_id"))
+                                .forEach(fluxSink::next);
+                        fluxSink.complete();
                     }
                 }));
     }

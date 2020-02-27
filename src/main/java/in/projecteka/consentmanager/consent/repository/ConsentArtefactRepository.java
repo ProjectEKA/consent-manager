@@ -37,7 +37,7 @@ public class ConsentArtefactRepository {
             "FROM consent_artefact WHERE consent_artefact_id = $1";
     private static final String SELECT_HIP_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
             "FROM hip_consent_artefact WHERE consent_artefact_id = $1";
-    private static final String SELECT_CONSENT_IDS_FROM_CONSENT_ARTIFACT = "SELECT consent_artefact_id " +
+    private static final String SELECT_CONSENT_IDS_FROM_CONSENT_ARTEFACT = "SELECT consent_artefact_id " +
             "FROM consent_artefact WHERE consent_request_id=$1";
     private PgPool dbClient;
 
@@ -175,7 +175,7 @@ public class ConsentArtefactRepository {
     }
 
     public Flux<String> getConsentArtefacts(String consentRequestId) {
-        return Flux.create(fluxSink -> dbClient.preparedQuery(SELECT_CONSENT_IDS_FROM_CONSENT_ARTIFACT,
+        return Flux.create(fluxSink -> dbClient.preparedQuery(SELECT_CONSENT_IDS_FROM_CONSENT_ARTEFACT,
                 Tuple.of(consentRequestId),
                 handler -> {
                     if (handler.failed()) {

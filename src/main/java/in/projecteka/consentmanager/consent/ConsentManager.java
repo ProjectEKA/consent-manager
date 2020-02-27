@@ -49,7 +49,8 @@ public class ConsentManager {
     private PostConsentApproval postConsentApproval;
 
     private static boolean isValidRequester(ConsentArtefact consentDetail, String requesterId) {
-        return consentDetail.getHiu().getId().equals(requesterId) || consentDetail.getPatient().getId().equals(requesterId);
+        return consentDetail.getHiu().getId().equals(requesterId) ||
+                consentDetail.getPatient().getId().equals(requesterId);
     }
 
     public Mono<String> askForConsent(String requestingHIUId, RequestedDetail requestedDetail) {
@@ -265,11 +266,11 @@ public class ConsentManager {
         return consentArtefactRepository.getConsentArtefacts(consentRequestId)
                 .flatMap(consentArtefactRepository::getConsentArtefact)
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()))
-                .flatMap(r -> {
-                    if (!isValidRequester(r.getConsentDetail(), requesterId)) {
+                .flatMap(consentArtefactRepresentation -> {
+                    if (!isValidRequester(consentArtefactRepresentation.getConsentDetail(), requesterId)) {
                         return Mono.error(ClientError.consentArtefactForbidden());
                     }
-                    return Mono.just(r);
+                    return Mono.just(consentArtefactRepresentation);
                 });
     }
 }

@@ -1,10 +1,21 @@
 package in.projecteka.consentmanager.user;
 
+import in.projecteka.consentmanager.clients.model.KeycloakToken;
+import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.SignUpSession;
-import in.projecteka.consentmanager.user.model.*;
+import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -29,4 +40,8 @@ public class UserController {
         return userService.permitOtp(request);
     }
 
+    @PostMapping
+    public Mono<KeycloakToken> create (@RequestBody SignUpRequest request) {
+        return userService.create(request);
+    }
 }

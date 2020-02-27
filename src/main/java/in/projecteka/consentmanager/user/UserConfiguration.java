@@ -3,7 +3,10 @@ package in.projecteka.consentmanager.user;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
+import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +22,15 @@ public class UserConfiguration {
     public UserService userService(UserRepository userRepository,
                                    OtpServiceProperties otpServiceProperties,
                                    OtpServiceClient otpServiceClient,
-                                   UserVerificationService userVerificationService) {
-        return new UserService(userRepository, otpServiceProperties, otpServiceClient, userVerificationService);
+                                   UserVerificationService userVerificationService,
+                                   IdentityServiceClient identityServiceClient,
+                                   TokenService tokenService) {
+        return new UserService(userRepository,
+                otpServiceProperties,
+                otpServiceClient,
+                userVerificationService,
+                identityServiceClient,
+                tokenService);
     }
 
     @Bean
@@ -32,6 +42,12 @@ public class UserConfiguration {
     public OtpServiceClient otpServiceClient(WebClient.Builder builder,
                                              OtpServiceProperties otpServiceProperties) {
         return new OtpServiceClient(builder, otpServiceProperties);
+    }
+
+    @Bean
+    public IdentityServiceClient keycloakClient(WebClient.Builder builder,
+                                                IdentityServiceProperties identityServiceProperties) {
+        return new IdentityServiceClient(builder, identityServiceProperties);
     }
 
     @Bean
@@ -51,5 +67,10 @@ public class UserConfiguration {
                         return Optional.empty();
                     }
                 });
+    }
+
+    @Bean
+    public TokenService tokenService(IdentityServiceProperties identityServiceProperties, IdentityServiceClient identityServiceClient) {
+        return new TokenService(identityServiceProperties, identityServiceClient);
     }
 }

@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DeviceIdentifier {
-    private String identifierType;
-    private String identifier;
+public class SignUpSession {
+    private String sessionId;
 }

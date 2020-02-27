@@ -5,11 +5,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
 @Builder
-public class Phone {
-    private String number;
-    private String countryCode;
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class UserSignUpEnquiry {
+    private String identifierType;
+    private String identifier;
 }

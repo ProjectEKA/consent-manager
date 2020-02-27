@@ -12,14 +12,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ConsentArtefact {
-    private String consentId;
-    private Date createdAt;
-    private ConsentPurpose purpose;
-    private PatientReference patient;
-    private HIPReference hip;
     private HIUReference hiu;
-    private Requester requester;
-    private HIType[] hiTypes;
     private ConsentPermission permission;
-    private List<GrantedContext> careContexts;
 }

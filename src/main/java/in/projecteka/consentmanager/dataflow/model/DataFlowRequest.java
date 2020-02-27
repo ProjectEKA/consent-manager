@@ -13,5 +13,5 @@ public class DataFlowRequest {
     private Consent consent;
     private HIDataRange hiDataRange;
     private String callBackUrl;
-    //TODO: Add KeyMaterial as part of encryption
+    private KeyMaterial keyMaterial;
 }

@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.dataflow.model.hip;
 
 import in.projecteka.consentmanager.dataflow.model.Consent;
 import in.projecteka.consentmanager.dataflow.model.HIDataRange;
+import in.projecteka.consentmanager.dataflow.model.KeyMaterial;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,5 +17,5 @@ public class DataFlowRequest {
     private Consent consent;
     private HIDataRange hiDataRange;
     private String callBackUrl;
-    //TODO: Add KeyMaterial as part of encryption
+    private KeyMaterial keyMaterial;
 }

@@ -1252,7 +1252,7 @@ components:
         - cryptoAlg
         - curve
         - DHPublicKey
-        - randomKey
+        - nonce
       properties:
         cryptoAlg:
           type: string
@@ -1264,8 +1264,10 @@ components:
           example: Curve25519
         dhPublicKey:
           $ref: '#/components/schemas/keyObject'
-        randomKey:
-          $ref: '#/components/schemas/keyObject'
+        nonce:
+          type: string
+          format: 32 byte string
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
     keyObject:
       type: object
       required:

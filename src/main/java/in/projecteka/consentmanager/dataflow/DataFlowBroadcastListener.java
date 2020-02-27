@@ -54,6 +54,7 @@ public class DataFlowBroadcastListener {
                     .callBackUrl(dataFlowRequestMessage.getDataFlowRequest().getCallBackUrl())
                     .consent(dataFlowRequestMessage.getDataFlowRequest().getConsent())
                     .hiDataRange(dataFlowRequestMessage.getDataFlowRequest().getHiDataRange())
+                    .keyMaterial(dataFlowRequestMessage.getDataFlowRequest().getKeyMaterial())
                     .build();
             configureAndSendDataRequestFor(dataFlowRequest);
         };

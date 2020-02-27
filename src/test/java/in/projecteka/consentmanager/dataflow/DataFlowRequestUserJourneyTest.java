@@ -237,7 +237,8 @@ public class DataFlowRequestUserJourneyTest {
         in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest dataFlowRequest = new in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest(dataFlowRequestMessage.getTransactionId(),
                 dataFlowRequestMessage.getDataFlowRequest().getConsent(),
                 dataFlowRequestMessage.getDataFlowRequest().getHiDataRange(),
-                dataFlowRequestMessage.getDataFlowRequest().getCallBackUrl());
+                dataFlowRequestMessage.getDataFlowRequest().getCallBackUrl(),
+                dataFlowRequestMessage.getDataFlowRequest().getKeyMaterial());
 
         when(dataFlowRequestRepository.getHipIdFor(dataFlowRequestMessage.getDataFlowRequest().getConsent().getId()))
                 .thenReturn(Mono.just("10000005"));

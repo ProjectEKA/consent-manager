@@ -2,7 +2,7 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Value;
-import in.projecteka.consentmanager.user.OtpServiceProperties;
+import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -21,8 +21,7 @@ public class OtpServiceClient {
     public Mono<Void> send(OtpRequest requestBody) {
         return webClientBuilder.build()
                 .post()
-                .uri(uriBuilder ->
-                        uriBuilder.path("/otp").build())
+                .uri(uriBuilder -> uriBuilder.path("/otp").build())
                 .header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(requestBody), OtpRequest.class)
                 .accept(MediaType.APPLICATION_JSON)

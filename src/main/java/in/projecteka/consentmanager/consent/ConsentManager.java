@@ -31,10 +31,10 @@ import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignedObject;
 import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.Date;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
@@ -47,6 +47,11 @@ public class ConsentManager {
     private final ConsentArtefactRepository consentArtefactRepository;
     private KeyPair keyPair;
     private PostConsentApproval postConsentApproval;
+
+    private static boolean isValidRequester(ConsentArtefact consentDetail, String requesterId) {
+        return consentDetail.getHiu().getId().equals(requesterId) ||
+                consentDetail.getPatient().getId().equals(requesterId);
+    }
 
     public Mono<String> askForConsent(String requestingHIUId, RequestedDetail requestedDetail) {
         final String requestId = UUID.randomUUID().toString();
@@ -227,10 +232,6 @@ public class ConsentManager {
                 });
     }
 
-    private static boolean isValidRequester(ConsentArtefact consentDetail, String requesterId) {
-        return consentDetail.getHiu().getId().equals(requesterId) || consentDetail.getPatient().getId().equals(requesterId);
-    }
-
     public Mono<ConsentArtefactLightRepresentation> getConsentArtefactLight(String consentId) {
         return getHipConsentArtefact(consentId)
                 .flatMap(hipConsentArtefactRepresentation -> getConsentArtefact(consentId)
@@ -259,5 +260,17 @@ public class ConsentManager {
                 .consentDetail(consentArtefactLight)
                 .signature(hipConsentArtefact.getSignature())
                 .build();
+    }
+
+    public Flux<ConsentArtefactRepresentation> getConsents(String consentRequestId, String requesterId) {
+        return consentArtefactRepository.getConsentArtefacts(consentRequestId)
+                .flatMap(consentArtefactRepository::getConsentArtefact)
+                .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()))
+                .flatMap(consentArtefactRepresentation -> {
+                    if (!isValidRequester(consentArtefactRepresentation.getConsentDetail(), requesterId)) {
+                        return Mono.error(ClientError.consentArtefactForbidden());
+                    }
+                    return Mono.just(consentArtefactRepresentation);
+                });
     }
 }

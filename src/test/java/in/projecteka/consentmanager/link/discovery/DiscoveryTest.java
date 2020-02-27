@@ -5,7 +5,6 @@ import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Address;
-import in.projecteka.consentmanager.clients.model.Phone;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.User;
@@ -40,7 +39,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-
 public class DiscoveryTest {
 
     @Mock
@@ -62,10 +60,15 @@ public class DiscoveryTest {
 
     @Test
     public void returnProvidersWithOfficial() {
-        var discovery = new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
+        var discovery = new Discovery(
+                clientRegistryClient,
+                userServiceClient,
+                discoveryServiceClient,
+                discoveryRepository);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
-        var identifier = identifier().use(in.projecteka.consentmanager.clients.model.Identifier.IdentifierType.OFFICIAL.toString()).build();
+        var identifier = identifier().use(
+                in.projecteka.consentmanager.clients.model.Identifier.IdentifierType.OFFICIAL.toString()).build();
         var provider = provider()
                 .addresses(of(address))
                 .telecoms(of(telecommunication))
@@ -84,7 +87,11 @@ public class DiscoveryTest {
         String providerId = "1";
         String transactionId = "transaction-id";
         String patientId = "1";
-        var discovery = new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
+        var discovery = new Discovery(
+                clientRegistryClient,
+                userServiceClient,
+                discoveryServiceClient,
+                discoveryRepository);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
         in.projecteka.consentmanager.link.discovery.model.patient.response.Patient patientInResponse = patientInResponse()
@@ -94,8 +101,7 @@ public class DiscoveryTest {
                 .careContexts(of())
                 .build();
         PatientResponse patientResponse = patientResponse().patient(patientInResponse).build();
-        Phone phone = Phone.builder().countryCode("+91").number("9999999999").build();
-        User user = user().identifier("1").firstName("first name").phone(phone).build();
+        User user = user().identifier("1").firstName("first name").phone("+91-9999999999").build();
         String hipClientUrl = "http://localhost:8001";
         Provider provider = provider()
                 .addresses(of(address))
@@ -103,7 +109,7 @@ public class DiscoveryTest {
                 .identifiers(of(providerIdentifier().system(hipClientUrl).use("official").build()))
                 .name("Max")
                 .build();
-        Identifier identifier = patientIdentifier().type("MOBILE").value("+919999999999").build();
+        Identifier identifier = patientIdentifier().type("MOBILE").value("+91-9999999999").build();
         Patient patient = Patient.builder()
                 .id(user.getIdentifier())
                 .firstName(user.getFirstName())
@@ -114,11 +120,15 @@ public class DiscoveryTest {
                 .unVerifiedIdentifiers(of())
                 .build();
         PatientRequest patientRequest = patientRequest().patient(patient).transactionId(transactionId).build();
-        DiscoveryResponse discoveryResponse = discoveryResponse().patient(patientResponse.getPatient()).transactionId(transactionId).build();
+        DiscoveryResponse discoveryResponse = discoveryResponse()
+                .patient(patientResponse.getPatient())
+                .transactionId(transactionId)
+                .build();
 
         when(clientRegistryClient.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
         when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
-        when(discoveryServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl))).thenReturn(Mono.just(patientResponse));
+        when(discoveryServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl)))
+                .thenReturn(Mono.just(patientResponse));
         when(discoveryRepository.insert(providerId, patientId, transactionId)).thenReturn(Mono.empty());
 
         StepVerifier.create(discovery.patientFor(providerId, patientId, transactionId))
@@ -130,11 +140,14 @@ public class DiscoveryTest {
     public void shouldGetInvalidHipErrorWhenIdentifierIsNotOfficial() {
         String providerId = "1";
         String userName = "1";
-        var discovery = new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
+        var discovery = new Discovery(
+                clientRegistryClient,
+                userServiceClient,
+                discoveryServiceClient,
+                discoveryRepository);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
-        Phone phone = Phone.builder().build();
-        User user = user().identifier("1").firstName("first name").phone(phone).build();
+        User user = user().identifier("1").firstName("first name").build();
         String hipClientUrl = "http://localhost:8001";
         Provider provider = provider()
                 .addresses(of(address))
@@ -157,7 +170,11 @@ public class DiscoveryTest {
 
     @Test
     public void returnEmptyProvidersWhenOfficialIdentifierIsUnavailable() {
-        var discovery = new Discovery(clientRegistryClient, userServiceClient, discoveryServiceClient, discoveryRepository);
+        var discovery = new Discovery(
+                clientRegistryClient,
+                userServiceClient,
+                discoveryServiceClient,
+                discoveryRepository);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var identifier = identifier().build();

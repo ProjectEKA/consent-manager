@@ -17,5 +17,5 @@ public class User {
     private String lastName;
     private Gender gender;
     private Date dateOfBirth;
-    private Phone phone;
+    private String phone;
 }

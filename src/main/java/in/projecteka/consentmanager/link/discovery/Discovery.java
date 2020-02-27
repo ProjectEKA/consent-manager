@@ -71,7 +71,7 @@ public class Discovery {
     private Mono<PatientResponse> patientIn(String url, User user, String transactionId) {
         var phoneNumber = in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
                 .type(MOBILE)
-                .value(user.getPhone().getCountryCode() + user.getPhone().getNumber())
+                .value(user.getPhone())
                 .build();
         Patient patient = Patient.builder()
                 .id(user.getIdentifier())

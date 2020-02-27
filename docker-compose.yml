@@ -3,9 +3,57 @@ services:
   consent-manager:
     build: .
     ports:
-      - "9000:8000"
-    networks:
-      - consent-manager
-networks:
-  consent-manager:
-    driver: bridge
+      - "9010:8000"
+    environment:
+      - Auth_Token=${TOKEN}
+      - Client_Registry_Url=${Client_Registry_Url}
+      - Otp_Service_Url=http://otp
+      - User_Service_Url=http://consent-manager:8000
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - CONSENT_MANAGER_DB_NAME=consent_manager
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=welcome
+      - DB_CONNECTION_POOL_SIZE=10
+      - JWT_SECRET=secret
+      - KEY_CLOAK_URL=http://keycloak:8080/auth
+      - KEY_CLOAK_CONSENT_CLIENT_ID=consent-service
+      - KEY_CLOAK_CONSENT_CLIENT_SECRET=${SECRET}
+      - KEY_CLOAK_CONSENT_USER_NAME=consent-service-admin-user
+      - KEY_CLOAK_CONSENT_PASSWORD=${PASSWORD}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - MAX_PAGE_SIZE=10
+      - DEFAULT_PAGE_SIZE=10
+    depends_on:
+      - db
+      - otp
+      - rabbitmq
+      - keycloak
+  otp:
+    image: "ganesan92/otp-service"
+    depends_on:
+      - db
+    ports:
+    - "5000:80"
+  db:
+    image: "postgres:latest"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=welcome
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgresql:/var/lib/postgresql
+      - postgresql_data:/var/lib/postgresql/data
+  rabbitmq:
+    image: "rabbitmq:3"
+    ports:
+      - "5672:5672"
+  keycloak:
+    image: "jboss/keycloak"
+    ports:
+      - "8080:8080"
+volumes:
+  postgresql:
+  postgresql_data:

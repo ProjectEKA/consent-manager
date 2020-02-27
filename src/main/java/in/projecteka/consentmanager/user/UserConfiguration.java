@@ -3,6 +3,10 @@ package in.projecteka.consentmanager.user;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import in.projecteka.consentmanager.clients.IdentityServiceClient;
+import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
+import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,8 +21,16 @@ public class UserConfiguration {
     @Bean
     public UserService userService(UserRepository userRepository,
                                    OtpServiceProperties otpServiceProperties,
-                                   OtpServiceClient otpServiceClient) {
-        return new UserService(userRepository, otpServiceProperties, otpServiceClient);
+                                   OtpServiceClient otpServiceClient,
+                                   UserVerificationService userVerificationService,
+                                   IdentityServiceClient identityServiceClient,
+                                   TokenService tokenService) {
+        return new UserService(userRepository,
+                otpServiceProperties,
+                otpServiceClient,
+                userVerificationService,
+                identityServiceClient,
+                tokenService);
     }
 
     @Bean
@@ -28,9 +40,14 @@ public class UserConfiguration {
 
     @Bean
     public OtpServiceClient otpServiceClient(WebClient.Builder builder,
-                                             OtpServiceProperties otpServiceProperties,
-                                             UserVerificationService userVerificationService) {
-        return new OtpServiceClient(builder, otpServiceProperties, userVerificationService);
+                                             OtpServiceProperties otpServiceProperties) {
+        return new OtpServiceClient(builder, otpServiceProperties);
+    }
+
+    @Bean
+    public IdentityServiceClient keycloakClient(WebClient.Builder builder,
+                                                IdentityServiceProperties identityServiceProperties) {
+        return new IdentityServiceClient(builder, identityServiceProperties);
     }
 
     @Bean
@@ -40,13 +57,20 @@ public class UserConfiguration {
         return new UserVerificationService(jwtProperties, sessionCache, secondSessionCache);
     }
 
-    @Bean({ "unverifiedSessions", "verifiedSessions" })
+    @Bean({"unverifiedSessions", "verifiedSessions"})
     public LoadingCache<String, Optional<String>> createSessionCache() {
-        return CacheBuilder.newBuilder().
-                expireAfterWrite(5, TimeUnit.MINUTES).build(new CacheLoader<>() {
-            public Optional<String> load(String key) {
-                return Optional.empty();
-            }
-        });
+        return CacheBuilder
+                .newBuilder()
+                .expireAfterWrite(5, TimeUnit.MINUTES)
+                .build(new CacheLoader<>() {
+                    public Optional<String> load(String key) {
+                        return Optional.empty();
+                    }
+                });
+    }
+
+    @Bean
+    public TokenService tokenService(IdentityServiceProperties identityServiceProperties, IdentityServiceClient identityServiceClient) {
+        return new TokenService(identityServiceProperties, identityServiceClient);
     }
 }

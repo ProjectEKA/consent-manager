@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent.repository;
 
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
+import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
@@ -31,6 +32,8 @@ public class ConsentArtefactRepository {
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
     private static final String SELECT_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
             "FROM consent_artefact WHERE consent_artefact_id = $1";
+    private static final String SELECT_HIP_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
+            "FROM hip_consent_artefact WHERE consent_artefact_id = $1";
     private PgPool dbClient;
 
     public Mono<Void> addConsentArtefactAndUpdateStatus(ConsentArtefact consentArtefact,
@@ -79,7 +82,7 @@ public class ConsentArtefactRepository {
                     Tuple.of(consentRequestId,
                             consentArtefact.getConsentDetail().getConsentId(),
                             patientId,
-                            JsonObject.mapFrom(consentArtefact),
+                            JsonObject.mapFrom(consentArtefact.getConsentDetail()),
                             signature,
                             ConsentStatus.GRANTED.toString()),
                     insertHipConsentArtefactHandler -> updateConsentRequest(
@@ -128,6 +131,31 @@ public class ConsentArtefactRepository {
                             JsonObject artefact = (JsonObject) row.getValue("consent_artefact");
                             ConsentArtefact consentArtefact = artefact.mapTo(ConsentArtefact.class);
                             ConsentArtefactRepresentation representation = ConsentArtefactRepresentation
+                                    .builder()
+                                    .status(ConsentStatus.valueOf(row.getString("status")))
+                                    .consentDetail(consentArtefact)
+                                    .signature(row.getString("signature"))
+                                    .build();
+                            monoSink.success(representation);
+                        } else {
+                            monoSink.success(null);
+                        }
+                    }
+                }));
+    }
+
+    public Mono<HIPConsentArtefactRepresentation> getHipConsentArtefact(String consentId) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_HIP_CONSENT_QUERY, Tuple.of(consentId),
+                handler -> {
+                    if (handler.failed()) {
+                        monoSink.error(new RuntimeException("Failed to retrieve CA.", handler.cause()));
+                    } else {
+                        RowSet<Row> results = handler.result();
+                        if (results.iterator().hasNext()) {
+                            Row row = results.iterator().next();
+                            JsonObject artefact = (JsonObject) row.getValue("consent_artefact");
+                            HIPConsentArtefact consentArtefact = artefact.mapTo(HIPConsentArtefact.class);
+                            HIPConsentArtefactRepresentation representation = HIPConsentArtefactRepresentation
                                     .builder()
                                     .status(ConsentStatus.valueOf(row.getString("status")))
                                     .consentDetail(consentArtefact)

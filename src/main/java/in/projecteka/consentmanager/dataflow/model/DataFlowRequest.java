@@ -14,4 +14,8 @@ public class DataFlowRequest {
     private HIDataRange hiDataRange;
     private String callBackUrl;
     private KeyMaterial keyMaterial;
+
+    public void setArtefactSignature(String signature) {
+        consent.setDigitalSignature(signature);
+    }
 }

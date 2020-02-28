@@ -1,6 +1,5 @@
-package in.projecteka.consentmanager.link.link.repository;
+package in.projecteka.consentmanager.link.link;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
@@ -17,6 +16,9 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import static in.projecteka.consentmanager.common.Serializer.from;
+import static in.projecteka.consentmanager.common.Serializer.to;
 
 public class LinkRepository {
 
@@ -42,57 +44,58 @@ public class LinkRepository {
 
     @SneakyThrows
     public Mono<Void> insertToLinkReference(PatientLinkReferenceResponse patientLinkReferenceResponse, String hipId) {
-        JsonObject patientLinkReferenceResponseJson =
-                new JsonObject(new ObjectMapper().writeValueAsString(patientLinkReferenceResponse));
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(
                         INSERT_TO_LINK_REFERENCE,
-                        Tuple.of(patientLinkReferenceResponseJson, hipId),
+                        Tuple.of(new JsonObject(from(patientLinkReferenceResponse)), hipId),
                         handler -> {
-                            if (handler.failed())
+                            if (handler.failed()) {
                                 monoSink.error(new Exception("Failed to insert link reference"));
-                            else
-                                monoSink.success();
-                        })
-        );
+                                return;
+                            }
+                            monoSink.success();
+                        }));
     }
 
     public Mono<String> getHIPIdFromDiscovery(String transactionId) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_HIP_ID_FROM_DISCOVERY, Tuple.of(transactionId),
+        return Mono.create(monoSink -> dbClient.preparedQuery(
+                SELECT_HIP_ID_FROM_DISCOVERY,
+                Tuple.of(transactionId),
                 handler -> {
                     if (handler.failed()) {
                         monoSink.error(new Exception("Failed to get HIP Id from transaction Id"));
-                    } else {
-                        monoSink.success(handler.result().iterator().next().getString(0));
+                        return;
                     }
+                    monoSink.success(handler.result().iterator().next().getString(0));
                 }));
     }
 
     public Mono<String> getTransactionIdFromLinkReference(String linkRefNumber) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_TRANSACTION_ID_FROM_LINK_REFERENCE, Tuple.of(linkRefNumber),
+        return Mono.create(monoSink -> dbClient.preparedQuery(
+                SELECT_TRANSACTION_ID_FROM_LINK_REFERENCE,
+                Tuple.of(linkRefNumber),
                 handler -> {
                     if (handler.failed()) {
                         monoSink.error(new Exception("Failed to get transaction id from link reference"));
-                    } else {
-                        monoSink.success(handler.result().iterator().next().getString(0));
+                        return;
                     }
+                    monoSink.success(handler.result().iterator().next().getString(0));
                 }));
     }
 
     @SneakyThrows
     public Mono<Void> insertToLink(String hipId, String consentManagerUserId, String linkRefNumber,
                                    PatientRepresentation patient) {
-        JsonObject patientJson = new JsonObject(new ObjectMapper().writeValueAsString(patient));
-        return Mono.create(monoSink ->
-                dbClient.preparedQuery(
-                        INSERT_TO_LINK, Tuple.of(hipId, consentManagerUserId, linkRefNumber, patientJson),
-                        handler -> {
-                            if (handler.failed())
-                                monoSink.error(new Exception("Failed to insert link"));
-                            else
-                                monoSink.success();
-                        })
-        );
+        return Mono.create(monoSink -> dbClient.preparedQuery(
+                INSERT_TO_LINK,
+                Tuple.of(hipId, consentManagerUserId, linkRefNumber, new JsonObject(from(patient))),
+                handler -> {
+                    if (handler.failed()) {
+                        monoSink.error(new Exception("Failed to insert link"));
+                        return;
+                    }
+                    monoSink.success();
+                }));
     }
 
     public Mono<String> getExpiryFromLinkReference(String linkRefNumber) {
@@ -100,9 +103,9 @@ public class LinkRepository {
                 handler -> {
                     if (handler.failed()) {
                         monoSink.error(new Exception("Failed to get communicationExpiry from link reference"));
-                    } else {
-                        monoSink.success(handler.result().iterator().next().getString(0));
+                        return;
                     }
+                    monoSink.success(handler.result().iterator().next().getString(0));
                 }));
     }
 
@@ -111,36 +114,35 @@ public class LinkRepository {
                 handler -> {
                     if (handler.failed()) {
                         monoSink.error(new Exception("Failed to get hip_id and care contexts"));
-                    } else {
-                        RowSet<Row> results = handler.result();
-                        List<Links> linksList = new ArrayList<>();
-                        HashMap<String,Links> hipIdToLinksMap = new HashMap<>();
-                        for (Row row : results) {
-                            String hipId = row.getString("hip_id");
-                            PatientRepresentation patientRepresentation =
-                                    convertToPatientRepresentation(row.getValue("patient").toString());
-                            if (hipIdToLinksMap.containsKey(hipId)){
-                                Links links = hipIdToLinksMap.get(hipId);
-                                links.getPatientRepresentations().getCareContexts()
-                                        .addAll(patientRepresentation.getCareContexts());
-                            } else {
-                                Links links = Links.builder()
-                                        .hip(Hip.builder().id(hipId).name("").build())
-                                        .patientRepresentations(patientRepresentation)
-                                        .build();
-                                hipIdToLinksMap.put(hipId, links);
-                            }
-                        }
-                        hipIdToLinksMap.forEach((key, link) -> linksList.add(link));
-                        monoSink.success(
-                                PatientLinks.builder().id(patientId).firstName("").lastName("").links(linksList).build());
+                        return;
                     }
+                    RowSet<Row> results = handler.result();
+                    List<Links> linksList = new ArrayList<>();
+                    HashMap<String, Links> hipIdToLinksMap = new HashMap<>();
+                    for (Row row : results) {
+                        String hipId = row.getString("hip_id");
+                        PatientRepresentation patientRepresentation = to(
+                                row.getValue("patient").toString(),
+                                PatientRepresentation.class);
+                        if (hipIdToLinksMap.containsKey(hipId)) {
+                            Links links = hipIdToLinksMap.get(hipId);
+                            links.getPatientRepresentations().getCareContexts()
+                                    .addAll(patientRepresentation.getCareContexts());
+                        } else {
+                            Links links = Links.builder()
+                                    .hip(Hip.builder().id(hipId).name("").build())
+                                    .patientRepresentations(patientRepresentation)
+                                    .build();
+                            hipIdToLinksMap.put(hipId, links);
+                        }
+                    }
+                    hipIdToLinksMap.forEach((key, link) -> linksList.add(link));
+                    monoSink.success(PatientLinks.builder()
+                            .id(patientId)
+                            .firstName("")
+                            .lastName("")
+                            .links(linksList)
+                            .build());
                 }));
-    }
-
-    @SneakyThrows
-    private PatientRepresentation convertToPatientRepresentation(String patient) {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(patient.getBytes(), PatientRepresentation.class);
     }
 }

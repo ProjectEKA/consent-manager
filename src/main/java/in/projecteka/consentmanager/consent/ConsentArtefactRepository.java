@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.consent.repository;
+package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;

@@ -15,7 +15,6 @@ import in.projecteka.consentmanager.link.link.model.PatientLinkResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import in.projecteka.consentmanager.link.link.model.hip.Patient;
-import in.projecteka.consentmanager.link.link.repository.LinkRepository;
 import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

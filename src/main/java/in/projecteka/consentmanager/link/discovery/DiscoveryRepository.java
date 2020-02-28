@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.link.discovery.repository;
+package in.projecteka.consentmanager.link.discovery;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import io.vertx.pgclient.PgPool;
@@ -17,13 +17,14 @@ public class DiscoveryRepository {
 
     public Mono<Void> insert(String providerId, String patientId, String transactionId) {
         return Mono.create(monoSink ->
-                dbClient.preparedQuery(INSERT_TO_DISCOVERY_REQUEST, Tuple.of(transactionId, patientId, providerId),
+                dbClient.preparedQuery(INSERT_TO_DISCOVERY_REQUEST,
+                        Tuple.of(transactionId, patientId, providerId),
                         handler -> {
-                            if (handler.failed())
+                            if (handler.failed()) {
                                 monoSink.error(ClientError.dbOperationFailed());
-                            else
-                                monoSink.success();
-                        })
-        );
+                                return;
+                            }
+                            monoSink.success();
+                        }));
     }
 }

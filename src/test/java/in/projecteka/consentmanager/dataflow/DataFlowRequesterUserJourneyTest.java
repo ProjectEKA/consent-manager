@@ -54,8 +54,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient(timeout = "300000")
-@ContextConfiguration(initializers = DataFlowRequestUserJourneyTest.ContextInitializer.class)
-public class DataFlowRequestUserJourneyTest {
+@ContextConfiguration(initializers = DataFlowRequesterUserJourneyTest.ContextInitializer.class)
+public class DataFlowRequesterUserJourneyTest {
     private static MockWebServer consentManagerServer = new MockWebServer();
 
     @Autowired
@@ -138,8 +138,8 @@ public class DataFlowRequestUserJourneyTest {
         ));
         var consentArtefactRepresentationJson = new ObjectMapper().writeValueAsString(consentArtefactRepresentation);
 
-        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_EXPIRED, "Consent artefact " +
-                "expired"));
+        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_EXPIRED,
+                "Consent artefact expired"));
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
         consentManagerServer.enqueue(
                 new MockResponse()

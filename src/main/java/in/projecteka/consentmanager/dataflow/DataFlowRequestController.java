@@ -12,13 +12,13 @@ import reactor.core.publisher.Mono;
 @RestController
 @AllArgsConstructor
 public class DataFlowRequestController {
-    private DataFlowRequest dataFlowRequest;
+    private DataFlowRequester dataFlowRequester;
 
     @PostMapping("/health-information/request")
-    public Mono<DataFlowRequestResponse> linkCareContexts(
+    public Mono<DataFlowRequestResponse> requestHealthInformation(
             @RequestHeader(value = "Authorization") String authorization,
             @RequestBody in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest) {
         String hiuId = TokenUtils.getCallerId(authorization);
-        return this.dataFlowRequest.validateDataTransferRequest(hiuId, dataFlowRequest);
+        return this.dataFlowRequester.requestHealthData(hiuId, dataFlowRequest);
     }
 }

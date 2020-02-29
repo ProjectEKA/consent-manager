@@ -3,10 +3,10 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.AuthorizationTest;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.model.KeycloakToken;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
-import in.projecteka.consentmanager.clients.model.KeycloakToken;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
@@ -25,8 +25,10 @@ import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.LocalDate;
 import java.util.AbstractMap;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.user.TestBuilders.keycloakToken;
@@ -143,13 +145,17 @@ class UserServiceTest {
 
     @Test
     public void shouldCreateUser() {
-        var signUpRequest = signUpRequest().build();
+        var signUpRequest = signUpRequest().dateOfBirth(LocalDate.MIN).build();
         var userToken = keycloakToken().build();
+        var sessionId = string();
+        var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new KeycloakToken()));
+        when(userVerificationService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
+        when(userRepository.save(any())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 
-        StepVerifier.create(userService.create(signUpRequest))
+        StepVerifier.create(userService.create(signUpRequest, sessionId))
                 .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
                 .verifyComplete();
     }
@@ -164,7 +170,7 @@ class UserServiceTest {
             @ConvertWith(AuthorizationTest.NullableConverter.class) String userId
     ) {
         var signUpRequest = signUpRequest().userName(userId).build();
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.create(signUpRequest));
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.create(signUpRequest, string()));
     }
 
     private static Stream<AbstractMap.SimpleEntry<String, String>> mobileNumberProvider() {

@@ -75,13 +75,20 @@ public class UserVerificationService {
         return getClaimFromToken(token, Claims::getExpiration);
     }
 
+    public String getSessionId(String token) {
+        return getClaimFromToken(token, Claims::getSubject);
+    }
+
+    public Optional<String> getMobileNumber(String sessionId) {
+        return verifiedSessions.getIfPresent(sessionId);
+    }
 
     private <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = getAllClaimsFromToken(token);
+        final var claims = from(token);
         return claimsResolver.apply(claims);
     }
 
-    private Claims getAllClaimsFromToken(String token) {
+    private Claims from(String token) {
         return Jwts.parser().setSigningKey(jwtProperties.getSecret()).parseClaimsJws(token).getBody();
     }
 }

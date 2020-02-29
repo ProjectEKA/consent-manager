@@ -199,7 +199,7 @@ public class ConsentManager {
     private ConsentArtefact from(ConsentRequestDetail requestDetail, GrantedConsent granted) {
         PatientReference patientReference = PatientReference.builder().id(requestDetail.getPatient().getId()).build();
         String consentArtefactId = UUID.randomUUID().toString();
-        //TODO: need to store also the CC
+        //TODO: need to save also the CC
         return ConsentArtefact.builder()
                 .consentId(consentArtefactId)
                 .createdAt(new Date())

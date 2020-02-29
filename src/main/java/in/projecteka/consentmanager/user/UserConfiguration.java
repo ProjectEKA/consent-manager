@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
+import io.vertx.pgclient.PgPool;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -34,8 +35,10 @@ public class UserConfiguration {
     }
 
     @Bean
-    public UserRepository userRepository(WebClient.Builder builder, UserServiceProperties properties) {
-        return new UserRepository(builder, properties);
+    public UserRepository userRepository(WebClient.Builder builder,
+                                         UserServiceProperties properties,
+                                         PgPool pgPool) {
+        return new UserRepository(builder, properties, pgPool);
     }
 
     @Bean
@@ -70,7 +73,8 @@ public class UserConfiguration {
     }
 
     @Bean
-    public TokenService tokenService(IdentityServiceProperties identityServiceProperties, IdentityServiceClient identityServiceClient) {
+    public TokenService tokenService(IdentityServiceProperties identityServiceProperties,
+                                     IdentityServiceClient identityServiceClient) {
         return new TokenService(identityServiceProperties, identityServiceClient);
     }
 }

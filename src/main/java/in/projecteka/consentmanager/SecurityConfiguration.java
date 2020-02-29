@@ -32,7 +32,7 @@ public class SecurityConfiguration {
             ServerSecurityContextRepository securityContextRepository) {
         return httpSecurity
                 .authorizeExchange()
-                .pathMatchers("/**.json", "/users/verify","/users/permit").permitAll()
+                .pathMatchers("/**.json", "/users/verify", "/users/permit").permitAll()
                 .pathMatchers("/**.html").permitAll()
                 .pathMatchers("/**.js").permitAll()
                 .pathMatchers("/**.png").permitAll()
@@ -77,11 +77,14 @@ public class SecurityConfiguration {
             var notBlank = authToken != null && !authToken.trim().equals("");
             var isSignUpRequest = isSignUpRequest(
                     exchange.getRequest().getPath().toString(),
-                    exchange.getRequest().getMethod()
-            );
+                    exchange.getRequest().getMethod());
 
-            if(isSignUpRequest && notBlank && userVerificationService.validateToken(authToken)) {
-                return Mono.just(new UsernamePasswordAuthenticationToken(authToken, authToken, new ArrayList<SimpleGrantedAuthority>()))
+            if (isSignUpRequest && notBlank && userVerificationService.validateToken(authToken)) {
+                return Mono.just(
+                        new UsernamePasswordAuthenticationToken(
+                                authToken,
+                                authToken,
+                                new ArrayList<SimpleGrantedAuthority>()))
                         .map(SecurityContextImpl::new);
             }
             if (authToken != null && !authToken.trim().equals("")) {

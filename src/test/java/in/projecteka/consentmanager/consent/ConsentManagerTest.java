@@ -84,8 +84,10 @@ class ConsentManagerTest {
         when(providerClient.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
 
-        String requestingHIUId = "hiu1";
-        StepVerifier.create(consentManager.askForConsent(requestedDetail))
-                .expectErrorMatches(e -> (e instanceof ClientError) && ((ClientError) e).getHttpStatus().is4xxClientError());
+        StepVerifier.create(consentManager.askForConsent(requestedDetail)
+                .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+                .expectErrorMatches(e -> (e instanceof ClientError) &&
+                        ((ClientError) e).getHttpStatus().is4xxClientError())
+                .verify();
     }
 }

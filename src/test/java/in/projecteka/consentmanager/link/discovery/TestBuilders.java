@@ -66,4 +66,8 @@ public class TestBuilders {
     public static in.projecteka.consentmanager.clients.model.Identifier.IdentifierBuilder identifier() {
         return easyRandom.nextObject(in.projecteka.consentmanager.clients.model.Identifier.IdentifierBuilder.class);
     }
+
+    public static String string() {
+        return easyRandom.nextObject(String.class);
+    }
 }

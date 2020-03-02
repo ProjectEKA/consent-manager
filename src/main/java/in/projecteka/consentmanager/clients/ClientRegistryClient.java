@@ -36,8 +36,9 @@ public class ClientRegistryClient {
                 .header("client_id", clientRegistryProperties.getClientId())
                 .header("X-Auth-Token", clientRegistryProperties.getXAuthToken())
                 .retrieve()
-                .onStatus(httpStatus -> httpStatus.value() == 404, clientResponse -> Mono.error(ClientError.providerNotFound()))
-                .onStatus(HttpStatus::is5xxServerError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .onStatus(httpStatus -> httpStatus.value() == 404,
+                        clientResponse -> Mono.error(ClientError.providerNotFound()))
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(Provider.class);
     }
 }

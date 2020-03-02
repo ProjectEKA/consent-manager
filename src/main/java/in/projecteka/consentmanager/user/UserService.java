@@ -25,12 +25,12 @@ import java.util.UUID;
 
 @AllArgsConstructor
 public class UserService {
-    private UserRepository userRepository;
-    private OtpServiceProperties otpServiceProperties;
-    private OtpServiceClient otpServiceClient;
-    private UserVerificationService userVerificationService;
-    private IdentityServiceClient identityServiceClient;
-    private TokenService tokenService;
+    private final UserRepository userRepository;
+    private final OtpServiceProperties otpServiceProperties;
+    private final OtpServiceClient otpServiceClient;
+    private final SignUpService signupService;
+    private final IdentityServiceClient identityServiceClient;
+    private final TokenService tokenService;
 
     public Mono<User> userWith(String userName) {
         return userRepository.userWith(userName);
@@ -51,7 +51,7 @@ public class UserService {
 
         return otpServiceClient
                 .send(otpRequest)
-                .thenReturn(userVerificationService.cacheAndSendSession(
+                .thenReturn(signupService.cacheAndSendSession(
                         otpRequest.getSessionId(),
                         otpRequest.getCommunication().getValue()));
     }
@@ -63,7 +63,7 @@ public class UserService {
 
         return otpServiceClient
                 .verify(otpVerification.getSessionId(), otpVerification.getValue())
-                .thenReturn(userVerificationService.generateToken(otpVerification.getSessionId()));
+                .thenReturn(signupService.generateToken(otpVerification.getSessionId()));
     }
 
     public Mono<KeycloakToken> create(SignUpRequest signUpRequest, String sessionId) {
@@ -78,7 +78,8 @@ public class UserService {
                 Collections.singletonList(credential),
                 Boolean.TRUE.toString());
 
-        return userVerificationService.getMobileNumber(sessionId)
+        // TODO: If some failure happened in between roll back others.
+        return signupService.getMobileNumber(sessionId)
                 .map(mobileNumber -> tokenService.tokenForAdmin()
                         .flatMap(accessToken -> identityServiceClient.createUser(accessToken, user))
                         .then(userRepository.save(User.from(signUpRequest, mobileNumber)))

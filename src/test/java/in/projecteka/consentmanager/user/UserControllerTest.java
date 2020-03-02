@@ -53,7 +53,7 @@ class UserControllerTest {
     private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @MockBean
-    private UserVerificationService userVerificationService;
+    private SignUpService signupService;
 
     @Autowired
     private WebTestClient webClient;

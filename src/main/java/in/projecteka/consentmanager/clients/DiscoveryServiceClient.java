@@ -21,8 +21,10 @@ public class DiscoveryServiceClient {
                 .uri(url + "/patients/discover/")
                 .bodyValue(request)
                 .retrieve()
-                .onStatus(httpStatus -> httpStatus.value() == 404, clientResponse -> Mono.error(ClientError.userNotFound()))
-                .onStatus(HttpStatus::is5xxServerError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .onStatus(httpStatus -> httpStatus.value() == 404,
+                        clientResponse -> Mono.error(ClientError.userNotFound()))
+                .onStatus(HttpStatus::is5xxServerError,
+                        clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(PatientResponse.class);
     }
 }

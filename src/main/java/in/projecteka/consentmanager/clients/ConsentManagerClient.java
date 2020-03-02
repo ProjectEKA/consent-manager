@@ -17,6 +17,7 @@ public class ConsentManagerClient {
     private DataFlowAuthServerProperties dataFlowAuthServerProperties;
     private DataFlowConsentManagerProperties dataFlowConsentManagerProperties;
 
+    // TODO: Need to fix authorization
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(String consentArtefactId) {
         return webClientBuilder.build()
                 .get()

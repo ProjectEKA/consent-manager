@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.dataflow;
 
-import in.projecteka.consentmanager.common.TokenUtils;
+import in.projecteka.consentmanager.common.Authenticator;
+import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,13 +13,15 @@ import reactor.core.publisher.Mono;
 @RestController
 @AllArgsConstructor
 public class DataFlowRequestController {
-    private DataFlowRequester dataFlowRequester;
+    private final DataFlowRequester dataFlowRequester;
+    private final Authenticator authenticator;
 
     @PostMapping("/health-information/request")
     public Mono<DataFlowRequestResponse> requestHealthInformation(
             @RequestHeader(value = "Authorization") String authorization,
             @RequestBody in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest) {
-        String hiuId = TokenUtils.getCallerId(authorization);
-        return this.dataFlowRequester.requestHealthData(hiuId, dataFlowRequest);
+        return authenticator.userFrom(authorization)
+                .map(Caller::getUserName)
+                .flatMap(hiu -> dataFlowRequester.requestHealthData(hiu, dataFlowRequest));
     }
 }

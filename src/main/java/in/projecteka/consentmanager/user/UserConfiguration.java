@@ -7,7 +7,6 @@ import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
-import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import io.vertx.pgclient.PgPool;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,22 +22,20 @@ public class UserConfiguration {
     public UserService userService(UserRepository userRepository,
                                    OtpServiceProperties otpServiceProperties,
                                    OtpServiceClient otpServiceClient,
-                                   UserVerificationService userVerificationService,
+                                   SignUpService signupService,
                                    IdentityServiceClient identityServiceClient,
                                    TokenService tokenService) {
         return new UserService(userRepository,
                 otpServiceProperties,
                 otpServiceClient,
-                userVerificationService,
+                signupService,
                 identityServiceClient,
                 tokenService);
     }
 
     @Bean
-    public UserRepository userRepository(WebClient.Builder builder,
-                                         UserServiceProperties properties,
-                                         PgPool pgPool) {
-        return new UserRepository(builder, properties, pgPool);
+    public UserRepository userRepository(PgPool pgPool) {
+        return new UserRepository(pgPool);
     }
 
     @Bean
@@ -54,10 +51,10 @@ public class UserConfiguration {
     }
 
     @Bean
-    public UserVerificationService authenticatorService(JWTProperties jwtProperties,
-                                                        LoadingCache<String, Optional<String>> sessionCache,
-                                                        LoadingCache<String, Optional<String>> secondSessionCache) {
-        return new UserVerificationService(jwtProperties, sessionCache, secondSessionCache);
+    public SignUpService authenticatorService(JWTProperties jwtProperties,
+                                              LoadingCache<String, Optional<String>> sessionCache,
+                                              LoadingCache<String, Optional<String>> secondSessionCache) {
+        return new SignUpService(jwtProperties, sessionCache, secondSessionCache);
     }
 
     @Bean({"unverifiedSessions", "verifiedSessions"})

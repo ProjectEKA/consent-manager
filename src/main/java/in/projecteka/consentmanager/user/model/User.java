@@ -20,7 +20,7 @@ public class User {
     private String phone;
 
     public static User from(SignUpRequest request, String mobileNumber) {
-        return new User(request.getUserName(),
+        return new User(request.getUserName().toLowerCase(),
                 request.getFirstName(),
                 request.getLastName(),
                 request.getGender(),

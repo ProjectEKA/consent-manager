@@ -55,7 +55,7 @@ class UserServiceTest {
     private OtpServiceClient otpServiceClient;
 
     @Mock
-    private UserVerificationService userVerificationService;
+    private SignUpService signupService;
 
     @Mock
     private IdentityServiceClient identityServiceClient;
@@ -75,7 +75,7 @@ class UserServiceTest {
                 userRepository,
                 otpServiceProperties,
                 otpServiceClient,
-                userVerificationService,
+                signupService,
                 identityServiceClient,
                 tokenService);
     }
@@ -88,7 +88,7 @@ class UserServiceTest {
         var sessionId = string();
         var signUpSession = new SignUpSession(sessionId);
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
-        when(userVerificationService.cacheAndSendSession(sessionCaptor.capture(), eq(mobileNumber.getValue())))
+        when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq(mobileNumber.getValue())))
                 .thenReturn(signUpSession);
 
         Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
@@ -111,7 +111,7 @@ class UserServiceTest {
         var token = string();
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(sessionId, otp)).thenReturn(Mono.empty());
-        when(userVerificationService.generateToken(sessionId))
+        when(signupService.generateToken(sessionId))
                 .thenReturn(new Token(token));
 
         StepVerifier.create(userService.permitOtp(otpVerification))
@@ -150,7 +150,7 @@ class UserServiceTest {
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new KeycloakToken()));
-        when(userVerificationService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));

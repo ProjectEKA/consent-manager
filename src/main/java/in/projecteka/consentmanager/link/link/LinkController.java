@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.common.TokenUtils;
+import in.projecteka.consentmanager.common.Authenticator;
+import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
@@ -15,29 +16,36 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+
 @RestController
 @AllArgsConstructor
 public class LinkController {
 
     private Link link;
+    private Authenticator authenticator;
 
     @PostMapping("/patients/link")
-    public Mono<PatientLinkReferenceResponse> linkCareContexts(@RequestHeader(value = "Authorization") String authorization, @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
-        String patientId = TokenUtils.getCallerId(authorization);
-        return link.patientWith(patientId, patientLinkReferenceRequest);
+    public Mono<PatientLinkReferenceResponse> linkCareContexts(
+            @RequestHeader(value = "Authorization") String token,
+            @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
+        return authenticator.userFrom(token)
+                .flatMap(caller -> link.patientWith(caller.getUserName(), patientLinkReferenceRequest));
     }
 
     @PostMapping("/patients/link/{linkRefNumber}")
-    public Mono<PatientLinkResponse> verifyToken(@RequestHeader(value = "Authorization") String authorization,
+    public Mono<PatientLinkResponse> verifyToken(@RequestHeader(value = "Authorization") String token,
                                                  @PathVariable("linkRefNumber") String linkRefNumber,
                                                  @RequestBody PatientLinkRequest patientLinkRequest) {
-        String patientId = TokenUtils.getCallerId(authorization);
-        return link.verifyToken(linkRefNumber, patientLinkRequest, patientId);
+        return authenticator.userFrom(token)
+                .flatMap(caller -> link.verifyToken(linkRefNumber, patientLinkRequest, caller.getUserName()));
     }
 
     @GetMapping("/patients/links")
-    public Mono<PatientLinksResponse> getLinkedCareContexts(@RequestHeader(value = "Authorization") String authorization) {
-        String patientId = TokenUtils.getCallerId(authorization);
-        return link.getLinkedCareContexts(patientId);
+    public Mono<PatientLinksResponse> getLinkedCareContexts(@RequestHeader(value = "Authorization") String token) {
+        return authenticator.userFrom(token)
+                .map(Caller::getUserName)
+                .flatMap(patient -> link.getLinkedCareContexts(patient)
+                        .subscriberContext(context -> context.put(AUTHORIZATION, token)));
     }
 }

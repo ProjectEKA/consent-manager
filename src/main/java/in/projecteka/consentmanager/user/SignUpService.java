@@ -6,24 +6,33 @@ import in.projecteka.consentmanager.user.exception.InvalidSessionException;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.util.StringUtils;
+import io.jsonwebtoken.SignatureException;
+import org.apache.log4j.Logger;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
-public class UserVerificationService {
+public class SignUpService {
 
+    private final static Logger logger = Logger.getLogger(SignUpService.class);
     private JWTProperties jwtProperties;
     private LoadingCache<String, Optional<String>> unverifiedSessions;
     private LoadingCache<String, Optional<String>> verifiedSessions;
     public static final long JWT_TOKEN_VALIDITY = 5 * 60 * 60;
 
-    public UserVerificationService(JWTProperties jwtProperties,
-                                   LoadingCache<String, Optional<String>> unverifiedSessions,
-                                   LoadingCache<String, Optional<String>> verifiedSessions) {
+    public SignUpService(JWTProperties jwtProperties,
+                         LoadingCache<String, Optional<String>> unverifiedSessions,
+                         LoadingCache<String, Optional<String>> verifiedSessions) {
         this.jwtProperties = jwtProperties;
         this.unverifiedSessions = unverifiedSessions;
         this.verifiedSessions = verifiedSessions;
@@ -36,11 +45,17 @@ public class UserVerificationService {
     }
 
     public Boolean validateToken(String token) {
-        return !isTokenExpired(token) && !StringUtils.isEmpty(getSessionFromToken(token));
+        try {
+            var session = sessionFrom(token);
+            return isStillExists(session);
+        } catch (ExpiredJwtException | MalformedJwtException | SignatureException | IllegalArgumentException e) {
+            logger.error(e);
+            return false;
+        }
     }
 
-    public String getSessionFromToken(String token) {
-        return getClaimFromToken(token, Claims::getSubject);
+    private Boolean isStillExists(String session) {
+        return verifiedSessions.getIfPresent(session).isPresent();
     }
 
     public Token generateToken(String sessionId) {
@@ -65,30 +80,19 @@ public class UserVerificationService {
                 .signWith(SignatureAlgorithm.HS512, jwtProperties.getSecret()).compact());
     }
 
-    private Boolean isTokenExpired(String token) {
-        final Date expiration = getExpirationDateFromToken(token);
-        return expiration.before(new Date());
-    }
-
-
-    public Date getExpirationDateFromToken(String token) {
-        return getClaimFromToken(token, Claims::getExpiration);
-    }
-
-    public String getSessionId(String token) {
-        return getClaimFromToken(token, Claims::getSubject);
+    public String sessionFrom(String token) {
+        return claim(from(token), Claims::getSubject);
     }
 
     public Optional<String> getMobileNumber(String sessionId) {
         return verifiedSessions.getIfPresent(sessionId);
     }
 
-    private <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
-        final var claims = from(token);
-        return claimsResolver.apply(claims);
+    private <T> T claim(Jws<Claims> claims, Function<Claims, T> claimsResolver) {
+        return claimsResolver.apply(claims.getBody());
     }
 
-    private Claims from(String token) {
-        return Jwts.parser().setSigningKey(jwtProperties.getSecret()).parseClaimsJws(token).getBody();
+    private Jws<Claims> from(String token) {
+        return Jwts.parser().setSigningKey(jwtProperties.getSecret()).parseClaimsJws(token);
     }
 }

@@ -23,8 +23,8 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/users")
 @AllArgsConstructor
 public class UserController {
-    private UserService userService;
-    private UserVerificationService userVerificationService;
+    private final UserService userService;
+    private final SignUpService signupService;
 
     @GetMapping("/{userName}")
     public Mono<User> userWith(@PathVariable String userName) {
@@ -44,8 +44,7 @@ public class UserController {
 
     @PostMapping
     public Mono<KeycloakToken> create(@RequestBody SignUpRequest request,
-                                      @RequestHeader(name = "Authorization") String authorization) {
-        var sessionFromToken = userVerificationService.getSessionFromToken(authorization);
-        return userService.create(request, sessionFromToken);
+                                      @RequestHeader(name = "Authorization") String token) {
+        return userService.create(request, signupService.sessionFrom(token));
     }
 }

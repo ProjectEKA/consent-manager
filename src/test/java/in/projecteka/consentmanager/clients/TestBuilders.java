@@ -77,4 +77,8 @@ public class TestBuilders {
     public static KeycloakToken.KeycloakTokenBuilder keycloakToken() {
         return easyRandom.nextObject(KeycloakToken.KeycloakTokenBuilder.class);
     }
+
+    public static String string() {
+        return easyRandom.nextObject(String.class);
+    }
 }

@@ -1,15 +1,13 @@
-package in.projecteka.consentmanager.consent.repository;
+package in.projecteka.consentmanager.consent;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
-import lombok.SneakyThrows;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -17,6 +15,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import static in.projecteka.consentmanager.common.Serializer.from;
+import static in.projecteka.consentmanager.common.Serializer.to;
 
 public class ConsentRequestRepository {
     private static final String INSERT_CONSENT_REQUEST_QUERY = "INSERT INTO consent_request (request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";
@@ -30,58 +31,62 @@ public class ConsentRequestRepository {
         this.dbClient = dbClient;
     }
 
-    @SneakyThrows
     public Mono<Void> insert(RequestedDetail requestedDetail, String requestId) {
-        final String detailAsString = new ObjectMapper().writeValueAsString(requestedDetail);
-        JsonObject detailsJson = new JsonObject(detailAsString);
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(
                         INSERT_CONSENT_REQUEST_QUERY,
-                        Tuple.of(requestId, requestedDetail.getPatient().getId(), ConsentStatus.REQUESTED.name(), detailsJson),
+                        Tuple.of(requestId,
+                                requestedDetail.getPatient().getId(),
+                                ConsentStatus.REQUESTED.name(),
+                                new JsonObject(from(requestedDetail))),
                         handler -> {
-                            if (handler.failed())
+                            if (handler.failed()) {
                                 monoSink.error(new Exception(FAILED_TO_SAVE_CONSENT_REQUEST));
-                            else
-                                monoSink.success();
-                        })
-        );
+                                return;
+                            }
+                            monoSink.success();
+                        }));
     }
 
     public Mono<List<ConsentRequestDetail>> requestsForPatient(String patientId, int limit, int offset) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_DETAILS_FOR_PATIENT, Tuple.of(patientId, limit, offset),
+        return Mono.create(monoSink -> dbClient.preparedQuery(
+                SELECT_CONSENT_DETAILS_FOR_PATIENT,
+                Tuple.of(patientId, limit, offset),
                 handler -> {
                     if (handler.failed()) {
                         monoSink.error(new RuntimeException(UNKNOWN_ERROR_OCCURRED));
-                    } else {
-                        List<ConsentRequestDetail> requestList = new ArrayList<>();
-                        RowSet<Row> results = handler.result();
-                        for (Row result : results) {
-                            ConsentRequestDetail aDetail = mapToConsentRequestDetail(result);
-                            requestList.add(aDetail);
-                        }
-                        monoSink.success(requestList);
+                        return;
                     }
+                    List<ConsentRequestDetail> requestList = new ArrayList<>();
+                    RowSet<Row> results = handler.result();
+                    for (Row result : results) {
+                        ConsentRequestDetail aDetail = mapToConsentRequestDetail(result);
+                        requestList.add(aDetail);
+                    }
+                    monoSink.success(requestList);
                 }));
     }
 
     public Mono<ConsentRequestDetail> requestOf(String requestId, String status) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS, Tuple.of(requestId, status),
+        return Mono.create(monoSink -> dbClient.preparedQuery(
+                SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS,
+                Tuple.of(requestId, status),
                 handler -> {
                     if (handler.failed()) {
                         monoSink.error(new RuntimeException(handler.cause().getMessage()));
-                    } else {
-                        RowSet<Row> results = handler.result();
-                        ConsentRequestDetail consentRequestDetail = null;
-                        for (Row result : results) {
-                            consentRequestDetail = mapToConsentRequestDetail(result);
-                        }
-                        monoSink.success(consentRequestDetail);
+                        return;
                     }
+                    RowSet<Row> results = handler.result();
+                    ConsentRequestDetail consentRequestDetail = null;
+                    for (Row result : results) {
+                        consentRequestDetail = mapToConsentRequestDetail(result);
+                    }
+                    monoSink.success(consentRequestDetail);
                 }));
     }
 
     private ConsentRequestDetail mapToConsentRequestDetail(Row result) {
-        RequestedDetail details = convertToConsentDetail(result.getValue("details").toString());
+        RequestedDetail details = to(result.getValue("details").toString(), RequestedDetail.class);
         return ConsentRequestDetail
                 .builder()
                 .requestId(result.getString("request_id"))
@@ -108,11 +113,5 @@ public class ConsentRequestRepository {
             return Date.from(timestamp.atZone(ZoneId.systemDefault()).toInstant());
         }
         return null;
-    }
-
-    @SneakyThrows
-    private RequestedDetail convertToConsentDetail(String details) {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(details.getBytes(), RequestedDetail.class);
     }
 }

@@ -11,7 +11,6 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
-import in.projecteka.consentmanager.link.discovery.repository.DiscoveryRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

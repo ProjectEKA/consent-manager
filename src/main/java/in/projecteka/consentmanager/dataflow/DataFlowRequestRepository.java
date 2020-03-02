@@ -23,22 +23,22 @@ public class DataFlowRequestRepository {
                         INSERT_TO_DATA_FLOW_REQUEST,
                         Tuple.of(transactionId, JsonObject.mapFrom(dataFlowRequest)),
                         handler -> {
-                            if (handler.failed())
+                            if (handler.failed()) {
                                 monoSink.error(new Exception("Failed to insert to data flow request"));
-                            else
-                                monoSink.success();
-                        })
-        );
+                                return;
+                            }
+                            monoSink.success();
+                        }));
     }
 
-    public Mono<String> getHipIdFor(String consentId){
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_HIP_ID_FROM_CONSENT_ARTEFACT,Tuple.of(consentId),
+    public Mono<String> getHipIdFor(String consentId) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_HIP_ID_FROM_CONSENT_ARTEFACT, Tuple.of(consentId),
                 handler -> {
                     if (handler.failed()) {
                         monoSink.error(new Exception("Failed to get hip id from consent Id"));
-                    } else {
-                        monoSink.success(handler.result().iterator().next().getString(0));
+                        return;
                     }
+                    monoSink.success(handler.result().iterator().next().getString(0));
                 }));
     }
 }

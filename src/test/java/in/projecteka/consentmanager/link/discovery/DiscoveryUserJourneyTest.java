@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,29 +31,41 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
+
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 @ContextConfiguration(initializers = DiscoveryUserJourneyTest.ContextInitializer.class)
 public class DiscoveryUserJourneyTest {
 
-    private static MockWebServer mockWebServer = new MockWebServer();
-
+    @SuppressWarnings("unused")
     @MockBean
     private DestinationsConfig destinationsConfig;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private DataFlowBroadcastListener dataFlowBroadcastListener;
+
+    private static MockWebServer providerServer = new MockWebServer();
+    private static MockWebServer identityServer = new MockWebServer();
 
     @Autowired
     private WebTestClient webTestClient;
 
-    @MockBean
-    private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
-
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
-
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
+    }
+
+    @AfterAll
+    public static void tearDown() throws IOException {
+        providerServer.shutdown();
+        identityServer.shutdown();
     }
 
     @Test
@@ -61,12 +74,17 @@ public class DiscoveryUserJourneyTest {
                 Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource("provider.json")),
                 new TypeReference<List<JsonNode>>() {
                 });
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(jsonNode.toString()));
+        var token = string();
+        var user = "{\"preferred_username\": \"service-account-consent-manager-service\"}";
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        providerServer.enqueue(new MockResponse()
+                .setHeader("Content-Type", "application/json")
+                .setBody(jsonNode.toString()));
 
         webTestClient.get()
                 .uri("/providers?name=Max")
                 .accept(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, "MTIzNDU2Nzg5")
+                .header(HttpHeaders.AUTHORIZATION, token)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
@@ -75,18 +93,14 @@ public class DiscoveryUserJourneyTest {
                 .jsonPath("$.[0].city").isEqualTo("Bangalore")
                 .jsonPath("$.[0].telephone").isEqualTo("08080887876")
                 .jsonPath("$.[0].type").isEqualTo("prov");
-
-        mockWebServer.shutdown();
     }
 
     public static class ContextInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(ConfigurableApplicationContext applicationContext) {
             TestPropertyValues values = TestPropertyValues.of(
-                    Stream.of(
-                            "consentmanager.clientregistry.url=" + mockWebServer.url("")
-                    )
-            );
+                    Stream.of("consentmanager.clientregistry.url=" + providerServer.url(""),
+                            "consentmanager.keycloak.baseUrl=" + identityServer.url("")));
             values.applyTo(applicationContext);
         }
     }

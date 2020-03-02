@@ -3,19 +3,16 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.model.KeycloakToken;
+import lombok.AllArgsConstructor;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Mono;
 
+@AllArgsConstructor
 public class TokenService {
 
     private final IdentityServiceProperties keyCloakProperties;
-    private IdentityServiceClient identityServiceClient;
-
-    public TokenService(IdentityServiceProperties identityServiceProperties, IdentityServiceClient identityServiceClient) {
-        this.keyCloakProperties = identityServiceProperties;
-        this.identityServiceClient = identityServiceClient;
-    }
+    private final IdentityServiceClient identityServiceClient;
 
     public Mono<KeycloakToken> tokenForAdmin() {
         return identityServiceClient.getToken(

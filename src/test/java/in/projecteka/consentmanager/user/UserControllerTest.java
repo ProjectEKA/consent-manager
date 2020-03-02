@@ -52,6 +52,9 @@ class UserControllerTest {
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;
 
+    @MockBean
+    private SignUpService signupService;
+
     @Autowired
     private WebTestClient webClient;
 

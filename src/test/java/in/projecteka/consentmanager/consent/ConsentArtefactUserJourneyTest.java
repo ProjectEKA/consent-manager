@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.link.link.model.Error;
 import in.projecteka.consentmanager.link.link.model.ErrorCode;
 import in.projecteka.consentmanager.link.link.model.ErrorRepresentation;
+import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
@@ -17,6 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
@@ -26,10 +30,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.util.Base64;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
+import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -37,43 +42,46 @@ import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
 @AutoConfigureWebTestClient
 @ContextConfiguration(initializers =
-        in.projecteka.consentmanager.consent.ConsentRequestUserJourneyTest.PropertyInitializer.class)
+        in.projecteka.consentmanager.consent.ConsentArtefactUserJourneyTest.ContextInitializer.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ConsentArtefactUserJourneyTest {
     private static MockWebServer clientRegistryServer = new MockWebServer();
     private static MockWebServer userServer = new MockWebServer();
+    private static MockWebServer identityServer = new MockWebServer();
+
     @Autowired
     private WebTestClient webTestClient;
 
-    @MockBean
-    private ConsentArtefactRepository consentArtefactRepository;
-
+    @SuppressWarnings("unused")
     @MockBean
     private DestinationsConfig destinationsConfig;
 
+    @SuppressWarnings("unused")
     @MockBean
     private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
 
+    @SuppressWarnings("unused")
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;
+
+    @MockBean
+    private ConsentArtefactRepository consentArtefactRepository;
 
     @AfterAll
     public static void tearDown() throws IOException {
         clientRegistryServer.shutdown();
         userServer.shutdown();
-    }
-
-    public static String encode(String authorizationHeader) {
-        Base64.Encoder encoder = Base64.getEncoder();
-        return new String(encoder.encode(authorizationHeader.getBytes()));
+        identityServer.shutdown();
     }
 
     @Test
     public void shouldListConsentArtifacts() {
-        ConsentArtefactRepresentation consentArtefact = consentArtefactRepresentation().build();
-        String encodedPatientId = encode(consentArtefact.getConsentDetail().getPatient().getId());
-
-        String consentRequestId = "request-id";
+        var consentArtefact = consentArtefactRepresentation().build();
+        var patientId = consentArtefact.getConsentDetail().getPatient().getId();
+        var consentRequestId = "request-id";
+        var user = "{\"preferred_username\": \"" + patientId + "\"}";
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))
                 .thenReturn(Flux.just(consentArtefact.getConsentDetail().getConsentId()));
         when(consentArtefactRepository.getConsentArtefact(eq(consentArtefact.getConsentDetail().getConsentId())))
@@ -82,7 +90,7 @@ public class ConsentArtefactUserJourneyTest {
         webTestClient.get()
                 .uri("/consent-requests/" + consentRequestId + "/consent-artefacts")
                 .accept(MediaType.APPLICATION_JSON)
-                .header("Authorization", encodedPatientId)
+                .header("Authorization", patientId)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(new ParameterizedTypeReference<List<ConsentArtefactRepresentation>>() {
@@ -94,12 +102,15 @@ public class ConsentArtefactUserJourneyTest {
 
     @Test
     public void shouldThrowConsentArtifactNotFound() throws JsonProcessingException {
-        ConsentArtefactRepresentation consentArtefact = consentArtefactRepresentation().build();
-        String encodedPatientId = encode(consentArtefact.getConsentDetail().getPatient().getId());
+        var consentArtefact = consentArtefactRepresentation().build();
+        var patientId = consentArtefact.getConsentDetail().getPatient().getId();
+        var user = "{\"preferred_username\": \"" + patientId + "\"}";
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_NOT_FOUND, "Cannot find the " +
                 "consent artefact"));
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
-        String consentRequestId = "request-id";
+        var consentRequestId = "request-id";
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))
                 .thenReturn(Flux.empty());
         when(consentArtefactRepository.getConsentArtefact(eq(consentArtefact.getConsentDetail().getConsentId())))
@@ -108,7 +119,7 @@ public class ConsentArtefactUserJourneyTest {
         webTestClient.get()
                 .uri("/consent-requests/" + consentRequestId + "/consent-artefacts")
                 .accept(MediaType.APPLICATION_JSON)
-                .header("Authorization", encodedPatientId)
+                .header("Authorization", patientId)
                 .exchange()
                 .expectStatus().isNotFound()
                 .expectBody()
@@ -117,14 +128,14 @@ public class ConsentArtefactUserJourneyTest {
 
     @Test
     public void shouldThrowInvalidRequester() throws JsonProcessingException {
-        ConsentArtefactRepresentation consentArtefact = consentArtefactRepresentation().build();
-        String encodedPatientId = encode(consentArtefact.getConsentDetail().getPatient().getId());
-        consentArtefact.getConsentDetail().getPatient().setId(encode("abc"));
-        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_FORBIDDEN, "Cannot retrieve " +
-                "Consent " +
-                "artefact. Forbidden"));
+        var consentArtefact = consentArtefactRepresentation().build();
+        var differentPatient = "{\"preferred_username\": \"" + string() + "\"}";
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(differentPatient));
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(differentPatient));
+        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_FORBIDDEN,
+                "Cannot retrieve Consent artefact. Forbidden"));
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
-        String consentRequestId = "request-id";
+        var consentRequestId = "request-id";
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))
                 .thenReturn(Flux.just(consentArtefact.getConsentDetail().getConsentId()));
         when(consentArtefactRepository.getConsentArtefact(eq(consentArtefact.getConsentDetail().getConsentId())))
@@ -133,10 +144,25 @@ public class ConsentArtefactUserJourneyTest {
         webTestClient.get()
                 .uri("/consent-requests/" + consentRequestId + "/consent-artefacts")
                 .accept(MediaType.APPLICATION_JSON)
-                .header("Authorization", encodedPatientId)
+                .header("Authorization", string())
                 .exchange()
-                .expectStatus().isForbidden()
+                .expectStatus()
+                .isForbidden()
                 .expectBody()
                 .json(errorResponseJson);
+    }
+
+    public static class ContextInitializer
+            implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            TestPropertyValues values =
+                    TestPropertyValues.of(
+                            Stream.of("consentmanager.clientregistry.url=" + clientRegistryServer.url(""),
+                                    "consentmanager.userservice.url=" + userServer.url(""),
+                                    "consentmanager.consentservice.maxPageSize=50",
+                                    "consentmanager.keycloak.baseUrl=" + identityServer.url("")));
+            values.applyTo(applicationContext);
+        }
     }
 }

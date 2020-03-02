@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.common.TokenUtils;
+import in.projecteka.consentmanager.common.Authenticator;
+import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import lombok.AllArgsConstructor;
@@ -15,14 +16,16 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 public class ConsentArtefactsController {
 
-    private ConsentManager consentManager;
+    private final ConsentManager consentManager;
+    private final Authenticator authenticator;
 
     @GetMapping(value = "/consents/{consentId}")
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(
             @RequestHeader(value = "Authorization") String authorization,
             @PathVariable(value = "consentId") String consentId) {
-        String requesterId = TokenUtils.getCallerId(authorization);
-        return consentManager.getConsent(consentId, requesterId);
+        return authenticator.userFrom(authorization)
+                .map(Caller::getUserName)
+                .flatMap(requesterId -> consentManager.getConsent(consentId, requesterId));
     }
 
     @GetMapping(value = "/internal/consents/{consentId}")
@@ -33,8 +36,9 @@ public class ConsentArtefactsController {
     @GetMapping(value = "/consent-requests/{request-id}/consent-artefacts")
     public Flux<ConsentArtefactRepresentation> getConsents(
             @PathVariable(value = "request-id") String requestId,
-            @RequestHeader(value = "Authorization") String authorization) {
-        String requesterId = TokenUtils.getCallerId(authorization);
-        return consentManager.getConsents(requestId, requesterId);
+            @RequestHeader(value = "Authorization") String token) {
+        return authenticator.userFrom(token)
+                .map(Caller::getUserName)
+                .flatMapMany(patient -> consentManager.getConsents(requestId, patient));
     }
 }

@@ -1,8 +1,8 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
-import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.KeycloakToken;
+import in.projecteka.consentmanager.clients.model.KeycloakUser;
+import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

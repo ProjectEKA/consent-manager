@@ -9,4 +9,8 @@ public class TestBuilders {
     public static ConsentArtefactRepresentation.ConsentArtefactRepresentationBuilder consentArtefactRepresentation() {
         return easyRandom.nextObject(ConsentArtefactRepresentation.ConsentArtefactRepresentationBuilder.class);
     }
+
+    public static String string() {
+        return easyRandom.nextObject(String.class);
+    }
 }

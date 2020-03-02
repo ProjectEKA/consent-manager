@@ -33,7 +33,7 @@ public class UserService {
     private final TokenService tokenService;
 
     public Mono<User> userWith(String userName) {
-        return userRepository.userWith(userName);
+        return userRepository.userWith(userName.toLowerCase());
     }
 
     public Mono<SignUpSession> sendOtp(UserSignUpEnquiry userSignupEnquiry) {

@@ -46,8 +46,7 @@ public class UserService {
         String sessionId = UUID.randomUUID().toString();
         OtpRequest otpRequest = new OtpRequest(
                 sessionId,
-                new OtpCommunicationData(userSignupEnquiry.getIdentifierType(),
-                        removeCountryCodeFrom(userSignupEnquiry.getIdentifier())));
+                new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
         return otpServiceClient
                 .send(otpRequest)
@@ -93,13 +92,6 @@ public class UserService {
                 !otpVerification.getSessionId().isEmpty() &&
                 otpVerification.getValue() != null &&
                 !otpVerification.getValue().isEmpty();
-    }
-
-    private String removeCountryCodeFrom(String mobileNumber) {
-        var countryCodeSeparator = "-";
-        return mobileNumber.split(countryCodeSeparator).length > 1
-               ? mobileNumber.split(countryCodeSeparator)[1]
-               : mobileNumber;
     }
 
     private boolean isValid(SignUpRequest signUpRequest) {

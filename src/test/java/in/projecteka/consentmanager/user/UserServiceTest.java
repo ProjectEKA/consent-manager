@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -26,10 +25,8 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
-import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.user.TestBuilders.keycloakToken;
 import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
@@ -80,15 +77,13 @@ class UserServiceTest {
                 tokenService);
     }
 
-    @ParameterizedTest
-    @MethodSource("mobileNumberProvider")
-    public void shouldReturnTemporarySessionReceivedFromClient(
-            AbstractMap.SimpleEntry<String, String> mobileNumber) {
-        var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", mobileNumber.getKey());
+    @Test
+    public void shouldReturnTemporarySessionReceivedFromClient() {
+        var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", "+91-9788888");
         var sessionId = string();
         var signUpSession = new SignUpSession(sessionId);
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
-        when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq(mobileNumber.getValue())))
+        when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq("+91-9788888")))
                 .thenReturn(signUpSession);
 
         Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
@@ -171,10 +166,5 @@ class UserServiceTest {
     ) {
         var signUpRequest = signUpRequest().userName(userId).build();
         Assertions.assertThrows(InvalidRequestException.class, () -> userService.create(signUpRequest, string()));
-    }
-
-    private static Stream<AbstractMap.SimpleEntry<String, String>> mobileNumberProvider() {
-        return Stream.of(new AbstractMap.SimpleEntry<>("9788888", "9788888"),
-                new AbstractMap.SimpleEntry<>("+91-9788888", "9788888"));
     }
 }

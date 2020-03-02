@@ -26,7 +26,8 @@ import java.util.HashMap;
 
 @Configuration
 public class ConsentManagerConfiguration {
-    public static final String CONSENT_GRANTED_QUEUE = "consent-granted-queue";
+    public static final String NOTIFY_CONSENT_TO_HIU_QUEUE = "hiu-consent-notification-queue";
+    public static final String NOTIFY_CONSENT_TO_HIP_QUEUE = "hip-consent-notification-queue";
     public static final String HIP_DATA_FLOW_REQUEST_QUEUE = "hip-data-flow-request-queue";
 
     @Bean
@@ -67,8 +68,12 @@ public class ConsentManagerConfiguration {
     @Bean
     public DestinationsConfig destinationsConfig(AmqpAdmin amqpAdmin) {
         HashMap<String, DestinationsConfig.DestinationInfo> queues = new HashMap<>();
-        queues.put(CONSENT_GRANTED_QUEUE, new DestinationsConfig.DestinationInfo("exchange", CONSENT_GRANTED_QUEUE));
-        queues.put(HIP_DATA_FLOW_REQUEST_QUEUE, new DestinationsConfig.DestinationInfo("exchange", HIP_DATA_FLOW_REQUEST_QUEUE));
+        queues.put(NOTIFY_CONSENT_TO_HIU_QUEUE,
+                new DestinationsConfig.DestinationInfo("exchange", NOTIFY_CONSENT_TO_HIU_QUEUE));
+        queues.put(NOTIFY_CONSENT_TO_HIP_QUEUE,
+                new DestinationsConfig.DestinationInfo("exchange", NOTIFY_CONSENT_TO_HIP_QUEUE));
+        queues.put(HIP_DATA_FLOW_REQUEST_QUEUE,
+                new DestinationsConfig.DestinationInfo("exchange", HIP_DATA_FLOW_REQUEST_QUEUE));
 
         DestinationsConfig destinationsConfig = new DestinationsConfig(queues, null);
         destinationsConfig.getQueues()

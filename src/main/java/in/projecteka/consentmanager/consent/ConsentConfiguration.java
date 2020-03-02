@@ -71,12 +71,24 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    public ConsentArtefactBroadcastListener hiuNotificationListener(MessageListenerContainerFactory messageListenerContainerFactory,
-                                                                    DestinationsConfig destinationsConfig,
-                                                                    Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-                                                                    ConsentArtefactNotifier consentArtefactNotifier,
-                                                                    ClientRegistryClient clientRegistryClient) {
-        return new ConsentArtefactBroadcastListener(
+    public HiuConsentNotificationListener hiuNotificationListener(MessageListenerContainerFactory messageListenerContainerFactory,
+                                                                  DestinationsConfig destinationsConfig,
+                                                                  Jackson2JsonMessageConverter jackson2JsonMessageConverter,
+                                                                  ConsentArtefactNotifier consentArtefactNotifier) {
+        return new HiuConsentNotificationListener(
+                messageListenerContainerFactory,
+                destinationsConfig,
+                jackson2JsonMessageConverter,
+                consentArtefactNotifier);
+    }
+
+    @Bean
+    public HipConsentNotificationListener hipNotificationListener(MessageListenerContainerFactory messageListenerContainerFactory,
+                                                                  DestinationsConfig destinationsConfig,
+                                                                  Jackson2JsonMessageConverter jackson2JsonMessageConverter,
+                                                                  ConsentArtefactNotifier consentArtefactNotifier,
+                                                                  ClientRegistryClient clientRegistryClient) {
+        return new HipConsentNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,

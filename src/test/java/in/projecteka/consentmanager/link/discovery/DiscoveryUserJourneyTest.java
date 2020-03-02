@@ -4,7 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
+import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
+import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -45,7 +46,11 @@ public class DiscoveryUserJourneyTest {
 
     @SuppressWarnings("unused")
     @MockBean
-    private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
+    private HiuConsentNotificationListener hiuConsentNotificationListener;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private HipConsentNotificationListener hipConsentNotificationListener;
 
     @SuppressWarnings("unused")
     @MockBean

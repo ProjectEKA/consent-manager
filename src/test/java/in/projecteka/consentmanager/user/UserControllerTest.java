@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
 import in.projecteka.consentmanager.consent.ConsentManager;
+import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.dataflow.DataFlowRequester;
 import in.projecteka.consentmanager.user.model.OtpVerification;
@@ -51,6 +52,9 @@ class UserControllerTest {
 
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;
+
+    @MockBean
+    private ConsentRequestNotificationListener consentRequestNotificationListener;
 
     @Autowired
     private WebTestClient webClient;

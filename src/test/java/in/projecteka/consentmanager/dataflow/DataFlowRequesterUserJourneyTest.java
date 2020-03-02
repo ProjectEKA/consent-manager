@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
+import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.dataflow.model.HIDataRange;
@@ -81,6 +82,9 @@ public class DataFlowRequesterUserJourneyTest {
 
     @MockBean
     private DataRequestNotifier dataRequestNotifier;
+
+    @MockBean
+    private ConsentRequestNotificationListener consentRequestNotificationListener;
 
     @AfterAll
     public static void tearDown() throws IOException {

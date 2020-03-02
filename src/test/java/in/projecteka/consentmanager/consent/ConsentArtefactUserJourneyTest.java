@@ -58,6 +58,9 @@ public class ConsentArtefactUserJourneyTest {
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;
 
+    @MockBean
+    private ConsentRequestNotificationListener consentRequestNotificationListener;
+
     @AfterAll
     public static void tearDown() throws IOException {
         clientRegistryServer.shutdown();

@@ -28,6 +28,7 @@ import java.util.HashMap;
 public class ConsentManagerConfiguration {
     public static final String CONSENT_GRANTED_QUEUE = "consent-granted-queue";
     public static final String HIP_DATA_FLOW_REQUEST_QUEUE = "hip-data-flow-request-queue";
+    public static final String CONSENT_REQUEST_QUEUE = "consent-request-queue";
 
     @Bean
     public ClientRegistryClient clientRegistryClient(WebClient.Builder builder,
@@ -69,6 +70,7 @@ public class ConsentManagerConfiguration {
         HashMap<String, DestinationsConfig.DestinationInfo> queues = new HashMap<>();
         queues.put(CONSENT_GRANTED_QUEUE, new DestinationsConfig.DestinationInfo("exchange", CONSENT_GRANTED_QUEUE));
         queues.put(HIP_DATA_FLOW_REQUEST_QUEUE, new DestinationsConfig.DestinationInfo("exchange", HIP_DATA_FLOW_REQUEST_QUEUE));
+        queues.put(CONSENT_REQUEST_QUEUE, new DestinationsConfig.DestinationInfo("exchange", CONSENT_REQUEST_QUEUE));
 
         DestinationsConfig destinationsConfig = new DestinationsConfig(queues, null);
         destinationsConfig.getQueues()

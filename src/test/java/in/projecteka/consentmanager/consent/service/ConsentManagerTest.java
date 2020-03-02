@@ -6,15 +6,20 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.consent.ConsentManager;
+import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.PostConsentApproval;
-import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
+import in.projecteka.consentmanager.consent.PostConsentRequestNotification;
+import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
 import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import reactor.core.publisher.Mono;
@@ -39,9 +44,18 @@ class ConsentManagerTest {
     private UserServiceClient userClient;
     @Mock
     private PostConsentApproval postConsentApproval;
+    @Mock
+    private PostConsentRequestNotification postConsentRequestNotification;
+
+    @MockBean
+    private ConsentRequestNotificationListener consentRequestNotificationListener;
+
     @MockBean
     private KeyPair keyPair;
     private ConsentManager consentManager;
+
+    @Captor
+    private ArgumentCaptor<ConsentRequest> captor;
 
     @BeforeEach
     public void setUp() {
@@ -51,7 +65,8 @@ class ConsentManagerTest {
                 repository,
                 consentArtefactRepository,
                 keyPair,
-                postConsentApproval);
+                postConsentApproval,
+                postConsentRequestNotification);
     }
 
     @Test
@@ -61,6 +76,8 @@ class ConsentManagerTest {
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
         RequestedDetail requestedDetail = RequestedDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
 
+        when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
+                .thenReturn(Mono.empty());
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(providerClient.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(providerClient.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
@@ -77,6 +94,8 @@ class ConsentManagerTest {
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
         RequestedDetail requestedDetail = RequestedDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
 
+        when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
+                .thenReturn(Mono.empty());
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(providerClient.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(providerClient.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));

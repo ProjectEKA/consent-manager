@@ -47,6 +47,7 @@ public class ConsentManager {
     private final ConsentArtefactRepository consentArtefactRepository;
     private KeyPair keyPair;
     private PostConsentApproval postConsentApproval;
+    private PostConsentRequestNotification postConsentRequestNotification;
 
     private static boolean isValidRequester(ConsentArtefact consentDetail, String requesterId) {
         return consentDetail.getHiu().getId().equals(requesterId) ||
@@ -58,7 +59,16 @@ public class ConsentManager {
         return validatePatient(requestedDetail.getPatient().getId())
                 .then(validateHIPAndHIU(requestedDetail))
                 .then(saveRequest(requestedDetail, requestId))
+                .then(sendConsentRequestNotification(requestId, requestedDetail))
                 .thenReturn(requestId);
+    }
+
+    private Mono<Void> sendConsentRequestNotification(String requestId, RequestedDetail requestedDetail) {
+        return postConsentRequestNotification.broadcastConsentRequestNotification(
+                ConsentRequest.builder()
+                            .requestedDetail(requestedDetail)
+                            .requestId(requestId)
+                            .build());
     }
 
     private Mono<Boolean> validatePatient(String patientId) {

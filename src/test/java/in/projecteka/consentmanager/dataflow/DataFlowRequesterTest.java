@@ -23,7 +23,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-public class DataFlowRequestTest {
+public class DataFlowRequesterTest {
     @Mock
     private DataFlowRequestRepository dataFlowRequestRepository;
 
@@ -33,12 +33,12 @@ public class DataFlowRequestTest {
     @Mock
     private PostDataFlowRequestApproval postDataFlowRequestApproval;
 
-    private DataFlowRequest dataFlowRequest;
+    private DataFlowRequester dataFlowRequester;
 
     @BeforeEach
     public void setUp() {
         initMocks(this);
-        dataFlowRequest = new DataFlowRequest(consentManagerClient, dataFlowRequestRepository,
+        dataFlowRequester = new DataFlowRequester(consentManagerClient, dataFlowRequestRepository,
                 postDataFlowRequestApproval);
     }
 
@@ -64,7 +64,7 @@ public class DataFlowRequestTest {
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(),
                 any(in.projecteka.consentmanager.dataflow.model.DataFlowRequest.class))).thenReturn(Mono.empty());
 
-        StepVerifier.create(dataFlowRequest.validateDataTransferRequest(hiuId, request))
+        StepVerifier.create(dataFlowRequester.requestHealthData(hiuId, request))
                 .expectNextMatches(res -> res != null)
                 .verifyComplete();
     }
@@ -77,7 +77,7 @@ public class DataFlowRequestTest {
         when(consentManagerClient.getConsentArtefact(request.getConsent().getId()))
                 .thenReturn(Mono.just(consentArtefactRepresentation));
 
-        StepVerifier.create(dataFlowRequest.validateDataTransferRequest("1", request))
+        StepVerifier.create(dataFlowRequester.requestHealthData("1", request))
                 .expectErrorMatches(e -> (e instanceof ClientError) && ((ClientError) e).getHttpStatus().is4xxClientError());
     }
 }

@@ -4,7 +4,7 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
 import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.dataflow.DataFlowRequest;
+import in.projecteka.consentmanager.dataflow.DataFlowRequester;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
@@ -41,7 +41,7 @@ class UserControllerTest {
     private ConsentManager consentManager;
 
     @MockBean
-    private DataFlowRequest dataFlowRequest;
+    private DataFlowRequester dataFlowRequester;
 
     @MockBean
     private DestinationsConfig destinationsConfig;

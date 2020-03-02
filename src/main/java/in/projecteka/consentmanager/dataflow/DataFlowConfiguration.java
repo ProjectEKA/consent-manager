@@ -39,12 +39,12 @@ public class DataFlowConfiguration {
     }
 
     @Bean
-    public DataFlowRequest dataRequest(WebClient.Builder builder,
-                                       DataFlowRequestRepository dataFlowRequestRepository,
-                                       PostDataFlowRequestApproval postDataFlowRequestApproval,
-                                       DataFlowAuthServerProperties dataFlowAuthServerProperties,
-                                       DataFlowConsentManagerProperties dataFlowConsentManagerProperties) {
-        return new DataFlowRequest(new ConsentManagerClient(builder, dataFlowAuthServerProperties, dataFlowConsentManagerProperties),
+    public DataFlowRequester dataRequest(WebClient.Builder builder,
+                                         DataFlowRequestRepository dataFlowRequestRepository,
+                                         PostDataFlowRequestApproval postDataFlowRequestApproval,
+                                         DataFlowAuthServerProperties dataFlowAuthServerProperties,
+                                         DataFlowConsentManagerProperties dataFlowConsentManagerProperties) {
+        return new DataFlowRequester(new ConsentManagerClient(builder, dataFlowAuthServerProperties, dataFlowConsentManagerProperties),
                 dataFlowRequestRepository, postDataFlowRequestApproval);
     }
 

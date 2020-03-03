@@ -59,16 +59,11 @@ public class ConsentManager {
                 .flatMap(context -> validatePatient(requestedDetail.getPatient().getId(), context.get("Authorization")))
                 .then(validateHIPAndHIU(requestedDetail))
                 .then(saveRequest(requestedDetail, requestId))
-                .then(sendConsentRequestNotification(requestId, requestedDetail))
+                .then(postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
+                                                                                .detail(requestedDetail)
+                                                                                .id(requestId)
+                                                                                .build()))
                 .thenReturn(requestId);
-    }
-
-    private Mono<Void> sendConsentRequestNotification(String requestId, RequestedDetail requestedDetail) {
-        return postConsentRequest.broadcastConsentRequestNotification(
-                ConsentRequest.builder()
-                            .detail(requestedDetail)
-                            .id(requestId)
-                            .build());
     }
 
     private Mono<Boolean> validatePatient(String patientId, String token) {

@@ -47,14 +47,14 @@ public class ConsentRequestNotificationListener {
             ConsentRequest consentRequest = (ConsentRequest) converter.fromMessage(message);
             logger.info(String.format("Received message for Request id : %s", consentRequest.getId()));
             createNotificationMessage(consentRequest)
-                    .flatMap(this::NotifyUserWith)
+                    .flatMap(this::notifyUserWith)
                     .block();
         };
         mlc.setupMessageListener(messageListener);
         mlc.start();
     }
 
-    public Mono<Void> NotifyUserWith(Notification notification) {
+    public Mono<Void> notifyUserWith(Notification notification) {
         return consentNotificationClient.send(notification);
     }
 

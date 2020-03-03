@@ -182,8 +182,8 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldSendNotificationMessage(){
         var notificationMessage = notificationMessage().build();
-        consentRequestNotificationListener.NotifyUserWith(notificationMessage);
-        verify(consentRequestNotificationListener).NotifyUserWith(notificationMessage);
+        consentRequestNotificationListener.notifyUserWith(notificationMessage);
+        verify(consentRequestNotificationListener).notifyUserWith(notificationMessage);
     }
 
     public static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

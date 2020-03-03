@@ -8,8 +8,8 @@ import org.apache.log4j.Logger;
 import org.springframework.amqp.core.AmqpTemplate;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.ConsentManagerConfiguration.NOTIFY_CONSENT_TO_HIP_QUEUE;
-import static in.projecteka.consentmanager.ConsentManagerConfiguration.NOTIFY_CONSENT_TO_HIU_QUEUE;
+import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_CONSENT_NOTIFICATION_QUEUE;
 
 @AllArgsConstructor
 public class PostConsentApproval {
@@ -27,10 +27,10 @@ public class PostConsentApproval {
     @SneakyThrows
     private void broadcastArtefactsToHiu(ConsentArtefactsMessage message) {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig.getQueues()
-                .get(NOTIFY_CONSENT_TO_HIU_QUEUE);
+                .get(HIU_CONSENT_NOTIFICATION_QUEUE);
 
         if (destinationInfo == null) {
-            String errorMessage = String.format("%s %s", NOTIFY_CONSENT_TO_HIU_QUEUE, " not found");
+            String errorMessage = String.format("%s %s", HIU_CONSENT_NOTIFICATION_QUEUE, " not found");
             logger.error(errorMessage);
             throw new Exception(errorMessage);
         }
@@ -42,10 +42,10 @@ public class PostConsentApproval {
     @SneakyThrows
     private void broadcastArtefactsToHips(ConsentArtefactsMessage message) {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig.getQueues()
-                .get(NOTIFY_CONSENT_TO_HIP_QUEUE);
+                .get(HIP_CONSENT_NOTIFICATION_QUEUE);
 
         if (destinationInfo == null) {
-            String errorMessage = String.format("%s %s", NOTIFY_CONSENT_TO_HIP_QUEUE, " not found");
+            String errorMessage = String.format("%s %s", HIP_CONSENT_NOTIFICATION_QUEUE, " not found");
             logger.error(errorMessage);
             throw new Exception(errorMessage);
         }

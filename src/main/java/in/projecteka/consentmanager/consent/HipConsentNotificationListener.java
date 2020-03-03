@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 
-import static in.projecteka.consentmanager.ConsentManagerConfiguration.NOTIFY_CONSENT_TO_HIP_QUEUE;
+import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
@@ -31,9 +31,9 @@ public class HipConsentNotificationListener {
     public void subscribe() throws ClientError {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig
                 .getQueues()
-                .get(NOTIFY_CONSENT_TO_HIP_QUEUE);
+                .get(HIP_CONSENT_NOTIFICATION_QUEUE);
         if (destinationInfo == null) {
-            logger.error(NOTIFY_CONSENT_TO_HIP_QUEUE + " not found");
+            logger.error(HIP_CONSENT_NOTIFICATION_QUEUE + " not found");
             throw queueNotFound();
         }
 

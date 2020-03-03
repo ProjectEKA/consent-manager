@@ -5,7 +5,6 @@ import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
-import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -35,6 +34,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.consent.TestBuilders.notificationMessage;
+import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -71,11 +71,13 @@ public class ConsentRequestUserJourneyTest {
 
     private static MockWebServer clientRegistryServer = new MockWebServer();
     private static MockWebServer userServer = new MockWebServer();
+    private static MockWebServer identityServer = new MockWebServer();
 
     @AfterAll
     public static void tearDown() throws IOException {
         clientRegistryServer.shutdown();
         userServer.shutdown();
+        identityServer.shutdown();
     }
 
     @Test
@@ -98,6 +100,8 @@ public class ConsentRequestUserJourneyTest {
                 .setBody("{}")
                 .setHeader("content-type",
                         "application/json"));
+        var user = "{\"preferred_username\": \"patient@ncg\"}";
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         String body = "{\n" +
                 "  \"consent\": {\n" +
                 "    \"purpose\": {\n" +
@@ -148,7 +152,7 @@ public class ConsentRequestUserJourneyTest {
                 .uri("/consent-requests")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "somevalue")
+                .header("Authorization", string())
                 .body(BodyInserters.fromValue(body))
                 .exchange()
                 .expectStatus().isOk()
@@ -159,11 +163,14 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldGetConsentRequests() {
         List<ConsentRequestDetail> requests = new ArrayList<>();
+        var user = "{\"preferred_username\": \"Ganesh@ncg\"}";
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         when(repository.requestsForPatient("Ganesh@ncg", 20, 0)).thenReturn(Mono.just(requests));
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/consent-requests").queryParam("limit", "20").build())
                 .accept(MediaType.APPLICATION_JSON)
-                .header("Authorization", "R2FuZXNoQG5jZw==")
+                .header("Authorization", string())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ConsentRequestsRepresentation.class)
@@ -185,7 +192,8 @@ public class ConsentRequestUserJourneyTest {
             TestPropertyValues values = TestPropertyValues.of(
                     Stream.of("consentmanager.clientregistry.url=" + clientRegistryServer.url(""),
                             "consentmanager.userservice.url=" + userServer.url(""),
-                            "consentmanager.consentservice.maxPageSize=50"));
+                            "consentmanager.consentservice.maxPageSize=50",
+                            "consentmanager.keycloak.baseUrl=" + identityServer.url("")));
             values.applyTo(applicationContext);
         }
     }

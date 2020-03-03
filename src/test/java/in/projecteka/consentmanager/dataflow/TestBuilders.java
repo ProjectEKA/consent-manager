@@ -24,4 +24,8 @@ public class TestBuilders {
     public static in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest.DataFlowRequestBuilder dataFlowRequestBuilder(){
         return easyRandom.nextObject(in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest.DataFlowRequestBuilder.class);
     }
+
+    public static String string() {
+        return easyRandom.nextObject(String.class);
+    }
 }

@@ -13,7 +13,6 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
-import in.projecteka.consentmanager.link.discovery.repository.DiscoveryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -32,12 +31,14 @@ import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientRe
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientResponse;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.providerIdentifier;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.telecom;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.user;
 import static java.util.List.of;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 public class DiscoveryTest {
 
@@ -84,9 +85,9 @@ public class DiscoveryTest {
 
     @Test
     public void patientForGivenProviderIdAndPatientId() {
-        String providerId = "1";
-        String transactionId = "transaction-id";
-        String patientId = "1";
+        var providerId = string();
+        String transactionId = string();
+        String patientId = string();
         var discovery = new Discovery(
                 clientRegistryClient,
                 userServiceClient,
@@ -131,7 +132,9 @@ public class DiscoveryTest {
                 .thenReturn(Mono.just(patientResponse));
         when(discoveryRepository.insert(providerId, patientId, transactionId)).thenReturn(Mono.empty());
 
-        StepVerifier.create(discovery.patientFor(providerId, patientId, transactionId))
+        StepVerifier.create(
+                discovery.patientFor(providerId, patientId, transactionId)
+                        .subscriberContext(cxt -> cxt.put(AUTHORIZATION, string())))
                 .expectNext(discoveryResponse)
                 .verifyComplete();
     }
@@ -159,7 +162,9 @@ public class DiscoveryTest {
         when(clientRegistryClient.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
         when(userServiceClient.userOf(eq(userName))).thenReturn(Mono.just(user));
 
-        StepVerifier.create(discovery.patientFor(providerId, userName, UUID.randomUUID().toString()))
+        StepVerifier.create(
+                discovery.patientFor(providerId, userName, UUID.randomUUID().toString())
+                        .subscriberContext(context -> context.put(AUTHORIZATION, string())))
                 .expectErrorMatches(error -> ((ClientError) error)
                         .getError()
                         .getError()

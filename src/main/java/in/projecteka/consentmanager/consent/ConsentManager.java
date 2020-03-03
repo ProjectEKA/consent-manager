@@ -18,8 +18,6 @@ import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRefere
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLight;
-import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
-import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
@@ -43,21 +41,22 @@ public class ConsentManager {
 
     public static final String SHA_1_WITH_RSA = "SHA1withRSA";
     private final ClientRegistryClient providerClient;
-    private UserServiceClient userServiceClient;
+    private final UserServiceClient userServiceClient;
     private final ConsentRequestRepository consentRequestRepository;
     private final ConsentArtefactRepository consentArtefactRepository;
     private KeyPair keyPair;
     private PostConsentApproval postConsentApproval;
     private PostConsentRequestNotification postConsentRequestNotification;
 
-    private static boolean isValidRequester(ConsentArtefact consentDetail, String requesterId) {
-        return consentDetail.getHiu().getId().equals(requesterId) ||
-                consentDetail.getPatient().getId().equals(requesterId);
+    private static boolean isNotSameRequester(ConsentArtefact consentDetail, String requesterId) {
+        return !consentDetail.getHiu().getId().equals(requesterId) &&
+                !consentDetail.getPatient().getId().equals(requesterId);
     }
 
-    public Mono<String> askForConsent(String requestingHIUId, RequestedDetail requestedDetail) {
+    public Mono<String> askForConsent(RequestedDetail requestedDetail) {
         final String requestId = UUID.randomUUID().toString();
-        return validatePatient(requestedDetail.getPatient().getId())
+        return Mono.subscriberContext()
+                .flatMap(context -> validatePatient(requestedDetail.getPatient().getId(), context.get("Authorization")))
                 .then(validateHIPAndHIU(requestedDetail))
                 .then(saveRequest(requestedDetail, requestId))
                 .then(sendConsentRequestNotification(requestId, requestedDetail))
@@ -72,8 +71,10 @@ public class ConsentManager {
                             .build());
     }
 
-    private Mono<Boolean> validatePatient(String patientId) {
-        return userServiceClient.userOf(patientId).map(Objects::nonNull);
+    private Mono<Boolean> validatePatient(String patientId, String token) {
+        return userServiceClient.userOf(patientId)
+                .map(Objects::nonNull)
+                .subscriberContext(context -> context.put("Authorization", token));
     }
 
     private Mono<Boolean> validateHIPAndHIU(RequestedDetail requestedDetail) {
@@ -116,7 +117,8 @@ public class ConsentManager {
     public Mono<ConsentApprovalResponse> approveConsent(String patientId,
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
-        return validatePatient(patientId)
+        return Mono.subscriberContext()
+                .flatMap(context -> validatePatient(patientId, context.get("Authorization")))
                 .then(validateConsentRequest(requestId))
                 .flatMap(consentRequest ->
                         generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)
@@ -191,8 +193,7 @@ public class ConsentManager {
                                                                         GrantedConsent grantedConsent) {
         var consentArtefact = from(consentRequest, grantedConsent);
         var hipConsentArtefact = from(consentArtefact);
-        String consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
-
+        var consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
         return consentArtefactRepository.addConsentArtefactAndUpdateStatus(consentArtefact,
                 requestId,
                 patientId,
@@ -212,7 +213,7 @@ public class ConsentManager {
     private ConsentArtefact from(ConsentRequestDetail requestDetail, GrantedConsent granted) {
         PatientReference patientReference = PatientReference.builder().id(requestDetail.getPatient().getId()).build();
         String consentArtefactId = UUID.randomUUID().toString();
-        //TODO: need to store also the CC
+        //TODO: need to save also the CC
         return ConsentArtefact.builder()
                 .consentId(consentArtefactId)
                 .createdAt(new Date())
@@ -236,7 +237,7 @@ public class ConsentManager {
         return getConsentArtefact(consentId)
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()))
                 .flatMap(r -> {
-                    if (!isValidRequester(r.getConsentDetail(), requesterId)) {
+                    if (isNotSameRequester(r.getConsentDetail(), requesterId)) {
                         return Mono.error(ClientError.consentArtefactForbidden());
                     }
                     return Mono.just(r);
@@ -277,11 +278,7 @@ public class ConsentManager {
         return consentArtefactRepository.getConsentArtefacts(consentRequestId)
                 .flatMap(consentArtefactRepository::getConsentArtefact)
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()))
-                .flatMap(consentArtefactRepresentation -> {
-                    if (!isValidRequester(consentArtefactRepresentation.getConsentDetail(), requesterId)) {
-                        return Mono.error(ClientError.consentArtefactForbidden());
-                    }
-                    return Mono.just(consentArtefactRepresentation);
-                });
+                .filter(consentArtefact -> !isNotSameRequester(consentArtefact.getConsentDetail(), requesterId))
+                .switchIfEmpty(Mono.error(ClientError.consentArtefactForbidden()));
     }
 }

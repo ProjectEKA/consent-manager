@@ -3,10 +3,10 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.AuthorizationTest;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
-import in.projecteka.consentmanager.clients.model.KeycloakToken;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -25,11 +24,11 @@ import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.AbstractMap;
+import java.time.LocalDate;
 import java.util.Collections;
-import java.util.stream.Stream;
+import java.util.Optional;
 
-import static in.projecteka.consentmanager.user.TestBuilders.keycloakToken;
+import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
@@ -53,7 +52,7 @@ class UserServiceTest {
     private OtpServiceClient otpServiceClient;
 
     @Mock
-    private UserVerificationService userVerificationService;
+    private SignUpService signupService;
 
     @Mock
     private IdentityServiceClient identityServiceClient;
@@ -73,20 +72,18 @@ class UserServiceTest {
                 userRepository,
                 otpServiceProperties,
                 otpServiceClient,
-                userVerificationService,
+                signupService,
                 identityServiceClient,
                 tokenService);
     }
 
-    @ParameterizedTest
-    @MethodSource("mobileNumberProvider")
-    public void shouldReturnTemporarySessionReceivedFromClient(
-            AbstractMap.SimpleEntry<String, String> mobileNumber) {
-        var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", mobileNumber.getKey());
+    @Test
+    public void shouldReturnTemporarySessionReceivedFromClient() {
+        var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", "+91-9788888");
         var sessionId = string();
         var signUpSession = new SignUpSession(sessionId);
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
-        when(userVerificationService.cacheAndSendSession(sessionCaptor.capture(), eq(mobileNumber.getValue())))
+        when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq("+91-9788888")))
                 .thenReturn(signUpSession);
 
         Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
@@ -109,7 +106,7 @@ class UserServiceTest {
         var token = string();
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(sessionId, otp)).thenReturn(Mono.empty());
-        when(userVerificationService.generateToken(sessionId))
+        when(signupService.generateToken(sessionId))
                 .thenReturn(new Token(token));
 
         StepVerifier.create(userService.permitOtp(otpVerification))
@@ -143,13 +140,17 @@ class UserServiceTest {
 
     @Test
     public void shouldCreateUser() {
-        var signUpRequest = signUpRequest().build();
-        var userToken = keycloakToken().build();
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new KeycloakToken()));
+        var signUpRequest = signUpRequest().dateOfBirth(LocalDate.MIN).build();
+        var userToken = session().build();
+        var sessionId = string();
+        var mobileNumber = string();
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
+        when(userRepository.save(any())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 
-        StepVerifier.create(userService.create(signUpRequest))
+        StepVerifier.create(userService.create(signUpRequest, sessionId))
                 .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
                 .verifyComplete();
     }
@@ -164,11 +165,6 @@ class UserServiceTest {
             @ConvertWith(AuthorizationTest.NullableConverter.class) String userId
     ) {
         var signUpRequest = signUpRequest().userName(userId).build();
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.create(signUpRequest));
-    }
-
-    private static Stream<AbstractMap.SimpleEntry<String, String>> mobileNumberProvider() {
-        return Stream.of(new AbstractMap.SimpleEntry<>("9788888", "9788888"),
-                new AbstractMap.SimpleEntry<>("+91-9788888", "9788888"));
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.create(signUpRequest, string()));
     }
 }

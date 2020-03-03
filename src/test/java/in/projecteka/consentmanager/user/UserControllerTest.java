@@ -56,6 +56,9 @@ class UserControllerTest {
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 
+    @MockBean
+    private SignUpService signupService;
+
     @Autowired
     private WebTestClient webClient;
 

@@ -20,7 +20,7 @@ class UserConfigurationTest {
     private OtpServiceClient otpServiceClient;
 
     @Mock
-    private UserVerificationService userVerificationService;
+    private SignUpService signupService;
 
     @Mock
     private IdentityServiceClient identityServiceClient;
@@ -36,7 +36,7 @@ class UserConfigurationTest {
                 mockUserRepository,
                 otpServiceProperties,
                 otpServiceClient,
-                userVerificationService,
+                signupService,
                 identityServiceClient,
                 tokenService))
                 .isInstanceOf(UserService.class);

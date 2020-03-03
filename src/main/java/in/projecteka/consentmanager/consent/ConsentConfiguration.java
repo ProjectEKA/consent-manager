@@ -9,8 +9,6 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
-import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
-import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
 import io.vertx.pgclient.PgPool;
 import lombok.SneakyThrows;
 import org.springframework.amqp.core.AmqpTemplate;

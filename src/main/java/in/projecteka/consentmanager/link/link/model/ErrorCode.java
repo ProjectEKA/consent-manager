@@ -23,7 +23,9 @@ public enum ErrorCode {
     QUEUE_NOT_FOUND(1013),
     INVALID_HIU(1014),
     INVALID_DATE_RANGE(1015),
-    CONSENT_ARTEFACT_EXPIRED(1016);
+    CONSENT_ARTEFACT_EXPIRED(1016),
+    INVALID_TOKEN(1017),
+    USERNAME_OR_PASSWORD_INCORRECT(1018);
 
     private int value;
     ErrorCode(int val) {
@@ -41,6 +43,6 @@ public enum ErrorCode {
         return Arrays.stream(ErrorCode.values())
                 .filter(errorCode -> errorCode.value == value)
                 .findAny()
-                .orElse(ErrorCode.OTP_EXPIRED);
+                .orElse(ErrorCode.UNKNOWN_ERROR_OCCURRED);
     }
 }

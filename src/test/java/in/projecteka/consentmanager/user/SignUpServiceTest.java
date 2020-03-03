@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class UserVerificationServiceTest {
+class SignUpServiceTest {
 
     @Mock
     private JWTProperties jwtProperties;
@@ -29,7 +29,7 @@ class UserVerificationServiceTest {
     @Mock
     private LoadingCache<String, Optional<String>> verifiedSessions;
 
-    private UserVerificationService userVerificationService;
+    private SignUpService signupService;
 
     EasyRandom easyRandom;
 
@@ -37,7 +37,7 @@ class UserVerificationServiceTest {
     public void setUp() {
         easyRandom = new EasyRandom();
         MockitoAnnotations.initMocks(this);
-        userVerificationService = new UserVerificationService(jwtProperties, unverifiedSessions, verifiedSessions);
+        signupService = new SignUpService(jwtProperties, unverifiedSessions, verifiedSessions);
     }
 
     @Test
@@ -48,7 +48,7 @@ class UserVerificationServiceTest {
         OtpRequest otpRequest = new OtpRequest(sessionId, communicationData);
         SignUpSession expectedResponse = new SignUpSession(sessionId);
 
-        assertThat(userVerificationService.cacheAndSendSession(
+        assertThat(signupService.cacheAndSendSession(
                 otpRequest.getSessionId(),
                 otpRequest.getCommunication().getValue()))
                 .isEqualTo(expectedResponse);
@@ -61,6 +61,6 @@ class UserVerificationServiceTest {
         when(jwtProperties.getSecret()).thenReturn(easyRandom.nextObject(String.class));
         when(unverifiedSessions.get(sessionId)).thenReturn(Optional.of(easyRandom.nextObject(String.class)));
 
-        assertThat(userVerificationService.generateToken(sessionId)).isInstanceOf(Token.class);
+        assertThat(signupService.generateToken(sessionId)).isInstanceOf(Token.class);
     }
 }

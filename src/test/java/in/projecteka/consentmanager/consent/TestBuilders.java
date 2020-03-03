@@ -11,7 +11,11 @@ public class TestBuilders {
         return easyRandom.nextObject(ConsentArtefactRepresentation.ConsentArtefactRepresentationBuilder.class);
     }
 
-    public static NotificationMessage.NotificationMessageBuilder notificationMessage(){
+    public static NotificationMessage.NotificationMessageBuilder notificationMessage() {
         return easyRandom.nextObject(NotificationMessage.NotificationMessageBuilder.class);
+    }
+
+    public static String string() {
+        return easyRandom.nextObject(String.class);
     }
 }

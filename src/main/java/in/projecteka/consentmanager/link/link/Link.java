@@ -4,6 +4,7 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Identifier;
+import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.link.HIPClient;
 import in.projecteka.consentmanager.link.link.model.Hip;
@@ -15,7 +16,7 @@ import in.projecteka.consentmanager.link.link.model.PatientLinkResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import in.projecteka.consentmanager.link.link.model.hip.Patient;
-import in.projecteka.consentmanager.link.link.repository.LinkRepository;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -28,19 +29,12 @@ import java.util.TimeZone;
 
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 
+@AllArgsConstructor
 public class Link {
     private final HIPClient hipClient;
     private final ClientRegistryClient clientRegistryClient;
     private final LinkRepository linkRepository;
-    private UserServiceClient userServiceClient;
-
-    public Link(HIPClient hipClient, ClientRegistryClient clientRegistryClient, LinkRepository linkRepository,
-                UserServiceClient userServiceClient) {
-        this.hipClient = hipClient;
-        this.clientRegistryClient = clientRegistryClient;
-        this.linkRepository = linkRepository;
-        this.userServiceClient = userServiceClient;
-    }
+    private final UserServiceClient userServiceClient;
 
     public Mono<PatientLinkReferenceResponse> patientWith(String patientId,
                                                           PatientLinkReferenceRequest patientLinkReferenceRequest) {
@@ -52,8 +46,9 @@ public class Link {
                 .flatMap(hipId -> providerUrl(hipId)
                         .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
                         .flatMap(url -> getPatientLinkReferenceResponse(patientLinkReferenceRequest,
-                                linkReferenceRequest, hipId, url)
-                        ));
+                                linkReferenceRequest,
+                                hipId,
+                                url)));
     }
 
     private Mono<PatientLinkReferenceResponse> getPatientLinkReferenceResponse(
@@ -64,33 +59,33 @@ public class Link {
         return hipClient.linkPatientCareContext(linkReferenceRequest, url)
                 .flatMap(linkReferenceResponse -> {
                     linkReferenceResponse.setTransactionId(patientLinkReferenceRequest.getTransactionId());
-                    return linkRepository.insertToLinkReference(
-                            linkReferenceResponse, hipId)
-                            .then(Mono.just(
-                                    PatientLinkReferenceResponse.builder()
-                                            .transactionId(
-                                                    linkReferenceResponse.getTransactionId())
-                                            .link(linkReferenceResponse.getLink()).build()));
+                    return linkRepository.insertToLinkReference(linkReferenceResponse, hipId)
+                            .thenReturn(PatientLinkReferenceResponse.builder()
+                                    .transactionId(linkReferenceResponse.getTransactionId())
+                                    .link(linkReferenceResponse.getLink()).build());
                 });
     }
 
-    public Mono<PatientLinkResponse> verifyToken(String linkRefNumber, PatientLinkRequest patientLinkRequest,
+    public Mono<PatientLinkResponse> verifyToken(String linkRefNumber,
+                                                 PatientLinkRequest patientLinkRequest,
                                                  String patientId) {
-        return isOTPExpired(linkRefNumber).flatMap(expiry -> {
-            if (!expiry) {
-                return linkCareContexts(patientLinkRequest, linkRefNumber, patientId);
-            }
-            return Mono.error(ClientError.otpExpired());
-        });
+        return isOTPExpired(linkRefNumber)
+                .filter(expired -> !expired)
+                .switchIfEmpty(Mono.error(ClientError.otpExpired()))
+                .then(linkCareContexts(patientLinkRequest, linkRefNumber, patientId));
     }
 
-    private Mono<PatientLinkResponse> linkCareContexts(PatientLinkRequest patientLinkRequest, String linkRefNumber,
+    private Mono<PatientLinkResponse> linkCareContexts(PatientLinkRequest patientLinkRequest,
+                                                       String linkRefNumber,
                                                        String patientId) {
         return linkRepository.getTransactionIdFromLinkReference(linkRefNumber)
                 .flatMap(linkRepository::getHIPIdFromDiscovery)
                 .flatMap(hipId -> providerUrl(hipId)
                         .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
-                        .flatMap(url -> getPatientLinkResponse(patientLinkRequest, linkRefNumber, patientId, hipId,
+                        .flatMap(url -> getPatientLinkResponse(patientLinkRequest,
+                                linkRefNumber,
+                                patientId,
+                                hipId,
                                 url)));
     }
 
@@ -101,13 +96,11 @@ public class Link {
             String hipId,
             String url) {
         return hipClient.validateToken(linkRefNumber, patientLinkRequest, url)
-                .flatMap(patientLinkResponse -> linkRepository.insertToLink(
-                        hipId,
-                        patientId,
-                        linkRefNumber,
-                        patientLinkResponse.getPatient()
-                ).then(Mono.just(
-                        PatientLinkResponse.builder().patient(patientLinkResponse.getPatient()).build())));
+                .flatMap(patientLinkResponse ->
+                        linkRepository.insertToLink(hipId, patientId, linkRefNumber, patientLinkResponse.getPatient())
+                                .thenReturn(PatientLinkResponse.builder()
+                                        .patient(patientLinkResponse.getPatient())
+                                        .build()));
     }
 
     private Mono<String> providerUrl(String providerId) {
@@ -122,8 +115,7 @@ public class Link {
 
     private Mono<Boolean> isOTPExpired(String linkRefNumber) {
         return linkRepository.getExpiryFromLinkReference(linkRefNumber)
-                .flatMap(this::isExpired)
-                .switchIfEmpty(Mono.empty());
+                .flatMap(this::isExpired);
     }
 
     @SneakyThrows
@@ -139,14 +131,14 @@ public class Link {
         return linkRepository.getLinkedCareContextsForAllHip(patientId)
                 .flatMap(patientLinks -> getLinks(patientLinks.getLinks())
                         .flatMap(links -> userWith(patientId)
-                                .flatMap(user -> Mono.just(PatientLinksResponse.builder().
+                                .map(user -> PatientLinksResponse.builder().
                                         patient(PatientLinks.builder()
                                                 .id(patientLinks.getId())
                                                 .firstName(user.getFirstName())
                                                 .lastName(user.getLastName())
                                                 .links(links)
                                                 .build())
-                                .build()))));
+                                        .build())));
     }
 
     private Mono<User> userWith(String patientId) {
@@ -154,24 +146,20 @@ public class Link {
     }
 
     private Mono<List<Links>> getLinks(List<Links> patientLinks) {
-        Flux<Links> linksFlux = Flux.fromIterable(patientLinks).flatMap(this::getHIPDetails);
-        return linksFlux.collectList();
-
+        return Flux.fromIterable(patientLinks).flatMap(this::getHIPDetails).collectList();
     }
 
     private Mono<Links> getHIPDetails(Links links) {
         return getProviderName(links.getHip().getId())
-                .flatMap(name ->
-                        Mono.just(Links.builder()
-                                .hip(Hip.builder().id(links.getHip().getId()).name(name).build())
-                                .patientRepresentations(links.getPatientRepresentations())
-                                .build()));
+                .map(name -> Links.builder()
+                        .hip(Hip.builder().id(links.getHip().getId()).name(name).build())
+                        .patientRepresentations(links.getPatientRepresentations())
+                        .build());
     }
 
     private Mono<String> getProviderName(String providerId) {
         return clientRegistryClient.providerWith(providerId)
-                .flatMap(provider -> Mono.just(provider.getName()))
+                .map(Provider::getName)
                 .switchIfEmpty(Mono.empty());
-
     }
 }

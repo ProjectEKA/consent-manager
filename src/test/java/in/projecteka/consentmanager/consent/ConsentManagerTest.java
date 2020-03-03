@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.consent.service;
+package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
@@ -14,19 +14,21 @@ import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
-import in.projecteka.consentmanager.consent.repository.ConsentArtefactRepository;
-import in.projecteka.consentmanager.consent.repository.ConsentRequestRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.security.KeyPair;
+import java.util.Objects;
 
+import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -83,8 +85,11 @@ class ConsentManagerTest {
         when(providerClient.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
 
-        String requestingHIUId = "hiu1";
-        StepVerifier.create(consentManager.askForConsent(requestingHIUId, requestedDetail)).expectNextMatches(r -> r != null).verifyComplete();
+        StepVerifier.create(
+                consentManager.askForConsent(requestedDetail)
+                        .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+                .expectNextMatches(Objects::nonNull)
+                .verifyComplete();
     }
 
     @Test
@@ -101,8 +106,10 @@ class ConsentManagerTest {
         when(providerClient.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
 
-        String requestingHIUId = "hiu1";
-        StepVerifier.create(consentManager.askForConsent(requestingHIUId, requestedDetail))
-                .expectErrorMatches(e -> (e instanceof ClientError) && ((ClientError) e).getHttpStatus().is4xxClientError());
+        StepVerifier.create(consentManager.askForConsent(requestedDetail)
+                .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+                .expectErrorMatches(e -> (e instanceof ClientError) &&
+                        ((ClientError) e).getHttpStatus().is4xxClientError())
+                .verify();
     }
 }

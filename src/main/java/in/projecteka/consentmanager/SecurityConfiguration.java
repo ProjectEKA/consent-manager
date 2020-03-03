@@ -1,6 +1,8 @@
 package in.projecteka.consentmanager;
 
-import in.projecteka.consentmanager.user.UserVerificationService;
+import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
+import in.projecteka.consentmanager.common.Authenticator;
+import in.projecteka.consentmanager.user.SignUpService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +18,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -32,7 +35,9 @@ public class SecurityConfiguration {
             ServerSecurityContextRepository securityContextRepository) {
         return httpSecurity
                 .authorizeExchange()
-                .pathMatchers("/**.json", "/users/verify","/users/permit").permitAll()
+                // TODO: need to fix internal call
+                .pathMatchers("/**.json", "/users/verify", "/users/permit", "/sessions", "/internal/consents")
+                .permitAll()
                 .pathMatchers("/**.html").permitAll()
                 .pathMatchers("/**.js").permitAll()
                 .pathMatchers("/**.png").permitAll()
@@ -55,16 +60,23 @@ public class SecurityConfiguration {
     }
 
     @Bean
+    public Authenticator authenticator(WebClient.Builder builder, IdentityServiceProperties identityServiceProperties) {
+        return new Authenticator(builder, identityServiceProperties);
+    }
+
+    @Bean
     public SecurityContextRepository contextRepository(ReactiveAuthenticationManager manager,
-                                                       UserVerificationService userVerificationService) {
-        return new SecurityContextRepository(manager, userVerificationService);
+                                                       SignUpService signupService,
+                                                       Authenticator authenticator) {
+        return new SecurityContextRepository(manager, signupService, authenticator);
     }
 
     @AllArgsConstructor
     private static class SecurityContextRepository implements ServerSecurityContextRepository {
 
         private ReactiveAuthenticationManager manager;
-        private UserVerificationService userVerificationService;
+        private SignUpService signupService;
+        private Authenticator identityServiceClient;
 
         @Override
         public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {
@@ -73,22 +85,40 @@ public class SecurityConfiguration {
 
         @Override
         public Mono<SecurityContext> load(ServerWebExchange exchange) {
-            var authToken = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-            var notBlank = authToken != null && !authToken.trim().equals("");
-            var isSignUpRequest = isSignUpRequest(
-                    exchange.getRequest().getPath().toString(),
-                    exchange.getRequest().getMethod()
-            );
+            var token = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            if (isEmpty(token)) {
+                return Mono.empty();
+            }
+            if (isSignUpRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
+                return checkSignUp(token);
+            }
+            return check(token);
+        }
 
-            if(isSignUpRequest && notBlank && userVerificationService.validateToken(authToken)) {
-                return Mono.just(new UsernamePasswordAuthenticationToken(authToken, authToken, new ArrayList<SimpleGrantedAuthority>()))
-                        .map(SecurityContextImpl::new);
+        private Mono<SecurityContext> check(String authToken) {
+            return identityServiceClient.verify(authToken)
+                    .flatMap(doesNotMatter -> {
+                        var token = new UsernamePasswordAuthenticationToken(
+                                authToken,
+                                authToken,
+                                new ArrayList<SimpleGrantedAuthority>());
+                        return manager.authenticate(token).map(SecurityContextImpl::new);
+                    });
+        }
+
+        private boolean isEmpty(String authToken) {
+            return authToken == null || authToken.trim().equals("");
+        }
+
+        private Mono<SecurityContext> checkSignUp(String authToken) {
+            if (!signupService.validateToken(authToken)) {
+                return Mono.empty();
             }
-            if (authToken != null && !authToken.trim().equals("")) {
-                var token = new UsernamePasswordAuthenticationToken(authToken, authToken);
-                return manager.authenticate(token).map(SecurityContextImpl::new);
-            }
-            return Mono.empty();
+            return Mono.just(new UsernamePasswordAuthenticationToken(
+                    authToken,
+                    authToken,
+                    new ArrayList<SimpleGrantedAuthority>()))
+                    .map(SecurityContextImpl::new);
         }
 
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {

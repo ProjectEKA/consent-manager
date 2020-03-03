@@ -11,30 +11,20 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
-import in.projecteka.consentmanager.link.discovery.repository.DiscoveryRepository;
+import lombok.AllArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+@AllArgsConstructor
 public class Discovery {
 
     private static final String MOBILE = "MOBILE";
     private final ClientRegistryClient clientRegistryClient;
-    private UserServiceClient userServiceClient;
-    private DiscoveryServiceClient discoveryServiceClient;
-    private DiscoveryRepository discoveryRepository;
-
-    public Discovery(
-            ClientRegistryClient clientRegistryClient,
-            UserServiceClient userServiceClient,
-            DiscoveryServiceClient discoveryServiceClient,
-            DiscoveryRepository discoveryRepository) {
-        this.clientRegistryClient = clientRegistryClient;
-        this.userServiceClient = userServiceClient;
-        this.discoveryServiceClient = discoveryServiceClient;
-        this.discoveryRepository = discoveryRepository;
-    }
+    private final UserServiceClient userServiceClient;
+    private final DiscoveryServiceClient discoveryServiceClient;
+    private final DiscoveryRepository discoveryRepository;
 
     public Flux<ProviderRepresentation> providersFrom(String name) {
         return clientRegistryClient.providersOf(name)
@@ -43,19 +33,24 @@ public class Discovery {
     }
 
     public Mono<DiscoveryResponse> patientFor(String providerId, String userName, String transactionId) {
-        return userWith(userName)
-                .flatMap(user -> providerUrl(providerId)
-                        .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
-                        .flatMap(url -> patientIn(url, user, transactionId)
-                                .flatMap(patientResponse -> insertDiscoveryRequest(patientResponse, providerId, userName, transactionId))));
+        return Mono.subscriberContext()
+                .flatMap(context -> userWith(userName, context.get("Authorization")))
+                .zipWith(providerUrl(providerId))
+                .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
+                .flatMap(userProvider -> patientIn(userProvider.getT2(), userProvider.getT1(), transactionId))
+                .flatMap(patientResponse ->
+                        insertDiscoveryRequest(patientResponse,
+                                providerId,
+                                userName,
+                                transactionId));
     }
 
     private Mono<Provider> providerWith(String providerId) {
         return clientRegistryClient.providerWith(providerId);
     }
 
-    private Mono<User> userWith(String patientId) {
-        return userServiceClient.userOf(patientId);
+    private Mono<User> userWith(String patientId, String token) {
+        return userServiceClient.userOf(patientId).subscriberContext(context -> context.put("Authorization", token));
     }
 
     private Mono<String> providerUrl(String providerId) {
@@ -83,11 +78,14 @@ public class Discovery {
                 .unVerifiedIdentifiers(List.of())
                 .build();
 
-        PatientRequest patientRequest = PatientRequest.builder().patient(patient).transactionId(transactionId).build();
+        var patientRequest = PatientRequest.builder().patient(patient).transactionId(transactionId).build();
         return discoveryServiceClient.patientFor(patientRequest, url);
     }
 
-    private Mono<DiscoveryResponse> insertDiscoveryRequest(PatientResponse patientResponse, String providerId, String patientId, String transactionId) {
+    private Mono<DiscoveryResponse> insertDiscoveryRequest(PatientResponse patientResponse,
+                                                           String providerId,
+                                                           String patientId,
+                                                           String transactionId) {
         return discoveryRepository.insert(providerId, patientId, transactionId).
                 then(Mono.just(DiscoveryResponse.
                         builder().

@@ -136,4 +136,20 @@ public class ClientError extends Throwable {
                         ErrorCode.CONSENT_ARTEFACT_EXPIRED,
                         "Consent artefact expired")));
     }
+
+    public static ClientError unAuthorized() {
+        return new ClientError(
+                HttpStatus.UNAUTHORIZED,
+                new ErrorRepresentation(
+                        new Error(ErrorCode.INVALID_TOKEN,
+                                "Token verification failed")));
+    }
+
+    public static ClientError unAuthorizedRequest() {
+        return new ClientError(
+                HttpStatus.UNAUTHORIZED,
+                new ErrorRepresentation(
+                        new Error(ErrorCode.USERNAME_OR_PASSWORD_INCORRECT,
+                                "Username or password is incorrect")));
+    }
 }

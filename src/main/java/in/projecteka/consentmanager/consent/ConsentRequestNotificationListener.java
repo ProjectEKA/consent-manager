@@ -68,7 +68,7 @@ public class ConsentRequestNotificationListener {
                                 .value(user.getPhone())
                                 .build())
                         .id(consentRequest.getRequestId())
-                        .notificationAction(NotificationAction.CONSENT_REQUEST)
+                        .notificationAction(NotificationAction.CONSENT_REQUEST_CREATED)
                         .notificationContent(NotificationContent.builder()
                                 .requester(consentRequest.getRequestedDetail().getRequester().getName())
                                 .consentRequestId(consentRequest.getRequestId())

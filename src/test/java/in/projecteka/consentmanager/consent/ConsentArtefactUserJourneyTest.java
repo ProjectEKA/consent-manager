@@ -59,7 +59,10 @@ public class ConsentArtefactUserJourneyTest {
 
     @SuppressWarnings("unused")
     @MockBean
-    private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
+    private HiuConsentNotificationListener hiuConsentNotificationListener;
+
+    @MockBean
+    private HipConsentNotificationListener hipConsentNotificationListener;
 
     @SuppressWarnings("unused")
     @MockBean

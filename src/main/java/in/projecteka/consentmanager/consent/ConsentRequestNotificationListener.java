@@ -22,7 +22,7 @@ import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class ConsentRequestNotificationListener {
-    private static final Logger logger = Logger.getLogger(ConsentArtefactBroadcastListener.class);
+    private static final Logger logger = Logger.getLogger(ConsentRequestNotificationListener.class);
     private MessageListenerContainerFactory messageListenerContainerFactory;
     private DestinationsConfig destinationsConfig;
     private Jackson2JsonMessageConverter converter;

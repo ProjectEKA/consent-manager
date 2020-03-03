@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager;
 
-import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
+import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
+import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.PostConsentApproval;
@@ -41,7 +42,10 @@ public class AuthorizationTest {
     private DestinationsConfig destinationsConfig;
 
     @MockBean
-    private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
+    private HiuConsentNotificationListener hiuConsentNotificationListener;
+
+    @MockBean
+    private HipConsentNotificationListener hipConsentNotificationListener;
 
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;

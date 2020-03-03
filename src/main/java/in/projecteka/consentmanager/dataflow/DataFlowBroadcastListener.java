@@ -6,7 +6,6 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.clients.model.Identifier;
-import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
 import in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest;
 import lombok.AllArgsConstructor;
@@ -23,7 +22,7 @@ import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class DataFlowBroadcastListener {
-    private static final Logger logger = Logger.getLogger(ConsentArtefactBroadcastListener.class);
+    private static final Logger logger = Logger.getLogger(DataFlowBroadcastListener.class);
     private MessageListenerContainerFactory messageListenerContainerFactory;
     private DestinationsConfig destinationsConfig;
     private Jackson2JsonMessageConverter converter;

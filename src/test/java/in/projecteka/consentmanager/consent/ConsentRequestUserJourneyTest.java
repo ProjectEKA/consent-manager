@@ -54,7 +54,10 @@ public class ConsentRequestUserJourneyTest {
     private ConsentRequestRepository repository;
 
     @MockBean
-    private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
+    private HiuConsentNotificationListener hiuConsentNotificationListener;
+
+    @MockBean
+    private HipConsentNotificationListener hipConsentNotificationListener;
 
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;

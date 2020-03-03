@@ -11,7 +11,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ConsentArtefactsNotificationMessage {
+public class ConsentArtefactsMessage {
     private String requestId;
     private List<HIPConsentArtefactRepresentation> consentArtefacts;
     private String hiuCallBackUrl;

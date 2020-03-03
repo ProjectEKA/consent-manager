@@ -3,7 +3,8 @@ package in.projecteka.consentmanager.link.link;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.consent.ConsentArtefactBroadcastListener;
+import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
+import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.link.TestBuilders;
 import in.projecteka.consentmanager.link.link.model.Error;
@@ -75,7 +76,10 @@ public class LinkUserJourneyTest {
     private LinkRepository linkRepository;
 
     @MockBean
-    private ConsentArtefactBroadcastListener consentArtefactBroadcastListener;
+    private HiuConsentNotificationListener hiuConsentNotificationListener;
+
+    @MockBean
+    private HipConsentNotificationListener hipConsentNotificationListener;
 
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;

@@ -24,7 +24,8 @@ public enum ErrorCode {
     INVALID_HIU(1014),
     INVALID_DATE_RANGE(1015),
     CONSENT_ARTEFACT_EXPIRED(1016),
-    INVALID_TOKEN(1017);
+    INVALID_TOKEN(1017),
+    USERNAME_OR_PASSWORD_INCORRECT(1018);
 
     private int value;
     ErrorCode(int val) {

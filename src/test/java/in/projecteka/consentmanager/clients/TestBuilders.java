@@ -2,7 +2,7 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.Address;
 import in.projecteka.consentmanager.clients.model.Identifier;
-import in.projecteka.consentmanager.clients.model.KeycloakToken;
+import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.Type;
@@ -74,8 +74,8 @@ public class TestBuilders {
         return easyRandom.nextObject(IdentityServiceProperties.IdentityServicePropertiesBuilder.class);
     }
 
-    public static KeycloakToken.KeycloakTokenBuilder keycloakToken() {
-        return easyRandom.nextObject(KeycloakToken.KeycloakTokenBuilder.class);
+    public static Session.SessionBuilder session() {
+        return easyRandom.nextObject(Session.SessionBuilder.class);
     }
 
     public static String string() {

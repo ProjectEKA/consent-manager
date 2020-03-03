@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class KeycloakToken {
+public class Session {
 
     @JsonAlias({ "access_token" })
     private String accessToken;

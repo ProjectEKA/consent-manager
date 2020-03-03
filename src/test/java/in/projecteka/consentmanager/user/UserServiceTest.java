@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.AuthorizationTest;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
-import in.projecteka.consentmanager.clients.model.KeycloakToken;
+import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
@@ -28,7 +28,7 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Optional;
 
-import static in.projecteka.consentmanager.user.TestBuilders.keycloakToken;
+import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
@@ -141,10 +141,10 @@ class UserServiceTest {
     @Test
     public void shouldCreateUser() {
         var signUpRequest = signUpRequest().dateOfBirth(LocalDate.MIN).build();
-        var userToken = keycloakToken().build();
+        var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new KeycloakToken()));
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
         when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());

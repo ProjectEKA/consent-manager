@@ -14,5 +14,4 @@ public class TestBuilders {
     public static NotificationMessage.NotificationMessageBuilder notificationMessage(){
         return easyRandom.nextObject(NotificationMessage.NotificationMessageBuilder.class);
     }
-
 }

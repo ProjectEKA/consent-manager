@@ -19,7 +19,7 @@ import reactor.test.StepVerifier;
 
 import static in.projecteka.consentmanager.clients.TestBuilders.keycloakCreateUser;
 import static in.projecteka.consentmanager.clients.TestBuilders.keycloakProperties;
-import static in.projecteka.consentmanager.clients.TestBuilders.keycloakToken;
+import static in.projecteka.consentmanager.clients.TestBuilders.session;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -70,7 +70,7 @@ class IdentityServiceClientTest {
     @Test
     public void shouldCreateUserAccountInKeycloak() {
         var request = keycloakCreateUser().build();
-        var token = keycloakToken().build();
+        var token = session().build();
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
                 Mono.just(ClientResponse
                         .create(HttpStatus.OK)
@@ -86,7 +86,7 @@ class IdentityServiceClientTest {
     @Test
     public void shouldThrowExceptionIfUserCreationRequestFails() {
         var request = keycloakCreateUser().build();
-        var token = keycloakToken().build();
+        var token = session().build();
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
                 Mono.just(ClientResponse
                         .create(HttpStatus.INTERNAL_SERVER_ERROR)

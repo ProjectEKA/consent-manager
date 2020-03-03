@@ -74,4 +74,9 @@ public class UserConfiguration {
                                      IdentityServiceClient identityServiceClient) {
         return new TokenService(identityServiceProperties, identityServiceClient);
     }
+
+    @Bean
+    public SessionService sessionService(TokenService tokenService) {
+        return new SessionService(tokenService);
+    }
 }

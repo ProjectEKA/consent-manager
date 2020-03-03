@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.model.KeycloakToken;
+import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.SignUpSession;
@@ -43,8 +43,8 @@ public class UserController {
     }
 
     @PostMapping
-    public Mono<KeycloakToken> create(@RequestBody SignUpRequest request,
-                                      @RequestHeader(name = "Authorization") String token) {
+    public Mono<Session> create(@RequestBody SignUpRequest request,
+                                @RequestHeader(name = "Authorization") String token) {
         return userService.create(request, signupService.sessionFrom(token));
     }
 }

@@ -5,10 +5,6 @@ import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
-import in.projecteka.consentmanager.consent.ConsentManager;
-import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
-import in.projecteka.consentmanager.consent.PostConsentApproval;
-import in.projecteka.consentmanager.consent.PostConsentRequestNotification;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIUReference;
@@ -47,8 +43,9 @@ class ConsentManagerTest {
     @Mock
     private PostConsentApproval postConsentApproval;
     @Mock
-    private PostConsentRequestNotification postConsentRequestNotification;
+    private PostConsentRequest postConsentRequestNotification;
 
+    @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 

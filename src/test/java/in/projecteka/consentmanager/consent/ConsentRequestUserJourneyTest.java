@@ -63,7 +63,7 @@ public class ConsentRequestUserJourneyTest {
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 
     @MockBean
-    private PostConsentRequestNotification postConsentRequestNotification;
+    private PostConsentRequest postConsentRequestNotification;
 
     @Captor
     private ArgumentCaptor<ConsentRequest> captor;
@@ -182,8 +182,8 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldSendNotificationMessage(){
         var notificationMessage = notificationMessage().build();
-        consentRequestNotificationListener.callNotificationService(notificationMessage);
-        verify(consentRequestNotificationListener).callNotificationService(notificationMessage);
+        consentRequestNotificationListener.NotifyUserWith(notificationMessage);
+        verify(consentRequestNotificationListener).NotifyUserWith(notificationMessage);
     }
 
     public static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

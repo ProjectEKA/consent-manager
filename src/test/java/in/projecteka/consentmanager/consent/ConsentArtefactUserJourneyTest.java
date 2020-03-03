@@ -65,6 +65,7 @@ public class ConsentArtefactUserJourneyTest {
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;
 
+    @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 

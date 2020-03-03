@@ -13,7 +13,7 @@ import static in.projecteka.consentmanager.ConsentManagerConfiguration.CONSENT_R
 import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
-public class PostConsentRequestNotification {
+public class PostConsentRequest {
     private static final Logger logger = Logger.getLogger(PostDataFlowRequestApproval.class);
     private AmqpTemplate amqpTemplate;
     private DestinationsConfig destinationsConfig;
@@ -27,11 +27,8 @@ public class PostConsentRequestNotification {
             throw queueNotFound();
         }
         return Mono.create(monoSink -> {
-            amqpTemplate.convertAndSend(
-                    destinationInfo.getExchange(),
-                    destinationInfo.getRoutingKey(),
-                    consentRequest);
-            logger.info("Broadcasting consent request with request id : " + consentRequest.getRequestId());
+            amqpTemplate.convertAndSend(destinationInfo.getExchange(), destinationInfo.getRoutingKey(), consentRequest);
+            logger.info("Broadcasting consent request with request id : " + consentRequest.getId());
             monoSink.success();
         });
     }

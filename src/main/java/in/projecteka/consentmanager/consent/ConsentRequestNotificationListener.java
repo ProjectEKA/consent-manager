@@ -44,41 +44,39 @@ public class ConsentRequestNotificationListener {
                 .createMessageListenerContainer(destinationInfo.getRoutingKey());
 
         MessageListener messageListener = message -> {
-            ConsentRequest consentRequest =
-                    (ConsentRequest) converter.fromMessage(message);
-            logger.info(String.format(
-                    "Received message for Request id : %s", consentRequest.getRequestId()));
+            ConsentRequest consentRequest = (ConsentRequest) converter.fromMessage(message);
+            logger.info(String.format("Received message for Request id : %s", consentRequest.getId()));
             createNotificationMessage(consentRequest)
-                    .flatMap(this::callNotificationService)
+                    .flatMap(this::NotifyUserWith)
                     .block();
         };
         mlc.setupMessageListener(messageListener);
         mlc.start();
     }
 
-    public Mono<Void> callNotificationService(NotificationMessage notificationMessage) {
-        return consentNotificationClient.sendToNotificationService(notificationMessage);
+    public Mono<Void> NotifyUserWith(Notification notification) {
+        return consentNotificationClient.send(notification);
     }
 
-    private Mono<NotificationMessage> createNotificationMessage(ConsentRequest consentRequest) {
-        return userServiceClient.userOf(consentRequest.getRequestedDetail().getPatient().getId())
-                .flatMap(user -> Mono.just(NotificationMessage.builder()
+    private Mono<Notification> createNotificationMessage(ConsentRequest consentRequest) {
+        return userServiceClient.userOf(consentRequest.getDetail().getPatient().getId())
+                .map(user -> Notification.builder()
                         .communication(Communication.builder()
                                 .communicationType(CommunicationType.MOBILE)
                                 .value(user.getPhone())
                                 .build())
-                        .id(consentRequest.getRequestId())
-                        .notificationAction(NotificationAction.CONSENT_REQUEST_CREATED)
-                        .notificationContent(NotificationContent.builder()
-                                .requester(consentRequest.getRequestedDetail().getRequester().getName())
-                                .consentRequestId(consentRequest.getRequestId())
-                                .hiTypes(Arrays.stream(consentRequest.getRequestedDetail().getHiTypes())
+                        .id(consentRequest.getId())
+                        .action(Action.CONSENT_REQUEST_CREATED)
+                        .content(Content.builder()
+                                .requester(consentRequest.getDetail().getRequester().getName())
+                                .consentRequestId(consentRequest.getId())
+                                .hiTypes(Arrays.stream(consentRequest.getDetail().getHiTypes())
                                         .map(HIType::getValue)
                                         .collect(Collectors.joining(",")))
                                 .deepLinkUrl(String.format("%s/consent/%s",
-                                        consentServiceProperties.getConsentServiceUrl(),
-                                        consentRequest.getRequestId()))
+                                        consentServiceProperties.getUrl(),
+                                        consentRequest.getId()))
                                 .build())
-                        .build()));
+                        .build());
     }
 }

@@ -2,11 +2,11 @@ package in.projecteka.consentmanager.consent.model;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum NotificationAction {
+public enum Action {
     CONSENT_REQUEST_CREATED("ConsentRequestCreated");
 
     private final String resourceType;
-    NotificationAction(String value) {
+    Action(String value) {
         resourceType = value;
     }
 

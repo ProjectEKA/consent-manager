@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class NotificationContent {
+public class Content {
     private String requester;
     private String consentRequestId;
     private String hiTypes;

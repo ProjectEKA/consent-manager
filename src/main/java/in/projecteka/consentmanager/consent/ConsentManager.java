@@ -46,7 +46,7 @@ public class ConsentManager {
     private final ConsentArtefactRepository consentArtefactRepository;
     private KeyPair keyPair;
     private PostConsentApproval postConsentApproval;
-    private PostConsentRequestNotification postConsentRequestNotification;
+    private PostConsentRequest postConsentRequest;
 
     private static boolean isNotSameRequester(ConsentArtefact consentDetail, String requesterId) {
         return !consentDetail.getHiu().getId().equals(requesterId) &&
@@ -64,10 +64,10 @@ public class ConsentManager {
     }
 
     private Mono<Void> sendConsentRequestNotification(String requestId, RequestedDetail requestedDetail) {
-        return postConsentRequestNotification.broadcastConsentRequestNotification(
+        return postConsentRequest.broadcastConsentRequestNotification(
                 ConsentRequest.builder()
-                            .requestedDetail(requestedDetail)
-                            .requestId(requestId)
+                            .detail(requestedDetail)
+                            .id(requestId)
                             .build());
     }
 

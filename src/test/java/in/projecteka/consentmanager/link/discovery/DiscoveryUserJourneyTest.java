@@ -52,6 +52,7 @@ public class DiscoveryUserJourneyTest {
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;
 
+    @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
     private static MockWebServer providerServer = new MockWebServer();

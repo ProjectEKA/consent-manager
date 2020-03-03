@@ -46,6 +46,7 @@ public class AuthorizationTest {
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;
 
+    @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 

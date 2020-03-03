@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class NotificationMessage {
+public class Notification {
     private String id;
     private Communication communication;
-    private NotificationContent notificationContent;
-    private NotificationAction notificationAction;
+    private Content content;
+    private Action action;
 }

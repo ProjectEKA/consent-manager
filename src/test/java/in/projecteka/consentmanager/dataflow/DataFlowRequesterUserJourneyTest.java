@@ -85,6 +85,7 @@ public class DataFlowRequesterUserJourneyTest {
     @MockBean
     private DataRequestNotifier dataRequestNotifier;
 
+    @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 

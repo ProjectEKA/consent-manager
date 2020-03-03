@@ -40,9 +40,9 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    public PostConsentRequestNotification postConsentRequestNotification(AmqpTemplate amqpTemplate,
-                                                                         DestinationsConfig destinationsConfig) {
-        return new PostConsentRequestNotification(amqpTemplate, destinationsConfig);
+    public PostConsentRequest postConsentRequestNotification(AmqpTemplate amqpTemplate,
+                                                             DestinationsConfig destinationsConfig) {
+        return new PostConsentRequest(amqpTemplate, destinationsConfig);
     }
 
     @Bean
@@ -53,7 +53,7 @@ public class ConsentConfiguration {
                                                 ConsentArtefactRepository consentArtefactRepository,
                                                 KeyPair keyPair,
                                                 PostConsentApproval postConsentApproval,
-                                                PostConsentRequestNotification postConsentRequestNotification) {
+                                                PostConsentRequest postConsentRequestNotification) {
         return new ConsentManager(
                 new ClientRegistryClient(builder, clientRegistryProperties),
                 new UserServiceClient(builder, userServiceProperties),
@@ -102,16 +102,14 @@ public class ConsentConfiguration {
                                                                     WebClient.Builder builder,
                                                                     OtpServiceProperties otpServiceProperties,
                                                                     UserServiceProperties userServiceProperties,
-                                                                    ConsentServiceProperties consentServiceProperties
-                                                                    ) {
+                                                                    ConsentServiceProperties consentServiceProperties) {
         return new ConsentRequestNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 new ConsentNotificationClient(otpServiceProperties, builder),
                 new UserServiceClient(builder, userServiceProperties),
-                consentServiceProperties
-        );
+                consentServiceProperties);
     }
 
     @SneakyThrows

@@ -53,6 +53,7 @@ class UserControllerTest {
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;
 
+    @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 

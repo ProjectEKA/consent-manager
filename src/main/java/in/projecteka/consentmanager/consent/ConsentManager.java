@@ -4,7 +4,7 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
-import in.projecteka.consentmanager.consent.model.ConsentArtefactsNotificationMessage;
+import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
@@ -112,14 +112,14 @@ public class ConsentManager {
                 .flatMap(consentRequest ->
                         generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)
                                 .flatMap(consents ->
-                                        broadcastConsentArtefact(consents, consentRequest.getCallBackUrl(), requestId)
+                                        broadcastConsentArtefacts(consents, consentRequest.getCallBackUrl(), requestId)
                                                 .thenReturn(consentApprovalResponse(consents))));
     }
 
-    private Mono<Void> broadcastConsentArtefact(List<HIPConsentArtefactRepresentation> consents,
-                                                String hiuCallBackUrl,
-                                                String requestId) {
-        ConsentArtefactsNotificationMessage message = ConsentArtefactsNotificationMessage
+    private Mono<Void> broadcastConsentArtefacts(List<HIPConsentArtefactRepresentation> consents,
+                                                 String hiuCallBackUrl,
+                                                 String requestId) {
+        ConsentArtefactsMessage message = ConsentArtefactsMessage
                 .builder()
                 .consentArtefacts(consents)
                 .hiuCallBackUrl(hiuCallBackUrl)

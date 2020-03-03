@@ -36,7 +36,8 @@ public class SecurityConfiguration {
         return httpSecurity
                 .authorizeExchange()
                 // TODO: need to fix internal call
-                .pathMatchers("/**.json", "/users/verify", "/users/permit", "/internal/consents").permitAll()
+                .pathMatchers("/**.json", "/users/verify", "/users/permit", "/sessions", "/internal/consents")
+                .permitAll()
                 .pathMatchers("/**.html").permitAll()
                 .pathMatchers("/**.js").permitAll()
                 .pathMatchers("/**.png").permitAll()

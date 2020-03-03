@@ -7,7 +7,7 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
-import in.projecteka.consentmanager.clients.model.KeycloakToken;
+import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.SignUpSession;
@@ -65,7 +65,7 @@ public class UserService {
                 .thenReturn(signupService.generateToken(otpVerification.getSessionId()));
     }
 
-    public Mono<KeycloakToken> create(SignUpRequest signUpRequest, String sessionId) {
+    public Mono<Session> create(SignUpRequest signUpRequest, String sessionId) {
         if (!isValid(signUpRequest)) {
             throw new InvalidRequestException("invalid.request.body");
         }

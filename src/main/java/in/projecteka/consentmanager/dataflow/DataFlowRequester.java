@@ -23,8 +23,8 @@ public class DataFlowRequester {
         final String transactionId = UUID.randomUUID().toString();
         return fetchConsentArtefact(dataFlowRequest.getConsent().getId())
                 .flatMap(caRep -> validateAndSaveConsent(transactionId, dataFlowRequest, caRep, hiuId))
-                .doOnSuccess(v -> notifyHIP(transactionId, dataFlowRequest))
-                .thenReturn(DataFlowRequestResponse.builder().transactionId(transactionId).build());
+                .then(notifyHIP(transactionId, dataFlowRequest))
+                .then(Mono.just(DataFlowRequestResponse.builder().transactionId(transactionId).build()));
     }
 
     private Mono<Void> notifyHIP(String transactionId,

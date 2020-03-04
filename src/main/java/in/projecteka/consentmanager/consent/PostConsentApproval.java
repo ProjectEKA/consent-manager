@@ -21,6 +21,7 @@ public class PostConsentApproval {
         return Mono.create(monoSink -> {
             broadcastArtefactsToHiu(message);
             broadcastArtefactsToHips(message);
+            monoSink.success();
         });
     }
 

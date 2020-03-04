@@ -24,7 +24,7 @@ public class DataFlowRequester {
         return fetchConsentArtefact(dataFlowRequest.getConsent().getId())
                 .flatMap(caRep -> validateAndSaveConsent(transactionId, dataFlowRequest, caRep, hiuId))
                 .then(notifyHIP(transactionId, dataFlowRequest))
-                .then(Mono.just(DataFlowRequestResponse.builder().transactionId(transactionId).build()));
+                .thenReturn(DataFlowRequestResponse.builder().transactionId(transactionId).build());
     }
 
     private Mono<Void> notifyHIP(String transactionId,

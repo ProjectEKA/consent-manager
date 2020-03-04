@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
+import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
@@ -89,6 +90,10 @@ public class DataFlowRequesterUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private DataRequestNotifier dataRequestNotifier;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private ConsentRequestNotificationListener consentRequestNotificationListener;
 
     @AfterAll
     public static void tearDown() throws IOException {

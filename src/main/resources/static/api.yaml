@@ -1257,7 +1257,7 @@ components:
         cryptoAlg:
           type: string
           format: string
-          example: ECDHE
+          example: ECDH
         curve:
           type: string
           format: string

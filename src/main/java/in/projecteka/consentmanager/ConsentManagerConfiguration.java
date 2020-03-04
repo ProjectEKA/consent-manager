@@ -29,7 +29,6 @@ public class ConsentManagerConfiguration {
     public static final String HIU_CONSENT_NOTIFICATION_QUEUE = "hiu-consent-notification-queue";
     public static final String HIP_CONSENT_NOTIFICATION_QUEUE = "hip-consent-notification-queue";
     public static final String HIP_DATA_FLOW_REQUEST_QUEUE = "hip-data-flow-request-queue";
-    public static final String CONSENT_REQUEST_QUEUE = "consent-request-queue";
 
     @Bean
     public ClientRegistryClient clientRegistryClient(WebClient.Builder builder,
@@ -69,8 +68,6 @@ public class ConsentManagerConfiguration {
     @Bean
     public DestinationsConfig destinationsConfig(AmqpAdmin amqpAdmin) {
         HashMap<String, DestinationsConfig.DestinationInfo> queues = new HashMap<>();
-        queues.put(HIP_DATA_FLOW_REQUEST_QUEUE, new DestinationsConfig.DestinationInfo("exchange", HIP_DATA_FLOW_REQUEST_QUEUE));
-        queues.put(CONSENT_REQUEST_QUEUE, new DestinationsConfig.DestinationInfo("exchange", CONSENT_REQUEST_QUEUE));
         queues.put(HIU_CONSENT_NOTIFICATION_QUEUE,
                 new DestinationsConfig.DestinationInfo("exchange", HIU_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_CONSENT_NOTIFICATION_QUEUE,

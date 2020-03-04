@@ -17,5 +17,4 @@ import org.springframework.context.annotation.Configuration;
 public class ConsentServiceProperties {
     private int maxPageSize;
     private int defaultPageSize;
-    private String url;
 }

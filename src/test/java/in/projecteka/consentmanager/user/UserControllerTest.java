@@ -4,7 +4,6 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.consent.ConsentManager;
-import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.dataflow.DataFlowRequester;
 import in.projecteka.consentmanager.user.model.OtpVerification;
@@ -56,10 +55,6 @@ class UserControllerTest {
 
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;
-
-    @SuppressWarnings("unused")
-    @MockBean
-    private ConsentRequestNotificationListener consentRequestNotificationListener;
 
     @MockBean
     private SignUpService signupService;

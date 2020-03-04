@@ -3,21 +3,20 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
-import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
-import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
+import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
+import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLight;
+import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
-import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
-import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLight;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
@@ -44,9 +43,8 @@ public class ConsentManager {
     private final UserServiceClient userServiceClient;
     private final ConsentRequestRepository consentRequestRepository;
     private final ConsentArtefactRepository consentArtefactRepository;
-    private KeyPair keyPair;
-    private PostConsentApproval postConsentApproval;
-    private PostConsentRequest postConsentRequest;
+    private final KeyPair keyPair;
+    private final PostConsentApproval postConsentApproval;
 
     private static boolean isNotSameRequester(ConsentArtefact consentDetail, String requesterId) {
         return !consentDetail.getHiu().getId().equals(requesterId) &&
@@ -59,10 +57,6 @@ public class ConsentManager {
                 .flatMap(context -> validatePatient(requestedDetail.getPatient().getId(), context.get("Authorization")))
                 .then(validateHIPAndHIU(requestedDetail))
                 .then(saveRequest(requestedDetail, requestId))
-                .then(postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
-                                                                                .detail(requestedDetail)
-                                                                                .id(requestId)
-                                                                                .build()))
                 .thenReturn(requestId);
     }
 

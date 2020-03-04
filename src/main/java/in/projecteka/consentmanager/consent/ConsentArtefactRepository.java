@@ -5,7 +5,6 @@ import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
@@ -16,7 +15,6 @@ import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoSink;
 
 import java.time.LocalDateTime;
 import java.util.stream.StreamSupport;
@@ -52,7 +50,7 @@ public class ConsentArtefactRepository {
                         return;
                     }
                     SqlConnection sqlConnection = connection.result();
-                    if (sqlConnection == null){
+                    if (sqlConnection == null) {
                         monoSink.error(new RuntimeException("Error getting connection to database."));
                         return;
                     }
@@ -85,7 +83,8 @@ public class ConsentArtefactRepository {
                                                 } else {
                                                     transaction.preparedQuery(
                                                             UPDATE_CONSENT_REQUEST_STATUS_QUERY,
-                                                            Tuple.of(ConsentStatus.GRANTED.toString(), LocalDateTime.now(), consentRequestId),
+                                                            Tuple.of(ConsentStatus.GRANTED.toString(),
+                                                                    LocalDateTime.now(), consentRequestId),
                                                             updateConsentRequestHandler -> {
                                                                 if (updateConsentRequestHandler.failed()) {
                                                                     sqlConnection.close();

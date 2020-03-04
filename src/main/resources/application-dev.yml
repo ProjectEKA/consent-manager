@@ -4,7 +4,6 @@ consentmanager:
   consentservice:
     defaultPageSize: 20
     maxPageSize: 100
-    url: http://localhost:9000
   clientregistry:
     XAuthToken: 8e983a1719e20913be6c61e9b552e88fc6032c21e1030f1abda986d17326b2b0
     clientId: 6

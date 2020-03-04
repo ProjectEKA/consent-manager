@@ -4,9 +4,12 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
+import in.projecteka.consentmanager.clients.ConsentNotificationClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
+import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
+import in.projecteka.consentmanager.user.TokenService;
 import io.vertx.pgclient.PgPool;
 import lombok.SneakyThrows;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -38,20 +41,28 @@ public class ConsentConfiguration {
     }
 
     @Bean
+    public PostConsentRequest postConsentRequestNotification(AmqpTemplate amqpTemplate,
+                                                             DestinationsConfig destinationsConfig) {
+        return new PostConsentRequest(amqpTemplate, destinationsConfig);
+    }
+
+    @Bean
     public ConsentManager consentRequestService(WebClient.Builder builder,
                                                 ConsentRequestRepository repository,
                                                 ClientRegistryProperties clientRegistryProperties,
                                                 UserServiceProperties userServiceProperties,
                                                 ConsentArtefactRepository consentArtefactRepository,
                                                 KeyPair keyPair,
-                                                PostConsentApproval postConsentApproval) {
+                                                PostConsentApproval postConsentApproval,
+                                                PostConsentRequest postConsentRequestNotification) {
         return new ConsentManager(
                 new ClientRegistryClient(builder, clientRegistryProperties),
                 new UserServiceClient(builder, userServiceProperties),
                 repository,
                 consentArtefactRepository,
                 keyPair,
-                postConsentApproval);
+                postConsentApproval,
+                postConsentRequestNotification);
     }
 
     @Bean
@@ -94,6 +105,26 @@ public class ConsentConfiguration {
                 jackson2JsonMessageConverter,
                 consentArtefactNotifier,
                 clientRegistryClient);
+    }
+
+    @Bean
+    public ConsentRequestNotificationListener consentRequestNotificationListener(
+                                                                                 MessageListenerContainerFactory messageListenerContainerFactory,
+                                                                                 DestinationsConfig destinationsConfig,
+                                                                                 Jackson2JsonMessageConverter jackson2JsonMessageConverter,
+                                                                                 WebClient.Builder builder,
+                                                                                 OtpServiceProperties otpServiceProperties,
+                                                                                 UserServiceProperties userServiceProperties,
+                                                                                 ConsentServiceProperties consentServiceProperties,
+                                                                                 TokenService tokenService) {
+        return new ConsentRequestNotificationListener(
+                messageListenerContainerFactory,
+                destinationsConfig,
+                jackson2JsonMessageConverter,
+                new ConsentNotificationClient(otpServiceProperties, builder),
+                new UserServiceClient(builder, userServiceProperties),
+                consentServiceProperties,
+                tokenService);
     }
 
     @SneakyThrows

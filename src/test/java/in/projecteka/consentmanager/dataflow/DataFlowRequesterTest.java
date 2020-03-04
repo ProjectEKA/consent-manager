@@ -76,6 +76,8 @@ public class DataFlowRequesterTest {
 
         when(consentManagerClient.getConsentArtefact(request.getConsent().getId()))
                 .thenReturn(Mono.just(consentArtefactRepresentation));
+        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(),
+                any(in.projecteka.consentmanager.dataflow.model.DataFlowRequest.class))).thenReturn(Mono.empty());
 
         StepVerifier.create(dataFlowRequester.requestHealthData("1", request))
                 .expectErrorMatches(e -> (e instanceof ClientError) && ((ClientError) e).getHttpStatus().is4xxClientError());

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
-import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
@@ -54,7 +53,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient(timeout = "300000")
+@AutoConfigureWebTestClient
 @ContextConfiguration(initializers = DataFlowRequesterUserJourneyTest.ContextInitializer.class)
 public class DataFlowRequesterUserJourneyTest {
     private static MockWebServer consentManagerServer = new MockWebServer();
@@ -73,9 +72,11 @@ public class DataFlowRequesterUserJourneyTest {
     @MockBean
     private PostDataFlowRequestApproval postDataFlowRequestApproval;
 
+    @SuppressWarnings("unused")
     @MockBean
     private HiuConsentNotificationListener hiuConsentNotificationListener;
 
+    @SuppressWarnings("unused")
     @MockBean
     private HipConsentNotificationListener hipConsentNotificationListener;
 
@@ -85,12 +86,9 @@ public class DataFlowRequesterUserJourneyTest {
     @MockBean
     private ClientRegistryClient clientRegistryClient;
 
-    @MockBean
-    private DataRequestNotifier dataRequestNotifier;
-
     @SuppressWarnings("unused")
     @MockBean
-    private ConsentRequestNotificationListener consentRequestNotificationListener;
+    private DataRequestNotifier dataRequestNotifier;
 
     @AfterAll
     public static void tearDown() throws IOException {

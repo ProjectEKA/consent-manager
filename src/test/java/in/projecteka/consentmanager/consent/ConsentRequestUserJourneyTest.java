@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
@@ -12,8 +11,6 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,10 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static in.projecteka.consentmanager.consent.TestBuilders.notificationMessage;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -62,16 +57,6 @@ public class ConsentRequestUserJourneyTest {
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;
 
-    @MockBean
-    private ConsentRequestNotificationListener consentRequestNotificationListener;
-
-    @MockBean
-    private PostConsentRequest postConsentRequestNotification;
-
-    @Captor
-    private ArgumentCaptor<ConsentRequest> captor;
-
-
     private static MockWebServer clientRegistryServer = new MockWebServer();
     private static MockWebServer userServer = new MockWebServer();
     private static MockWebServer identityServer = new MockWebServer();
@@ -86,8 +71,6 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldAcceptConsentRequest() {
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
-        when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
-                .thenReturn(Mono.empty());
         clientRegistryServer.enqueue(new MockResponse()
                 .setResponseCode(200)
                 .setBody("{}")
@@ -180,13 +163,6 @@ public class ConsentRequestUserJourneyTest {
                 .value(ConsentRequestsRepresentation::getLimit, Matchers.is(20))
                 .value(ConsentRequestsRepresentation::getOffset, Matchers.is(0))
                 .value(response -> response.getRequests().size(), Matchers.is(0));
-    }
-
-    @Test
-    public void shouldSendNotificationMessage(){
-        var notificationMessage = notificationMessage().build();
-        consentRequestNotificationListener.notifyUserWith(notificationMessage);
-        verify(consentRequestNotificationListener).notifyUserWith(notificationMessage);
     }
 
     public static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

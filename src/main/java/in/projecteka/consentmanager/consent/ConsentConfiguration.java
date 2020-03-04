@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
+import in.projecteka.consentmanager.user.TokenService;
 import io.vertx.pgclient.PgPool;
 import lombok.SneakyThrows;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -108,20 +109,22 @@ public class ConsentConfiguration {
 
     @Bean
     public ConsentRequestNotificationListener consentRequestNotificationListener(
-                                                                    MessageListenerContainerFactory messageListenerContainerFactory,
-                                                                    DestinationsConfig destinationsConfig,
-                                                                    Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-                                                                    WebClient.Builder builder,
-                                                                    OtpServiceProperties otpServiceProperties,
-                                                                    UserServiceProperties userServiceProperties,
-                                                                    ConsentServiceProperties consentServiceProperties) {
+                                                                                 MessageListenerContainerFactory messageListenerContainerFactory,
+                                                                                 DestinationsConfig destinationsConfig,
+                                                                                 Jackson2JsonMessageConverter jackson2JsonMessageConverter,
+                                                                                 WebClient.Builder builder,
+                                                                                 OtpServiceProperties otpServiceProperties,
+                                                                                 UserServiceProperties userServiceProperties,
+                                                                                 ConsentServiceProperties consentServiceProperties,
+                                                                                 TokenService tokenService) {
         return new ConsentRequestNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 new ConsentNotificationClient(otpServiceProperties, builder),
                 new UserServiceClient(builder, userServiceProperties),
-                consentServiceProperties);
+                consentServiceProperties,
+                tokenService);
     }
 
     @SneakyThrows

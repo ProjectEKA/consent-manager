@@ -32,9 +32,10 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
+import static in.projecteka.consentmanager.consent.TestBuilders.string;
+
 
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
-import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -66,6 +67,10 @@ public class ConsentArtefactUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private ConsentRequestNotificationListener consentRequestNotificationListener;
 
     @MockBean
     private ConsentArtefactRepository consentArtefactRepository;

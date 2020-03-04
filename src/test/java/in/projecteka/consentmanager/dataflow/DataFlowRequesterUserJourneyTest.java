@@ -5,11 +5,11 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
-import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
-import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
+import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
+import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import in.projecteka.consentmanager.dataflow.model.HIDataRange;
 import in.projecteka.consentmanager.dataflow.model.HIUReference;
@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient(timeout = "300000")
+@AutoConfigureWebTestClient
 @ContextConfiguration(initializers = DataFlowRequesterUserJourneyTest.ContextInitializer.class)
 public class DataFlowRequesterUserJourneyTest {
     private static MockWebServer consentManagerServer = new MockWebServer();
@@ -73,9 +73,11 @@ public class DataFlowRequesterUserJourneyTest {
     @MockBean
     private PostDataFlowRequestApproval postDataFlowRequestApproval;
 
+    @SuppressWarnings("unused")
     @MockBean
     private HiuConsentNotificationListener hiuConsentNotificationListener;
 
+    @SuppressWarnings("unused")
     @MockBean
     private HipConsentNotificationListener hipConsentNotificationListener;
 
@@ -85,6 +87,7 @@ public class DataFlowRequesterUserJourneyTest {
     @MockBean
     private ClientRegistryClient clientRegistryClient;
 
+    @SuppressWarnings("unused")
     @MockBean
     private DataRequestNotifier dataRequestNotifier;
 
@@ -162,6 +165,8 @@ public class DataFlowRequesterUserJourneyTest {
         var user = "{\"preferred_username\": \"service-account-10000005\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
+                .thenReturn(Mono.empty());
 
         webTestClient
                 .post()
@@ -193,6 +198,8 @@ public class DataFlowRequesterUserJourneyTest {
         var user = "{\"preferred_username\": \"service-account-different-hiu\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
+                .thenReturn(Mono.empty());
 
         webTestClient
                 .post()
@@ -235,6 +242,8 @@ public class DataFlowRequesterUserJourneyTest {
         var user = "{\"preferred_username\": \"service-account-10000005\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
+                .thenReturn(Mono.empty());
 
         webTestClient
                 .post()

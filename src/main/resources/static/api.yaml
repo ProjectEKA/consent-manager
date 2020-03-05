@@ -401,7 +401,7 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentArtefactRepresentation'
-  /consent-requests/{request-id}/consent-artefacts:
+  /consent-requests/{consent-request-id}/consent-artefacts:
     get:
       tags:
         - consent
@@ -583,6 +583,38 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /health-information/notification:
+    post:
+      tags:
+        - data flow
+      description: Notifications corresponding to events during data flow
+      parameters:
+        - $ref: '#/components/parameters/hiuAuthorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HINotification'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/HINotification'
+      responses:
+        '200':
+          description: Notification is Accepted
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   parameters:
     authorization:
@@ -1323,3 +1355,42 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/ConsentArtefactRepresentation'
+    HINotification:
+      type: object
+      properties:
+        transactionId:
+          type: string
+        doneAt:
+          type: string
+          format: date-time
+        notifier:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [HIU, HIP]
+            id:
+              type: string
+              example: tmh
+        statusNotification:
+          type: object
+          properties:
+            sessionStatus:
+              type: string
+              enum: [TRANSFERRED, FAILED]
+            hipId:
+              type: string
+              example: max
+            statusResponses:
+              type: array
+              items:
+                type: object
+                properties:
+                  careContextReference:
+                    type: string
+                  hiStatus:
+                    type: string
+                    enum: [DELIVERED, OK, ERRORED]
+                    example: OK
+                  description:
+                    type: string

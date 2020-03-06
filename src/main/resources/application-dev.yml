@@ -39,5 +39,12 @@ consentmanager:
       url: http://localhost:9000
 spring:
   rabbitmq:
+    listener:
+      retry:
+        enabled: false
+        initial-interval: 2000
+        max-attempts: 2
+        multiplier: 1.5
+        max-interval: 5000
     host: localhost
     port: 5672

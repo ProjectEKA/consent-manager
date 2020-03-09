@@ -2,9 +2,9 @@ package in.projecteka.consentmanager.dataflow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
@@ -85,7 +85,7 @@ public class DataFlowRequesterUserJourneyTest {
     private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @MockBean
-    private ClientRegistryClient clientRegistryClient;
+    private CentralRegistry centralRegistry;
 
     @SuppressWarnings("unused")
     @MockBean
@@ -271,7 +271,8 @@ public class DataFlowRequesterUserJourneyTest {
                 dataFlowRequestMessage.getDataFlowRequest().getKeyMaterial());
         when(dataFlowRequestRepository.getHipIdFor(dataFlowRequestMessage.getDataFlowRequest().getConsent().getId()))
                 .thenReturn(Mono.just("10000005"));
-        when(clientRegistryClient.providerWith("10000005")).thenReturn(Mono.just(provider));
+        when(centralRegistry.providerWith("10000005")).thenReturn(Mono.just(provider));
+
         dataFlowBroadcastListener.configureAndSendDataRequestFor(dataFlowRequest);
 
         verify(dataFlowBroadcastListener).configureAndSendDataRequestFor(dataFlowRequest);

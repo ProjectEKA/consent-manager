@@ -3,8 +3,8 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import lombok.AllArgsConstructor;
 import org.apache.log4j.Logger;
@@ -26,7 +26,7 @@ public class HipConsentNotificationListener {
     private DestinationsConfig destinationsConfig;
     private Jackson2JsonMessageConverter converter;
     private ConsentArtefactNotifier consentArtefactNotifier;
-    private ClientRegistryClient clientRegistryClient;
+    private CentralRegistry centralRegistry;
 
     @PostConstruct
     public void subscribe() throws ClientError {
@@ -71,8 +71,6 @@ public class HipConsentNotificationListener {
     }
 
     private Mono<String> getProviderUrl(String hipId) {
-        return clientRegistryClient.providerWith(hipId)
-                .flatMap(provider -> Mono.just(provider.getProviderUrl()));
+        return centralRegistry.providerWith(hipId).flatMap(provider -> Mono.just(provider.getProviderUrl()));
     }
-
 }

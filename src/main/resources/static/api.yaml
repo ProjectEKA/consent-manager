@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   version: 0.0.1
-  title: Health Information Consent Manager
+  title: Health Data Consent Manager
   description: >
     Entity which provides health information aggregation services to customers of health care services.
     It enables customers to fetch their health information from one or more Health Information Providers

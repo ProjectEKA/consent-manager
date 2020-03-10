@@ -16,6 +16,7 @@ import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import lombok.AllArgsConstructor;
+import org.apache.log4j.Logger;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
@@ -23,8 +24,13 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
+import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
+import static java.lang.String.format;
+
 @AllArgsConstructor
 public class UserService {
+    private final Logger logger = Logger.getLogger(UserService.class);
     private final UserRepository userRepository;
     private final OtpServiceProperties otpServiceProperties;
     private final OtpServiceClient otpServiceClient;
@@ -33,7 +39,7 @@ public class UserService {
     private final TokenService tokenService;
 
     public Mono<User> userWith(String userName) {
-        return userRepository.userWith(userName.toLowerCase());
+        return userRepository.userWith(userName.toLowerCase()).switchIfEmpty(Mono.error(userNotFound()));
     }
 
     public Mono<SignUpSession> sendOtp(UserSignUpEnquiry userSignupEnquiry) {
@@ -79,12 +85,26 @@ public class UserService {
 
         // TODO: If some failure happened in between roll back others.
         return signupService.getMobileNumber(sessionId)
-                .map(mobileNumber -> tokenService.tokenForAdmin()
-                        .flatMap(accessToken -> identityServiceClient.createUser(accessToken, user))
-                        .then(userRepository.save(User.from(signUpRequest, mobileNumber)))
-                        .then(tokenService.tokenForUser(signUpRequest.getUserName(), signUpRequest.getPassword()))
-                        .map(keycloakToken -> keycloakToken))
+                .map(mobileNumber -> userExistsWith(signUpRequest.getUserName())
+                        .switchIfEmpty(Mono.defer(() -> createUserWith(mobileNumber, signUpRequest, user)))
+                        .cast(Session.class))
                 .orElse(Mono.error(new InvalidRequestException("mobile number not verified")));
+    }
+
+    private Mono<Object> userExistsWith(String username) {
+        return userRepository.userWith(username)
+                .flatMap(patient -> {
+                    logger.error(format("Patient with %s already exists", patient.getIdentifier()));
+                    return Mono.error(userAlreadyExists(patient.getIdentifier()));
+                });
+    }
+
+    private Mono<Session> createUserWith(String mobileNumber, SignUpRequest signUpRequest, KeycloakUser user) {
+        return tokenService.tokenForAdmin()
+                .flatMap(accessToken -> identityServiceClient.createUser(accessToken, user))
+                .then(userRepository.save(User.from(signUpRequest, mobileNumber)))
+                .then(tokenService.tokenForUser(signUpRequest.getUserName(), signUpRequest.getPassword()))
+                .map(keycloakToken -> keycloakToken);
     }
 
     private boolean validateOtpVerification(OtpVerification otpVerification) {

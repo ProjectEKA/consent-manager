@@ -406,7 +406,7 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentArtefactRepresentation'
-  /consent-requests/{request-id}/consent-artefacts:
+  /consent-requests/{consent-request-id}/consent-artefacts:
     get:
       tags:
         - consent
@@ -628,12 +628,12 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /patients:
-    put:
+  /patient/pin:
+    post:
       tags:
         - account
-      summary: Update profile.
-      description: Update patient existing information such as pin.
+      summary: Create transaction pin
+      description: Create transaction pin to use it while granting consent.
       parameters:
         - $ref: '#/components/parameters/authorization'
       requestBody:
@@ -641,10 +641,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProfileUpdateRequest'
+              $ref: '#/components/schemas/CreatePinRequest'
           application/xml:
             schema:
-              $ref: '#/components/schemas/ProfileUpdateRequest'
+              $ref: '#/components/schemas/CreatePinRequest'
       responses:
         '204':
           description: Profile updated successfully.
@@ -1484,7 +1484,7 @@ components:
         - M
         - F
         - O
-    ProfileUpdateRequest:
+    CreatePinRequest:
       type: object
       properties:
         pin:

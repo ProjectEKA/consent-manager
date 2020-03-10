@@ -3,8 +3,8 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.AuthorizationTest;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
-import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.OtpVerification;
@@ -140,7 +140,47 @@ class UserServiceTest {
 
     @Test
     public void shouldCreateUser() {
-        var signUpRequest = signUpRequest().dateOfBirth(LocalDate.MIN).build();
+        var signUpRequest = signUpRequest().dateOfBirth(LocalDate.now()).build();
+        var userToken = session().build();
+        var sessionId = string();
+        var mobileNumber = string();
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
+        when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
+        when(userRepository.save(any())).thenReturn(Mono.empty());
+        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
+
+        StepVerifier.create(userService.create(signUpRequest, sessionId))
+                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
+                .verifyComplete();
+    }
+
+    @ParameterizedTest(name = "Invalid user name")
+    @CsvSource({
+            ",",
+            "empty",
+            "null"
+    })
+    public void shouldCreateUserWhenLastNameIsNullOrEmpty(
+            @ConvertWith(AuthorizationTest.NullableConverter.class) String lastName) {
+        var signUpRequest = signUpRequest().lastName(lastName).dateOfBirth(LocalDate.MIN).build();
+        var userToken = session().build();
+        var sessionId = string();
+        var mobileNumber = string();
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
+        when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
+        when(userRepository.save(any())).thenReturn(Mono.empty());
+        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
+
+        StepVerifier.create(userService.create(signUpRequest, sessionId))
+                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
+                .verifyComplete();
+    }
+
+    @Test
+    public void shouldCreateUserWhenDOBIsNull() {
+        var signUpRequest = signUpRequest().dateOfBirth(null).build();
         var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();
@@ -162,9 +202,15 @@ class UserServiceTest {
             "null"
     })
     public void shouldThrowInvalidRequestExceptionForInvalidUserId(
-            @ConvertWith(AuthorizationTest.NullableConverter.class) String userId
-    ) {
+            @ConvertWith(AuthorizationTest.NullableConverter.class) String userId) {
         var signUpRequest = signUpRequest().userName(userId).build();
         Assertions.assertThrows(InvalidRequestException.class, () -> userService.create(signUpRequest, string()));
+    }
+
+    @Test
+    public void shouldThrowInvalidRequestExceptionForFutureDOB() {
+        var signUpRequestWithTomorrow = signUpRequest().dateOfBirth(LocalDate.now().plusDays(1)).build();
+        Assertions.assertThrows(InvalidRequestException.class,
+                () -> userService.create(signUpRequestWithTomorrow, string()));
     }
 }

@@ -2,6 +2,7 @@ package in.projecteka.consentmanager;
 
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
@@ -36,9 +37,15 @@ public class ConsentManagerConfiguration {
     private static final String CM_DEAD_LETTER_ROUTING_KEY = "cm-dead-letter";
 
     @Bean
+    public CentralRegistry centralRegistry(ClientRegistryClient clientRegistryClient,
+                                           ClientRegistryProperties clientRegistryProperties) {
+        return new CentralRegistry(clientRegistryClient, clientRegistryProperties);
+    }
+
+    @Bean
     public ClientRegistryClient clientRegistryClient(WebClient.Builder builder,
                                                      ClientRegistryProperties clientRegistryProperties) {
-        return new ClientRegistryClient(builder, clientRegistryProperties);
+        return new ClientRegistryClient(builder, clientRegistryProperties.getUrl());
     }
 
     @Bean

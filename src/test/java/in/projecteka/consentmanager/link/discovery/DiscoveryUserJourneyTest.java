@@ -79,16 +79,20 @@ public class DiscoveryUserJourneyTest {
 
     @Test
     public void shouldGetProvidersByName() throws IOException {
-        var jsonNode = new ObjectMapper().readValue(
+        var providers = new ObjectMapper().readValue(
                 Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource("provider.json")),
                 new TypeReference<List<JsonNode>>() {
                 });
         var token = string();
         var user = "{\"preferred_username\": \"service-account-consent-manager-service\"}";
+        var session = "{\"accessToken\": \"eyJhbGc\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         providerServer.enqueue(new MockResponse()
                 .setHeader("Content-Type", "application/json")
-                .setBody(jsonNode.toString()));
+                .setBody(session));
+        providerServer.enqueue(new MockResponse()
+                .setHeader("Content-Type", "application/json")
+                .setBody(providers.toString()));
 
         webTestClient.get()
                 .uri("/providers?name=Max")

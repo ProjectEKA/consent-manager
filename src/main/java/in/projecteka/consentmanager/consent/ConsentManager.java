@@ -1,8 +1,8 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
@@ -40,13 +40,13 @@ import java.util.stream.Collectors;
 public class ConsentManager {
 
     public static final String SHA_1_WITH_RSA = "SHA1withRSA";
-    private final ClientRegistryClient providerClient;
     private final UserServiceClient userServiceClient;
     private final ConsentRequestRepository consentRequestRepository;
     private final ConsentArtefactRepository consentArtefactRepository;
-    private KeyPair keyPair;
-    private PostConsentApproval postConsentApproval;
-    private PostConsentRequest postConsentRequest;
+    private final KeyPair keyPair;
+    private final PostConsentApproval postConsentApproval;
+    private final CentralRegistry centralRegistry;
+    private final PostConsentRequest postConsentRequest;
 
     private static boolean isNotSameRequester(ConsentArtefact consentDetail, String requesterId) {
         return !consentDetail.getHiu().getId().equals(requesterId) &&
@@ -60,9 +60,9 @@ public class ConsentManager {
                 .then(validateHIPAndHIU(requestedDetail))
                 .then(saveRequest(requestedDetail, requestId))
                 .then(postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
-                                                                                .detail(requestedDetail)
-                                                                                .id(requestId)
-                                                                                .build()))
+                        .detail(requestedDetail)
+                        .id(requestId)
+                        .build()))
                 .thenReturn(requestId);
     }
 
@@ -83,13 +83,15 @@ public class ConsentManager {
     }
 
     private Mono<Boolean> isValidHIU(RequestedDetail requestedDetail) {
-        return providerClient.providerWith(getHIUId(requestedDetail)).flatMap(hiu -> Mono.just(hiu != null));
+        return centralRegistry.providerWith(getHIUId(requestedDetail))
+                .flatMap(hiu -> Mono.just(hiu != null));
     }
 
     private Mono<Boolean> isValidHIP(RequestedDetail requestedDetail) {
         String hipId = getHIPId(requestedDetail);
         if (hipId != null) {
-            return providerClient.providerWith(hipId).flatMap(hip -> Mono.just(hip != null));
+            return centralRegistry.providerWith(hipId)
+                    .flatMap(hip -> Mono.just(hip != null));
         }
         return Mono.just(true);
     }

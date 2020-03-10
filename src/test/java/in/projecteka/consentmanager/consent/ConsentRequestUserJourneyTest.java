@@ -88,23 +88,14 @@ public class ConsentRequestUserJourneyTest {
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
-        clientRegistryServer.enqueue(new MockResponse()
-                .setResponseCode(200)
-                .setBody("{}")
-                .setHeader("content-type",
-                        "application/json"));
-        clientRegistryServer.enqueue(new MockResponse()
-                .setResponseCode(200)
-                .setBody("{}")
-                .setHeader("content-type",
-                        "application/json"));
-        userServer.enqueue(new MockResponse()
-                .setResponseCode(200)
-                .setBody("{}")
-                .setHeader("content-type",
-                        "application/json"));
+        // TODO: Two calls being made to CR to get token within one single request, have to make it single.
+        load(clientRegistryServer, "{}");
+        load(clientRegistryServer, "{}");
+        load(clientRegistryServer, "{}");
+        load(clientRegistryServer, "{}");
+        load(userServer, "{}");
         var user = "{\"preferred_username\": \"patient@ncg\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        load(identityServer, user);
         String body = "{\n" +
                 "  \"consent\": {\n" +
                 "    \"purpose\": {\n" +
@@ -167,8 +158,8 @@ public class ConsentRequestUserJourneyTest {
     public void shouldGetConsentRequests() {
         List<ConsentRequestDetail> requests = new ArrayList<>();
         var user = "{\"preferred_username\": \"Ganesh@ncg\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        load(identityServer, user);
+        load(identityServer, user);
         when(repository.requestsForPatient("Ganesh@ncg", 20, 0)).thenReturn(Mono.just(requests));
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/consent-requests").queryParam("limit", "20").build())
@@ -183,7 +174,7 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldSendNotificationMessage(){
+    public void shouldSendNotificationMessage() {
         var notificationMessage = notificationMessage().build();
         consentRequestNotificationListener.notifyUserWith(notificationMessage);
         verify(consentRequestNotificationListener).notifyUserWith(notificationMessage);
@@ -199,5 +190,12 @@ public class ConsentRequestUserJourneyTest {
                             "consentmanager.keycloak.baseUrl=" + identityServer.url("")));
             values.applyTo(applicationContext);
         }
+    }
+
+    private static void load(MockWebServer server, String body) {
+        server.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setBody(body)
+                .setHeader("content-type", "application/json"));
     }
 }

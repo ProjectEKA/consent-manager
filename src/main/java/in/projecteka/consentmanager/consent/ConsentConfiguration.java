@@ -2,13 +2,12 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.clients.ConsentNotificationClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.user.TokenService;
 import io.vertx.pgclient.PgPool;
 import lombok.SneakyThrows;
@@ -49,20 +48,20 @@ public class ConsentConfiguration {
     @Bean
     public ConsentManager consentRequestService(WebClient.Builder builder,
                                                 ConsentRequestRepository repository,
-                                                ClientRegistryProperties clientRegistryProperties,
                                                 UserServiceProperties userServiceProperties,
                                                 ConsentArtefactRepository consentArtefactRepository,
                                                 KeyPair keyPair,
                                                 PostConsentApproval postConsentApproval,
-                                                PostConsentRequest postConsentRequestNotification) {
+                                                CentralRegistry centralRegistry,
+                                                PostConsentRequest postConsentRequest) {
         return new ConsentManager(
-                new ClientRegistryClient(builder, clientRegistryProperties),
                 new UserServiceClient(builder, userServiceProperties),
                 repository,
                 consentArtefactRepository,
                 keyPair,
                 postConsentApproval,
-                postConsentRequestNotification);
+                centralRegistry,
+                postConsentRequest);
     }
 
     @Bean
@@ -98,25 +97,25 @@ public class ConsentConfiguration {
                                                                   DestinationsConfig destinationsConfig,
                                                                   Jackson2JsonMessageConverter jackson2JsonMessageConverter,
                                                                   ConsentArtefactNotifier consentArtefactNotifier,
-                                                                  ClientRegistryClient clientRegistryClient) {
+                                                                  CentralRegistry centralRegistry) {
         return new HipConsentNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 consentArtefactNotifier,
-                clientRegistryClient);
+                centralRegistry);
     }
 
     @Bean
     public ConsentRequestNotificationListener consentRequestNotificationListener(
-                                                                                 MessageListenerContainerFactory messageListenerContainerFactory,
-                                                                                 DestinationsConfig destinationsConfig,
-                                                                                 Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-                                                                                 WebClient.Builder builder,
-                                                                                 OtpServiceProperties otpServiceProperties,
-                                                                                 UserServiceProperties userServiceProperties,
-                                                                                 ConsentServiceProperties consentServiceProperties,
-                                                                                 TokenService tokenService) {
+            MessageListenerContainerFactory messageListenerContainerFactory,
+            DestinationsConfig destinationsConfig,
+            Jackson2JsonMessageConverter jackson2JsonMessageConverter,
+            WebClient.Builder builder,
+            OtpServiceProperties otpServiceProperties,
+            UserServiceProperties userServiceProperties,
+            ConsentServiceProperties consentServiceProperties,
+            TokenService tokenService) {
         return new ConsentRequestNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,

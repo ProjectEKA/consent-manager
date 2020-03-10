@@ -1,12 +1,12 @@
 package in.projecteka.consentmanager.link.discovery;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
@@ -21,13 +21,13 @@ import java.util.List;
 public class Discovery {
 
     private static final String MOBILE = "MOBILE";
-    private final ClientRegistryClient clientRegistryClient;
     private final UserServiceClient userServiceClient;
     private final DiscoveryServiceClient discoveryServiceClient;
     private final DiscoveryRepository discoveryRepository;
+    private final CentralRegistry centralRegistry;
 
     public Flux<ProviderRepresentation> providersFrom(String name) {
-        return clientRegistryClient.providersOf(name)
+        return centralRegistry.providersOf(name)
                 .filter(this::isValid)
                 .map(Transformer::to);
     }
@@ -45,16 +45,12 @@ public class Discovery {
                                 transactionId));
     }
 
-    private Mono<Provider> providerWith(String providerId) {
-        return clientRegistryClient.providerWith(providerId);
-    }
-
     private Mono<User> userWith(String patientId, String token) {
         return userServiceClient.userOf(patientId).subscriberContext(context -> context.put("Authorization", token));
     }
 
     private Mono<String> providerUrl(String providerId) {
-        return providerWith(providerId)
+        return centralRegistry.providerWith(providerId)
                 .flatMap(provider -> provider.getIdentifiers()
                         .stream()
                         .filter(Identifier::isOfficial)

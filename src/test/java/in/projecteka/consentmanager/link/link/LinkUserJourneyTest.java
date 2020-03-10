@@ -295,7 +295,7 @@ public class LinkUserJourneyTest {
 
     final Dispatcher dispatcher = new Dispatcher() {
         @Override
-        public MockResponse dispatch (RecordedRequest request) {
+        public MockResponse dispatch(RecordedRequest request) {
             var official = identifier().use("official").system(hipServer.url("").toString()).build();
             var maxProvider = provider().name("Max").identifiers(of(official)).build();
             var tmhProvider = provider().name("TMH").identifiers(of(official)).build();
@@ -309,11 +309,14 @@ public class LinkUserJourneyTest {
             }
 
             switch (request.getPath()) {
-                case "/providers/10000004":
+                case "/api/2.0/providers/10000004":
                     return new MockResponse().setResponseCode(200).setBody(mxAsJson).setHeader("content-type",
                             "application/json");
-                case "/providers/10000005":
+                case "/api/2.0/providers/10000005":
                     return new MockResponse().setResponseCode(200).setBody(tmhJson).setHeader("content-type",
+                            "application/json");
+                case "/api/1.0/sessions":
+                    return new MockResponse().setResponseCode(200).setBody("{}").setHeader("content-type",
                             "application/json");
             }
             return new MockResponse().setResponseCode(404);

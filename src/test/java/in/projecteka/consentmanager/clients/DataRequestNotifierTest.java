@@ -15,8 +15,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.io.IOException;
-
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequestBuilder;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -37,7 +35,7 @@ public class DataRequestNotifierTest {
     }
 
     @Test
-    public void shouldDiscoverPatients() throws IOException {
+    public void shouldDiscoverPatients() {
         when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
                 .header("Content-Type", "application/json")
                 .build()));

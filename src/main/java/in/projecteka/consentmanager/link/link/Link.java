@@ -1,11 +1,11 @@
 package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.link.HIPClient;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
@@ -32,9 +32,9 @@ import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 @AllArgsConstructor
 public class Link {
     private final HIPClient hipClient;
-    private final ClientRegistryClient clientRegistryClient;
     private final LinkRepository linkRepository;
     private final UserServiceClient userServiceClient;
+    private final CentralRegistry centralRegistry;
 
     public Mono<PatientLinkReferenceResponse> patientWith(String patientId,
                                                           PatientLinkReferenceRequest patientLinkReferenceRequest) {
@@ -104,7 +104,7 @@ public class Link {
     }
 
     private Mono<String> providerUrl(String providerId) {
-        return clientRegistryClient.providerWith(providerId)
+        return centralRegistry.providerWith(providerId)
                 .flatMap(provider -> provider.getIdentifiers()
                         .stream()
                         .filter(Identifier::isOfficial)
@@ -158,7 +158,7 @@ public class Link {
     }
 
     private Mono<String> getProviderName(String providerId) {
-        return clientRegistryClient.providerWith(providerId)
+        return centralRegistry.providerWith(providerId)
                 .map(Provider::getName)
                 .switchIfEmpty(Mono.empty());
     }

@@ -3,9 +3,9 @@ package in.projecteka.consentmanager.dataflow;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.clients.model.Identifier;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
 import in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest;
 import lombok.AllArgsConstructor;
@@ -29,7 +29,7 @@ public class DataFlowBroadcastListener {
     private Jackson2JsonMessageConverter converter;
     private DataRequestNotifier dataRequestNotifier;
     private DataFlowRequestRepository dataFlowRequestRepository;
-    private ClientRegistryClient clientRegistryClient;
+    private CentralRegistry clientRegistryClient;
 
     @PostConstruct
     public void subscribe() throws ClientError {
@@ -69,7 +69,7 @@ public class DataFlowBroadcastListener {
 
     public void configureAndSendDataRequestFor(DataFlowRequest dataFlowRequest) {
         dataFlowRequestRepository.getHipIdFor(dataFlowRequest.getConsent().getId())
-                .flatMap(hipId -> providerUrl(hipId))
+                .flatMap(this::providerUrl)
                 .flatMap(url -> dataRequestNotifier.notifyHip(dataFlowRequest, url))
                 .block();
     }

@@ -7,7 +7,7 @@ consentmanager:
     url: ${CONSENT_SERVICE_URL}
   clientregistry:
     XAuthToken: ${Auth_Token}
-    clientId: 6
+    clientId: ${CENTRAL_REGISTRY_ID}
     url: ${Client_Registry_Url}
   userservice:
     url: ${User_Service_Url}

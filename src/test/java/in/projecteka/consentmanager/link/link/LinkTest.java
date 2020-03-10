@@ -1,18 +1,17 @@
 package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Identifier;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.link.HIPClient;
+import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
-import in.projecteka.consentmanager.link.link.model.PatientLinkResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
+import in.projecteka.consentmanager.link.link.model.PatientLinkResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
-import in.projecteka.consentmanager.link.link.model.Hip;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -25,16 +24,15 @@ import java.util.ArrayList;
 
 import static in.projecteka.consentmanager.link.link.TestBuilders.address;
 import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
+import static in.projecteka.consentmanager.link.link.TestBuilders.links;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResponse;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinks;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientRepresentation;
-import static in.projecteka.consentmanager.link.link.TestBuilders.telecom;
 import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
-import static in.projecteka.consentmanager.link.link.TestBuilders.links;
+import static in.projecteka.consentmanager.link.link.TestBuilders.telecom;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
-
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 import static java.util.Arrays.asList;
 import static java.util.List.of;
@@ -47,7 +45,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 class LinkTest {
 
   @Mock
-  private ClientRegistryClient clientRegistryClient;
+  private CentralRegistry clientRegistryClient;
 
   @Mock
   private HIPClient hipClient;
@@ -65,7 +63,7 @@ class LinkTest {
 
   @Test
   public void createsLinkReference() {
-      var link = new Link(hipClient, clientRegistryClient, linkRepository, userServiceClient);
+      var link = new Link(hipClient, linkRepository, userServiceClient, clientRegistryClient);
       var address = address().use("work").build();
       var telecommunication = telecom().use("work").build();
       String providerUrl = "http://localhost:8001";
@@ -99,7 +97,7 @@ class LinkTest {
 
   @Test
   public void shouldGetSystemUrlForOfficialIdentifier() {
-      var link = new Link(hipClient, clientRegistryClient, linkRepository, userServiceClient);
+      var link = new Link(hipClient, linkRepository, userServiceClient, clientRegistryClient);
       var address = address().use("work").build();
       var telecommunication = telecom().use("work").build();
       String providerUrl = "http://localhost:8001";
@@ -140,7 +138,7 @@ class LinkTest {
 
   @Test
   public void shouldGetErrorWhenProviderUrlIsEmpty() {
-      var link = new Link(hipClient, clientRegistryClient, linkRepository, userServiceClient);
+      var link = new Link(hipClient, linkRepository, userServiceClient, clientRegistryClient);
       var address = address().use("work").build();
       var telecommunication = telecom().use("work").build();
       var provider =
@@ -169,7 +167,7 @@ class LinkTest {
 
   @Test
   public void linksPatientsCareContexts() {
-      var link = new Link(hipClient, clientRegistryClient, linkRepository, userServiceClient);
+      var link = new Link(hipClient, linkRepository, userServiceClient, clientRegistryClient);
       var address = address().use("work").build();
       var telecommunication = telecom().use("work").build();
       String providerUrl = "http://localhost:8001";
@@ -249,7 +247,7 @@ class LinkTest {
       when(linkRepository.getLinkedCareContextsForAllHip(patientId)).thenReturn(Mono.just(patientLinks));
       when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
       when(userServiceClient.userOf(patientId)).thenReturn(Mono.just(user));
-      var link = new Link(hipClient, clientRegistryClient, linkRepository, userServiceClient);
+      var link = new Link(hipClient, linkRepository, userServiceClient, clientRegistryClient);
 
       StepVerifier.create(link.getLinkedCareContexts(patientId))
               .expectNext(patientLinksResponse)

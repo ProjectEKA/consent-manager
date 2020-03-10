@@ -2,10 +2,9 @@ package in.projecteka.consentmanager.dataflow;
 
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
-import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import io.vertx.pgclient.PgPool;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -28,14 +27,13 @@ public class DataFlowConfiguration {
                                                                Jackson2JsonMessageConverter jackson2JsonMessageConverter,
                                                                DataRequestNotifier dataRequestNotifier,
                                                                DataFlowRequestRepository dataFlowRequestRepository,
-                                                               WebClient.Builder builder,
-                                                               ClientRegistryProperties clientRegistryProperties) {
+                                                               CentralRegistry centralRegistry) {
         return new DataFlowBroadcastListener(messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 dataRequestNotifier,
                 dataFlowRequestRepository,
-                new ClientRegistryClient(builder, clientRegistryProperties));
+                centralRegistry);
     }
 
     @Bean
@@ -44,8 +42,10 @@ public class DataFlowConfiguration {
                                          PostDataFlowRequestApproval postDataFlowRequestApproval,
                                          DataFlowAuthServerProperties dataFlowAuthServerProperties,
                                          DataFlowConsentManagerProperties dataFlowConsentManagerProperties) {
-        return new DataFlowRequester(new ConsentManagerClient(builder, dataFlowAuthServerProperties, dataFlowConsentManagerProperties),
-                dataFlowRequestRepository, postDataFlowRequestApproval);
+        return new DataFlowRequester(
+                new ConsentManagerClient(builder, dataFlowAuthServerProperties, dataFlowConsentManagerProperties),
+                dataFlowRequestRepository,
+                postDataFlowRequestApproval);
     }
 
     @Bean

@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
 import in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest;
 import lombok.AllArgsConstructor;
 import org.apache.log4j.Logger;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -31,7 +32,7 @@ public class DataFlowBroadcastListener {
     private ClientRegistryClient clientRegistryClient;
 
     @PostConstruct
-    public void subscribe() throws ClientError{
+    public void subscribe() throws ClientError {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig
                 .getQueues()
                 .get(HIP_DATA_FLOW_REQUEST_QUEUE);
@@ -44,18 +45,23 @@ public class DataFlowBroadcastListener {
                 .createMessageListenerContainer(destinationInfo.getRoutingKey());
 
         MessageListener messageListener = message -> {
-            DataFlowRequestMessage dataFlowRequestMessage =
-                    (DataFlowRequestMessage) converter.fromMessage(message);
-            logger.info("Received message for Request id : " + dataFlowRequestMessage
-                    .getTransactionId());
-            DataFlowRequest dataFlowRequest = DataFlowRequest.builder()
-                    .transactionId(dataFlowRequestMessage.getTransactionId())
-                    .callBackUrl(dataFlowRequestMessage.getDataFlowRequest().getCallBackUrl())
-                    .consent(dataFlowRequestMessage.getDataFlowRequest().getConsent())
-                    .hiDataRange(dataFlowRequestMessage.getDataFlowRequest().getHiDataRange())
-                    .keyMaterial(dataFlowRequestMessage.getDataFlowRequest().getKeyMaterial())
-                    .build();
-            configureAndSendDataRequestFor(dataFlowRequest);
+            try {
+                DataFlowRequestMessage dataFlowRequestMessage =
+                        (DataFlowRequestMessage) converter.fromMessage(message);
+                logger.info("Received message for Request id : " + dataFlowRequestMessage
+                        .getTransactionId());
+                DataFlowRequest dataFlowRequest = DataFlowRequest.builder()
+                        .transactionId(dataFlowRequestMessage.getTransactionId())
+                        .callBackUrl(dataFlowRequestMessage.getDataFlowRequest().getCallBackUrl())
+                        .consent(dataFlowRequestMessage.getDataFlowRequest().getConsent())
+                        .hiDataRange(dataFlowRequestMessage.getDataFlowRequest().getHiDataRange())
+                        .keyMaterial(dataFlowRequestMessage.getDataFlowRequest().getKeyMaterial())
+                        .build();
+                configureAndSendDataRequestFor(dataFlowRequest);
+            } catch (Exception e) {
+                logger.error(e);
+                throw new AmqpRejectAndDontRequeueException(e);
+            }
         };
         mlc.setupMessageListener(messageListener);
         mlc.start();
@@ -72,13 +78,13 @@ public class DataFlowBroadcastListener {
         return clientRegistryClient.providerWith(providerId)
                 .flatMap(provider ->
                         provider.getIdentifiers()
-                        .stream()
-                        .filter(Identifier::isOfficial)
-                        .findFirst()
-                        .map(identifier -> Mono.just(identifier.getSystem()))
-                        .orElse(Mono.empty()))
+                                .stream()
+                                .filter(Identifier::isOfficial)
+                                .findFirst()
+                                .map(identifier -> Mono.just(identifier.getSystem()))
+                                .orElse(Mono.empty()))
                 .flatMap(url -> {
-                    if (url == null){
+                    if (url == null) {
                         logger.error("Hip Url not found for Hip Id");
                         return Mono.empty();
                     } else {

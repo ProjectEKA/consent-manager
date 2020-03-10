@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import lombok.AllArgsConstructor;
 import org.apache.log4j.Logger;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -41,12 +42,17 @@ public class HipConsentNotificationListener {
                 .createMessageListenerContainer(destinationInfo.getRoutingKey());
 
         MessageListener messageListener = message -> {
-            HIPConsentArtefactRepresentation consentArtefact =
-                    (HIPConsentArtefactRepresentation) converter.fromMessage(message);
-            logger.info(String.format("Received notify consent to hip for consent artefact: %s",
-                    consentArtefact.getConsentDetail().getConsentId()));
+            try {
+                HIPConsentArtefactRepresentation consentArtefact =
+                        (HIPConsentArtefactRepresentation) converter.fromMessage(message);
+                logger.info(String.format("Received notify consent to hip for consent artefact: %s",
+                        consentArtefact.getConsentDetail().getConsentId()));
 
-            sendConsentArtefact(consentArtefact);
+                sendConsentArtefact(consentArtefact);
+            } catch (Exception e) {
+                logger.error(e);
+                throw new AmqpRejectAndDontRequeueException(e);
+            }
         };
         mlc.setupMessageListener(messageListener);
 

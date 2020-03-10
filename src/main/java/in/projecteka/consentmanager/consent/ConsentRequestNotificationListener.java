@@ -15,6 +15,7 @@ import in.projecteka.consentmanager.consent.model.HIType;
 import in.projecteka.consentmanager.user.TokenService;
 import lombok.AllArgsConstructor;
 import org.apache.log4j.Logger;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -53,11 +54,16 @@ public class ConsentRequestNotificationListener {
                 .createMessageListenerContainer(destinationInfo.getRoutingKey());
 
         MessageListener messageListener = message -> {
+            try {
             ConsentRequest consentRequest = (ConsentRequest) converter.fromMessage(message);
             logger.info(String.format("Received message for Request id : %s", consentRequest.getId()));
-            createNotificationMessage(consentRequest)
-                    .flatMap(this::notifyUserWith)
-                    .block();
+                createNotificationMessage(consentRequest)
+                        .flatMap(this::notifyUserWith)
+                        .block();
+            } catch (Exception e) {
+                logger.error(e);
+                throw new AmqpRejectAndDontRequeueException(e);
+            }
         };
         mlc.setupMessageListener(messageListener);
         mlc.start();

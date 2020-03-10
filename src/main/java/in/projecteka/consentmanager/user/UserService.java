@@ -2,12 +2,12 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
-import in.projecteka.consentmanager.clients.model.KeycloakUser;
-import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.SignUpSession;
@@ -95,9 +95,11 @@ public class UserService {
     }
 
     private boolean isValid(SignUpRequest signUpRequest) {
+        final LocalDate tomorrow = LocalDate.now().plusDays(1);
         return !StringUtils.isEmpty(signUpRequest.getFirstName()) &&
                 !StringUtils.isEmpty(signUpRequest.getUserName()) &&
                 !StringUtils.isEmpty(signUpRequest.getPassword()) &&
-                signUpRequest.getDateOfBirth().isBefore(LocalDate.now());
+                (signUpRequest.getDateOfBirth() == null ||
+                        signUpRequest.getDateOfBirth().isBefore(tomorrow));
     }
 }

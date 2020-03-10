@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.AuthorizationTest;
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
@@ -11,6 +12,7 @@ import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,7 @@ import java.util.Optional;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -148,6 +151,7 @@ class UserServiceTest {
         when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
+        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 
         StepVerifier.create(userService.create(signUpRequest, sessionId))
@@ -169,6 +173,7 @@ class UserServiceTest {
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
         when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
+        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.empty());
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
@@ -176,6 +181,21 @@ class UserServiceTest {
         StepVerifier.create(userService.create(signUpRequest, sessionId))
                 .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
                 .verifyComplete();
+    }
+
+    @Test
+    public void shouldReturnUserAlreadyExistsError() {
+        var signUpRequest = signUpRequest().dateOfBirth(LocalDate.MIN).build();
+        var sessionId = string();
+        var user = user().identifier(signUpRequest.getUserName()).build();
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(string()));
+        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.just(user));
+        when(userRepository.save(any())).thenReturn(Mono.empty());
+
+        StepVerifier.create(userService.create(signUpRequest, sessionId))
+                .verifyErrorSatisfies(error -> assertThat(error)
+                        .asInstanceOf(InstanceOfAssertFactories.type(ClientError.class))
+                        .isEqualToComparingFieldByField(ClientError.userAlreadyExists(signUpRequest.getUserName())));
     }
 
     @Test
@@ -187,6 +207,7 @@ class UserServiceTest {
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
         when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
+        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 

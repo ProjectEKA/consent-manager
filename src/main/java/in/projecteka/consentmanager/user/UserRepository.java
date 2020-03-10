@@ -45,7 +45,7 @@ public class UserRepository {
                                 .build());
                         return;
                     }
-                    monoSink.error(dbOperationFailed());
+                    monoSink.success();
                 }));
     }
 

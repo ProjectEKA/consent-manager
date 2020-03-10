@@ -349,7 +349,12 @@ paths:
       summary: Approve Request
       description: User approves the consent request with preferred data access parameters.
       parameters:
-        - $ref: '#/components/parameters/authorization'
+        - name: Authorization
+          description: Token received after successful verification of PIN
+          in: header
+          required: true
+          schema:
+            type: string
         - name: request-id
           in: path
           required: true
@@ -583,6 +588,140 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /patients/me:
+    get:
+      tags:
+        - account
+      summary: Get profile.
+      description: Logged in patient profile information.
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+      responses:
+        '200':
+          description: A profile of a patient.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientProfileRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientProfileRepresentation'
+        '401':
+          description: >
+            **Causes:**
+              * Token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /patients:
+    put:
+      tags:
+        - account
+      summary: Update profile.
+      description: Update patient existing information such as pin.
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdateRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdateRequest'
+      responses:
+        '204':
+          description: Profile updated successfully.
+        '401':
+          description: >
+            **Causes:**
+              * Token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /consent-requests/verify-pin:
+    post:
+      tags:
+        - consent
+      summary: Verify PIN
+      description: MFA before granting the consent request.
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PinVerificationRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/PinVerificationRequest'
+      responses:
+        '200':
+          description: Successful verification of PIN.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentifierVerifyResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/IdentifierVerifyResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Token is invalid
+              * PIN is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   parameters:
     authorization:
@@ -1323,3 +1462,41 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/ConsentArtefactRepresentation'
+    PatientProfileRepresentation:
+      type: object
+      properties:
+        id:
+          type: string
+          example: user@ncg
+        firstName:
+          type: string
+          example: Raj
+        lastName:
+          type: string
+          example: Sharma
+        gender:
+          $ref: '#/components/schemas/Gender'
+        hasTransactionPin:
+          type: boolean
+    Gender:
+      type: string
+      enum:
+        - M
+        - F
+        - O
+    ProfileUpdateRequest:
+      type: object
+      properties:
+        pin:
+          type: string
+          maximum: 9999
+          example: "1234"
+          description: '4 digit number'
+    PinVerificationRequest:
+      type: object
+      properties:
+        pin:
+          type: string
+          maximum: 9999
+          example: "1234"
+          description: '4 digit number'

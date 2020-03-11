@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import static java.util.function.Predicate.not;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 public class LinkServiceClient {
 
@@ -21,10 +22,12 @@ public class LinkServiceClient {
 
     public Mono<PatientLinkReferenceResponse> linkPatientEnquiry(
             PatientLinkReferenceRequest patientLinkReferenceRequest,
-            String url) {
+            String url,
+            String authorization) {
         return webClientBuilder.build()
                 .post()
                 .uri(String.format("%s/patients/link", url))
+                .header(AUTHORIZATION, authorization)
                 .body(Mono.just(patientLinkReferenceRequest), PatientLinkReferenceRequest.class)
                 .retrieve()
                 .onStatus(not(HttpStatus::is2xxSuccessful), clientResponse ->
@@ -36,10 +39,12 @@ public class LinkServiceClient {
     public Mono<PatientLinkResponse> linkPatientConfirmation(
             String linkRefNumber,
             PatientLinkRequest patientLinkRequest,
-            String url) {
+            String url,
+            String authorization) {
         return webClientBuilder.build()
                 .post()
                 .uri(String.format("%s/patients/link/%s", url, linkRefNumber))
+                .header(AUTHORIZATION, authorization)
                 .body(Mono.just(patientLinkRequest), PatientLinkRequest.class)
                 .retrieve()
                 .onStatus(not(HttpStatus::is2xxSuccessful), clientResponse ->

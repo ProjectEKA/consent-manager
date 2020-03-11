@@ -72,4 +72,8 @@ public class TestBuilders {
     public static PatientLinkResponse.PatientLinkResponseBuilder patientLinkResponse() {
         return easyRandom.nextObject(PatientLinkResponse.PatientLinkResponseBuilder.class);
     }
+
+    public static String string() {
+        return easyRandom.nextObject(String.class);
+    }
 }

@@ -32,6 +32,7 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReq
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinks;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientRepresentation;
 import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
+import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.telecom;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
@@ -81,9 +82,11 @@ class LinkTest {
                 patientLinkReferenceRequest.getTransactionId(),
                 toHIPPatient(patientId, patientLinkReferenceRequest.getPatient()));
         String hipId = "10000005";
+        var token = string();
         patientLinkReferenceResponse.setTransactionId(patientLinkReferenceRequest.getTransactionId());
 
-        when(linkServiceClient.linkPatientEnquiry(patientLinkReferenceRequestForHIP, providerUrl))
+        when(clientRegistryClient.authenticate()).thenReturn(Mono.just(token));
+        when(linkServiceClient.linkPatientEnquiry(patientLinkReferenceRequestForHIP, providerUrl, token))
                 .thenReturn(Mono.just(patientLinkReferenceResponse));
         when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
@@ -97,6 +100,7 @@ class LinkTest {
 
     @Test
     public void shouldGetSystemUrlForOfficialIdentifier() {
+        var token = string();
         var link = new Link(linkServiceClient, linkRepository, userServiceClient, clientRegistryClient);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
@@ -114,6 +118,7 @@ class LinkTest {
                         .build();
 
         String hipId = "10000005";
+        when(clientRegistryClient.authenticate()).thenReturn(Mono.just(token));
         when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
         PatientLinkReferenceResponse patientLinkReferenceResponse =
                 PatientLinkReferenceResponse.builder().build();
@@ -124,7 +129,7 @@ class LinkTest {
                         patientLinkReferenceRequest.getTransactionId(),
                         toHIPPatient(patientId, patientLinkReferenceRequest.getPatient()));
 
-        when(linkServiceClient.linkPatientEnquiry(patientLinkReferenceRequestForHIP, providerUrl))
+        when(linkServiceClient.linkPatientEnquiry(patientLinkReferenceRequestForHIP, providerUrl, token))
                 .thenReturn(Mono.just(patientLinkReferenceResponse));
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
@@ -133,7 +138,7 @@ class LinkTest {
         StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
                 .expectNext(patientLinkReferenceResponse)
                 .verifyComplete();
-        verify(linkServiceClient).linkPatientEnquiry(patientLinkReferenceRequestForHIP, providerUrl);
+        verify(linkServiceClient).linkPatientEnquiry(patientLinkReferenceRequestForHIP, providerUrl, token);
     }
 
     @Test
@@ -186,7 +191,9 @@ class LinkTest {
         String linkRefNumber = "link-ref-num";
         String patientId = "patient";
 
-        when(linkServiceClient.linkPatientConfirmation(linkRefNumber, patientLinkRequest, providerUrl))
+        var token = string();
+        when(clientRegistryClient.authenticate()).thenReturn(Mono.just(token));
+        when(linkServiceClient.linkPatientConfirmation(linkRefNumber, patientLinkRequest, providerUrl, token))
                 .thenReturn(Mono.just(patientLinkResponse));
         String hipId = "10000005";
         when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));

@@ -56,7 +56,9 @@ public class Link {
             in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest linkReferenceRequest,
             String hipId,
             String url) {
-        return linkServiceClient.linkPatientEnquiry(linkReferenceRequest, url)
+        return centralRegistry
+                .authenticate()
+                .flatMap(token -> linkServiceClient.linkPatientEnquiry(linkReferenceRequest, url, token))
                 .flatMap(linkReferenceResponse -> {
                     linkReferenceResponse.setTransactionId(patientLinkReferenceRequest.getTransactionId());
                     return linkRepository.insertToLinkReference(linkReferenceResponse, hipId)
@@ -95,7 +97,9 @@ public class Link {
             String patientId,
             String hipId,
             String url) {
-        return linkServiceClient.linkPatientConfirmation(linkRefNumber, patientLinkRequest, url)
+        return centralRegistry.authenticate()
+                .flatMap(token ->
+                        linkServiceClient.linkPatientConfirmation(linkRefNumber, patientLinkRequest, url, token))
                 .flatMap(patientLinkResponse ->
                         linkRepository.insertToLink(hipId, patientId, linkRefNumber, patientLinkResponse.getPatient())
                                 .thenReturn(PatientLinkResponse.builder()

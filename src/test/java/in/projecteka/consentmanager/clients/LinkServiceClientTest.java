@@ -19,6 +19,7 @@ import static in.projecteka.consentmanager.clients.TestBuilders.patientLinkRefer
 import static in.projecteka.consentmanager.clients.TestBuilders.patientLinkReferenceResponse;
 import static in.projecteka.consentmanager.clients.TestBuilders.patientLinkRequest;
 import static in.projecteka.consentmanager.clients.TestBuilders.patientLinkResponse;
+import static in.projecteka.consentmanager.clients.TestBuilders.string;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class LinkServiceClientTest {
@@ -46,7 +47,7 @@ public class LinkServiceClientTest {
                         .setBody(linkReferenceJson));
 
         PatientLinkReferenceRequest request = patientLinkReferenceRequestForHIP().build();
-        StepVerifier.create(linkServiceClient.linkPatientEnquiry(request, baseUrl))
+        StepVerifier.create(linkServiceClient.linkPatientEnquiry(request, baseUrl, string()))
                 .assertNext(
                         patientLinkReferenceResponse -> {
                             assertThat(patientLinkReferenceResponse.getLink().getReferenceNumber())
@@ -82,7 +83,7 @@ public class LinkServiceClientTest {
                         .setBody(errorResponseJson));
 
         PatientLinkReferenceRequest request = patientLinkReferenceRequestForHIP().build();
-        StepVerifier.create(linkServiceClient.linkPatientEnquiry(request, baseUrl))
+        StepVerifier.create(linkServiceClient.linkPatientEnquiry(request, baseUrl, string()))
                 .expectErrorSatisfies(
                         errorRes -> {
                             assertThat(((ClientError) errorRes).getError().getError().getCode().getValue())
@@ -113,7 +114,7 @@ public class LinkServiceClientTest {
 
         PatientLinkRequest request = patientLinkRequest().build();
         String linkRefNumber = "test-ref-number";
-        StepVerifier.create(linkServiceClient.linkPatientConfirmation(linkRefNumber, request, baseUrl))
+        StepVerifier.create(linkServiceClient.linkPatientConfirmation(linkRefNumber, request, baseUrl, string()))
                 .assertNext(
                         patientLinkResponse -> {
                             assertThat(patientLinkResponse.getPatient().getReferenceNumber())
@@ -152,7 +153,7 @@ public class LinkServiceClientTest {
 
         PatientLinkRequest request = patientLinkRequest().build();
         String linkRefNumber = "test-ref-number";
-        StepVerifier.create(linkServiceClient.linkPatientConfirmation(linkRefNumber, request, baseUrl))
+        StepVerifier.create(linkServiceClient.linkPatientConfirmation(linkRefNumber, request, baseUrl, string()))
                 .expectErrorSatisfies(
                         errorRes -> {
                             assertThat(((ClientError) errorRes).getError().getError().getCode().getValue())

@@ -1,15 +1,17 @@
 package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.model.Address;
+import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Identifier;
+import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.Type;
 import in.projecteka.consentmanager.clients.model.User;
-import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
-import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
+import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
-import in.projecteka.consentmanager.link.link.model.PatientRepresentation;
+import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.link.link.model.Links;
 import org.jeasy.random.EasyRandom;
 
@@ -61,5 +63,13 @@ public class TestBuilders {
 
     public static User.UserBuilder user() {
         return easyRandom.nextObject(User.UserBuilder.class);
+    }
+
+    public static ErrorRepresentation.ErrorRepresentationBuilder errorRepresentation() {
+        return easyRandom.nextObject(ErrorRepresentation.ErrorRepresentationBuilder.class);
+    }
+
+    public static PatientLinkResponse.PatientLinkResponseBuilder patientLinkResponse() {
+        return easyRandom.nextObject(PatientLinkResponse.PatientLinkResponseBuilder.class);
     }
 }

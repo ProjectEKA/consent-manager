@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.link;
 
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
+import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
@@ -31,7 +32,7 @@ public class LinkConfiguration {
                      LinkRepository linkRepository,
                      UserServiceProperties userServiceProperties,
                      CentralRegistry centralRegistry) {
-        return new Link(new HIPClient(builder),
+        return new Link(new LinkServiceClient(builder),
                 linkRepository,
                 new UserServiceClient(builder, userServiceProperties),
                 centralRegistry);

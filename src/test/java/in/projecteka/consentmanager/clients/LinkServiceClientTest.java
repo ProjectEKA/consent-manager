@@ -1,9 +1,8 @@
-package in.projecteka.consentmanager.link;
+package in.projecteka.consentmanager.clients;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
-import in.projecteka.consentmanager.link.link.model.hip.PatientLinkReferenceRequest;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest;
+import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -15,11 +14,15 @@ import reactor.test.StepVerifier;
 import java.io.IOException;
 import java.util.Objects;
 
-import static in.projecteka.consentmanager.link.TestBuilders.*;
+import static in.projecteka.consentmanager.clients.TestBuilders.errorRepresentation;
+import static in.projecteka.consentmanager.clients.TestBuilders.patientLinkReferenceRequestForHIP;
+import static in.projecteka.consentmanager.clients.TestBuilders.patientLinkReferenceResponse;
+import static in.projecteka.consentmanager.clients.TestBuilders.patientLinkRequest;
+import static in.projecteka.consentmanager.clients.TestBuilders.patientLinkResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class HIPClientTest {
-    private HIPClient hipClient;
+public class LinkServiceClientTest {
+    private LinkServiceClient linkServiceClient;
     private MockWebServer mockWebServer;
     private String baseUrl;
 
@@ -28,7 +31,7 @@ public class HIPClientTest {
         mockWebServer = new MockWebServer();
         baseUrl = mockWebServer.url("/").toString();
         WebClient.Builder webClientBuilder = WebClient.builder().baseUrl(baseUrl);
-        hipClient = new HIPClient(webClientBuilder);
+        linkServiceClient = new LinkServiceClient(webClientBuilder);
     }
 
     @Test
@@ -43,7 +46,7 @@ public class HIPClientTest {
                         .setBody(linkReferenceJson));
 
         PatientLinkReferenceRequest request = patientLinkReferenceRequestForHIP().build();
-        StepVerifier.create(hipClient.linkPatientCareContext(request, baseUrl))
+        StepVerifier.create(linkServiceClient.linkPatientEnquiry(request, baseUrl))
                 .assertNext(
                         patientLinkReferenceResponse -> {
                             assertThat(patientLinkReferenceResponse.getLink().getReferenceNumber())
@@ -79,7 +82,7 @@ public class HIPClientTest {
                         .setBody(errorResponseJson));
 
         PatientLinkReferenceRequest request = patientLinkReferenceRequestForHIP().build();
-        StepVerifier.create(hipClient.linkPatientCareContext(request, baseUrl))
+        StepVerifier.create(linkServiceClient.linkPatientEnquiry(request, baseUrl))
                 .expectErrorSatisfies(
                         errorRes -> {
                             assertThat(((ClientError) errorRes).getError().getError().getCode().getValue())
@@ -110,7 +113,7 @@ public class HIPClientTest {
 
         PatientLinkRequest request = patientLinkRequest().build();
         String linkRefNumber = "test-ref-number";
-        StepVerifier.create(hipClient.validateToken(linkRefNumber, request, baseUrl))
+        StepVerifier.create(linkServiceClient.linkPatientConfirmation(linkRefNumber, request, baseUrl))
                 .assertNext(
                         patientLinkResponse -> {
                             assertThat(patientLinkResponse.getPatient().getReferenceNumber())
@@ -149,7 +152,7 @@ public class HIPClientTest {
 
         PatientLinkRequest request = patientLinkRequest().build();
         String linkRefNumber = "test-ref-number";
-        StepVerifier.create(hipClient.validateToken(linkRefNumber, request, baseUrl))
+        StepVerifier.create(linkServiceClient.linkPatientConfirmation(linkRefNumber, request, baseUrl))
                 .expectErrorSatisfies(
                         errorRes -> {
                             assertThat(((ClientError) errorRes).getError().getError().getCode().getValue())

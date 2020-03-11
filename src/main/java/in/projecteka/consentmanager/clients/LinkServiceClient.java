@@ -1,26 +1,25 @@
-package in.projecteka.consentmanager.link;
+package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.link.link.model.ErrorRepresentation;
-import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
-import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
-import in.projecteka.consentmanager.link.link.model.PatientLinkResponse;
-import in.projecteka.consentmanager.link.link.model.hip.PatientLinkReferenceRequest;
+import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
+import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
+import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import static java.util.function.Predicate.not;
 
-public class HIPClient {
+public class LinkServiceClient {
 
     private final WebClient.Builder webClientBuilder;
 
-    public HIPClient(WebClient.Builder webClientBuilder) {
+    public LinkServiceClient(WebClient.Builder webClientBuilder) {
         this.webClientBuilder = webClientBuilder;
     }
 
-    public Mono<PatientLinkReferenceResponse> linkPatientCareContext(
+    public Mono<PatientLinkReferenceResponse> linkPatientEnquiry(
             PatientLinkReferenceRequest patientLinkReferenceRequest,
             String url) {
         return webClientBuilder.build()
@@ -34,7 +33,7 @@ public class HIPClient {
                 .bodyToMono(PatientLinkReferenceResponse.class);
     }
 
-    public Mono<PatientLinkResponse> validateToken(
+    public Mono<PatientLinkResponse> linkPatientConfirmation(
             String linkRefNumber,
             PatientLinkRequest patientLinkRequest,
             String url) {

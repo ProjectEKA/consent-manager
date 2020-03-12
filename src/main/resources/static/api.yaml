@@ -885,7 +885,7 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /patient/pin:
+  /patients/pin:
     post:
       tags:
         - account
@@ -904,11 +904,76 @@ paths:
               $ref: '#/components/schemas/CreatePinRequest'
       responses:
         '204':
-          description: Profile updated successfully.
+          description: PIN created successfully.
         '401':
           description: >
             **Causes:**
               * Token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /patients:
+    post:
+      tags:
+        - account
+      summary: Create Account
+      description: Patient can create an account once they verified one of the identifiers.
+      parameters:
+        - name: Authorization
+          description: Token received after successful verification of identifier.
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePatientRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/CreatePatientRequest'
+      responses:
+        '200':
+          description: Profile created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Invalid/expired token.
           content:
             application/json:
               schema:
@@ -1749,6 +1814,8 @@ components:
           maximum: 9999
           example: "1234"
           description: '4 digit number'
+      required:
+        - pin
     PinVerificationRequest:
       type: object
       properties:
@@ -1757,3 +1824,49 @@ components:
           maximum: 9999
           example: "1234"
           description: '4 digit number'
+      required:
+        - pin
+    CreatePatientRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: Raj
+        lastName:
+          type: string
+          example: sharma
+        username:
+          type: string
+          example: raj.sharma@ncg
+        password:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          $ref: '#/components/schemas/Gender'
+      required:
+        - firstName
+        - username
+        - password
+        - gender
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: eyJhbGciOiJSUzI1Ni.IsInR5cCIgOiAiSldUIiwia2lkIiA6ICJrVVp.2MXJQMjRyYXN1UW9wU2lWbkdZQUZIVFowYVZGVWpYNXFLMnNibTk0In0
+        expiresIn:
+          type: integer
+          example: 1800
+          description: In Minutes
+        refreshExpiresIn:
+          type: integer
+          example: 1800
+          description: In Minutes
+        refreshToken:
+          type: string
+          example: eyJhbGciOiJSUzI1Ni.IsInR5cCIgOiAiSldUIiwia2lkIiA6ICJrVVp.2MXJQMjRyYXN1UW9wU2lWbkdZQUZIVFowYVZGVWpYNXFLMnNibTk0In0
+        tokenType:
+          type: string
+          example: bearer

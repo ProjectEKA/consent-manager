@@ -3,17 +3,16 @@ package in.projecteka.consentmanager.link.link;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.model.Error;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
+import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.link.TestBuilders;
-import in.projecteka.consentmanager.link.link.model.Error;
-import in.projecteka.consentmanager.link.link.model.ErrorCode;
-import in.projecteka.consentmanager.link.link.model.ErrorRepresentation;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
-import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import okhttp3.mockwebserver.Dispatcher;
@@ -47,10 +46,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.link.link.TestBuilders.errorRepresentation;
 import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResponse;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkRequest;
+import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkResponse;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientRepresentation;
 import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
@@ -137,7 +138,7 @@ public class LinkUserJourneyTest {
 
     @Test
     public void shouldGiveErrorFromHIP() throws IOException {
-        var errorResponse = TestBuilders.errorRepresentation().build();
+        var errorResponse = errorRepresentation().build();
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
         clientRegistryServer.setDispatcher(dispatcher);
         hipServer.enqueue(
@@ -169,7 +170,7 @@ public class LinkUserJourneyTest {
 
     @Test
     public void shouldLinkCareContexts() throws IOException {
-        var linkRes = TestBuilders.patientLinkResponse().build();
+        var linkRes = patientLinkResponse().build();
         var linkResJson = new ObjectMapper().writeValueAsString(linkRes);
         var user = "{\"preferred_username\": \"123@ncg\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));

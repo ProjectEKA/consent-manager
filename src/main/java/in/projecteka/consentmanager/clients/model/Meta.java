@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.link.link.model;
+package in.projecteka.consentmanager.clients.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;

@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.link.link.model.hip.CareContext;
-import in.projecteka.consentmanager.link.link.model.hip.Patient;
+import in.projecteka.consentmanager.clients.model.CareContext;
+import in.projecteka.consentmanager.clients.model.Patient;
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.link.link.model;
+package in.projecteka.consentmanager.clients.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;

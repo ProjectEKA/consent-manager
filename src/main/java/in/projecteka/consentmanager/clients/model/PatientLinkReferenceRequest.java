@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.link.link.model.hip;
+package in.projecteka.consentmanager.clients.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @Data
-public class CareContext {
-    private String referenceNumber;
+public class PatientLinkReferenceRequest {
+    private String transactionId;
+    private Patient patient;
 }

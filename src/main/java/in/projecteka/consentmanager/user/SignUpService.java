@@ -55,7 +55,8 @@ public class SignUpService {
     }
 
     private Boolean isStillExists(String session) {
-        return verifiedSessions.getIfPresent(session).isPresent();
+        var optionalSession = verifiedSessions.getIfPresent(session);
+        return optionalSession != null && optionalSession.isPresent();
     }
 
     public Token generateToken(String sessionId) {

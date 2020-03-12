@@ -47,7 +47,7 @@ public class ClientRegistryClient {
                 .bodyToMono(Provider.class);
     }
 
-    public Mono<Session> getToken(String clientId, String clientSecret) {
+    public Mono<Session> getTokenFor(String clientId, String clientSecret) {
         return webClientBuilder.build()
                 .post()
                 .uri("/api/1.0/sessions")

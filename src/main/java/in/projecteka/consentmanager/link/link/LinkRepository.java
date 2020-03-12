@@ -2,9 +2,9 @@ package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
-import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
-import in.projecteka.consentmanager.link.link.model.PatientRepresentation;
+import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;

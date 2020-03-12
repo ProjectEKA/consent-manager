@@ -15,14 +15,18 @@ public class CentralRegistry {
     private final ClientRegistryProperties properties;
 
     public Mono<Provider> providerWith(String providerId) {
-        return clientRegistryClient.getToken(properties.getClientId(), properties.getXAuthToken())
-                .map(session -> format("%s %s", session.getTokenType(), session.getAccessToken()))
+        return authenticate()
                 .flatMap(token -> clientRegistryClient.providerWith(providerId, token));
     }
 
     public Flux<Provider> providersOf(String providerName) {
-        return clientRegistryClient.getToken(properties.getClientId(), properties.getXAuthToken())
-                .map(session -> format("%s %s", session.getTokenType(), session.getAccessToken()))
+        return authenticate()
                 .flatMapMany(token -> clientRegistryClient.providersOf(providerName, token));
+    }
+
+    public Mono<String> authenticate() {
+        return clientRegistryClient
+                .getTokenFor(properties.getClientId(), properties.getXAuthToken())
+                .map(session -> format("%s %s", session.getTokenType(), session.getAccessToken()));
     }
 }

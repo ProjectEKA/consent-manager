@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.dataflow;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
+import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import in.projecteka.consentmanager.dataflow.model.HIDataRange;
 import lombok.AllArgsConstructor;
@@ -29,7 +30,7 @@ public class DataFlowRequester {
 
     private Mono<Void> notifyHIP(String transactionId,
                                  in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest) {
-         return postDataFlowrequestApproval.broadcastDataFlowRequest(transactionId, dataFlowRequest);
+        return postDataFlowrequestApproval.broadcastDataFlowRequest(transactionId, dataFlowRequest);
     }
 
     private Mono<Void> validateAndSaveConsent(String transactionId,
@@ -72,11 +73,25 @@ public class DataFlowRequester {
 
     private boolean isValidHIDateRange(in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
                                        ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return dataFlowRequest.getHiDataRange().getFrom()
-                .after(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getFromDate()) &&
-                dataFlowRequest.getHiDataRange().getTo()
-                        .before(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getToDate()) &&
+        return isEqualOrAfter(dataFlowRequest, consentArtefactRepresentation) &&
+                isEqualOrBefore(dataFlowRequest, consentArtefactRepresentation) &&
                 dataFlowRequest.getHiDataRange().getFrom().before(dataFlowRequest.getHiDataRange().getTo());
+    }
+
+    private boolean isEqualOrBefore(DataFlowRequest dataFlowRequest,
+                                    ConsentArtefactRepresentation consentArtefactRepresentation) {
+        return (dataFlowRequest.getHiDataRange().getTo()
+                .equals(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getToDate())) ||
+                (dataFlowRequest.getHiDataRange().getTo()
+                        .before(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getToDate()));
+    }
+
+    private boolean isEqualOrAfter(DataFlowRequest dataFlowRequest,
+                                   ConsentArtefactRepresentation consentArtefactRepresentation) {
+        return (dataFlowRequest.getHiDataRange().getFrom()
+                .equals(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getFromDate())) ||
+                (dataFlowRequest.getHiDataRange().getFrom()
+                        .after(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getFromDate()));
     }
 
     private boolean isConsentExpired(ConsentArtefactRepresentation consentArtefactRepresentation) {

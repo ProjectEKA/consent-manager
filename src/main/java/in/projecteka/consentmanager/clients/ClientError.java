@@ -93,8 +93,15 @@ public class ClientError extends Throwable {
     }
 
     public static ClientError unknownErrorOccurred() {
-        return new ClientError(INTERNAL_SERVER_ERROR,
-                new ErrorRepresentation(new Error(UNKNOWN_ERROR_OCCURRED, "Unknown error occurred")));
+        return internalServerError("Unknown error occurred");
+    }
+
+    public static ClientError failedToCreateTransactionPin() {
+        return internalServerError("Failed to create transaction pin");
+    }
+
+    public static ClientError failedToFetchTransactionPin() {
+        return internalServerError("Failed to fetch transaction pin");
     }
 
     public static ClientError queueNotFound() {
@@ -131,5 +138,10 @@ public class ClientError extends Throwable {
         return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(USER_ALREADY_EXISTS,
                         format("%s is already exists", username))));
+    }
+
+    private static ClientError internalServerError(String message) {
+        return new ClientError(INTERNAL_SERVER_ERROR,
+                new ErrorRepresentation(new Error(UNKNOWN_ERROR_OCCURRED, message)));
     }
 }

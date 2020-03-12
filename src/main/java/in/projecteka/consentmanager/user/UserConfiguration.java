@@ -79,4 +79,19 @@ public class UserConfiguration {
     public SessionService sessionService(TokenService tokenService) {
         return new SessionService(tokenService);
     }
+
+    @Bean
+    public TransactionPinRepository transactionPinRepository(PgPool dbClient) {
+        return new TransactionPinRepository(dbClient);
+    }
+
+    @Bean
+    public TransactionPinService transactionPinService(TransactionPinRepository transactionPinRepository) {
+        return new TransactionPinService(transactionPinRepository);
+    }
+
+    @Bean
+    public ProfileService profileService(UserService userService, TransactionPinService transactionPinService) {
+        return new ProfileService(userService, transactionPinService);
+    }
 }

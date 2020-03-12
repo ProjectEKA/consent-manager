@@ -1043,6 +1043,76 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /consents/revoke:
+    post:
+      tags:
+        - consent
+      summary: Revoke consents
+      description: Patient revoke consents which are given earlier to HIU.
+      parameters:
+        - name: Authorization
+          description: Token received after successful verification of PIN
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/RevokeRequest'
+      responses:
+        '204':
+          description: Successful revocation of list of consents.
+        '404':
+          description: >
+            **Causes:**
+              * One or more consents does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: >
+            **Causes:**
+              * One or more consents are already revoked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Token is invalid
+              * PIN is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   parameters:
@@ -1870,3 +1940,12 @@ components:
         tokenType:
           type: string
           example: bearer
+    RevokeRequest:
+      type: object
+      properties:
+        consents:
+          type: array
+          items:
+            type: string
+            format: uuid
+          uniqueItems: true

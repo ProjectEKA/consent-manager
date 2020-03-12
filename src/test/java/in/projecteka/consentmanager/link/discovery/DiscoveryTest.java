@@ -1,13 +1,13 @@
 package in.projecteka.consentmanager.link.discovery;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Address;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
@@ -43,7 +43,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 public class DiscoveryTest {
 
     @Mock
-    ClientRegistryClient clientRegistryClient;
+    CentralRegistry centralRegistry;
 
     @Mock
     UserServiceClient userServiceClient;
@@ -62,10 +62,10 @@ public class DiscoveryTest {
     @Test
     public void returnProvidersWithOfficial() {
         var discovery = new Discovery(
-                clientRegistryClient,
                 userServiceClient,
                 discoveryServiceClient,
-                discoveryRepository);
+                discoveryRepository,
+                centralRegistry);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var identifier = identifier().use(
@@ -76,7 +76,7 @@ public class DiscoveryTest {
                 .identifiers(of(identifier))
                 .name("Max")
                 .build();
-        when(clientRegistryClient.providersOf(eq("Max"))).thenReturn(Flux.just(provider));
+        when(centralRegistry.providersOf(eq("Max"))).thenReturn(Flux.just(provider));
 
         StepVerifier.create(discovery.providersFrom("Max"))
                 .expectNext(Transformer.to(provider))
@@ -86,13 +86,14 @@ public class DiscoveryTest {
     @Test
     public void patientForGivenProviderIdAndPatientId() {
         var providerId = string();
-        String transactionId = string();
-        String patientId = string();
+        var transactionId = string();
+        var patientId = string();
+        var authToken = string();
         var discovery = new Discovery(
-                clientRegistryClient,
                 userServiceClient,
                 discoveryServiceClient,
-                discoveryRepository);
+                discoveryRepository,
+                centralRegistry);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
         in.projecteka.consentmanager.link.discovery.model.patient.response.Patient patientInResponse = patientInResponse()
@@ -126,9 +127,10 @@ public class DiscoveryTest {
                 .transactionId(transactionId)
                 .build();
 
-        when(clientRegistryClient.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
+        when(centralRegistry.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
+        when(centralRegistry.authenticate()).thenReturn(Mono.just(authToken));
         when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
-        when(discoveryServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl)))
+        when(discoveryServiceClient.patientFor(patientRequest, hipClientUrl, authToken))
                 .thenReturn(Mono.just(patientResponse));
         when(discoveryRepository.insert(providerId, patientId, transactionId)).thenReturn(Mono.empty());
 
@@ -144,10 +146,10 @@ public class DiscoveryTest {
         String providerId = "1";
         String userName = "1";
         var discovery = new Discovery(
-                clientRegistryClient,
                 userServiceClient,
                 discoveryServiceClient,
-                discoveryRepository);
+                discoveryRepository,
+                centralRegistry);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
         User user = user().identifier("1").firstName("first name").build();
@@ -159,7 +161,7 @@ public class DiscoveryTest {
                 .name("Max")
                 .build();
 
-        when(clientRegistryClient.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
+        when(centralRegistry.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
         when(userServiceClient.userOf(eq(userName))).thenReturn(Mono.just(user));
 
         StepVerifier.create(
@@ -176,10 +178,10 @@ public class DiscoveryTest {
     @Test
     public void returnEmptyProvidersWhenOfficialIdentifierIsUnavailable() {
         var discovery = new Discovery(
-                clientRegistryClient,
                 userServiceClient,
                 discoveryServiceClient,
-                discoveryRepository);
+                discoveryRepository,
+                centralRegistry);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var identifier = identifier().build();
@@ -189,7 +191,7 @@ public class DiscoveryTest {
                 .identifiers(of(identifier))
                 .name("Max")
                 .build();
-        when(clientRegistryClient.providersOf(eq("Max"))).thenReturn(Flux.just(provider));
+        when(centralRegistry.providersOf(eq("Max"))).thenReturn(Flux.just(provider));
 
         StepVerifier.create(discovery.providersFrom("Max"))
                 .verifyComplete();

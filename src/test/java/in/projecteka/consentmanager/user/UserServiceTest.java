@@ -1,16 +1,18 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.AuthorizationTest;
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
-import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,7 @@ import java.util.Optional;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -140,13 +143,71 @@ class UserServiceTest {
 
     @Test
     public void shouldCreateUser() {
-        var signUpRequest = signUpRequest().dateOfBirth(LocalDate.MIN).build();
+        var signUpRequest = signUpRequest().dateOfBirth(LocalDate.now()).build();
         var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
         when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
+        when(userRepository.save(any())).thenReturn(Mono.empty());
+        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.empty());
+        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
+
+        StepVerifier.create(userService.create(signUpRequest, sessionId))
+                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
+                .verifyComplete();
+    }
+
+    @ParameterizedTest(name = "Invalid user name")
+    @CsvSource({
+            ",",
+            "empty",
+            "null"
+    })
+    public void shouldCreateUserWhenLastNameIsNullOrEmpty(
+            @ConvertWith(AuthorizationTest.NullableConverter.class) String lastName) {
+        var signUpRequest = signUpRequest().lastName(lastName).dateOfBirth(LocalDate.MIN).build();
+        var userToken = session().build();
+        var sessionId = string();
+        var mobileNumber = string();
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
+        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.empty());
+        when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
+        when(userRepository.save(any())).thenReturn(Mono.empty());
+        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
+
+        StepVerifier.create(userService.create(signUpRequest, sessionId))
+                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
+                .verifyComplete();
+    }
+
+    @Test
+    public void shouldReturnUserAlreadyExistsError() {
+        var signUpRequest = signUpRequest().dateOfBirth(LocalDate.MIN).build();
+        var sessionId = string();
+        var user = user().identifier(signUpRequest.getUserName()).build();
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(string()));
+        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.just(user));
+        when(userRepository.save(any())).thenReturn(Mono.empty());
+
+        StepVerifier.create(userService.create(signUpRequest, sessionId))
+                .verifyErrorSatisfies(error -> assertThat(error)
+                        .asInstanceOf(InstanceOfAssertFactories.type(ClientError.class))
+                        .isEqualToComparingFieldByField(ClientError.userAlreadyExists(signUpRequest.getUserName())));
+    }
+
+    @Test
+    public void shouldCreateUserWhenDOBIsNull() {
+        var signUpRequest = signUpRequest().dateOfBirth(null).build();
+        var userToken = session().build();
+        var sessionId = string();
+        var mobileNumber = string();
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
+        when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
+        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 
@@ -162,9 +223,15 @@ class UserServiceTest {
             "null"
     })
     public void shouldThrowInvalidRequestExceptionForInvalidUserId(
-            @ConvertWith(AuthorizationTest.NullableConverter.class) String userId
-    ) {
+            @ConvertWith(AuthorizationTest.NullableConverter.class) String userId) {
         var signUpRequest = signUpRequest().userName(userId).build();
         Assertions.assertThrows(InvalidRequestException.class, () -> userService.create(signUpRequest, string()));
+    }
+
+    @Test
+    public void shouldThrowInvalidRequestExceptionForFutureDOB() {
+        var signUpRequestWithTomorrow = signUpRequest().dateOfBirth(LocalDate.now().plusDays(1)).build();
+        Assertions.assertThrows(InvalidRequestException.class,
+                () -> userService.create(signUpRequestWithTomorrow, string()));
     }
 }

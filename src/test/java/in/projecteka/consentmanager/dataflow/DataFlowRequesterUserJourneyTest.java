@@ -2,9 +2,9 @@ package in.projecteka.consentmanager.dataflow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
@@ -13,9 +13,9 @@ import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import in.projecteka.consentmanager.dataflow.model.HIDataRange;
 import in.projecteka.consentmanager.dataflow.model.HIUReference;
-import in.projecteka.consentmanager.link.link.model.Error;
-import in.projecteka.consentmanager.link.link.model.ErrorCode;
-import in.projecteka.consentmanager.link.link.model.ErrorRepresentation;
+import in.projecteka.consentmanager.clients.model.Error;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
@@ -46,7 +46,7 @@ import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequestMessage;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.string;
 import static in.projecteka.consentmanager.dataflow.Utils.toDate;
-import static in.projecteka.consentmanager.link.TestBuilders.provider;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.provider;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -85,7 +85,7 @@ public class DataFlowRequesterUserJourneyTest {
     private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @MockBean
-    private ClientRegistryClient clientRegistryClient;
+    private CentralRegistry centralRegistry;
 
     @SuppressWarnings("unused")
     @MockBean
@@ -271,7 +271,8 @@ public class DataFlowRequesterUserJourneyTest {
                 dataFlowRequestMessage.getDataFlowRequest().getKeyMaterial());
         when(dataFlowRequestRepository.getHipIdFor(dataFlowRequestMessage.getDataFlowRequest().getConsent().getId()))
                 .thenReturn(Mono.just("10000005"));
-        when(clientRegistryClient.providerWith("10000005")).thenReturn(Mono.just(provider));
+        when(centralRegistry.providerWith("10000005")).thenReturn(Mono.just(provider));
+
         dataFlowBroadcastListener.configureAndSendDataRequestFor(dataFlowRequest);
 
         verify(dataFlowBroadcastListener).configureAndSendDataRequestFor(dataFlowRequest);

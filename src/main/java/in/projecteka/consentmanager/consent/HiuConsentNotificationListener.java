@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactReference;
 import lombok.AllArgsConstructor;
 import org.apache.log4j.Logger;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -42,11 +43,18 @@ public class HiuConsentNotificationListener {
                 .createMessageListenerContainer(destinationInfo.getRoutingKey());
 
         MessageListener messageListener = message -> {
-            ConsentArtefactsMessage consentArtefactsMessage = (ConsentArtefactsMessage) converter.fromMessage(message);
-            logger.info(String.format(
-                    "Received message for Request id : %s", consentArtefactsMessage.getRequestId()));
+            try {
+                ConsentArtefactsMessage consentArtefactsMessage =
+                        (ConsentArtefactsMessage) converter.fromMessage(message);
+                logger.info(String.format(
+                        "Received message for Request id : %s", consentArtefactsMessage.getRequestId()));
 
-            notifyHiu(consentArtefactsMessage);
+                notifyHiu(consentArtefactsMessage);
+            } catch (Exception e) {
+                logger.error(e);
+                throw new AmqpRejectAndDontRequeueException(e);
+            }
+
         };
         mlc.setupMessageListener(messageListener);
 

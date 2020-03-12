@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.clients;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Provider;
-import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -20,7 +19,13 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 
-import static in.projecteka.consentmanager.clients.TestBuilders.*;
+import static in.projecteka.consentmanager.clients.TestBuilders.address;
+import static in.projecteka.consentmanager.clients.TestBuilders.coding;
+import static in.projecteka.consentmanager.clients.TestBuilders.identifier;
+import static in.projecteka.consentmanager.clients.TestBuilders.provider;
+import static in.projecteka.consentmanager.clients.TestBuilders.string;
+import static in.projecteka.consentmanager.clients.TestBuilders.telecom;
+import static in.projecteka.consentmanager.clients.TestBuilders.type;
 import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -36,9 +41,7 @@ public class ClientRegistryClientTest {
     public void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        ClientRegistryProperties clientRegistryProperties =
-                new ClientRegistryProperties("localhost:8000", "", "");
-        clientRegistryClient = new ClientRegistryClient(webClientBuilder, clientRegistryProperties);
+        clientRegistryClient = new ClientRegistryClient(webClientBuilder, "http://localhost:8000");
     }
 
     @Test
@@ -60,7 +63,7 @@ public class ClientRegistryClientTest {
                                 .body(providerJson)
                                 .build()));
 
-        StepVerifier.create(clientRegistryClient.providersOf("Max"))
+        StepVerifier.create(clientRegistryClient.providersOf("Max", string()))
                 .assertNext(provider -> {
                     assertThat(provider.getName()).isEqualTo(source.getName());
                     assertThat(provider.getAddresses().get(0).getCity())
@@ -72,7 +75,7 @@ public class ClientRegistryClientTest {
                 })
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("localhost:8000/providers?name=Max");
+        assertThat(captor.getValue().url().toString()).isEqualTo("http://localhost:8000/api/2.0/providers?name=Max");
     }
 
     @Test
@@ -94,7 +97,7 @@ public class ClientRegistryClientTest {
                                 .body(providerJson)
                                 .build()));
 
-        StepVerifier.create(clientRegistryClient.providerWith("10000005"))
+        StepVerifier.create(clientRegistryClient.providerWith("10000005", string()))
                 .assertNext(provider -> {
                     assertThat(provider.getName()).isEqualTo(source.getName());
                     assertThat(provider.getAddresses().get(0).getCity())
@@ -106,7 +109,7 @@ public class ClientRegistryClientTest {
                 })
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("localhost:8000/providers/10000005");
+        assertThat(captor.getValue().url().toString()).isEqualTo("http://localhost:8000/api/2.0/providers/10000005");
     }
 
     @Test
@@ -126,7 +129,7 @@ public class ClientRegistryClientTest {
                                 .body(providerJsonResponse)
                                 .build()));
 
-        StepVerifier.create(clientRegistryClient.providerWith("10000003"))
+        StepVerifier.create(clientRegistryClient.providerWith("10000003", string()))
                 .assertNext(providerResponse -> {
                     assertThat(providerResponse.getName()).isEqualTo(provider.getName());
                     assertThat(providerResponse.getAddresses().get(0).getCity())
@@ -138,6 +141,6 @@ public class ClientRegistryClientTest {
                 })
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("localhost:8000/providers/10000003");
+        assertThat(captor.getValue().url().toString()).isEqualTo("http://localhost:8000/api/2.0/providers/10000003");
     }
 }

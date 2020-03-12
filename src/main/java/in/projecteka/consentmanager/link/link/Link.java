@@ -1,21 +1,21 @@
 package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
-import in.projecteka.consentmanager.link.HIPClient;
+import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
-import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceResponse;
-import in.projecteka.consentmanager.link.link.model.PatientLinkRequest;
-import in.projecteka.consentmanager.link.link.model.PatientLinkResponse;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
+import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
+import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
-import in.projecteka.consentmanager.link.link.model.hip.Patient;
+import in.projecteka.consentmanager.clients.model.Patient;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
@@ -31,15 +31,15 @@ import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 
 @AllArgsConstructor
 public class Link {
-    private final HIPClient hipClient;
-    private final ClientRegistryClient clientRegistryClient;
+    private final LinkServiceClient linkServiceClient;
     private final LinkRepository linkRepository;
     private final UserServiceClient userServiceClient;
+    private final CentralRegistry centralRegistry;
 
     public Mono<PatientLinkReferenceResponse> patientWith(String patientId,
                                                           PatientLinkReferenceRequest patientLinkReferenceRequest) {
         Patient patient = toHIPPatient(patientId, patientLinkReferenceRequest.getPatient());
-        var linkReferenceRequest = new in.projecteka.consentmanager.link.link.model.hip.PatientLinkReferenceRequest(
+        var linkReferenceRequest = new in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest(
                 patientLinkReferenceRequest.getTransactionId(),
                 patient);
         return linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId())
@@ -53,10 +53,12 @@ public class Link {
 
     private Mono<PatientLinkReferenceResponse> getPatientLinkReferenceResponse(
             PatientLinkReferenceRequest patientLinkReferenceRequest,
-            in.projecteka.consentmanager.link.link.model.hip.PatientLinkReferenceRequest linkReferenceRequest,
+            in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest linkReferenceRequest,
             String hipId,
             String url) {
-        return hipClient.linkPatientCareContext(linkReferenceRequest, url)
+        return centralRegistry
+                .authenticate()
+                .flatMap(token -> linkServiceClient.linkPatientEnquiry(linkReferenceRequest, url, token))
                 .flatMap(linkReferenceResponse -> {
                     linkReferenceResponse.setTransactionId(patientLinkReferenceRequest.getTransactionId());
                     return linkRepository.insertToLinkReference(linkReferenceResponse, hipId)
@@ -95,7 +97,9 @@ public class Link {
             String patientId,
             String hipId,
             String url) {
-        return hipClient.validateToken(linkRefNumber, patientLinkRequest, url)
+        return centralRegistry.authenticate()
+                .flatMap(token ->
+                        linkServiceClient.linkPatientConfirmation(linkRefNumber, patientLinkRequest, url, token))
                 .flatMap(patientLinkResponse ->
                         linkRepository.insertToLink(hipId, patientId, linkRefNumber, patientLinkResponse.getPatient())
                                 .thenReturn(PatientLinkResponse.builder()
@@ -104,7 +108,7 @@ public class Link {
     }
 
     private Mono<String> providerUrl(String providerId) {
-        return clientRegistryClient.providerWith(providerId)
+        return centralRegistry.providerWith(providerId)
                 .flatMap(provider -> provider.getIdentifiers()
                         .stream()
                         .filter(Identifier::isOfficial)
@@ -158,7 +162,7 @@ public class Link {
     }
 
     private Mono<String> getProviderName(String providerId) {
-        return clientRegistryClient.providerWith(providerId)
+        return centralRegistry.providerWith(providerId)
                 .map(Provider::getName)
                 .switchIfEmpty(Mono.empty());
     }

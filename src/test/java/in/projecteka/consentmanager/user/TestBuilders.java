@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
+import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import org.jeasy.random.EasyRandom;
 
@@ -28,5 +29,9 @@ public class TestBuilders {
 
     public static SessionRequest.SessionRequestBuilder sessionRequest() {
         return easyRandom.nextObject(SessionRequest.SessionRequestBuilder.class);
+    }
+
+    public static User.UserBuilder user() {
+        return easyRandom.nextObject(User.UserBuilder.class);
     }
 }

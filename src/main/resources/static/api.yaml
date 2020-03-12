@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   version: 0.0.1
-  title: Health Information Consent Manager
+  title: Health Data Consent Manager
   description: >
     Entity which provides health information aggregation services to customers of health care services.
     It enables customers to fetch their health information from one or more Health Information Providers
@@ -90,7 +90,6 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
   /patients/links:
     get:
       tags:
@@ -111,6 +110,29 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/LinkedCareContexts'
+        '401':
+          description: >
+            **Causes:**
+              * Expired/Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /patients/link:
     post:
       tags:
@@ -157,7 +179,7 @@ paths:
         '401':
           description: >
             **Causes:**
-              * Unauthorized request
+              * Expired/Invalid token.
           content:
             application/json:
               schema:
@@ -177,7 +199,6 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
   /patients/link/{linkRefNumber}:
     post:
       tags:
@@ -226,7 +247,7 @@ paths:
         '401':
           description: >
             **Causes:**
-              * Unauthorized request
+              * Expired/Invalid token.
           content:
             application/json:
               schema:
@@ -290,7 +311,7 @@ paths:
       description: Creates a consent request to get data about a patient by HIU user.
       operationId: createConsentRequest
       parameters:
-        - $ref: '#/components/parameters/authorization'
+        - $ref: '#/components/parameters/hiuAuthorization'
       requestBody:
         required: true
         content:
@@ -321,6 +342,40 @@ paths:
                       id:
                         type: string
                         format: uuid
+        '400':
+          description:  >
+            **Causes:**
+              * Invalid data being sent such as patient doesn't exist in the system.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description:  >
+            **Causes:**
+              * Expired/Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     get:
       tags:
         - consent
@@ -342,6 +397,29 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentRequestsRepresentation'
+        '401':
+          description:  >
+            **Causes:**
+              * Expired/Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /consent-requests/{request-id}/approve:
     post:
       tags:
@@ -349,7 +427,12 @@ paths:
       summary: Approve Request
       description: User approves the consent request with preferred data access parameters.
       parameters:
-        - $ref: '#/components/parameters/authorization'
+        - name: Authorization
+          description: Token received after successful verification of PIN
+          in: header
+          required: true
+          schema:
+            type: string
         - name: request-id
           in: path
           required: true
@@ -375,7 +458,110 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentApprovalRepresentation'
-
+        '409':
+          description: Consent request already in approved status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Consent request doesn't exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description:  >
+            **Causes:**
+              * Expired/Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /consent-requests/{request-id}/deny:
+    delete:
+      tags:
+        - consent
+      summary: Deny request.
+      description: Deny consent request.
+      parameters:
+        - name: Authorization
+          description: Token received after successful verification of PIN
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: request-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Successfully denied consent request.
+        '409':
+          description: Consent request already in denied status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Consent request doesn't exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description:  >
+            **Causes:**
+              * Expired/Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /consents/{consent-id}:
     get:
       tags:
@@ -384,7 +570,7 @@ paths:
       description: Fetch a consent artefact associated with the consent-id
       operationId: fetchConsentArtefact
       parameters:
-        - $ref: '#/components/parameters/authorization'
+        - $ref: '#/components/parameters/hiuAuthorization'
         - name: consent-id
           in: path
           required: true
@@ -401,6 +587,38 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentArtefactRepresentation'
+        '404':
+          description: Consent artefact doesn't exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description:  >
+            **Causes:**
+              * Expired/Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /consent-requests/{consent-request-id}/consent-artefacts:
     get:
       tags:
@@ -426,6 +644,39 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ConsentArtefacts'
+        '404':
+          description: Consent request doesn't exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description:  >
+            **Causes:**
+              * Expired/Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /health-information/request:
     post:
       tags:
@@ -475,7 +726,18 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /patients/enquiries:
     post:
       tags:
@@ -583,30 +845,267 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
-  /health-information/notification:
+  /patients/me:
+    get:
+      tags:
+        - account
+      summary: Get profile.
+      description: Logged in patient profile information.
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+      responses:
+        '200':
+          description: A profile of a patient.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientProfileRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PatientProfileRepresentation'
+        '401':
+          description: >
+            **Causes:**
+              * Token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /patients/pin:
     post:
       tags:
-        - data flow
-      description: Notifications corresponding to events during data flow
+        - account
+      summary: Create transaction pin
+      description: Create transaction pin to use it while granting consent.
       parameters:
-        - $ref: '#/components/parameters/hiuAuthorization'
+        - $ref: '#/components/parameters/authorization'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/HINotification'
+              $ref: '#/components/schemas/CreatePinRequest'
           application/xml:
             schema:
-              $ref: '#/components/schemas/HINotification'
+              $ref: '#/components/schemas/CreatePinRequest'
+      responses:
+        '204':
+          description: PIN created successfully.
+        '401':
+          description: >
+            **Causes:**
+              * Token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /patients:
+    post:
+      tags:
+        - account
+      summary: Create Account
+      description: Patient can create an account once they verified one of the identifiers.
+      parameters:
+        - name: Authorization
+          description: Token received after successful verification of identifier.
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePatientRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/CreatePatientRequest'
       responses:
         '200':
-          description: Notification is Accepted
+          description: Profile created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
         '400':
           description: >
             **Causes:**
               * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Invalid/expired token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /consent-requests/verify-pin:
+    post:
+      tags:
+        - consent
+      summary: Verify PIN
+      description: MFA before granting the consent request.
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PinVerificationRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/PinVerificationRequest'
+      responses:
+        '200':
+          description: Successful verification of PIN.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentifierVerifyResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/IdentifierVerifyResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Token is invalid
+              * PIN is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /consents/revoke:
+    post:
+      tags:
+        - consent
+      summary: Revoke consents
+      description: Patient revoke consents which are given earlier to HIU.
+      parameters:
+        - name: Authorization
+          description: Token received after successful verification of PIN
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/RevokeRequest'
+      responses:
+        '204':
+          description: Successful revocation of list of consents.
+        '404':
+          description: >
+            **Causes:**
+              * One or more consents does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: >
+            **Causes:**
+              * One or more consents are already revoked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Token is invalid
+              * PIN is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
           content:
             application/json:
               schema:
@@ -1355,42 +1854,98 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/ConsentArtefactRepresentation'
-    HINotification:
+    PatientProfileRepresentation:
       type: object
       properties:
-        transactionId:
+        id:
           type: string
-        doneAt:
+          example: user@ncg
+        firstName:
           type: string
-          format: date-time
-        notifier:
-          type: object
-          properties:
-            type:
-              type: string
-              enum: [HIU, HIP]
-            id:
-              type: string
-              example: tmh
-        statusNotification:
-          type: object
-          properties:
-            sessionStatus:
-              type: string
-              enum: [TRANSFERRED, FAILED]
-            hipId:
-              type: string
-              example: max
-            statusResponses:
-              type: array
-              items:
-                type: object
-                properties:
-                  careContextReference:
-                    type: string
-                  hiStatus:
-                    type: string
-                    enum: [DELIVERED, OK, ERRORED]
-                    example: OK
-                  description:
-                    type: string
+          example: Raj
+        lastName:
+          type: string
+          example: Sharma
+        gender:
+          $ref: '#/components/schemas/Gender'
+        hasTransactionPin:
+          type: boolean
+    Gender:
+      type: string
+      enum:
+        - M
+        - F
+        - O
+    CreatePinRequest:
+      type: object
+      properties:
+        pin:
+          type: string
+          maximum: 9999
+          example: "1234"
+          description: '4 digit number'
+      required:
+        - pin
+    PinVerificationRequest:
+      type: object
+      properties:
+        pin:
+          type: string
+          maximum: 9999
+          example: "1234"
+          description: '4 digit number'
+      required:
+        - pin
+    CreatePatientRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: Raj
+        lastName:
+          type: string
+          example: sharma
+        username:
+          type: string
+          example: raj.sharma@ncg
+        password:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          $ref: '#/components/schemas/Gender'
+      required:
+        - firstName
+        - username
+        - password
+        - gender
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: eyJhbGciOiJSUzI1Ni.IsInR5cCIgOiAiSldUIiwia2lkIiA6ICJrVVp.2MXJQMjRyYXN1UW9wU2lWbkdZQUZIVFowYVZGVWpYNXFLMnNibTk0In0
+        expiresIn:
+          type: integer
+          example: 1800
+          description: In Minutes
+        refreshExpiresIn:
+          type: integer
+          example: 1800
+          description: In Minutes
+        refreshToken:
+          type: string
+          example: eyJhbGciOiJSUzI1Ni.IsInR5cCIgOiAiSldUIiwia2lkIiA6ICJrVVp.2MXJQMjRyYXN1UW9wU2lWbkdZQUZIVFowYVZGVWpYNXFLMnNibTk0In0
+        tokenType:
+          type: string
+          example: bearer
+    RevokeRequest:
+      type: object
+      properties:
+        consents:
+          type: array
+          items:
+            type: string
+            format: uuid
+          uniqueItems: true

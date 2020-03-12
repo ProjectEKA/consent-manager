@@ -44,7 +44,7 @@ public class LinkConfiguration {
                                DiscoveryRepository discoveryRepository,
                                CentralRegistry centralRegistry) {
         UserServiceClient userServiceClient = new UserServiceClient(builder, userServiceProperties);
-        DiscoveryServiceClient discoveryServiceClient = new DiscoveryServiceClient(builder);
+        DiscoveryServiceClient discoveryServiceClient = new DiscoveryServiceClient(builder, centralRegistry::authenticate);
         return new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry);
     }
 }

@@ -75,8 +75,7 @@ public class Discovery {
                 .build();
 
         var patientRequest = PatientRequest.builder().patient(patient).transactionId(transactionId).build();
-        return centralRegistry.authenticate()
-                .flatMap(token -> discoveryServiceClient.patientFor(patientRequest, url, token));
+        return discoveryServiceClient.patientFor(patientRequest, url);
     }
 
     private Mono<DiscoveryResponse> insertDiscoveryRequest(PatientResponse patientResponse,

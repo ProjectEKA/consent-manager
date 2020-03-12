@@ -1050,7 +1050,12 @@ paths:
       summary: Revoke consents
       description: Patient revoke consents which are given earlier to HIU.
       parameters:
-        - $ref: '#/components/parameters/authorization'
+        - name: Authorization
+          description: Token received after successful verification of PIN
+          in: header
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -1942,4 +1947,5 @@ components:
           type: array
           items:
             type: string
+            format: uuid
           uniqueItems: true

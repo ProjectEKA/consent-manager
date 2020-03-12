@@ -26,6 +26,7 @@ import static in.projecteka.consentmanager.clients.TestBuilders.patientInRequest
 import static in.projecteka.consentmanager.clients.TestBuilders.patientInResponse;
 import static in.projecteka.consentmanager.clients.TestBuilders.patientRequest;
 import static in.projecteka.consentmanager.clients.TestBuilders.patientResponse;
+import static in.projecteka.consentmanager.clients.TestBuilders.string;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -56,7 +57,7 @@ public class DiscoveryServiceClientTest {
                 .body(patientResponseBody).build()));
 
         PatientRequest patientRequest = patientRequest().patient(patientInRequest().build()).transactionId("transaction-id-1").build();
-        StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/"))
+        StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/", string()))
                 .assertNext(response -> {
                     assertThat(response.getPatient().getDisplay()).isEqualTo(expectedPatient.getDisplay());
                     assertThat(response.getPatient().getReferenceNumber()).isEqualTo(expectedPatient.getReferenceNumber());

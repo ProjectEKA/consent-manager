@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.link.link.model;
+package in.projecteka.consentmanager.clients.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @Data
-public class CareContextRepresentation {
+public class Link {
     private String referenceNumber;
-    private String display;
+    private String authenticationType;
+    private Meta meta;
 }

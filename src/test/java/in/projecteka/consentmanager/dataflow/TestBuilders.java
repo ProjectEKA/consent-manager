@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.dataflow;
 
+import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
@@ -27,5 +28,9 @@ public class TestBuilders {
 
     public static String string() {
         return easyRandom.nextObject(String.class);
+    }
+
+    public static Provider.ProviderBuilder provider() {
+        return easyRandom.nextObject(Provider.ProviderBuilder.class);
     }
 }

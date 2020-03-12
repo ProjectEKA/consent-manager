@@ -6,19 +6,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+
 public class DiscoveryServiceClient {
 
     private final WebClient.Builder webClientBuilder;
 
-    public DiscoveryServiceClient(
-            WebClient.Builder webClientBuilder) {
+    public DiscoveryServiceClient(WebClient.Builder webClientBuilder) {
         this.webClientBuilder = webClientBuilder;
     }
 
-    public Mono<PatientResponse> patientFor(PatientRequest request, String url) {
+    public Mono<PatientResponse> patientFor(PatientRequest request, String url, String authorization) {
         return webClientBuilder.build()
                 .post()
                 .uri(url + "/patients/discover/")
+                .header(AUTHORIZATION, authorization)
                 .bodyValue(request)
                 .retrieve()
                 .onStatus(httpStatus -> httpStatus.value() == 404,

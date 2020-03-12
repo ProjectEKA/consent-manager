@@ -885,7 +885,7 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /patient/pin:
+  /patients/pin:
     post:
       tags:
         - account
@@ -904,11 +904,76 @@ paths:
               $ref: '#/components/schemas/CreatePinRequest'
       responses:
         '204':
-          description: Profile updated successfully.
+          description: PIN created successfully.
         '401':
           description: >
             **Causes:**
               * Token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /patients:
+    post:
+      tags:
+        - account
+      summary: Create Account
+      description: Patient can create an account once they verified one of the identifiers.
+      parameters:
+        - name: Authorization
+          description: Token received after successful verification of identifier.
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePatientRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/CreatePatientRequest'
+      responses:
+        '200':
+          description: Profile created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Invalid/expired token.
           content:
             application/json:
               schema:
@@ -971,6 +1036,107 @@ paths:
           description: >
             **Causes:**
               * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /consents/revoke:
+    post:
+      tags:
+        - consent
+      summary: Revoke consents
+      description: Patient revoke consents which are given earlier to HIU.
+      parameters:
+        - name: Authorization
+          description: Token received after successful verification of PIN
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/RevokeRequest'
+      responses:
+        '204':
+          description: Successful revocation of list of consents.
+        '404':
+          description: >
+            **Causes:**
+              * One or more consents does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: >
+            **Causes:**
+              * One or more consents are already revoked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Token is invalid
+              * PIN is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health-information/notification:
+    post:
+      tags:
+        - notification
+      description: Notifications corresponding to events during data flow
+      parameters:
+        - $ref: '#/components/parameters/hiuAuthorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HINotification'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/HINotification'
+      responses:
+        '204':
+          description: Notification is Accepted
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
           content:
             application/json:
               schema:
@@ -1749,6 +1915,8 @@ components:
           maximum: 9999
           example: "1234"
           description: '4 digit number'
+      required:
+        - pin
     PinVerificationRequest:
       type: object
       properties:
@@ -1757,3 +1925,97 @@ components:
           maximum: 9999
           example: "1234"
           description: '4 digit number'
+      required:
+        - pin
+    CreatePatientRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: Raj
+        lastName:
+          type: string
+          example: sharma
+        username:
+          type: string
+          example: raj.sharma@ncg
+        password:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          $ref: '#/components/schemas/Gender'
+      required:
+        - firstName
+        - username
+        - password
+        - gender
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: eyJhbGciOiJSUzI1Ni.IsInR5cCIgOiAiSldUIiwia2lkIiA6ICJrVVp.2MXJQMjRyYXN1UW9wU2lWbkdZQUZIVFowYVZGVWpYNXFLMnNibTk0In0
+        expiresIn:
+          type: integer
+          example: 1800
+          description: In Minutes
+        refreshExpiresIn:
+          type: integer
+          example: 1800
+          description: In Minutes
+        refreshToken:
+          type: string
+          example: eyJhbGciOiJSUzI1Ni.IsInR5cCIgOiAiSldUIiwia2lkIiA6ICJrVVp.2MXJQMjRyYXN1UW9wU2lWbkdZQUZIVFowYVZGVWpYNXFLMnNibTk0In0
+        tokenType:
+          type: string
+          example: bearer
+    RevokeRequest:
+      type: object
+      properties:
+        consents:
+          type: array
+          items:
+            type: string
+            format: uuid
+          uniqueItems: true
+    HINotification:
+      type: object
+      properties:
+        transactionId:
+          type: string
+        doneAt:
+          type: string
+          format: date-time
+        notifier:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [HIU, HIP]
+            id:
+              type: string
+              example: tmh
+        statusNotification:
+          type: object
+          properties:
+            sessionStatus:
+              type: string
+              enum: [TRANSFERRED, FAILED]
+            hipId:
+              type: string
+              example: max
+            statusResponses:
+              type: array
+              items:
+                type: object
+                properties:
+                  careContextReference:
+                    type: string
+                  hiStatus:
+                    type: string
+                    enum: [DELIVERED, OK, ERRORED]
+                    example: OK
+                  description:
+                    type: string

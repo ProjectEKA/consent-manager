@@ -1,7 +1,11 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.Address;
+import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Identifier;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
+import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
+import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Telecom;
@@ -80,5 +84,29 @@ public class TestBuilders {
 
     public static String string() {
         return easyRandom.nextObject(String.class);
+    }
+
+    public static in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder patientLinkReferenceRequest() {
+        return easyRandom.nextObject(in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder.class);
+    }
+
+    public static PatientLinkRequest.PatientLinkRequestBuilder patientLinkRequest() {
+        return easyRandom.nextObject(PatientLinkRequest.PatientLinkRequestBuilder.class);
+    }
+
+    public static PatientLinkReferenceResponse.PatientLinkReferenceResponseBuilder patientLinkReferenceResponse() {
+        return easyRandom.nextObject(PatientLinkReferenceResponse.PatientLinkReferenceResponseBuilder.class);
+    }
+
+    public static ErrorRepresentation.ErrorRepresentationBuilder errorRepresentation() {
+        return easyRandom.nextObject(ErrorRepresentation.ErrorRepresentationBuilder.class);
+    }
+
+    public static PatientLinkResponse.PatientLinkResponseBuilder patientLinkResponse() {
+        return easyRandom.nextObject(PatientLinkResponse.PatientLinkResponseBuilder.class);
+    }
+
+    public static in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder patientLinkReferenceRequestForHIP() {
+        return easyRandom.nextObject(in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder.class);
     }
 }

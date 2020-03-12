@@ -1145,9 +1145,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-
-
-
 components:
   parameters:
     authorization:

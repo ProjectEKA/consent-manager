@@ -24,11 +24,10 @@ public class PatientsController {
     private TransactionPinService transactionPinService;
 
     @PostMapping("/pin")
-    public Mono<ServerResponse> pin(@RequestHeader(name = "Authorization") String token,
+    public Mono<Void> pin(@RequestHeader(name = "Authorization") String token,
                                     @RequestBody CreatePinRequest createPinRequest) {
         return getUserNameFrom(token) //TODO : Add token validation (token to be 6 digit integer)
-                .flatMap(userName -> transactionPinService.createPinFor(userName, createPinRequest.getPin()))
-                .then(ServerResponse.status(HttpStatus.CREATED).body(BodyInserters.empty()));
+                .flatMap(userName -> transactionPinService.createPinFor(userName, createPinRequest.getPin()));
     }
 
     @PostMapping("/me")

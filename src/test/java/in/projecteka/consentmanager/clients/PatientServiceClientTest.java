@@ -78,7 +78,6 @@ class PatientServiceClientTest {
                     assertThat(linkedCareContexts.hasCCReferences("MAX", Arrays.asList("patientX.OpdContext"))).isEqualTo(false);
                 })
                 .verifyComplete();
-
     }
 
 }

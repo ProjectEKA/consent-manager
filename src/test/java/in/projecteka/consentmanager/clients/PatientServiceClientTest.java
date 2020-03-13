@@ -79,5 +79,4 @@ class PatientServiceClientTest {
                 })
                 .verifyComplete();
     }
-
 }

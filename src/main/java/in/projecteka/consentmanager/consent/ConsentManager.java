@@ -118,8 +118,8 @@ public class ConsentManager {
                 .flatMap(linkedCareContexts ->
                         Flux.fromIterable(grantedConsents)
                                 .filter(grantedConsent ->
-                                        linkedCareContexts.hasHipReference(grantedConsent.getHip().getId())
-                                                && linkedCareContexts.hasCCReferences(grantedConsent.getHip().getId(),
+                                        linkedCareContexts.hasCCReferences(
+                                                grantedConsent.getHip().getId(),
                                                 grantedConsent.getCareContexts().stream()
                                                         .map(c -> c.getCareContextReference()).collect(Collectors.toList())))
                                 .collectList()

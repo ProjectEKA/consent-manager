@@ -59,7 +59,7 @@ public class LinkedCareContexts {
         }
     }
 
-    public boolean hasHipReference(String hipId) {
+    private boolean hasHipReference(String hipId) {
         for (HipLink link : links) {
             if (link.hipId.equalsIgnoreCase(hipId)) {
                 return true;
@@ -68,7 +68,7 @@ public class LinkedCareContexts {
         return false;
     }
 
-    public boolean hasCCReference(String hipId, String ccReference) {
+    private boolean hasCCReference(String hipId, String ccReference) {
         Optional<HipLink> hipLink = links.stream().filter(aLink -> {
             return aLink.hipId.equalsIgnoreCase(hipId);
         }).findFirst();

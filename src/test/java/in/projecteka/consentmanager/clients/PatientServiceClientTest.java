@@ -17,6 +17,7 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -72,9 +73,9 @@ class PatientServiceClientTest {
         StepVerifier.create(
                 patientServiceClient.retrievePatientLinks("patientAuthToken"))
                 .assertNext(linkedCareContexts -> {
-                    assertThat(linkedCareContexts.hasHipReference("TMH")).isEqualTo(true);
-                    assertThat(linkedCareContexts.hasHipReference("TMH")).isEqualTo(true);
-                    assertThat(linkedCareContexts.hasHipReference("MAX")).isEqualTo(false);
+                    assertThat(linkedCareContexts.hasCCReferences("TMH", Collections.emptyList())).isEqualTo(true);
+                    assertThat(linkedCareContexts.hasCCReferences("MAX", Collections.emptyList())).isEqualTo(false);
+                    assertThat(linkedCareContexts.hasCCReferences("TMH", Arrays.asList("patientX.OpdContext"))).isEqualTo(true);
                     assertThat(linkedCareContexts.hasCCReferences("MAX", Arrays.asList("patientX.OpdContext"))).isEqualTo(false);
                 })
                 .verifyComplete();

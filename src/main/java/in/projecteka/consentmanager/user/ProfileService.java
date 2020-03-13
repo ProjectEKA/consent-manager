@@ -10,13 +10,13 @@ public class ProfileService {
     private UserService userService;
     private TransactionPinService transactionPinService;
 
-    public Mono<Profile> getProfileFor(String patientId) {
+    public Mono<Profile> profileFor(String patientId) {
         return userService.userWith(patientId)
                 .flatMap(user -> transactionPinService.isTransactionPinSet(patientId)
-                        .map(hasTransactionPin -> profileFrom(user, hasTransactionPin)));
+                        .map(hasTransactionPin -> from(user, hasTransactionPin)));
     }
 
-    private Profile profileFrom(User user, Boolean hasTransactionPin) {
+    private Profile from(User user, Boolean hasTransactionPin) {
         return Profile.builder()
                 .id(user.getIdentifier())
                 .firstName(user.getFirstName())

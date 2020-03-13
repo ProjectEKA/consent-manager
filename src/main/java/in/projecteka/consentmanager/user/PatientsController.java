@@ -5,14 +5,12 @@ import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.user.model.CreatePinRequest;
 import in.projecteka.consentmanager.user.model.Profile;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -30,10 +28,10 @@ public class PatientsController {
                 .flatMap(userName -> transactionPinService.createPinFor(userName, createPinRequest.getPin()));
     }
 
-    @PostMapping("/me")
-    public Mono<Profile> me(@RequestHeader(name = "Authorization") String token) {
+    @GetMapping("/me")
+    public Mono<Profile> profileFor(@RequestHeader(name = "Authorization") String token) {
         return getUserNameFrom(token)
-                .flatMap(userName -> profileService.getProfileFor(userName));
+                .flatMap(userName -> profileService.profileFor(userName));
     }
 
     private Mono<String> getUserNameFrom(@RequestHeader(name = "Authorization") String token) {

@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -74,6 +75,7 @@ class PatientServiceClientTest {
                     assertThat(linkedCareContexts.hasHipReference("TMH")).isEqualTo(true);
                     assertThat(linkedCareContexts.hasHipReference("TMH")).isEqualTo(true);
                     assertThat(linkedCareContexts.hasHipReference("MAX")).isEqualTo(false);
+                    assertThat(linkedCareContexts.hasCCReferences("MAX", Arrays.asList("patientX.OpdContext"))).isEqualTo(false);
                 })
                 .verifyComplete();
 

@@ -83,6 +83,12 @@ public class LinkedCareContexts {
     }
 
     public boolean hasCCReferences(String hipId, List<String> ccRefs) {
-        return false;
+        boolean result = hasHipReference(hipId);
+        if (result) {
+            for (String ccRef : ccRefs) {
+                result = result && hasCCReference(hipId, ccRef);
+            }
+        }
+        return result;
     }
 }

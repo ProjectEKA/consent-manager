@@ -1,6 +1,8 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.LinkServiceClient;
+import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
@@ -44,6 +46,9 @@ class ConsentManagerTest {
     private PostConsentApproval postConsentApproval;
     @Mock
     private PostConsentRequest postConsentRequestNotification;
+    @Mock
+    private PatientServiceClient patientServiceClient;
+
 
     @SuppressWarnings("unused")
     @MockBean
@@ -65,7 +70,8 @@ class ConsentManagerTest {
                 keyPair,
                 postConsentApproval,
                 centralRegistry,
-                postConsentRequestNotification);
+                postConsentRequestNotification,
+                patientServiceClient);
     }
 
     @Test

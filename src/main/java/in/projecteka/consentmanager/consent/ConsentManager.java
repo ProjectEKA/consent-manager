@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
@@ -47,6 +48,7 @@ public class ConsentManager {
     private final PostConsentApproval postConsentApproval;
     private final CentralRegistry centralRegistry;
     private final PostConsentRequest postConsentRequest;
+    private final PatientServiceClient patientServiceClient;
 
     private static boolean isNotSameRequester(ConsentArtefact consentDetail, String requesterId) {
         return !consentDetail.getHiu().getId().equals(requesterId) &&
@@ -111,11 +113,28 @@ public class ConsentManager {
         return consentRequestRepository.requestsForPatient(patientId, limit, offset);
     }
 
+    private Mono<Void> validateLinkedHips(String authorizationToken, List<GrantedConsent> grantedConsents) {
+        return patientServiceClient.retrievePatientLinks(authorizationToken)
+                .flatMap(linkedCareContexts ->
+                        Flux.fromIterable(grantedConsents)
+                                .filter(grantedConsent ->
+                                        linkedCareContexts.hasHipReference(grantedConsent.getHip().getId())
+                                                && linkedCareContexts.hasCCReferences(grantedConsent.getHip().getId(),
+                                                grantedConsent.getCareContexts().stream()
+                                                        .map(c -> c.getCareContextReference()).collect(Collectors.toList())))
+                                .collectList()
+                                .map(filteredList -> filteredList.size() == grantedConsents.size())
+                ).filter(result -> result)
+                .switchIfEmpty(Mono.error(ClientError.invalidProviderOrCareContext()))
+                .then();
+    }
+
     public Mono<ConsentApprovalResponse> approveConsent(String patientId,
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
         return Mono.subscriberContext()
                 .flatMap(context -> validatePatient(patientId, context.get("Authorization")))
+                .then(Mono.subscriberContext().map(context -> validateLinkedHips(context.get("Authorization"), grantedConsents)))
                 .then(validateConsentRequest(requestId))
                 .flatMap(consentRequest ->
                         generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)

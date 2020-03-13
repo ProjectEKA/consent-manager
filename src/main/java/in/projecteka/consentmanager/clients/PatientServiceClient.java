@@ -18,7 +18,6 @@ public class PatientServiceClient {
         this.serviceProperties = serviceProperties;
     }
 
-
     public Mono<LinkedCareContexts> retrievePatientLinks(String authorization) {
         return webClientBuilder.build()
                 .get()

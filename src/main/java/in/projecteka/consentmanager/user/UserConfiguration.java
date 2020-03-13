@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import io.vertx.pgclient.PgPool;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Optional;
@@ -78,5 +79,26 @@ public class UserConfiguration {
     @Bean
     public SessionService sessionService(TokenService tokenService) {
         return new SessionService(tokenService);
+    }
+
+    @Bean
+    public TransactionPinRepository transactionPinRepository(PgPool dbClient) {
+        return new TransactionPinRepository(dbClient);
+    }
+
+    @Bean
+    public BCryptPasswordEncoder encoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public TransactionPinService transactionPinService(TransactionPinRepository transactionPinRepository,
+                                                       BCryptPasswordEncoder encoder) {
+        return new TransactionPinService(transactionPinRepository, encoder);
+    }
+
+    @Bean
+    public ProfileService profileService(UserService userService, TransactionPinService transactionPinService) {
+        return new ProfileService(userService, transactionPinService);
     }
 }

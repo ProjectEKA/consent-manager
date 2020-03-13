@@ -27,7 +27,7 @@ public enum ErrorCode {
     INVALID_TOKEN(1017),
     USERNAME_OR_PASSWORD_INCORRECT(1018),
     USER_ALREADY_EXISTS(1019),
-    TRANSACTION_PIN_ALREADY_SET(1020);
+    TRANSACTION_PIN_IS_ALREADY_CREATED(1020);
 
     private int value;
     ErrorCode(int val) {

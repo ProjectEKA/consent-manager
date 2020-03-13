@@ -18,7 +18,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_EXPIRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_INVALID;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.PROVIDER_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.QUEUE_NOT_FOUND;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_PIN_ALREADY_SET;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_PIN_IS_ALREADY_CREATED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.UNABLE_TO_CONNECT_TO_PROVIDER;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.UNKNOWN_ERROR_OCCURRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USERNAME_OR_PASSWORD_INCORRECT;
@@ -141,10 +141,10 @@ public class ClientError extends Throwable {
                         format("%s is already exists", username))));
     }
 
-    public static ClientError transactionPinAlreadySet() {
+    public static ClientError transactionPinAlreadyCreated() {
         return new ClientError(BAD_REQUEST,
-                new ErrorRepresentation(new Error(TRANSACTION_PIN_ALREADY_SET,
-                        "Transaction pin is already set")));
+                new ErrorRepresentation(new Error(TRANSACTION_PIN_IS_ALREADY_CREATED,
+                        "Transaction pin is already created")));
     }
 
     private static ClientError internalServerError(String message) {

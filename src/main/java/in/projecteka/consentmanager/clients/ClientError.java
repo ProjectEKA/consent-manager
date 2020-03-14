@@ -12,6 +12,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUE
 import static in.projecteka.consentmanager.clients.model.ErrorCode.DB_OPERATION_FAILED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_RANGE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_HIU;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TOKEN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.NETWORK_SERVICE_ERROR;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_EXPIRED;
@@ -150,5 +151,11 @@ public class ClientError extends Throwable {
     private static ClientError internalServerError(String message) {
         return new ClientError(INTERNAL_SERVER_ERROR,
                 new ErrorRepresentation(new Error(UNKNOWN_ERROR_OCCURRED, message)));
+    }
+
+    public static ClientError invalidProviderOrCareContext() {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(INVALID_PROVIDER_OR_CARE_CONTEXT,
+                        "Invalid Provider or Care Context.")));
     }
 }

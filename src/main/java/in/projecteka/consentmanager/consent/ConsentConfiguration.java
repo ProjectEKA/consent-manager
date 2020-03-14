@@ -4,7 +4,9 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.clients.ConsentNotificationClient;
+import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
@@ -53,7 +55,8 @@ public class ConsentConfiguration {
                                                 KeyPair keyPair,
                                                 PostConsentApproval postConsentApproval,
                                                 CentralRegistry centralRegistry,
-                                                PostConsentRequest postConsentRequest) {
+                                                PostConsentRequest postConsentRequest,
+                                                LinkServiceProperties linkServiceProperties ) {
         return new ConsentManager(
                 new UserServiceClient(builder, userServiceProperties),
                 repository,
@@ -61,7 +64,8 @@ public class ConsentConfiguration {
                 keyPair,
                 postConsentApproval,
                 centralRegistry,
-                postConsentRequest);
+                postConsentRequest,
+                new PatientServiceClient(builder, linkServiceProperties));
     }
 
     @Bean

@@ -133,8 +133,8 @@ public class ConsentManager {
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
         return Mono.subscriberContext()
-                .flatMap(context -> validatePatient(patientId, context.get("Authorization")))
-                .then(Mono.subscriberContext().map(context -> validateLinkedHips(context.get("Authorization"), grantedConsents)))
+                .flatMap(context -> validatePatient(patientId, context.get("Authorization"))
+                        .then(validateLinkedHips(context.get("Authorization"), grantedConsents)))
                 .then(validateConsentRequest(requestId))
                 .flatMap(consentRequest ->
                         generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)

@@ -50,7 +50,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-    implementation 'org.jeasy:easy-random-core:4.1.0'
+    implementation 'org.jeasy:easy-random-core:4.2.0'
     testImplementation("com.squareup.okhttp3:okhttp:4.4.1")
     testImplementation "com.squareup.okhttp3:mockwebserver:4.4.1"
     implementation 'com.google.guava:guava:28.2-jre'

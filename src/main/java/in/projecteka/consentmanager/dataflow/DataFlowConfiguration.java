@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.IdentityService;
 import io.vertx.pgclient.PgPool;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -40,10 +41,10 @@ public class DataFlowConfiguration {
     public DataFlowRequester dataRequest(WebClient.Builder builder,
                                          DataFlowRequestRepository dataFlowRequestRepository,
                                          PostDataFlowRequestApproval postDataFlowRequestApproval,
-                                         DataFlowAuthServerProperties dataFlowAuthServerProperties,
-                                         DataFlowConsentManagerProperties dataFlowConsentManagerProperties) {
+                                         DataFlowConsentManagerProperties dataFlowConsentManagerProperties,
+                                         IdentityService identityService) {
         return new DataFlowRequester(
-                new ConsentManagerClient(builder, dataFlowAuthServerProperties, dataFlowConsentManagerProperties),
+                new ConsentManagerClient(builder, dataFlowConsentManagerProperties.getUrl(), identityService::authenticate),
                 dataFlowRequestRepository,
                 postDataFlowRequestApproval);
     }

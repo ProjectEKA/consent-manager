@@ -36,7 +36,6 @@ public class SecurityConfiguration {
                                            "/users/verify",
                                            "/users/permit",
                                            "/sessions",
-                                           "/internal/consents/**",
                                            "/**.html",
                                            "/**.js",
                                            "/**.yaml",

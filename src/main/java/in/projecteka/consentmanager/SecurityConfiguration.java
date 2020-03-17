@@ -30,6 +30,15 @@ import java.util.Map;
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfiguration {
+
+    private static final List<Map.Entry<String, HttpMethod>> SERVICE_ONLY_URLS = new ArrayList<>() {
+        {
+            add(Map.entry("/consent-requests", HttpMethod.GET));
+            add(Map.entry("/health-information/request", HttpMethod.POST));
+            add(Map.entry("/consents/**", HttpMethod.GET));
+        }
+    };
+
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity httpSecurity,
@@ -113,17 +122,10 @@ public class SecurityConfiguration {
         }
 
         private boolean isCentralRegistryAuthenticatedOnlyRequest(String url, HttpMethod method) {
-            List<Map.Entry<String, HttpMethod>> patterns = new ArrayList<>();
-            patterns.add(Map.entry("/consent-requests", HttpMethod.GET));
-            patterns.add(Map.entry("/health-information/request", HttpMethod.POST));
-            patterns.add(Map.entry("/consents/**", HttpMethod.GET));
             AntPathMatcher antPathMatcher = new AntPathMatcher();
-            for (var pattern : patterns) {
-                if (antPathMatcher.match(pattern.getKey(), url) && pattern.getValue().equals(method)) {
-                    return true;
-                }
-            }
-            return false;
+            return SERVICE_ONLY_URLS.stream()
+                    .anyMatch(pattern ->
+                            antPathMatcher.match(pattern.getKey(), url) && pattern.getValue().equals(method));
         }
 
         private Mono<SecurityContext> check(String authToken) {

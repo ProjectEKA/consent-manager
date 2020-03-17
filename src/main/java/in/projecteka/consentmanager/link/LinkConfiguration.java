@@ -50,7 +50,7 @@ public class LinkConfiguration {
                 builder,
                 userServiceProperties.getUrl(),
                 identityService::authenticate);
-        DiscoveryServiceClient discoveryServiceClient = new DiscoveryServiceClient(builder);
+        DiscoveryServiceClient discoveryServiceClient = new DiscoveryServiceClient(builder, centralRegistry::authenticate);
         return new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry);
     }
 }

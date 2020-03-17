@@ -37,6 +37,8 @@ consentmanager:
       url: http://localhost:9001
     consentmanager:
       url: http://localhost:9000
+  linkservice:
+    url: http://localhost:9000
 spring:
   rabbitmq:
     host: localhost

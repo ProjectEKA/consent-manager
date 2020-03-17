@@ -37,6 +37,8 @@ consentmanager:
       url: ${AUTH_SERVER_URL}
     consentmanager:
       url: ${CONSENT_MANAGER_URL}
+  linkservice:
+    url: ${LINK_SERVICE_URL}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}

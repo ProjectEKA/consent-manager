@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.DiscoveryRepository;
 import in.projecteka.consentmanager.link.link.Link;
@@ -31,10 +32,11 @@ public class LinkConfiguration {
     public Link link(WebClient.Builder builder,
                      LinkRepository linkRepository,
                      UserServiceProperties userServiceProperties,
-                     CentralRegistry centralRegistry) {
+                     CentralRegistry centralRegistry,
+                     IdentityService identityService) {
         return new Link(new LinkServiceClient(builder),
                 linkRepository,
-                new UserServiceClient(builder, userServiceProperties),
+                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate),
                 centralRegistry);
     }
 
@@ -42,8 +44,12 @@ public class LinkConfiguration {
     public Discovery discovery(WebClient.Builder builder,
                                UserServiceProperties userServiceProperties,
                                DiscoveryRepository discoveryRepository,
-                               CentralRegistry centralRegistry) {
-        UserServiceClient userServiceClient = new UserServiceClient(builder, userServiceProperties);
+                               CentralRegistry centralRegistry,
+                               IdentityService identityService) {
+        UserServiceClient userServiceClient = new UserServiceClient(
+                builder,
+                userServiceProperties.getUrl(),
+                identityService::authenticate);
         DiscoveryServiceClient discoveryServiceClient = new DiscoveryServiceClient(builder);
         return new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry);
     }

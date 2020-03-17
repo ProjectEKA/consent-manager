@@ -5,21 +5,19 @@ import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentNotificationClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.consent.model.ConsentRequest;
-import in.projecteka.consentmanager.consent.model.Notification;
-import in.projecteka.consentmanager.consent.model.Content;
 import in.projecteka.consentmanager.consent.model.Action;
 import in.projecteka.consentmanager.consent.model.Communication;
 import in.projecteka.consentmanager.consent.model.CommunicationType;
+import in.projecteka.consentmanager.consent.model.ConsentRequest;
+import in.projecteka.consentmanager.consent.model.Content;
 import in.projecteka.consentmanager.consent.model.HIType;
-import in.projecteka.consentmanager.user.TokenService;
+import in.projecteka.consentmanager.consent.model.Notification;
 import lombok.AllArgsConstructor;
 import org.apache.log4j.Logger;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
-import org.springframework.http.HttpHeaders;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
@@ -38,7 +36,6 @@ public class ConsentRequestNotificationListener {
     private ConsentNotificationClient consentNotificationClient;
     private UserServiceClient userServiceClient;
     private ConsentServiceProperties consentServiceProperties;
-    private TokenService tokenService;
 
     @PostConstruct
     public void subscribe() throws ClientError {
@@ -55,8 +52,8 @@ public class ConsentRequestNotificationListener {
 
         MessageListener messageListener = message -> {
             try {
-            ConsentRequest consentRequest = (ConsentRequest) converter.fromMessage(message);
-            logger.info(String.format("Received message for Request id : %s", consentRequest.getId()));
+                ConsentRequest consentRequest = (ConsentRequest) converter.fromMessage(message);
+                logger.info(String.format("Received message for Request id : %s", consentRequest.getId()));
                 createNotificationMessage(consentRequest)
                         .flatMap(this::notifyUserWith)
                         .block();
@@ -74,8 +71,7 @@ public class ConsentRequestNotificationListener {
     }
 
     private Mono<Notification> createNotificationMessage(ConsentRequest consentRequest) {
-        return tokenService.tokenForAdmin()
-                .flatMap(session -> userServiceClient.userOf(consentRequest.getDetail().getPatient().getId())
+        return userServiceClient.userOf(consentRequest.getDetail().getPatient().getId())
                 .map(user -> Notification.builder()
                         .communication(Communication.builder()
                                 .communicationType(CommunicationType.MOBILE)
@@ -93,10 +89,6 @@ public class ConsentRequestNotificationListener {
                                         consentServiceProperties.getUrl(),
                                         consentRequest.getId()))
                                 .build())
-                        .build())
-                .subscriberContext(context -> {
-                    String token = "Bearer " + session.getAccessToken();
-                    return context.put(HttpHeaders.AUTHORIZATION, token);
-                }));
+                        .build());
     }
 }

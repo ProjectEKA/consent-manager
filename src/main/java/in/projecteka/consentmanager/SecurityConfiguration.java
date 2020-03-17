@@ -27,28 +27,26 @@ import java.util.ArrayList;
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfiguration {
-
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity httpSecurity,
             ReactiveAuthenticationManager authenticationManager,
             ServerSecurityContextRepository securityContextRepository) {
+        final String[] WHITELISTED_URLS = {"/**.json",
+                                           "/users/verify",
+                                           "/users/permit",
+                                           "/sessions",
+                                           "/internal/consents/**",
+                                           "/**.html",
+                                           "/**.js",
+                                           "/**.yaml",
+                                           "/**.css",
+                                           "/**.png"};
+        // TODO: need to fix internal call
+        httpSecurity.authorizeExchange().pathMatchers(WHITELISTED_URLS).permitAll();
+        httpSecurity.httpBasic().disable().formLogin().disable().csrf().disable().logout().disable();
+        httpSecurity.authorizeExchange().pathMatchers("/**").authenticated();
         return httpSecurity
-                .authorizeExchange()
-                // TODO: need to fix internal call
-                .pathMatchers("/**.json", "/users/verify", "/users/permit", "/sessions", "/internal/consents/**")
-                .permitAll()
-                .pathMatchers("/**.html").permitAll()
-                .pathMatchers("/**.js").permitAll()
-                .pathMatchers("/**.png").permitAll()
-                .pathMatchers("/**.css").permitAll()
-                .pathMatchers("/**.yaml").permitAll()
-                .pathMatchers("/**").authenticated()
-                .and()
-                .httpBasic().disable()
-                .formLogin().disable()
-                .csrf().disable()
-                .logout().disable()
                 .authenticationManager(authenticationManager)
                 .securityContextRepository(securityContextRepository)
                 .build();
@@ -73,7 +71,6 @@ public class SecurityConfiguration {
 
     @AllArgsConstructor
     private static class SecurityContextRepository implements ServerSecurityContextRepository {
-
         private ReactiveAuthenticationManager manager;
         private SignUpService signupService;
         private Authenticator identityServiceClient;
@@ -89,6 +86,7 @@ public class SecurityConfiguration {
             if (isEmpty(token)) {
                 return Mono.empty();
             }
+
             if (isSignUpRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
                 return checkSignUp(token);
             }

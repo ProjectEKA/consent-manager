@@ -104,9 +104,10 @@ public class DataFlowRequesterUserJourneyTest {
     @Test
     public void shouldAcknowledgeDataFlowRequest() throws IOException, ParseException {
         var hiuId = "10000005";
-        var dataFlowRequest = dataFlowRequest().build();
-        dataFlowRequest.setHiDataRange(HIDataRange.builder().from(toDate("2020-01-16T08:47:48Z")).to(toDate("2020" +
-                "-01-20T08:47:48Z")).build());
+        var dataFlowRequest = dataFlowRequest().hiDataRange(HIDataRange.builder()
+                .from(toDate("2020-01-16T08:47:48Z"))
+                .to(toDate("2020-01-20T08:47:48Z"))
+                .build()).build();
         ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
         consentArtefactRepresentation.getConsentDetail().getPermission().
                 setDateRange(AccessPeriod.builder()

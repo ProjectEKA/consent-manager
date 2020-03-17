@@ -33,8 +33,7 @@ public class Discovery {
     }
 
     public Mono<DiscoveryResponse> patientFor(String providerId, String userName, String transactionId) {
-        return Mono.subscriberContext()
-                .flatMap(context -> userWith(userName, context.get("Authorization")))
+        return userWith(userName)
                 .zipWith(providerUrl(providerId))
                 .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
                 .flatMap(userProvider -> patientIn(userProvider.getT2(), userProvider.getT1(), transactionId))
@@ -45,8 +44,8 @@ public class Discovery {
                                 transactionId));
     }
 
-    private Mono<User> userWith(String patientId, String token) {
-        return userServiceClient.userOf(patientId).subscriberContext(context -> context.put("Authorization", token));
+    private Mono<User> userWith(String patientId) {
+        return userServiceClient.userOf(patientId);
     }
 
     private Mono<String> providerUrl(String providerId) {

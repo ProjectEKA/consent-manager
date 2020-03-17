@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.clients;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.User;
-import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -29,17 +28,13 @@ import static org.mockito.Mockito.when;
 public class UserServiceClientTest {
     @Captor
     private ArgumentCaptor<ClientRequest> captor;
-    private UserServiceClient userServiceClient;
     @Mock
     private ExchangeFunction exchangeFunction;
+
 
     @BeforeEach
     public void init() {
         MockitoAnnotations.initMocks(this);
-        WebClient.Builder webClientBuilder = WebClient.builder()
-                .exchangeFunction(exchangeFunction);
-        UserServiceProperties userServiceProperties = new UserServiceProperties("http://user-service/");
-        userServiceClient = new UserServiceClient(webClientBuilder, userServiceProperties);
     }
 
     @Test
@@ -51,10 +46,10 @@ public class UserServiceClientTest {
                 .thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
                         .header("Content-Type", "application/json")
                         .body(patientResponseBody).build()));
+        var webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
+        var userServiceClient = new UserServiceClient(webClientBuilder, "http://user-service/", () -> Mono.just(token));
 
-        StepVerifier.create(
-                userServiceClient.userOf("1")
-                        .subscriberContext(cxt -> cxt.put(HttpHeaders.AUTHORIZATION, token)))
+        StepVerifier.create(userServiceClient.userOf("1"))
                 .assertNext(response -> assertThat(response.getFirstName()).isEqualTo(user.getFirstName()))
                 .verifyComplete();
 

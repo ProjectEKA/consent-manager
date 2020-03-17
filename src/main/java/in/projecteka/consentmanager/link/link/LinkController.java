@@ -1,11 +1,11 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.common.Authenticator;
-import in.projecteka.consentmanager.common.Caller;
-import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
+import in.projecteka.consentmanager.common.Authenticator;
+import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,8 +15,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
-
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @RestController
 @AllArgsConstructor
@@ -45,7 +43,6 @@ public class LinkController {
     public Mono<PatientLinksResponse> getLinkedCareContexts(@RequestHeader(value = "Authorization") String token) {
         return authenticator.userFrom(token)
                 .map(Caller::getUserName)
-                .flatMap(patient -> link.getLinkedCareContexts(patient)
-                        .subscriberContext(context -> context.put(AUTHORIZATION, token)));
+                .flatMap(patient -> link.getLinkedCareContexts(patient));
     }
 }

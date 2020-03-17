@@ -43,7 +43,7 @@ public class DiscoveryServiceClientTest {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder()
                 .exchangeFunction(exchangeFunction);
-        discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder);
+        discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder, () -> Mono.just(string()));
     }
 
 
@@ -57,7 +57,7 @@ public class DiscoveryServiceClientTest {
                 .body(patientResponseBody).build()));
 
         PatientRequest patientRequest = patientRequest().patient(patientInRequest().build()).transactionId("transaction-id-1").build();
-        StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/", string()))
+        StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/"))
                 .assertNext(response -> {
                     assertThat(response.getPatient().getDisplay()).isEqualTo(expectedPatient.getDisplay());
                     assertThat(response.getPatient().getReferenceNumber()).isEqualTo(expectedPatient.getReferenceNumber());

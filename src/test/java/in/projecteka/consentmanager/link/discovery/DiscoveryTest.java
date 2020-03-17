@@ -88,7 +88,6 @@ public class DiscoveryTest {
         var providerId = string();
         var transactionId = string();
         var patientId = string();
-        var authToken = string();
         var discovery = new Discovery(
                 userServiceClient,
                 discoveryServiceClient,
@@ -128,9 +127,8 @@ public class DiscoveryTest {
                 .build();
 
         when(centralRegistry.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
-        when(centralRegistry.authenticate()).thenReturn(Mono.just(authToken));
         when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
-        when(discoveryServiceClient.patientFor(patientRequest, hipClientUrl, authToken))
+        when(discoveryServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl)))
                 .thenReturn(Mono.just(patientResponse));
         when(discoveryRepository.insert(providerId, patientId, transactionId)).thenReturn(Mono.empty());
 

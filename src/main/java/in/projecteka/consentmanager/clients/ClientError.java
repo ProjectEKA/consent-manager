@@ -14,6 +14,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_HIU;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TOKEN;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TRANSACTION_PIN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.NETWORK_SERVICE_ERROR;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_EXPIRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_INVALID;
@@ -52,6 +53,12 @@ public class ClientError extends Throwable {
     public static ClientError userNotFound() {
         return new ClientError(NOT_FOUND,
                 new ErrorRepresentation(new Error(USER_NOT_FOUND, "Cannot find the user")));
+    }
+
+    public static ClientError invalidTransactionPin() {
+        return new ClientError(UNAUTHORIZED,
+                new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN,
+                        "Invalid transaction pin")));
     }
 
     public static ClientError dbOperationFailed() {
@@ -146,6 +153,12 @@ public class ClientError extends Throwable {
         return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(TRANSACTION_PIN_IS_ALREADY_CREATED,
                         "Transaction pin is already created")));
+    }
+
+    public static ClientError transactionPinNotFound() {
+        return new ClientError(NOT_FOUND,
+                new ErrorRepresentation(new Error(TRANSACTION_PIN_IS_ALREADY_CREATED,
+                        "Transaction pin not found")));
     }
 
     private static ClientError internalServerError(String message) {

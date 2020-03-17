@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -44,5 +45,10 @@ public class LinkController {
         return authenticator.userFrom(token)
                 .map(Caller::getUserName)
                 .flatMap(patient -> link.getLinkedCareContexts(patient));
+    }
+
+    @GetMapping("internal/patients/{username}/links")
+    public Mono<PatientLinksResponse> getLinkedCareContextInternal(@PathVariable String username) {
+        return link.getLinkedCareContexts(username);
     }
 }

@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.common.Authenticator;
-import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.consent.model.ConsentRequestValidator;
 import in.projecteka.consentmanager.consent.model.request.ConsentApprovalRequest;
 import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
@@ -28,10 +27,10 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @RestController
 @AllArgsConstructor
 public class ConsentRequestController {
-
     private final ConsentManager consentManager;
     private final ConsentServiceProperties serviceProperties;
     private final Authenticator authenticator;
+    private final PinVerificationTokenService pinVerificationTokenService;
 
     @InitBinder("consentRequest")
     protected void initBinder(WebDataBinder binder) {
@@ -77,10 +76,10 @@ public class ConsentRequestController {
             @PathVariable(value = "request-id") String requestId,
             @RequestHeader(value = "Authorization") String token,
             @Valid @RequestBody ConsentApprovalRequest consentApprovalRequest) {
-        return authenticator.userFrom(token)
-                .map(Caller::getUserName)
-                .flatMap(patient ->
-                        consentManager.approveConsent(patient, requestId, consentApprovalRequest.getConsents())
-                                .subscriberContext(context -> context.put(AUTHORIZATION, token)));
+        return pinVerificationTokenService.usernameFrom(token)
+                .map(username ->
+                        consentManager.approveConsent(username, requestId, consentApprovalRequest.getConsents())
+                                .subscriberContext(context -> context.put(AUTHORIZATION, token)))
+                .orElse(Mono.error(new Throwable("Token without username being passed")));
     }
 }

@@ -6,6 +6,8 @@ import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.TokenService;
+import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
@@ -18,6 +20,7 @@ import org.springframework.amqp.core.Exchange;
 import org.springframework.amqp.core.ExchangeBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.context.ApplicationContext;
@@ -27,6 +30,11 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.HashMap;
 
 @Configuration
@@ -127,5 +135,33 @@ public class ConsentManagerConfiguration {
     public IdentityService identityService(IdentityServiceClient identityServiceClient,
                                            IdentityServiceProperties identityServiceProperties) {
         return new IdentityService(identityServiceClient, identityServiceProperties);
+    }
+
+    @Bean
+    public TokenService tokenService(IdentityServiceProperties identityServiceProperties,
+                                     IdentityServiceClient identityServiceClient) {
+        return new TokenService(identityServiceProperties, identityServiceClient);
+    }
+
+    @Bean("pinSigning")
+    public KeyPair keyPair() throws NoSuchAlgorithmException {
+        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
+        keyPairGen.initialize(1024);
+        return keyPairGen.genKeyPair();
+    }
+
+    @Bean("keySigningPublicKey")
+    public PublicKey publicKey(@Qualifier("pinSigning") KeyPair keyPair) {
+        return keyPair.getPublic();
+    }
+
+    @Bean("keySigningPrivateKey")
+    public PrivateKey privateKey(@Qualifier("pinSigning") KeyPair keyPair) {
+        return keyPair.getPrivate();
+    }
+
+    @Bean
+    public PinVerificationTokenService pinVerificationTokenService(@Qualifier("keySigningPublicKey") PublicKey key) {
+        return new PinVerificationTokenService(key);
     }
 }

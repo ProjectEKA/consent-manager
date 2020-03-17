@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static in.projecteka.consentmanager.clients.TestBuilders.string;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -35,7 +36,7 @@ class PatientServiceClientTest {
         WebClient.Builder webClientBuilder = WebClient.builder()
                 .exchangeFunction(exchangeFunction);
         LinkServiceProperties serviceProperties = new LinkServiceProperties("http://user-service/");
-        patientServiceClient = new PatientServiceClient(webClientBuilder, serviceProperties);
+        patientServiceClient = new PatientServiceClient(webClientBuilder, () -> Mono.just(string()), serviceProperties.getUrl());
     }
 
     @Test

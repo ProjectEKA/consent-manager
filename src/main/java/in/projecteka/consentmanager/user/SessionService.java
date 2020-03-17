@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.common.TokenService;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import lombok.AllArgsConstructor;
 import org.apache.log4j.Logger;

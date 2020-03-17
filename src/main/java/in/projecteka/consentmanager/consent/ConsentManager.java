@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public class ConsentManager {
-
     public static final String SHA_1_WITH_RSA = "SHA1withRSA";
     private final UserServiceClient userServiceClient;
     private final ConsentRequestRepository consentRequestRepository;
@@ -112,8 +111,8 @@ public class ConsentManager {
         return consentRequestRepository.requestsForPatient(patientId, limit, offset);
     }
 
-    private Mono<Void> validateLinkedHips(String authorizationToken, List<GrantedConsent> grantedConsents) {
-        return patientServiceClient.retrievePatientLinks(authorizationToken)
+    private Mono<Void> validateLinkedHips(String username, List<GrantedConsent> grantedConsents) {
+        return patientServiceClient.retrievePatientLinks(username)
                 .flatMap(linkedCareContexts ->
                         Flux.fromIterable(grantedConsents)
                                 .filter(grantedConsent ->
@@ -134,7 +133,7 @@ public class ConsentManager {
                                                         List<GrantedConsent> grantedConsents) {
         return Mono.subscriberContext()
                 .flatMap(context -> validatePatient(patientId)
-                        .then(validateLinkedHips(context.get("Authorization"), grantedConsents)))
+                        .then(validateLinkedHips(patientId, grantedConsents)))
                 .then(validateConsentRequest(requestId))
                 .flatMap(consentRequest ->
                         generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)

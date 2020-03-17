@@ -2,6 +2,8 @@ package in.projecteka.consentmanager;
 
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.Authenticator;
+import in.projecteka.consentmanager.consent.ConsentManager;
+import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.user.SignUpService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -75,8 +77,9 @@ public class SecurityConfiguration {
     @Bean
     public SecurityContextRepository contextRepository(ReactiveAuthenticationManager manager,
                                                        SignUpService signupService,
-                                                       Authenticator authenticator) {
-        return new SecurityContextRepository(manager, signupService, authenticator);
+                                                       Authenticator authenticator,
+                                                       PinVerificationTokenService pinVerificationTokenService) {
+        return new SecurityContextRepository(manager, signupService, authenticator, pinVerificationTokenService);
     }
 
     @AllArgsConstructor
@@ -84,6 +87,7 @@ public class SecurityConfiguration {
         private ReactiveAuthenticationManager manager;
         private SignUpService signupService;
         private Authenticator identityServiceClient;
+        private PinVerificationTokenService pinVerificationTokenService;
 
         @Override
         public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {
@@ -99,6 +103,9 @@ public class SecurityConfiguration {
 
             if (isSignUpRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
                 return checkSignUp(token);
+            }
+            if (isGrantConsentRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
+                return validateGrantConsentRequest(token);
             }
 
             if (isCentralRegistryAuthenticatedOnlyRequest(
@@ -154,8 +161,23 @@ public class SecurityConfiguration {
                     .map(SecurityContextImpl::new);
         }
 
+        private Mono<SecurityContext> validateGrantConsentRequest(String authToken) {
+            if (!pinVerificationTokenService.validateToken(authToken)) {
+                return Mono.empty();
+            }
+            return Mono.just(new UsernamePasswordAuthenticationToken(
+                    authToken,
+                    authToken,
+                    new ArrayList<SimpleGrantedAuthority>()))
+                    .map(SecurityContextImpl::new);
+        }
+
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
             return ("/users").equals(url) && HttpMethod.POST.equals(httpMethod);
+        }
+
+        private boolean isGrantConsentRequest(String url, HttpMethod httpMethod) {
+            return url.matches("/consent-requests/.*/approve/?$") && HttpMethod.POST.equals(httpMethod);
         }
     }
 

@@ -18,11 +18,14 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -41,7 +44,6 @@ public class SecurityConfiguration {
                                            "/**.yaml",
                                            "/**.css",
                                            "/**.png"};
-        // TODO: need to fix internal call
         httpSecurity.authorizeExchange().pathMatchers(WHITELISTED_URLS).permitAll();
         httpSecurity.httpBasic().disable().formLogin().disable().csrf().disable().logout().disable();
         httpSecurity.authorizeExchange().pathMatchers("/**").authenticated();
@@ -89,7 +91,39 @@ public class SecurityConfiguration {
             if (isSignUpRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
                 return checkSignUp(token);
             }
+
+            if (isCentralRegistryAuthenticatedOnlyRequest(
+                    exchange.getRequest().getPath().toString(),
+                    exchange.getRequest().getMethod())) {
+                return checkCentralRegistry(token);
+            }
+
             return check(token);
+        }
+
+        private Mono<SecurityContext> checkCentralRegistry(String token) {
+            return identityServiceClient.verify(token)
+                    .flatMap(doesNotMatter -> {
+                        var authToken = new UsernamePasswordAuthenticationToken(
+                                token,
+                                token,
+                                new ArrayList<SimpleGrantedAuthority>());
+                        return manager.authenticate(authToken).map(SecurityContextImpl::new);
+                    });
+        }
+
+        private boolean isCentralRegistryAuthenticatedOnlyRequest(String url, HttpMethod method) {
+            List<Map.Entry<String, HttpMethod>> patterns = new ArrayList<>();
+            patterns.add(Map.entry("/consent-requests", HttpMethod.GET));
+            patterns.add(Map.entry("/health-information/request", HttpMethod.POST));
+            patterns.add(Map.entry("/consents/**", HttpMethod.GET));
+            AntPathMatcher antPathMatcher = new AntPathMatcher();
+            for (var pattern : patterns) {
+                if (antPathMatcher.match(pattern.getKey(), url) && pattern.getValue().equals(method)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private Mono<SecurityContext> check(String authToken) {

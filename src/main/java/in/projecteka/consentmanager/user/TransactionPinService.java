@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.TransactionPin;
 import io.jsonwebtoken.Jwts;
@@ -17,15 +18,24 @@ import java.util.Optional;
 
 @AllArgsConstructor
 public class TransactionPinService {
-    private static final long JWT_TOKEN_VALIDITY = 10 * 60; // TODO: Make it configurable
     private TransactionPinRepository transactionPinRepository;
     private BCryptPasswordEncoder encoder;
     private PrivateKey privateKey;
+    private UserServiceProperties userServiceProperties;
 
     public Mono<Void> createPinFor(String patientId, String pin) {
+        if (!isPinValid(pin)) {
+            return Mono.error(ClientError.invalidTransactionPin());
+        }
         String encodedPin = encoder.encode(pin);
         TransactionPin transactionPin = TransactionPin.builder().pin(encodedPin).patientId(patientId).build();
         return validateTransactionPin(patientId).then(transactionPinRepository.insert(transactionPin));
+    }
+
+    private boolean isPinValid(String pin) {
+        String count = String.valueOf(userServiceProperties.getTransactionPinDigitSize());
+        String regex = "^\\d{" + count + "}$";
+        return pin.matches(regex);
     }
 
     private Mono<Void> validateTransactionPin(String patientId) {
@@ -47,7 +57,7 @@ public class TransactionPinService {
                     }
 
                     if(!encoder.matches(pin, transactionPin.get().getPin())) {
-                        return Mono.error(ClientError.invalidTransactionPin());
+                        return Mono.error(ClientError.transactionPinDidNotMatch());
                     }
 
                     return Mono.empty();
@@ -56,11 +66,12 @@ public class TransactionPinService {
 
     @SneakyThrows
     private Token newToken(String userName) {
+        int minutes = userServiceProperties.getTransactionPinTokenValidity() * 60 * 1000;
         return new Token(Jwts.builder()
                 .setClaims(new HashMap<>())
                 .setSubject(userName)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000))
+                .setExpiration(new Date(System.currentTimeMillis() + minutes))
                 .signWith(SignatureAlgorithm.RS512, privateKey).compact());
     }
 }

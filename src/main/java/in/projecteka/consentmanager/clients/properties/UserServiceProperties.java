@@ -16,4 +16,6 @@ import org.springframework.context.annotation.Configuration;
 @AllArgsConstructor
 public class UserServiceProperties {
     private String url;
+    private int transactionPinDigitSize;
+    private int transactionPinTokenValidity;
 }

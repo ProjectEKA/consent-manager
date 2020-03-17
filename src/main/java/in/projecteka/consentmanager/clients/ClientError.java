@@ -55,10 +55,14 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(USER_NOT_FOUND, "Cannot find the user")));
     }
 
-    public static ClientError invalidTransactionPin() {
+    public static ClientError transactionPinDidNotMatch() {
         return new ClientError(UNAUTHORIZED,
-                new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN,
-                        "Invalid transaction pin")));
+                new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN, "Invalid transaction pin")));
+    }
+
+    public static ClientError invalidTransactionPin() {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN, "Invalid transaction pin")));
     }
 
     public static ClientError dbOperationFailed() {

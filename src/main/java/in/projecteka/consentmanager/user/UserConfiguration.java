@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import in.projecteka.consentmanager.common.TokenService;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -91,8 +92,9 @@ public class UserConfiguration {
     @Bean
     public TransactionPinService transactionPinService(TransactionPinRepository transactionPinRepository,
                                                        BCryptPasswordEncoder encoder,
-                                                       @Qualifier("keySigningPrivateKey") PrivateKey privateKey) {
-        return new TransactionPinService(transactionPinRepository, encoder, privateKey);
+                                                       @Qualifier("keySigningPrivateKey") PrivateKey privateKey,
+                                                       UserServiceProperties userServiceProperties) {
+        return new TransactionPinService(transactionPinRepository, encoder, privateKey, userServiceProperties);
     }
 
     @Bean

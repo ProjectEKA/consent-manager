@@ -260,6 +260,7 @@ public class LinkUserJourneyTest {
         var patient = "{\"preferred_username\": \"5@ncg\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(patient));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(patient));
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(patient));
 
         patientLinksResponse.getPatient().setFirstName(user.getFirstName());
         patientLinksResponse.getPatient().setLastName(user.getLastName());

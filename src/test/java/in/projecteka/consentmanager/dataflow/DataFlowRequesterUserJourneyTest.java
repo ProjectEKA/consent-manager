@@ -104,9 +104,10 @@ public class DataFlowRequesterUserJourneyTest {
     @Test
     public void shouldAcknowledgeDataFlowRequest() throws IOException, ParseException {
         var hiuId = "10000005";
-        var dataFlowRequest = dataFlowRequest().build();
-        dataFlowRequest.setHiDataRange(HIDataRange.builder().from(toDate("2020-01-16T08:47:48Z")).to(toDate("2020" +
-                "-01-20T08:47:48Z")).build());
+        var dataFlowRequest = dataFlowRequest().hiDataRange(HIDataRange.builder()
+                .from(toDate("2020-01-16T08:47:48Z"))
+                .to(toDate("2020-01-20T08:47:48Z"))
+                .build()).build();
         ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
         consentArtefactRepresentation.getConsentDetail().getPermission().
                 setDateRange(AccessPeriod.builder()
@@ -123,6 +124,7 @@ public class DataFlowRequesterUserJourneyTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(consentArtefactRepresentationJson));
         var user = "{\"preferred_username\": \"service-account-10000005\"}";
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
@@ -165,6 +167,7 @@ public class DataFlowRequesterUserJourneyTest {
         var user = "{\"preferred_username\": \"service-account-10000005\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
 
@@ -196,6 +199,7 @@ public class DataFlowRequesterUserJourneyTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(consentArtefactRepresentationJson));
         var user = "{\"preferred_username\": \"service-account-different-hiu\"}";
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
@@ -240,6 +244,7 @@ public class DataFlowRequesterUserJourneyTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(consentArtefactRepresentationJson));
         var user = "{\"preferred_username\": \"service-account-10000005\"}";
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))

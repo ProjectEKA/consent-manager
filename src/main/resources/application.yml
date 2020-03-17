@@ -31,10 +31,6 @@ consentmanager:
     password: ${POSTGRES_PASSWORD}
     poolSize: 5
   dataflow:
-    authserver:
-      clientId: ${CLIENT_ID}
-      clientSecret: ${CLIENT_SECRET}
-      url: ${AUTH_SERVER_URL}
     consentmanager:
       url: ${CONSENT_MANAGER_URL}
   linkservice:

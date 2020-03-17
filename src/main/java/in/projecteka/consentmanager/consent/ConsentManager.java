@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.GrantedContext;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.PatientReference;
@@ -57,8 +58,7 @@ public class ConsentManager {
 
     public Mono<String> askForConsent(RequestedDetail requestedDetail) {
         final String requestId = UUID.randomUUID().toString();
-        return Mono.subscriberContext()
-                .flatMap(context -> validatePatient(requestedDetail.getPatient().getId(), context.get("Authorization")))
+        return validatePatient(requestedDetail.getPatient().getId())
                 .then(validateHIPAndHIU(requestedDetail))
                 .then(saveRequest(requestedDetail, requestId))
                 .then(postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
@@ -68,10 +68,9 @@ public class ConsentManager {
                 .thenReturn(requestId);
     }
 
-    private Mono<Boolean> validatePatient(String patientId, String token) {
+    private Mono<Boolean> validatePatient(String patientId) {
         return userServiceClient.userOf(patientId)
-                .map(Objects::nonNull)
-                .subscriberContext(context -> context.put("Authorization", token));
+                .map(Objects::nonNull);
     }
 
     private Mono<Boolean> validateHIPAndHIU(RequestedDetail requestedDetail) {
@@ -121,10 +120,11 @@ public class ConsentManager {
                                         linkedCareContexts.hasCCReferences(
                                                 grantedConsent.getHip().getId(),
                                                 grantedConsent.getCareContexts().stream()
-                                                        .map(c -> c.getCareContextReference()).collect(Collectors.toList())))
+                                                        .map(GrantedContext::getCareContextReference)
+                                                        .collect(Collectors.toList())))
                                 .collectList()
-                                .map(filteredList -> filteredList.size() == grantedConsents.size())
-                ).filter(result -> result)
+                                .map(filteredList -> filteredList.size() == grantedConsents.size()))
+                .filter(result -> result)
                 .switchIfEmpty(Mono.error(ClientError.invalidProviderOrCareContext()))
                 .then();
     }
@@ -133,7 +133,7 @@ public class ConsentManager {
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
         return Mono.subscriberContext()
-                .flatMap(context -> validatePatient(patientId, context.get("Authorization"))
+                .flatMap(context -> validatePatient(patientId)
                         .then(validateLinkedHips(context.get("Authorization"), grantedConsents)))
                 .then(validateConsentRequest(requestId))
                 .flatMap(consentRequest ->

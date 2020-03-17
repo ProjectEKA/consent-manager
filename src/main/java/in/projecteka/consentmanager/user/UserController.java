@@ -26,6 +26,8 @@ public class UserController {
     private final UserService userService;
     private final SignUpService signupService;
 
+    // TODO: only service accounts can invoke this, not an user
+    // TODO: for hiu and hip we should have different URL where we don't return
     @GetMapping("/{userName}")
     public Mono<User> userWith(@PathVariable String userName) {
         return userService.userWith(userName);

@@ -10,7 +10,7 @@ import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.user.TokenService;
+import in.projecteka.consentmanager.common.IdentityService;
 import io.vertx.pgclient.PgPool;
 import lombok.SneakyThrows;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -56,9 +56,10 @@ public class ConsentConfiguration {
                                                 PostConsentApproval postConsentApproval,
                                                 CentralRegistry centralRegistry,
                                                 PostConsentRequest postConsentRequest,
-                                                LinkServiceProperties linkServiceProperties ) {
+                                                LinkServiceProperties linkServiceProperties,
+                                                IdentityService identityService) {
         return new ConsentManager(
-                new UserServiceClient(builder, userServiceProperties),
+                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate),
                 repository,
                 consentArtefactRepository,
                 keyPair,
@@ -74,8 +75,9 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    public MessageListenerContainerFactory messageListenerContainerFactory(ConnectionFactory connectionFactory,
-                                                                           Jackson2JsonMessageConverter jackson2JsonMessageConverter) {
+    public MessageListenerContainerFactory messageListenerContainerFactory(
+            ConnectionFactory connectionFactory,
+            Jackson2JsonMessageConverter jackson2JsonMessageConverter) {
         return new MessageListenerContainerFactory(connectionFactory, jackson2JsonMessageConverter);
     }
 
@@ -85,10 +87,11 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    public HiuConsentNotificationListener hiuNotificationListener(MessageListenerContainerFactory messageListenerContainerFactory,
-                                                                  DestinationsConfig destinationsConfig,
-                                                                  Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-                                                                  ConsentArtefactNotifier consentArtefactNotifier) {
+    public HiuConsentNotificationListener hiuNotificationListener(
+            MessageListenerContainerFactory messageListenerContainerFactory,
+            DestinationsConfig destinationsConfig,
+            Jackson2JsonMessageConverter jackson2JsonMessageConverter,
+            ConsentArtefactNotifier consentArtefactNotifier) {
         return new HiuConsentNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
@@ -97,11 +100,12 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    public HipConsentNotificationListener hipNotificationListener(MessageListenerContainerFactory messageListenerContainerFactory,
-                                                                  DestinationsConfig destinationsConfig,
-                                                                  Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-                                                                  ConsentArtefactNotifier consentArtefactNotifier,
-                                                                  CentralRegistry centralRegistry) {
+    public HipConsentNotificationListener hipNotificationListener(
+            MessageListenerContainerFactory messageListenerContainerFactory,
+            DestinationsConfig destinationsConfig,
+            Jackson2JsonMessageConverter jackson2JsonMessageConverter,
+            ConsentArtefactNotifier consentArtefactNotifier,
+            CentralRegistry centralRegistry) {
         return new HipConsentNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
@@ -119,15 +123,14 @@ public class ConsentConfiguration {
             OtpServiceProperties otpServiceProperties,
             UserServiceProperties userServiceProperties,
             ConsentServiceProperties consentServiceProperties,
-            TokenService tokenService) {
+            IdentityService identityService) {
         return new ConsentRequestNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 new ConsentNotificationClient(otpServiceProperties, builder),
-                new UserServiceClient(builder, userServiceProperties),
-                consentServiceProperties,
-                tokenService);
+                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate),
+                consentServiceProperties);
     }
 
     @SneakyThrows

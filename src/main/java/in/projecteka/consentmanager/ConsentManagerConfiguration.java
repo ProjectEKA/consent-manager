@@ -1,8 +1,11 @@
 package in.projecteka.consentmanager;
 
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
+import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
+import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
@@ -117,7 +120,12 @@ public class ConsentManagerConfiguration {
                             .noargs();
                     amqpAdmin.declareBinding(b);
                 });
-
         return destinationsConfig;
+    }
+
+    @Bean
+    public IdentityService identityService(IdentityServiceClient identityServiceClient,
+                                           IdentityServiceProperties identityServiceProperties) {
+        return new IdentityService(identityServiceClient, identityServiceProperties);
     }
 }

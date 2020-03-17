@@ -18,37 +18,45 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfiguration {
+
+    private static final List<Map.Entry<String, HttpMethod>> SERVICE_ONLY_URLS = new ArrayList<>() {
+        {
+            add(Map.entry("/consent-requests", HttpMethod.GET));
+            add(Map.entry("/health-information/request", HttpMethod.POST));
+            add(Map.entry("/consents/**", HttpMethod.GET));
+        }
+    };
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity httpSecurity,
             ReactiveAuthenticationManager authenticationManager,
             ServerSecurityContextRepository securityContextRepository) {
+        final String[] WHITELISTED_URLS = {"/**.json",
+                                           "/users/verify",
+                                           "/users/permit",
+                                           "/sessions",
+                                           "/**.html",
+                                           "/**.js",
+                                           "/**.yaml",
+                                           "/**.css",
+                                           "/**.png"};
+        httpSecurity.authorizeExchange().pathMatchers(WHITELISTED_URLS).permitAll();
+        httpSecurity.httpBasic().disable().formLogin().disable().csrf().disable().logout().disable();
+        httpSecurity.authorizeExchange().pathMatchers("/**").authenticated();
         return httpSecurity
-                .authorizeExchange()
-                // TODO: need to fix internal call
-                .pathMatchers("/**.json", "/users/verify", "/users/permit", "/sessions", "/internal/consents/**")
-                .permitAll()
-                .pathMatchers("/**.html").permitAll()
-                .pathMatchers("/**.js").permitAll()
-                .pathMatchers("/**.png").permitAll()
-                .pathMatchers("/**.css").permitAll()
-                .pathMatchers("/**.yaml").permitAll()
-                .pathMatchers("/**").authenticated()
-                .and()
-                .httpBasic().disable()
-                .formLogin().disable()
-                .csrf().disable()
-                .logout().disable()
                 .authenticationManager(authenticationManager)
                 .securityContextRepository(securityContextRepository)
                 .build();
@@ -73,7 +81,6 @@ public class SecurityConfiguration {
 
     @AllArgsConstructor
     private static class SecurityContextRepository implements ServerSecurityContextRepository {
-
         private ReactiveAuthenticationManager manager;
         private SignUpService signupService;
         private Authenticator identityServiceClient;
@@ -89,10 +96,36 @@ public class SecurityConfiguration {
             if (isEmpty(token)) {
                 return Mono.empty();
             }
+
             if (isSignUpRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
                 return checkSignUp(token);
             }
+
+            if (isCentralRegistryAuthenticatedOnlyRequest(
+                    exchange.getRequest().getPath().toString(),
+                    exchange.getRequest().getMethod())) {
+                return checkCentralRegistry(token);
+            }
+
             return check(token);
+        }
+
+        private Mono<SecurityContext> checkCentralRegistry(String token) {
+            return identityServiceClient.verify(token)
+                    .flatMap(doesNotMatter -> {
+                        var authToken = new UsernamePasswordAuthenticationToken(
+                                token,
+                                token,
+                                new ArrayList<SimpleGrantedAuthority>());
+                        return manager.authenticate(authToken).map(SecurityContextImpl::new);
+                    });
+        }
+
+        private boolean isCentralRegistryAuthenticatedOnlyRequest(String url, HttpMethod method) {
+            AntPathMatcher antPathMatcher = new AntPathMatcher();
+            return SERVICE_ONLY_URLS.stream()
+                    .anyMatch(pattern ->
+                            antPathMatcher.match(pattern.getKey(), url) && pattern.getValue().equals(method));
         }
 
         private Mono<SecurityContext> check(String authToken) {

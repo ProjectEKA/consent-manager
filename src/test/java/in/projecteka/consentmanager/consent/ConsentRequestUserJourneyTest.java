@@ -81,7 +81,6 @@ public class ConsentRequestUserJourneyTest {
     @Captor
     private ArgumentCaptor<ConsentRequest> captor;
 
-
     private static MockWebServer clientRegistryServer = new MockWebServer();
     private static MockWebServer userServer = new MockWebServer();
     private static MockWebServer identityServer = new MockWebServer();
@@ -126,53 +125,6 @@ public class ConsentRequestUserJourneyTest {
         identityServer.shutdown();
         patientLinkServer.shutdown();
     }
-
-    private String consentRequestJson =
-            "{\n" +
-            "  \"consent\": {\n" +
-            "    \"purpose\": {\n" +
-            "      \"text\": \"For Clinical Reference\",\n" +
-            "      \"code\": \"CLINICAL\",\n" +
-            "      \"refUri\": \"http://nha.gov.in/value-set/purpose.txt\"\n" +
-            "    },\n" +
-            "    \"patient\": {\n" +
-            "      \"id\": \"batman@ncg\"\n" +
-            "    },\n" +
-            "    \"hip\": {\n" +
-            "      \"id\": \"TMH-ID\",\n" +
-            "      \"name\": \"TMH\"\n" +
-            "    },\n" +
-            "    \"hiu\": {\n" +
-            "      \"id\": \"MAX-ID\",\n" +
-            "      \"name\": \"MAX\"\n" +
-            "    },\n" +
-            "    \"requester\": {\n" +
-            "      \"name\": \"Dr Ramandeep\",\n" +
-            "      \"identifier\": {\n" +
-            "        \"value\": \"MCI-10\",\n" +
-            "        \"type\": \"Oncologist\",\n" +
-            "        \"system\": \"http://mci.org/\"\n" +
-            "      }\n" +
-            "    },\n" +
-            "    \"hiTypes\": [\n" +
-            "      \"Condition\",\n" +
-            "      \"Observation\"\n" +
-            "    ],\n" +
-            "    \"permission\": {\n" +
-            "      \"accessMode\": \"VIEW\",\n" +
-            "      \"dateRange\": {\n" +
-            "        \"from\": \"2021-01-16T07:23:41.305Z\",\n" +
-            "        \"to\": \"2021-01-16T07:35:41.305Z\"\n" +
-            "      },\n" +
-            "      \"dataExpiryAt\": \"2022-01-16T07:23:41.305Z\",\n" +
-            "      \"frequency\": {\n" +
-            "        \"unit\": \"DAY\",\n" +
-            "        \"value\": 1\n" +
-            "      }\n" +
-            "    },\n" +
-            "    \"callBackUrl\": \"https://tmh-hiu/notify\"\n" +
-            "  }\n" +
-            "}";
 
     private String requestedConsentJson = "{\n" +
             "            \"status\": \"REQUESTED\",\n" +
@@ -228,8 +180,53 @@ public class ConsentRequestUserJourneyTest {
         load(userServer, "{}");
         var user = "{\"preferred_username\": \"patient@ncg\"}";
         load(identityServer, user);
+        load(identityServer, user);
 
-
+        String consentRequestJson = "{\n" +
+                "  \"consent\": {\n" +
+                "    \"purpose\": {\n" +
+                "      \"text\": \"For Clinical Reference\",\n" +
+                "      \"code\": \"CLINICAL\",\n" +
+                "      \"refUri\": \"http://nha.gov.in/value-set/purpose.txt\"\n" +
+                "    },\n" +
+                "    \"patient\": {\n" +
+                "      \"id\": \"batman@ncg\"\n" +
+                "    },\n" +
+                "    \"hip\": {\n" +
+                "      \"id\": \"TMH-ID\",\n" +
+                "      \"name\": \"TMH\"\n" +
+                "    },\n" +
+                "    \"hiu\": {\n" +
+                "      \"id\": \"MAX-ID\",\n" +
+                "      \"name\": \"MAX\"\n" +
+                "    },\n" +
+                "    \"requester\": {\n" +
+                "      \"name\": \"Dr Ramandeep\",\n" +
+                "      \"identifier\": {\n" +
+                "        \"value\": \"MCI-10\",\n" +
+                "        \"type\": \"Oncologist\",\n" +
+                "        \"system\": \"http://mci.org/\"\n" +
+                "      }\n" +
+                "    },\n" +
+                "    \"hiTypes\": [\n" +
+                "      \"Condition\",\n" +
+                "      \"Observation\"\n" +
+                "    ],\n" +
+                "    \"permission\": {\n" +
+                "      \"accessMode\": \"VIEW\",\n" +
+                "      \"dateRange\": {\n" +
+                "        \"from\": \"2021-01-16T07:23:41.305Z\",\n" +
+                "        \"to\": \"2021-01-16T07:35:41.305Z\"\n" +
+                "      },\n" +
+                "      \"dataExpiryAt\": \"2022-01-16T07:23:41.305Z\",\n" +
+                "      \"frequency\": {\n" +
+                "        \"unit\": \"DAY\",\n" +
+                "        \"value\": 1\n" +
+                "      }\n" +
+                "    },\n" +
+                "    \"callBackUrl\": \"https://tmh-hiu/notify\"\n" +
+                "  }\n" +
+                "}";
         webTestClient.post()
                 .uri("/consent-requests")
                 .accept(MediaType.APPLICATION_JSON)
@@ -280,6 +277,7 @@ public class ConsentRequestUserJourneyTest {
         load(clientRegistryServer, "{}");
         load(userServer, "{}");
         var user = "{\"preferred_username\": \"patient@ncg\"}";
+        load(identityServer, user);
         load(identityServer, user);
         load(identityServer, user);
 
@@ -336,6 +334,7 @@ public class ConsentRequestUserJourneyTest {
         load(clientRegistryServer, "{}");
         load(userServer, "{}");
         var user = "{\"preferred_username\": \"patient@ncg\"}";
+        load(identityServer, user);
         load(identityServer, user);
         load(identityServer, user);
         //NOTE: referenceNumber of linked CareContext is different. ashokkumar.ipdContext

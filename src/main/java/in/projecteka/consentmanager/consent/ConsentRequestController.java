@@ -40,11 +40,9 @@ public class ConsentRequestController {
 
     @PostMapping(value = "/consent-requests")
     public Mono<RequestCreatedRepresentation> requestConsent(
-            @RequestHeader(value = "Authorization") String token,
             @RequestBody @Valid @ModelAttribute("consentRequest") ConsentRequest request) {
         return consentManager.askForConsent(request.getConsent())
-                .map(ConsentRequestController::buildResponse)
-                .subscriberContext(context -> context.put(AUTHORIZATION, token));
+                .map(ConsentRequestController::buildResponse);
     }
 
     @GetMapping(value = "/consent-requests")

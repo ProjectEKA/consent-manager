@@ -14,32 +14,29 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/users")
 @AllArgsConstructor
 public class UserController {
     private final UserService userService;
     private final SignUpService signupService;
 
-    // TODO: only service accounts can invoke this, not an user
-    // TODO: for hiu and hip we should have different URL where we don't return
-    @GetMapping("/{userName}")
+    // TODO: Should not return phone number from this API.
+    @GetMapping("/users/{userName}")
     public Mono<User> userWith(@PathVariable String userName) {
         return userService.userWith(userName);
     }
 
-    @PostMapping("/verify")
+    @PostMapping("/users/verify")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<SignUpSession> sendOtp(@RequestBody UserSignUpEnquiry request) {
         return userService.sendOtp(request);
     }
 
-    @PostMapping("/permit")
+    @PostMapping("/users/permit")
     public Mono<Token> permitOtp(@RequestBody OtpVerification request) {
         return userService.permitOtp(request);
     }
@@ -48,5 +45,12 @@ public class UserController {
     public Mono<Session> create(@RequestBody SignUpRequest request,
                                 @RequestHeader(name = "Authorization") String token) {
         return userService.create(request, signupService.sessionFrom(token));
+    }
+
+    // TODO: should be moved to patients and need to make sure only consent manager service uses it.
+    // Not patient themselves
+    @GetMapping("/internal/users/{userName}")
+    public Mono<User> internalUserWith(@PathVariable String userName) {
+        return userService.userWith(userName);
     }
 }

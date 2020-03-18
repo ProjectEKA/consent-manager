@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.user;
 
+import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
@@ -66,6 +67,9 @@ class UserControllerTest {
 
     @Autowired
     private WebTestClient webClient;
+
+    @MockBean
+    private JWKSet jwkSet;
 
     EasyRandom easyRandom;
 

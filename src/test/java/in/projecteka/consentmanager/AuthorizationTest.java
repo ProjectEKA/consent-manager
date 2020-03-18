@@ -1,9 +1,10 @@
 package in.projecteka.consentmanager;
 
-import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
-import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
+import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
+import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
+import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.consent.PostConsentApproval;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +54,9 @@ public class AuthorizationTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
+
+    @MockBean
+    private JWKSet jwkSet;
 
     @BeforeEach
     public void setUp() {

@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.link.link;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
@@ -89,6 +90,9 @@ public class LinkUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
+
+    @MockBean
+    private JWKSet jwkSet;
 
     @AfterAll
     public static void tearDown() throws IOException {

@@ -9,6 +9,7 @@ consentmanager:
     XAuthToken: ${Auth_Token}
     clientId: ${CENTRAL_REGISTRY_ID}
     url: ${Client_Registry_Url}
+    jwkUrl: ${CENTRAL_REGISTRY_JWK_URL}
   userservice:
     url: ${User_Service_Url}
     transactionPinDigitSize: ${TRANSACTION_PIN_DIGIT_SIZE}

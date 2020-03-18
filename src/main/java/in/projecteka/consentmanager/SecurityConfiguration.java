@@ -3,7 +3,9 @@ package in.projecteka.consentmanager;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.consent.PinVerificationTokenService;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.user.SignUpService;
+
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,9 +36,10 @@ public class SecurityConfiguration {
 
     private static final List<Map.Entry<String, HttpMethod>> SERVICE_ONLY_URLS = new ArrayList<>() {
         {
-            add(Map.entry("/consent-requests", HttpMethod.GET));
+            add(Map.entry("/consent-requests", HttpMethod.POST));
             add(Map.entry("/health-information/request", HttpMethod.POST));
             add(Map.entry("/consents/**", HttpMethod.GET));
+            add(Map.entry("/users/**", HttpMethod.GET));
         }
     };
 
@@ -77,8 +80,13 @@ public class SecurityConfiguration {
     public SecurityContextRepository contextRepository(ReactiveAuthenticationManager manager,
                                                        SignUpService signupService,
                                                        Authenticator authenticator,
-                                                       PinVerificationTokenService pinVerificationTokenService) {
-        return new SecurityContextRepository(manager, signupService, authenticator, pinVerificationTokenService);
+                                                       PinVerificationTokenService pinVerificationTokenService,
+                                                       CentralRegistryTokenVerifier centralRegistryTokenVerifier) {
+        return new SecurityContextRepository(manager,
+                signupService,
+                authenticator,
+                pinVerificationTokenService,
+                centralRegistryTokenVerifier);
     }
 
     @AllArgsConstructor
@@ -87,6 +95,7 @@ public class SecurityConfiguration {
         private SignUpService signupService;
         private Authenticator identityServiceClient;
         private PinVerificationTokenService pinVerificationTokenService;
+        private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
         @Override
         public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {
@@ -117,14 +126,14 @@ public class SecurityConfiguration {
         }
 
         private Mono<SecurityContext> checkCentralRegistry(String token) {
-            return identityServiceClient.verify(token)
-                    .flatMap(doesNotMatter -> {
-                        var authToken = new UsernamePasswordAuthenticationToken(
-                                token,
-                                token,
-                                new ArrayList<SimpleGrantedAuthority>());
-                        return manager.authenticate(authToken).map(SecurityContextImpl::new);
-                    });
+            return centralRegistryTokenVerifier.verify(token)
+                    .map(caller ->
+                            new UsernamePasswordAuthenticationToken(
+                                    caller,
+                                    token,
+                                    new ArrayList<SimpleGrantedAuthority>()))
+                    .flatMap(authToken -> manager.authenticate(authToken))
+                    .map(SecurityContextImpl::new);
         }
 
         private boolean isCentralRegistryAuthenticatedOnlyRequest(String url, HttpMethod method) {
@@ -184,7 +193,10 @@ public class SecurityConfiguration {
         @Override
         public Mono<Authentication> authenticate(Authentication authentication) {
             var token = authentication.getCredentials().toString();
-            var auth = new UsernamePasswordAuthenticationToken(token, token, new ArrayList<SimpleGrantedAuthority>());
+            var auth = new UsernamePasswordAuthenticationToken(
+                    authentication.getPrincipal(),
+                    token,
+                    new ArrayList<SimpleGrantedAuthority>());
             return Mono.just(auth);
         }
     }

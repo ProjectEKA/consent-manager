@@ -24,13 +24,11 @@ import static in.projecteka.consentmanager.clients.TestBuilders.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-
 public class UserServiceClientTest {
     @Captor
     private ArgumentCaptor<ClientRequest> captor;
     @Mock
     private ExchangeFunction exchangeFunction;
-
 
     @BeforeEach
     public void init() {
@@ -53,7 +51,7 @@ public class UserServiceClientTest {
                 .assertNext(response -> assertThat(response.getFirstName()).isEqualTo(user.getFirstName()))
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://user-service/users/1/");
+        assertThat(captor.getValue().url().toString()).isEqualTo("http://user-service/internal/users/1/");
         assertThat(captor.getValue().headers().get(HttpHeaders.AUTHORIZATION).get(0)).isEqualTo(token);
     }
 }

@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.consent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
@@ -74,6 +75,9 @@ public class ConsentArtefactUserJourneyTest {
 
     @MockBean
     private ConsentArtefactRepository consentArtefactRepository;
+
+    @MockBean
+    private JWKSet jwkSet;
 
     @AfterAll
     public static void tearDown() throws IOException {

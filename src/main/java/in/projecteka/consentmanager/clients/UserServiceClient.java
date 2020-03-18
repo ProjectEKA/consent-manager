@@ -20,7 +20,7 @@ public class UserServiceClient {
         return tokenGenerator.get().flatMap(token ->
                 webClientBuilder.build()
                         .get()
-                        .uri(String.format("%s/users/%s/", url, userId))
+                        .uri(String.format("%s/internal/users/%s/", url, userId))
                         .header(AUTHORIZATION, token)
                         .retrieve()
                         .onStatus(httpStatus -> httpStatus.value() == 404,

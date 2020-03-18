@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.link.discovery;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
@@ -65,6 +66,9 @@ public class DiscoveryUserJourneyTest {
 
     @Autowired
     private WebTestClient webTestClient;
+
+    @MockBean
+    private JWKSet jwkSet;
 
     @BeforeEach
     public void setUp() {

@@ -2,7 +2,10 @@ package in.projecteka.consentmanager.consent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
@@ -81,6 +84,13 @@ public class ConsentRequestUserJourneyTest {
 
     @MockBean
     private PinVerificationTokenService pinVerificationTokenService;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private JWKSet jwkSet;
+
+    @MockBean
+    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
     @Captor
     private ArgumentCaptor<ConsentRequest> captor;
@@ -173,6 +183,8 @@ public class ConsentRequestUserJourneyTest {
 
     @Test
     public void shouldAcceptConsentRequest() {
+        var authToken = string();
+        when(centralRegistryTokenVerifier.verify(authToken)).thenReturn(Mono.just(new Caller("MAX-ID", true)));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
@@ -183,7 +195,6 @@ public class ConsentRequestUserJourneyTest {
         load(clientRegistryServer, "{}");
         load(userServer, "{}");
         var user = "{\"preferred_username\": \"patient@ncg\"}";
-        load(identityServer, user);
         load(identityServer, user);
 
         String consentRequestJson = "{\n" +
@@ -235,7 +246,7 @@ public class ConsentRequestUserJourneyTest {
                 .uri("/consent-requests")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", string())
+                .header("Authorization", authToken)
                 .body(BodyInserters.fromValue(consentRequestJson))
                 .exchange()
                 .expectStatus().isOk()

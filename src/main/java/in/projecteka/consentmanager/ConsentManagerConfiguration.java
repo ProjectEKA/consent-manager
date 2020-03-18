@@ -1,13 +1,15 @@
 package in.projecteka.consentmanager;
 
+import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
-import in.projecteka.consentmanager.user.TokenService;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
+import in.projecteka.consentmanager.user.TokenService;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
@@ -29,11 +31,14 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.IOException;
+import java.net.URL;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.text.ParseException;
 import java.util.HashMap;
 
 @Configuration
@@ -157,5 +162,15 @@ public class ConsentManagerConfiguration {
     @Bean("keySigningPrivateKey")
     public PrivateKey privateKey(@Qualifier("pinSigning") KeyPair keyPair) {
         return keyPair.getPrivate();
+    }
+
+    @Bean("centralRegistryJWKSet")
+    public JWKSet jwkSet(ClientRegistryProperties clientRegistryProperties) throws IOException, ParseException {
+        return JWKSet.load(new URL(clientRegistryProperties.getJwkUrl()));
+    }
+
+    @Bean
+    public CentralRegistryTokenVerifier centralRegistryTokenVerifier(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
+        return new CentralRegistryTokenVerifier(jwkSet);
     }
 }

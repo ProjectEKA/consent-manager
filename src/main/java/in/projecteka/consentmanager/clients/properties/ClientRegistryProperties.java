@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.clients.properties;
 
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,4 +18,5 @@ public class ClientRegistryProperties {
     private String url;
     private String XAuthToken;
     private String clientId;
+    private String jwkUrl;
 }

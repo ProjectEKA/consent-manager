@@ -7,6 +7,8 @@ services:
     environment:
       - Auth_Token=${TOKEN}
       - Client_Registry_Url=${Client_Registry_Url}
+      - CENTRAL_REGISTRY_JWK_URL=${Client_Registry_Url}/certs
+      - CENTRAL_REGISTRY_ID=${CLIENT_ID}
       - Otp_Service_Url=http://otp
       - User_Service_Url=http://consent-manager:8000
       - POSTGRES_HOST=db

@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -20,12 +21,10 @@ public class ConsentArtefactsController {
     private final Authenticator authenticator;
 
     @GetMapping(value = "/consents/{consentId}")
-    public Mono<ConsentArtefactRepresentation> getConsentArtefact(
-            @RequestHeader(value = "Authorization") String authorization,
-            @PathVariable(value = "consentId") String consentId) {
-        return authenticator.userFrom(authorization)
-                .map(Caller::getUserName)
-                .flatMap(requesterId -> consentManager.getConsent(consentId, requesterId));
+    public Mono<ConsentArtefactRepresentation> getConsentArtefact(@PathVariable(value = "consentId") String consentId) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .flatMap(requester -> consentManager.getConsent(consentId, requester.getUserName()));
     }
 
     @GetMapping(value = "/internal/consents/{consentId}")

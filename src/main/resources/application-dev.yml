@@ -9,6 +9,7 @@ consentmanager:
     XAuthToken: 8e983a1719e20913be6c61e9b552e88fc6032c21e1030f1abda986d17326b2b0
     clientId: 6
     url: http://localhost:8080
+    jwkUrl: http://host.docker.internal:8080/certs
   userservice:
     url: http://localhost:9000
     transactionPinDigitSize: 4

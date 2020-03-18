@@ -22,8 +22,6 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-
 @RestController
 @AllArgsConstructor
 public class ConsentRequestController {

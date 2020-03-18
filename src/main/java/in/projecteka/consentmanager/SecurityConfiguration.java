@@ -2,7 +2,6 @@ package in.projecteka.consentmanager;
 
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.Authenticator;
-import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.user.SignUpService;
 import lombok.AllArgsConstructor;

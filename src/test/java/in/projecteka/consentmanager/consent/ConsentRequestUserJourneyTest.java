@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.consent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;

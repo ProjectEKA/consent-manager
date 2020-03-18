@@ -52,7 +52,7 @@ class SessionServiceTest {
     })
     void returnUnAuthorizedErrorWhenUsernameIsEmpty(
             @ConvertWith(AuthorizationTest.NullableConverter.class) String value) {
-        var sessionRequest = sessionRequest().UserName(value).build();
+        var sessionRequest = sessionRequest().userName(value).build();
         var sessionService = new SessionService(tokenService);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
@@ -70,7 +70,7 @@ class SessionServiceTest {
     })
     void returnUnAuthorizedErrorWhenPasswordIsEmpty(
             @ConvertWith(AuthorizationTest.NullableConverter.class) String value) {
-        var sessionRequest = sessionRequest().Password(value).build();
+        var sessionRequest = sessionRequest().password(value).build();
         var sessionService = new SessionService(tokenService);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);

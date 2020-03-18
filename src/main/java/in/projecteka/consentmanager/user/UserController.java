@@ -41,7 +41,7 @@ public class UserController {
         return userService.permitOtp(request);
     }
 
-    @PostMapping
+    @PostMapping("/users")
     public Mono<Session> create(@RequestBody SignUpRequest request,
                                 @RequestHeader(name = "Authorization") String token) {
         return userService.create(request, signupService.sessionFrom(token));

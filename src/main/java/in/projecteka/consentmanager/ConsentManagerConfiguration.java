@@ -6,7 +6,7 @@ import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
-import in.projecteka.consentmanager.common.TokenService;
+import in.projecteka.consentmanager.user.TokenService;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;

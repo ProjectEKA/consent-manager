@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.AuthorizationTest;
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.common.TokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

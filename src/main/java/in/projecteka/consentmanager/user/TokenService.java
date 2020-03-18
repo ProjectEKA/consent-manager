@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.common;
+package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;

@@ -59,8 +59,7 @@ public class ConsentConfiguration {
                                                 CentralRegistry centralRegistry,
                                                 PostConsentRequest postConsentRequest,
                                                 LinkServiceProperties linkServiceProperties,
-                                                IdentityService identityService,
-                                                @Qualifier("keySigningPublicKey") PublicKey publicKey) {
+                                                IdentityService identityService) {
         return new ConsentManager(
                 new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate),
                 repository,
@@ -142,5 +141,10 @@ public class ConsentConfiguration {
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
         keyGen.initialize(2048);
         return keyGen.generateKeyPair();
+    }
+
+    @Bean
+    public PinVerificationTokenService pinVerificationTokenService(@Qualifier("keySigningPublicKey") PublicKey key) {
+        return new PinVerificationTokenService(key);
     }
 }

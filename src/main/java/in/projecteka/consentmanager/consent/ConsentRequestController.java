@@ -78,8 +78,7 @@ public class ConsentRequestController {
             @Valid @RequestBody ConsentApprovalRequest consentApprovalRequest) {
         return pinVerificationTokenService.usernameFrom(token)
                 .map(username ->
-                        consentManager.approveConsent(username, requestId, consentApprovalRequest.getConsents())
-                                .subscriberContext(context -> context.put(AUTHORIZATION, token)))
+                        consentManager.approveConsent(username, requestId, consentApprovalRequest.getConsents()))
                 .orElse(Mono.error(new Throwable("Token without username being passed")));
     }
 }

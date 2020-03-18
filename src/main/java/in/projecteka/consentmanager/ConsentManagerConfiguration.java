@@ -159,9 +159,4 @@ public class ConsentManagerConfiguration {
     public PrivateKey privateKey(@Qualifier("pinSigning") KeyPair keyPair) {
         return keyPair.getPrivate();
     }
-
-    @Bean
-    public PinVerificationTokenService pinVerificationTokenService(@Qualifier("keySigningPublicKey") PublicKey key) {
-        return new PinVerificationTokenService(key);
-    }
 }

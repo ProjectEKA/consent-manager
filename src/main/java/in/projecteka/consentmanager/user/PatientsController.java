@@ -4,6 +4,8 @@ import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.user.model.CreatePinRequest;
 import in.projecteka.consentmanager.user.model.Profile;
+import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.ValidatePinRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,7 +26,7 @@ public class PatientsController {
     @PostMapping("/pin")
     public Mono<Void> pin(@RequestHeader(name = "Authorization") String token,
                                     @RequestBody CreatePinRequest createPinRequest) {
-        return getUserNameFrom(token) //TODO : Add token validation (token to be 6 digit integer)
+        return getUserNameFrom(token)
                 .flatMap(userName -> transactionPinService.createPinFor(userName, createPinRequest.getPin()));
     }
 
@@ -32,6 +34,13 @@ public class PatientsController {
     public Mono<Profile> profileFor(@RequestHeader(name = "Authorization") String token) {
         return getUserNameFrom(token)
                 .flatMap(userName -> profileService.profileFor(userName));
+    }
+
+    @PostMapping(value = "/verify-pin")
+    public Mono<Token> validatePin(@RequestHeader(value = "Authorization") String token,
+                                   @RequestBody ValidatePinRequest request) {
+        return getUserNameFrom(token)
+                .flatMap(userName -> transactionPinService.validatePinFor(userName, request.getPin()));
     }
 
     private Mono<String> getUserNameFrom(@RequestHeader(name = "Authorization") String token) {

@@ -7,12 +7,15 @@ import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import io.vertx.pgclient.PgPool;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.security.PrivateKey;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -71,12 +74,6 @@ public class UserConfiguration {
     }
 
     @Bean
-    public TokenService tokenService(IdentityServiceProperties identityServiceProperties,
-                                     IdentityServiceClient identityServiceClient) {
-        return new TokenService(identityServiceProperties, identityServiceClient);
-    }
-
-    @Bean
     public SessionService sessionService(TokenService tokenService) {
         return new SessionService(tokenService);
     }
@@ -93,8 +90,10 @@ public class UserConfiguration {
 
     @Bean
     public TransactionPinService transactionPinService(TransactionPinRepository transactionPinRepository,
-                                                       BCryptPasswordEncoder encoder) {
-        return new TransactionPinService(transactionPinRepository, encoder);
+                                                       BCryptPasswordEncoder encoder,
+                                                       @Qualifier("keySigningPrivateKey") PrivateKey privateKey,
+                                                       UserServiceProperties userServiceProperties) {
+        return new TransactionPinService(transactionPinRepository, encoder, privateKey, userServiceProperties);
     }
 
     @Bean

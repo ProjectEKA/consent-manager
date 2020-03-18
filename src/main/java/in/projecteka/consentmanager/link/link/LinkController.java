@@ -45,4 +45,9 @@ public class LinkController {
                 .map(Caller::getUserName)
                 .flatMap(patient -> link.getLinkedCareContexts(patient));
     }
+
+    @GetMapping("internal/patients/{username}/links")
+    public Mono<PatientLinksResponse> getLinkedCareContextInternal(@PathVariable String username) {
+        return link.getLinkedCareContexts(username);
+    }
 }

@@ -34,6 +34,7 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.consent.TestBuilders.notificationMessage;
@@ -77,6 +78,9 @@ public class ConsentRequestUserJourneyTest {
 
     @MockBean
     private PostConsentApproval postConsentApproval;
+
+    @MockBean
+    private PinVerificationTokenService pinVerificationTokenService;
 
     @Captor
     private ArgumentCaptor<ConsentRequest> captor;
@@ -271,13 +275,8 @@ public class ConsentRequestUserJourneyTest {
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
         load(userServer, "{}");
         var user = "{\"preferred_username\": \"patient@ncg\"}";
-        load(identityServer, user);
         load(identityServer, user);
         load(identityServer, user);
 
@@ -304,17 +303,20 @@ public class ConsentRequestUserJourneyTest {
                 "        ]\n" +
                 "    }\n" +
                 "}";
+        String token = string();
 
         load(patientLinkServer, linkedPatientContextsJson);
         ConsentRequestDetail consentRequestDetail = new ObjectMapper().readValue(requestedConsentJson, ConsentRequestDetail.class);
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED")).thenReturn(Mono.just(consentRequestDetail));
+        when(pinVerificationTokenService.validateToken(token)).thenReturn(true);
+        when(pinVerificationTokenService.usernameFrom(token)).thenReturn(Optional.of("patient@ncg"));
         when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(any(), eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"), any(), any(), any())).thenReturn(Mono.empty());
         when(postConsentApproval.broadcastConsentArtefacts(any())).thenReturn(Mono.empty());
         webTestClient.post()
                 .uri("/consent-requests/30d02f6d-de17-405e-b4ab-d31b2bb799d7/approve")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", string())
+                .header("Authorization", token)
                 .body(BodyInserters.fromValue(CONSENT_GRANT_JSON))
                 .exchange()
                 .expectStatus().isOk()
@@ -362,9 +364,12 @@ public class ConsentRequestUserJourneyTest {
                 "        ]\n" +
                 "    }\n" +
                 "}";
+        String token = string();
 
         load(patientLinkServer, linkedPatientContextsJson);
         ConsentRequestDetail consentRequestDetail = new ObjectMapper().readValue(requestedConsentJson, ConsentRequestDetail.class);
+        when(pinVerificationTokenService.validateToken(token)).thenReturn(true);
+        when(pinVerificationTokenService.usernameFrom(token)).thenReturn(Optional.of("patient@ncg"));
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED")).thenReturn(Mono.just(consentRequestDetail));
         when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(any(), eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"), any(), any(), any())).thenReturn(Mono.empty());
         when(postConsentApproval.broadcastConsentArtefacts(any())).thenReturn(Mono.empty());
@@ -372,10 +377,10 @@ public class ConsentRequestUserJourneyTest {
                 .uri("/consent-requests/30d02f6d-de17-405e-b4ab-d31b2bb799d7/approve")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", string())
+                .header("Authorization", token)
                 .body(BodyInserters.fromValue(CONSENT_GRANT_JSON))
                 .exchange()
-                .expectStatus().is4xxClientError()
+                .expectStatus().isBadRequest()
                 .expectBody(in.projecteka.consentmanager.clients.model.Error.class);
     }
 

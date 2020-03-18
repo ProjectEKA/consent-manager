@@ -16,12 +16,14 @@ import lombok.SneakyThrows;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.PublicKey;
 
 @Configuration
 public class ConsentConfiguration {
@@ -66,7 +68,7 @@ public class ConsentConfiguration {
                 postConsentApproval,
                 centralRegistry,
                 postConsentRequest,
-                new PatientServiceClient(builder, linkServiceProperties));
+                new PatientServiceClient(builder, identityService::authenticate, linkServiceProperties.getUrl()));
     }
 
     @Bean
@@ -139,5 +141,10 @@ public class ConsentConfiguration {
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
         keyGen.initialize(2048);
         return keyGen.generateKeyPair();
+    }
+
+    @Bean
+    public PinVerificationTokenService pinVerificationTokenService(@Qualifier("keySigningPublicKey") PublicKey key) {
+        return new PinVerificationTokenService(key);
     }
 }

@@ -24,7 +24,7 @@ import java.util.HashSet;
 public class Authenticator {
 
     private final ConfigurableJWTProcessor<SecurityContext> jwtProcessor;
-    private final Logger logger = Logger.getLogger(CentralRegistryTokenVerifier.class);
+    private final Logger logger = Logger.getLogger(Authenticator.class);
 
     public Authenticator(JWKSet jwkSet, String issuer) {
         var immutableJWKSet = new ImmutableJWKSet<>(jwkSet);

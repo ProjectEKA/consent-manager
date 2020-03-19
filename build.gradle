@@ -58,7 +58,7 @@ dependencies {
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     implementation 'io.vertx:vertx-pg-client:3.8.5'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    compile 'com.nimbusds:nimbus-jose-jwt:8.3'
+    compile 'com.nimbusds:nimbus-jose-jwt:8.10'
 }
 
 test {

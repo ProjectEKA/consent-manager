@@ -16,16 +16,16 @@ public class Transformer {
                 .stream()
                 .filter(add -> add.getUse().equalsIgnoreCase("work"))
                 .findFirst()
-                .orElse(!provider.getAddresses().isEmpty() ?
-                        provider.getAddresses().get(0)
-                                                           : new Address("", ""));
+                .orElse(!provider.getAddresses().isEmpty()
+                        ? provider.getAddresses().get(0)
+                        : new Address("", ""));
         var telecommunication = provider.getTelecoms()
                 .stream()
                 .filter(tel -> tel.getUse().equalsIgnoreCase("work"))
                 .findFirst()
-                .orElse(!provider.getTelecoms().isEmpty() ?
-                        provider.getTelecoms().get(0)
-                                                          : new Telecom("", ""));
+                .orElse(!provider.getTelecoms().isEmpty()
+                        ? provider.getTelecoms().get(0)
+                        : new Telecom("", ""));
         return ProviderRepresentation.builder()
                 .city(address.getCity())
                 .telephone(telecommunication.getValue())

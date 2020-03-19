@@ -37,7 +37,6 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.consent.TestBuilders.notificationMessage;
@@ -194,7 +193,7 @@ public class ConsentRequestUserJourneyTest {
         load(clientRegistryServer, "{}");
         load(clientRegistryServer, "{}");
         load(userServer, "{}");
-        var user = "{\"preferred_username\": \"patient@ncg\"}";
+        var user = "{\"preferred_username\": \"batman@ncg\"}";
         load(identityServer, user);
 
         String consentRequestJson = "{\n" +
@@ -259,8 +258,7 @@ public class ConsentRequestUserJourneyTest {
         List<ConsentRequestDetail> requests = new ArrayList<>();
         var user = "{\"preferred_username\": \"Ganesh@ncg\"}";
         load(identityServer, user);
-        load(identityServer, user);
-        when(repository.requestsForPatient("Ganesh@ncg", 20, 0)).thenReturn(Mono.just(requests));
+        when(repository.requestsForPatient(any(), eq(20), eq(0))).thenReturn(Mono.just(requests));
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/consent-requests").queryParam("limit", "20").build())
                 .accept(MediaType.APPLICATION_JSON)
@@ -287,10 +285,10 @@ public class ConsentRequestUserJourneyTest {
                 .thenReturn(Mono.empty());
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
         load(userServer, "{}");
-        var user = "{\"preferred_username\": \"patient@ncg\"}";
+        var user = "{\"preferred_username\": \"ashok.kumar@ncg\"}";
         load(identityServer, user);
         load(identityServer, user);
-
+        load(identityServer, user);
         String linkedPatientContextsJson = "{\n" +
                 "    \"patient\": {\n" +
                 "        \"id\": \"ashok.kumar@ncg\",\n" +
@@ -317,11 +315,16 @@ public class ConsentRequestUserJourneyTest {
         String token = string();
 
         load(patientLinkServer, linkedPatientContextsJson);
-        ConsentRequestDetail consentRequestDetail = new ObjectMapper().readValue(requestedConsentJson, ConsentRequestDetail.class);
-        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED")).thenReturn(Mono.just(consentRequestDetail));
-        when(pinVerificationTokenService.validateToken(token)).thenReturn(true);
-        when(pinVerificationTokenService.usernameFrom(token)).thenReturn(Optional.of("patient@ncg"));
-        when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(any(), eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"), any(), any(), any())).thenReturn(Mono.empty());
+        var consentRequestDetail = new ObjectMapper().readValue(requestedConsentJson, ConsentRequestDetail.class);
+        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED"))
+                .thenReturn(Mono.just(consentRequestDetail));
+        when(pinVerificationTokenService.validateToken(token)).thenReturn(Mono.just(new Caller("patient@ncg", false)));
+        when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(
+                any(),
+                eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"),
+                any(),
+                any(),
+                any())).thenReturn(Mono.empty());
         when(postConsentApproval.broadcastConsentArtefacts(any())).thenReturn(Mono.empty());
         webTestClient.post()
                 .uri("/consent-requests/30d02f6d-de17-405e-b4ab-d31b2bb799d7/approve")
@@ -346,7 +349,7 @@ public class ConsentRequestUserJourneyTest {
         load(clientRegistryServer, "{}");
         load(clientRegistryServer, "{}");
         load(userServer, "{}");
-        var user = "{\"preferred_username\": \"patient@ncg\"}";
+        var user = "{\"preferred_username\": \"ashok.kumar@ncg\"}";
         load(identityServer, user);
         load(identityServer, user);
         load(identityServer, user);
@@ -378,11 +381,15 @@ public class ConsentRequestUserJourneyTest {
         String token = string();
 
         load(patientLinkServer, linkedPatientContextsJson);
-        ConsentRequestDetail consentRequestDetail = new ObjectMapper().readValue(requestedConsentJson, ConsentRequestDetail.class);
-        when(pinVerificationTokenService.validateToken(token)).thenReturn(true);
-        when(pinVerificationTokenService.usernameFrom(token)).thenReturn(Optional.of("patient@ncg"));
-        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED")).thenReturn(Mono.just(consentRequestDetail));
-        when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(any(), eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"), any(), any(), any())).thenReturn(Mono.empty());
+        var consentRequestDetail = new ObjectMapper().readValue(requestedConsentJson, ConsentRequestDetail.class);
+        when(pinVerificationTokenService.validateToken(token)).thenReturn(Mono.just(new Caller("ashok.kumar@ncg", false)));
+        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED"))
+                .thenReturn(Mono.just(consentRequestDetail));
+        when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(any(),
+                eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"),
+                any(),
+                any(),
+                any())).thenReturn(Mono.empty());
         when(postConsentApproval.broadcastConsentArtefacts(any())).thenReturn(Mono.empty());
         webTestClient.post()
                 .uri("/consent-requests/30d02f6d-de17-405e-b4ab-d31b2bb799d7/approve")

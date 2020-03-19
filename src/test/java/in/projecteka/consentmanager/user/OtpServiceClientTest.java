@@ -4,7 +4,6 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
-import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,8 +21,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.Collections;
-
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 class OtpServiceClientTest {
@@ -40,11 +38,8 @@ class OtpServiceClientTest {
     void setUp() {
         easyRandom = new EasyRandom();
         MockitoAnnotations.initMocks(this);
-
-        final OtpServiceProperties otpServiceProperties
-                = new OtpServiceProperties("localhost:8000/otpservice", Collections.emptyList());
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        otpServiceClient = new OtpServiceClient(webClientBuilder, otpServiceProperties);
+        otpServiceClient = new OtpServiceClient(webClientBuilder, "http://localhost/otpservice");
     }
 
     @Test
@@ -60,8 +55,9 @@ class OtpServiceClientTest {
                                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                                 .build()));
 
-        StepVerifier.create(otpServiceClient.send(otpRequest))
-                .verifyComplete();
+        StepVerifier.create(otpServiceClient.send(otpRequest)).verifyComplete();
+        assertThat(captor.getValue().url().getPath()).isEqualTo("/otpservice/otp");
+        assertThat(captor.getValue().url().getHost()).isEqualTo("localhost");
     }
 
     @Test
@@ -79,5 +75,7 @@ class OtpServiceClientTest {
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().is5xxServerError())
                 .verify();
+        assertThat(captor.getValue().url().getPath()).isEqualTo("/otpservice/otp");
+        assertThat(captor.getValue().url().getHost()).isEqualTo("localhost");
     }
 }

@@ -22,10 +22,6 @@ public class Authenticator {
         this.webClientBuilder.baseUrl(identityServiceProperties.getBaseUrl());
     }
 
-    public Mono<Caller> userFrom(String token) {
-        return verify(token);
-    }
-
     public Mono<Caller> verify(String token) {
         return webClientBuilder.build()
                 .get()

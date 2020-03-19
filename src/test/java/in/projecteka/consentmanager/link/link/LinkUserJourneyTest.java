@@ -57,6 +57,7 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.patientReprese
 import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static java.util.List.of;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -91,6 +92,7 @@ public class LinkUserJourneyTest {
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 
+    @SuppressWarnings("unused")
     @MockBean
     private JWKSet jwkSet;
 
@@ -264,7 +266,6 @@ public class LinkUserJourneyTest {
         var patient = "{\"preferred_username\": \"5@ncg\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(patient));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(patient));
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(patient));
 
         patientLinksResponse.getPatient().setFirstName(user.getFirstName());
         patientLinksResponse.getPatient().setLastName(user.getLastName());
@@ -272,7 +273,7 @@ public class LinkUserJourneyTest {
                 .peek(link -> link.setHip(Hip.builder().id(link.getHip().getId()).name("Max").build()))
                 .collect(Collectors.toList()));
         var patientLinksRes = new ObjectMapper().writeValueAsString(patientLinksResponse);
-        when(linkRepository.getLinkedCareContextsForAllHip(patientId)).thenReturn(Mono.just(patientLinks));
+        when(linkRepository.getLinkedCareContextsForAllHip(any())).thenReturn(Mono.just(patientLinks));
 
         webTestClient
                 .get()

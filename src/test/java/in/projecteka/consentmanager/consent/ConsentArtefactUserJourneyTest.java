@@ -42,7 +42,7 @@ import static org.mockito.Mockito.when;
 
 
 @ExtendWith(SpringExtension.class)
-@AutoConfigureWebTestClient
+@AutoConfigureWebTestClient(timeout = "36000")
 @ContextConfiguration(initializers =
         in.projecteka.consentmanager.consent.ConsentArtefactUserJourneyTest.ContextInitializer.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -76,6 +76,7 @@ public class ConsentArtefactUserJourneyTest {
     @MockBean
     private ConsentArtefactRepository consentArtefactRepository;
 
+    @SuppressWarnings("unused")
     @MockBean
     private JWKSet jwkSet;
 
@@ -92,7 +93,6 @@ public class ConsentArtefactUserJourneyTest {
         var patientId = consentArtefact.getConsentDetail().getPatient().getId();
         var consentRequestId = "request-id";
         var user = "{\"preferred_username\": \"" + patientId + "\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))
                 .thenReturn(Flux.just(consentArtefact.getConsentDetail().getConsentId()));
@@ -118,7 +118,6 @@ public class ConsentArtefactUserJourneyTest {
         var patientId = consentArtefact.getConsentDetail().getPatient().getId();
         var user = "{\"preferred_username\": \"" + patientId + "\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_NOT_FOUND, "Cannot find the " +
                 "consent artefact"));
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
@@ -142,7 +141,6 @@ public class ConsentArtefactUserJourneyTest {
     public void shouldThrowInvalidRequester() throws JsonProcessingException {
         var consentArtefact = consentArtefactRepresentation().build();
         var differentPatient = "{\"preferred_username\": \"" + string() + "\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(differentPatient));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(differentPatient));
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_FORBIDDEN,
                 "Cannot retrieve Consent artefact. Forbidden"));

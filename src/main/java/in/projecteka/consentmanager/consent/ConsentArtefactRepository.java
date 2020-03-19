@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
+import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
@@ -15,6 +16,7 @@ import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoSink;
 
 import java.time.LocalDateTime;
 import java.util.stream.StreamSupport;
@@ -33,10 +35,15 @@ public class ConsentArtefactRepository {
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
     private static final String SELECT_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
             "FROM consent_artefact WHERE consent_artefact_id = $1";
+    private static final String SELECT_CONSENT_WITH_REQUEST_QUERY = "SELECT status, consent_artefact, " +
+            "consent_request_id " +
+            "FROM consent_artefact WHERE consent_artefact_id = $1";
     private static final String SELECT_HIP_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
             "FROM hip_consent_artefact WHERE consent_artefact_id = $1";
     private static final String SELECT_CONSENT_IDS_FROM_CONSENT_ARTEFACT = "SELECT consent_artefact_id " +
             "FROM consent_artefact WHERE consent_request_id=$1";
+    private static final String UPDATE_CONSENT_ARTEFACT_STATUS_QUERY = "UPDATE consent_artefact SET status=$1, " +
+            "date_modified=$2 WHERE consent_artefact_id=$3";
     private PgPool dbClient;
 
     public Mono<Void> addConsentArtefactAndUpdateStatus(ConsentArtefact consentArtefact,
@@ -164,6 +171,60 @@ public class ConsentArtefactRepository {
                                 .map(row -> row.getString("consent_artefact_id"))
                                 .forEach(fluxSink::next);
                         fluxSink.complete();
+                    }
+                }));
+    }
+
+    public Mono<Void> updateStatus(String consentId, String consentRequestId, ConsentStatus status) {
+        return Mono.create(monoSink -> dbClient.begin(res -> {
+            if (res.succeeded()) {
+                Transaction transaction = res.result();
+                update(consentRequestId, status, monoSink, transaction, UPDATE_CONSENT_REQUEST_STATUS_QUERY);
+                update(consentId, status, monoSink, transaction, UPDATE_CONSENT_ARTEFACT_STATUS_QUERY);
+            }else {
+                monoSink.error(new RuntimeException("Error connecting to database. "));
+            }
+        }));
+    }
+
+    private void update(String id, ConsentStatus status, MonoSink<Void> monoSink, Transaction transaction,
+                        String updateStatusQuery) {
+        transaction.preparedQuery(updateStatusQuery,
+                Tuple.of(status.toString(),
+                        LocalDateTime.now(),
+                        id),
+                updateHandler -> {
+                    if (updateHandler.failed()) {
+                        transaction.close();
+                        monoSink.error(new Exception("Failed to update status"));
+                    } else {
+                        transaction.commit();
+                        monoSink.success();
+                    }
+                });
+    }
+
+    public Mono<ConsentRepresentation> getConsentWithRequest(String consentId) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_WITH_REQUEST_QUERY, Tuple.of(consentId),
+                handler -> {
+                    if (handler.failed()) {
+                        monoSink.error(new RuntimeException("Failed to retrieve CA.", handler.cause()));
+                    } else {
+                        RowSet<Row> results = handler.result();
+                        if (results.iterator().hasNext()) {
+                            Row row = results.iterator().next();
+                            JsonObject artefact = (JsonObject) row.getValue("consent_artefact");
+                            ConsentArtefact consentArtefact = artefact.mapTo(ConsentArtefact.class);
+                            ConsentRepresentation representation = ConsentRepresentation
+                                    .builder()
+                                    .status(ConsentStatus.valueOf(row.getString("status")))
+                                    .consentDetail(consentArtefact)
+                                    .consentRequestId(row.getString("consent_request_id"))
+                                    .build();
+                            monoSink.success(representation);
+                        } else {
+                            monoSink.success(null);
+                        }
                     }
                 }));
     }

@@ -4,15 +4,7 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.consent.model.ConsentArtefact;
-import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
-import in.projecteka.consentmanager.consent.model.ConsentRequest;
-import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
-import in.projecteka.consentmanager.consent.model.ConsentStatus;
-import in.projecteka.consentmanager.consent.model.GrantedContext;
-import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
-import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
-import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.*;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
@@ -294,5 +286,31 @@ public class ConsentManager {
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()))
                 .filter(consentArtefact -> !isNotSameRequester(consentArtefact.getConsentDetail(), requesterId))
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactForbidden()));
+    }
+
+    public Mono<ConsentRepresentation> getConsentRepresentation(String consentId, String requesterId) {
+        return getConsentWithRequest(consentId)
+                .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()))
+                .flatMap(r -> {
+                    if (isNotSameRequester(r.getConsentDetail(), requesterId)) {
+                        return Mono.error(ClientError.consentArtefactForbidden());
+                    }
+                    return Mono.just(r);
+                });
+    }
+
+    private Mono<ConsentRepresentation> getConsentWithRequest(String consentId) {
+        return consentArtefactRepository.getConsentWithRequest(consentId)
+                .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()));
+    }
+
+
+    public Mono<Void> revokeConsent(RevokeRequest revokeRequest, String requesterId) {
+        return Flux.fromIterable(revokeRequest.getConsents())
+                .flatMap(consentId -> getConsentRepresentation(consentId, requesterId)
+                .flatMap(consentRepresentation -> consentArtefactRepository.updateStatus(consentId,
+                        consentRepresentation.getConsentRequestId(),
+                        ConsentStatus.REVOKED)))
+                .then();
     }
 }

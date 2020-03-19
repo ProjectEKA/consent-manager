@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.ConsentNotificationClient;
+import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.consent.model.Action;
 import in.projecteka.consentmanager.consent.model.Communication;
@@ -33,7 +33,7 @@ public class ConsentRequestNotificationListener {
     private MessageListenerContainerFactory messageListenerContainerFactory;
     private DestinationsConfig destinationsConfig;
     private Jackson2JsonMessageConverter converter;
-    private ConsentNotificationClient consentNotificationClient;
+    private OtpServiceClient consentNotificationClient;
     private UserServiceClient userServiceClient;
     private ConsentServiceProperties consentServiceProperties;
 

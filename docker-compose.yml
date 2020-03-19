@@ -23,6 +23,8 @@ services:
       - KEY_CLOAK_CONSENT_CLIENT_SECRET=${SECRET}
       - KEY_CLOAK_CONSENT_USER_NAME=consent-service-admin-user
       - KEY_CLOAK_CONSENT_PASSWORD=${PASSWORD}
+      - KEY_CLOAK_JWK_URL=http://keycloak:8080/auth/realms/consent-manager/protocol/openid-connect/certs
+      - KEY_CLOAK_TOKEN_ISSUER=http://keycloak:8080/auth/realms/consent-manager
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - MAX_PAGE_SIZE=10

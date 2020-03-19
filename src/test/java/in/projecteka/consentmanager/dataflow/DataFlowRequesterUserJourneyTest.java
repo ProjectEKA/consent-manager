@@ -99,8 +99,12 @@ public class DataFlowRequesterUserJourneyTest {
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 
     @SuppressWarnings("unused")
-    @MockBean
-    private JWKSet jwkSet;
+    @MockBean(name = "centralRegistryJWKSet")
+    private JWKSet centralRegistryJWKSet;
+
+    @SuppressWarnings("unused")
+    @MockBean(name = "identityServiceJWKSet")
+    private JWKSet identityServiceJWKSet;
 
     @MockBean
     private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
@@ -134,9 +138,7 @@ public class DataFlowRequesterUserJourneyTest {
                 new MockResponse()
                         .setHeader("Content-Type", "application/json")
                         .setBody(consentArtefactRepresentationJson));
-        var user = "{\"preferred_username\": \"service-account-10000005\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller(hiuId, true)));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
@@ -176,9 +178,7 @@ public class DataFlowRequesterUserJourneyTest {
                 new MockResponse()
                         .setHeader("Content-Type", "application/json")
                         .setBody(consentArtefactRepresentationJson));
-        var user = "{\"preferred_username\": \"service-account-10000005\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller(hiuId, true)));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
@@ -212,7 +212,6 @@ public class DataFlowRequesterUserJourneyTest {
                         .setBody(consentArtefactRepresentationJson));
         var loggedInHIU = "service-account-different-hiu";
         var user = "{\"preferred_username\": \"patient\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller(loggedInHIU, true)));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
@@ -258,7 +257,6 @@ public class DataFlowRequesterUserJourneyTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(consentArtefactRepresentationJson));
         var user = "{\"preferred_username\": \"service-account-10000005\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
         when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller(hiuId, true)));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))

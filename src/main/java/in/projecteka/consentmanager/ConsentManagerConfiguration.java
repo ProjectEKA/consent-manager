@@ -169,6 +169,12 @@ public class ConsentManagerConfiguration {
         return JWKSet.load(new URL(clientRegistryProperties.getJwkUrl()));
     }
 
+    @Bean("identityServiceJWKSet")
+    public JWKSet identityServiceJWKSet(IdentityServiceProperties identityServiceProperties)
+            throws IOException, ParseException {
+        return JWKSet.load(new URL(identityServiceProperties.getJwkUrl()));
+    }
+
     @Bean
     public CentralRegistryTokenVerifier centralRegistryTokenVerifier(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
         return new CentralRegistryTokenVerifier(jwkSet);

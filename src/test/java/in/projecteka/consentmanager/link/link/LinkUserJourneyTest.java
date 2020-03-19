@@ -8,6 +8,8 @@ import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
+import in.projecteka.consentmanager.common.Authenticator;
+import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
@@ -55,9 +57,9 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReq
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkResponse;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientRepresentation;
 import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
+import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static java.util.List.of;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -92,9 +94,16 @@ public class LinkUserJourneyTest {
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 
-    @SuppressWarnings("unused")
     @MockBean
-    private JWKSet jwkSet;
+    private Authenticator authenticator;
+
+    @SuppressWarnings("unused")
+    @MockBean(name = "centralRegistryJWKSet")
+    private JWKSet centralRegistryJWKSet;
+
+    @SuppressWarnings("unused")
+    @MockBean(name = "identityServiceJWKSet")
+    private JWKSet identityServiceJWKSet;
 
     @AfterAll
     public static void tearDown() throws IOException {
@@ -111,14 +120,13 @@ public class LinkUserJourneyTest {
 
     @Test
     public void shouldGetLinkReference() throws IOException {
+        var token = string();
         var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
         var hipId = "10000005";
         var linkReference = patientLinkReferenceResponse().build();
         linkReference.setTransactionId(patientLinkReferenceRequest.getTransactionId());
         var linkReferenceJson = new ObjectMapper().writeValueAsString(linkReference);
-        var user = "{\"preferred_username\": \"user-id\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
         hipServer.enqueue(
                 new MockResponse()
                         .setHeader("Content-Type", "application/json")
@@ -131,7 +139,7 @@ public class LinkUserJourneyTest {
         webTestClient
                 .post()
                 .uri("/patients/link")
-                .header("Authorization", "MTIzNDU2Nzg5")
+                .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkReferenceRequest)
                 .accept(MediaType.APPLICATION_JSON)
@@ -144,6 +152,7 @@ public class LinkUserJourneyTest {
 
     @Test
     public void shouldGiveErrorFromHIP() throws IOException {
+        var token = string();
         var errorResponse = errorRepresentation().build();
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
         clientRegistryServer.setDispatcher(dispatcher);
@@ -154,16 +163,14 @@ public class LinkUserJourneyTest {
                         .setBody(errorResponseJson));
         var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
         var hipId = "10000005";
-        var user = "{\"preferred_username\": \"user-id\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
 
         webTestClient
                 .post()
                 .uri("/patients/link")
-                .header("Authorization", "MTIzNDU2Nzg5")
+                .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkReferenceRequest)
                 .accept(MediaType.APPLICATION_JSON)
@@ -176,11 +183,10 @@ public class LinkUserJourneyTest {
 
     @Test
     public void shouldLinkCareContexts() throws IOException {
+        var token = string();
         var linkRes = patientLinkResponse().build();
         var linkResJson = new ObjectMapper().writeValueAsString(linkRes);
-        var user = "{\"preferred_username\": \"123@ncg\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
         clientRegistryServer.setDispatcher(dispatcher);
         hipServer.enqueue(
                 new MockResponse()
@@ -200,7 +206,7 @@ public class LinkUserJourneyTest {
         webTestClient
                 .post()
                 .uri("/patients/link/link-ref-num")
-                .header("Authorization", "MTIzNDU2Nzg5")
+                .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
                 .accept(MediaType.APPLICATION_JSON)
@@ -213,6 +219,7 @@ public class LinkUserJourneyTest {
 
     @Test
     public void shouldGiveOtpExpiredError() throws IOException {
+        var token = string();
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.OTP_EXPIRED, "OTP Expired, please try again"));
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
         PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
@@ -225,14 +232,12 @@ public class LinkUserJourneyTest {
                 .thenReturn(Mono.just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
         clientRegistryServer.setDispatcher(dispatcher);
-        var user = "{\"preferred_username\": \"123@ncg\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
 
         webTestClient
                 .post()
                 .uri("/patients/link/link-ref")
-                .header("Authorization", "MTIzNDU2Nzg5")
+                .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
                 .accept(MediaType.APPLICATION_JSON)
@@ -245,6 +250,7 @@ public class LinkUserJourneyTest {
 
     @Test
     public void shouldReturnLinkedCareContexts() throws IOException {
+        var token = string();
         var patientId = "5@ncg";
         var links = Links.builder()
                 .hip(Hip.builder().id("10000004").name("").build())
@@ -263,23 +269,21 @@ public class LinkUserJourneyTest {
         var userJson = new ObjectMapper().writeValueAsString(user);
         clientRegistryServer.setDispatcher(dispatcher);
         userServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(userJson));
-        var patient = "{\"preferred_username\": \"5@ncg\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(patient));
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(patient));
-
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
         patientLinksResponse.getPatient().setFirstName(user.getFirstName());
         patientLinksResponse.getPatient().setLastName(user.getLastName());
         patientLinksResponse.getPatient().setLinks(patientLinks.getLinks().stream()
                 .peek(link -> link.setHip(Hip.builder().id(link.getHip().getId()).name("Max").build()))
                 .collect(Collectors.toList()));
         var patientLinksRes = new ObjectMapper().writeValueAsString(patientLinksResponse);
-        when(linkRepository.getLinkedCareContextsForAllHip(any())).thenReturn(Mono.just(patientLinks));
+        when(linkRepository.getLinkedCareContextsForAllHip(patientId)).thenReturn(Mono.just(patientLinks));
 
         webTestClient
                 .get()
                 .uri("/patients/links")
                 .accept(MediaType.APPLICATION_JSON)
-                .header("Authorization", patient)
+                .header("Authorization", token)
                 .exchange()
                 .expectStatus()
                 .isOk()

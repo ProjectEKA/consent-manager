@@ -2,18 +2,16 @@ package in.projecteka.consentmanager.user;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
-import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
+import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
+import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.dataflow.DataFlowRequester;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
-import org.jeasy.random.EasyRandom;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -27,6 +25,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
+import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
@@ -68,22 +67,20 @@ class UserControllerTest {
     @Autowired
     private WebTestClient webClient;
 
-    @MockBean
-    private JWKSet jwkSet;
+    @SuppressWarnings("unused")
+    @MockBean(name = "centralRegistryJWKSet")
+    private JWKSet centralRegistryJWKSet;
 
-    EasyRandom easyRandom;
-
-    @BeforeEach
-    void setUp() {
-        easyRandom = new EasyRandom();
-    }
+    @SuppressWarnings("unused")
+    @MockBean(name = "identityServiceJWKSet")
+    private JWKSet identityServiceJWKSet;
 
     @Test
     public void shouldReturnTemporarySessionIfOtpRequestIsSuccessful() {
         UserSignUpEnquiry userSignupEnquiry = new UserSignUpEnquiry(
                 "MOBILE",
-                easyRandom.nextObject(String.class));
-        when(mockService.sendOtp(any())).thenReturn(Mono.just(new SignUpSession(easyRandom.nextObject(String.class))));
+                string());
+        when(mockService.sendOtp(any())).thenReturn(Mono.just(new SignUpSession(string())));
 
         webClient.post()
                 .uri("/users/verify")
@@ -97,9 +94,9 @@ class UserControllerTest {
     @Test
     public void shouldReturnTemporarySessionIfOtpPermitRequestIsSuccessful() {
         OtpVerification otpVerification = new OtpVerification(
-                easyRandom.nextObject(String.class),
-                easyRandom.nextObject(String.class));
-        Token token = new Token(easyRandom.nextObject(String.class));
+                string(),
+                string());
+        Token token = new Token(string());
 
         when(mockService.permitOtp(any())).thenReturn(Mono.just(token));
 

@@ -1,12 +1,13 @@
 package in.projecteka.consentmanager;
 
+import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.Authenticator;
-import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.user.SignUpService;
-
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -22,7 +23,6 @@ import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -72,8 +72,9 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public Authenticator authenticator(WebClient.Builder builder, IdentityServiceProperties identityServiceProperties) {
-        return new Authenticator(builder, identityServiceProperties);
+    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet,
+                                       IdentityServiceProperties identityServiceProperties) {
+        return new Authenticator(jwkSet, identityServiceProperties.getIssuer());
     }
 
     @Bean

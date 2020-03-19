@@ -35,7 +35,7 @@ public class Authenticator {
         keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, immutableJWKSet);
         jwtProcessor.setJWSKeySelector(keySelector);
         jwtProcessor.setJWTClaimsSetVerifier(new DefaultJWTClaimsVerifier<>(
-                new JWTClaimsSet.Builder().issuer(issuer).build(),
+                new JWTClaimsSet.Builder().build(),
                 new HashSet<>(Arrays.asList("sub", "iat", "exp", "scope", "preferred_username"))));
     }
 
@@ -47,6 +47,7 @@ public class Authenticator {
                 return Mono.justOrEmpty(jwtProcessor.process(credentials, null))
                         .flatMap(jwtClaimsSet -> {
                             try {
+                                logger.error(jwtClaimsSet.getIssuer());
                                 return Mono.just(from(jwtClaimsSet.getStringClaim("preferred_username")));
                             } catch (ParseException e) {
                                 logger.error(e);

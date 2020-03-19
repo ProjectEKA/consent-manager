@@ -14,8 +14,7 @@ public class SessionController {
     private SessionService sessionService;
 
     @PostMapping("/sessions")
-    public Mono<Session> forNew(@RequestBody SessionRequest sessionRequest)
-    {
+    public Mono<Session> forNew(@RequestBody SessionRequest sessionRequest) {
         return sessionService.forNew(sessionRequest);
     }
 }

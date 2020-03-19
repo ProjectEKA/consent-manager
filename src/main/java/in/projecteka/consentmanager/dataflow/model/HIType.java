@@ -10,6 +10,7 @@ public enum HIType {
     MEDICATION_REQUEST("MedicationRequest");
 
     private final String resourceType;
+
     HIType(String value) {
         resourceType = value;
     }

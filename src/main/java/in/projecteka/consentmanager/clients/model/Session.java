@@ -14,18 +14,18 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Session {
 
-    @JsonAlias({ "access_token" })
+    @JsonAlias({"access_token"})
     private String accessToken;
 
-    @JsonAlias({ "expires_in" })
+    @JsonAlias({"expires_in"})
     private int expiresIn;
 
-    @JsonAlias({ "refresh_expires_in" })
+    @JsonAlias({"refresh_expires_in"})
     private int refreshExpiresIn;
 
-    @JsonAlias({ "refresh_token" })
+    @JsonAlias({"refresh_token"})
     private String refreshToken;
 
-    @JsonAlias({ "token_type" })
+    @JsonAlias({"token_type"})
     private String tokenType;
 }

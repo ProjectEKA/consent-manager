@@ -4,5 +4,5 @@ public enum AccessMode {
     VIEW,
     STORE,
     STREAM,
-    QUERY;
+    QUERY
 }

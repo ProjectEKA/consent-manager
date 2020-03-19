@@ -17,7 +17,7 @@ public class PostConsentApproval {
     private AmqpTemplate amqpTemplate;
     private DestinationsConfig destinationsConfig;
 
-    public Mono<Void> broadcastConsentArtefacts(ConsentArtefactsMessage message){
+    public Mono<Void> broadcastConsentArtefacts(ConsentArtefactsMessage message) {
         return Mono.create(monoSink -> {
             broadcastArtefactsToHiu(message);
             broadcastArtefactsToHips(message);

@@ -1,8 +1,8 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
-import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import lombok.AllArgsConstructor;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;

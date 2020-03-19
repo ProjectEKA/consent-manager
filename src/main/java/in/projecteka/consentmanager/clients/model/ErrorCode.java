@@ -33,6 +33,7 @@ public enum ErrorCode {
     TRANSACTION_PIN_NOT_FOUND(1023);
 
     private int value;
+
     ErrorCode(int val) {
         value = val;
     }

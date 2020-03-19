@@ -6,6 +6,7 @@ public enum CommunicationType {
     MOBILE("Mobile");
 
     private final String resourceType;
+
     CommunicationType(String value) {
         resourceType = value;
     }

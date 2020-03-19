@@ -18,14 +18,14 @@ public class Transformer {
                 .findFirst()
                 .orElse(!provider.getAddresses().isEmpty() ?
                         provider.getAddresses().get(0)
-                        : new Address("", ""));
+                                                           : new Address("", ""));
         var telecommunication = provider.getTelecoms()
                 .stream()
                 .filter(tel -> tel.getUse().equalsIgnoreCase("work"))
                 .findFirst()
                 .orElse(!provider.getTelecoms().isEmpty() ?
                         provider.getTelecoms().get(0)
-                        : new Telecom("", ""));
+                                                          : new Telecom("", ""));
         return ProviderRepresentation.builder()
                 .city(address.getCity())
                 .telephone(telecommunication.getValue())

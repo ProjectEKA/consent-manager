@@ -26,10 +26,10 @@ public class LinkedCareContexts {
     private List<HipLink> links = new ArrayList<>();
 
     @JsonProperty("patient")
-    private void setPatientLinks(Map<String,Object> patientMap) {
+    private void setPatientLinks(Map<String, Object> patientMap) {
         Object links = patientMap.get("links");
         if ((links != null) && (links instanceof List)) {
-            ((List) links).stream().forEach( link -> {
+            ((List) links).stream().forEach(link -> {
                 HipLink hipLink = null;
                 Object hipMap = ((Map) link).get("hip");
                 if (hipMap != null && hipMap instanceof Map) {

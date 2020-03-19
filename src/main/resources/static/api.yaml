@@ -927,6 +927,56 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /patients/verify-pin:
+    post:
+      tags:
+        - account
+      summary: Verify PIN
+      description: MFA before granting the consent request.
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PinVerificationRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/PinVerificationRequest'
+      responses:
+        '200':
+          description: Successful verification of PIN.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentifierVerifyResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/IdentifierVerifyResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Token is invalid
+              * PIN is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /patients:
     post:
       tags:
@@ -993,56 +1043,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /consent-requests/verify-pin:
-    post:
-      tags:
-        - consent
-      summary: Verify PIN
-      description: MFA before granting the consent request.
-      parameters:
-        - $ref: '#/components/parameters/authorization'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PinVerificationRequest'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/PinVerificationRequest'
-      responses:
-        '200':
-          description: Successful verification of PIN.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentifierVerifyResponse'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/IdentifierVerifyResponse'
-        '401':
-          description: >
-            **Causes:**
-              * Token is invalid
-              * PIN is invalid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: >
-            **Causes:**
-              * Downstream services are down
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /consents/revoke:
     post:
       tags:

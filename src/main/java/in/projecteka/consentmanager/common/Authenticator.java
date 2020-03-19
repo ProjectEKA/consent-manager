@@ -26,7 +26,7 @@ public class Authenticator {
     private final ConfigurableJWTProcessor<SecurityContext> jwtProcessor;
     private final Logger logger = Logger.getLogger(Authenticator.class);
 
-    public Authenticator(JWKSet jwkSet, String issuer) {
+    public Authenticator(JWKSet jwkSet) {
         var immutableJWKSet = new ImmutableJWKSet<>(jwkSet);
         jwtProcessor = new DefaultJWTProcessor<>();
         jwtProcessor.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(JOSEObjectType.JWT));
@@ -47,7 +47,6 @@ public class Authenticator {
                 return Mono.justOrEmpty(jwtProcessor.process(credentials, null))
                         .flatMap(jwtClaimsSet -> {
                             try {
-                                logger.error(jwtClaimsSet.getIssuer());
                                 return Mono.just(from(jwtClaimsSet.getStringClaim("preferred_username")));
                             } catch (ParseException e) {
                                 logger.error(e);

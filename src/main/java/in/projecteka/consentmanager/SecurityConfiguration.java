@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.consent.PinVerificationTokenService;
@@ -72,9 +71,8 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet,
-                                       IdentityServiceProperties identityServiceProperties) {
-        return new Authenticator(jwkSet, identityServiceProperties.getIssuer());
+    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet) {
+        return new Authenticator(jwkSet);
     }
 
     @Bean

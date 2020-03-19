@@ -45,7 +45,7 @@ public class UserConfiguration {
     @Bean
     public OtpServiceClient otpServiceClient(WebClient.Builder builder,
                                              OtpServiceProperties otpServiceProperties) {
-        return new OtpServiceClient(builder, otpServiceProperties);
+        return new OtpServiceClient(builder, otpServiceProperties.getUrl());
     }
 
     @Bean

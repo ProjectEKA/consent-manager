@@ -6,9 +6,9 @@ consentmanager:
     maxPageSize: 100
     url: http://localhost:9000
   clientregistry:
-    XAuthToken: 8e983a1719e20913be6c61e9b552e88fc6032c21e1030f1abda986d17326b2b0
-    clientId: 6
-    url: http://localhost:8080
+    XAuthToken: e178fb45-2a2f-425c-bd45-996c60910d70
+    clientId: consent-manager
+    url: http://host.docker.internal:8080
     jwkUrl: http://host.docker.internal:8080/certs
   userservice:
     url: http://localhost:9000
@@ -19,11 +19,13 @@ consentmanager:
     identifiers:
       - MOBILE
   keycloak:
-    baseUrl: http://localhost:8080/auth
+    baseUrl: http://host.docker.internal:9001/auth
     clientId: consent-service
     clientSecret: e689921b-d20a-4bd1-ada8-044ba3e7814f
     userName: consent-service-admin-user
     password: welcome
+    jwkUrl: http://host.docker.internal:9001/auth/realms/consent-manager/protocol/openid-connect/certs
+    issuer: http://host.docker.internal:9001/auth/realms/consent-manager
   jwt:
     secret: secret_salt
   db:

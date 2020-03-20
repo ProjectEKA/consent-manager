@@ -150,7 +150,7 @@ public class ConsentManagerConfiguration {
     @Bean("pinSigning")
     public KeyPair keyPair() throws NoSuchAlgorithmException {
         KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
-        keyPairGen.initialize(1024);
+        keyPairGen.initialize(2048);
         return keyPairGen.genKeyPair();
     }
 

@@ -108,9 +108,6 @@ public class SecurityConfiguration {
             if (isEmpty(token)) {
                 return Mono.empty();
             }
-//            if (token.equals("MQ==")){
-//                return Mono.empty();
-//            }
             if (isSignUpRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
                 return checkSignUp(token);
             }

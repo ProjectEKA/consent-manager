@@ -10,7 +10,7 @@ import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLight;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
-import in.projecteka.consentmanager.consent.model.response.ConsentArtefactReference;
+import in.projecteka.consentmanager.consent.model.response.ConsentReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -37,7 +37,7 @@ public class ConsentManager {
     private final ConsentRequestRepository consentRequestRepository;
     private final ConsentArtefactRepository consentArtefactRepository;
     private final KeyPair keyPair;
-    private final PostConsentApproval postConsentApproval;
+    private final ConsentNotificationPublisher consentNotificationPublisher;
     private final CentralRegistry centralRegistry;
     private final PostConsentRequest postConsentRequest;
     private final PatientServiceClient patientServiceClient;
@@ -129,25 +129,33 @@ public class ConsentManager {
                 .flatMap(consentRequest ->
                         generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)
                                 .flatMap(consents ->
-                                        broadcastConsentArtefacts(consents, consentRequest.getCallBackUrl(), requestId)
+                                        broadcastConsentArtefacts(consents,
+                                                consentRequest.getCallBackUrl(),
+                                                requestId,
+                                                ConsentStatus.GRANTED,
+                                                consentRequest.getLastUpdated())
                                                 .thenReturn(consentApprovalResponse(consents))));
     }
 
     private Mono<Void> broadcastConsentArtefacts(List<HIPConsentArtefactRepresentation> consents,
                                                  String hiuCallBackUrl,
-                                                 String requestId) {
+                                                 String requestId,
+                                                 ConsentStatus status,
+                                                 Date lastUpdated) {
         ConsentArtefactsMessage message = ConsentArtefactsMessage
                 .builder()
+                .status(status)
+                .timestamp(lastUpdated)
+                .consentRequestId(requestId)
                 .consentArtefacts(consents)
                 .hiuCallBackUrl(hiuCallBackUrl)
-                .requestId(requestId)
                 .build();
 
-        return postConsentApproval.broadcastConsentArtefacts(message);
+        return consentNotificationPublisher.broadcastConsentArtefacts(message);
     }
 
     private ConsentApprovalResponse consentApprovalResponse(List<HIPConsentArtefactRepresentation> consentArtefacts) {
-        List<ConsentArtefactReference> consents = consentArtefacts
+        List<ConsentReference> consents = consentArtefacts
                 .stream()
                 .map(this::from)
                 .collect(Collectors.toList());
@@ -155,8 +163,8 @@ public class ConsentManager {
         return ConsentApprovalResponse.builder().consents(consents).build();
     }
 
-    private ConsentArtefactReference from(HIPConsentArtefactRepresentation consent) {
-        return ConsentArtefactReference
+    private ConsentReference from(HIPConsentArtefactRepresentation consent) {
+        return ConsentReference
                 .builder()
                 .id(consent.getConsentDetail().getConsentId())
                 .status(consent.getStatus())
@@ -304,13 +312,34 @@ public class ConsentManager {
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()));
     }
 
-
-    public Mono<Void> revokeConsent(RevokeRequest revokeRequest, String requesterId) {
+    public Mono<List<HIPConsentArtefactRepresentation>> revokeConsent(RevokeRequest revokeRequest, String requesterId) {
         return Flux.fromIterable(revokeRequest.getConsents())
                 .flatMap(consentId -> getConsentRepresentation(consentId, requesterId)
-                .flatMap(consentRepresentation -> consentArtefactRepository.updateStatus(consentId,
-                        consentRepresentation.getConsentRequestId(),
-                        ConsentStatus.REVOKED)))
-                .then();
+                        .flatMap(consentRepresentation -> consentRequestRepository.requestOf(
+                                consentRepresentation.getConsentRequestId(),
+                                consentRepresentation.getStatus().toString())
+                                .flatMap(consentRequestDetail -> consentArtefactRepository.updateStatus(consentId,
+                                        consentRepresentation.getConsentRequestId(),
+                                        ConsentStatus.REVOKED)
+                                        .thenReturn(from(consentRepresentation.getConsentDetail()))
+                                )))
+                .collectList();
+    }
+
+    public Mono<Void> revokeAndBroadCastConsent(RevokeRequest revokeRequest, String requesterId) {
+        return Flux.fromIterable(revokeRequest.getConsents())
+                .flatMap(consentId -> getConsentRepresentation(consentId, requesterId)
+                        .flatMap(consentRepresentation ->
+                                consentRequestRepository.requestOf(
+                                        consentRepresentation.getConsentRequestId(),
+                                        consentRepresentation.getStatus().toString())
+                                .flatMap(consentRequestDetail -> revokeConsent(revokeRequest, requesterId)
+                                        .flatMap(hipConsentArtefactRepresentations ->
+                                                broadcastConsentArtefacts(
+                                                        hipConsentArtefactRepresentations,
+                                                        consentRequestDetail.getCallBackUrl(),
+                                                        "",
+                                                        ConsentStatus.REVOKED,
+                                                        consentRepresentation.getDateModified()))))).then();
     }
 }

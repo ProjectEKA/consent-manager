@@ -50,6 +50,6 @@ public class ConsentArtefactsController {
                                     @RequestBody RevokeRequest revokeRequest){
         return authenticator.userFrom(token)
                 .map(Caller::getUserName)
-                .flatMap(requesterId -> consentManager.revokeConsent(revokeRequest, requesterId));
+                .flatMap(requesterId -> consentManager.revokeAndBroadCastConsent(revokeRequest, requesterId));
     }
 }

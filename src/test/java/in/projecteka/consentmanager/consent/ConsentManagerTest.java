@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Provider;
@@ -43,7 +42,7 @@ class ConsentManagerTest {
     @Mock
     private UserServiceClient userClient;
     @Mock
-    private PostConsentApproval postConsentApproval;
+    private ConsentNotificationPublisher consentNotificationPublisher;
     @Mock
     private PostConsentRequest postConsentRequestNotification;
     @Mock
@@ -68,7 +67,7 @@ class ConsentManagerTest {
                 repository,
                 consentArtefactRepository,
                 keyPair,
-                postConsentApproval,
+                consentNotificationPublisher,
                 centralRegistry,
                 postConsentRequestNotification,
                 patientServiceClient);

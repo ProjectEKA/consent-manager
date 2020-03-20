@@ -80,7 +80,7 @@ public class ConsentRequestUserJourneyTest {
     private PostConsentRequest postConsentRequestNotification;
 
     @MockBean
-    private PostConsentApproval postConsentApproval;
+    private ConsentNotificationPublisher consentNotificationPublisher;
 
     @MockBean
     private PinVerificationTokenService pinVerificationTokenService;
@@ -322,7 +322,7 @@ public class ConsentRequestUserJourneyTest {
         when(pinVerificationTokenService.validateToken(token)).thenReturn(true);
         when(pinVerificationTokenService.usernameFrom(token)).thenReturn(Optional.of("patient@ncg"));
         when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(any(), eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"), any(), any(), any())).thenReturn(Mono.empty());
-        when(postConsentApproval.broadcastConsentArtefacts(any())).thenReturn(Mono.empty());
+        when(consentNotificationPublisher.broadcastConsentArtefacts(any())).thenReturn(Mono.empty());
         webTestClient.post()
                 .uri("/consent-requests/30d02f6d-de17-405e-b4ab-d31b2bb799d7/approve")
                 .accept(MediaType.APPLICATION_JSON)
@@ -383,7 +383,7 @@ public class ConsentRequestUserJourneyTest {
         when(pinVerificationTokenService.usernameFrom(token)).thenReturn(Optional.of("patient@ncg"));
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED")).thenReturn(Mono.just(consentRequestDetail));
         when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(any(), eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"), any(), any(), any())).thenReturn(Mono.empty());
-        when(postConsentApproval.broadcastConsentArtefacts(any())).thenReturn(Mono.empty());
+        when(consentNotificationPublisher.broadcastConsentArtefacts(any())).thenReturn(Mono.empty());
         webTestClient.post()
                 .uri("/consent-requests/30d02f6d-de17-405e-b4ab-d31b2bb799d7/approve")
                 .accept(MediaType.APPLICATION_JSON)

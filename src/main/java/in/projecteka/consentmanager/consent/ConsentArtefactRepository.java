@@ -36,8 +36,7 @@ public class ConsentArtefactRepository {
     private static final String SELECT_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
             "FROM consent_artefact WHERE consent_artefact_id = $1";
     private static final String SELECT_CONSENT_WITH_REQUEST_QUERY = "SELECT status, consent_artefact, " +
-            "consent_request_id " +
-            "FROM consent_artefact WHERE consent_artefact_id = $1";
+            "consent_request_id, date_modified FROM consent_artefact WHERE consent_artefact_id = $1";
     private static final String SELECT_HIP_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
             "FROM hip_consent_artefact WHERE consent_artefact_id = $1";
     private static final String SELECT_CONSENT_IDS_FROM_CONSENT_ARTEFACT = "SELECT consent_artefact_id " +

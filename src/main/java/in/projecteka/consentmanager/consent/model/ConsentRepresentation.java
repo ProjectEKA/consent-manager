@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -13,4 +15,5 @@ public class ConsentRepresentation {
     private ConsentStatus status;
     private ConsentArtefact consentDetail;
     private String consentRequestId;
+    private Date dateModified;
 }

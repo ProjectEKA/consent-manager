@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.dataflow;
 
-import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import lombok.AllArgsConstructor;

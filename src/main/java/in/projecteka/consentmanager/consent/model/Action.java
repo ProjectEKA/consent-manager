@@ -6,6 +6,7 @@ public enum Action {
     CONSENT_REQUEST_CREATED("ConsentRequestCreated");
 
     private final String resourceType;
+
     Action(String value) {
         resourceType = value;
     }

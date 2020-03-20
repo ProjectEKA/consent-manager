@@ -150,7 +150,7 @@ public class ConsentManagerConfiguration {
     @Bean("pinSigning")
     public KeyPair keyPair() throws NoSuchAlgorithmException {
         KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
-        keyPairGen.initialize(1024);
+        keyPairGen.initialize(2048);
         return keyPairGen.genKeyPair();
     }
 
@@ -167,6 +167,12 @@ public class ConsentManagerConfiguration {
     @Bean("centralRegistryJWKSet")
     public JWKSet jwkSet(ClientRegistryProperties clientRegistryProperties) throws IOException, ParseException {
         return JWKSet.load(new URL(clientRegistryProperties.getJwkUrl()));
+    }
+
+    @Bean("identityServiceJWKSet")
+    public JWKSet identityServiceJWKSet(IdentityServiceProperties identityServiceProperties)
+            throws IOException, ParseException {
+        return JWKSet.load(new URL(identityServiceProperties.getJwkUrl()));
     }
 
     @Bean

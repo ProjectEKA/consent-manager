@@ -20,4 +20,6 @@ public class IdentityServiceProperties {
     private String clientSecret;
     private String userName;
     private String password;
+    private String jwkUrl;
+    private String issuer;
 }

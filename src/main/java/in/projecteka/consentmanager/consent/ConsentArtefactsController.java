@@ -1,9 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
-import in.projecteka.consentmanager.consent.model.request.ConsentApprovalRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import lombok.AllArgsConstructor;
@@ -22,7 +20,6 @@ import reactor.core.publisher.Mono;
 public class ConsentArtefactsController {
 
     private final ConsentManager consentManager;
-    private final Authenticator authenticator;
 
     @GetMapping(value = "/consents/{consentId}")
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(@PathVariable(value = "consentId") String consentId) {
@@ -37,18 +34,18 @@ public class ConsentArtefactsController {
     }
 
     @GetMapping(value = "/consent-requests/{request-id}/consent-artefacts")
-    public Flux<ConsentArtefactRepresentation> getConsents(
-            @PathVariable(value = "request-id") String requestId,
-            @RequestHeader(value = "Authorization") String token) {
-        return authenticator.userFrom(token)
+    public Flux<ConsentArtefactRepresentation> getConsents(@PathVariable(value = "request-id") String requestId) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUserName)
                 .flatMapMany(patient -> consentManager.getConsents(requestId, patient));
     }
 
     @PostMapping(value = "/consents/revoke")
     public Mono<Void> revokeConsent(@RequestHeader(value = "Authorization") String token,
-                                    @RequestBody RevokeRequest revokeRequest){
-        return authenticator.userFrom(token)
+                                    @RequestBody RevokeRequest revokeRequest) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUserName)
                 .flatMap(requesterId -> consentManager.revokeAndBroadCastConsent(revokeRequest, requesterId));
     }

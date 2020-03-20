@@ -3,6 +3,9 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.model.Error;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.*;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
@@ -14,6 +17,7 @@ import in.projecteka.consentmanager.consent.model.response.ConsentReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -61,6 +65,9 @@ public class ConsentManager {
 
     private Mono<Boolean> validatePatient(String patientId) {
         return userServiceClient.userOf(patientId)
+                .onErrorResume(ClientError.class,
+                        clientError -> Mono.error(new ClientError(HttpStatus.BAD_REQUEST,
+                                new ErrorRepresentation(new Error(ErrorCode.USER_NOT_FOUND, "Invalid patient")))))
                 .map(Objects::nonNull);
     }
 
@@ -124,17 +131,16 @@ public class ConsentManager {
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
         return validatePatient(patientId)
-                .then(validateLinkedHips(patientId, grantedConsents))
-                .then(validateConsentRequest(requestId))
-                .flatMap(consentRequest ->
-                        generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)
+                .then(validateConsentRequest(requestId, patientId))
+                .flatMap(consentRequest -> validateLinkedHips(patientId, grantedConsents)
+                        .then(generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)
                                 .flatMap(consents ->
                                         broadcastConsentArtefacts(consents,
                                                 consentRequest.getCallBackUrl(),
                                                 requestId,
                                                 ConsentStatus.GRANTED,
                                                 consentRequest.getLastUpdated())
-                                                .thenReturn(consentApprovalResponse(consents))));
+                                                .thenReturn(consentApprovalResponse(consents)))));
     }
 
     private Mono<Void> broadcastConsentArtefacts(List<HIPConsentArtefactRepresentation> consents,
@@ -242,8 +248,8 @@ public class ConsentManager {
                 .build();
     }
 
-    private Mono<ConsentRequestDetail> validateConsentRequest(String requestId) {
-        return consentRequestRepository.requestOf(requestId, ConsentStatus.REQUESTED.toString())
+    private Mono<ConsentRequestDetail> validateConsentRequest(String requestId, String patientId) {
+        return consentRequestRepository.requestOf(requestId, ConsentStatus.REQUESTED.toString(), patientId)
                 .switchIfEmpty(Mono.error(ClientError.consentRequestNotFound()));
     }
 
@@ -317,7 +323,8 @@ public class ConsentManager {
                 .flatMap(consentId -> getConsentRepresentation(consentId, requesterId)
                         .flatMap(consentRepresentation -> consentRequestRepository.requestOf(
                                 consentRepresentation.getConsentRequestId(),
-                                consentRepresentation.getStatus().toString())
+                                consentRepresentation.getStatus().toString(),
+                                consentRepresentation.getConsentDetail().getPatient().getId())
                                 .flatMap(consentRequestDetail -> consentArtefactRepository.updateStatus(consentId,
                                         consentRepresentation.getConsentRequestId(),
                                         ConsentStatus.REVOKED)
@@ -332,7 +339,8 @@ public class ConsentManager {
                         .flatMap(consentRepresentation ->
                                 consentRequestRepository.requestOf(
                                         consentRepresentation.getConsentRequestId(),
-                                        consentRepresentation.getStatus().toString())
+                                        consentRepresentation.getStatus().toString(),
+                                        consentRepresentation.getConsentDetail().getPatient().getId())
                                 .flatMap(consentRequestDetail -> revokeConsent(revokeRequest, requesterId)
                                         .flatMap(hipConsentArtefactRepresentations ->
                                                 broadcastConsentArtefacts(

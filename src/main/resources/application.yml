@@ -26,6 +26,8 @@ consentmanager:
     clientSecret: ${KEY_CLOAK_CONSENT_CLIENT_SECRET}
     userName: ${KEY_CLOAK_CONSENT_USER_NAME}
     password: ${KEY_CLOAK_CONSENT_PASSWORD}
+    jwkUrl:  ${KEY_CLOAK_JWK_URL}
+    issuer: ${KEY_CLOAK_TOKEN_ISSUER}
   db:
     host: ${POSTGRES_HOST}
     port: 5432

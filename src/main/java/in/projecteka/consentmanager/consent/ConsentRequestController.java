@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.common.Authenticator;
+import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.consent.model.ConsentRequestValidator;
 import in.projecteka.consentmanager.consent.model.request.ConsentApprovalRequest;
 import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.consent.model.response.ConsentApprovalRespon
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -27,8 +27,6 @@ import javax.validation.Valid;
 public class ConsentRequestController {
     private final ConsentManager consentManager;
     private final ConsentServiceProperties serviceProperties;
-    private final Authenticator authenticator;
-    private final PinVerificationTokenService pinVerificationTokenService;
 
     @InitBinder("consentRequest")
     protected void initBinder(WebDataBinder binder) {
@@ -44,11 +42,11 @@ public class ConsentRequestController {
 
     @GetMapping(value = "/consent-requests")
     public Mono<ConsentRequestsRepresentation> allConsents(
-            @RequestHeader(value = "Authorization") String token,
             @RequestParam(defaultValue = "-1") int limit,
             @RequestParam(defaultValue = "0") int offset) {
         int pageSize = getPageSize(limit);
-        return authenticator.userFrom(token)
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .flatMap(caller -> consentManager.findRequestsForPatient(caller.getUserName(), pageSize, offset))
                 .map(results -> ConsentRequestsRepresentation.builder()
                         .size(results.size())
@@ -72,11 +70,11 @@ public class ConsentRequestController {
     @PostMapping(value = "/consent-requests/{request-id}/approve")
     public Mono<ConsentApprovalResponse> approveConsent(
             @PathVariable(value = "request-id") String requestId,
-            @RequestHeader(value = "Authorization") String token,
             @Valid @RequestBody ConsentApprovalRequest consentApprovalRequest) {
-        return pinVerificationTokenService.usernameFrom(token)
-                .map(username ->
-                        consentManager.approveConsent(username, requestId, consentApprovalRequest.getConsents()))
-                .orElse(Mono.error(new Throwable("Token without username being passed")));
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .map(Caller::getUserName)
+                .flatMap(username ->
+                        consentManager.approveConsent(username, requestId, consentApprovalRequest.getConsents()));
     }
 }

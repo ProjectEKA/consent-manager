@@ -110,6 +110,9 @@ public class SecurityConfiguration {
             if (isGrantConsentRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
                 return validateGrantConsentRequest(token);
             }
+            if (isRevokeConsentRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
+                return validateRevokeConsentRequest(token);
+            }
 
             if (isCentralRegistryAuthenticatedOnlyRequest(
                     exchange.getRequest().getPath().toString(),
@@ -170,12 +173,25 @@ public class SecurityConfiguration {
                     .map(SecurityContextImpl::new);
         }
 
+        private Mono<SecurityContext> validateRevokeConsentRequest(String authToken) {
+            return pinVerificationTokenService.validateToken(authToken)
+                    .map(caller -> new UsernamePasswordAuthenticationToken(
+                            caller,
+                            authToken,
+                            new ArrayList<SimpleGrantedAuthority>()))
+                    .map(SecurityContextImpl::new);
+        }
+
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
             return ("/users").equals(url) && HttpMethod.POST.equals(httpMethod);
         }
 
         private boolean isGrantConsentRequest(String url, HttpMethod httpMethod) {
             return url.matches("/consent-requests/.*/approve/?$") && HttpMethod.POST.equals(httpMethod);
+        }
+
+        private boolean isRevokeConsentRequest(String url, HttpMethod httpMethod) {
+            return url.matches("/consents/revoke/?$") && HttpMethod.POST.equals(httpMethod);
         }
     }
 

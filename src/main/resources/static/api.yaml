@@ -1908,6 +1908,19 @@ components:
           xml:
             name: verifiedIdentifiers
             wrapped: true
+          example:
+            type: "MOBILE"
+            value: "+91-9800083232"
+        unverifiedIdentifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/IdentifierReference'
+          xml:
+            name: unverifiedIdentifiers
+            wrapped: true
+          example:
+            type: "PAN"
+            value: "EEE****00J"
     IdentifierReference:
       type: object
       properties:
@@ -1915,12 +1928,11 @@ components:
           $ref: '#/components/schemas/IdentifierType'
         value:
           type: string
-          example: "+919800083232"
       xml:
         name: Identifier
     IdentifierType:
       type: string
-      enum: [MOBILE]
+      enum: [MOBILE, PAN]
     Gender:
       type: string
       enum:

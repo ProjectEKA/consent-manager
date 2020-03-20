@@ -289,6 +289,7 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldApproveConsentGrant() throws JsonProcessingException {
         var token = string();
+        String patientId = "ashok.kumar@ncg";
         var consentRequestDetail = new ObjectMapper().readValue(requestedConsentJson, ConsentRequestDetail.class);
         load(userServer, "{}");
         load(identityServer, "{}");
@@ -320,10 +321,10 @@ public class ConsentRequestUserJourneyTest {
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
-        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED"))
+        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
                 .thenReturn(Mono.just(consentRequestDetail));
         when(pinVerificationTokenService.validateToken(token))
-                .thenReturn(Mono.just(new Caller("ashok.kumar@ncg", false)));
+                .thenReturn(Mono.just(new Caller(patientId, false)));
         when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(
                 any(),
                 eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"),
@@ -385,9 +386,10 @@ public class ConsentRequestUserJourneyTest {
                 "}";
         load(patientLinkServer, linkedPatientContextsJson);
         var consentRequestDetail = new ObjectMapper().readValue(requestedConsentJson, ConsentRequestDetail.class);
+        String patientId = "ashok.kumar@ncg";
         when(pinVerificationTokenService.validateToken(token))
-                .thenReturn(Mono.just(new Caller("ashok.kumar@ncg", false)));
-        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED"))
+                .thenReturn(Mono.just(new Caller(patientId, false)));
+        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
                 .thenReturn(Mono.just(consentRequestDetail));
         when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(any(),
                 eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"),

@@ -1901,6 +1901,26 @@ components:
           $ref: '#/components/schemas/Gender'
         hasTransactionPin:
           type: boolean
+        verifiedIdentifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/IdentifierReference'
+          xml:
+            name: verifiedIdentifiers
+            wrapped: true
+    IdentifierReference:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/IdentifierType'
+        value:
+          type: string
+          example: "+919800083232"
+      xml:
+        name: Identifier
+    IdentifierType:
+      type: string
+      enum: [MOBILE]
     Gender:
       type: string
       enum:

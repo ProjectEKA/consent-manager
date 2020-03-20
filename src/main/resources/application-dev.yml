@@ -6,10 +6,10 @@ consentmanager:
     maxPageSize: 100
     url: http://localhost:9000
   clientregistry:
-    XAuthToken: 2ee87792-691d-44ba-bc13-9e1635861a51
-    clientId: consent-service
-    url: http://localhost:8080
-    jwkUrl: http://localhost:8080/certs
+    XAuthToken: e178fb45-2a2f-425c-bd45-996c60910d70
+    clientId: consent-manager
+    url: http://host.docker.internal:8080
+    jwkUrl: http://host.docker.internal:8080/certs
   userservice:
     url: http://localhost:9000
     transactionPinDigitSize: 4
@@ -19,10 +19,10 @@ consentmanager:
     identifiers:
       - MOBILE
   keycloak:
-    baseUrl: http://identity-dev.projecteka.in/auth
+    baseUrl: http://host.docker.internal:9001/auth
     clientId: consent-service
-    clientSecret: 2ee87792-691d-44ba-bc13-9e1635861a51
-    userName: service-account-consent-service
+    clientSecret: e689921b-d20a-4bd1-ada8-044ba3e7814f
+    userName: consent-service-admin-user
     password: welcome
     jwkUrl: http://host.docker.internal:9001/auth/realms/consent-manager/protocol/openid-connect/certs
     issuer: http://host.docker.internal:9001/auth/realms/consent-manager

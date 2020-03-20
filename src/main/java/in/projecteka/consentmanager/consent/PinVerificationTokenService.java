@@ -43,7 +43,6 @@ public class PinVerificationTokenService {
     }
 
     private Jws<Claims> from(String authToken) {
-        String token = authToken.replaceAll("Bearer ", "");
-        return Jwts.parser().setSigningKey(publicKey).parseClaimsJws(token);
+        return Jwts.parser().setSigningKey(publicKey).parseClaimsJws(authToken);
     }
 }

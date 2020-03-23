@@ -55,7 +55,7 @@ public class DataFlowConfiguration {
     }
 
     @Bean
-    public DataRequestNotifier dataFlowClient(WebClient.Builder builder) {
-        return new DataRequestNotifier(builder);
+    public DataRequestNotifier dataFlowClient(WebClient.Builder builder, CentralRegistry centralRegistry) {
+        return new DataRequestNotifier(builder, centralRegistry::authenticate);
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
@@ -44,7 +45,7 @@ import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactR
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 @AutoConfigureWebTestClient
@@ -102,6 +103,40 @@ public class ConsentArtefactUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean(name = "identityServiceJWKSet")
     private JWKSet identityServiceJWKSet;
+    public static final String REVOKE_CONSENT_JSON = "{\n" +
+            "  \"status\": \"GRANTED\",\n" +
+            "  \"consentDetail\": {\n" +
+            "    \"consentId\": \"10000005\",\n" +
+            "    \"createdAt\": \"2020-03-14T10:51:05.466+0000\",\n" +
+            "    \"purpose\": {\n" +
+            "      \"text\": \"EPISODE_OF_CARE\",\n" +
+            "      \"code\": \"EpisodeOfCare\",\n" +
+            "      \"refUri\": null\n" +
+            "    },\n" +
+            "    \"patient\": {\n" +
+            "      \"id\": \"ashok.kumar@ncg\"\n" +
+            "    },\n" +
+            "    \"hip\": null,\n" +
+            "    \"hiu\": {\n" +
+            "      \"id\": \"10000005\",\n" +
+            "      \"name\": \"Max Health Care\"\n" +
+            "    },\n" +
+            "    \"requester\": {\n" +
+            "      \"name\": \"Dr. Lakshmi\",\n" +
+            "      \"identifier\": null\n" +
+            "    },\n" +
+            "    \"hiTypes\": [\"Observation\"],\n" +
+            "    \"permission\": null,\n" +
+            "    \"careContexts\": [\n" +
+            "        {\n" +
+            "          \"patientReference\": \"ashokkumar@max\",\n" +
+            "          \"careContextReference\": \"ashokkumar.opdcontext\"\n" +
+            "        }      \n" +
+            "      ]\n" +
+            "  },\n" +
+            "  \"consentRequestId\": \"30d02f6d-de17-405e-b4ab-d31b2bb799d7\",\n" +
+            "  \"dateModified\": \"\"\n" +
+            "}";
 
     @AfterAll
     public static void tearDown() throws IOException {
@@ -176,42 +211,8 @@ public class ConsentArtefactUserJourneyTest {
                 "            \"lastUpdated\": \"2020-03-14T12:00:52.091+0000\",\n" +
                 "            \"id\": \"30d02f6d-de17-405e-b4ab-d31b2bb799d7\"\n" +
                 "        }";
-        var revokeConsentJson = "{\n" +
-                "  \"status\": \"GRANTED\",\n" +
-                "  \"consentDetail\": {\n" +
-                "    \"consentId\": \"10000005\",\n" +
-                "    \"createdAt\": \"2020-03-14T10:51:05.466+0000\",\n" +
-                "    \"purpose\": {\n" +
-                "      \"text\": \"EPISODE_OF_CARE\",\n" +
-                "      \"code\": \"EpisodeOfCare\",\n" +
-                "      \"refUri\": null\n" +
-                "    },\n" +
-                "    \"patient\": {\n" +
-                "      \"id\": \"ashok.kumar@ncg\"\n" +
-                "    },\n" +
-                "    \"hip\": null,\n" +
-                "    \"hiu\": {\n" +
-                "      \"id\": \"10000005\",\n" +
-                "      \"name\": \"Max Health Care\"\n" +
-                "    },\n" +
-                "    \"requester\": {\n" +
-                "      \"name\": \"Dr. Lakshmi\",\n" +
-                "      \"identifier\": null\n" +
-                "    },\n" +
-                "    \"hiTypes\": [\"Observation\"],\n" +
-                "    \"permission\": null,\n" +
-                "    \"careContexts\": [\n" +
-                "        {\n" +
-                "          \"patientReference\": \"ashokkumar@max\",\n" +
-                "          \"careContextReference\": \"ashokkumar.opdcontext\"\n" +
-                "        }      \n" +
-                "      ]\n" +
-                "  },\n" +
-                "  \"consentRequestId\": \"30d02f6d-de17-405e-b4ab-d31b2bb799d7\",\n" +
-                "  \"dateModified\": \"\"\n" +
-                "}";
         var token = string();
-        var consentRepresentation = new ObjectMapper().readValue(revokeConsentJson, ConsentRepresentation.class);
+        var consentRepresentation = new ObjectMapper().readValue(REVOKE_CONSENT_JSON, ConsentRepresentation.class);
         var consentRequestDetail = new ObjectMapper().readValue(requestedConsentJson, ConsentRequestDetail.class);
         String patientId = consentRepresentation.getConsentDetail().getPatient().getId();
         String consentId = "10000005";
@@ -239,6 +240,35 @@ public class ConsentArtefactUserJourneyTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(RevokeRequest.class);
+    }
+
+    @Test
+    public void shouldNotRevokeConsentArtefactWhenTheRequestisNotInGrantedState() throws JsonProcessingException {
+        var token = string();
+        var consentRepresentation = new ObjectMapper().readValue(REVOKE_CONSENT_JSON, ConsentRepresentation.class);
+        String patientId = consentRepresentation.getConsentDetail().getPatient().getId();
+        String consentId = "10000005";
+        String requestBody = "{\"consents\": [\"10000005\"]}";
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user", false)));
+        when(pinVerificationTokenService.validateToken(token))
+                .thenReturn(Mono.just(new Caller(patientId, false)));
+        when(consentArtefactRepository.getConsentWithRequest(eq(consentId)))
+                .thenReturn(Mono.just(consentRepresentation));
+        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", ConsentStatus.GRANTED.toString(), patientId))
+                .thenReturn(Mono.error(ClientError.consentArtefactNotFound()));
+
+        webTestClient.post()
+                .uri(uriBuilder -> uriBuilder.path("/consents/revoke").build())
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", token)
+                .body(BodyInserters.fromValue(requestBody))
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody(in.projecteka.consentmanager.clients.model.Error.class);
+        verify(consentArtefactRepository, times(0)).updateStatus(any(), any(), any());
+        verifyNoInteractions(consentNotificationPublisher);
     }
 
     @Test

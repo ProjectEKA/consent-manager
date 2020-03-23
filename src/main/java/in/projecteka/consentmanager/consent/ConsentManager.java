@@ -339,7 +339,7 @@ public class ConsentManager {
                         .flatMap(consentRepresentation ->
                                 consentRequestRepository.requestOf(
                                         consentRepresentation.getConsentRequestId(),
-                                        consentRepresentation.getStatus().toString(),
+                                        ConsentStatus.GRANTED.toString(),
                                         consentRepresentation.getConsentDetail().getPatient().getId())
                                 .flatMap(consentRequestDetail -> revokeConsent(revokeRequest, requesterId)
                                         .flatMap(hipConsentArtefactRepresentations ->

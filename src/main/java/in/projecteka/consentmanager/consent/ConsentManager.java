@@ -305,11 +305,11 @@ public class ConsentManager {
     public Mono<ConsentRepresentation> getConsentRepresentation(String consentId, String requesterId) {
         return getConsentWithRequest(consentId)
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()))
-                .flatMap(r -> {
-                    if (isNotSameRequester(r.getConsentDetail(), requesterId)) {
+                .flatMap(consentRepresentation -> {
+                    if (isNotSameRequester(consentRepresentation.getConsentDetail(), requesterId)) {
                         return Mono.error(ClientError.consentArtefactForbidden());
                     }
-                    return Mono.just(r);
+                    return Mono.just(consentRepresentation);
                 });
     }
 

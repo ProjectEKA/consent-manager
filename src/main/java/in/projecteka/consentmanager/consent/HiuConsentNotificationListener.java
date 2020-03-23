@@ -72,7 +72,8 @@ public class HiuConsentNotificationListener {
         return HIUNotificationRequest
                 .builder()
                 .status(consentArtefactsMessage.getStatus())
-                .consents(consentArtefactReferences)
+                .timestamp(consentArtefactsMessage.getTimestamp())
+                .consentArtefacts(consentArtefactReferences)
                 .consentRequestId(consentArtefactsMessage.getConsentRequestId())
                 .build();
     }

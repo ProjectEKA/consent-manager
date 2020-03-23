@@ -19,5 +19,5 @@ public class HIUNotificationRequest {
     private ConsentStatus status;
     private Date timestamp;
     private String consentRequestId;
-    private List<ConsentArtefactReference> consents;
+    private List<ConsentArtefactReference> consentArtefacts;
 }

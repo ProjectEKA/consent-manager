@@ -1,9 +1,13 @@
 package in.projecteka.consentmanager.user;
 
+import in.projecteka.consentmanager.user.model.Identifier;
+import in.projecteka.consentmanager.user.model.IdentifierType;
 import in.projecteka.consentmanager.user.model.Profile;
 import in.projecteka.consentmanager.user.model.User;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
+
+import static java.util.Collections.singletonList;
 
 @AllArgsConstructor
 public class ProfileService {
@@ -23,6 +27,7 @@ public class ProfileService {
                 .lastName(user.getLastName())
                 .gender(user.getGender())
                 .hasTransactionPin(hasTransactionPin)
+                .verifiedIdentifiers(singletonList(new Identifier(IdentifierType.MOBILE, user.getPhone())))
                 .build();
     }
 }

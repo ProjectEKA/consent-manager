@@ -186,7 +186,7 @@ public class ConsentManager {
                 .collectList();
     }
 
-    private HIPConsentArtefactRepresentation from(ConsentArtefact consentArtefact) {
+    private HIPConsentArtefactRepresentation from(ConsentArtefact consentArtefact, ConsentStatus status) {
         HIPConsentArtefact hipConsentArtefact = HIPConsentArtefact.builder()
                 .consentId(consentArtefact.getConsentId())
                 .createdAt(consentArtefact.getCreatedAt())
@@ -203,7 +203,7 @@ public class ConsentManager {
                 .builder()
                 .consentDetail(hipConsentArtefact)
                 .signature(signature)
-                .status(ConsentStatus.GRANTED)
+                .status(status)
                 .build();
     }
 
@@ -212,7 +212,7 @@ public class ConsentManager {
                                                                         ConsentRequestDetail consentRequest,
                                                                         GrantedConsent grantedConsent) {
         var consentArtefact = from(consentRequest, grantedConsent);
-        var hipConsentArtefact = from(consentArtefact);
+        var hipConsentArtefact = from(consentArtefact, ConsentStatus.GRANTED);
         var consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
         return consentArtefactRepository.addConsentArtefactAndUpdateStatus(consentArtefact,
                 requestId,
@@ -328,7 +328,7 @@ public class ConsentManager {
                                 .flatMap(consentRequestDetail -> consentArtefactRepository.updateStatus(consentId,
                                         consentRepresentation.getConsentRequestId(),
                                         ConsentStatus.REVOKED)
-                                        .thenReturn(from(consentRepresentation.getConsentDetail()))
+                                        .thenReturn(from(consentRepresentation.getConsentDetail(), ConsentStatus.REVOKED))
                                 )))
                 .collectList();
     }

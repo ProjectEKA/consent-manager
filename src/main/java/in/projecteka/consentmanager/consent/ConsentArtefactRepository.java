@@ -19,6 +19,8 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.stream.StreamSupport;
 
 @AllArgsConstructor
@@ -219,6 +221,7 @@ public class ConsentArtefactRepository {
                                     .status(ConsentStatus.valueOf(row.getString("status")))
                                     .consentDetail(consentArtefact)
                                     .consentRequestId(row.getString("consent_request_id"))
+                                    .dateModified(convertToDate(row.getLocalDateTime("date_modified")))
                                     .build();
                             monoSink.success(representation);
                         } else {
@@ -226,5 +229,12 @@ public class ConsentArtefactRepository {
                         }
                     }
                 }));
+    }
+
+    private Date convertToDate(LocalDateTime timestamp) {
+        if (timestamp != null) {
+            return Date.from(timestamp.atZone(ZoneId.systemDefault()).toInstant());
+        }
+        return null;
     }
 }

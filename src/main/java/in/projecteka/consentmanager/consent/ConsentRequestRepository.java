@@ -28,6 +28,8 @@ public class ConsentRequestRepository {
     private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT = "SELECT request_id, status, details, " +
             "date_created, date_modified FROM consent_request where patient_id=$1 LIMIT $2 OFFSET $3";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
+    private static final String CONSENT_REQUEST_NOT_FOUND = "Consent request with given id, status and patientId not " +
+            "found";
     private PgPool dbClient;
 
     public ConsentRequestRepository(PgPool dbClient) {
@@ -76,7 +78,7 @@ public class ConsentRequestRepository {
                 Tuple.of(requestId, status, patientId),
                 handler -> {
                     if (handler.failed()) {
-                        monoSink.error(new RuntimeException(handler.cause().getMessage()));
+                        monoSink.error(new RuntimeException(CONSENT_REQUEST_NOT_FOUND));
                         return;
                     }
                     RowSet<Row> results = handler.result();

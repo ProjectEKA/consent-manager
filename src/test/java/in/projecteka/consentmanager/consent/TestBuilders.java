@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
+import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import org.jeasy.random.EasyRandom;
@@ -14,6 +15,10 @@ public class TestBuilders {
 
     public static ConsentRepresentation.ConsentRepresentationBuilder consentRepresentation() {
         return easyRandom.nextObject(ConsentRepresentation.ConsentRepresentationBuilder.class);
+    }
+
+    public static ConsentRequestDetail.ConsentRequestDetailBuilder consentRequestDetail() {
+        return easyRandom.nextObject(ConsentRequestDetail.ConsentRequestDetailBuilder.class);
     }
 
     public static Notification.NotificationBuilder notificationMessage() {

@@ -15,6 +15,7 @@ import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
+import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import in.projecteka.consentmanager.dataflow.model.HIDataRange;
@@ -244,6 +245,7 @@ public class DataFlowRequesterUserJourneyTest {
                         .fromDate(toDate("2020-01-15T08:47:48Z"))
                         .toDate(toDate("2020-01-29T08:47:48Z"))
                         .build());
+        consentArtefactRepresentation.setStatus(ConsentStatus.GRANTED);
         consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
         var consentExpiryDate = new Date();
         consentExpiryDate.setTime(consentExpiryDate.getTime() + 9000000);
@@ -272,6 +274,46 @@ public class DataFlowRequesterUserJourneyTest {
                 .exchange()
                 .expectStatus()
                 .isUnauthorized()
+                .expectBody()
+                .json(errorResponseJson);
+    }
+
+    @Test
+    public void shouldThrowConsentNotGranted() throws IOException, ParseException {
+        String token = string();
+        var hiuId = "10000005";
+        var dataFlowRequest = dataFlowRequest().build();
+        dataFlowRequest.setHiDataRange(HIDataRange.builder().from(toDate("2020-01-14T08:47:48Z")).to(toDate("2020" +
+                "-01-20T08:47:48Z")).build());
+        var consentArtefactRepresentation = consentArtefactRepresentation().build();
+        consentArtefactRepresentation.setStatus(ConsentStatus.REVOKED);
+        consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
+        var consentExpiryDate = new Date();
+        consentExpiryDate.setTime(consentExpiryDate.getTime() + 9000000);
+        consentArtefactRepresentation.getConsentDetail().getPermission().setDataExpiryAt(consentExpiryDate);
+        var consentArtefactRepresentationJson = new ObjectMapper().writeValueAsString(consentArtefactRepresentation);
+        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_NOT_GRANTED, "Not a granted consent."));
+        var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
+        consentManagerServer.enqueue(
+                new MockResponse()
+                        .setHeader("Content-Type", "application/json")
+                        .setBody(consentArtefactRepresentationJson));
+        var user = "{\"preferred_username\": \"service-account-10000005\"}";
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller(hiuId, true)));
+        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
+                .thenReturn(Mono.empty());
+
+        webTestClient
+                .post()
+                .uri("/health-information/request")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(dataFlowRequest)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isForbidden()
                 .expectBody()
                 .json(errorResponseJson);
     }

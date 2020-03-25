@@ -45,6 +45,8 @@ public class ConsentArtefactRepository {
             "FROM consent_artefact WHERE consent_request_id=$1";
     private static final String UPDATE_CONSENT_ARTEFACT_STATUS_QUERY = "UPDATE consent_artefact SET status=$1, " +
             "date_modified=$2 WHERE consent_artefact_id=$3";
+    private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
+
     private PgPool dbClient;
 
     public Mono<Void> addConsentArtefactAndUpdateStatus(ConsentArtefact consentArtefact,
@@ -115,7 +117,7 @@ public class ConsentArtefactRepository {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_QUERY, Tuple.of(consentId),
                 handler -> {
                     if (handler.failed()) {
-                        monoSink.error(new RuntimeException("Failed to retrieve CA.", handler.cause()));
+                        monoSink.error(new RuntimeException(FAILED_TO_RETRIEVE_CA, handler.cause()));
                     } else {
                         RowSet<Row> results = handler.result();
                         if (results.iterator().hasNext()) {
@@ -140,7 +142,7 @@ public class ConsentArtefactRepository {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_HIP_CONSENT_QUERY, Tuple.of(consentId),
                 handler -> {
                     if (handler.failed()) {
-                        monoSink.error(new RuntimeException("Failed to retrieve CA.", handler.cause()));
+                        monoSink.error(new RuntimeException(FAILED_TO_RETRIEVE_CA, handler.cause()));
                     } else {
                         RowSet<Row> results = handler.result();
                         if (results.iterator().hasNext()) {
@@ -209,7 +211,7 @@ public class ConsentArtefactRepository {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_WITH_REQUEST_QUERY, Tuple.of(consentId),
                 handler -> {
                     if (handler.failed()) {
-                        monoSink.error(new RuntimeException("Failed to retrieve CA.", handler.cause()));
+                        monoSink.error(new RuntimeException(FAILED_TO_RETRIEVE_CA, handler.cause()));
                     } else {
                         RowSet<Row> results = handler.result();
                         if (results.iterator().hasNext()) {

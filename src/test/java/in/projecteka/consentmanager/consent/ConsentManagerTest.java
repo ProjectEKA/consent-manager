@@ -8,7 +8,14 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.consent.model.*;
+import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
+import in.projecteka.consentmanager.consent.model.ConsentRequest;
+import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.HIPReference;
+import in.projecteka.consentmanager.consent.model.HIUReference;
+import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,8 +29,11 @@ import reactor.test.StepVerifier;
 
 import java.security.KeyPair;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
+import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -46,11 +56,6 @@ class ConsentManagerTest {
     private PostConsentRequest postConsentRequestNotification;
     @Mock
     private PatientServiceClient patientServiceClient;
-    @Mock
-    private ConsentRepresentation consentRepresentation;
-    @Mock
-    private ConsentRequestRepository consentRequestRepository;
-
 
     @SuppressWarnings("unused")
     @MockBean
@@ -122,73 +127,28 @@ class ConsentManagerTest {
 
     @Test
     public void revokeAndBroadCastConsent() {
-        PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
-        HIUReference hiuRef = HIUReference.builder()
-                .id("chethan@ncg")
-                .build();
-        ConsentArtefact cArtefact = ConsentArtefact.builder()
-                .hiu(hiuRef)
-                .patient(patient)
-                .consentId("10000005")
-                .build();
-        ConsentRepresentation consentRepresentation = ConsentRepresentation.builder()
-                .consentRequestId("111")
-                .consentDetail(cArtefact)
-                .status(ConsentStatus.GRANTED)
-                .build();
-
-        ConsentRequestDetail consentRequestDetail = ConsentRequestDetail.builder()
-                .requestId("111")
-                .status(ConsentStatus.GRANTED)
-                .patient(patient)
-                .hiu(hiuRef)
-                .build();
-        ArrayList<String> consents = new ArrayList<String>();
-        consents.add("10000005");
-        RevokeRequest revokeRequest = RevokeRequest.builder().consents(consents).build();
+        ConsentRepresentation consentRepresentation = consentRepresentation().build();
+        consentRepresentation.setStatus(ConsentStatus.GRANTED);
+        ConsentRequestDetail consentRequestDetail = consentRequestDetail().build();
+        consentRequestDetail.setStatus(ConsentStatus.GRANTED);
+        String consentRequestId = consentRepresentation.getConsentRequestId();
+        consentRequestDetail.setRequestId(consentRequestId);
+        List<String> consentIds = new ArrayList<>();
+        String consentId = consentRepresentation.getConsentDetail().getConsentId();
+        consentIds.add(consentRepresentation.getConsentDetail().getConsentId());
+        RevokeRequest revokeRequest = RevokeRequest.builder().consents(consentIds).build();
+        String patientId = consentRepresentation.getConsentDetail().getPatient().getId();
 
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
-        when(consentArtefactRepository.getConsentWithRequest("10000005")).thenReturn(Mono.just(consentRepresentation));
-        when(repository.requestOf(eq("111"), eq(ConsentStatus.GRANTED.toString()), eq("chethan@ncg"))).thenReturn(Mono.just(consentRequestDetail));
-        when(consentArtefactRepository.updateStatus("10000005", "111", ConsentStatus.REVOKED)).thenReturn(Mono.empty());
+        when(consentArtefactRepository.getConsentWithRequest(consentId)).thenReturn(Mono.just(consentRepresentation));
+        when(repository.requestOf(consentRequestId, ConsentStatus.GRANTED.toString(), patientId)).thenReturn(Mono.just(consentRequestDetail));
+        when(consentArtefactRepository.updateStatus(consentId, consentRequestId, ConsentStatus.REVOKED)).thenReturn(Mono.empty());
         when(consentNotificationPublisher.broadcastConsentArtefacts(any())).thenReturn(Mono.empty());
 
-        StepVerifier.create(consentManager.revokeAndBroadCastConsent(revokeRequest, "chethan@ncg")
+        StepVerifier.create(consentManager.revokeAndBroadCastConsent(revokeRequest, patientId)
                 .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
                 .verifyComplete();
     }
 
-    @Test
-    public void revokeAndBroadCastConsentWithIncorrectConsentStatus() {
-        PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
-        HIUReference hiuRef = HIUReference.builder()
-                .id("chethan@ncg")
-                .build();
-        ConsentArtefact cArtefact = ConsentArtefact.builder()
-                .hiu(hiuRef)
-                .patient(patient)
-                .consentId("10000005")
-                .build();
-        ConsentRepresentation consentRepresentation = ConsentRepresentation.builder()
-                .consentRequestId("111")
-                .consentDetail(cArtefact)
-                .status(ConsentStatus.REQUESTED)
-                .build();
-
-        ArrayList<String> consents = new ArrayList<String>();
-        consents.add("10000005");
-        RevokeRequest revokeRequest = RevokeRequest.builder().consents(consents).build();
-
-        when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
-        when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
-        when(consentArtefactRepository.getConsentWithRequest("10000005")).thenReturn(Mono.just(consentRepresentation));
-        when(repository.requestOf(eq("111"), eq(ConsentStatus.GRANTED.toString()), eq("chethan@ncg"))).thenReturn(Mono.error(ClientError.consentArtefactForbidden()));
-
-        StepVerifier.create(consentManager.revokeAndBroadCastConsent(revokeRequest, "chethan@ncg")
-                .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
-                .expectErrorMatches(e -> (e instanceof ClientError) &&
-                        ((ClientError) e).getHttpStatus().is4xxClientError())
-                .verify();
-    }
 }

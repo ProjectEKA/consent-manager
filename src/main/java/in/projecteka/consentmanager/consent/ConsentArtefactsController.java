@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -42,8 +41,7 @@ public class ConsentArtefactsController {
     }
 
     @PostMapping(value = "/consents/revoke")
-    public Mono<Void> revokeConsent(@RequestHeader(value = "Authorization") String token,
-                                    @RequestBody RevokeRequest revokeRequest) {
+    public Mono<Void> revokeConsent(@RequestBody RevokeRequest revokeRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUserName)

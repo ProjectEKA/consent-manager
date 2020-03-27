@@ -4,7 +4,6 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.user.model.TransactionPin;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowIterator;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
@@ -40,7 +39,7 @@ public class TransactionPinRepository {
                         return;
                     }
                     var transactionPinIterator = handler.result().iterator();
-                    if (transactionPinIterator.hasNext()){
+                    if (transactionPinIterator.hasNext()) {
                         monoSink.success(transactionPinFrom(transactionPinIterator.next()));
                     }
                     monoSink.success(Optional.empty());

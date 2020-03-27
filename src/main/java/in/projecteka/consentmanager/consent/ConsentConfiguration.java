@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
-import in.projecteka.consentmanager.clients.ConsentNotificationClient;
+import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
@@ -84,8 +84,8 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    public ConsentArtefactNotifier consentArtefactClient(WebClient.Builder builder) {
-        return new ConsentArtefactNotifier(builder);
+    public ConsentArtefactNotifier consentArtefactClient(WebClient.Builder builder, CentralRegistry centralRegistry) {
+        return new ConsentArtefactNotifier(builder, centralRegistry::authenticate);
     }
 
     @Bean
@@ -130,7 +130,7 @@ public class ConsentConfiguration {
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
-                new ConsentNotificationClient(otpServiceProperties, builder),
+                new OtpServiceClient(builder, otpServiceProperties.getUrl()),
                 new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate),
                 consentServiceProperties);
     }

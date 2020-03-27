@@ -1,12 +1,12 @@
 package in.projecteka.consentmanager;
 
-import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
+import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.common.Authenticator;
-import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.user.SignUpService;
-
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -22,7 +22,6 @@ import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -72,18 +71,16 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public Authenticator authenticator(WebClient.Builder builder, IdentityServiceProperties identityServiceProperties) {
-        return new Authenticator(builder, identityServiceProperties);
+    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet) {
+        return new Authenticator(jwkSet);
     }
 
     @Bean
-    public SecurityContextRepository contextRepository(ReactiveAuthenticationManager manager,
-                                                       SignUpService signupService,
+    public SecurityContextRepository contextRepository(SignUpService signupService,
                                                        Authenticator authenticator,
                                                        PinVerificationTokenService pinVerificationTokenService,
                                                        CentralRegistryTokenVerifier centralRegistryTokenVerifier) {
-        return new SecurityContextRepository(manager,
-                signupService,
+        return new SecurityContextRepository(signupService,
                 authenticator,
                 pinVerificationTokenService,
                 centralRegistryTokenVerifier);
@@ -91,7 +88,6 @@ public class SecurityConfiguration {
 
     @AllArgsConstructor
     private static class SecurityContextRepository implements ServerSecurityContextRepository {
-        private ReactiveAuthenticationManager manager;
         private SignUpService signupService;
         private Authenticator identityServiceClient;
         private PinVerificationTokenService pinVerificationTokenService;
@@ -132,7 +128,6 @@ public class SecurityConfiguration {
                                     caller,
                                     token,
                                     new ArrayList<SimpleGrantedAuthority>()))
-                    .flatMap(authToken -> manager.authenticate(authToken))
                     .map(SecurityContextImpl::new);
         }
 
@@ -145,13 +140,11 @@ public class SecurityConfiguration {
 
         private Mono<SecurityContext> check(String authToken) {
             return identityServiceClient.verify(authToken)
-                    .flatMap(doesNotMatter -> {
-                        var token = new UsernamePasswordAuthenticationToken(
-                                authToken,
-                                authToken,
-                                new ArrayList<SimpleGrantedAuthority>());
-                        return manager.authenticate(token).map(SecurityContextImpl::new);
-                    });
+                    .map(caller -> new UsernamePasswordAuthenticationToken(
+                            caller,
+                            authToken,
+                            new ArrayList<SimpleGrantedAuthority>()))
+                    .map(SecurityContextImpl::new);
         }
 
         private boolean isEmpty(String authToken) {
@@ -170,13 +163,11 @@ public class SecurityConfiguration {
         }
 
         private Mono<SecurityContext> validateGrantConsentRequest(String authToken) {
-            if (!pinVerificationTokenService.validateToken(authToken)) {
-                return Mono.empty();
-            }
-            return Mono.just(new UsernamePasswordAuthenticationToken(
-                    authToken,
-                    authToken,
-                    new ArrayList<SimpleGrantedAuthority>()))
+            return pinVerificationTokenService.validateToken(authToken)
+                    .map(caller -> new UsernamePasswordAuthenticationToken(
+                            caller,
+                            authToken,
+                            new ArrayList<SimpleGrantedAuthority>()))
                     .map(SecurityContextImpl::new);
         }
 

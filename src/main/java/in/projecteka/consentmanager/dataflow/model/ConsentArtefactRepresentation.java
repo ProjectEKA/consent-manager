@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @Builder
 public class ConsentArtefactRepresentation {
-   private ConsentStatus status;
-   private ConsentArtefact consentDetail;
-   private String signature;
+    private ConsentStatus status;
+    private ConsentArtefact consentDetail;
+    private String signature;
 }

@@ -41,8 +41,8 @@ public class TransactionPinService {
     private Mono<Void> validateTransactionPin(String patientId) {
         return isTransactionPinSet(patientId)
                 .flatMap(hasTransactionPin -> hasTransactionPin
-                        ? Mono.error(ClientError.transactionPinAlreadyCreated())
-                        : Mono.empty());
+                                              ? Mono.error(ClientError.transactionPinAlreadyCreated())
+                                              : Mono.empty());
     }
 
     public Mono<Boolean> isTransactionPinSet(String patientId) {
@@ -52,11 +52,11 @@ public class TransactionPinService {
     public Mono<Token> validatePinFor(String patientId, String pin) {
         return transactionPinRepository.getTransactionPinFor(patientId)
                 .flatMap(transactionPin -> {
-                    if (transactionPin.isEmpty()){
+                    if (transactionPin.isEmpty()) {
                         return Mono.error(ClientError.transactionPinNotFound());
                     }
 
-                    if(!encoder.matches(pin, transactionPin.get().getPin())) {
+                    if (!encoder.matches(pin, transactionPin.get().getPin())) {
                         return Mono.error(ClientError.transactionPinDidNotMatch());
                     }
 

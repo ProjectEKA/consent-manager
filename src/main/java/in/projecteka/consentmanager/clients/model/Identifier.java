@@ -13,8 +13,9 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Identifier {
     public enum IdentifierType {
-        OFFICIAL;
+        OFFICIAL
     }
+
     private String system;
     private String value;
     private String use;

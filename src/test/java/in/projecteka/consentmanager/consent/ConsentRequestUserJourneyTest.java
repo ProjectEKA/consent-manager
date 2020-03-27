@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.consent.TestBuilders.notificationMessage;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
@@ -290,7 +291,7 @@ public class ConsentRequestUserJourneyTest {
     public void shouldApproveConsentGrant() throws JsonProcessingException {
         var token = string();
         String patientId = "ashok.kumar@ncg";
-        var consentRequestDetail = new ObjectMapper().readValue(requestedConsentJson, ConsentRequestDetail.class);
+        var consentRequestDetail = OBJECT_MAPPER.readValue(requestedConsentJson, ConsentRequestDetail.class);
         load(userServer, "{}");
         load(identityServer, "{}");
         load(identityServer, "{}");
@@ -332,7 +333,7 @@ public class ConsentRequestUserJourneyTest {
                 any(),
                 any(),
                 any())).thenReturn(Mono.empty());
-        when(consentNotificationPublisher.broadcastConsentArtefacts(any())).thenReturn(Mono.empty());
+        when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
         webTestClient.post()
                 .uri("/consent-requests/30d02f6d-de17-405e-b4ab-d31b2bb799d7/approve")
@@ -386,7 +387,7 @@ public class ConsentRequestUserJourneyTest {
                 "    }\n" +
                 "}";
         load(patientLinkServer, linkedPatientContextsJson);
-        var consentRequestDetail = new ObjectMapper().readValue(requestedConsentJson, ConsentRequestDetail.class);
+        var consentRequestDetail = OBJECT_MAPPER.readValue(requestedConsentJson, ConsentRequestDetail.class);
         String patientId = "ashok.kumar@ncg";
 
         when(pinVerificationTokenService.validateToken(token))
@@ -398,7 +399,7 @@ public class ConsentRequestUserJourneyTest {
                 any(),
                 any(),
                 any())).thenReturn(Mono.empty());
-        when(consentNotificationPublisher.broadcastConsentArtefacts(any())).thenReturn(Mono.empty());
+        when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
         webTestClient.post()
                 .uri("/consent-requests/30d02f6d-de17-405e-b4ab-d31b2bb799d7/approve")

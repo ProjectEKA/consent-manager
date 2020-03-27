@@ -144,9 +144,9 @@ class ConsentManagerTest {
         when(consentArtefactRepository.getConsentWithRequest(consentId)).thenReturn(Mono.just(consentRepresentation));
         when(repository.requestOf(consentRequestId, ConsentStatus.GRANTED.toString(), patientId)).thenReturn(Mono.just(consentRequestDetail));
         when(consentArtefactRepository.updateStatus(consentId, consentRequestId, ConsentStatus.REVOKED)).thenReturn(Mono.empty());
-        when(consentNotificationPublisher.broadcastConsentArtefacts(any())).thenReturn(Mono.empty());
+        when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
-        StepVerifier.create(consentManager.revokeAndBroadCastConsent(revokeRequest, patientId)
+        StepVerifier.create(consentManager.revoke(revokeRequest, patientId)
                 .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
                 .verifyComplete();
     }

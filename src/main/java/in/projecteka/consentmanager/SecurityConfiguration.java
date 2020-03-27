@@ -44,8 +44,8 @@ public class SecurityConfiguration {
 
     private static final List<Map.Entry<String, HttpMethod>> PIN_VERIFICATION_URLS = new ArrayList<>() {
         {
-            add(Map.entry("/consent-requests/.*/approve/", HttpMethod.POST));
-            add(Map.entry("/consents/revoke/", HttpMethod.POST));
+            add(Map.entry("/consent-requests/**/approve", HttpMethod.POST));
+            add(Map.entry("/consents/revoke", HttpMethod.POST));
         }
     };
 

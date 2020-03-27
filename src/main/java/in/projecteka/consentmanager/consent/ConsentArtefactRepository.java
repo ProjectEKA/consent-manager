@@ -184,6 +184,8 @@ public class ConsentArtefactRepository {
                 Transaction transaction = res.result();
                 update(consentRequestId, status, monoSink, transaction, UPDATE_CONSENT_REQUEST_STATUS_QUERY);
                 update(consentId, status, monoSink, transaction, UPDATE_CONSENT_ARTEFACT_STATUS_QUERY);
+                transaction.commit();
+                monoSink.success();
             }else {
                 monoSink.error(new RuntimeException("Error connecting to database. "));
             }
@@ -200,10 +202,7 @@ public class ConsentArtefactRepository {
                     if (updateHandler.failed()) {
                         transaction.close();
                         monoSink.error(new Exception("Failed to update status"));
-                    } else {
-                        transaction.commit();
-                        monoSink.success();
-                    }
+                    } 
                 });
     }
 

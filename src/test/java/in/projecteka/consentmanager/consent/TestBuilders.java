@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.Notification;
@@ -7,6 +8,7 @@ import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepres
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final EasyRandom easyRandom = new EasyRandom();
 
     public static ConsentArtefactRepresentation.ConsentArtefactRepresentationBuilder consentArtefactRepresentation() {
@@ -24,6 +26,7 @@ public class TestBuilders {
     public static Notification.NotificationBuilder notificationMessage() {
         return easyRandom.nextObject(Notification.NotificationBuilder.class);
     }
+
 
     public static String string() {
         return easyRandom.nextObject(String.class);

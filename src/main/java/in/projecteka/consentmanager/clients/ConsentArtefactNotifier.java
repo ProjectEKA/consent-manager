@@ -18,7 +18,7 @@ public class ConsentArtefactNotifier {
     private final Supplier<Mono<String>> tokenGenerator;
 
     public Mono<Void> notifyHiu(HIUNotificationRequest request, String callBackUrl) {
-        String hiuNotificationUrl = String.format("%s/%s", callBackUrl, "consent/notification/");
+        String hiuNotificationUrl = String.format("%s/%s", callBackUrl, "consent/notification");
         return post(request, hiuNotificationUrl);
     }
 

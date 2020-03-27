@@ -157,7 +157,7 @@ public class ConsentManager {
                 .hiuCallBackUrl(hiuCallBackUrl)
                 .build();
 
-        return consentNotificationPublisher.broadcastConsentArtefacts(message);
+        return consentNotificationPublisher.publish(message);
     }
 
     private ConsentApprovalResponse consentApprovalResponse(List<HIPConsentArtefactRepresentation> consentArtefacts) {
@@ -304,13 +304,14 @@ public class ConsentManager {
 
     public Mono<ConsentRepresentation> getConsentRepresentation(String consentId, String requesterId) {
         return getConsentWithRequest(consentId)
-                .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()))
-                .flatMap(consentRepresentation -> {
-                    if (isNotSameRequester(consentRepresentation.getConsentDetail(), requesterId)) {
-                        return Mono.error(ClientError.consentArtefactForbidden());
-                    }
-                    return Mono.just(consentRepresentation);
-                });
+                .filter(consentRepresentation -> !isNotSameRequester(consentRepresentation.getConsentDetail(), requesterId))
+                .switchIfEmpty(Mono.error(ClientError.consentArtefactForbidden()))
+                .filter(this::isGrantedConsent)
+                .switchIfEmpty(Mono.error(ClientError.consentNotGranted()));
+    }
+
+    private boolean isGrantedConsent(ConsentRepresentation consentRepresentation) {
+        return consentRepresentation.getStatus().equals(ConsentStatus.GRANTED);
     }
 
     private Mono<ConsentRepresentation> getConsentWithRequest(String consentId) {
@@ -318,36 +319,41 @@ public class ConsentManager {
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()));
     }
 
-    public Mono<List<HIPConsentArtefactRepresentation>> revokeConsent(RevokeRequest revokeRequest, String requesterId) {
+    public Mono<List<HIPConsentArtefactRepresentation>> getHIPConsentArtefacts(RevokeRequest revokeRequest,
+                                                                               String requesterId){
+        return Flux.fromIterable(revokeRequest.getConsents())
+                .flatMap(consentId -> getConsentRepresentation(consentId, requesterId)
+                        .map(consentRepresentation ->
+                                from(consentRepresentation.getConsentDetail(), ConsentStatus.REVOKED)))
+                .collectList();
+    }
+
+    public Mono<Void> revoke(RevokeRequest revokeRequest, String requesterId) {
         return Flux.fromIterable(revokeRequest.getConsents())
                 .flatMap(consentId -> getConsentRepresentation(consentId, requesterId)
                         .flatMap(consentRepresentation -> consentRequestRepository.requestOf(
                                 consentRepresentation.getConsentRequestId(),
-                                consentRepresentation.getStatus().toString(),
+                                ConsentStatus.GRANTED.toString(),
                                 consentRepresentation.getConsentDetail().getPatient().getId())
-                                .flatMap(consentRequestDetail -> consentArtefactRepository.updateStatus(consentId,
-                                        consentRepresentation.getConsentRequestId(),
-                                        ConsentStatus.REVOKED)
-                                        .thenReturn(from(consentRepresentation.getConsentDetail(), ConsentStatus.REVOKED))
-                                )))
-                .collectList();
+                                .flatMap(consentRequestDetail -> updateAndBroadcast(revokeRequest, requesterId,
+                                        consentId, consentRepresentation, consentRequestDetail)))).then();
     }
 
-    public Mono<Void> revokeAndBroadCastConsent(RevokeRequest revokeRequest, String requesterId) {
-        return Flux.fromIterable(revokeRequest.getConsents())
-                .flatMap(consentId -> getConsentRepresentation(consentId, requesterId)
-                        .flatMap(consentRepresentation ->
-                                consentRequestRepository.requestOf(
-                                        consentRepresentation.getConsentRequestId(),
-                                        ConsentStatus.GRANTED.toString(),
-                                        consentRepresentation.getConsentDetail().getPatient().getId())
-                                .flatMap(consentRequestDetail -> revokeConsent(revokeRequest, requesterId)
-                                        .flatMap(hipConsentArtefactRepresentations ->
-                                                broadcastConsentArtefacts(
-                                                        hipConsentArtefactRepresentations,
-                                                        consentRequestDetail.getCallBackUrl(),
-                                                        "",
-                                                        ConsentStatus.REVOKED,
-                                                        consentRepresentation.getDateModified()))))).then();
+    private Mono<Void> updateAndBroadcast(RevokeRequest revokeRequest,
+                                          String requesterId,
+                                          String consentId,
+                                          ConsentRepresentation consentRepresentation,
+                                          ConsentRequestDetail consentRequestDetail) {
+        return consentArtefactRepository.updateStatus(
+                consentId,
+                consentRepresentation.getConsentRequestId(),
+                ConsentStatus.REVOKED)
+                .then(getHIPConsentArtefacts(revokeRequest, requesterId))
+                .flatMap(hipConsentArtefactRepresentations -> broadcastConsentArtefacts(
+                        hipConsentArtefactRepresentations,
+                        consentRequestDetail.getCallBackUrl(),
+                        "",
+                        ConsentStatus.REVOKED,
+                        consentRepresentation.getDateModified()));
     }
 }

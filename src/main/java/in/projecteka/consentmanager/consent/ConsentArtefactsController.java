@@ -47,6 +47,6 @@ public class ConsentArtefactsController {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUserName)
-                .flatMap(requesterId -> consentManager.revokeAndBroadCastConsent(revokeRequest, requesterId));
+                .flatMap(requesterId -> consentManager.revoke(revokeRequest, requesterId));
     }
 }

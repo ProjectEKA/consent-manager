@@ -29,6 +29,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUN
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_NOT_GRANTED;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -178,7 +179,7 @@ public class ClientError extends Throwable {
     }
 
     public static ClientError consentNotGranted() {
-        return new ClientError(FORBIDDEN,
+        return new ClientError(CONFLICT,
                 new ErrorRepresentation(new Error(CONSENT_NOT_GRANTED,
                         "Not a granted consent.")));
     }

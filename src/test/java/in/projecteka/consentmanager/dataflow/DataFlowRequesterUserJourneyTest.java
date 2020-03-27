@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.dataflow;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
@@ -45,6 +44,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.dataflow.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequestMessage;
@@ -124,7 +124,8 @@ public class DataFlowRequesterUserJourneyTest {
                 .from(toDate("2020-01-16T08:47:48Z"))
                 .to(toDate("2020-01-20T08:47:48Z"))
                 .build()).build();
-        ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
+        ConsentArtefactRepresentation consentArtefactRepresentation =
+                consentArtefactRepresentation().status(ConsentStatus.GRANTED).build();
         consentArtefactRepresentation.getConsentDetail().getPermission().
                 setDateRange(AccessPeriod.builder()
                         .fromDate(toDate("2020-01-15T08:47:48Z"))
@@ -134,7 +135,7 @@ public class DataFlowRequesterUserJourneyTest {
         var consentExpiryDate = new Date();
         consentExpiryDate.setTime(consentExpiryDate.getTime() + 9000000);
         consentArtefactRepresentation.getConsentDetail().getPermission().setDataExpiryAt(consentExpiryDate);
-        var consentArtefactRepresentationJson = new ObjectMapper().writeValueAsString(consentArtefactRepresentation);
+        var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
         consentManagerServer.enqueue(
                 new MockResponse()
                         .setHeader("Content-Type", "application/json")
@@ -171,10 +172,10 @@ public class DataFlowRequesterUserJourneyTest {
                 .getConsentDetail()
                 .getPermission()
                 .setDataExpiryAt(toDate("2020-01-15T08:47:48Z"));
-        var consentArtefactRepresentationJson = new ObjectMapper().writeValueAsString(consentArtefactRepresentation);
+        var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_EXPIRED,
                 "Consent artefact expired"));
-        var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
+        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         consentManagerServer.enqueue(
                 new MockResponse()
                         .setHeader("Content-Type", "application/json")
@@ -204,9 +205,9 @@ public class DataFlowRequesterUserJourneyTest {
         var dataFlowRequest = dataFlowRequest().build();
         var consentArtefactRepresentation = consentArtefactRepresentation().build();
         consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id("10000005").name("MAX").build());
-        var consentArtefactRepresentationJson = new ObjectMapper().writeValueAsString(consentArtefactRepresentation);
+        var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.INVALID_HIU, "Not a valid HIU"));
-        var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
+        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         consentManagerServer.enqueue(
                 new MockResponse()
                         .setHeader("Content-Type", "application/json")
@@ -250,10 +251,10 @@ public class DataFlowRequesterUserJourneyTest {
         var consentExpiryDate = new Date();
         consentExpiryDate.setTime(consentExpiryDate.getTime() + 9000000);
         consentArtefactRepresentation.getConsentDetail().getPermission().setDataExpiryAt(consentExpiryDate);
-        var consentArtefactRepresentationJson = new ObjectMapper().writeValueAsString(consentArtefactRepresentation);
+        var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.INVALID_DATE_RANGE, "Date Range given is " +
                 "invalid"));
-        var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
+        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         consentManagerServer.enqueue(
                 new MockResponse()
                         .setHeader("Content-Type", "application/json")
@@ -285,15 +286,14 @@ public class DataFlowRequesterUserJourneyTest {
         var dataFlowRequest = dataFlowRequest().build();
         dataFlowRequest.setHiDataRange(HIDataRange.builder().from(toDate("2020-01-14T08:47:48Z")).to(toDate("2020" +
                 "-01-20T08:47:48Z")).build());
-        var consentArtefactRepresentation = consentArtefactRepresentation().build();
-        consentArtefactRepresentation.setStatus(ConsentStatus.REVOKED);
+        var consentArtefactRepresentation = consentArtefactRepresentation().status(ConsentStatus.REVOKED).build();
         consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
         var consentExpiryDate = new Date();
         consentExpiryDate.setTime(consentExpiryDate.getTime() + 9000000);
         consentArtefactRepresentation.getConsentDetail().getPermission().setDataExpiryAt(consentExpiryDate);
-        var consentArtefactRepresentationJson = new ObjectMapper().writeValueAsString(consentArtefactRepresentation);
+        var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_NOT_GRANTED, "Not a granted consent."));
-        var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
+        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         consentManagerServer.enqueue(
                 new MockResponse()
                         .setHeader("Content-Type", "application/json")
@@ -313,7 +313,7 @@ public class DataFlowRequesterUserJourneyTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus()
-                .isForbidden()
+                .isEqualTo(409)
                 .expectBody()
                 .json(errorResponseJson);
     }

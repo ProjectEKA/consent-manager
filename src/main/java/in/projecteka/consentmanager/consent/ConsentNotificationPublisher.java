@@ -17,7 +17,7 @@ public class ConsentNotificationPublisher {
     private AmqpTemplate amqpTemplate;
     private DestinationsConfig destinationsConfig;
 
-    public Mono<Void> broadcastConsentArtefacts(ConsentArtefactsMessage message) {
+    public Mono<Void> publish(ConsentArtefactsMessage message) {
         return Mono.create(monoSink -> {
             broadcastArtefactsToHiu(message);
             broadcastArtefactsToHips(message);

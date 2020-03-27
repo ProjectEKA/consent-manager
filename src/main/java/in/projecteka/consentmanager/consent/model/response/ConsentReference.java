@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ConsentArtefactReference {
+public class ConsentReference {
     private String id;
     private ConsentStatus status;
 }

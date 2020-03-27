@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.dataflow;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
@@ -8,6 +9,7 @@ import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
 
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final EasyRandom easyRandom = new EasyRandom();
 
     public static DataFlowRequest.DataFlowRequestBuilder dataFlowRequest() {
@@ -18,11 +20,11 @@ public class TestBuilders {
         return easyRandom.nextObject(ConsentArtefactRepresentation.ConsentArtefactRepresentationBuilder.class);
     }
 
-    public static DataFlowRequestMessage.DataFlowRequestMessageBuilder dataFlowRequestMessage(){
+    public static DataFlowRequestMessage.DataFlowRequestMessageBuilder dataFlowRequestMessage() {
         return easyRandom.nextObject(DataFlowRequestMessage.DataFlowRequestMessageBuilder.class);
     }
 
-    public static in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest.DataFlowRequestBuilder dataFlowRequestBuilder(){
+    public static in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest.DataFlowRequestBuilder dataFlowRequestBuilder() {
         return easyRandom.nextObject(in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest.DataFlowRequestBuilder.class);
     }
 

@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.dataflow;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
+import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import in.projecteka.consentmanager.dataflow.model.HIDataRange;
@@ -43,6 +44,9 @@ public class DataFlowRequester {
         if (isConsentExpired(consentArtefactRepresentation)) {
             return Mono.error(ClientError.consentExpired());
         }
+        if (!isConsentGranted(consentArtefactRepresentation)) {
+            return Mono.error(ClientError.consentNotGranted());
+        }
         if (dataFlowRequest.getHiDataRange() == null) {
             dataFlowRequest.setHiDataRange(defaultDateRange(consentArtefactRepresentation));
         } else if (!isValidHIDateRange(dataFlowRequest, consentArtefactRepresentation)) {
@@ -50,6 +54,10 @@ public class DataFlowRequester {
         }
         dataFlowRequest.setArtefactSignature(consentArtefactRepresentation.getSignature());
         return dataFlowRequestRepository.addDataFlowRequest(transactionId, dataFlowRequest);
+    }
+
+    private boolean isConsentGranted(ConsentArtefactRepresentation consentArtefactRepresentation) {
+        return consentArtefactRepresentation.getStatus().equals(ConsentStatus.GRANTED);
     }
 
     private HIDataRange defaultDateRange(ConsentArtefactRepresentation consentArtefactRepresentation) {

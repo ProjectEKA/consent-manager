@@ -14,5 +14,5 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ConsentApprovalResponse {
-    private List<ConsentArtefactReference> consents;
+    private List<ConsentReference> consents;
 }

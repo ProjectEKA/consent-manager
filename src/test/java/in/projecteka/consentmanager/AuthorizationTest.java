@@ -5,7 +5,7 @@ import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.consent.PostConsentApproval;
+import in.projecteka.consentmanager.consent.ConsentNotificationPublisher;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +37,7 @@ public class AuthorizationTest {
     private ConsentManager consentManager;
 
     @MockBean
-    private PostConsentApproval postConsentApproval;
+    private ConsentNotificationPublisher consentNotificationPublisher;
 
     @MockBean
     private DestinationsConfig destinationsConfig;

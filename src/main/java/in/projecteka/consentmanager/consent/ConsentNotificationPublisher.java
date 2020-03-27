@@ -12,12 +12,12 @@ import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSE
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_CONSENT_NOTIFICATION_QUEUE;
 
 @AllArgsConstructor
-public class PostConsentApproval {
-    private static final Logger logger = Logger.getLogger(PostConsentApproval.class);
+public class ConsentNotificationPublisher {
+    private static final Logger logger = Logger.getLogger(ConsentNotificationPublisher.class);
     private AmqpTemplate amqpTemplate;
     private DestinationsConfig destinationsConfig;
 
-    public Mono<Void> broadcastConsentArtefacts(ConsentArtefactsMessage message) {
+    public Mono<Void> publish(ConsentArtefactsMessage message) {
         return Mono.create(monoSink -> {
             broadcastArtefactsToHiu(message);
             broadcastArtefactsToHips(message);
@@ -37,7 +37,7 @@ public class PostConsentApproval {
         }
         sendMessage(message, destinationInfo.getExchange(), destinationInfo.getRoutingKey());
         logger.info(String.format("Broadcasting consent artefact notification for Request Id: %s",
-                message.getRequestId()));
+                message.getConsentRequestId()));
     }
 
     @SneakyThrows

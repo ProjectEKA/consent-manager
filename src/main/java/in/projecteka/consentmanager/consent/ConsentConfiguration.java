@@ -39,8 +39,8 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    public PostConsentApproval postConsentApproval(AmqpTemplate amqpTemplate, DestinationsConfig destinationsConfig) {
-        return new PostConsentApproval(amqpTemplate, destinationsConfig);
+    public ConsentNotificationPublisher postConsentApproval(AmqpTemplate amqpTemplate, DestinationsConfig destinationsConfig) {
+        return new ConsentNotificationPublisher(amqpTemplate, destinationsConfig);
     }
 
     @Bean
@@ -55,7 +55,7 @@ public class ConsentConfiguration {
                                                 UserServiceProperties userServiceProperties,
                                                 ConsentArtefactRepository consentArtefactRepository,
                                                 KeyPair keyPair,
-                                                PostConsentApproval postConsentApproval,
+                                                ConsentNotificationPublisher consentNotificationPublisher,
                                                 CentralRegistry centralRegistry,
                                                 PostConsentRequest postConsentRequest,
                                                 LinkServiceProperties linkServiceProperties,
@@ -65,7 +65,7 @@ public class ConsentConfiguration {
                 repository,
                 consentArtefactRepository,
                 keyPair,
-                postConsentApproval,
+                consentNotificationPublisher,
                 centralRegistry,
                 postConsentRequest,
                 new PatientServiceClient(builder, identityService::authenticate, linkServiceProperties.getUrl()));

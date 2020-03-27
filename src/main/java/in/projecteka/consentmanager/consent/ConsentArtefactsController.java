@@ -1,12 +1,15 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -35,5 +38,13 @@ public class ConsentArtefactsController {
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUserName)
                 .flatMapMany(patient -> consentManager.getConsents(requestId, patient));
+    }
+
+    @PostMapping(value = "/consents/revoke")
+    public Mono<Void> revokeConsent(@RequestBody RevokeRequest revokeRequest) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .map(Caller::getUserName)
+                .flatMap(requesterId -> consentManager.revoke(revokeRequest, requesterId));
     }
 }

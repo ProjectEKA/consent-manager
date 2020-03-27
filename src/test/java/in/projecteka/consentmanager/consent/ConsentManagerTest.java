@@ -1,18 +1,22 @@
 package in.projecteka.consentmanager.consent;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
-import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
+import in.projecteka.consentmanager.consent.model.ConsentRequest;
+import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -24,8 +28,12 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.security.KeyPair;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
+import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -43,12 +51,11 @@ class ConsentManagerTest {
     @Mock
     private UserServiceClient userClient;
     @Mock
-    private PostConsentApproval postConsentApproval;
+    private ConsentNotificationPublisher consentNotificationPublisher;
     @Mock
     private PostConsentRequest postConsentRequestNotification;
     @Mock
     private PatientServiceClient patientServiceClient;
-
 
     @SuppressWarnings("unused")
     @MockBean
@@ -62,13 +69,15 @@ class ConsentManagerTest {
     private ArgumentCaptor<ConsentRequest> captor;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws JOSEException {
         initMocks(this);
+        RSAKeyGenerator rsKG = new RSAKeyGenerator(2048);
+        keyPair = rsKG.generate().toKeyPair();
         consentManager = new ConsentManager(userClient,
                 repository,
                 consentArtefactRepository,
                 keyPair,
-                postConsentApproval,
+                consentNotificationPublisher,
                 centralRegistry,
                 postConsentRequestNotification,
                 patientServiceClient);
@@ -115,4 +124,31 @@ class ConsentManagerTest {
                         ((ClientError) e).getHttpStatus().is4xxClientError())
                 .verify();
     }
+
+    @Test
+    public void revokeAndBroadCastConsent() {
+        ConsentRepresentation consentRepresentation = consentRepresentation().build();
+        consentRepresentation.setStatus(ConsentStatus.GRANTED);
+        ConsentRequestDetail consentRequestDetail = consentRequestDetail().build();
+        consentRequestDetail.setStatus(ConsentStatus.GRANTED);
+        String consentRequestId = consentRepresentation.getConsentRequestId();
+        consentRequestDetail.setRequestId(consentRequestId);
+        List<String> consentIds = new ArrayList<>();
+        String consentId = consentRepresentation.getConsentDetail().getConsentId();
+        consentIds.add(consentRepresentation.getConsentDetail().getConsentId());
+        RevokeRequest revokeRequest = RevokeRequest.builder().consents(consentIds).build();
+        String patientId = consentRepresentation.getConsentDetail().getPatient().getId();
+
+        when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
+        when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
+        when(consentArtefactRepository.getConsentWithRequest(consentId)).thenReturn(Mono.just(consentRepresentation));
+        when(repository.requestOf(consentRequestId, ConsentStatus.GRANTED.toString(), patientId)).thenReturn(Mono.just(consentRequestDetail));
+        when(consentArtefactRepository.updateStatus(consentId, consentRequestId, ConsentStatus.REVOKED)).thenReturn(Mono.empty());
+        when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
+
+        StepVerifier.create(consentManager.revoke(revokeRequest, patientId)
+                .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+                .verifyComplete();
+    }
+
 }

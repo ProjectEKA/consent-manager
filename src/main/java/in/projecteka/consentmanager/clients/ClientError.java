@@ -26,8 +26,10 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.UNKNOWN_ERROR
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USERNAME_OR_PASSWORD_INCORRECT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_NOT_GRANTED;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -174,5 +176,11 @@ public class ClientError extends Throwable {
         return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_PROVIDER_OR_CARE_CONTEXT,
                         "Invalid Provider or Care Context.")));
+    }
+
+    public static ClientError consentNotGranted() {
+        return new ClientError(CONFLICT,
+                new ErrorRepresentation(new Error(CONSENT_NOT_GRANTED,
+                        "Not a granted consent.")));
     }
 }

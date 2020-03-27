@@ -5,12 +5,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
 @Builder
-public class HIPConsentArtefactRepresentation {
-    private HIPConsentArtefact consentDetail;
-    private ConsentStatus status;
-    private String signature;
+public class RevokeRequest {
+    List<String> consents;
 }

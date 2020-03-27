@@ -5,8 +5,8 @@ import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
+import in.projecteka.consentmanager.consent.model.request.ConsentArtefactReference;
 import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
-import in.projecteka.consentmanager.consent.model.response.ConsentArtefactReference;
 import lombok.AllArgsConstructor;
 import org.apache.log4j.Logger;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
@@ -47,7 +47,7 @@ public class HiuConsentNotificationListener {
                 ConsentArtefactsMessage consentArtefactsMessage =
                         (ConsentArtefactsMessage) converter.fromMessage(message);
                 logger.info(String.format(
-                        "Received message for Request id : %s", consentArtefactsMessage.getRequestId()));
+                        "Received message for Request id : %s", consentArtefactsMessage.getConsentRequestId()));
 
                 notifyHiu(consentArtefactsMessage);
             } catch (Exception e) {
@@ -69,11 +69,12 @@ public class HiuConsentNotificationListener {
 
     private HIUNotificationRequest hiuNotificationRequest(ConsentArtefactsMessage consentArtefactsMessage) {
         List<ConsentArtefactReference> consentArtefactReferences = consentArtefactReferences(consentArtefactsMessage);
-
         return HIUNotificationRequest
                 .builder()
-                .consents(consentArtefactReferences)
-                .consentRequestId(consentArtefactsMessage.getRequestId())
+                .status(consentArtefactsMessage.getStatus())
+                .timestamp(consentArtefactsMessage.getTimestamp())
+                .consentArtefacts(consentArtefactReferences)
+                .consentRequestId(consentArtefactsMessage.getConsentRequestId())
                 .build();
     }
 
@@ -83,7 +84,6 @@ public class HiuConsentNotificationListener {
                 .stream()
                 .map(consentArtefact -> ConsentArtefactReference
                         .builder()
-                        .status(consentArtefact.getStatus())
                         .id(consentArtefact.getConsentDetail().getConsentId())
                         .build())
                 .collect(Collectors.toList());

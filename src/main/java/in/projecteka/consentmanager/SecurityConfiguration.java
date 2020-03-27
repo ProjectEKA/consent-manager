@@ -42,6 +42,13 @@ public class SecurityConfiguration {
         }
     };
 
+    private static final List<Map.Entry<String, HttpMethod>> PIN_VERIFICATION_URLS = new ArrayList<>() {
+        {
+            add(Map.entry("/consent-requests/.*/approve/", HttpMethod.POST));
+            add(Map.entry("/consents/revoke/", HttpMethod.POST));
+        }
+    };
+
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity httpSecurity,
@@ -107,13 +114,9 @@ public class SecurityConfiguration {
             if (isSignUpRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
                 return checkSignUp(token);
             }
-            if (isGrantConsentRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
-                return validateGrantConsentRequest(token);
+            if(isGrantOrRevokeConsentRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())){
+                return validateGrantOrRevokeConsentRequest(token);
             }
-            if (isRevokeConsentRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
-                return validateRevokeConsentRequest(token);
-            }
-
             if (isCentralRegistryAuthenticatedOnlyRequest(
                     exchange.getRequest().getPath().toString(),
                     exchange.getRequest().getMethod())) {
@@ -133,9 +136,25 @@ public class SecurityConfiguration {
                     .map(SecurityContextImpl::new);
         }
 
+        private Mono<SecurityContext> validateGrantOrRevokeConsentRequest(String token) {
+            return pinVerificationTokenService.validateToken(token)
+                    .map(caller -> new UsernamePasswordAuthenticationToken(
+                            caller,
+                            token,
+                            new ArrayList<SimpleGrantedAuthority>()))
+                    .map(SecurityContextImpl::new);
+        }
+
         private boolean isCentralRegistryAuthenticatedOnlyRequest(String url, HttpMethod method) {
             AntPathMatcher antPathMatcher = new AntPathMatcher();
             return SERVICE_ONLY_URLS.stream()
+                    .anyMatch(pattern ->
+                            antPathMatcher.match(pattern.getKey(), url) && pattern.getValue().equals(method));
+        }
+
+        private boolean isGrantOrRevokeConsentRequest(String url, HttpMethod method) {
+            AntPathMatcher antPathMatcher = new AntPathMatcher();
+            return PIN_VERIFICATION_URLS.stream()
                     .anyMatch(pattern ->
                             antPathMatcher.match(pattern.getKey(), url) && pattern.getValue().equals(method));
         }
@@ -164,34 +183,8 @@ public class SecurityConfiguration {
                     .map(SecurityContextImpl::new);
         }
 
-        private Mono<SecurityContext> validateGrantConsentRequest(String authToken) {
-            return pinVerificationTokenService.validateToken(authToken)
-                    .map(caller -> new UsernamePasswordAuthenticationToken(
-                            caller,
-                            authToken,
-                            new ArrayList<SimpleGrantedAuthority>()))
-                    .map(SecurityContextImpl::new);
-        }
-
-        private Mono<SecurityContext> validateRevokeConsentRequest(String authToken) {
-            return pinVerificationTokenService.validateToken(authToken)
-                    .map(caller -> new UsernamePasswordAuthenticationToken(
-                            caller,
-                            authToken,
-                            new ArrayList<SimpleGrantedAuthority>()))
-                    .map(SecurityContextImpl::new);
-        }
-
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
             return ("/users").equals(url) && HttpMethod.POST.equals(httpMethod);
-        }
-
-        private boolean isGrantConsentRequest(String url, HttpMethod httpMethod) {
-            return url.matches("/consent-requests/.*/approve/?$") && HttpMethod.POST.equals(httpMethod);
-        }
-
-        private boolean isRevokeConsentRequest(String url, HttpMethod httpMethod) {
-            return url.matches("/consents/revoke/?$") && HttpMethod.POST.equals(httpMethod);
         }
     }
 

@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.AuthorizationTest;
+import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,15 +50,15 @@ class SessionServiceTest {
             "empty",
             "null"
     })
-    void returnUnAuthorizedErrorWhenUsernameIsEmpty(
-            @ConvertWith(AuthorizationTest.NullableConverter.class) String value) {
+    void returnUnAuthorizedErrorWhenUsernameIsEmpty(@ConvertWith(NullableConverter.class) String value) {
         var sessionRequest = sessionRequest().UserName(value).build();
         var sessionService = new SessionService(tokenService);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
         StepVerifier.create(sessionPublisher)
-                .expectErrorSatisfies(throwable -> assertThat(((ClientError)throwable).getHttpStatus() == UNAUTHORIZED))
+                .expectErrorSatisfies(throwable ->
+                        assertThat(((ClientError) throwable).getHttpStatus() == UNAUTHORIZED))
                 .verify();
     }
 
@@ -69,14 +69,14 @@ class SessionServiceTest {
             "null"
     })
     void returnUnAuthorizedErrorWhenPasswordIsEmpty(
-            @ConvertWith(AuthorizationTest.NullableConverter.class) String value) {
+            @ConvertWith(NullableConverter.class) String value) {
         var sessionRequest = sessionRequest().Password(value).build();
         var sessionService = new SessionService(tokenService);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
         StepVerifier.create(sessionPublisher)
-                .expectErrorSatisfies(throwable -> assertThat(((ClientError)throwable).getHttpStatus() == UNAUTHORIZED))
+                .expectErrorSatisfies(throwable -> assertThat(((ClientError) throwable).getHttpStatus() == UNAUTHORIZED))
                 .verify();
     }
 
@@ -89,7 +89,7 @@ class SessionServiceTest {
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
         StepVerifier.create(sessionPublisher)
-                .expectErrorSatisfies(throwable -> assertThat(((ClientError)throwable).getHttpStatus() == UNAUTHORIZED))
+                .expectErrorSatisfies(throwable -> assertThat(((ClientError) throwable).getHttpStatus() == UNAUTHORIZED))
                 .verify();
     }
 }

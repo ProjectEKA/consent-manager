@@ -17,10 +17,8 @@ import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import lombok.AllArgsConstructor;
 import org.apache.log4j.Logger;
-import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -72,9 +70,6 @@ public class UserService {
     }
 
     public Mono<Session> create(SignUpRequest signUpRequest, String sessionId) {
-        if (!isValid(signUpRequest)) {
-            throw new InvalidRequestException("invalid.request.body");
-        }
         UserCredential credential = new UserCredential(signUpRequest.getPassword());
         KeycloakUser user = new KeycloakUser(
                 signUpRequest.getFirstName(),
@@ -112,14 +107,5 @@ public class UserService {
                 !otpVerification.getSessionId().isEmpty() &&
                 otpVerification.getValue() != null &&
                 !otpVerification.getValue().isEmpty();
-    }
-
-    private boolean isValid(SignUpRequest signUpRequest) {
-        final LocalDate tomorrow = LocalDate.now().plusDays(1);
-        return !StringUtils.isEmpty(signUpRequest.getFirstName()) &&
-                !StringUtils.isEmpty(signUpRequest.getUserName()) &&
-                !StringUtils.isEmpty(signUpRequest.getPassword()) &&
-                (signUpRequest.getDateOfBirth() == null ||
-                        signUpRequest.getDateOfBirth().isBefore(tomorrow));
     }
 }

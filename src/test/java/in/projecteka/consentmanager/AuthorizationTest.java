@@ -10,10 +10,7 @@ import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.converter.ArgumentConversionException;
 import org.junit.jupiter.params.converter.ConvertWith;
-import org.junit.jupiter.params.converter.DefaultArgumentConverter;
-import org.junit.jupiter.params.converter.SimpleArgumentConverter;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,17 +79,5 @@ public class AuthorizationTest {
                 .exchange()
                 .expectStatus().is4xxClientError();
     }
-
-    public static final class NullableConverter extends SimpleArgumentConverter {
-        @Override
-        protected Object convert(Object source, Class<?> targetType) throws ArgumentConversionException {
-            if ("null".equals(source)) {
-                return null;
-            }
-            if ("empty".equals(source)) {
-                return "";
-            }
-            return DefaultArgumentConverter.INSTANCE.convert(source, targetType);
-        }
-    }
 }
+

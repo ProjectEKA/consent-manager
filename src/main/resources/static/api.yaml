@@ -1281,6 +1281,14 @@ components:
             id:
               type: string
               description: Identifier of the health information provider where patient record needs to be looked up.
+        unverifiedIdentifiers:
+          description: additional unverified identifiers may be passed
+          type: array
+          items:
+            $ref: '#/components/schemas/PatientIdentifier'
+          xml:
+            name: unverifiedIdentifiers
+            wrapped: true
     PatientLinkReferenceRequest:
       type: object
       properties:
@@ -2051,3 +2059,16 @@ components:
                     example: OK
                   description:
                     type: string
+    PatientIdentifier:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/PatientIdentifierType'
+        value:
+          type: string
+          example: "+919800083232"
+      xml:
+        name: Identifier
+    PatientIdentifierType:
+      type: string
+      enum: [MOBILE, MR]

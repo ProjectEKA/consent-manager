@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.AuthorizationTest;
+import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
@@ -124,7 +124,7 @@ class UserServiceTest {
             "null"
     })
     public void shouldThrowInvalidRequestExceptionForInvalidOtpValue(
-            @ConvertWith(AuthorizationTest.NullableConverter.class) String value) {
+            @ConvertWith(NullableConverter.class) String value) {
         OtpVerification otpVerification = new OtpVerification(string(), value);
         Assertions.assertThrows(InvalidRequestException.class, () -> userService.permitOtp(otpVerification));
     }
@@ -136,7 +136,7 @@ class UserServiceTest {
             "null"
     })
     public void shouldThrowInvalidRequestExceptionForInvalidOtpSessionId(
-            @ConvertWith(AuthorizationTest.NullableConverter.class) String sessionId) {
+            @ConvertWith(NullableConverter.class) String sessionId) {
         OtpVerification otpVerification = new OtpVerification(sessionId, string());
         Assertions.assertThrows(InvalidRequestException.class, () -> userService.permitOtp(otpVerification));
     }
@@ -165,8 +165,7 @@ class UserServiceTest {
             "empty",
             "null"
     })
-    public void shouldCreateUserWhenLastNameIsNullOrEmpty(
-            @ConvertWith(AuthorizationTest.NullableConverter.class) String lastName) {
+    public void shouldCreateUserWhenLastNameIsNullOrEmpty(@ConvertWith(NullableConverter.class) String lastName) {
         var signUpRequest = signUpRequest().lastName(lastName).dateOfBirth(LocalDate.MIN).build();
         var userToken = session().build();
         var sessionId = string();
@@ -214,24 +213,5 @@ class UserServiceTest {
         StepVerifier.create(userService.create(signUpRequest, sessionId))
                 .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
                 .verifyComplete();
-    }
-
-    @ParameterizedTest(name = "Invalid user name")
-    @CsvSource({
-            ",",
-            "empty",
-            "null"
-    })
-    public void shouldThrowInvalidRequestExceptionForInvalidUserId(
-            @ConvertWith(AuthorizationTest.NullableConverter.class) String userId) {
-        var signUpRequest = signUpRequest().userName(userId).build();
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.create(signUpRequest, string()));
-    }
-
-    @Test
-    public void shouldThrowInvalidRequestExceptionForFutureDOB() {
-        var signUpRequestWithTomorrow = signUpRequest().dateOfBirth(LocalDate.now().plusDays(1)).build();
-        Assertions.assertThrows(InvalidRequestException.class,
-                () -> userService.create(signUpRequestWithTomorrow, string()));
     }
 }

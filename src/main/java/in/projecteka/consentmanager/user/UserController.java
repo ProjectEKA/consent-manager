@@ -1,5 +1,9 @@
 package in.projecteka.consentmanager.user;
 
+import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.model.Error;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
@@ -17,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
+
+import static java.lang.String.format;
 
 @RestController
 @AllArgsConstructor
@@ -44,7 +50,12 @@ public class UserController {
     @PostMapping("/users")
     public Mono<Session> create(@RequestBody SignUpRequest request,
                                 @RequestHeader(name = "Authorization") String token) {
-        return userService.create(request, signupService.sessionFrom(token));
+        var signUpRequests = SignUpRequestValidator.validate(request);
+        return signUpRequests.isValid()
+               ? userService.create(signUpRequests.get(), signupService.sessionFrom(token))
+               : Mono.error(new ClientError(HttpStatus.BAD_REQUEST,
+                       new ErrorRepresentation(new Error(ErrorCode.INVALID_HIU,
+                               signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));
     }
 
     // TODO: should be moved to patients and need to make sure only consent manager service uses it.

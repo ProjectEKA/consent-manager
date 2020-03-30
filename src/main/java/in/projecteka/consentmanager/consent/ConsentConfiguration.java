@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.UserServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.user.UserServiceProperties;
 import io.vertx.pgclient.PgPool;
 import lombok.SneakyThrows;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -73,6 +74,18 @@ public class ConsentConfiguration {
                 new CMProperties(identityService.getConsentManagerId()),
                 new ConsentArtefactQueryGenerator());
     }
+
+    @Bean
+    public ConsentScheduler consentScheduler(
+            ConsentRequestRepository repository,
+            ConsentArtefactRepository consentArtefactRepository,
+            ConsentNotificationPublisher consentNotificationPublisher) {
+        return new ConsentScheduler(
+                repository,
+                consentArtefactRepository,
+                consentNotificationPublisher);
+    }
+
 
     @Bean
     public Jackson2JsonMessageConverter converter() {

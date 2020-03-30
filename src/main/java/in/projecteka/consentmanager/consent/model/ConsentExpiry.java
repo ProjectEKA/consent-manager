@@ -5,13 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
 @Builder
-public class HIPConsentArtefactRepresentation {
-    private HIPConsentArtefact consentDetail;
-    private ConsentStatus status;
-    private String signature;
+public class ConsentExpiry {
     private String consentId;
+    private Date consentExpiryDate;
+    private String patientId;
 }

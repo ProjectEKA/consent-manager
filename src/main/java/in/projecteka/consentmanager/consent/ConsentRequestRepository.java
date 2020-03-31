@@ -3,12 +3,15 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoSink;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -24,12 +27,15 @@ public class ConsentRequestRepository {
             "(request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";
     private static final String SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS = "SELECT request_id, status, details, " +
             "date_created, date_modified FROM consent_request where request_id=$1 and status=$2 and patient_id=$3";
+    private static final String SELECT_CONSENT_REQUEST_BY_ID = "SELECT request_id, status, details, " +
+            "date_created, date_modified FROM consent_request where request_id=$1";
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent request";
     private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT = "SELECT request_id, status, details, " +
             "date_created, date_modified FROM consent_request where patient_id=$1 LIMIT $2 OFFSET $3";
+    private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
+            "date_modified=$2 WHERE request_id=$3";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
-    private static final String CONSENT_REQUEST_NOT_FOUND = "Consent request with given id, status and patientId not " +
-            "found";
+
     private PgPool dbClient;
 
     public ConsentRequestRepository(PgPool dbClient) {
@@ -76,18 +82,29 @@ public class ConsentRequestRepository {
         return Mono.create(monoSink -> dbClient.preparedQuery(
                 SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS,
                 Tuple.of(requestId, status, patientId),
-                handler -> {
-                    if (handler.failed()) {
-                        monoSink.error(new RuntimeException(CONSENT_REQUEST_NOT_FOUND));
-                        return;
-                    }
-                    RowSet<Row> results = handler.result();
-                    ConsentRequestDetail consentRequestDetail = null;
-                    for (Row result : results) {
-                        consentRequestDetail = mapToConsentRequestDetail(result);
-                    }
-                    monoSink.success(consentRequestDetail);
-                }));
+                consentRequestHandler(monoSink)));
+    }
+
+    public Mono<ConsentRequestDetail> requestOf(String requestId) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(
+                SELECT_CONSENT_REQUEST_BY_ID,
+                Tuple.of(requestId),
+                consentRequestHandler(monoSink)));
+    }
+
+    private Handler<AsyncResult<RowSet<Row>>> consentRequestHandler(MonoSink<ConsentRequestDetail> monoSink) {
+        return handler -> {
+            if (handler.failed()) {
+                monoSink.error(new RuntimeException(UNKNOWN_ERROR_OCCURRED));
+                return;
+            }
+            RowSet<Row> results = handler.result();
+            ConsentRequestDetail consentRequestDetail = null;
+            for (Row result : results) {
+                consentRequestDetail = mapToConsentRequestDetail(result);
+            }
+            monoSink.success(consentRequestDetail);
+        };
     }
 
     private ConsentRequestDetail mapToConsentRequestDetail(Row result) {
@@ -107,6 +124,19 @@ public class ConsentRequestRepository {
                 .callBackUrl(details.getCallBackUrl())
                 .lastUpdated(convertToDate(result.getLocalDateTime("date_modified")))
                 .build();
+    }
+
+    public Mono<Void> updateStatus(String id, ConsentStatus status) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
+                Tuple.of(status.toString(),
+                        LocalDateTime.now(),
+                        id),
+                updateHandler -> {
+                    if (updateHandler.failed()) {
+                        monoSink.error(new Exception("Failed to update status"));
+                    }
+                    monoSink.success();
+                }));
     }
 
     private ConsentStatus getConsentStatus(String status) {

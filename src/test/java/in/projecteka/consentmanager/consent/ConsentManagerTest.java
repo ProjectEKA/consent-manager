@@ -23,7 +23,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -97,9 +97,7 @@ class ConsentManagerTest {
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
 
-        StepVerifier.create(
-                consentManager.askForConsent(requestedDetail)
-                        .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+        StepVerifier.create(consentManager.askForConsent(requestedDetail))
                 .expectNextMatches(Objects::nonNull)
                 .verifyComplete();
     }
@@ -118,8 +116,7 @@ class ConsentManagerTest {
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
 
-        StepVerifier.create(consentManager.askForConsent(requestedDetail)
-                .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+        StepVerifier.create(consentManager.askForConsent(requestedDetail))
                 .expectErrorMatches(e -> (e instanceof ClientError) &&
                         ((ClientError) e).getHttpStatus().is4xxClientError())
                 .verify();
@@ -146,9 +143,78 @@ class ConsentManagerTest {
         when(consentArtefactRepository.updateStatus(consentId, consentRequestId, ConsentStatus.REVOKED)).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
-        StepVerifier.create(consentManager.revoke(revokeRequest, patientId)
-                .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+        StepVerifier.create(consentManager.revoke(revokeRequest, patientId))
                 .verifyComplete();
     }
 
+    @Test
+    void denyConsentRequest() {
+        var patientId = string();
+        var requestId = string();
+        var consentRequestDetail = consentRequestDetail()
+                .requestId(requestId)
+                .patient(new PatientReference(patientId))
+                .status(ConsentStatus.REQUESTED)
+                .build();
+        when(repository.requestOf(requestId)).thenReturn(Mono.just(consentRequestDetail));
+        when(repository.updateStatus(requestId, ConsentStatus.DENIED)).thenReturn(Mono.empty());
+
+        Mono<? extends Void> publisher = consentManager.deny(requestId, patientId);
+
+        StepVerifier.create(publisher)
+                .verifyComplete();
+    }
+
+    @Test
+    void returnForbiddenDenyConsentRequest() {
+        var patientId = string();
+        var differentPatientId = string();
+        var requestId = string();
+        var consentRequestDetail = consentRequestDetail()
+                .requestId(requestId)
+                .patient(new PatientReference(differentPatientId))
+                .status(ConsentStatus.REQUESTED)
+                .build();
+        when(repository.requestOf(requestId)).thenReturn(Mono.just(consentRequestDetail));
+
+        Mono<? extends Void> publisher = consentManager.deny(requestId, patientId);
+
+        StepVerifier.create(publisher)
+                .expectErrorMatches(e -> (e instanceof ClientError) &&
+                        ((ClientError) e).getHttpStatus() == HttpStatus.FORBIDDEN)
+                .verify();
+    }
+
+    @Test
+    void returnConflictDenyConsentRequest() {
+        var patientId = string();
+        var requestId = string();
+        var consentRequestDetail = consentRequestDetail()
+                .requestId(requestId)
+                .patient(new PatientReference(patientId))
+                .status(ConsentStatus.GRANTED)
+                .build();
+        when(repository.requestOf(requestId)).thenReturn(Mono.just(consentRequestDetail));
+
+        Mono<? extends Void> publisher = consentManager.deny(requestId, patientId);
+
+        StepVerifier.create(publisher)
+                .expectErrorMatches(e -> (e instanceof ClientError) &&
+                        ((ClientError) e).getHttpStatus() == HttpStatus.CONFLICT)
+                .verify();
+    }
+
+    @Test
+    void returnNotFoundDenyConsentRequest() {
+        var patientId = string();
+        var requestId = string();
+        when(repository.requestOf(requestId)).thenReturn(Mono.empty());
+
+        Mono<? extends Void> publisher = consentManager.deny(requestId, patientId);
+
+        StepVerifier.create(publisher)
+                .expectErrorMatches(e -> (e instanceof ClientError) &&
+                        ((ClientError) e).getHttpStatus() == HttpStatus.NOT_FOUND)
+                .verify();
+    }
 }

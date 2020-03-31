@@ -7,14 +7,24 @@ import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.consent.model.*;
+import in.projecteka.consentmanager.consent.model.ConsentArtefact;
+import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
+import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
+import in.projecteka.consentmanager.consent.model.ConsentRequest;
+import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.GrantedContext;
+import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
+import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLight;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
-import in.projecteka.consentmanager.consent.model.response.ConsentReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.response.ConsentReference;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.HttpStatus;
@@ -33,6 +43,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static java.lang.String.format;
 
 @AllArgsConstructor
 public class ConsentManager {
@@ -320,7 +332,7 @@ public class ConsentManager {
     }
 
     public Mono<List<HIPConsentArtefactRepresentation>> getHIPConsentArtefacts(RevokeRequest revokeRequest,
-                                                                               String requesterId){
+                                                                               String requesterId) {
         return Flux.fromIterable(revokeRequest.getConsents())
                 .flatMap(consentId -> getConsentRepresentation(consentId, requesterId)
                         .map(consentRepresentation ->
@@ -355,5 +367,21 @@ public class ConsentManager {
                         "",
                         ConsentStatus.REVOKED,
                         consentRepresentation.getDateModified()));
+    }
+
+    public Mono<Void> deny(String id, String patientId) {
+        return consentRequestRepository.requestOf(id)
+                .switchIfEmpty(Mono.error(new ClientError(HttpStatus.NOT_FOUND,
+                        new ErrorRepresentation(new Error(ErrorCode.CONSENT_REQUEST_NOT_FOUND,
+                                "Consent request not existing")))))
+                .filter(consentRequest -> consentRequest.getPatient().getId().equals(patientId))
+                .switchIfEmpty(Mono.error(new ClientError(HttpStatus.FORBIDDEN,
+                        new ErrorRepresentation(new Error(ErrorCode.CONSENT_REQUEST_NOT_FOUND,
+                                format("Consent request not existing for patient: %s", patientId))))))
+                .filter(consentRequest -> consentRequest.getStatus().equals(ConsentStatus.REQUESTED))
+                .switchIfEmpty(Mono.error(new ClientError(HttpStatus.CONFLICT,
+                        new ErrorRepresentation(new Error(ErrorCode.INVALID_STATE,
+                                format("Consent request is not in %s state", ConsentStatus.REQUESTED.toString()))))))
+                .flatMap(consentRequest -> consentRequestRepository.updateStatus(id, ConsentStatus.DENIED));
     }
 }

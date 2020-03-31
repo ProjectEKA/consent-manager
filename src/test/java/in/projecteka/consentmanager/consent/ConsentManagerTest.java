@@ -11,7 +11,6 @@ import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
-import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.PatientReference;
@@ -23,7 +22,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -35,10 +33,17 @@ import java.util.Objects;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 class ConsentManagerTest {
 
@@ -125,9 +130,9 @@ class ConsentManagerTest {
     @Test
     public void revokeAndBroadCastConsent() {
         ConsentRepresentation consentRepresentation = consentRepresentation().build();
-        consentRepresentation.setStatus(ConsentStatus.GRANTED);
+        consentRepresentation.setStatus(GRANTED);
         ConsentRequestDetail consentRequestDetail = consentRequestDetail().build();
-        consentRequestDetail.setStatus(ConsentStatus.GRANTED);
+        consentRequestDetail.setStatus(GRANTED);
         String consentRequestId = consentRepresentation.getConsentRequestId();
         consentRequestDetail.setRequestId(consentRequestId);
         List<String> consentIds = new ArrayList<>();
@@ -139,8 +144,9 @@ class ConsentManagerTest {
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
         when(consentArtefactRepository.getConsentWithRequest(consentId)).thenReturn(Mono.just(consentRepresentation));
-        when(repository.requestOf(consentRequestId, ConsentStatus.GRANTED.toString(), patientId)).thenReturn(Mono.just(consentRequestDetail));
-        when(consentArtefactRepository.updateStatus(consentId, consentRequestId, ConsentStatus.REVOKED)).thenReturn(Mono.empty());
+        when(repository.requestOf(consentRequestId, GRANTED.toString(), patientId))
+                .thenReturn(Mono.just(consentRequestDetail));
+        when(consentArtefactRepository.updateStatus(consentId, consentRequestId, REVOKED)).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
         StepVerifier.create(consentManager.revoke(revokeRequest, patientId))
@@ -154,10 +160,12 @@ class ConsentManagerTest {
         var consentRequestDetail = consentRequestDetail()
                 .requestId(requestId)
                 .patient(new PatientReference(patientId))
-                .status(ConsentStatus.REQUESTED)
-                .build();
-        when(repository.requestOf(requestId)).thenReturn(Mono.just(consentRequestDetail));
-        when(repository.updateStatus(requestId, ConsentStatus.DENIED)).thenReturn(Mono.empty());
+                .status(REQUESTED);
+        when(repository.requestOf(requestId))
+                .thenReturn(Mono.just(consentRequestDetail.build()),
+                Mono.just(consentRequestDetail.status(DENIED).build()));
+        when(repository.updateStatus(requestId, DENIED)).thenReturn(Mono.empty());
+        when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
         Mono<? extends Void> publisher = consentManager.deny(requestId, patientId);
 
@@ -173,7 +181,7 @@ class ConsentManagerTest {
         var consentRequestDetail = consentRequestDetail()
                 .requestId(requestId)
                 .patient(new PatientReference(differentPatientId))
-                .status(ConsentStatus.REQUESTED)
+                .status(REQUESTED)
                 .build();
         when(repository.requestOf(requestId)).thenReturn(Mono.just(consentRequestDetail));
 
@@ -181,7 +189,7 @@ class ConsentManagerTest {
 
         StepVerifier.create(publisher)
                 .expectErrorMatches(e -> (e instanceof ClientError) &&
-                        ((ClientError) e).getHttpStatus() == HttpStatus.FORBIDDEN)
+                        ((ClientError) e).getHttpStatus() == FORBIDDEN)
                 .verify();
     }
 
@@ -192,7 +200,7 @@ class ConsentManagerTest {
         var consentRequestDetail = consentRequestDetail()
                 .requestId(requestId)
                 .patient(new PatientReference(patientId))
-                .status(ConsentStatus.GRANTED)
+                .status(GRANTED)
                 .build();
         when(repository.requestOf(requestId)).thenReturn(Mono.just(consentRequestDetail));
 
@@ -200,7 +208,7 @@ class ConsentManagerTest {
 
         StepVerifier.create(publisher)
                 .expectErrorMatches(e -> (e instanceof ClientError) &&
-                        ((ClientError) e).getHttpStatus() == HttpStatus.CONFLICT)
+                        ((ClientError) e).getHttpStatus() == CONFLICT)
                 .verify();
     }
 
@@ -214,7 +222,7 @@ class ConsentManagerTest {
 
         StepVerifier.create(publisher)
                 .expectErrorMatches(e -> (e instanceof ClientError) &&
-                        ((ClientError) e).getHttpStatus() == HttpStatus.NOT_FOUND)
+                        ((ClientError) e).getHttpStatus() == NOT_FOUND)
                 .verify();
     }
 }

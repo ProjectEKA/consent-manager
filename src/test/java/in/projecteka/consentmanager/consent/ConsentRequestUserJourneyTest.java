@@ -8,7 +8,6 @@ import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
-import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
@@ -45,6 +44,8 @@ import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.notificationMessage;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -423,11 +424,13 @@ public class ConsentRequestUserJourneyTest {
         var consentRequestDetail = consentRequestDetail()
                 .requestId(requestId)
                 .patient(new PatientReference(patientId))
-                .status(ConsentStatus.REQUESTED)
-                .build();
+                .status(REQUESTED);
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
-        when(repository.updateStatus(requestId, ConsentStatus.DENIED)).thenReturn(Mono.empty());
-        when(repository.requestOf(requestId)).thenReturn(Mono.just(consentRequestDetail));
+        when(repository.updateStatus(requestId, DENIED)).thenReturn(Mono.empty());
+        when(repository.requestOf(requestId))
+                .thenReturn(Mono.just(consentRequestDetail.build()),
+                        Mono.just(consentRequestDetail.status(DENIED).build()));
+        when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
         webTestClient.post()
                 .uri(uriBuilder -> uriBuilder.path(format("/consent-requests/%s/deny", requestId)).build())

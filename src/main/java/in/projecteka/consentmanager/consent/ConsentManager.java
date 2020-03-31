@@ -4,7 +4,6 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
@@ -27,7 +26,6 @@ import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepres
 import in.projecteka.consentmanager.consent.model.response.ConsentReference;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -44,7 +42,18 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_NOT_FOUND;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_STATE;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
 import static java.lang.String.format;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @AllArgsConstructor
 public class ConsentManager {
@@ -78,8 +87,8 @@ public class ConsentManager {
     private Mono<Boolean> validatePatient(String patientId) {
         return userServiceClient.userOf(patientId)
                 .onErrorResume(ClientError.class,
-                        clientError -> Mono.error(new ClientError(HttpStatus.BAD_REQUEST,
-                                new ErrorRepresentation(new Error(ErrorCode.USER_NOT_FOUND, "Invalid patient")))))
+                        clientError -> Mono.error(new ClientError(BAD_REQUEST,
+                                new ErrorRepresentation(new Error(USER_NOT_FOUND, "Invalid patient")))))
                 .map(Objects::nonNull);
     }
 
@@ -150,7 +159,7 @@ public class ConsentManager {
                                         broadcastConsentArtefacts(consents,
                                                 consentRequest.getCallBackUrl(),
                                                 requestId,
-                                                ConsentStatus.GRANTED,
+                                                GRANTED,
                                                 consentRequest.getLastUpdated())
                                                 .thenReturn(consentApprovalResponse(consents)))));
     }
@@ -168,16 +177,15 @@ public class ConsentManager {
                 .consentArtefacts(consents)
                 .hiuCallBackUrl(hiuCallBackUrl)
                 .build();
-
         return consentNotificationPublisher.publish(message);
     }
 
-    private ConsentApprovalResponse consentApprovalResponse(List<HIPConsentArtefactRepresentation> consentArtefacts) {
+    private ConsentApprovalResponse consentApprovalResponse(
+            List<HIPConsentArtefactRepresentation> consentArtefacts) {
         List<ConsentReference> consents = consentArtefacts
                 .stream()
                 .map(this::from)
                 .collect(Collectors.toList());
-
         return ConsentApprovalResponse.builder().consents(consents).build();
     }
 
@@ -224,7 +232,7 @@ public class ConsentManager {
                                                                         ConsentRequestDetail consentRequest,
                                                                         GrantedConsent grantedConsent) {
         var consentArtefact = from(consentRequest, grantedConsent);
-        var hipConsentArtefact = from(consentArtefact, ConsentStatus.GRANTED);
+        var hipConsentArtefact = from(consentArtefact, GRANTED);
         var consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
         return consentArtefactRepository.addConsentArtefactAndUpdateStatus(consentArtefact,
                 requestId,
@@ -261,7 +269,7 @@ public class ConsentManager {
     }
 
     private Mono<ConsentRequestDetail> validateConsentRequest(String requestId, String patientId) {
-        return consentRequestRepository.requestOf(requestId, ConsentStatus.REQUESTED.toString(), patientId)
+        return consentRequestRepository.requestOf(requestId, REQUESTED.toString(), patientId)
                 .switchIfEmpty(Mono.error(ClientError.consentRequestNotFound()));
     }
 
@@ -323,7 +331,7 @@ public class ConsentManager {
     }
 
     private boolean isGrantedConsent(ConsentRepresentation consentRepresentation) {
-        return consentRepresentation.getStatus().equals(ConsentStatus.GRANTED);
+        return consentRepresentation.getStatus().equals(GRANTED);
     }
 
     private Mono<ConsentRepresentation> getConsentWithRequest(String consentId) {
@@ -336,7 +344,7 @@ public class ConsentManager {
         return Flux.fromIterable(revokeRequest.getConsents())
                 .flatMap(consentId -> getConsentRepresentation(consentId, requesterId)
                         .map(consentRepresentation ->
-                                from(consentRepresentation.getConsentDetail(), ConsentStatus.REVOKED)))
+                                from(consentRepresentation.getConsentDetail(), REVOKED)))
                 .collectList();
     }
 
@@ -345,7 +353,7 @@ public class ConsentManager {
                 .flatMap(consentId -> getConsentRepresentation(consentId, requesterId)
                         .flatMap(consentRepresentation -> consentRequestRepository.requestOf(
                                 consentRepresentation.getConsentRequestId(),
-                                ConsentStatus.GRANTED.toString(),
+                                GRANTED.toString(),
                                 consentRepresentation.getConsentDetail().getPatient().getId())
                                 .flatMap(consentRequestDetail -> updateAndBroadcast(revokeRequest, requesterId,
                                         consentId, consentRepresentation, consentRequestDetail)))).then();
@@ -359,29 +367,35 @@ public class ConsentManager {
         return consentArtefactRepository.updateStatus(
                 consentId,
                 consentRepresentation.getConsentRequestId(),
-                ConsentStatus.REVOKED)
+                REVOKED)
                 .then(getHIPConsentArtefacts(revokeRequest, requesterId))
                 .flatMap(hipConsentArtefactRepresentations -> broadcastConsentArtefacts(
                         hipConsentArtefactRepresentations,
                         consentRequestDetail.getCallBackUrl(),
                         "",
-                        ConsentStatus.REVOKED,
+                        REVOKED,
                         consentRepresentation.getDateModified()));
     }
 
     public Mono<Void> deny(String id, String patientId) {
         return consentRequestRepository.requestOf(id)
-                .switchIfEmpty(Mono.error(new ClientError(HttpStatus.NOT_FOUND,
-                        new ErrorRepresentation(new Error(ErrorCode.CONSENT_REQUEST_NOT_FOUND,
+                .switchIfEmpty(Mono.error(new ClientError(NOT_FOUND,
+                        new ErrorRepresentation(new Error(CONSENT_REQUEST_NOT_FOUND,
                                 "Consent request not existing")))))
                 .filter(consentRequest -> consentRequest.getPatient().getId().equals(patientId))
-                .switchIfEmpty(Mono.error(new ClientError(HttpStatus.FORBIDDEN,
-                        new ErrorRepresentation(new Error(ErrorCode.CONSENT_REQUEST_NOT_FOUND,
+                .switchIfEmpty(Mono.error(new ClientError(FORBIDDEN,
+                        new ErrorRepresentation(new Error(CONSENT_REQUEST_NOT_FOUND,
                                 format("Consent request not existing for patient: %s", patientId))))))
-                .filter(consentRequest -> consentRequest.getStatus().equals(ConsentStatus.REQUESTED))
-                .switchIfEmpty(Mono.error(new ClientError(HttpStatus.CONFLICT,
-                        new ErrorRepresentation(new Error(ErrorCode.INVALID_STATE,
-                                format("Consent request is not in %s state", ConsentStatus.REQUESTED.toString()))))))
-                .flatMap(consentRequest -> consentRequestRepository.updateStatus(id, ConsentStatus.DENIED));
+                .filter(consentRequest -> consentRequest.getStatus().equals(REQUESTED))
+                .switchIfEmpty(Mono.error(new ClientError(CONFLICT,
+                        new ErrorRepresentation(new Error(INVALID_STATE,
+                                format("Consent request is not in %s state", REQUESTED.toString()))))))
+                .flatMap(consentRequest -> consentRequestRepository.updateStatus(id, DENIED)
+                        .then(consentRequestRepository.requestOf(id)))
+                .flatMap(consentRequest -> broadcastConsentArtefacts(List.of(),
+                        consentRequest.getCallBackUrl(),
+                        consentRequest.getRequestId(),
+                        consentRequest.getStatus(),
+                        consentRequest.getLastUpdated()));
     }
 }

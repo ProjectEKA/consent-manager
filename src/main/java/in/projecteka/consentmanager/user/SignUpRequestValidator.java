@@ -6,10 +6,8 @@ import in.projecteka.consentmanager.user.model.SignUpRequest;
 import io.vavr.collection.CharSeq;
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
-import org.passay.AlphabeticalSequenceRule;
 import org.passay.DigitCharacterRule;
 import org.passay.LengthRule;
-import org.passay.NumericalSequenceRule;
 import org.passay.PasswordData;
 import org.passay.PasswordValidator;
 import org.passay.QwertySequenceRule;
@@ -17,7 +15,6 @@ import org.passay.RuleResult;
 import org.passay.RuleResultDetail;
 import org.passay.SpecialCharacterRule;
 import org.passay.UppercaseCharacterRule;
-import org.passay.WhitespaceRule;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -125,10 +122,7 @@ public class SignUpRequestValidator {
                 new UppercaseCharacterRule(1),
                 new DigitCharacterRule(1),
                 new SpecialCharacterRule(1),
-                new NumericalSequenceRule(3, false),
-                new AlphabeticalSequenceRule(3, false),
-                new QwertySequenceRule(3, false),
-                new WhitespaceRule()));
+                new QwertySequenceRule(3, false)));
         RuleResult result = validator.validate(new PasswordData(password));
         if (result.isValid()) {
             return Validation.valid(password);

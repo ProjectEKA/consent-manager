@@ -12,6 +12,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SignatureException;
+import lombok.AllArgsConstructor;
 import org.apache.log4j.Logger;
 
 import java.util.Date;
@@ -22,21 +23,14 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
+@AllArgsConstructor
 public class SignUpService {
 
     private final static Logger logger = Logger.getLogger(SignUpService.class);
+    public static final long JWT_TOKEN_VALIDITY = 5 * 60 * 60;
     private JWTProperties jwtProperties;
     private LoadingCache<String, Optional<String>> unverifiedSessions;
     private LoadingCache<String, Optional<String>> verifiedSessions;
-    public static final long JWT_TOKEN_VALIDITY = 5 * 60 * 60;
-
-    public SignUpService(JWTProperties jwtProperties,
-                         LoadingCache<String, Optional<String>> unverifiedSessions,
-                         LoadingCache<String, Optional<String>> verifiedSessions) {
-        this.jwtProperties = jwtProperties;
-        this.unverifiedSessions = unverifiedSessions;
-        this.verifiedSessions = verifiedSessions;
-    }
 
     public SignUpSession cacheAndSendSession(String sessionId, String mobileNumber) {
         SignUpSession signupSession = new SignUpSession(sessionId);
@@ -83,6 +77,10 @@ public class SignUpService {
 
     public String sessionFrom(String token) {
         return claim(from(token), Claims::getSubject);
+    }
+
+    public void removeOf(String sessionId) {
+        verifiedSessions.invalidate(sessionId);
     }
 
     public Optional<String> getMobileNumber(String sessionId) {

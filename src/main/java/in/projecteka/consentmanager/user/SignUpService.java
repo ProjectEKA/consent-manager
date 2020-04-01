@@ -12,7 +12,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SignatureException;
-import lombok.AllArgsConstructor;
 import org.apache.log4j.Logger;
 
 import java.util.Date;
@@ -23,14 +22,23 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
-@AllArgsConstructor
 public class SignUpService {
 
     private final static Logger logger = Logger.getLogger(SignUpService.class);
-    public static final long JWT_TOKEN_VALIDITY = 5 * 60 * 60;
-    private JWTProperties jwtProperties;
-    private LoadingCache<String, Optional<String>> unverifiedSessions;
-    private LoadingCache<String, Optional<String>> verifiedSessions;
+    public final long jwtTokenValidity;
+    private final JWTProperties jwtProperties;
+    private final LoadingCache<String, Optional<String>> unverifiedSessions;
+    private final LoadingCache<String, Optional<String>> verifiedSessions;
+
+    public SignUpService(JWTProperties jwtProperties,
+                         LoadingCache<String, Optional<String>> unverifiedSessions,
+                         LoadingCache<String, Optional<String>> verifiedSessions,
+                         int tokenValidityInMinutes) {
+        this.jwtProperties = jwtProperties;
+        this.unverifiedSessions = unverifiedSessions;
+        this.verifiedSessions = verifiedSessions;
+        jwtTokenValidity = tokenValidityInMinutes * 60 * 60;
+    }
 
     public SignUpSession cacheAndSendSession(String sessionId, String mobileNumber) {
         SignUpSession signupSession = new SignUpSession(sessionId);
@@ -71,7 +79,7 @@ public class SignUpService {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtTokenValidity * 1000))
                 .signWith(SignatureAlgorithm.HS512, jwtProperties.getSecret()).compact());
     }
 

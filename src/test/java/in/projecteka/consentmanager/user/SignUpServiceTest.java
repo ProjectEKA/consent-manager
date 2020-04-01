@@ -40,7 +40,7 @@ class SignUpServiceTest {
     public void setUp() {
         easyRandom = new EasyRandom();
         MockitoAnnotations.initMocks(this);
-        signupService = new SignUpService(jwtProperties, unverifiedSessions, verifiedSessions);
+        signupService = new SignUpService(jwtProperties, unverifiedSessions, verifiedSessions, 5);
     }
 
     @Test
@@ -80,7 +80,7 @@ class SignUpServiceTest {
                 });
         var value = Optional.of("Something");
         verifiedSessions.put(sessionId, value);
-        var signUpService = new SignUpService(null, null, verifiedSessions);
+        var signUpService = new SignUpService(null, null, verifiedSessions, 0);
 
         assertThat(verifiedSessions.get(sessionId)).isEqualTo(value);
         signUpService.removeOf(sessionId);

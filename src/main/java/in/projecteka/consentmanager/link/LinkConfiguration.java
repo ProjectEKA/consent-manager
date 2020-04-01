@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.link;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
+import in.projecteka.consentmanager.user.UserServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.link.discovery.Discovery;

@@ -10,7 +10,7 @@ info:
     Doctors, Medical Researchers).
 
 servers:
-  - url: https://consent-manager-dev.projecteka.in
+  - url: https://ncg-dev.projecteka.in/consent-manager
     description: Dev
 
 tags:
@@ -500,24 +500,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   /consent-requests/{request-id}/deny:
-    delete:
+    post:
       tags:
         - consent
       summary: Deny request.
       description: Deny consent request.
       parameters:
-        - name: Authorization
-          description: Token received after successful verification of PIN
-          in: header
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/authorization'
         - name: request-id
           in: path
           required: true
           schema:
             type: string
             format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentDenyRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/ConsentDenyRequest'
       responses:
         '204':
           description: Successfully denied consent request.
@@ -2072,3 +2076,8 @@ components:
     PatientIdentifierType:
       type: string
       enum: [MOBILE, MR]
+    ConsentDenyRequest:
+      type: object
+      properties:
+        reason:
+          type: string

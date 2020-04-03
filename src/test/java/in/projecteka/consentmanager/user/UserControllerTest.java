@@ -2,6 +2,9 @@ package in.projecteka.consentmanager.user;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.common.Authenticator;
+import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
@@ -25,10 +28,16 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
+import static in.projecteka.consentmanager.user.TestBuilders.session;
+import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static in.projecteka.consentmanager.user.TestBuilders.user;
+import static java.lang.String.format;
+import static java.time.LocalDate.now;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @SuppressWarnings("ALL")
 @RunWith(SpringRunner.class)
@@ -37,7 +46,7 @@ import static org.mockito.Mockito.when;
 class UserControllerTest {
 
     @MockBean
-    private UserService mockService;
+    private UserService userService;
 
     @MockBean
     private ConsentManager consentManager;
@@ -75,12 +84,18 @@ class UserControllerTest {
     @MockBean(name = "identityServiceJWKSet")
     private JWKSet identityServiceJWKSet;
 
+    @MockBean
+    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+
+    @MockBean
+    private Authenticator authenticator;
+
     @Test
     public void shouldReturnTemporarySessionIfOtpRequestIsSuccessful() {
         UserSignUpEnquiry userSignupEnquiry = new UserSignUpEnquiry(
                 "MOBILE",
                 string());
-        when(mockService.sendOtp(any())).thenReturn(Mono.just(new SignUpSession(string())));
+        when(userService.sendOtp(any())).thenReturn(Mono.just(new SignUpSession(string())));
 
         webClient.post()
                 .uri("/users/verify")
@@ -88,7 +103,7 @@ class UserControllerTest {
                 .body(BodyInserters.fromValue(userSignupEnquiry))
                 .exchange().expectStatus().isCreated();
 
-        Mockito.verify(mockService, times(1)).sendOtp(userSignupEnquiry);
+        Mockito.verify(userService, times(1)).sendOtp(userSignupEnquiry);
     }
 
     @Test
@@ -98,7 +113,7 @@ class UserControllerTest {
                 string());
         Token token = new Token(string());
 
-        when(mockService.permitOtp(any())).thenReturn(Mono.just(token));
+        when(userService.permitOtp(any())).thenReturn(Mono.just(token));
 
         webClient.post()
                 .uri("/users/permit")
@@ -106,6 +121,86 @@ class UserControllerTest {
                 .body(BodyInserters.fromValue(otpVerification))
                 .exchange().expectStatus().isOk();
 
-        Mockito.verify(mockService, times(1)).permitOtp(otpVerification);
+        Mockito.verify(userService, times(1)).permitOtp(otpVerification);
+    }
+
+    @Test
+    public void createUser() {
+        var signUpRequest = signUpRequest()
+                .userName("username@ncg")
+                .firstName("RandomName")
+                .password("@2Abaafasfas")
+                .dateOfBirth(now())
+                .build();
+        var token = string();
+        var sessionId = string();
+        var session = session().build();
+        when(signupService.sessionFrom(token)).thenReturn(sessionId);
+        when(userService.create(signUpRequest, sessionId)).thenReturn(Mono.just(session));
+        when(signupService.validateToken(token)).thenReturn(true);
+
+        webClient.post()
+                .uri("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .body(BodyInserters.fromValue(signUpRequest))
+                .exchange().expectStatus().isOk();
+    }
+
+    @Test
+    public void returnBadRequestForUserCreation() {
+        var signUpRequest = signUpRequest()
+                .firstName("RandomName")
+                .dateOfBirth(now().plusDays(1))
+                .build();
+        var token = string();
+        var sessionId = string();
+        var session = session().build();
+        when(signupService.sessionFrom(token)).thenReturn(sessionId);
+        when(userService.create(signUpRequest, sessionId)).thenReturn(Mono.just(session));
+        when(signupService.validateToken(token)).thenReturn(true);
+
+        webClient.post()
+                .uri("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .body(BodyInserters.fromValue(signUpRequest))
+                .exchange()
+                .expectStatus()
+                .is4xxClientError();
+    }
+
+    @Test
+    public void returnUserForCentralRegistryAuthenticatedSystem() {
+        var username = string();
+        var token = string();
+        var sessionId = string();
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller(username, false)));
+        when(userService.userWith(username)).thenReturn(Mono.just(user().build()));
+
+        webClient.get()
+                .uri(format("/users/%s", username))
+                .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .exchange()
+                .expectStatus()
+                .isOk();
+    }
+
+    @Test
+    public void returnUser() {
+        var username = string();
+        var token = string();
+        var sessionId = string();
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(username, true)));
+        when(userService.userWith(username)).thenReturn(Mono.just(user().build()));
+
+        webClient.get()
+                .uri(format("/internal/users/%s", username))
+                .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .exchange()
+                .expectStatus()
+                .isOk();
     }
 }

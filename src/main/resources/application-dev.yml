@@ -14,6 +14,7 @@ consentmanager:
     url: http://localhost:9000
     transactionPinDigitSize: 4
     transactionPinTokenValidity: 2
+    userCreationTokenValidity: 5
   otpservice:
     url: http://localhost:5000
     identifiers:

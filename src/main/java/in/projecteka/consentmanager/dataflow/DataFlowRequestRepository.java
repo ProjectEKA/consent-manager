@@ -20,25 +20,28 @@ public class DataFlowRequestRepository {
     public Mono<Void> addDataFlowRequest(String transactionId, DataFlowRequest dataFlowRequest) {
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(
-                        INSERT_TO_DATA_FLOW_REQUEST,
-                        Tuple.of(transactionId, JsonObject.mapFrom(dataFlowRequest)),
-                        handler -> {
-                            if (handler.failed()) {
-                                monoSink.error(new Exception("Failed to insert to data flow request"));
-                                return;
-                            }
-                            monoSink.success();
-                        }));
+                        INSERT_TO_DATA_FLOW_REQUEST)
+                        .execute(
+                                Tuple.of(transactionId, JsonObject.mapFrom(dataFlowRequest)),
+                                handler -> {
+                                    if (handler.failed()) {
+                                        monoSink.error(new Exception("Failed to insert to data flow request"));
+                                        return;
+                                    }
+                                    monoSink.success();
+                                }));
     }
 
     public Mono<String> getHipIdFor(String consentId) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_HIP_ID_FROM_CONSENT_ARTEFACT, Tuple.of(consentId),
-                handler -> {
-                    if (handler.failed()) {
-                        monoSink.error(new Exception("Failed to get hip id from consent Id"));
-                        return;
-                    }
-                    monoSink.success(handler.result().iterator().next().getString(0));
-                }));
+        return Mono.create(monoSink ->
+                dbClient.preparedQuery(SELECT_HIP_ID_FROM_CONSENT_ARTEFACT)
+                        .execute(Tuple.of(consentId),
+                                handler -> {
+                                    if (handler.failed()) {
+                                        monoSink.error(new Exception("Failed to get hip id from consent Id"));
+                                        return;
+                                    }
+                                    monoSink.success(handler.result().iterator().next().getString(0));
+                                }));
     }
 }

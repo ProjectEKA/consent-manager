@@ -24,46 +24,46 @@ public class UserRepository {
     private PgPool dbClient;
 
     public Mono<User> userWith(String userName) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT,
-                Tuple.of(userName),
-                handler -> {
-                    if (handler.failed()) {
-                        logger.error(handler.cause());
-                        monoSink.error(dbOperationFailed());
-                        return;
-                    }
-                    var patientIterator = handler.result().iterator();
-                    if (patientIterator.hasNext()) {
-                        var patientRow = patientIterator.next();
-                        monoSink.success(User.builder()
-                                .identifier(patientRow.getString("id"))
-                                .firstName(patientRow.getString("first_name"))
-                                .lastName(patientRow.getString("last_name"))
-                                .dateOfBirth(patientRow.getLocalDate("date_of_birth"))
-                                .gender(Gender.valueOf(patientRow.getString("gender")))
-                                .phone(patientRow.getString("phone_number"))
-                                .build());
-                        return;
-                    }
-                    monoSink.success();
-                }));
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT)
+                .execute(Tuple.of(userName),
+                        handler -> {
+                            if (handler.failed()) {
+                                logger.error(handler.cause());
+                                monoSink.error(dbOperationFailed());
+                                return;
+                            }
+                            var patientIterator = handler.result().iterator();
+                            if (patientIterator.hasNext()) {
+                                var patientRow = patientIterator.next();
+                                monoSink.success(User.builder()
+                                        .identifier(patientRow.getString("id"))
+                                        .firstName(patientRow.getString("first_name"))
+                                        .lastName(patientRow.getString("last_name"))
+                                        .dateOfBirth(patientRow.getLocalDate("date_of_birth"))
+                                        .gender(Gender.valueOf(patientRow.getString("gender")))
+                                        .phone(patientRow.getString("phone_number"))
+                                        .build());
+                                return;
+                            }
+                            monoSink.success();
+                        }));
     }
 
     public Mono<Void> save(User user) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_PATIENT,
-                Tuple.of(user.getIdentifier(),
+        return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_PATIENT)
+                .execute(Tuple.of(user.getIdentifier(),
                         user.getFirstName(),
                         user.getLastName(),
                         user.getGender().toString(),
                         user.getDateOfBirth(),
                         user.getPhone()),
-                handler -> {
-                    if (handler.failed()) {
-                        logger.error(handler.cause());
-                        monoSink.error(dbOperationFailed());
-                        return;
-                    }
-                    monoSink.success();
-                }));
+                        handler -> {
+                            if (handler.failed()) {
+                                logger.error(handler.cause());
+                                monoSink.error(dbOperationFailed());
+                                return;
+                            }
+                            monoSink.success();
+                        }));
     }
 }

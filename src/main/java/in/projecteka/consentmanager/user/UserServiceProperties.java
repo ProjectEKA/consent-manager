@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.clients.properties;
+package in.projecteka.consentmanager.user;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -18,4 +18,5 @@ public class UserServiceProperties {
     private String url;
     private int transactionPinDigitSize;
     private int transactionPinTokenValidity;
+    private int userCreationTokenValidity;
 }

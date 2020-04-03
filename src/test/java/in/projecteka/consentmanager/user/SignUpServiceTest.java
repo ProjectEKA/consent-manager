@@ -1,5 +1,7 @@
 package in.projecteka.consentmanager.user;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
@@ -13,6 +15,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -37,7 +40,7 @@ class SignUpServiceTest {
     public void setUp() {
         easyRandom = new EasyRandom();
         MockitoAnnotations.initMocks(this);
-        signupService = new SignUpService(jwtProperties, unverifiedSessions, verifiedSessions);
+        signupService = new SignUpService(jwtProperties, unverifiedSessions, verifiedSessions, 5);
     }
 
     @Test
@@ -62,5 +65,25 @@ class SignUpServiceTest {
         when(unverifiedSessions.get(sessionId)).thenReturn(Optional.of(easyRandom.nextObject(String.class)));
 
         assertThat(signupService.generateToken(sessionId)).isInstanceOf(Token.class);
+    }
+
+    @Test
+    public void invalidateSession() throws ExecutionException {
+        var sessionId = easyRandom.nextObject(String.class);
+        var verifiedSessions = CacheBuilder
+                .newBuilder()
+                .expireAfterWrite(5, TimeUnit.MINUTES)
+                .build(new CacheLoader<String, Optional<String>>() {
+                    public Optional<String> load(String key) {
+                        return Optional.empty();
+                    }
+                });
+        var value = Optional.of("Something");
+        verifiedSessions.put(sessionId, value);
+        var signUpService = new SignUpService(null, null, verifiedSessions, 0);
+
+        assertThat(verifiedSessions.get(sessionId)).isEqualTo(value);
+        signUpService.removeOf(sessionId);
+        assertThat(verifiedSessions.get(sessionId)).isEmpty();
     }
 }

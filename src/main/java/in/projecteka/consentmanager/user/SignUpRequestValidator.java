@@ -6,15 +6,16 @@ import in.projecteka.consentmanager.user.model.SignUpRequest;
 import io.vavr.collection.CharSeq;
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
-import org.passay.DigitCharacterRule;
+import org.passay.CharacterRule;
+import org.passay.CharacterSequence;
+import org.passay.EnglishCharacterData;
+import org.passay.IllegalSequenceRule;
 import org.passay.LengthRule;
 import org.passay.PasswordData;
 import org.passay.PasswordValidator;
-import org.passay.QwertySequenceRule;
 import org.passay.RuleResult;
 import org.passay.RuleResultDetail;
-import org.passay.SpecialCharacterRule;
-import org.passay.UppercaseCharacterRule;
+import org.passay.SequenceData;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -119,10 +120,23 @@ public class SignUpRequestValidator {
         }
         PasswordValidator validator = new PasswordValidator(Arrays.asList(
                 new LengthRule(8, 30),
-                new UppercaseCharacterRule(1),
-                new DigitCharacterRule(1),
-                new SpecialCharacterRule(1),
-                new QwertySequenceRule(3, false)));
+                new CharacterRule(EnglishCharacterData.UpperCase, 1),
+                new CharacterRule(EnglishCharacterData.LowerCase, 1),
+                new CharacterRule(EnglishCharacterData.Digit, 1),
+                new CharacterRule(EnglishCharacterData.Special, 1),
+                new IllegalSequenceRule(new SequenceData() {
+                    @Override
+                    public String getErrorCode() {
+                        return "cannot have three or more consecutive numbers";
+                    }
+
+                    @Override
+                    public CharacterSequence[] getSequences() {
+                        return new CharacterSequence[]{
+                                new CharacterSequence("`1234567890-=")
+                        };
+                    }
+                }, 3, false)));
         RuleResult result = validator.validate(new PasswordData(password));
         if (result.isValid()) {
             return Validation.valid(password);

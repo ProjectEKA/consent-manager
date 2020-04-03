@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.TransactionPin;
 import io.jsonwebtoken.Jwts;

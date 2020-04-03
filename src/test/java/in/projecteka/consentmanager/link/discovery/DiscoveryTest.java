@@ -10,6 +10,8 @@ import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
+import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
+import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifierType;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
@@ -20,7 +22,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResponse;
@@ -111,6 +116,12 @@ public class DiscoveryTest {
                 .name("Max")
                 .build();
         Identifier identifier = patientIdentifier().type("MOBILE").value("+91-9999999999").build();
+        List<PatientIdentifier> unverifiedIdentifiers = Collections.singletonList(new PatientIdentifier(PatientIdentifierType.MR, "NCP1008"));
+        var unverifiedIds = unverifiedIdentifiers.stream().map(patientIdentifier ->
+                in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
+                        .type(patientIdentifier.getType().toString())
+                        .value(patientIdentifier.getValue())
+                        .build()).collect(Collectors.toList());
         Patient patient = Patient.builder()
                 .id(user.getIdentifier())
                 .firstName(user.getFirstName())
@@ -118,7 +129,7 @@ public class DiscoveryTest {
                 .gender(user.getGender())
                 .dateOfBirth(user.getDateOfBirth())
                 .verifiedIdentifiers(of(identifier))
-                .unVerifiedIdentifiers(of())
+                .unverifiedIdentifiers(unverifiedIds)
                 .build();
         PatientRequest patientRequest = patientRequest().patient(patient).transactionId(transactionId).build();
         DiscoveryResponse discoveryResponse = discoveryResponse()
@@ -133,7 +144,7 @@ public class DiscoveryTest {
         when(discoveryRepository.insert(providerId, patientId, transactionId)).thenReturn(Mono.empty());
 
         StepVerifier.create(
-                discovery.patientFor(providerId, patientId, transactionId)
+                discovery.patientFor(patientId, unverifiedIdentifiers, providerId, transactionId)
                         .subscriberContext(cxt -> cxt.put(AUTHORIZATION, string())))
                 .expectNext(discoveryResponse)
                 .verifyComplete();
@@ -163,7 +174,7 @@ public class DiscoveryTest {
         when(userServiceClient.userOf(eq(userName))).thenReturn(Mono.just(user));
 
         StepVerifier.create(
-                discovery.patientFor(providerId, userName, UUID.randomUUID().toString())
+                discovery.patientFor(userName, Collections.emptyList(), providerId, UUID.randomUUID().toString())
                         .subscriberContext(context -> context.put(AUTHORIZATION, string())))
                 .expectErrorMatches(error -> ((ClientError) error)
                         .getError()

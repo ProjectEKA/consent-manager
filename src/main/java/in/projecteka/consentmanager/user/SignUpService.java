@@ -25,17 +25,19 @@ import java.util.function.Function;
 public class SignUpService {
 
     private final static Logger logger = Logger.getLogger(SignUpService.class);
-    private JWTProperties jwtProperties;
-    private LoadingCache<String, Optional<String>> unverifiedSessions;
-    private LoadingCache<String, Optional<String>> verifiedSessions;
-    public static final long JWT_TOKEN_VALIDITY = 5 * 60 * 60;
+    public final long jwtTokenValidity;
+    private final JWTProperties jwtProperties;
+    private final LoadingCache<String, Optional<String>> unverifiedSessions;
+    private final LoadingCache<String, Optional<String>> verifiedSessions;
 
     public SignUpService(JWTProperties jwtProperties,
                          LoadingCache<String, Optional<String>> unverifiedSessions,
-                         LoadingCache<String, Optional<String>> verifiedSessions) {
+                         LoadingCache<String, Optional<String>> verifiedSessions,
+                         int tokenValidityInMinutes) {
         this.jwtProperties = jwtProperties;
         this.unverifiedSessions = unverifiedSessions;
         this.verifiedSessions = verifiedSessions;
+        jwtTokenValidity = tokenValidityInMinutes * 60 * 60;
     }
 
     public SignUpSession cacheAndSendSession(String sessionId, String mobileNumber) {
@@ -77,12 +79,16 @@ public class SignUpService {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtTokenValidity * 1000))
                 .signWith(SignatureAlgorithm.HS512, jwtProperties.getSecret()).compact());
     }
 
     public String sessionFrom(String token) {
         return claim(from(token), Claims::getSubject);
+    }
+
+    public void removeOf(String sessionId) {
+        verifiedSessions.invalidate(sessionId);
     }
 
     public Optional<String> getMobileNumber(String sessionId) {

@@ -44,52 +44,48 @@ public class ConsentRequestRepository {
 
     public Mono<Void> insert(RequestedDetail requestedDetail, String requestId) {
         return Mono.create(monoSink ->
-                dbClient.preparedQuery(
-                        INSERT_CONSENT_REQUEST_QUERY,
-                        Tuple.of(requestId,
+                dbClient.preparedQuery(INSERT_CONSENT_REQUEST_QUERY)
+                        .execute(Tuple.of(requestId,
                                 requestedDetail.getPatient().getId(),
                                 ConsentStatus.REQUESTED.name(),
                                 new JsonObject(from(requestedDetail))),
-                        handler -> {
-                            if (handler.failed()) {
-                                monoSink.error(new Exception(FAILED_TO_SAVE_CONSENT_REQUEST));
-                                return;
-                            }
-                            monoSink.success();
-                        }));
+                                handler -> {
+                                    if (handler.failed()) {
+                                        monoSink.error(new Exception(FAILED_TO_SAVE_CONSENT_REQUEST));
+                                        return;
+                                    }
+                                    monoSink.success();
+                                }));
     }
 
     public Mono<List<ConsentRequestDetail>> requestsForPatient(String patientId, int limit, int offset) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(
-                SELECT_CONSENT_DETAILS_FOR_PATIENT,
-                Tuple.of(patientId, limit, offset),
-                handler -> {
-                    if (handler.failed()) {
-                        monoSink.error(new RuntimeException(UNKNOWN_ERROR_OCCURRED));
-                        return;
-                    }
-                    List<ConsentRequestDetail> requestList = new ArrayList<>();
-                    RowSet<Row> results = handler.result();
-                    for (Row result : results) {
-                        ConsentRequestDetail aDetail = mapToConsentRequestDetail(result);
-                        requestList.add(aDetail);
-                    }
-                    monoSink.success(requestList);
-                }));
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_DETAILS_FOR_PATIENT)
+                .execute(Tuple.of(patientId, limit, offset),
+                        handler -> {
+                            if (handler.failed()) {
+                                monoSink.error(new RuntimeException(UNKNOWN_ERROR_OCCURRED));
+                                return;
+                            }
+                            List<ConsentRequestDetail> requestList = new ArrayList<>();
+                            RowSet<Row> results = handler.result();
+                            for (Row result : results) {
+                                ConsentRequestDetail aDetail = mapToConsentRequestDetail(result);
+                                requestList.add(aDetail);
+                            }
+                            monoSink.success(requestList);
+                        }));
     }
 
     public Mono<ConsentRequestDetail> requestOf(String requestId, String status, String patientId) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(
-                SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS,
-                Tuple.of(requestId, status, patientId),
-                consentRequestHandler(monoSink)));
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS)
+                .execute(Tuple.of(requestId, status, patientId),
+                        consentRequestHandler(monoSink)));
     }
 
     public Mono<ConsentRequestDetail> requestOf(String requestId) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(
-                SELECT_CONSENT_REQUEST_BY_ID,
-                Tuple.of(requestId),
-                consentRequestHandler(monoSink)));
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_REQUEST_BY_ID)
+                .execute(Tuple.of(requestId),
+                        consentRequestHandler(monoSink)));
     }
 
     private Handler<AsyncResult<RowSet<Row>>> consentRequestHandler(MonoSink<ConsentRequestDetail> monoSink) {
@@ -127,16 +123,14 @@ public class ConsentRequestRepository {
     }
 
     public Mono<Void> updateStatus(String id, ConsentStatus status) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
-                Tuple.of(status.toString(),
-                        LocalDateTime.now(),
-                        id),
-                updateHandler -> {
-                    if (updateHandler.failed()) {
-                        monoSink.error(new Exception("Failed to update status"));
-                    }
-                    monoSink.success();
-                }));
+        return Mono.create(monoSink -> dbClient.preparedQuery(UPDATE_CONSENT_REQUEST_STATUS_QUERY)
+                .execute(Tuple.of(status.toString(), LocalDateTime.now(), id),
+                        updateHandler -> {
+                            if (updateHandler.failed()) {
+                                monoSink.error(new Exception("Failed to update status"));
+                            }
+                            monoSink.success();
+                        }));
     }
 
     private ConsentStatus getConsentStatus(String status) {

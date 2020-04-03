@@ -7,7 +7,6 @@ import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
-import in.projecteka.consentmanager.clients.properties.UserServiceProperties;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -57,8 +56,12 @@ public class UserConfiguration {
     @Bean
     public SignUpService authenticatorService(JWTProperties jwtProperties,
                                               LoadingCache<String, Optional<String>> sessionCache,
-                                              LoadingCache<String, Optional<String>> secondSessionCache) {
-        return new SignUpService(jwtProperties, sessionCache, secondSessionCache);
+                                              LoadingCache<String, Optional<String>> secondSessionCache,
+                                              UserServiceProperties userServiceProperties) {
+        return new SignUpService(jwtProperties,
+                sessionCache,
+                secondSessionCache,
+                userServiceProperties.getUserCreationTokenValidity());
     }
 
     @Bean({"unverifiedSessions", "verifiedSessions"})

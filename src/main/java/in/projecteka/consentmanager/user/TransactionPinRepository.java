@@ -19,31 +19,33 @@ public class TransactionPinRepository {
     private PgPool dbClient;
 
     public Mono<Void> insert(TransactionPin transactionPin) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_TRANSACTION_PIN,
-                Tuple.of(transactionPin.getPin(), transactionPin.getPatientId()),
-                handler -> {
-                    if (handler.failed()) {
-                        monoSink.error(ClientError.failedToCreateTransactionPin());
-                        return;
-                    }
-                    monoSink.success();
-                }));
+        return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_TRANSACTION_PIN)
+                .execute(
+                        Tuple.of(transactionPin.getPin(), transactionPin.getPatientId()),
+                        handler -> {
+                            if (handler.failed()) {
+                                monoSink.error(ClientError.failedToCreateTransactionPin());
+                                return;
+                            }
+                            monoSink.success();
+                        }));
     }
 
     public Mono<Optional<TransactionPin>> getTransactionPinFor(String patientId) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_TRANSACTION_PIN,
-                Tuple.of(patientId),
-                handler -> {
-                    if (handler.failed()) {
-                        monoSink.error(ClientError.failedToFetchTransactionPin());
-                        return;
-                    }
-                    var transactionPinIterator = handler.result().iterator();
-                    if (transactionPinIterator.hasNext()) {
-                        monoSink.success(transactionPinFrom(transactionPinIterator.next()));
-                    }
-                    monoSink.success(Optional.empty());
-                }));
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_TRANSACTION_PIN)
+                .execute(
+                        Tuple.of(patientId),
+                        handler -> {
+                            if (handler.failed()) {
+                                monoSink.error(ClientError.failedToFetchTransactionPin());
+                                return;
+                            }
+                            var transactionPinIterator = handler.result().iterator();
+                            if (transactionPinIterator.hasNext()) {
+                                monoSink.success(transactionPinFrom(transactionPinIterator.next()));
+                            }
+                            monoSink.success(Optional.empty());
+                        }));
     }
 
     private Optional<TransactionPin> transactionPinFrom(Row row) {

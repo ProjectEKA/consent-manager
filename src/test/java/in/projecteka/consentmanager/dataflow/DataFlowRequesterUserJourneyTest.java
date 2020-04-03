@@ -206,7 +206,7 @@ public class DataFlowRequesterUserJourneyTest {
         var consentArtefactRepresentation = consentArtefactRepresentation().build();
         consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id("10000005").name("MAX").build());
         var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
-        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.INVALID_HIU, "Not a valid HIU"));
+        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.INVALID_REQUESTER, "Not a valid HIU"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         consentManagerServer.enqueue(
                 new MockResponse()

@@ -54,7 +54,7 @@ public class UserController {
         return signUpRequests.isValid()
                ? userService.create(signUpRequests.get(), signupService.sessionFrom(token))
                : Mono.error(new ClientError(HttpStatus.BAD_REQUEST,
-                       new ErrorRepresentation(new Error(ErrorCode.INVALID_HIU,
+                       new ErrorRepresentation(new Error(ErrorCode.INVALID_REQUESTER,
                                signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));
     }
 

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.validation.Valid;
 import java.util.UUID;
 
 @RestController
@@ -27,11 +28,12 @@ public class DiscoveryController {
     }
 
     @PostMapping("/patients/discover")
-    public Mono<DiscoveryResponse> findPatient(@RequestBody DiscoveryRequest discoveryRequest) {
+    public Mono<DiscoveryResponse> findPatient(@RequestBody @Valid DiscoveryRequest discoveryRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUserName)
-                .flatMap(user -> discovery.patientFor(discoveryRequest.getHip().getId(), user, newTransaction()));
+                .flatMap(user -> discovery.patientFor(user, discoveryRequest.getUnverifiedIdentifiers(), discoveryRequest.getHip().getId(),
+                        newTransaction()));
     }
 
     private String newTransaction() {

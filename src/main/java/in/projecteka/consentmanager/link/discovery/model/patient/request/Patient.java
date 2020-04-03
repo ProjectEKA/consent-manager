@@ -21,5 +21,5 @@ public class Patient {
     private Gender gender;
     private Date dateOfBirth;
     private List<Identifier> verifiedIdentifiers;
-    private List<Identifier> unVerifiedIdentifiers;
+    private List<Identifier> unverifiedIdentifiers;
 }

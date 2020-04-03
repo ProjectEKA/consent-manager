@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.common.Authenticator;
@@ -9,6 +8,7 @@ import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
@@ -41,8 +41,12 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.notificationMessage;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
+import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -410,6 +414,31 @@ public class ConsentRequestUserJourneyTest {
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectBody(in.projecteka.consentmanager.clients.model.Error.class);
+    }
+
+    @Test
+    public void shouldDenyConsentRequest() {
+        var token = string();
+        var requestId = string();
+        var patientId = string();
+        var consentRequestDetail = consentRequestDetail()
+                .requestId(requestId)
+                .patient(new PatientReference(patientId))
+                .status(REQUESTED);
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
+        when(repository.updateStatus(requestId, DENIED)).thenReturn(Mono.empty());
+        when(repository.requestOf(requestId))
+                .thenReturn(Mono.just(consentRequestDetail.build()),
+                        Mono.just(consentRequestDetail.status(DENIED).build()));
+        when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
+
+        webTestClient.post()
+                .uri(uriBuilder -> uriBuilder.path(format("/consent-requests/%s/deny", requestId)).build())
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", token)
+                .exchange()
+                .expectStatus()
+                .isNoContent();
     }
 
     public static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

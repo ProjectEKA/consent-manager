@@ -206,7 +206,7 @@ class SignUpRequestValidatorTest {
             "weak_without_caps_or_numeric",
             "weak_Without_numeric",
             "weakWithout1SpecialCharacters",
-            "weak With whitespace characters"
+            "345aA#afaf"
     })
     void returnInValidSignUpRequestWithWeak(String password) {
         var signUpRequest = signUpRequest()

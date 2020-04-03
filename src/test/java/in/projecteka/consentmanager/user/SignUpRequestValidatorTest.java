@@ -16,7 +16,7 @@ class SignUpRequestValidatorTest {
     @Test
     void returnValidSignUpRequestWithAllFields() {
         var signUpRequest = signUpRequest()
-                .password("aB1#afasas")
+                .password("aB1 #afasas")
                 .firstName("onlyAlphabets")
                 .lastName("onlyAlphabets")
                 .dateOfBirth(LocalDate.now())

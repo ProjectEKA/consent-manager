@@ -59,7 +59,7 @@ dependencies {
     implementation 'io.vertx:vertx-pg-client:3.8.5'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'com.nimbusds:nimbus-jose-jwt:8.11'
-    implementation 'io.vavr:vavr:0.9.3'
+    implementation 'io.vavr:vavr:0.10.2'
     implementation 'org.passay:passay:1.5.0'
 }
 

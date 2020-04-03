@@ -17,14 +17,14 @@ public class DiscoveryRepository {
 
     public Mono<Void> insert(String providerId, String patientId, String transactionId) {
         return Mono.create(monoSink ->
-                dbClient.preparedQuery(INSERT_TO_DISCOVERY_REQUEST,
-                        Tuple.of(transactionId, patientId, providerId),
-                        handler -> {
-                            if (handler.failed()) {
-                                monoSink.error(ClientError.dbOperationFailed());
-                                return;
-                            }
-                            monoSink.success();
-                        }));
+                dbClient.preparedQuery(INSERT_TO_DISCOVERY_REQUEST)
+                        .execute(Tuple.of(transactionId, patientId, providerId),
+                                handler -> {
+                                    if (handler.failed()) {
+                                        monoSink.error(ClientError.dbOperationFailed());
+                                        return;
+                                    }
+                                    monoSink.success();
+                                }));
     }
 }

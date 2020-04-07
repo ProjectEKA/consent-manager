@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_HIU;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
@@ -53,16 +53,16 @@ public class UserController {
                                 @RequestHeader(name = "Authorization") String token) {
         var signUpRequests = SignUpRequestValidator.validate(request);
         return signUpRequests.isValid()
-               ? Mono.justOrEmpty(signupService.sessionFrom(token))
-                       .flatMap(sessionId ->
-                               userService.create(signUpRequests.get(), sessionId)
-                                       .map(session -> {
-                                           signupService.removeOf(sessionId);
-                                           return session;
-                                       }))
-               : Mono.error(new ClientError(BAD_REQUEST,
-                       new ErrorRepresentation(new Error(INVALID_HIU,
-                               signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));
+                ? Mono.justOrEmpty(signupService.sessionFrom(token))
+                .flatMap(sessionId ->
+                        userService.create(signUpRequests.get(), sessionId)
+                                .map(session -> {
+                                    signupService.removeOf(sessionId);
+                                    return session;
+                                }))
+                : Mono.error(new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(INVALID_REQUESTER,
+                        signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));
     }
 
     // TODO: should be moved to patients and need to make sure only consent manager service uses it.

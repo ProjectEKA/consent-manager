@@ -13,7 +13,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_NOT_G
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.DB_OPERATION_FAILED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_RANGE;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_HIU;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TOKEN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TRANSACTION_PIN;
@@ -126,8 +126,8 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(QUEUE_NOT_FOUND, "Queue not found")));
     }
 
-    public static ClientError invalidHIU() {
-        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(INVALID_HIU, "Not a valid HIU")));
+    public static ClientError invalidRequester() {
+        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(INVALID_REQUESTER, "Not a valid Requester")));
     }
 
     public static ClientError invalidDateRange() {

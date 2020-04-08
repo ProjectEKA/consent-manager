@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import in.projecteka.consentmanager.dataflow.model.HIDataRange;
+import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -39,7 +40,7 @@ public class DataFlowRequester {
                                               ConsentArtefactRepresentation consentArtefactRepresentation,
                                               String hiuId) {
         if (!isValidHIU(hiuId, consentArtefactRepresentation)) {
-            return Mono.error(ClientError.invalidHIU());
+            return Mono.error(ClientError.invalidRequester());
         }
         if (isConsentExpired(consentArtefactRepresentation)) {
             return Mono.error(ClientError.consentExpired());
@@ -108,5 +109,15 @@ public class DataFlowRequester {
 
     private boolean isValidHIU(String hiuId, ConsentArtefactRepresentation consentArtefactRepresentation) {
         return consentArtefactRepresentation.getConsentDetail().getHiu().getId().equals(hiuId);
+    }
+
+    public Mono<Void> notifyHealthInfoStatus(String requesterId, HealthInfoNotificationRequest notificationRequest) {
+        if(!validateRequester(requesterId, notificationRequest))
+            return Mono.error(ClientError.invalidRequester());
+        return dataFlowRequestRepository.saveNotificationRequest(notificationRequest);
+    }
+
+    private boolean validateRequester(String requesterId, HealthInfoNotificationRequest notificationRequest) {
+        return notificationRequest.getNotifier().getId().equals(requesterId);
     }
 }

@@ -37,6 +37,7 @@ public class SecurityConfiguration {
         {
             add(Map.entry("/consent-requests", HttpMethod.POST));
             add(Map.entry("/health-information/request", HttpMethod.POST));
+            add(Map.entry("/health-information/notification", HttpMethod.POST));
             add(Map.entry("/consents/**", HttpMethod.GET));
             add(Map.entry("/users/**", HttpMethod.GET));
         }

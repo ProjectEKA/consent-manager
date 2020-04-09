@@ -1616,6 +1616,7 @@ components:
             - requester
             - hiTypes
             - permission
+            - consentNotificationUrl
           properties:
             purpose:
               $ref: '#/components/schemas/UsePurpose'
@@ -1645,6 +1646,9 @@ components:
                 $ref: '#/components/schemas/HITypeEnum'
             permission:
               $ref: '#/components/schemas/Permission'
+            consentNotificationUrl:
+              type: string
+              example: 'http://localhost:8003/consent/notification'
     ConsentManagerPatientID:
       type: object
       properties:
@@ -1789,6 +1793,7 @@ components:
           $ref: '#/components/schemas/hiDataRange'
         dataPushUrl:
           type: string
+          example: 'http://localhost:8003/data/notification'
         keyMaterial:
           $ref: '#/components/schemas/keyMaterial'
     HealthInformationRequestResponse:

@@ -52,7 +52,7 @@ public class DataFlowBroadcastListener {
                         .getTransactionId());
                 DataFlowRequest dataFlowRequest = DataFlowRequest.builder()
                         .transactionId(dataFlowRequestMessage.getTransactionId())
-                        .callBackUrl(dataFlowRequestMessage.getDataFlowRequest().getCallBackUrl())
+                        .dataPushUrl(dataFlowRequestMessage.getDataFlowRequest().getDataPushUrl())
                         .consent(dataFlowRequestMessage.getDataFlowRequest().getConsent())
                         .hiDataRange(dataFlowRequestMessage.getDataFlowRequest().getHiDataRange())
                         .keyMaterial(dataFlowRequestMessage.getDataFlowRequest().getKeyMaterial())

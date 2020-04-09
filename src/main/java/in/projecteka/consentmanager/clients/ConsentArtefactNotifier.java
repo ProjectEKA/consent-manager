@@ -17,9 +17,8 @@ public class ConsentArtefactNotifier {
     private WebClient.Builder webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
 
-    public Mono<Void> notifyHiu(HIUNotificationRequest request, String callBackUrl) {
-        String hiuNotificationUrl = String.format("%s/%s", callBackUrl, "consent/notification");
-        return post(request, hiuNotificationUrl);
+    public Mono<Void> notifyHiu(HIUNotificationRequest request, String consentNotificationUrl) {
+        return post(request, consentNotificationUrl);
     }
 
     public Mono<Void> sendConsentArtefactTo(HIPConsentArtefactRepresentation consentArtefact, String providerUrl) {

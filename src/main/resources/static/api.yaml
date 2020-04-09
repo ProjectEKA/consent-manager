@@ -1781,13 +1781,13 @@ components:
       type: object
       required:
         - consentArtefactId
-        - callBackUrl
+        - dataPushUrl
       properties:
         consent:
           $ref: '#/components/schemas/consent'
         hiDataRange:
           $ref: '#/components/schemas/hiDataRange'
-        callBackUrl:
+        dataPushUrl:
           type: string
         keyMaterial:
           $ref: '#/components/schemas/keyMaterial'

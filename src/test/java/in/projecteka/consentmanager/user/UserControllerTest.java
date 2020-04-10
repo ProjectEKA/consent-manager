@@ -128,9 +128,9 @@ class UserControllerTest {
     public void createUser() {
         var signUpRequest = signUpRequest()
                 .userName("username@ncg")
-                .firstName("RandomName")
+                .name("RandomName")
                 .password("@2Abaafasfas")
-                .dateOfBirth(now())
+                .yearOfBirth(now().getYear())
                 .build();
         var token = string();
         var sessionId = string();
@@ -150,8 +150,8 @@ class UserControllerTest {
     @Test
     public void returnBadRequestForUserCreation() {
         var signUpRequest = signUpRequest()
-                .firstName("RandomName")
-                .dateOfBirth(now().plusDays(1))
+                .name("RandomName")
+                .yearOfBirth(now().plusDays(1).getYear())
                 .build();
         var token = string();
         var sessionId = string();

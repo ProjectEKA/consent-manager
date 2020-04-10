@@ -72,8 +72,7 @@ public class UserService {
     public Mono<Session> create(SignUpRequest signUpRequest, String sessionId) {
         UserCredential credential = new UserCredential(signUpRequest.getPassword());
         KeycloakUser user = new KeycloakUser(
-                signUpRequest.getFirstName(),
-                signUpRequest.getLastName(),
+                signUpRequest.getName(),
                 signUpRequest.getUserName(),
                 Collections.singletonList(credential),
                 Boolean.TRUE.toString());

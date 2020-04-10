@@ -17,9 +17,8 @@ class SignUpRequestValidatorTest {
     void returnValidSignUpRequestWithAllFields() {
         var signUpRequest = signUpRequest()
                 .password("aB1 #afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
+                .name("onlyAlphabets")
+                .yearOfBirth(1990)
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -37,9 +36,8 @@ class SignUpRequestValidatorTest {
     void returnValidSignUpRequestWithOptional(@ConvertWith(NullableConverter.class) String lastName) {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName(lastName)
-                .dateOfBirth(LocalDate.now())
+                .name("onlyAlphabets")
+                .yearOfBirth(1990)
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -52,9 +50,8 @@ class SignUpRequestValidatorTest {
     void returnValidSignUpRequestWithOptionalDateOfBirth() {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(null)
+                .name("onlyAlphabets")
+                .yearOfBirth(1990)
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -64,12 +61,11 @@ class SignUpRequestValidatorTest {
     }
 
     @Test
-    void returnValidSignUpRequestWithFutureDateOfBirth() {
+    void returnValidSignUpRequestWithFutureYearOfBirth() {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now().plusDays(1))
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().plusYears(1).getYear())
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -87,9 +83,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithEmpty(@ConvertWith(NullableConverter.class) String firstName) {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName(firstName)
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
+                .name(firstName)
+                .yearOfBirth(1990)
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -97,16 +92,15 @@ class SignUpRequestValidatorTest {
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
-                .isSubsetOf("first name can't be empty");
+                .isSubsetOf("Name can't be empty");
     }
 
     @Test
     void returnInValidSignUpRequestWithEmptyGender() {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
+                .name("onlyAlphabets")
+                .yearOfBirth(1990)
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .gender(null)
                 .build();
@@ -127,9 +121,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithEmptyUser(@ConvertWith(NullableConverter.class) String name) {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
+                .name("onlyAlphabets")
+                .yearOfBirth(1990)
                 .userName(name)
                 .build();
 
@@ -149,9 +142,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithRandomValues(@ConvertWith(NullableConverter.class) String name) {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
+                .name("onlyAlphabets")
+                .yearOfBirth(1990)
                 .userName(name)
                 .build();
 
@@ -164,9 +156,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithUserDoesNotEndWithProvider() {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
+                .name("onlyAlphabets")
+                .yearOfBirth(1990)
                 .userName("userDoesNotEndWith")
                 .build();
 
@@ -187,9 +178,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithUserLesserThanMinimumLength(String username) {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
+                .name("onlyAlphabets")
+                .yearOfBirth(1990)
                 .userName(username)
                 .build();
 
@@ -211,9 +201,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithWeak(String password) {
         var signUpRequest = signUpRequest()
                 .password(password)
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
+                .name("onlyAlphabets")
+                .yearOfBirth(1990)
                 .userName("username@ncg")
                 .build();
 
@@ -231,9 +220,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithEmptyPassword(@ConvertWith(NullableConverter.class) String password) {
         var signUpRequest = signUpRequest()
                 .password(password)
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
+                .name("onlyAlphabets")
+                .yearOfBirth(1990)
                 .userName("username@ncg")
                 .build();
 

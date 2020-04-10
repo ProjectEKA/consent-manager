@@ -23,8 +23,7 @@ public class ProfileService {
     private Profile from(User user, Boolean hasTransactionPin) {
         return Profile.builder()
                 .id(user.getIdentifier())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
+                .name(user.getName())
                 .gender(user.getGender())
                 .hasTransactionPin(hasTransactionPin)
                 .verifiedIdentifiers(singletonList(new Identifier(IdentifierType.MOBILE, user.getPhone())))

@@ -143,7 +143,7 @@ class UserServiceTest {
 
     @Test
     public void shouldCreateUser() {
-        var signUpRequest = signUpRequest().dateOfBirth(LocalDate.now()).build();
+        var signUpRequest = signUpRequest().yearOfBirth(LocalDate.now().getYear()).build();
         var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();
@@ -166,7 +166,7 @@ class UserServiceTest {
             "null"
     })
     public void shouldCreateUserWhenLastNameIsNullOrEmpty(@ConvertWith(NullableConverter.class) String lastName) {
-        var signUpRequest = signUpRequest().lastName(lastName).dateOfBirth(LocalDate.MIN).build();
+        var signUpRequest = signUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
         var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();
@@ -184,7 +184,7 @@ class UserServiceTest {
 
     @Test
     public void shouldReturnUserAlreadyExistsError() {
-        var signUpRequest = signUpRequest().dateOfBirth(LocalDate.MIN).build();
+        var signUpRequest = signUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
         var sessionId = string();
         var user = user().identifier(signUpRequest.getUserName()).build();
         when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(string()));
@@ -198,8 +198,8 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldCreateUserWhenDOBIsNull() {
-        var signUpRequest = signUpRequest().dateOfBirth(null).build();
+    public void shouldCreateUserWhenYOBIsNull() {
+        var signUpRequest = signUpRequest().name("apoorva g a").yearOfBirth(null).build();
         var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();

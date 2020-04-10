@@ -326,7 +326,7 @@ public class DataFlowRequesterUserJourneyTest {
                 dataFlowRequestMessage.getTransactionId(),
                 dataFlowRequestMessage.getDataFlowRequest().getConsent(),
                 dataFlowRequestMessage.getDataFlowRequest().getHiDataRange(),
-                dataFlowRequestMessage.getDataFlowRequest().getCallBackUrl(),
+                dataFlowRequestMessage.getDataFlowRequest().getDataPushUrl(),
                 dataFlowRequestMessage.getDataFlowRequest().getKeyMaterial());
         when(dataFlowRequestRepository.getHipIdFor(dataFlowRequestMessage.getDataFlowRequest().getConsent().getId()))
                 .thenReturn(Mono.just("10000005"));

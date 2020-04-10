@@ -26,6 +26,6 @@ public class ConsentRequestDetail {
     private Requester requester;
     private HIType[] hiTypes;
     private ConsentPermission permission;
-    private String callBackUrl;
+    private String consentNotificationUrl;
     private Date lastUpdated;
 }

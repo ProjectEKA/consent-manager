@@ -16,6 +16,6 @@ public class DataFlowRequest {
     private String transactionId;
     private Consent consent;
     private HIDataRange hiDataRange;
-    private String callBackUrl;
+    private String dataPushUrl;
     private KeyMaterial keyMaterial;
 }

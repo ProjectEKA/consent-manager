@@ -117,7 +117,7 @@ public class ConsentRequestRepository {
                 .permission(details.getPermission())
                 .purpose(details.getPurpose())
                 .requester(details.getRequester())
-                .callBackUrl(details.getCallBackUrl())
+                .consentNotificationUrl(details.getConsentNotificationUrl())
                 .lastUpdated(convertToDate(result.getLocalDateTime("date_modified")))
                 .build();
     }

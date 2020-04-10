@@ -59,8 +59,7 @@ public class ConsentConfiguration {
                                                 CentralRegistry centralRegistry,
                                                 PostConsentRequest postConsentRequest,
                                                 LinkServiceProperties linkServiceProperties,
-                                                IdentityService identityService,
-                                                CMProperties cmProperties) {
+                                                IdentityService identityService) {
         return new ConsentManager(
                 new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate),
                 repository,
@@ -70,7 +69,7 @@ public class ConsentConfiguration {
                 centralRegistry,
                 postConsentRequest,
                 new PatientServiceClient(builder, identityService::authenticate, linkServiceProperties.getUrl()),
-                cmProperties);
+                new CMProperties(identityService.getConsentManagerId()));
     }
 
     @Bean

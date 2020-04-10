@@ -1,8 +1,6 @@
 server:
   port: 9000
 consentmanager:
-  identifier:
-    id: NCG
   consentservice:
     defaultPageSize: 20
     maxPageSize: 100

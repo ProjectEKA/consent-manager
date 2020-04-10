@@ -1,8 +1,6 @@
 server:
   port: 8000
 consentmanager:
-  identifier:
-    id: ${CONSENT_MANAGER_ID}
   consentservice:
     defaultPageSize: ${DEFAULT_PAGE_SIZE}
     maxPageSize: ${MAX_PAGE_SIZE}

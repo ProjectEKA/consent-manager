@@ -822,7 +822,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{HIP_HOST}}/patients/discover/",
+							"raw": "{{HIP_HOST}}/patients/discover/carecontexts",
 							"host": [
 								"{{HIP_HOST}}"
 							],

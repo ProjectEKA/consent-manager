@@ -63,8 +63,8 @@ public class HiuConsentNotificationListener {
 
     private void notifyHiu(ConsentArtefactsMessage consentArtefactsMessage) {
         HIUNotificationRequest hiuNotificationRequest = hiuNotificationRequest(consentArtefactsMessage);
-        String hiuCallBackUrl = consentArtefactsMessage.getHiuCallBackUrl();
-        consentArtefactNotifier.notifyHiu(hiuNotificationRequest, hiuCallBackUrl).block();
+        String hiuConsentNotificationUrl = consentArtefactsMessage.getHiuConsentNotificationUrl();
+        consentArtefactNotifier.notifyHiu(hiuNotificationRequest, hiuConsentNotificationUrl).block();
     }
 
     private HIUNotificationRequest hiuNotificationRequest(ConsentArtefactsMessage consentArtefactsMessage) {

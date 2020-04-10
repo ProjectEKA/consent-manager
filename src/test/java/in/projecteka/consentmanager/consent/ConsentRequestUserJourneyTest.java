@@ -188,7 +188,7 @@ public class ConsentRequestUserJourneyTest {
             "                    \"repeats\": 0\n" +
             "                }\n" +
             "            },\n" +
-            "            \"callBackUrl\": \"http://hiu:8003\",\n" +
+            "            \"consentNotificationUrl\": \"http://hiu:8003\",\n" +
             "            \"lastUpdated\": \"2020-03-14T12:00:52.091+0000\",\n" +
             "            \"id\": \"30d02f6d-de17-405e-b4ab-d31b2bb799d7\"\n" +
             "        }";
@@ -250,7 +250,7 @@ public class ConsentRequestUserJourneyTest {
                 "        \"value\": 1\n" +
                 "      }\n" +
                 "    },\n" +
-                "    \"callBackUrl\": \"https://tmh-hiu/notify\"\n" +
+                "    \"consentNotificationUrl\": \"https://tmh-hiu/notify\"\n" +
                 "  }\n" +
                 "}";
         webTestClient.post()

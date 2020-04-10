@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.user;
+package in.projecteka.consentmanager.consent;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -9,15 +9,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "consentmanager.userservice")
+@ConfigurationProperties(prefix = "consentmanager.identifier")
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 @AllArgsConstructor
-public class UserServiceProperties {
-    private String url;
-    private int transactionPinDigitSize;
-    private int transactionPinTokenValidity;
-    private int userCreationTokenValidity;
-    private String userIdSuffix;
+public class CMProperties {
+    private String id;
 }

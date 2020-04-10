@@ -19,6 +19,7 @@ public class HIPConsentArtefact implements Serializable {
     private Date createdAt;
     private ConsentPurpose purpose;
     private PatientReference patient;
+    private CMReference consentManager;
     private HIPReference hip;
     private HIType[] hiTypes;
     private ConsentPermission permission;

@@ -63,6 +63,9 @@ class UserServiceTest {
     @Mock
     private TokenService tokenService;
 
+    @Mock
+    private UserServiceProperties properties;
+
     private UserService userService;
 
     @BeforeEach
@@ -77,7 +80,8 @@ class UserServiceTest {
                 otpServiceClient,
                 signupService,
                 identityServiceClient,
-                tokenService);
+                tokenService,
+                properties);
     }
 
     @Test

@@ -1,6 +1,8 @@
 server:
   port: 9000
 consentmanager:
+  identifier:
+    id: NCG
   consentservice:
     defaultPageSize: 20
     maxPageSize: 100
@@ -15,6 +17,7 @@ consentmanager:
     transactionPinDigitSize: 4
     transactionPinTokenValidity: 2
     userCreationTokenValidity: 5
+    userIdSuffix: @ncg
   otpservice:
     url: http://localhost:5000
     identifiers:

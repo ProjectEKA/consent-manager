@@ -1,6 +1,8 @@
 server:
   port: 8000
 consentmanager:
+  identifier:
+    id: ${CONSENT_MANAGER_ID}
   consentservice:
     defaultPageSize: ${DEFAULT_PAGE_SIZE}
     maxPageSize: ${MAX_PAGE_SIZE}
@@ -15,6 +17,7 @@ consentmanager:
     transactionPinDigitSize: ${TRANSACTION_PIN_DIGIT_SIZE}
     transactionPinTokenValidity: ${TRANSACTION_PIN_TOKEN_VALIDITY}
     userCreationTokenValidity: ${USER_CREATION_TOKEN_VALIDITY}
+    userIdSuffix: ${USER_ID_SUFFIX}
   otpservice:
     url: ${Otp_Service_Url}
     identifiers:

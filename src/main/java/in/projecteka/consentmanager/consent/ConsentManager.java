@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.consent.model.CMReference;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
@@ -66,6 +67,7 @@ public class ConsentManager {
     private final CentralRegistry centralRegistry;
     private final PostConsentRequest postConsentRequest;
     private final PatientServiceClient patientServiceClient;
+    private final CMProperties cmProperties;
 
     private static boolean isNotSameRequester(ConsentArtefact consentDetail, String requesterId) {
         return !consentDetail.getHiu().getId().equals(requesterId) &&
@@ -216,8 +218,9 @@ public class ConsentManager {
                 .hip(consentArtefact.getHip())
                 .hiTypes(consentArtefact.getHiTypes())
                 .permission(consentArtefact.getPermission())
+                .consentManager(getConsentManagerRef())
                 .build();
-        String signature = getConsentArtefactSignature(hipConsentArtefact);
+        String signature = signConsentArtefact(hipConsentArtefact);
 
         return HIPConsentArtefactRepresentation
                 .builder()
@@ -233,7 +236,7 @@ public class ConsentManager {
                                                                         GrantedConsent grantedConsent) {
         var consentArtefact = from(consentRequest, grantedConsent);
         var hipConsentArtefact = from(consentArtefact, GRANTED);
-        var consentArtefactSignature = getConsentArtefactSignature(consentArtefact);
+        var consentArtefactSignature = signConsentArtefact(consentArtefact);
         return consentArtefactRepository.addConsentArtefactAndUpdateStatus(consentArtefact,
                 requestId,
                 patientId,
@@ -243,7 +246,7 @@ public class ConsentManager {
     }
 
     @SneakyThrows
-    private String getConsentArtefactSignature(Serializable consentArtefact) {
+    private String signConsentArtefact(Serializable consentArtefact) {
         PrivateKey privateKey = keyPair.getPrivate();
         Signature signature = Signature.getInstance(SHA_1_WITH_RSA);
         SignedObject signedObject = new SignedObject(consentArtefact, privateKey, signature);
@@ -265,7 +268,12 @@ public class ConsentManager {
                 .hip(granted.getHip())
                 .hiTypes(granted.getHiTypes())
                 .permission(granted.getPermission())
+                .consentManager(getConsentManagerRef())
                 .build();
+    }
+
+    private CMReference getConsentManagerRef() {
+        return CMReference.builder().id(cmProperties.getId()).build();
     }
 
     private Mono<ConsentRequestDetail> validateConsentRequest(String requestId, String patientId) {
@@ -355,15 +363,15 @@ public class ConsentManager {
                                 consentRepresentation.getConsentRequestId(),
                                 GRANTED.toString(),
                                 consentRepresentation.getConsentDetail().getPatient().getId())
-                                .flatMap(consentRequestDetail -> updateAndBroadcast(revokeRequest, requesterId,
+                                .flatMap(consentRequestDetail -> updateStatusAndBroadcast(revokeRequest, requesterId,
                                         consentId, consentRepresentation, consentRequestDetail)))).then();
     }
 
-    private Mono<Void> updateAndBroadcast(RevokeRequest revokeRequest,
-                                          String requesterId,
-                                          String consentId,
-                                          ConsentRepresentation consentRepresentation,
-                                          ConsentRequestDetail consentRequestDetail) {
+    private Mono<Void> updateStatusAndBroadcast(RevokeRequest revokeRequest,
+                                                String requesterId,
+                                                String consentId,
+                                                ConsentRepresentation consentRepresentation,
+                                                ConsentRequestDetail consentRequestDetail) {
         return consentArtefactRepository.updateStatus(
                 consentId,
                 consentRepresentation.getConsentRequestId(),

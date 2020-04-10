@@ -78,6 +78,7 @@ class ConsentManagerTest {
         initMocks(this);
         RSAKeyGenerator rsKG = new RSAKeyGenerator(2048);
         keyPair = rsKG.generate().toKeyPair();
+        CMProperties cmProperties = new CMProperties("NCG");
         consentManager = new ConsentManager(userClient,
                 repository,
                 consentArtefactRepository,
@@ -85,7 +86,8 @@ class ConsentManagerTest {
                 consentNotificationPublisher,
                 centralRegistry,
                 postConsentRequestNotification,
-                patientServiceClient);
+                patientServiceClient,
+                cmProperties);
     }
 
     @Test

@@ -137,6 +137,7 @@ class UserControllerTest {
         var session = session().build();
         when(signupService.sessionFrom(token)).thenReturn(sessionId);
         when(userService.create(signUpRequest, sessionId)).thenReturn(Mono.just(session));
+        when(userService.getUserIdSuffix()).thenReturn("@ncg");
         when(signupService.validateToken(token)).thenReturn(true);
 
         webClient.post()
@@ -158,6 +159,7 @@ class UserControllerTest {
         var session = session().build();
         when(signupService.sessionFrom(token)).thenReturn(sessionId);
         when(userService.create(signUpRequest, sessionId)).thenReturn(Mono.just(session));
+        when(userService.getUserIdSuffix()).thenReturn("@ncg");
         when(signupService.validateToken(token)).thenReturn(true);
 
         webClient.post()

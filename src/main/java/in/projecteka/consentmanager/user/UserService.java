@@ -35,6 +35,7 @@ public class UserService {
     private final SignUpService signupService;
     private final IdentityServiceClient identityServiceClient;
     private final TokenService tokenService;
+    private final UserServiceProperties userServiceProperties;
 
     public Mono<User> userWith(String userName) {
         return userRepository.userWith(userName.toLowerCase()).switchIfEmpty(Mono.error(userNotFound()));
@@ -107,5 +108,9 @@ public class UserService {
                 !otpVerification.getSessionId().isEmpty() &&
                 otpVerification.getValue() != null &&
                 !otpVerification.getValue().isEmpty();
+    }
+
+    public String getUserIdSuffix() {
+        return userServiceProperties.getUserIdSuffix();
     }
 }

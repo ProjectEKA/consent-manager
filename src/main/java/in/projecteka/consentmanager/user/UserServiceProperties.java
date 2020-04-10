@@ -19,4 +19,5 @@ public class UserServiceProperties {
     private int transactionPinDigitSize;
     private int transactionPinTokenValidity;
     private int userCreationTokenValidity;
+    private String userIdSuffix;
 }

@@ -18,6 +18,7 @@ public class ConsentArtefact implements Serializable {
     private Date createdAt;
     private ConsentPurpose purpose;
     private PatientReference patient;
+    private CMReference consentManager;
     private HIPReference hip;
     private HIUReference hiu;
     private Requester requester;

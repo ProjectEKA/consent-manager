@@ -27,13 +27,15 @@ public class UserConfiguration {
                                    OtpServiceClient otpServiceClient,
                                    SignUpService signupService,
                                    IdentityServiceClient identityServiceClient,
-                                   TokenService tokenService) {
+                                   TokenService tokenService,
+                                   UserServiceProperties userServiceProperties) {
         return new UserService(userRepository,
                 otpServiceProperties,
                 otpServiceClient,
                 signupService,
                 identityServiceClient,
-                tokenService);
+                tokenService,
+                userServiceProperties);
     }
 
     @Bean

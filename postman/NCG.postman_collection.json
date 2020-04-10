@@ -88,7 +88,7 @@
 							"raw": "{\n\t\"hip\": {\n\t\t\"id\": \"10000004\"\n\t}\n}"
 						},
 						"url": {
-							"raw": "{{CM_HOST}}/patients/discover",
+							"raw": "{{CM_HOST}}/patients/discover/carecontexts",
 							"host": [
 								"{{CM_HOST}}"
 							],

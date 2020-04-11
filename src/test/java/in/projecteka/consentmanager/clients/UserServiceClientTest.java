@@ -37,7 +37,7 @@ public class UserServiceClientTest {
 
     @Test
     public void shouldGetUser() throws IOException {
-        User user = user().firstName("first name").build();
+        User user = user().name("first name").build();
         var token = string();
         String patientResponseBody = new ObjectMapper().writeValueAsString(user);
         when(exchangeFunction.exchange(captor.capture()))
@@ -48,7 +48,7 @@ public class UserServiceClientTest {
         var userServiceClient = new UserServiceClient(webClientBuilder, "http://user-service/", () -> Mono.just(token));
 
         StepVerifier.create(userServiceClient.userOf("1"))
-                .assertNext(response -> assertThat(response.getFirstName()).isEqualTo(user.getFirstName()))
+                .assertNext(response -> assertThat(response.getName()).isEqualTo(user.getName()))
                 .verifyComplete();
 
         assertThat(captor.getValue().url().toString()).isEqualTo("http://user-service/internal/users/1/");

@@ -225,8 +225,7 @@ class LinkTest {
         listOfLinks.add(links);
         var patientLinks = patientLinks()
                 .id(patientId)
-                .firstName("")
-                .lastName("")
+                .name("")
                 .links(listOfLinks)
                 .build();
         var provider =
@@ -246,8 +245,7 @@ class LinkTest {
         listOfLinksResponse.add(linksResponse);
         var patientLinksResponse = new PatientLinksResponse(patientLinks()
                 .id(patientId)
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
+                .name(user.getName())
                 .links(listOfLinksResponse)
                 .build());
 

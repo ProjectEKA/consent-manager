@@ -260,8 +260,7 @@ public class LinkUserJourneyTest {
         var patientLinks =
                 PatientLinks.builder().
                         id(patientId).
-                        firstName("").
-                        lastName("").
+                        name("").
                         links(linksList).build();
         var patientLinksResponse = PatientLinksResponse.builder().patient(patientLinks).build();
         var user = user().build();
@@ -271,8 +270,7 @@ public class LinkUserJourneyTest {
         userServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(userJson));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
-        patientLinksResponse.getPatient().setFirstName(user.getFirstName());
-        patientLinksResponse.getPatient().setLastName(user.getLastName());
+        patientLinksResponse.getPatient().setName(user.getName());
         patientLinksResponse.getPatient().setLinks(patientLinks.getLinks().stream()
                 .peek(link -> link.setHip(Hip.builder().id(link.getHip().getId()).name("Max").build()))
                 .collect(Collectors.toList()));

@@ -138,8 +138,7 @@ public class Link {
                                 .map(user -> PatientLinksResponse.builder().
                                         patient(PatientLinks.builder()
                                                 .id(patientLinks.getId())
-                                                .firstName(user.getFirstName())
-                                                .lastName(user.getLastName())
+                                                .name(user.getName())
                                                 .links(links)
                                                 .build())
                                         .build())));

@@ -140,7 +140,7 @@ class UserControllerTest {
         when(signupService.validateToken(token)).thenReturn(true);
 
         webClient.post()
-                .uri("/users")
+                .uri("/patients/profile")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .body(BodyInserters.fromValue(signUpRequest))
@@ -161,7 +161,7 @@ class UserControllerTest {
         when(signupService.validateToken(token)).thenReturn(true);
 
         webClient.post()
-                .uri("/users")
+                .uri("/patients/profile")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .body(BodyInserters.fromValue(signUpRequest))

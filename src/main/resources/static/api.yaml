@@ -981,7 +981,7 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /patients:
+  /patients/profile:
     post:
       tags:
         - account
@@ -1979,24 +1979,21 @@ components:
     CreatePatientRequest:
       type: object
       properties:
-        firstName:
+        name:
           type: string
-          example: Raj
-        lastName:
-          type: string
-          example: sharma
+          example: Raj Sharma
         username:
           type: string
           example: raj.sharma@ncg
         password:
           type: string
-        dateOfBirth:
-          type: string
-          format: date
+        yearOfBirth:
+          type: integer
+          example: 2000
         gender:
           $ref: '#/components/schemas/Gender'
       required:
-        - firstName
+        - name
         - username
         - password
         - gender

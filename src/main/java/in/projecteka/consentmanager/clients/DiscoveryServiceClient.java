@@ -23,7 +23,7 @@ public class DiscoveryServiceClient {
                 .map(token ->
                         webClientBuilder.build()
                                 .post()
-                                .uri(url + "/patients/discover/")
+                                .uri(url + "/patients/discover/carecontexts")
                                 .header(AUTHORIZATION, token)
                                 .bodyValue(request)
                                 .retrieve())

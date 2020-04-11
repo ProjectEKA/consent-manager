@@ -22,7 +22,7 @@ tags:
 
 paths:
   # discovery service
-  /patients/discover:
+  /patients/discover/carecontexts:
     post:
       tags:
         - discovery

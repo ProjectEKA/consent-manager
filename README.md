@@ -57,6 +57,34 @@ all the dependencies automatically.
 *   [docker >= 19.03.5](https://www.docker.com/)
 *   [graphviz](https://graphviz.gitlab.io/download/)
 
+## Setting up local machine
+Consent Manager needs a bunch of backends like RabbitMQ, Keycloak, Postgres.  These backends also need some initialization, 
+e.g. 2 Realms (consent-manager & central-registry) & a user *consent-service-admin-user* need to be created for user authentication in Keycloak.  Also, relevant databases & schemas need to be created in postgresql.
+Run the following docker-compose command for initializing the backend
+
+```alpha
+docker-compose -f docker-compose-backend.yml up
+```  
+Leave the terminal window for these backends to be running.
+
+Start and stop the backend using the following commands
+```alpha
+#Stop backends
+docker-compose -f docker-compose-backend.yml stop
+#Start backends
+docker-compose -f docker-compose-backend.yml start
+```  
+
+
+If you want to remove all the backends for good
+
+```alpha
+docker-compose -f docker-compose-backend.yml down
+docker volume rm consent-manager_postgres_data
+```
+
+  
+
 ## :whale: Running From The Docker Image
 
 Create docker image

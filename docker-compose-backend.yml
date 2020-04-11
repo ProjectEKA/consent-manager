@@ -1,0 +1,46 @@
+version: '3'
+services:
+  rabbitmq:
+    image: "rabbitmq:3"
+    ports:
+      - "5672:5672"
+
+  keycloak:
+    image: "jboss/keycloak"
+    container_name: keycloak
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: welcome
+      DB_VENDOR: POSTGRES
+      DB_ADDR: postgres
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_SCHEMA: public
+      DB_PASSWORD: password
+    depends_on:
+      - postgres
+    ports:
+      - "9001:8080"
+  postgres:
+    image: "postgres:latest"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db-init.sql:/docker-entrypoint-initdb.d/db-init.sql
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5433:5432"
+
+  keycloak_setup:
+    image: "bharatak/eka-keycloak-setup"
+    environment:
+      KEYCLOAK_SERVER: http://keycloak:8080/auth
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: welcome
+    command: "sh -c 'dockerize -wait http://keycloak:8080 -timeout 240s && java -jar /app.jar'"
+    depends_on:
+      - keycloak
+volumes:
+  postgres_data:
+    driver: local

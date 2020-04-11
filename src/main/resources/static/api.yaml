@@ -1770,6 +1770,12 @@ components:
                 - $ref: '#/components/schemas/OrganizationRepresentation'
                 - xml:
                     name: hiu
+            consentManager:
+              type: object
+              allOf:
+                - $ref: '#/components/schemas/Organization'
+                - xml:
+                    name: consentManager
             requester:
               $ref: '#/components/schemas/Requester'
             hiTypes:

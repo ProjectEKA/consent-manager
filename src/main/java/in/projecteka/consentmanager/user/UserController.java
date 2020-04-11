@@ -51,7 +51,7 @@ public class UserController {
     @PostMapping("/users")
     public Mono<Session> create(@RequestBody SignUpRequest request,
                                 @RequestHeader(name = "Authorization") String token) {
-        var signUpRequests = SignUpRequestValidator.validate(request);
+        var signUpRequests = SignUpRequestValidator.validate(request, userService.getUserIdSuffix());
         return signUpRequests.isValid()
                 ? Mono.justOrEmpty(signupService.sessionFrom(token))
                 .flatMap(sessionId ->

@@ -21,6 +21,7 @@ services:
       - postgres
     ports:
       - "9001:8080"
+
   postgres:
     image: "postgres:latest"
     volumes:

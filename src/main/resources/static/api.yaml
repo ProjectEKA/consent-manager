@@ -22,7 +22,7 @@ tags:
 
 paths:
   # discovery service
-  /patients/discover:
+  /patients/discover/carecontexts:
     post:
       tags:
         - discovery
@@ -1770,6 +1770,12 @@ components:
                 - $ref: '#/components/schemas/OrganizationRepresentation'
                 - xml:
                     name: hiu
+            consentManager:
+              type: object
+              allOf:
+                - $ref: '#/components/schemas/Organization'
+                - xml:
+                    name: consentManager
             requester:
               $ref: '#/components/schemas/Requester'
             hiTypes:

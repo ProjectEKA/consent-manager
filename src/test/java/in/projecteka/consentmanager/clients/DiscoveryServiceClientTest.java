@@ -66,6 +66,6 @@ public class DiscoveryServiceClientTest {
                 })
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://hip-url/patients/discover/");
+        assertThat(captor.getValue().url().toString()).isEqualTo("http://hip-url/patients/discover/carecontexts");
     }
 }

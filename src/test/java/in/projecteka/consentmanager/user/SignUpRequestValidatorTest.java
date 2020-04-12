@@ -22,7 +22,8 @@ class SignUpRequestValidatorTest {
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isTrue();
     }
@@ -36,7 +37,7 @@ class SignUpRequestValidatorTest {
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isTrue();
     }
@@ -50,7 +51,7 @@ class SignUpRequestValidatorTest {
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
     }
@@ -69,7 +70,7 @@ class SignUpRequestValidatorTest {
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -86,7 +87,7 @@ class SignUpRequestValidatorTest {
                 .gender(null)
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -107,7 +108,7 @@ class SignUpRequestValidatorTest {
                 .userName(name)
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -128,7 +129,7 @@ class SignUpRequestValidatorTest {
                 .userName(name)
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
     }
@@ -142,7 +143,7 @@ class SignUpRequestValidatorTest {
                 .userName("userDoesNotEndWith")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -164,7 +165,7 @@ class SignUpRequestValidatorTest {
                 .userName(username)
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -187,7 +188,7 @@ class SignUpRequestValidatorTest {
                 .userName("username@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
     }
@@ -206,7 +207,7 @@ class SignUpRequestValidatorTest {
                 .userName("username@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -222,7 +223,7 @@ class SignUpRequestValidatorTest {
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -238,7 +239,7 @@ class SignUpRequestValidatorTest {
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())

@@ -30,13 +30,12 @@ public class SignUpRequestValidator {
 
     private static final LocalDate TODAY = LocalDate.now();
     private static final String VALID_NAME_CHARS = "[a-zA-Z ]";
-    private static final String PROVIDER = "@ncg";
 
-    public static Validation<Seq<String>, SignUpRequest> validate(SignUpRequest signUpRequest) {
+    public static Validation<Seq<String>, SignUpRequest> validate(SignUpRequest signUpRequest, String userIdSuffix) {
         return Validation.combine(
                 validateName(signUpRequest.getName()),
                 validate(signUpRequest.getGender()),
-                validateUserName(signUpRequest.getUserName()),
+                validateUserName(signUpRequest.getUserName(), userIdSuffix),
                 validatePassword(signUpRequest.getPassword()),
                 validateYearOfBirth(signUpRequest.getYearOfBirth()))
                 .ap((firstName, gender, username, password, dateOfBirth) -> SignUpRequest.builder()
@@ -62,21 +61,21 @@ public class SignUpRequestValidator {
         return allowed(VALID_NAME_CHARS, "name", name);
     }
 
-    private static Validation<String, String> validateUserName(String username) {
+    private static Validation<String, String> validateUserName(String username, String userIdSuffix) {
         final String VALID_USERNAME_CHARS = "[a-zA-Z@0-9.\\-]";
         if (Strings.isNullOrEmpty(username)) {
             return Validation.invalid("username can't be empty");
         }
         return allowed(VALID_USERNAME_CHARS, "username", username)
-                .combine(endsWithProvider(username))
-                .combine(lengthLimitFor(username.replace(PROVIDER, "")))
+                .combine(endsWithProvider(username, userIdSuffix))
+                .combine(lengthLimitFor(username.replace(userIdSuffix, "")))
                 .ap((validCharacters, validEndsWith, validLength) -> username)
                 .mapError(errors -> errors.reduce((left, right) -> format("%s, %s", left, right)));
     }
 
-    private static Validation<String, String> endsWithProvider(String username) {
-        if (!username.endsWith(PROVIDER)) {
-            return Validation.invalid("username does not end with @ncg");
+    private static Validation<String, String> endsWithProvider(String username, String userIdSuffix) {
+        if (!username.endsWith(userIdSuffix)) {
+            return Validation.invalid("username does not end with " + userIdSuffix);
         }
         return Validation.valid(username);
     }

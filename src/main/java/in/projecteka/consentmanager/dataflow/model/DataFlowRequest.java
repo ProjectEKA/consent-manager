@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class DataFlowRequest {
     private Consent consent;
-    private HIDataRange hiDataRange;
+    private DateRange dateRange;
     private String dataPushUrl;
     private KeyMaterial keyMaterial;
 

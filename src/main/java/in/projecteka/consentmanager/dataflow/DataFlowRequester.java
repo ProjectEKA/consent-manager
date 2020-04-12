@@ -6,7 +6,7 @@ import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation
 import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
-import in.projecteka.consentmanager.dataflow.model.HIDataRange;
+import in.projecteka.consentmanager.dataflow.model.DateRange;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
@@ -48,8 +48,8 @@ public class DataFlowRequester {
         if (!isConsentGranted(consentArtefactRepresentation)) {
             return Mono.error(ClientError.consentNotGranted());
         }
-        if (dataFlowRequest.getHiDataRange() == null) {
-            dataFlowRequest.setHiDataRange(defaultDateRange(consentArtefactRepresentation));
+        if (dataFlowRequest.getDateRange() == null) {
+            dataFlowRequest.setDateRange(defaultDateRange(consentArtefactRepresentation));
         } else if (!isValidHIDateRange(dataFlowRequest, consentArtefactRepresentation)) {
             return Mono.error(ClientError.invalidDateRange());
         }
@@ -61,8 +61,8 @@ public class DataFlowRequester {
         return consentArtefactRepresentation.getStatus().equals(ConsentStatus.GRANTED);
     }
 
-    private HIDataRange defaultDateRange(ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return HIDataRange.builder()
+    private DateRange defaultDateRange(ConsentArtefactRepresentation consentArtefactRepresentation) {
+        return DateRange.builder()
                 .from(consentArtefactRepresentation
                         .getConsentDetail()
                         .getPermission()
@@ -84,27 +84,27 @@ public class DataFlowRequester {
                                        ConsentArtefactRepresentation consentArtefactRepresentation) {
         return isEqualOrAfter(dataFlowRequest, consentArtefactRepresentation) &&
                 isEqualOrBefore(dataFlowRequest, consentArtefactRepresentation) &&
-                dataFlowRequest.getHiDataRange().getFrom().before(dataFlowRequest.getHiDataRange().getTo());
+                dataFlowRequest.getDateRange().getFrom().before(dataFlowRequest.getDateRange().getTo());
     }
 
     private boolean isEqualOrBefore(DataFlowRequest dataFlowRequest,
                                     ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return (dataFlowRequest.getHiDataRange().getTo()
+        return (dataFlowRequest.getDateRange().getTo()
                 .equals(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getToDate())) ||
-                (dataFlowRequest.getHiDataRange().getTo()
+                (dataFlowRequest.getDateRange().getTo()
                         .before(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getToDate()));
     }
 
     private boolean isEqualOrAfter(DataFlowRequest dataFlowRequest,
                                    ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return (dataFlowRequest.getHiDataRange().getFrom()
+        return (dataFlowRequest.getDateRange().getFrom()
                 .equals(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getFromDate())) ||
-                (dataFlowRequest.getHiDataRange().getFrom()
+                (dataFlowRequest.getDateRange().getFrom()
                         .after(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getFromDate()));
     }
 
     private boolean isConsentExpired(ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return consentArtefactRepresentation.getConsentDetail().getPermission().getDataExpiryAt().before(new Date());
+        return consentArtefactRepresentation.getConsentDetail().getPermission().getDataEraseAt().before(new Date());
     }
 
     private boolean isValidHIU(String hiuId, ConsentArtefactRepresentation consentArtefactRepresentation) {

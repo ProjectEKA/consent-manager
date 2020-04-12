@@ -16,6 +16,6 @@ import java.util.Date;
 public class ConsentPermission {
     private AccessMode accessMode;
     private AccessPeriod dateRange;
-    private Date dataExpiryAt;
+    private Date dataEraseAt;
     private DataFrequency frequency;
 }

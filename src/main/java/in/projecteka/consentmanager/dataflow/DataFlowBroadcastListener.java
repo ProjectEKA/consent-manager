@@ -55,7 +55,7 @@ public class DataFlowBroadcastListener {
                         .transactionId(dataFlowRequestMessage.getTransactionId())
                         .dataPushUrl(dataFlowRequestMessage.getDataFlowRequest().getDataPushUrl())
                         .consent(dataFlowRequestMessage.getDataFlowRequest().getConsent())
-                        .hiDataRange(dataFlowRequestMessage.getDataFlowRequest().getHiDataRange())
+                        .dateRange(dataFlowRequestMessage.getDataFlowRequest().getDateRange())
                         .keyMaterial(dataFlowRequestMessage.getDataFlowRequest().getKeyMaterial())
                         .build();
                 configureAndSendDataRequestFor(dataFlowRequest);

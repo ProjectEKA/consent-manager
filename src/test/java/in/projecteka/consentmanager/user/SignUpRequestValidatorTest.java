@@ -18,26 +18,7 @@ class SignUpRequestValidatorTest {
         var signUpRequest = signUpRequest()
                 .password("aB1 #afasas")
                 .name("onlyAlphabets")
-                .yearOfBirth(1990)
-                .userName("usernameWithAlphabetsAnd1@ncg")
-                .build();
-
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
-
-        assertThat(requestValidation.isValid()).isTrue();
-    }
-
-    @ParameterizedTest(name = "Optional last name")
-    @CsvSource({
-            ",",
-            "empty",
-            "null"
-    })
-    void returnValidSignUpRequestWithOptional(@ConvertWith(NullableConverter.class) String lastName) {
-        var signUpRequest = signUpRequest()
-                .password("aB1#afasas")
-                .name("onlyAlphabets")
-                .yearOfBirth(1990)
+                .yearOfBirth(LocalDate.now().getYear())
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -51,7 +32,7 @@ class SignUpRequestValidatorTest {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
                 .name("onlyAlphabets")
-                .yearOfBirth(1990)
+                .yearOfBirth(LocalDate.now().getYear())
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -74,17 +55,17 @@ class SignUpRequestValidatorTest {
         assertThat(requestValidation.isValid()).isFalse();
     }
 
-    @ParameterizedTest(name = "Empty first name")
+    @ParameterizedTest(name = "Empty name")
     @CsvSource({
             ",",
             "empty",
             "null"
     })
-    void returnInValidSignUpRequestWithEmpty(@ConvertWith(NullableConverter.class) String firstName) {
+    void returnInValidSignUpRequestWithEmpty(@ConvertWith(NullableConverter.class) String name) {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .name(firstName)
-                .yearOfBirth(1990)
+                .name(name)
+                .yearOfBirth(LocalDate.now().getYear())
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -100,7 +81,7 @@ class SignUpRequestValidatorTest {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
                 .name("onlyAlphabets")
-                .yearOfBirth(1990)
+                .yearOfBirth(LocalDate.now().getYear())
                 .userName("usernameWithAlphabetsAnd1@ncg")
                 .gender(null)
                 .build();
@@ -122,7 +103,7 @@ class SignUpRequestValidatorTest {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
                 .name("onlyAlphabets")
-                .yearOfBirth(1990)
+                .yearOfBirth(LocalDate.now().getYear())
                 .userName(name)
                 .build();
 
@@ -143,7 +124,7 @@ class SignUpRequestValidatorTest {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
                 .name("onlyAlphabets")
-                .yearOfBirth(1990)
+                .yearOfBirth(LocalDate.now().getYear())
                 .userName(name)
                 .build();
 
@@ -157,7 +138,7 @@ class SignUpRequestValidatorTest {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
                 .name("onlyAlphabets")
-                .yearOfBirth(1990)
+                .yearOfBirth(LocalDate.now().getYear())
                 .userName("userDoesNotEndWith")
                 .build();
 
@@ -179,7 +160,7 @@ class SignUpRequestValidatorTest {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
                 .name("onlyAlphabets")
-                .yearOfBirth(1990)
+                .yearOfBirth(LocalDate.now().getYear())
                 .userName(username)
                 .build();
 
@@ -201,8 +182,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithWeak(String password) {
         var signUpRequest = signUpRequest()
                 .password(password)
-                .name("onlyAlphabets")
-                .yearOfBirth(1990)
+                .name("onlyAlp habets")
+                .yearOfBirth(LocalDate.now().getYear())
                 .userName("username@ncg")
                 .build();
 
@@ -221,7 +202,7 @@ class SignUpRequestValidatorTest {
         var signUpRequest = signUpRequest()
                 .password(password)
                 .name("onlyAlphabets")
-                .yearOfBirth(1990)
+                .yearOfBirth(LocalDate.now().getYear())
                 .userName("username@ncg")
                 .build();
 
@@ -230,5 +211,37 @@ class SignUpRequestValidatorTest {
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
                 .isSubsetOf("password can't be empty");
+    }
+
+    @Test
+    void returnInValidSignUpRequestWithYearOfBirthGreaterThan120() {
+        var signUpRequest = signUpRequest()
+                .password("aB1 #afasas")
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().getYear()-121)
+                .userName("usernameWithAlphabetsAnd1@ncg")
+                .build();
+
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+
+        assertThat(requestValidation.isValid()).isFalse();
+        assertThat(requestValidation.getError())
+                .isSubsetOf("Year of birth can't be in future or older than 120 years");
+    }
+
+    @Test
+    void returnInValidSignUpRequestWithYearOfBirthInFuture() {
+        var signUpRequest = signUpRequest()
+                .password("aB1 #afasas")
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().getYear()+1)
+                .userName("usernameWithAlphabetsAnd1@ncg")
+                .build();
+
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+
+        assertThat(requestValidation.isValid()).isFalse();
+        assertThat(requestValidation.getError())
+                .isSubsetOf("Year of birth can't be in future or older than 120 years");
     }
 }

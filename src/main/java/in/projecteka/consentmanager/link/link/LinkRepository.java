@@ -138,8 +138,6 @@ public class LinkRepository {
                             hipIdToLinksMap.forEach((key, link) -> linksList.add(link));
                             monoSink.success(PatientLinks.builder()
                                     .id(patientId)
-                                    .firstName("")
-                                    .lastName("")
                                     .links(linksList)
                                     .build());
                         }));

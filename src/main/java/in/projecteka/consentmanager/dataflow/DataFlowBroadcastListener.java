@@ -9,7 +9,8 @@ import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
 import in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest;
 import lombok.AllArgsConstructor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
@@ -23,7 +24,7 @@ import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class DataFlowBroadcastListener {
-    private static final Logger logger = Logger.getLogger(DataFlowBroadcastListener.class);
+    private static final Logger logger = LoggerFactory.getLogger(DataFlowBroadcastListener.class);
     private MessageListenerContainerFactory messageListenerContainerFactory;
     private DestinationsConfig destinationsConfig;
     private Jackson2JsonMessageConverter converter;
@@ -48,7 +49,7 @@ public class DataFlowBroadcastListener {
             try {
                 DataFlowRequestMessage dataFlowRequestMessage =
                         (DataFlowRequestMessage) converter.fromMessage(message);
-                logger.info("Received message for Request id : " + dataFlowRequestMessage
+                logger.info("Received message for Request id : {}", dataFlowRequestMessage
                         .getTransactionId());
                 DataFlowRequest dataFlowRequest = DataFlowRequest.builder()
                         .transactionId(dataFlowRequestMessage.getTransactionId())
@@ -59,8 +60,7 @@ public class DataFlowBroadcastListener {
                         .build();
                 configureAndSendDataRequestFor(dataFlowRequest);
             } catch (Exception e) {
-                logger.error(e);
-                throw new AmqpRejectAndDontRequeueException(e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
             }
         };
         mlc.setupMessageListener(messageListener);

@@ -185,7 +185,7 @@ public class SecurityConfiguration {
         }
 
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
-            return ("/users").equals(url) && HttpMethod.POST.equals(httpMethod);
+            return ("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod);
         }
     }
 

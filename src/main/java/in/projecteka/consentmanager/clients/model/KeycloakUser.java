@@ -11,8 +11,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class KeycloakUser {
-    private String firstName;
-    private String lastName;
+    private String name;
     private String username;
     private List<UserCredential> credentials;
     private String enabled;

@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Date;
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -15,9 +13,8 @@ import java.util.Date;
 @Builder
 public class User {
     private String identifier;
-    private String firstName;
-    private String lastName;
+    private String name;
     private Gender gender;
-    private Date dateOfBirth;
+    private Integer yearOfBirth;
     private String phone;
 }

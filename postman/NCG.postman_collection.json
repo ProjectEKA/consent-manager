@@ -489,7 +489,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"consents\": [\n        {\n            \"hip\": {\n                \"id\": \"10000004\",\n                \"name\": \"Max Health Care\"\n            },\n            \"hiTypes\": [\n            \t\"Observation\"\n                ],\n            \"careContexts\": [\n                {\n                    \"patientReference\": \"{{PATIENT_REF_NUMBER}}\",\n                    \"careContextReference\": \"{{CARE_CONTEXT1_NUMBER}}\"\n                }\n            ],\n            \"permission\": {\n                \"accessMode\": \"VIEW\",\n                \"dateRange\": {\n                    \"from\": \"2020-01-16T08:47:48.000+0000\",\n                    \"to\": \"2020-04-29T08:47:48.000+0000\"\n                },\n                \"dataExpiryAt\": \"2020-05-29T08:47:48.000+0000\",\n                \"frequency\": {\n                    \"unit\": \"HOUR\",\n                    \"value\": 1,\n                    \"repeats\": 0\n                }\n            }\n        }\n    ]\n}",
+							"raw": "{\n    \"consents\": [\n        {\n            \"hip\": {\n                \"id\": \"10000004\",\n                \"name\": \"Max Health Care\"\n            },\n            \"hiTypes\": [\n            \t\"Observation\"\n                ],\n            \"careContexts\": [\n                {\n                    \"patientReference\": \"{{PATIENT_REF_NUMBER}}\",\n                    \"careContextReference\": \"{{CARE_CONTEXT1_NUMBER}}\"\n                }\n            ],\n            \"permission\": {\n                \"accessMode\": \"VIEW\",\n                \"dateRange\": {\n                    \"from\": \"2020-01-16T08:47:48.000+0000\",\n                    \"to\": \"2020-04-29T08:47:48.000+0000\"\n                },\n                \"dataEraseAt\": \"2020-05-29T08:47:48.000+0000\",\n                \"frequency\": {\n                    \"unit\": \"HOUR\",\n                    \"value\": 1,\n                    \"repeats\": 0\n                }\n            }\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -644,7 +644,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"ashok1.kumar@ncg\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\",\n      \"text\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"hiu\": {\n    \t\"id\": \"10000005\",\n    \t\"name\": \"something\"\n    },\n    \"requester\": {\n    \t\"name\": \"Dr Lakshmi\",\n    \t\"identifier\": {\n    \t\t\"value\": \"1\",\n    \t\t\"type\": \"identifier\",\n    \t\t\"system\": \"NCG\"\n    \t}\n    },\n    \"permission\": {\n    \t\"accessMode\": \"VIEW\",\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataExpiryAt\": \"2020-04-23T11:06:32.760Z\"\n    },\n    \"callBackUrl\": \"http://localhost:8003\"\n  }\n}",
+							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"ashok1.kumar@ncg\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\",\n      \"text\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"hiu\": {\n    \t\"id\": \"10000005\",\n    \t\"name\": \"something\"\n    },\n    \"requester\": {\n    \t\"name\": \"Dr Lakshmi\",\n    \t\"identifier\": {\n    \t\t\"value\": \"1\",\n    \t\t\"type\": \"identifier\",\n    \t\t\"system\": \"NCG\"\n    \t}\n    },\n    \"permission\": {\n    \t\"accessMode\": \"VIEW\",\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataEraseAt\": \"2020-04-23T11:06:32.760Z\"\n    },\n    \"callBackUrl\": \"http://localhost:8003\"\n  }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1072,7 +1072,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"{{USERNAME}}\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"permission\": {\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataExpiryAt\": \"2020-04-30T11:06:32.760Z\"\n    }\n  }\n}",
+							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"{{USERNAME}}\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"permission\": {\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataEraseAt\": \"2020-04-30T11:06:32.760Z\"\n    }\n  }\n}",
 							"options": {
 								"raw": {
 									"language": "json"

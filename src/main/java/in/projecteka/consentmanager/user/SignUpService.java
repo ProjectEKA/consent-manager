@@ -52,7 +52,7 @@ public class SignUpService {
             var session = sessionFrom(token);
             return isStillExists(session);
         } catch (ExpiredJwtException | MalformedJwtException | SignatureException | IllegalArgumentException e) {
-            logger.error(e.getMessage(),e);
+            logger.error(e.getMessage(), e);
             return false;
         }
     }

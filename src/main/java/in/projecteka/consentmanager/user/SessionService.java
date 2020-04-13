@@ -20,7 +20,7 @@ public class SessionService {
         if (StringUtils.isEmpty(request.getUserName()) || StringUtils.isEmpty(request.getPassword()))
             return Mono.error(ClientError.unAuthorizedRequest());
         return tokenService.tokenForUser(request.getUserName(), request.getPassword())
-                .doOnError(error -> logger.error(error.getMessage(),error))
+                .doOnError(error -> logger.error(error.getMessage(), error))
                 .onErrorResume(error -> Mono.error(ClientError.unAuthorizedRequest()));
     }
 }

@@ -60,7 +60,7 @@ public class UserRepository {
                         user.getPhone()),
                         handler -> {
                             if (handler.failed()) {
-                                logger.error("",handler.cause());
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(dbOperationFailed());
                                 return;
                             }

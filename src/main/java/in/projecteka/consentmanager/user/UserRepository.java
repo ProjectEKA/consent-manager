@@ -13,7 +13,7 @@ import static in.projecteka.consentmanager.clients.ClientError.dbOperationFailed
 
 @AllArgsConstructor
 public class UserRepository {
-    private final static Logger logger = LoggerFactory.getLogger(UserRepository.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
 
     private final static String INSERT_PATIENT = "Insert into patient(id, " +
             "first_name, last_name, gender, date_of_birth, phone_number)" +

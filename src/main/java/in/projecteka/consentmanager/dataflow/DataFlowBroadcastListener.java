@@ -49,7 +49,7 @@ public class DataFlowBroadcastListener {
             try {
                 DataFlowRequestMessage dataFlowRequestMessage =
                         (DataFlowRequestMessage) converter.fromMessage(message);
-                logger.info("Received message for Request id : " + dataFlowRequestMessage
+                logger.info("Received message for Request id : {}", dataFlowRequestMessage
                         .getTransactionId());
                 DataFlowRequest dataFlowRequest = DataFlowRequest.builder()
                         .transactionId(dataFlowRequestMessage.getTransactionId())
@@ -60,8 +60,7 @@ public class DataFlowBroadcastListener {
                         .build();
                 configureAndSendDataRequestFor(dataFlowRequest);
             } catch (Exception e) {
-                logger.error(e.getMessage(),e);
-                throw new AmqpRejectAndDontRequeueException(e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
             }
         };
         mlc.setupMessageListener(messageListener);

@@ -26,7 +26,7 @@ import java.util.function.Function;
 
 public class SignUpService {
     public final long jwtTokenValidity;
-    private final static Logger logger = LoggerFactory.getLogger(SignUpService.class);
+    private static final Logger logger = LoggerFactory.getLogger(SignUpService.class);
     private final JWTProperties jwtProperties;
     private final LoadingCache<String, Optional<String>> unverifiedSessions;
     private final LoadingCache<String, Optional<String>> verifiedSessions;

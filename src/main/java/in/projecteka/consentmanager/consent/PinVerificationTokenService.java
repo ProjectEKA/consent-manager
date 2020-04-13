@@ -19,8 +19,8 @@ import java.util.function.Function;
 
 @AllArgsConstructor
 public class PinVerificationTokenService {
-    private final static Logger logger = LoggerFactory.getLogger(PinVerificationTokenService.class);
     private final PublicKey publicKey;
+    private static final Logger logger = LoggerFactory.getLogger(PinVerificationTokenService.class);
 
     public Mono<Caller> validateToken(String authToken) {
         try {

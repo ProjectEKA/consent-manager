@@ -52,8 +52,7 @@ public class HiuConsentNotificationListener {
 
                 notifyHiu(consentArtefactsMessage);
             } catch (Exception e) {
-                logger.error(e.getMessage(),e);
-                throw new AmqpRejectAndDontRequeueException(e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
             }
 
         };

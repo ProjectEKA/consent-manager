@@ -60,8 +60,7 @@ public class ConsentRequestNotificationListener {
                         .flatMap(this::notifyUserWith)
                         .block();
             } catch (Exception e) {
-                logger.error(e.getMessage(),e);
-                throw new AmqpRejectAndDontRequeueException(e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
             }
         };
         mlc.setupMessageListener(messageListener);

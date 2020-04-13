@@ -29,7 +29,7 @@ public class PostConsentRequest {
         }
         return Mono.create(monoSink -> {
             amqpTemplate.convertAndSend(destinationInfo.getExchange(), destinationInfo.getRoutingKey(), consentRequest);
-            logger.info("Broadcasting consent request with request id : " + consentRequest.getId());
+            logger.info("Broadcasting consent request with request id : {}", consentRequest.getId());
             monoSink.success();
         });
     }

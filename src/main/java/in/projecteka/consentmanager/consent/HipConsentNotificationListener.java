@@ -52,8 +52,7 @@ public class HipConsentNotificationListener {
 
                 sendConsentArtefact(consentArtefact);
             } catch (Exception e) {
-                logger.error(e.getMessage(),e);
-                throw new AmqpRejectAndDontRequeueException(e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
             }
         };
         mlc.setupMessageListener(messageListener);

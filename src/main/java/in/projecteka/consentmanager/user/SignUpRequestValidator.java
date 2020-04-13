@@ -97,8 +97,8 @@ public class SignUpRequestValidator {
                                           seq.distinct().sorted())));
     }
 
-    private static Validation<String, Integer> validateYearOfBirth(int year) {
-        return ((year <= (TODAY.getYear())) && (year >= TODAY.getYear() - 120))
+    private static Validation<String, Integer> validateYearOfBirth(Integer year) {
+        return year == null || ((year <= (TODAY.getYear())) && (year >= TODAY.getYear() - 120))
                 ? Validation.valid(year)
                 : Validation.invalid("Year of birth can't be in future or older than 120 years");
     }

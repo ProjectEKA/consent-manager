@@ -245,4 +245,18 @@ class SignUpRequestValidatorTest {
         assertThat(requestValidation.getError())
                 .isSubsetOf("Year of birth can't be in future or older than 120 years");
     }
+
+    @Test
+    void returnInValidSignUpRequestWithYearOfBirthIsNull() {
+        var signUpRequest = signUpRequest()
+                .password("aB1 #afasas")
+                .name("onlyAlphabets")
+                .yearOfBirth(null)
+                .userName("usernameWithAlphabetsAnd1@ncg")
+                .build();
+
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+
+        assertThat(requestValidation.isValid()).isTrue();
+    }
 }

@@ -97,7 +97,9 @@ docker volume rm consent-manager_postgres_data
 * Navigate to ConsentManager Realm
 * Go to "Clients" > "Credentials"
 * Get the Secret field
-* Update the secret in [docker-compose.yml](docker-compose.yml) under variables CONSENTMANAGER_CLIENTREGISTRY_XAUTHTOKEN & CONSENTMANAGER_KEYCLOAK_CLIENTSECRET 
+* Update the secret in [docker-compose.yml](docker-compose.yml) under variables CONSENTMANAGER_CLIENTREGISTRY_XAUTHTOKEN & CONSENTMANAGER_KEYCLOAK_CLIENTSECRET
+CONSENTMANAGER_CLIENTREGISTRY_XAUTHTOKEN => this one needs to be copied from central-registry realm
+CONSENTMANAGER_KEYCLOAK_CLIENTSECRET => this one needs to be copied from ConsentManager realm 
 
 4. Now run the rest of the containers with the following command
 

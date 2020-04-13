@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
-import in.projecteka.consentmanager.dataflow.PostDataFlowRequestApproval;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
@@ -16,7 +15,7 @@ import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class PostConsentRequest {
-    private static final Logger logger = LoggerFactory.getLogger(PostDataFlowRequestApproval.class);
+    private static final Logger logger = LoggerFactory.getLogger(PostConsentRequest.class);
     private AmqpTemplate amqpTemplate;
     private DestinationsConfig destinationsConfig;
 

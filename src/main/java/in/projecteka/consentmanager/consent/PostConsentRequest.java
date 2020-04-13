@@ -5,7 +5,9 @@ import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.dataflow.PostDataFlowRequestApproval;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.amqp.core.AmqpTemplate;
 import reactor.core.publisher.Mono;
 
@@ -14,7 +16,7 @@ import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class PostConsentRequest {
-    private static final Logger logger = Logger.getLogger(PostDataFlowRequestApproval.class);
+    private static final Logger logger = LoggerFactory.getLogger(PostDataFlowRequestApproval.class);
     private AmqpTemplate amqpTemplate;
     private DestinationsConfig destinationsConfig;
 

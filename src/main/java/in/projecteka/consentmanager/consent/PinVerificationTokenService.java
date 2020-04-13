@@ -8,7 +8,9 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
 import lombok.AllArgsConstructor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import reactor.core.publisher.Mono;
 
 import java.security.PublicKey;
@@ -17,14 +19,14 @@ import java.util.function.Function;
 
 @AllArgsConstructor
 public class PinVerificationTokenService {
-    private final static Logger logger = Logger.getLogger(PinVerificationTokenService.class);
+    private final static Logger logger = LoggerFactory.getLogger(PinVerificationTokenService.class);
     private final PublicKey publicKey;
 
     public Mono<Caller> validateToken(String authToken) {
         try {
             return usernameFrom(authToken).map(username -> Mono.just(new Caller(username, false))).orElse(Mono.empty());
         } catch (ExpiredJwtException | MalformedJwtException | SignatureException | IllegalArgumentException e) {
-            logger.error(e);
+            logger.error(e.getMessage(),e);
             return Mono.empty();
         }
     }
@@ -33,7 +35,7 @@ public class PinVerificationTokenService {
         try {
             return Optional.ofNullable(claim(from(token), Claims::getSubject));
         } catch (ExpiredJwtException | MalformedJwtException | SignatureException | IllegalArgumentException e) {
-            logger.error(e);
+            logger.error(e.getMessage(),e);
             return Optional.empty();
         }
     }

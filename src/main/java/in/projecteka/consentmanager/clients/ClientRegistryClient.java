@@ -4,7 +4,8 @@ import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Session;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -19,7 +20,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 public class ClientRegistryClient {
 
-    private final Logger logger = Logger.getLogger(ClientRegistryClient.class);
+    private final Logger logger = LoggerFactory.getLogger(ClientRegistryClient.class);
     private final WebClient.Builder webClientBuilder;
 
     public ClientRegistryClient(WebClient.Builder webClientBuilder, String baseUrl) {

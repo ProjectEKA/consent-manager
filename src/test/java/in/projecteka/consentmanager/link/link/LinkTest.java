@@ -54,9 +54,6 @@ class LinkTest {
     @Mock
     private LinkRepository linkRepository;
 
-    @Mock
-    private UserServiceClient userServiceClient;
-
     @BeforeEach
     public void setUp() {
         initMocks(this);
@@ -64,7 +61,7 @@ class LinkTest {
 
     @Test
     public void createsLinkReference() {
-        var link = new Link(linkServiceClient, linkRepository, userServiceClient, clientRegistryClient);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         String providerUrl = "http://localhost:8001";
@@ -101,7 +98,7 @@ class LinkTest {
     @Test
     public void shouldGetSystemUrlForOfficialIdentifier() {
         var token = string();
-        var link = new Link(linkServiceClient, linkRepository, userServiceClient, clientRegistryClient);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         String providerUrl = "http://localhost:8001";
@@ -143,7 +140,7 @@ class LinkTest {
 
     @Test
     public void shouldGetErrorWhenProviderUrlIsEmpty() {
-        var link = new Link(linkServiceClient, linkRepository, userServiceClient, clientRegistryClient);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var provider =
@@ -172,7 +169,7 @@ class LinkTest {
 
     @Test
     public void linksPatientsCareContexts() {
-        var link = new Link(linkServiceClient, linkRepository, userServiceClient, clientRegistryClient);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         String providerUrl = "http://localhost:8001";
@@ -225,7 +222,6 @@ class LinkTest {
         listOfLinks.add(links);
         var patientLinks = patientLinks()
                 .id(patientId)
-                .name("")
                 .links(listOfLinks)
                 .build();
         var provider =
@@ -245,14 +241,12 @@ class LinkTest {
         listOfLinksResponse.add(linksResponse);
         var patientLinksResponse = new PatientLinksResponse(patientLinks()
                 .id(patientId)
-                .name(user.getName())
                 .links(listOfLinksResponse)
                 .build());
 
         when(linkRepository.getLinkedCareContextsForAllHip(patientId)).thenReturn(Mono.just(patientLinks));
         when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
-        when(userServiceClient.userOf(patientId)).thenReturn(Mono.just(user));
-        var link = new Link(linkServiceClient, linkRepository, userServiceClient, clientRegistryClient);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient);
 
         StepVerifier.create(link.getLinkedCareContexts(patientId))
                 .expectNext(patientLinksResponse)

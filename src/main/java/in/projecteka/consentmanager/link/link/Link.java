@@ -2,14 +2,12 @@ package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
-import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Patient;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.clients.model.Provider;
-import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
@@ -33,7 +31,6 @@ import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 public class Link {
     private final LinkServiceClient linkServiceClient;
     private final LinkRepository linkRepository;
-    private final UserServiceClient userServiceClient;
     private final CentralRegistry centralRegistry;
 
     public Mono<PatientLinkReferenceResponse> patientWith(String patientId,
@@ -134,18 +131,12 @@ public class Link {
     public Mono<PatientLinksResponse> getLinkedCareContexts(String patientId) {
         return linkRepository.getLinkedCareContextsForAllHip(patientId)
                 .flatMap(patientLinks -> getLinks(patientLinks.getLinks())
-                        .flatMap(links -> userWith(patientId)
-                                .map(user -> PatientLinksResponse.builder().
-                                        patient(PatientLinks.builder()
-                                                .id(patientLinks.getId())
-                                                .name(user.getName())
-                                                .links(links)
-                                                .build())
-                                        .build())));
-    }
-
-    private Mono<User> userWith(String patientId) {
-        return userServiceClient.userOf(patientId);
+                        .map(links -> PatientLinksResponse.builder()
+                                .patient(PatientLinks.builder()
+                                        .id(patientLinks.getId())
+                                        .links(links)
+                                        .build())
+                                .build()));
     }
 
     private Mono<List<Links>> getLinks(List<Links> patientLinks) {

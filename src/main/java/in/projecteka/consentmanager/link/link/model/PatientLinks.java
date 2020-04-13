@@ -11,6 +11,5 @@ import java.util.List;
 @Data
 public class PatientLinks {
     private String id;
-    private String name;
     private List<Links> links;
 }

@@ -1667,13 +1667,8 @@ components:
       type: object
       required:
         - id
-        - firstName
       properties:
         id:
-          type: string
-        firstName:
-          type: string
-        lastName:
           type: string
         links:
           type: array
@@ -1914,12 +1909,9 @@ components:
         id:
           type: string
           example: user@ncg
-        firstName:
+        name:
           type: string
-          example: Raj
-        lastName:
-          type: string
-          example: Sharma
+          example: Raj Sharma
         gender:
           $ref: '#/components/schemas/Gender'
         hasTransactionPin:

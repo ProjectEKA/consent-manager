@@ -4,7 +4,9 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.amqp.core.AmqpTemplate;
 import reactor.core.publisher.Mono;
 
@@ -13,7 +15,7 @@ import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_CONSE
 
 @AllArgsConstructor
 public class ConsentNotificationPublisher {
-    private static final Logger logger = Logger.getLogger(ConsentNotificationPublisher.class);
+    private static final Logger logger = LoggerFactory.getLogger(ConsentNotificationPublisher.class);
     private AmqpTemplate amqpTemplate;
     private DestinationsConfig destinationsConfig;
 
@@ -36,8 +38,8 @@ public class ConsentNotificationPublisher {
             throw new Exception(errorMessage);
         }
         sendMessage(message, destinationInfo.getExchange(), destinationInfo.getRoutingKey());
-        logger.info(String.format("Broadcasting consent artefact notification for Request Id: %s",
-                message.getConsentRequestId()));
+        logger.info("Broadcasting consent artefact notification for Request Id: {}",
+                message.getConsentRequestId());
     }
 
     @SneakyThrows
@@ -53,9 +55,9 @@ public class ConsentNotificationPublisher {
         message.getConsentArtefacts()
                 .forEach(consentArtefact -> {
                     sendMessage(consentArtefact, destinationInfo.getExchange(), destinationInfo.getRoutingKey());
-                    logger.info(String.format(
-                            "Broadcasting consent artefact notification to hip for consent artefact: %s",
-                            consentArtefact.getConsentDetail().getConsentId()));
+                    logger.info(
+                            "Broadcasting consent artefact notification to hip for consent artefact: {}",
+                            consentArtefact.getConsentDetail().getConsentId());
                 });
     }
 

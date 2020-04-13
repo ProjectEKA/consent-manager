@@ -6,7 +6,7 @@ consentmanager:
     maxPageSize: 100
     url: http://consent-manager:9000
   clientregistry:
-    XAuthToken: efb60576-8110-47df-ad94-3883924624e6
+    XAuthToken: ${CONSENTMANAGER_CLIENTREGISTRY_XAUTHTOKEN}
     clientId: consent-manager
     url: http://client-registry:8080
     jwkUrl: http://client-registry:8080/certs

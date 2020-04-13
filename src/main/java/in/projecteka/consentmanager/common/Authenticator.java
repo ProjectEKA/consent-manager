@@ -14,7 +14,9 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import reactor.core.publisher.Mono;
 
 import java.text.ParseException;
@@ -24,7 +26,7 @@ import java.util.HashSet;
 public class Authenticator {
 
     private final ConfigurableJWTProcessor<SecurityContext> jwtProcessor;
-    private final Logger logger = Logger.getLogger(Authenticator.class);
+    private final Logger logger = LoggerFactory.getLogger(Authenticator.class);
 
     public Authenticator(JWKSet jwkSet) {
         var immutableJWKSet = new ImmutableJWKSet<>(jwkSet);
@@ -49,7 +51,7 @@ public class Authenticator {
                             try {
                                 return Mono.just(from(jwtClaimsSet.getStringClaim("preferred_username")));
                             } catch (ParseException e) {
-                                logger.error(e);
+                                logger.error(e.getMessage());
                                 return Mono.empty();
                             }
                         });

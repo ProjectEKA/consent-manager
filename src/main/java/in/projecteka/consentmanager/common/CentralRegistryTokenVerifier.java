@@ -14,7 +14,8 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.text.ParseException;
@@ -23,7 +24,7 @@ import java.util.HashSet;
 
 public class CentralRegistryTokenVerifier {
     private final ConfigurableJWTProcessor<SecurityContext> jwtProcessor;
-    private final Logger logger = Logger.getLogger(CentralRegistryTokenVerifier.class);
+    private final Logger logger = LoggerFactory.getLogger(CentralRegistryTokenVerifier.class);
 
     public CentralRegistryTokenVerifier(JWKSet jwkSet) {
         var immutableJWKSet = new ImmutableJWKSet<>(jwkSet);
@@ -48,7 +49,7 @@ public class CentralRegistryTokenVerifier {
                             try {
                                 return Mono.just(new Caller(jwtClaimsSet.getStringClaim("clientId"), true));
                             } catch (ParseException e) {
-                                logger.error(e);
+                                logger.error(e.getMessage(),e);
                                 return Mono.empty();
                             }
                         });

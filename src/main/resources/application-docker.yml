@@ -23,7 +23,7 @@ consentmanager:
   keycloak:
     baseUrl: http://keycloak:8080/auth
     clientId: consent-manager
-    clientSecret: efb60576-8110-47df-ad94-3883924624e6
+    clientSecret: ${CONSENTMANAGER_KEYCLOAK_CLIENTSECRET}
     userName: consent-service-admin-user
     password: welcome
     jwkUrl: http://keycloak:8080/auth/realms/consent-manager/protocol/openid-connect/certs

@@ -28,24 +28,22 @@ public class SignUpRequestValidator {
 
     }
 
-    private static final LocalDate TOMORROW = LocalDate.now().plusDays(1);
-    private static final String VALID_NAME_CHARS = "[a-zA-Z]";
+    private static final LocalDate TODAY = LocalDate.now();
+    private static final String VALID_NAME_CHARS = "[a-zA-Z ]";
 
     public static Validation<Seq<String>, SignUpRequest> validate(SignUpRequest signUpRequest, String userIdSuffix) {
         return Validation.combine(
-                validateFirstName(signUpRequest.getFirstName()),
-                validateLastName(signUpRequest.getLastName()),
+                validateName(signUpRequest.getName()),
                 validate(signUpRequest.getGender()),
                 validateUserName(signUpRequest.getUserName(), userIdSuffix),
                 validatePassword(signUpRequest.getPassword()),
-                validateAge(signUpRequest.getDateOfBirth()))
-                .ap((firstName, lastName, gender, username, password, dateOfBirth) -> SignUpRequest.builder()
-                        .firstName(firstName)
-                        .lastName(lastName)
+                validateYearOfBirth(signUpRequest.getYearOfBirth()))
+                .ap((firstName, gender, username, password, dateOfBirth) -> SignUpRequest.builder()
+                        .name(firstName)
                         .gender(gender)
                         .userName(username)
                         .password(password)
-                        .dateOfBirth(dateOfBirth)
+                        .yearOfBirth(dateOfBirth)
                         .build());
     }
 
@@ -56,18 +54,11 @@ public class SignUpRequestValidator {
         return Validation.invalid("gender can't be empty");
     }
 
-    private static Validation<String, String> validateLastName(String lastName) {
-        if (Strings.isNullOrEmpty(lastName)) {
-            return Validation.valid(lastName);
+    private static Validation<String, String> validateName(String name) {
+        if (Strings.isNullOrEmpty(name)) {
+            return Validation.invalid("Name can't be empty");
         }
-        return allowed(VALID_NAME_CHARS, "last name", lastName);
-    }
-
-    private static Validation<String, String> validateFirstName(String firstName) {
-        if (Strings.isNullOrEmpty(firstName)) {
-            return Validation.invalid("first name can't be empty");
-        }
-        return allowed(VALID_NAME_CHARS, "first name", firstName);
+        return allowed(VALID_NAME_CHARS, "name", name);
     }
 
     private static Validation<String, String> validateUserName(String username, String userIdSuffix) {
@@ -106,11 +97,10 @@ public class SignUpRequestValidator {
                                           seq.distinct().sorted())));
     }
 
-    private static Validation<String, LocalDate> validateAge(LocalDate dateOfBirth) {
-        return dateOfBirth == null ||
-                       dateOfBirth.isBefore(TOMORROW)
-               ? Validation.valid(dateOfBirth)
-               : Validation.invalid("Date of birth can't be in future");
+    private static Validation<String, Integer> validateYearOfBirth(Integer year) {
+        return year == null || ((year <= (TODAY.getYear())) && (year >= TODAY.getYear() - 120))
+                ? Validation.valid(year)
+                : Validation.invalid("Year of birth can't be in future or older than 120 years");
     }
 
     private static Validation<String, String> validatePassword(String password) {

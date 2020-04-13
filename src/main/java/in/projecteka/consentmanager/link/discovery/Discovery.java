@@ -76,10 +76,9 @@ public class Discovery {
                                     .build()).collect(Collectors.toList());
         Patient patient = Patient.builder()
                 .id(user.getIdentifier())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
+                .name(user.getName())
                 .gender(user.getGender())
-                .dateOfBirth(user.getDateOfBirth())
+                .yearOfBirth(user.getYearOfBirth())
                 .verifiedIdentifiers(List.of(phoneNumber))
                 .unverifiedIdentifiers(unverifiedIds)
                 .build();

@@ -5,26 +5,22 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Builder
 public class User {
     private String identifier;
-    private String firstName;
-    private String lastName;
+    private String name;
     private Gender gender;
-    private LocalDate dateOfBirth;
+    private Integer yearOfBirth;
     private String phone;
 
     public static User from(SignUpRequest request, String mobileNumber) {
         return new User(request.getUserName().toLowerCase(),
-                request.getFirstName(),
-                request.getLastName(),
+                request.getName(),
                 request.getGender(),
-                request.getDateOfBirth(),
+                request.getYearOfBirth(),
                 mobileNumber);
     }
 }

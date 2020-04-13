@@ -31,12 +31,9 @@ public class LinkConfiguration {
     @Bean
     public Link link(WebClient.Builder builder,
                      LinkRepository linkRepository,
-                     UserServiceProperties userServiceProperties,
-                     CentralRegistry centralRegistry,
-                     IdentityService identityService) {
+                     CentralRegistry centralRegistry) {
         return new Link(new LinkServiceClient(builder),
                 linkRepository,
-                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate),
                 centralRegistry);
     }
 

@@ -16,7 +16,8 @@ import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import lombok.AllArgsConstructor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
@@ -28,7 +29,7 @@ import static java.lang.String.format;
 
 @AllArgsConstructor
 public class UserService {
-    private final Logger logger = Logger.getLogger(UserService.class);
+    private final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
     private final OtpServiceProperties otpServiceProperties;
     private final OtpServiceClient otpServiceClient;
@@ -73,8 +74,7 @@ public class UserService {
     public Mono<Session> create(SignUpRequest signUpRequest, String sessionId) {
         UserCredential credential = new UserCredential(signUpRequest.getPassword());
         KeycloakUser user = new KeycloakUser(
-                signUpRequest.getFirstName(),
-                signUpRequest.getLastName(),
+                signUpRequest.getName(),
                 signUpRequest.getUserName(),
                 Collections.singletonList(credential),
                 Boolean.TRUE.toString());

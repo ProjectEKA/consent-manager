@@ -48,7 +48,8 @@ public class UserController {
         return userService.permitOtp(request);
     }
 
-    @PostMapping("/users")
+    //TODO : should be moved to PatientController
+    @PostMapping("/patients/profile")
     public Mono<Session> create(@RequestBody SignUpRequest request,
                                 @RequestHeader(name = "Authorization") String token) {
         var signUpRequests = SignUpRequestValidator.validate(request, userService.getUserIdSuffix());

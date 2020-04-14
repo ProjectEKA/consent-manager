@@ -9,8 +9,7 @@ import java.util.List;
 @Builder
 public class Profile {
     private String id;
-    private String firstName;
-    private String lastName;
+    private String name;
     private Gender gender;
     private boolean hasTransactionPin;
     private List<Identifier> verifiedIdentifiers;

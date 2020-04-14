@@ -35,13 +35,13 @@ public class SignUpRequestValidator {
         return Validation.combine(
                 validateName(signUpRequest.getName()),
                 validate(signUpRequest.getGender()),
-                validateUserName(signUpRequest.getUserName(), userIdSuffix),
+                validateUserName(signUpRequest.getUsername(), userIdSuffix),
                 validatePassword(signUpRequest.getPassword()),
                 validateYearOfBirth(signUpRequest.getYearOfBirth()))
                 .ap((firstName, gender, username, password, dateOfBirth) -> SignUpRequest.builder()
                         .name(firstName)
                         .gender(gender)
-                        .userName(username)
+                        .username(username)
                         .password(password)
                         .yearOfBirth(dateOfBirth)
                         .build());

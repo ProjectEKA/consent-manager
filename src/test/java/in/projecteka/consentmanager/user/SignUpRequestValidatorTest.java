@@ -19,9 +19,8 @@ class SignUpRequestValidatorTest {
                 .password("aB1 #afasas")
                 .name("onlyAlphabets")
                 .yearOfBirth(LocalDate.now().getYear())
-                .userName("usernameWithAlphabetsAnd1@ncg")
+                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
-
 
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
@@ -34,7 +33,7 @@ class SignUpRequestValidatorTest {
                 .password("aB1#afasas")
                 .name("onlyAlphabets")
                 .yearOfBirth(LocalDate.now().getYear())
-                .userName("usernameWithAlphabetsAnd1@ncg")
+                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
@@ -48,7 +47,7 @@ class SignUpRequestValidatorTest {
                 .password("aB1#afasas")
                 .name("onlyAlphabets")
                 .yearOfBirth(LocalDate.now().plusYears(1).getYear())
-                .userName("usernameWithAlphabetsAnd1@ncg")
+                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
@@ -67,7 +66,7 @@ class SignUpRequestValidatorTest {
                 .password("aB1#afasas")
                 .name(name)
                 .yearOfBirth(LocalDate.now().getYear())
-                .userName("usernameWithAlphabetsAnd1@ncg")
+                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
@@ -83,7 +82,7 @@ class SignUpRequestValidatorTest {
                 .password("aB1#afasas")
                 .name("onlyAlphabets")
                 .yearOfBirth(LocalDate.now().getYear())
-                .userName("usernameWithAlphabetsAnd1@ncg")
+                .username("usernameWithAlphabetsAnd1@ncg")
                 .gender(null)
                 .build();
 
@@ -105,7 +104,7 @@ class SignUpRequestValidatorTest {
                 .password("aB1#afasas")
                 .name("onlyAlphabets")
                 .yearOfBirth(LocalDate.now().getYear())
-                .userName(name)
+                .username(name)
                 .build();
 
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
@@ -126,7 +125,7 @@ class SignUpRequestValidatorTest {
                 .password("aB1#afasas")
                 .name("onlyAlphabets")
                 .yearOfBirth(LocalDate.now().getYear())
-                .userName(name)
+                .username(name)
                 .build();
 
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
@@ -140,7 +139,7 @@ class SignUpRequestValidatorTest {
                 .password("aB1#afasas")
                 .name("onlyAlphabets")
                 .yearOfBirth(LocalDate.now().getYear())
-                .userName("userDoesNotEndWith")
+                .username("userDoesNotEndWith")
                 .build();
 
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
@@ -162,7 +161,7 @@ class SignUpRequestValidatorTest {
                 .password("aB1#afasas")
                 .name("onlyAlphabets")
                 .yearOfBirth(LocalDate.now().getYear())
-                .userName(username)
+                .username(username)
                 .build();
 
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
@@ -185,7 +184,7 @@ class SignUpRequestValidatorTest {
                 .password(password)
                 .name("onlyAlp habets")
                 .yearOfBirth(LocalDate.now().getYear())
-                .userName("username@ncg")
+                .username("username@ncg")
                 .build();
 
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
@@ -204,7 +203,7 @@ class SignUpRequestValidatorTest {
                 .password(password)
                 .name("onlyAlphabets")
                 .yearOfBirth(LocalDate.now().getYear())
-                .userName("username@ncg")
+                .username("username@ncg")
                 .build();
 
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
@@ -220,7 +219,7 @@ class SignUpRequestValidatorTest {
                 .password("aB1 #afasas")
                 .name("onlyAlphabets")
                 .yearOfBirth(LocalDate.now().getYear()-121)
-                .userName("usernameWithAlphabetsAnd1@ncg")
+                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
@@ -236,7 +235,7 @@ class SignUpRequestValidatorTest {
                 .password("aB1 #afasas")
                 .name("onlyAlphabets")
                 .yearOfBirth(LocalDate.now().getYear()+1)
-                .userName("usernameWithAlphabetsAnd1@ncg")
+                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
@@ -252,7 +251,7 @@ class SignUpRequestValidatorTest {
                 .password("aB1 #afasas")
                 .name("onlyAlphabets")
                 .yearOfBirth(null)
-                .userName("usernameWithAlphabetsAnd1@ncg")
+                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");

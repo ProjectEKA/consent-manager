@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "eb5f157c-b343-488f-83a7-9d23721353d0",
+		"_postman_id": "12180772-0814-4b97-9394-f1aae5f84a08",
 		"name": "NCG",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -8,199 +8,6 @@
 		{
 			"name": "CM",
 			"item": [
-				{
-					"name": "Providers",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "{{AUTHORIZATION}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{CM_HOST}}/providers?name=infi",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"providers"
-							],
-							"query": [
-								{
-									"key": "name",
-									"value": "infi"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Discovery Enquiry",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "eae93b7d-089b-48ac-8f3d-1ce6d902f3b6",
-								"exec": [
-									"pm.test(\"Update patient reference number\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.environment.set(\"PATIENT_REF_NUMBER\", jsonData.patient.referenceNumber);",
-									"    pm.environment.set(\"CARE_CONTEXT1_NUMBER\",",
-									"    jsonData.patient.careContexts[0].referenceNumber)",
-									"    pm.environment.set(\"DISCOVERY_REQUEST_ID\", jsonData.transactionId)",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "patientId",
-								"type": "text",
-								"value": "1",
-								"disabled": true
-							},
-							{
-								"key": "Accept",
-								"type": "text",
-								"value": "application/json",
-								"disabled": true
-							},
-							{
-								"key": "Content-Type",
-								"type": "text",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"type": "text",
-								"value": "{{AUTHORIZATION}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"hip\": {\n\t\t\"id\": \"10000004\"\n\t}\n}"
-						},
-						"url": {
-							"raw": "{{CM_HOST}}/patients/discover/carecontexts",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"patients",
-								"discover"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Link Enquiry",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "eeda8a4e-44d7-4fe4-8300-56571879ad14",
-								"exec": [
-									"pm.test(\"Update link reference number\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.environment.set(\"LINK_REF_NUMBER\", jsonData.link.referenceNumber);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"name": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json",
-								"type": "text",
-								"disabled": true
-							},
-							{
-								"key": "Authorization",
-								"value": "{{AUTHORIZATION}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"transactionId\": \"{{DISCOVERY_REQUEST_ID}}\",\n\t\"patient\": {\n\t\t\"referenceNumber\": \"{{PATIENT_REF_NUMBER}}\",\n\t\t\"careContexts\": [\n            {\n                \"referenceNumber\": \"{{CARE_CONTEXT1_NUMBER}}\"\n            }\n        ]\n\t}\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{CM_HOST}}/patients/link/",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"patients",
-								"link",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Link Confirmation",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json",
-								"type": "text",
-								"disabled": true
-							},
-							{
-								"key": "Authorization",
-								"value": "{{AUTHORIZATION}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"token\": \"666666\"\n}"
-						},
-						"url": {
-							"raw": "{{CM_HOST}}/patients/link/{{LINK_REF_NUMBER}}",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"patients",
-								"link",
-								"{{LINK_REF_NUMBER}}"
-							]
-						}
-					},
-					"response": []
-				},
 				{
 					"name": "New User Enquiry",
 					"event": [
@@ -343,7 +150,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\"firstName\": \"{{$randomFirstName}}\",\n\"lastName\": \"{{$randomLastName}}\",\n\"userName\": \"{{$randomFirstName}}.{{$randomLastName}}@ncg\",\n\"password\": \"{{$randomPassword}}#\",\n\"dateOfBirth\": \"1990-06-09\",\n\"gender\": \"M\"\n}",
+							"raw": "{\n\"name\": \"{{$randomName}}\",\n\"username\": \"{{$randomFirstName}}.{{$randomLastName}}@ncg\",\n\"password\": \"{{$randomPassword}}#\",\n\"yearOfBirth\": 1990,\n\"gender\": \"M\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -351,12 +158,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{CM_HOST}}/users",
+							"raw": "{{CM_HOST}}/patients/profile",
 							"host": [
 								"{{CM_HOST}}"
 							],
 							"path": [
-								"users"
+								"patients",
+								"profile"
 							]
 						}
 					},
@@ -387,6 +195,200 @@
 					"response": []
 				},
 				{
+					"name": "Providers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{CM_HOST}}/providers?name=infi",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"providers"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "infi"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Discovery Enquiry",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "eae93b7d-089b-48ac-8f3d-1ce6d902f3b6",
+								"exec": [
+									"pm.test(\"Update patient reference number\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"PATIENT_REF_NUMBER\", jsonData.patient.referenceNumber);",
+									"    pm.environment.set(\"CARE_CONTEXT1_NUMBER\",",
+									"    jsonData.patient.careContexts[0].referenceNumber)",
+									"    pm.environment.set(\"DISCOVERY_REQUEST_ID\", jsonData.transactionId)",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "patientId",
+								"type": "text",
+								"value": "1",
+								"disabled": true
+							},
+							{
+								"key": "Accept",
+								"type": "text",
+								"value": "application/json",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{AUTHORIZATION}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"hip\": {\n\t\t\"id\": \"10000004\"\n\t}\n}"
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/discover/carecontexts",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"discover",
+								"carecontexts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Link Enquiry",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "eeda8a4e-44d7-4fe4-8300-56571879ad14",
+								"exec": [
+									"pm.test(\"Update link reference number\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"LINK_REF_NUMBER\", jsonData.link.referenceNumber);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"transactionId\": \"{{DISCOVERY_REQUEST_ID}}\",\n\t\"patient\": {\n\t\t\"referenceNumber\": \"{{PATIENT_REF_NUMBER}}\",\n\t\t\"careContexts\": [\n            {\n                \"referenceNumber\": \"{{CARE_CONTEXT1_NUMBER}}\"\n            }\n        ]\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/link/",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"link",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Link Confirmation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"token\": \"666666\"\n}"
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/link/{{LINK_REF_NUMBER}}",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"link",
+								"{{LINK_REF_NUMBER}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Links",
 					"request": {
 						"method": "GET",
@@ -411,8 +413,31 @@
 					"response": []
 				},
 				{
+					"name": "Consent Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{CM_HOST}}/consent-requests",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"consent-requests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Create pin",
-					"request" : {
+					"request": {
 						"method": "POST",
 						"header": [
 							{
@@ -445,7 +470,22 @@
 				},
 				{
 					"name": "Verify pin",
-					"request" : {
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "ad042029-4326-4ef5-85cf-158f2fb6abcd",
+								"exec": [
+									"pm.test(\"Update user creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"PIN_AUTHORIZATION\", \"bearer \" + jsonData.temporaryToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
 						"method": "POST",
 						"header": [
 							{
@@ -588,29 +628,6 @@
 								"consent-requests",
 								"{{CONSENT_REQUEST_ID}}",
 								"consent-artefacts"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Consent Requests",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "{{AUTHORIZATION}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{CM_HOST}}/consent-requests",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"consent-requests"
 							]
 						}
 					},
@@ -829,7 +846,7 @@
 							"path": [
 								"patients",
 								"discover",
-								""
+								"carecontexts"
 							]
 						}
 					},

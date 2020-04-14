@@ -155,7 +155,7 @@ class UserServiceTest {
         when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
-        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.empty());
+        when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 
         StepVerifier.create(userService.create(signUpRequest, sessionId))
@@ -167,15 +167,15 @@ class UserServiceTest {
     public void shouldReturnUserAlreadyExistsError() {
         var signUpRequest = signUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
         var sessionId = string();
-        var user = user().identifier(signUpRequest.getUserName()).build();
+        var user = user().identifier(signUpRequest.getUsername()).build();
         when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(string()));
-        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.just(user));
+        when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.just(user));
         when(userRepository.save(any())).thenReturn(Mono.empty());
 
         StepVerifier.create(userService.create(signUpRequest, sessionId))
                 .verifyErrorSatisfies(error -> assertThat(error)
                         .asInstanceOf(InstanceOfAssertFactories.type(ClientError.class))
-                        .isEqualToComparingFieldByField(ClientError.userAlreadyExists(signUpRequest.getUserName())));
+                        .isEqualToComparingFieldByField(ClientError.userAlreadyExists(signUpRequest.getUsername())));
     }
 
     @Test
@@ -187,7 +187,7 @@ class UserServiceTest {
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
         when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
-        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.empty());
+        when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 

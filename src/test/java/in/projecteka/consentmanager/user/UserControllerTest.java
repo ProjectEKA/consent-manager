@@ -5,12 +5,10 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
-import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.dataflow.DataFlowRequester;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
@@ -28,12 +26,9 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.user.TestBuilders.session;
-import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static java.lang.String.format;
-import static java.time.LocalDate.now;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
@@ -47,12 +42,6 @@ class UserControllerTest {
 
     @MockBean
     private UserService userService;
-
-    @MockBean
-    private ConsentManager consentManager;
-
-    @MockBean
-    private DataFlowRequester dataFlowRequester;
 
     @MockBean
     private DestinationsConfig destinationsConfig;
@@ -122,54 +111,6 @@ class UserControllerTest {
                 .exchange().expectStatus().isOk();
 
         Mockito.verify(userService, times(1)).permitOtp(otpVerification);
-    }
-
-    @Test
-    public void createUser() {
-        var signUpRequest = signUpRequest()
-                .userName("username@ncg")
-                .name("RandomName")
-                .password("@2Abaafasfas")
-                .yearOfBirth(now().getYear())
-                .build();
-        var token = string();
-        var sessionId = string();
-        var session = session().build();
-        when(signupService.sessionFrom(token)).thenReturn(sessionId);
-        when(userService.create(signUpRequest, sessionId)).thenReturn(Mono.just(session));
-        when(userService.getUserIdSuffix()).thenReturn("@ncg");
-        when(signupService.validateToken(token)).thenReturn(true);
-
-        webClient.post()
-                .uri("/patients/profile")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header(AUTHORIZATION, token)
-                .body(BodyInserters.fromValue(signUpRequest))
-                .exchange().expectStatus().isOk();
-    }
-
-    @Test
-    public void returnBadRequestForUserCreation() {
-        var signUpRequest = signUpRequest()
-                .name("RandomName")
-                .yearOfBirth(now().plusDays(1).getYear())
-                .build();
-        var token = string();
-        var sessionId = string();
-        var session = session().build();
-        when(signupService.sessionFrom(token)).thenReturn(sessionId);
-        when(userService.create(signUpRequest, sessionId)).thenReturn(Mono.just(session));
-        when(userService.getUserIdSuffix()).thenReturn("@ncg");
-        when(signupService.validateToken(token)).thenReturn(true);
-
-        webClient.post()
-                .uri("/patients/profile")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header(AUTHORIZATION, token)
-                .body(BodyInserters.fromValue(signUpRequest))
-                .exchange()
-                .expectStatus()
-                .is4xxClientError();
     }
 
     @Test

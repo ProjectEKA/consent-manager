@@ -17,7 +17,7 @@ public class User {
     private String phone;
 
     public static User from(SignUpRequest request, String mobileNumber) {
-        return new User(request.getUserName().toLowerCase(),
+        return new User(request.getUsername().toLowerCase(),
                 request.getName(),
                 request.getGender(),
                 request.getYearOfBirth(),

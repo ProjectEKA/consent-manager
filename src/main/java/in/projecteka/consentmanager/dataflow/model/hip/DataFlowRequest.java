@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.dataflow.model.hip;
 
 import in.projecteka.consentmanager.dataflow.model.Consent;
-import in.projecteka.consentmanager.dataflow.model.HIDataRange;
+import in.projecteka.consentmanager.dataflow.model.DateRange;
 import in.projecteka.consentmanager.dataflow.model.KeyMaterial;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class DataFlowRequest {
     private String transactionId;
     private Consent consent;
-    private HIDataRange hiDataRange;
+    private DateRange dateRange;
     private String dataPushUrl;
     private KeyMaterial keyMaterial;
 }

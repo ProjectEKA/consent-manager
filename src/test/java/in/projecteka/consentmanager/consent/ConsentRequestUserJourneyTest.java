@@ -133,7 +133,7 @@ public class ConsentRequestUserJourneyTest {
             "                    \"from\": \"2020-01-16T08:47:48.000+0000\",\n" +
             "                    \"to\": \"2020-04-29T08:47:48.000+0000\"\n" +
             "                },\n" +
-            "                \"dataExpiryAt\": \"2020-05-29T08:47:48.000+0000\",\n" +
+            "                \"dataEraseAt\": \"2020-05-29T08:47:48.000+0000\",\n" +
             "                \"frequency\": {\n" +
             "                    \"unit\": \"HOUR\",\n" +
             "                    \"value\": 1,\n" +
@@ -181,7 +181,7 @@ public class ConsentRequestUserJourneyTest {
             "                    \"from\": \"2020-03-14T10:50:45.032+0000\",\n" +
             "                    \"to\": \"2020-03-14T10:50:45.032+0000\"\n" +
             "                },\n" +
-            "                \"dataExpiryAt\": \"2020-03-18T10:50:00.000+0000\",\n" +
+            "                \"dataEraseAt\": \"2020-03-18T10:50:00.000+0000\",\n" +
             "                \"frequency\": {\n" +
             "                    \"unit\": \"HOUR\",\n" +
             "                    \"value\": 1,\n" +
@@ -244,7 +244,7 @@ public class ConsentRequestUserJourneyTest {
                 "        \"from\": \"2021-01-16T07:23:41.305Z\",\n" +
                 "        \"to\": \"2021-01-16T07:35:41.305Z\"\n" +
                 "      },\n" +
-                "      \"dataExpiryAt\": \"2022-01-16T07:23:41.305Z\",\n" +
+                "      \"dataEraseAt\": \"2022-01-16T07:23:41.305Z\",\n" +
                 "      \"frequency\": {\n" +
                 "        \"unit\": \"DAY\",\n" +
                 "        \"value\": 1\n" +

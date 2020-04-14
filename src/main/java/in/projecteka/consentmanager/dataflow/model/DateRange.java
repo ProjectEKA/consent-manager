@@ -11,7 +11,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class HIDataRange {
+public class DateRange {
     private Date from;
     private Date to;
 }

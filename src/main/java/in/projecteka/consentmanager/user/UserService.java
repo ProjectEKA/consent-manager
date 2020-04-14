@@ -75,13 +75,13 @@ public class UserService {
         UserCredential credential = new UserCredential(signUpRequest.getPassword());
         KeycloakUser user = new KeycloakUser(
                 signUpRequest.getName(),
-                signUpRequest.getUserName(),
+                signUpRequest.getUsername(),
                 Collections.singletonList(credential),
                 Boolean.TRUE.toString());
 
         // TODO: If some failure happened in between roll back others.
         return signupService.getMobileNumber(sessionId)
-                .map(mobileNumber -> userExistsWith(signUpRequest.getUserName())
+                .map(mobileNumber -> userExistsWith(signUpRequest.getUsername())
                         .switchIfEmpty(Mono.defer(() -> createUserWith(mobileNumber, signUpRequest, user)))
                         .cast(Session.class))
                 .orElse(Mono.error(new InvalidRequestException("mobile number not verified")));
@@ -99,7 +99,7 @@ public class UserService {
         return tokenService.tokenForAdmin()
                 .flatMap(accessToken -> identityServiceClient.createUser(accessToken, user))
                 .then(userRepository.save(User.from(signUpRequest, mobileNumber)))
-                .then(tokenService.tokenForUser(signUpRequest.getUserName(), signUpRequest.getPassword()))
+                .then(tokenService.tokenForUser(signUpRequest.getUsername(), signUpRequest.getPassword()))
                 .map(keycloakToken -> keycloakToken);
     }
 

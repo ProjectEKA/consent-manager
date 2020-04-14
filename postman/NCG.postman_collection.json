@@ -94,7 +94,8 @@
 							],
 							"path": [
 								"patients",
-								"discover"
+								"discover",
+								"carecontexts"
 							]
 						}
 					},
@@ -343,7 +344,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\"firstName\": \"{{$randomFirstName}}\",\n\"lastName\": \"{{$randomLastName}}\",\n\"userName\": \"{{$randomFirstName}}.{{$randomLastName}}@ncg\",\n\"password\": \"{{$randomPassword}}#\",\n\"dateOfBirth\": \"1990-06-09\",\n\"gender\": \"M\"\n}",
+							"raw": "{\n\"name\": \"{{$randomName}}\",\n\"userName\": \"{{$randomFirstName}}.{{$randomLastName}}@ncg\",\n\"password\": \"{{$randomPassword}}#\",\n\"yearOfBirth\": 1990,\n\"gender\": \"M\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -351,12 +352,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{CM_HOST}}/users",
+							"raw": "{{CM_HOST}}/patients/profile",
 							"host": [
 								"{{CM_HOST}}"
 							],
 							"path": [
-								"users"
+								"patients",
+								"profile"
 							]
 						}
 					},
@@ -829,7 +831,7 @@
 							"path": [
 								"patients",
 								"discover",
-								""
+								"carecontexts"
 							]
 						}
 					},

@@ -1571,7 +1571,7 @@ components:
             to:
               type: string
               format: date-time
-        dataExpiryAt:
+        dataEraseAt:
           type: string
           format: date-time
         frequency:
@@ -1729,6 +1729,9 @@ components:
         consentDetail:
           type: object
           properties:
+            schemaVersion:
+              type: string
+              format: string
             consentId:
               type: string
               format: uuid
@@ -1790,8 +1793,8 @@ components:
       properties:
         consent:
           $ref: '#/components/schemas/consent'
-        hiDataRange:
-          $ref: '#/components/schemas/hiDataRange'
+        dateRange:
+          $ref: '#/components/schemas/dateRange'
         dataPushUrl:
           type: string
           example: 'http://localhost:8003/data/notification'
@@ -1814,7 +1817,7 @@ components:
           type: string
         digitalSignature:
           type: string
-    hiDataRange:
+    dateRange:
       type: object
       required:
         - from

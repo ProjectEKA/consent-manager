@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "eb5f157c-b343-488f-83a7-9d23721353d0",
+		"_postman_id": "12180772-0814-4b97-9394-f1aae5f84a08",
 		"name": "NCG",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -8,6 +8,192 @@
 		{
 			"name": "CM",
 			"item": [
+				{
+					"name": "New User Enquiry",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "b1329605-e1bf-471d-b9f8-ecec587d6d55",
+								"exec": [
+									"pm.test(\"Update session id\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"SESSION_ID\", jsonData.sessionId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"identifierType\": \"mobile\",\n\t\"identifier\": \"+91-9999999999\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/users/verify",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"users",
+								"verify"
+							]
+						},
+						"description": "\t"
+					},
+					"response": []
+				},
+				{
+					"name": "New User Enquiry Confirmation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "de2af3fb-8122-442d-bf31-316203732c5d",
+								"exec": [
+									"pm.test(\"Update user creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"USER_TEMP_TOKEN\", jsonData.temporaryToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"sessionId\": \"{{SESSION_ID}}\",\n\t\"value\": \"666666\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/users/permit",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"users",
+								"permit"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Patient",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "51c7be74-e15f-4ee1-8a73-10d001796a21",
+								"exec": [
+									"pm.test(\"Update auth creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var request = JSON.parse(pm.request.body.raw);",
+									"    pm.environment.set(\"AUTHORIZATION\", \"bearer \" + jsonData.accessToken);",
+									"    pm.environment.set(\"USERNAME\", request.userName);",
+									"    pm.environment.set(\"PASSWORD\", request.password);",
+									"    ",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{USER_TEMP_TOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "",
+								"value": "",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"name\": \"{{$randomName}}\",\n\"username\": \"{{$randomFirstName}}.{{$randomLastName}}@ncg\",\n\"password\": \"{{$randomPassword}}#\",\n\"yearOfBirth\": 1990,\n\"gender\": \"M\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/profile",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Patient",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{CM_HOST}}/users/shreya@ncg",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"users",
+								"shreya@ncg"
+							]
+						}
+					},
+					"response": []
+				},
 				{
 					"name": "Providers",
 					"request": {
@@ -203,192 +389,6 @@
 					"response": []
 				},
 				{
-					"name": "New User Enquiry",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "b1329605-e1bf-471d-b9f8-ecec587d6d55",
-								"exec": [
-									"pm.test(\"Update session id\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.environment.set(\"SESSION_ID\", jsonData.sessionId);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"name": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"identifierType\": \"mobile\",\n\t\"identifier\": \"+91-9999999999\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{CM_HOST}}/users/verify",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"users",
-								"verify"
-							]
-						},
-						"description": "\t"
-					},
-					"response": []
-				},
-				{
-					"name": "New User Enquiry Confirmation",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "de2af3fb-8122-442d-bf31-316203732c5d",
-								"exec": [
-									"pm.test(\"Update user creation token\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.environment.set(\"USER_TEMP_TOKEN\", jsonData.temporaryToken);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"name": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"sessionId\": \"{{SESSION_ID}}\",\n\t\"value\": \"666666\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{CM_HOST}}/users/permit",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"users",
-								"permit"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create Patient",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "51c7be74-e15f-4ee1-8a73-10d001796a21",
-								"exec": [
-									"pm.test(\"Update auth creation token\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    var request = JSON.parse(pm.request.body.raw);",
-									"    pm.environment.set(\"AUTHORIZATION\", \"bearer \" + jsonData.accessToken);",
-									"    pm.environment.set(\"USERNAME\", request.userName);",
-									"    pm.environment.set(\"PASSWORD\", request.password);",
-									"    ",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "{{USER_TEMP_TOKEN}}",
-								"type": "text"
-							},
-							{
-								"key": "Content-Type",
-								"name": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							},
-							{
-								"key": "",
-								"value": "",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\"name\": \"{{$randomName}}\",\n\"userName\": \"{{$randomFirstName}}.{{$randomLastName}}@ncg\",\n\"password\": \"{{$randomPassword}}#\",\n\"yearOfBirth\": 1990,\n\"gender\": \"M\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{CM_HOST}}/patients/profile",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"patients",
-								"profile"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Patient",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "{{AUTHORIZATION}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{CM_HOST}}/users/shreya@ncg",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"users",
-								"shreya@ncg"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Links",
 					"request": {
 						"method": "GET",
@@ -413,8 +413,31 @@
 					"response": []
 				},
 				{
+					"name": "Consent Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{CM_HOST}}/consent-requests",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"consent-requests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Create pin",
-					"request" : {
+					"request": {
 						"method": "POST",
 						"header": [
 							{
@@ -447,7 +470,22 @@
 				},
 				{
 					"name": "Verify pin",
-					"request" : {
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "ad042029-4326-4ef5-85cf-158f2fb6abcd",
+								"exec": [
+									"pm.test(\"Update user creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"PIN_AUTHORIZATION\", \"bearer \" + jsonData.temporaryToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
 						"method": "POST",
 						"header": [
 							{
@@ -590,29 +628,6 @@
 								"consent-requests",
 								"{{CONSENT_REQUEST_ID}}",
 								"consent-artefacts"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Consent Requests",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "{{AUTHORIZATION}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{CM_HOST}}/consent-requests",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"consent-requests"
 							]
 						}
 					},

@@ -3,6 +3,8 @@ package in.projecteka.consentmanager.user;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import in.projecteka.consentmanager.common.cache.ICacheAdapter;
+import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
@@ -57,8 +59,8 @@ public class UserConfiguration {
 
     @Bean
     public SignUpService authenticatorService(JWTProperties jwtProperties,
-                                              LoadingCache<String, Optional<String>> sessionCache,
-                                              LoadingCache<String, Optional<String>> secondSessionCache,
+                                              ICacheAdapter<String, Optional<String>> sessionCache,
+                                              ICacheAdapter<String, Optional<String>> secondSessionCache,
                                               UserServiceProperties userServiceProperties) {
         return new SignUpService(jwtProperties,
                 sessionCache,
@@ -67,6 +69,11 @@ public class UserConfiguration {
     }
 
     @Bean({"unverifiedSessions", "verifiedSessions"})
+    public ICacheAdapter<String, Optional<String>> createLoadingCacheAdapter(LoadingCache<String,Optional<String>> cache) {
+       return new LoadingCacheAdapter(cache);
+    }
+
+    @Bean
     public LoadingCache<String, Optional<String>> createSessionCache() {
         return CacheBuilder
                 .newBuilder()

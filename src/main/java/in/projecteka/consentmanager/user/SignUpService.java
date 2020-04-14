@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.user;
 
-import com.google.common.cache.LoadingCache;
-import in.projecteka.consentmanager.user.exception.CacheNotAccessibleException;
+import in.projecteka.consentmanager.common.cache.ICacheAdapter;
 import in.projecteka.consentmanager.user.exception.InvalidSessionException;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
@@ -21,19 +20,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
 public class SignUpService {
     public final long jwtTokenValidity;
     private static final Logger logger = LoggerFactory.getLogger(SignUpService.class);
     private final JWTProperties jwtProperties;
-    private final LoadingCache<String, Optional<String>> unverifiedSessions;
-    private final LoadingCache<String, Optional<String>> verifiedSessions;
+    private final ICacheAdapter<String, Optional<String>> unverifiedSessions;
+    private final ICacheAdapter<String, Optional<String>> verifiedSessions;
 
     public SignUpService(JWTProperties jwtProperties,
-                         LoadingCache<String, Optional<String>> unverifiedSessions,
-                         LoadingCache<String, Optional<String>> verifiedSessions,
+                         ICacheAdapter<String, Optional<String>> unverifiedSessions,
+                         ICacheAdapter<String, Optional<String>> verifiedSessions,
                          int tokenValidityInMinutes) {
         this.jwtProperties = jwtProperties;
         this.unverifiedSessions = unverifiedSessions;
@@ -63,16 +61,12 @@ public class SignUpService {
     }
 
     public Token generateToken(String sessionId) {
-        try {
-            return unverifiedSessions.get(sessionId)
-                    .map(number -> {
-                        String newSession = UUID.randomUUID().toString();
-                        verifiedSessions.put(newSession, Optional.of(number));
-                        return generateToken(new HashMap<>(), newSession);
-                    }).orElseThrow(() -> new InvalidSessionException("invalid.session.id"));
-        } catch (ExecutionException e) {
-            throw new CacheNotAccessibleException("cache.not.accessible");
-        }
+        return unverifiedSessions.get(sessionId)
+                .map(number -> {
+                    String newSession = UUID.randomUUID().toString();
+                    verifiedSessions.put(newSession, Optional.of(number));
+                    return generateToken(new HashMap<>(), newSession);
+                }).orElseThrow(() -> new InvalidSessionException("invalid.session.id"));
     }
 
     private Token generateToken(Map<String, Object> claims, String subject) {

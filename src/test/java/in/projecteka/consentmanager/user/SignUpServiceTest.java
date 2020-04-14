@@ -2,7 +2,8 @@ package in.projecteka.consentmanager.user;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import in.projecteka.consentmanager.common.cache.ICacheAdapter;
+import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.user.model.SignUpSession;
@@ -27,10 +28,10 @@ class SignUpServiceTest {
     private JWTProperties jwtProperties;
 
     @Mock
-    private LoadingCache<String, Optional<String>> unverifiedSessions;
+    private ICacheAdapter<String, Optional<String>> unverifiedSessions;
 
     @Mock
-    private LoadingCache<String, Optional<String>> verifiedSessions;
+    private ICacheAdapter<String, Optional<String>> verifiedSessions;
 
     private SignUpService signupService;
 
@@ -78,9 +79,10 @@ class SignUpServiceTest {
                         return Optional.empty();
                     }
                 });
+        var verifiedSessionsAdapter = new LoadingCacheAdapter(verifiedSessions);
         var value = Optional.of("Something");
         verifiedSessions.put(sessionId, value);
-        var signUpService = new SignUpService(null, null, verifiedSessions, 0);
+        var signUpService = new SignUpService(null, null, verifiedSessionsAdapter, 0);
 
         assertThat(verifiedSessions.get(sessionId)).isEqualTo(value);
         signUpService.removeOf(sessionId);

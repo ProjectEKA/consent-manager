@@ -21,13 +21,13 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.user.TestBuilders.string;
-import static in.projecteka.consentmanager.user.TestBuilders.user;
+import static in.projecteka.consentmanager.user.TestBuilders.*;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -35,6 +35,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @SuppressWarnings("ALL")
+@ActiveProfiles("default")
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient

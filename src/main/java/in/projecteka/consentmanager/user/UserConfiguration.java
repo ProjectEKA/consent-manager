@@ -3,16 +3,21 @@ package in.projecteka.consentmanager.user;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import in.projecteka.consentmanager.common.cache.ICacheAdapter;
-import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.common.cache.ICacheAdapter;
+import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisOptions;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -68,12 +73,14 @@ public class UserConfiguration {
                 userServiceProperties.getUserCreationTokenValidity());
     }
 
+    @Profile("default")
     @Bean({"unverifiedSessions", "verifiedSessions"})
     public ICacheAdapter<String, Optional<String>> createLoadingCacheAdapter(LoadingCache<String,Optional<String>> cache) {
        return new LoadingCacheAdapter(cache);
     }
 
     @Bean
+    @Profile("default")
     public LoadingCache<String, Optional<String>> createSessionCache() {
         return CacheBuilder
                 .newBuilder()
@@ -84,6 +91,18 @@ public class UserConfiguration {
                     }
                 });
     }
+
+    @Profile("redis")
+    @Bean({"unverifiedSessions", "verifiedSessions"})
+    public ICacheAdapter<String, Optional<String>> createRedisCacheAdapter(RedisOptions redisOptions) {
+        RedisURI redisUri = RedisURI.Builder.
+                redis(redisOptions.getHost())
+                .withPort(redisOptions.getPort())
+                .build();
+        RedisClient redisClient = RedisClient.create(redisUri);
+        return new RedisCacheAdapter(redisClient);
+    }
+
 
     @Bean
     public SessionService sessionService(TokenService tokenService) {

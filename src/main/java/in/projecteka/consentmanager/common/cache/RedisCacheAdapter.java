@@ -19,13 +19,11 @@ public class RedisCacheAdapter implements ICacheAdapter<String, Optional<String>
 
     @PostConstruct
     public void postConstruct() {
-        System.out.println("PostConstruct of RCA");
         statefulConnection = redisClient.connect();
     }
 
     @PreDestroy
     public void preDestroy () {
-        System.out.println("PreDestroy of RCA");
         statefulConnection.close();
         redisClient.shutdown();
     }
@@ -38,8 +36,8 @@ public class RedisCacheAdapter implements ICacheAdapter<String, Optional<String>
     @Override
     public void put(String key, Optional<String> value) {
         RedisCommands<String, String> redisCommands = statefulConnection.sync();
-        redisCommands.set(key, value.get());
-        redisCommands.expire(key, 5 * 60);
+        redisCommands.set(key, value.orElseGet((String::new)));
+        redisCommands.expire(key, 5 * 60L);
     }
 
     @Override

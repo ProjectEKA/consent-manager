@@ -63,7 +63,7 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static java.util.List.of;
 import static org.mockito.Mockito.when;
 
-@ActiveProfiles("default")
+
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient

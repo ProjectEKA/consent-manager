@@ -29,7 +29,11 @@ import reactor.test.StepVerifier;
 import java.time.LocalDate;
 import java.util.Collections;
 
-import static in.projecteka.consentmanager.user.TestBuilders.*;
+import static in.projecteka.consentmanager.user.TestBuilders.session;
+import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
+import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static in.projecteka.consentmanager.user.TestBuilders.user;
+import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;

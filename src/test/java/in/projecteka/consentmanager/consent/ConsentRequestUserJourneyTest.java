@@ -53,7 +53,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ActiveProfiles("default")
+
 @ExtendWith(SpringExtension.class)
 @AutoConfigureWebTestClient
 @ContextConfiguration(initializers = ConsentRequestUserJourneyTest.PropertyInitializer.class)

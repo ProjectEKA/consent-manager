@@ -15,9 +15,9 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -72,14 +72,14 @@ public class UserConfiguration {
                 userServiceProperties.getUserCreationTokenValidity());
     }
 
-    @Profile("default")
+    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"unverifiedSessions", "verifiedSessions"})
     public CacheAdapter<String, String> createLoadingCacheAdapter(LoadingCache<String,String> cache) {
        return new LoadingCacheAdapter(cache);
     }
 
     @Bean
-    @Profile("default")
+    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     public LoadingCache<String, String> createSessionCache() {
         return CacheBuilder
                 .newBuilder()
@@ -91,7 +91,7 @@ public class UserConfiguration {
                 });
     }
 
-    @Profile("redis")
+    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"unverifiedSessions", "verifiedSessions"})
     public CacheAdapter<String, String> createRedisCacheAdapter(RedisOptions redisOptions) {
         RedisURI redisUri = RedisURI.Builder.

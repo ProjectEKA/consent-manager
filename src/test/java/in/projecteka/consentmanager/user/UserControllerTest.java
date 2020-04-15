@@ -27,7 +27,8 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.user.TestBuilders.*;
+import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -35,7 +36,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @SuppressWarnings("ALL")
-@ActiveProfiles("default")
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient

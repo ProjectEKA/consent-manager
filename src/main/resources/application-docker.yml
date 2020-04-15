@@ -6,7 +6,7 @@ consentmanager:
     maxPageSize: 100
     url: http://consent-manager:9000
   clientregistry:
-    XAuthToken: ${CONSENTMANAGER_CLIENTREGISTRY_XAUTHTOKEN}
+    XAuthToken: "0e3f27a0-c167-45b4-a95b-ca1ba019b1bf"
     clientId: consent-manager
     url: http://client-registry:8080
     jwkUrl: http://client-registry:8080/certs
@@ -23,7 +23,7 @@ consentmanager:
   keycloak:
     baseUrl: http://keycloak:8080/auth
     clientId: consent-manager
-    clientSecret: ${CONSENTMANAGER_KEYCLOAK_CLIENTSECRET}
+    clientSecret: "0e3f27a0-c167-45b4-a95b-ca1ba019b1bf"
     userName: consent-service-admin-user
     password: welcome
     jwkUrl: http://keycloak:8080/auth/realms/consent-manager/protocol/openid-connect/certs

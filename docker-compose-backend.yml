@@ -2,12 +2,15 @@ version: '3'
 services:
   rabbitmq:
     image: "rabbitmq:3"
+    container_name: rabbitmq
+    hostname: rabbitmq
     ports:
       - "5672:5672"
 
   keycloak:
     image: "jboss/keycloak"
     container_name: keycloak
+    hostname: keycloak
     environment:
       KEYCLOAK_USER: admin
       KEYCLOAK_PASSWORD: welcome
@@ -24,6 +27,8 @@ services:
 
   postgres:
     image: "postgres:latest"
+    container_name: postgres
+    hostname: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db-init.sql:/docker-entrypoint-initdb.d/db-init.sql
@@ -31,7 +36,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
     ports:
-      - "5433:5432"
+      - "5432:5432"
 
   keycloak_setup:
     image: "bharatak/eka-keycloak-setup"
@@ -42,6 +47,27 @@ services:
     command: "sh -c 'dockerize -wait http://keycloak:8080 -timeout 240s && java -jar /app.jar'"
     depends_on:
       - keycloak
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.2
+    container_name: elasticsearch
+    hostname: elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.6.2
+    container_name: kibana
+    hostname: kibana
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
 volumes:
   postgres_data:
     driver: local

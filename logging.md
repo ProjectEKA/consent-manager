@@ -4,7 +4,7 @@ This document talks about structured logging and the Elastic stack
 ## Components
 The following are various components used in logging: Elasticsearch Kibana & Filebeat
 
-###Filebeat
+### Filebeat
 [Filebeat](https://www.elastic.co/beats/filebeat) is a lightweight shipper for logs.  Helps in transporting the log files from application to Elasticsearch.  We use the following filebeat configuration
 
 ```yaml
@@ -22,12 +22,12 @@ output.elasticsearch:
 
 We are configuring the logs to be in JSON format
 
-###Elasticsearch
+### Elasticsearch
 [Elasticsearch](https://www.elastic.co/) is a software for searching and analyzing your data in realtime.  We are storing our logs in elasticsearch database so that it can be useful for debugging purposes.
 
 It can be accessed at [this url](http://localhost:9200/) 
 
-###Kibana
+### Kibana
 [Kibana](https://www.elastic.co/kibana) lets you visualize your elasticsearch data.  It helps you build visuals and explore the data available in Elasticsearch.
 
 ## Structured Logging
@@ -66,7 +66,7 @@ We are using [LogstashEncoder](https://github.com/logstash/logstash-logback-enco
 }
 ```
 
-###How to log entries?
+### How to log entries?
 Nothing special.  Just log it using standard [Slf4j](http://www.slf4j.org/) interface
 ```java
 log.info("logging demo!");
@@ -96,6 +96,6 @@ The above code will generate a JSON like this
 ```
 Note that who, app & operation are custom fields added in log statement above.
 
-###Configuring Kibana
+### Configuring Kibana
 Once filebeat starts publishing the messages to Elasticsearch, you can see a new index getting created with a name filebeat-7.6.2-xxxxxx.  You can configure this Index Pattern as mentioned [here](https://www.elastic.co/guide/en/kibana/current/tutorial-define-index.html)
 Then you can start searching for the fields and interact with it in Kibana dashboard.

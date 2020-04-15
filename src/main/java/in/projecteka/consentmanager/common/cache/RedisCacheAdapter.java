@@ -2,13 +2,13 @@ package in.projecteka.consentmanager.common.cache;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
+import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.Optional;
 
-public class RedisCacheAdapter implements ICacheAdapter<String, Optional<String>> {
+public class RedisCacheAdapter implements CacheAdapter<String, String> {
 
     private final RedisClient redisClient;
     private StatefulRedisConnection<String, String> statefulConnection;
@@ -28,26 +28,27 @@ public class RedisCacheAdapter implements ICacheAdapter<String, Optional<String>
         redisClient.shutdown();
     }
     @Override
-    public Optional<String> get(String key) {
-        RedisCommands<String, String> redisCommands = statefulConnection.sync();
-        return Optional.ofNullable(redisCommands.get(key));
+    public Mono<String> get(String key) {
+        RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
+        return redisCommands.get(key);
     }
 
     @Override
-    public void put(String key, Optional<String> value) {
-        RedisCommands<String, String> redisCommands = statefulConnection.sync();
-        redisCommands.set(key, value.orElseGet((String::new)));
-        redisCommands.expire(key, 5 * 60L);
+    public Mono<Void> put(String key, String value) {
+        RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
+        return redisCommands.set(key, value).doOnSuccess(s -> {
+            redisCommands.expire(key, 5 * 60L);
+        }).then();
     }
 
     @Override
-    public Optional<String> getIfPresent(String key) {
+    public Mono<String> getIfPresent(String key) {
         return get(key);
     }
 
     @Override
-    public void invalidate(String key) {
-        RedisCommands<String, String> redisCommands = statefulConnection.sync();
-        redisCommands.expire(key, 0l);
+    public Mono<Void> invalidate(String key) {
+        RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
+        return redisCommands.expire(key, 0L).then();
     }
 }

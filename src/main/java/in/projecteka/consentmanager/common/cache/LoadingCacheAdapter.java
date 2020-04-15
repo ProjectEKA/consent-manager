@@ -2,38 +2,48 @@ package in.projecteka.consentmanager.common.cache;
 
 import com.google.common.cache.LoadingCache;
 import in.projecteka.consentmanager.user.exception.CacheNotAccessibleException;
+import reactor.core.publisher.Mono;
 
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-public class LoadingCacheAdapter implements ICacheAdapter<String, Optional<String>> {
-    private final LoadingCache<String, Optional<String>> loadingCache;
+public class LoadingCacheAdapter implements CacheAdapter<String, String> {
+    private final LoadingCache<String, String> loadingCache;
 
-    public LoadingCacheAdapter(LoadingCache<String,Optional<String>> loadingCache) {
+    public LoadingCacheAdapter(LoadingCache<String, String> loadingCache) {
         this.loadingCache = loadingCache;
     }
 
     @Override
-    public Optional<String> get(String key) {
+    public Mono<String> get(String key) {
         try {
-            return loadingCache.get(key);
+            String value = loadingCache.get(key);
+            if (!value.isEmpty()) {
+                return Mono.just(value);
+            }
+            return Mono.empty();
         } catch (ExecutionException e) {
-            throw new CacheNotAccessibleException("cache.not.accessible");
+            return Mono.error(new CacheNotAccessibleException("cache.not.accessible"));
         }
     }
 
     @Override
-    public void put(String key, Optional<String> value) {
+    public Mono<Void> put(String key, String value) {
         loadingCache.put(key, value);
+        return Mono.empty();
     }
 
     @Override
-    public Optional<String> getIfPresent(String key) {
-        return loadingCache.getIfPresent(key);
+    public Mono<String> getIfPresent(String key) {
+        String value = loadingCache.getIfPresent(key);
+        if (value != null && !value.isEmpty()) {
+            return Mono.just(value);
+        }
+        return Mono.empty();
     }
 
     @Override
-    public void invalidate(String key) {
+    public Mono<Void> invalidate(String key) {
         loadingCache.invalidate(key);
+        return Mono.empty();
     }
 }

@@ -78,7 +78,8 @@ public class PatientControllerTest {
         when(signupService.sessionFrom(token)).thenReturn(sessionId);
         when(userService.create(signUpRequest, sessionId)).thenReturn(Mono.just(session));
         when(userService.getUserIdSuffix()).thenReturn("@ncg");
-        when(signupService.validateToken(token)).thenReturn(true);
+        when(signupService.validateToken(token)).thenReturn(Mono.just(true));
+        when(signupService.removeOf(sessionId)).thenReturn(Mono.empty());
 
         webClient.post()
                 .uri("/patients/profile")
@@ -100,7 +101,7 @@ public class PatientControllerTest {
         when(signupService.sessionFrom(token)).thenReturn(sessionId);
         when(userService.create(signUpRequest, sessionId)).thenReturn(Mono.just(session));
         when(userService.getUserIdSuffix()).thenReturn("@ncg");
-        when(signupService.validateToken(token)).thenReturn(true);
+        when(signupService.validateToken(token)).thenReturn(Mono.just(true));
 
         webClient.post()
                 .uri("/patients/profile")

@@ -2,10 +2,10 @@ package in.projecteka.consentmanager.user;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
-import in.projecteka.consentmanager.common.cache.ICacheAdapter;
-import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import org.jeasy.random.EasyRandom;
@@ -13,12 +13,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import reactor.core.publisher.Mono;
 
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,10 +30,10 @@ class SignUpServiceTest {
     private JWTProperties jwtProperties;
 
     @Mock
-    private ICacheAdapter<String, Optional<String>> unverifiedSessions;
+    private CacheAdapter<String, String> unverifiedSessions;
 
     @Mock
-    private ICacheAdapter<String, Optional<String>> verifiedSessions;
+    private CacheAdapter<String, String> verifiedSessions;
 
     private SignUpService signupService;
 
@@ -51,21 +53,24 @@ class SignUpServiceTest {
         var sessionId = easyRandom.nextObject(String.class);
         OtpRequest otpRequest = new OtpRequest(sessionId, communicationData);
         SignUpSession expectedResponse = new SignUpSession(sessionId);
+        when(unverifiedSessions.put(sessionId, otpRequest.getCommunication().getValue())).thenReturn(Mono.empty());
 
         assertThat(signupService.cacheAndSendSession(
                 otpRequest.getSessionId(),
-                otpRequest.getCommunication().getValue()))
+                otpRequest.getCommunication().getValue()).block())
                 .isEqualTo(expectedResponse);
-        verify(unverifiedSessions).put(sessionId, Optional.of(value));
+        verify(unverifiedSessions).put(sessionId, value);
     }
 
     @Test
     public void shouldGenerateToken() throws ExecutionException {
         var sessionId = easyRandom.nextObject(String.class);
+        String number = easyRandom.nextObject(String.class);
         when(jwtProperties.getSecret()).thenReturn(easyRandom.nextObject(String.class));
-        when(unverifiedSessions.get(sessionId)).thenReturn(Optional.of(easyRandom.nextObject(String.class)));
+        when(verifiedSessions.put(anyString(),eq(number))).thenReturn(Mono.empty());
+        when(unverifiedSessions.get(sessionId)).thenReturn(Mono.just(number));
 
-        assertThat(signupService.generateToken(sessionId)).isInstanceOf(Token.class);
+        assertThat(signupService.generateToken(sessionId).block()).isInstanceOf(Token.class);
     }
 
     @Test
@@ -74,13 +79,13 @@ class SignUpServiceTest {
         var verifiedSessions = CacheBuilder
                 .newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES)
-                .build(new CacheLoader<String, Optional<String>>() {
-                    public Optional<String> load(String key) {
-                        return Optional.empty();
+                .build(new CacheLoader<String, String>() {
+                    public String load(String key) {
+                        return "";
                     }
                 });
         var verifiedSessionsAdapter = new LoadingCacheAdapter(verifiedSessions);
-        var value = Optional.of("Something");
+        var value = "Something";
         verifiedSessions.put(sessionId, value);
         var signUpService = new SignUpService(null, null, verifiedSessionsAdapter, 0);
 

@@ -7,7 +7,7 @@ import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
-import in.projecteka.consentmanager.common.cache.ICacheAdapter;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisOptions;
@@ -22,7 +22,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.security.PrivateKey;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
@@ -64,8 +63,8 @@ public class UserConfiguration {
 
     @Bean
     public SignUpService authenticatorService(JWTProperties jwtProperties,
-                                              ICacheAdapter<String, Optional<String>> sessionCache,
-                                              ICacheAdapter<String, Optional<String>> secondSessionCache,
+                                              CacheAdapter<String, String> sessionCache,
+                                              CacheAdapter<String, String> secondSessionCache,
                                               UserServiceProperties userServiceProperties) {
         return new SignUpService(jwtProperties,
                 sessionCache,
@@ -75,26 +74,26 @@ public class UserConfiguration {
 
     @Profile("default")
     @Bean({"unverifiedSessions", "verifiedSessions"})
-    public ICacheAdapter<String, Optional<String>> createLoadingCacheAdapter(LoadingCache<String,Optional<String>> cache) {
+    public CacheAdapter<String, String> createLoadingCacheAdapter(LoadingCache<String,String> cache) {
        return new LoadingCacheAdapter(cache);
     }
 
     @Bean
     @Profile("default")
-    public LoadingCache<String, Optional<String>> createSessionCache() {
+    public LoadingCache<String, String> createSessionCache() {
         return CacheBuilder
                 .newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES)
-                .build(new CacheLoader<>() {
-                    public Optional<String> load(String key) {
-                        return Optional.empty();
+                .build(new CacheLoader<String, String>() {
+                    public String load(String key) {
+                        return "";
                     }
                 });
     }
 
     @Profile("redis")
     @Bean({"unverifiedSessions", "verifiedSessions"})
-    public ICacheAdapter<String, Optional<String>> createRedisCacheAdapter(RedisOptions redisOptions) {
+    public CacheAdapter<String, String> createRedisCacheAdapter(RedisOptions redisOptions) {
         RedisURI redisUri = RedisURI.Builder.
                 redis(redisOptions.getHost())
                 .withPort(redisOptions.getPort())

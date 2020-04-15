@@ -174,14 +174,13 @@ public class SecurityConfiguration {
         }
 
         private Mono<SecurityContext> checkSignUp(String authToken) {
-            if (!signupService.validateToken(authToken)) {
-                return Mono.empty();
-            }
-            return Mono.just(new UsernamePasswordAuthenticationToken(
-                    authToken,
-                    authToken,
-                    new ArrayList<SimpleGrantedAuthority>()))
-                    .map(SecurityContextImpl::new);
+            return Mono.just(authToken)
+                    .filterWhen(token -> signupService.validateToken(token))
+                    .flatMap(token -> Mono.just(new UsernamePasswordAuthenticationToken(
+                            token,
+                            token,
+                            new ArrayList<SimpleGrantedAuthority>()))
+                            .map(SecurityContextImpl::new));
         }
 
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {

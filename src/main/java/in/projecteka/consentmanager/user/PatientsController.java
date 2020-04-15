@@ -66,12 +66,9 @@ public class PatientsController {
         var signUpRequests = SignUpRequestValidator.validate(request, userService.getUserIdSuffix());
         return signUpRequests.isValid()
                ? Mono.justOrEmpty(signupService.sessionFrom(token))
-                       .flatMap(sessionId ->
-                               userService.create(signUpRequests.get(), sessionId)
-                                       .map(session -> {
-                                           signupService.removeOf(sessionId);
-                                           return session;
-                                       }))
+                       .flatMap(sessionId -> userService.create(signUpRequests.get(), sessionId)
+                               .zipWith(Mono.just(sessionId))
+                               .flatMap(tuple -> signupService.removeOf(tuple.getT2()).thenReturn(tuple.getT1())))
                : Mono.error(new ClientError(BAD_REQUEST,
                        new ErrorRepresentation(new Error(INVALID_REQUESTER,
                                signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));

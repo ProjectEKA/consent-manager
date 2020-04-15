@@ -56,7 +56,7 @@ public class UserService {
 
         return otpServiceClient
                 .send(otpRequest)
-                .thenReturn(signupService.cacheAndSendSession(
+                .then(signupService.cacheAndSendSession(
                         otpRequest.getSessionId(),
                         otpRequest.getCommunication().getValue()));
     }
@@ -68,7 +68,7 @@ public class UserService {
 
         return otpServiceClient
                 .verify(otpVerification.getSessionId(), otpVerification.getValue())
-                .thenReturn(signupService.generateToken(otpVerification.getSessionId()));
+                .then(signupService.generateToken(otpVerification.getSessionId()));
     }
 
     public Mono<Session> create(SignUpRequest signUpRequest, String sessionId) {
@@ -81,10 +81,10 @@ public class UserService {
 
         // TODO: If some failure happened in between roll back others.
         return signupService.getMobileNumber(sessionId)
-                .map(mobileNumber -> userExistsWith(signUpRequest.getUsername())
+                .switchIfEmpty(Mono.error(new InvalidRequestException("mobile number not verified")))
+                .flatMap(mobileNumber -> userExistsWith(signUpRequest.getUsername())
                         .switchIfEmpty(Mono.defer(() -> createUserWith(mobileNumber, signUpRequest, user)))
-                        .cast(Session.class))
-                .orElse(Mono.error(new InvalidRequestException("mobile number not verified")));
+                        .cast(Session.class));
     }
 
     private Mono<Object> userExistsWith(String username) {

@@ -150,7 +150,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\"name\": \"{{$randomName}}\",\n\"username\": \"{{$randomFirstName}}.{{$randomLastName}}@ncg\",\n\"password\": \"{{$randomPassword}}#\",\n\"yearOfBirth\": 1990,\n\"gender\": \"M\"\n}",
+							"raw": "{\n\"name\": \"{{$randomFirstName}} {{$randomLastName}}\",\n\"username\": \"{{$randomFirstName}}.{{$randomLastName}}@ncg\",\n\"password\": \"{{$randomPassword}}#\",\n\"yearOfBirth\": 1990,\n\"gender\": \"M\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"

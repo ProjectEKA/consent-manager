@@ -24,7 +24,7 @@ class RedisCacheAdapterTest {
     @Mock
     private RedisReactiveCommands<String,String> redisReactiveCommands;
     @InjectMocks
-    RedisCacheAdapter redisCacheAdapter;
+    private RedisCacheAdapter redisCacheAdapter;
 
     @BeforeEach
     public void init() {

@@ -42,10 +42,10 @@ consentmanager:
       url: ${CONSENT_MANAGER_URL}
   linkservice:
     url: ${LINK_SERVICE_URL}
-  cacheMethod: guava
+  cacheMethod: redis
   redis:
     #Will not be used if cacheMethod is guava
-    host: localhost
+    host: ${REDIS_HOST}
     port: 6379
     password: ${REDIS_PASSWORD}
 spring:

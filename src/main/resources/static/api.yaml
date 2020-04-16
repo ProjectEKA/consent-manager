@@ -1224,7 +1224,7 @@ components:
     PatientDiscoveryRepresentation:
       type: object
       properties:
-        transactionId:
+        requestID:
           type: string
           format: uuid
         patient:
@@ -1296,7 +1296,7 @@ components:
     PatientLinkReferenceRequest:
       type: object
       properties:
-        transactionId:
+        requestID:
           type: string
         patient:
           $ref: '#/components/schemas/Patient'
@@ -1305,7 +1305,7 @@ components:
     PatientLinkReferenceResponse:
       type: object
       properties:
-        transactionId:
+        requestID:
           type: string
         link:
           $ref: '#/components/schemas/link'

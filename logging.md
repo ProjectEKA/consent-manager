@@ -66,7 +66,7 @@ We are using [LogstashEncoder](https://github.com/logstash/logstash-logback-enco
 }
 ```
 
-### How to log entries?
+### Logging entries
 Nothing special.  Just log it using standard [Slf4j](http://www.slf4j.org/) interface
 ```java
 log.info("logging demo!");

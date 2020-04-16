@@ -46,7 +46,8 @@ consentmanager:
   redis:
     #Will not be used if cacheMethod is guava
     host: localhost
-    port: 6380
+    port: 6379
+    password: ${REDIS_PASSWORD}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}

@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.link;
 
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.DbOperationError;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
@@ -10,11 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ReactiveHttpOutputMessage;
 import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.server.RequestPredicates;
-import org.springframework.web.reactive.function.server.RouterFunction;
-import org.springframework.web.reactive.function.server.RouterFunctions;
-import org.springframework.web.reactive.function.server.ServerRequest;
-import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.reactive.function.server.*;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -42,6 +39,11 @@ public class ClientErrorExceptionHandler extends AbstractErrorWebExceptionHandle
         if (error instanceof ClientError) {
             status = ((ClientError) error).getHttpStatus();
             bodyInserter = BodyInserters.fromValue(((ClientError) error).getError());
+        }
+
+        if (error instanceof DbOperationError) {
+            status = ((DbOperationError) error).getHttpStatus();
+            bodyInserter = BodyInserters.fromValue(((DbOperationError) error).getError());
         }
 
         return ServerResponse.status(status)

@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.user;
 
+import in.projecteka.consentmanager.clients.DbOperationError;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.User;
 import io.vertx.pgclient.PgPool;
@@ -8,8 +9,6 @@ import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
-
-import static in.projecteka.consentmanager.clients.ClientError.dbOperationFailed;
 
 @AllArgsConstructor
 public class UserRepository {
@@ -22,15 +21,17 @@ public class UserRepository {
     private static final String SELECT_PATIENT = "select id, name, gender, year_of_birth, phone_number " +
             "from patient where id = $1";
 
-    private final PgPool dbClient;
+    private final static String DELETE_PATIENT = "DELETE FROM patient WHERE id=$1";
+
+    private PgPool dbClient;
 
     public Mono<User> userWith(String userName) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT)
                 .execute(Tuple.of(userName),
                         handler -> {
                             if (handler.failed()) {
-                                logger.error(handler.cause().getMessage(), handler.cause());
-                                monoSink.error(dbOperationFailed());
+                                logger.error("", handler.cause());
+                                monoSink.error(new DbOperationError());
                                 return;
                             }
                             var patientIterator = handler.result().iterator();
@@ -50,19 +51,29 @@ public class UserRepository {
     }
 
     public Mono<Void> save(User user) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_PATIENT)
-                .execute(Tuple.of(user.getIdentifier(),
-                        user.getName(),
-                        user.getGender().toString(),
-                        user.getYearOfBirth(),
-                        user.getPhone()),
-                        handler -> {
-                            if (handler.failed()) {
-                                logger.error(handler.cause().getMessage(), handler.cause());
-                                monoSink.error(dbOperationFailed());
-                                return;
-                            }
-                            monoSink.success();
-                        }));
+        Tuple userDetails = Tuple.of(user.getIdentifier(),
+                user.getName(),
+                user.getGender().toString(),
+                user.getYearOfBirth(),
+                user.getPhone());
+        return doOperation(INSERT_PATIENT, userDetails);
+    }
+
+    public Mono<Void> delete(User user) {
+        String identifier = user.getIdentifier();
+        Tuple userDetails = Tuple.of(identifier);
+        return doOperation(DELETE_PATIENT, userDetails);
+    }
+
+    private Mono<Void> doOperation(String query, Tuple userDetails) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(query)
+                .execute(userDetails, handler -> {
+                    if (handler.failed()) {
+                        logger.error(handler.cause().getMessage(), handler.cause());
+                        monoSink.error(new DbOperationError());
+                        return;
+                    }
+                    monoSink.success();
+                }));
     }
 }

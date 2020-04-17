@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.link.link;
 
+import in.projecteka.consentmanager.clients.DbOperationError;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.link.link.model.Hip;
@@ -18,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static in.projecteka.consentmanager.clients.ClientError.dbOperationFailed;
 import static in.projecteka.consentmanager.clients.ClientError.transactionIdNotFound;
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.to;
@@ -49,7 +49,7 @@ public class LinkRepository {
                         .execute(Tuple.of(new JsonObject(from(patientLinkReferenceResponse)), hipId),
                                 handler -> {
                                     if (handler.failed()) {
-                                        monoSink.error(dbOperationFailed());
+                                        monoSink.error(new DbOperationError());
                                         return;
                                     }
                                     monoSink.success();
@@ -70,7 +70,7 @@ public class LinkRepository {
                 .execute(parameters,
                         handler -> {
                             if (handler.failed()) {
-                                monoSink.error(dbOperationFailed());
+                                monoSink.error(new DbOperationError());
                                 return;
                             }
                             var iterator = handler.result().iterator();
@@ -88,7 +88,7 @@ public class LinkRepository {
                 .execute(Tuple.of(hipId, consentManagerUserId, linkRefNumber, new JsonObject(from(patient))),
                         handler -> {
                             if (handler.failed()) {
-                                monoSink.error(dbOperationFailed());
+                                monoSink.error(new DbOperationError());
                                 return;
                             }
                             monoSink.success();
@@ -100,7 +100,7 @@ public class LinkRepository {
                 .execute(Tuple.of(patientId),
                         handler -> {
                             if (handler.failed()) {
-                                monoSink.error(dbOperationFailed());
+                                monoSink.error(new DbOperationError());
                                 return;
                             }
                             RowSet<Row> results = handler.result();

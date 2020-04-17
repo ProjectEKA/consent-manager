@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.link.discovery;
 
-import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.DbOperationError;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
 import reactor.core.publisher.Mono;
@@ -21,7 +21,7 @@ public class DiscoveryRepository {
                         .execute(Tuple.of(transactionId, patientId, providerId),
                                 handler -> {
                                     if (handler.failed()) {
-                                        monoSink.error(ClientError.dbOperationFailed());
+                                        monoSink.error(new DbOperationError());
                                         return;
                                     }
                                     monoSink.success();

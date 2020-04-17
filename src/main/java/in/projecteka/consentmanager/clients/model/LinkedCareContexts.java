@@ -23,7 +23,7 @@ public class LinkedCareContexts {
         List<CareContext> careContexts = new ArrayList<>();
     }
 
-    private List<HipLink> links = new ArrayList<>();
+    private final List<HipLink> links = new ArrayList<>();
 
     @JsonProperty("patient")
     private void setPatientLinks(Map<String, Object> patientMap) {

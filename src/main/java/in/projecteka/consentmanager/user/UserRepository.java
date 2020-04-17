@@ -22,7 +22,7 @@ public class UserRepository {
     private final static String SELECT_PATIENT = "select id, name, gender, year_of_birth, phone_number " +
             "from patient where id = $1";
 
-    private PgPool dbClient;
+    private final PgPool dbClient;
 
     public Mono<User> userWith(String userName) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT)

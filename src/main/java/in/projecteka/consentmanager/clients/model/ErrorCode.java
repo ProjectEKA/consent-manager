@@ -34,7 +34,7 @@ public enum ErrorCode {
     CONSENT_NOT_GRANTED(1024),
     INVALID_STATE(1025);
 
-    private int value;
+    private final int value;
 
     ErrorCode(int val) {
         value = val;

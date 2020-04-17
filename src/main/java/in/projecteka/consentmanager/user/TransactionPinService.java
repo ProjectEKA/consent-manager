@@ -17,10 +17,10 @@ import java.util.Optional;
 
 @AllArgsConstructor
 public class TransactionPinService {
-    private TransactionPinRepository transactionPinRepository;
-    private BCryptPasswordEncoder encoder;
-    private PrivateKey privateKey;
-    private UserServiceProperties userServiceProperties;
+    private final TransactionPinRepository transactionPinRepository;
+    private final BCryptPasswordEncoder encoder;
+    private final PrivateKey privateKey;
+    private final UserServiceProperties userServiceProperties;
 
     public Mono<Void> createPinFor(String patientId, String pin) {
         if (!isPinValid(pin)) {

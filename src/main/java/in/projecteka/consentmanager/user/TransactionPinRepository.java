@@ -16,7 +16,7 @@ public class TransactionPinRepository {
             "transaction_pin (pin, patient_id) VALUES ($1, $2)";
     private static final String SELECT_TRANSACTION_PIN = "SELECT pin, patient_id from " +
             "transaction_pin WHERE patient_id=$1";
-    private PgPool dbClient;
+    private final PgPool dbClient;
 
     public Mono<Void> insert(TransactionPin transactionPin) {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_TRANSACTION_PIN)

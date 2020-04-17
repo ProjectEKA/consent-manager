@@ -96,10 +96,10 @@ public class SecurityConfiguration {
 
     @AllArgsConstructor
     private static class SecurityContextRepository implements ServerSecurityContextRepository {
-        private SignUpService signupService;
-        private Authenticator identityServiceClient;
-        private PinVerificationTokenService pinVerificationTokenService;
-        private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+        private final SignUpService signupService;
+        private final Authenticator identityServiceClient;
+        private final PinVerificationTokenService pinVerificationTokenService;
+        private final CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
         @Override
         public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {

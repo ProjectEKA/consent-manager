@@ -47,7 +47,7 @@ public class ConsentArtefactRepository {
             "date_modified=$2 WHERE consent_artefact_id=$3";
     private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
 
-    private PgPool dbClient;
+    private final PgPool dbClient;
 
     public Mono<Void> addConsentArtefactAndUpdateStatus(ConsentArtefact consentArtefact,
                                                         String consentRequestId,

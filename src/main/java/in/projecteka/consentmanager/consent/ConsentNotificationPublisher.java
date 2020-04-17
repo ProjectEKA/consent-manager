@@ -16,8 +16,8 @@ import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_CONSE
 @AllArgsConstructor
 public class ConsentNotificationPublisher {
     private static final Logger logger = LoggerFactory.getLogger(ConsentNotificationPublisher.class);
-    private AmqpTemplate amqpTemplate;
-    private DestinationsConfig destinationsConfig;
+    private final AmqpTemplate amqpTemplate;
+    private final DestinationsConfig destinationsConfig;
 
     public Mono<Void> publish(ConsentArtefactsMessage message) {
         return Mono.create(monoSink -> {

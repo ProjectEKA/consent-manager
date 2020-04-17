@@ -14,7 +14,7 @@ public class DataFlowRequestRepository {
             "hip_id FROM consent_artefact WHERE consent_artefact_id=$1";
     private static final String INSERT_TO_HEALTH_INFO_NOTIFICATION = "INSERT INTO health_info_notification " +
             "(transaction_id, notification_request) VALUES ($1, $2)";
-    private PgPool dbClient;
+    private final PgPool dbClient;
 
     public DataFlowRequestRepository(PgPool pgPool) {
         this.dbClient = pgPool;

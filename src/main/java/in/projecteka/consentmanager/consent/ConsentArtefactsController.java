@@ -24,7 +24,7 @@ public class ConsentArtefactsController {
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(@PathVariable(value = "consentId") String consentId) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(requester -> consentManager.getConsent(consentId, requester.getUserName()));
+                .flatMap(requester -> consentManager.getConsent(consentId, requester.getUsername()));
     }
 
     @GetMapping(value = "/internal/consents/{consentId}")
@@ -36,7 +36,7 @@ public class ConsentArtefactsController {
     public Flux<ConsentArtefactRepresentation> getConsents(@PathVariable(value = "request-id") String requestId) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUserName)
+                .map(Caller::getUsername)
                 .flatMapMany(patient -> consentManager.getConsents(requestId, patient));
     }
 
@@ -44,7 +44,7 @@ public class ConsentArtefactsController {
     public Mono<Void> revokeConsent(@RequestBody RevokeRequest revokeRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUserName)
+                .map(Caller::getUsername)
                 .flatMap(requesterId -> consentManager.revoke(revokeRequest, requesterId));
     }
 }

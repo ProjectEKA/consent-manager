@@ -36,7 +36,7 @@ public class ConsentRequestRepository {
             "date_modified=$2 WHERE request_id=$3";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
 
-    private PgPool dbClient;
+    private final PgPool dbClient;
 
     public ConsentRequestRepository(PgPool dbClient) {
         this.dbClient = dbClient;

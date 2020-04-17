@@ -36,7 +36,7 @@ public class LinkRepository {
     private static final String SELECT_EXPIRY_FROM_LINK_REFERENCE = "SELECT patient_link_reference -> 'link' -> " +
             "'meta' ->> 'communicationExpiry' as communicationExpiry FROM link_reference WHERE " +
             "patient_link_reference -> 'link' ->> 'referenceNumber' = $1";
-    private PgPool dbClient;
+    private final PgPool dbClient;
 
     public LinkRepository(PgPool dbClient) {
         this.dbClient = dbClient;

@@ -8,8 +8,8 @@ import lombok.Value;
 @Value
 @Builder
 public class ProviderRepresentation {
-    private IdentifierRepresentation identifier;
-    private String city;
-    private String telephone;
-    private String type;
+    IdentifierRepresentation identifier;
+    String city;
+    String telephone;
+    String type;
 }

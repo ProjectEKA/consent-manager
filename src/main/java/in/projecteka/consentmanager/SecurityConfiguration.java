@@ -175,7 +175,7 @@ public class SecurityConfiguration {
 
         private Mono<SecurityContext> checkSignUp(String authToken) {
             return Mono.just(authToken)
-                    .filterWhen(token -> signupService.validateToken(token))
+                    .filterWhen(signupService::validateToken)
                     .flatMap(token -> Mono.just(new UsernamePasswordAuthenticationToken(
                             token,
                             token,

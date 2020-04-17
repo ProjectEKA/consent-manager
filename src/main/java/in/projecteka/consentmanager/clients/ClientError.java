@@ -153,8 +153,7 @@ public class ClientError extends Throwable {
 
     public static ClientError userAlreadyExists(String username) {
         return new ClientError(BAD_REQUEST,
-                new ErrorRepresentation(new Error(USER_ALREADY_EXISTS,
-                        format("%s is already exists", username))));
+                new ErrorRepresentation(new Error(USER_ALREADY_EXISTS, format("%s is already exists", username))));
     }
 
     public static ClientError transactionPinAlreadyCreated() {
@@ -165,8 +164,7 @@ public class ClientError extends Throwable {
 
     public static ClientError transactionPinNotFound() {
         return new ClientError(NOT_FOUND,
-                new ErrorRepresentation(new Error(TRANSACTION_PIN_IS_ALREADY_CREATED,
-                        "Transaction pin not found")));
+                new ErrorRepresentation(new Error(TRANSACTION_PIN_IS_ALREADY_CREATED, "Transaction pin not found")));
     }
 
     private static ClientError internalServerError(String message) {
@@ -182,7 +180,6 @@ public class ClientError extends Throwable {
 
     public static ClientError consentNotGranted() {
         return new ClientError(CONFLICT,
-                new ErrorRepresentation(new Error(CONSENT_NOT_GRANTED,
-                        "Not a granted consent.")));
+                new ErrorRepresentation(new Error(CONSENT_NOT_GRANTED, "Not a granted consent.")));
     }
 }

@@ -6,12 +6,12 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.amqp.core.AmqpTemplate;
 import reactor.core.publisher.Mono;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class ConsentNotificationPublisher {
@@ -35,7 +35,7 @@ public class ConsentNotificationPublisher {
         if (destinationInfo == null) {
             String errorMessage = String.format("%s %s", HIU_CONSENT_NOTIFICATION_QUEUE, " not found");
             logger.error(errorMessage);
-            throw new Exception(errorMessage);
+            throw queueNotFound();
         }
         sendMessage(message, destinationInfo.getExchange(), destinationInfo.getRoutingKey());
         logger.info("Broadcasting consent artefact notification for Request Id: {}",
@@ -50,7 +50,7 @@ public class ConsentNotificationPublisher {
         if (destinationInfo == null) {
             String errorMessage = String.format("%s %s", HIP_CONSENT_NOTIFICATION_QUEUE, " not found");
             logger.error(errorMessage);
-            throw new Exception(errorMessage);
+            throw queueNotFound();
         }
         message.getConsentArtefacts()
                 .forEach(consentArtefact -> {

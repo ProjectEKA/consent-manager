@@ -39,7 +39,7 @@ public class TransactionPinService {
 
     private Mono<Void> validateTransactionPin(String patientId) {
         return isTransactionPinSet(patientId)
-                .flatMap(hasTransactionPin -> hasTransactionPin
+                .flatMap(hasTransactionPin -> Boolean.TRUE.equals(hasTransactionPin)
                                               ? Mono.error(ClientError.transactionPinAlreadyCreated())
                                               : Mono.empty());
     }

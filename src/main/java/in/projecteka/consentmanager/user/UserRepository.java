@@ -15,11 +15,11 @@ import static in.projecteka.consentmanager.clients.ClientError.dbOperationFailed
 public class UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
 
-    private final static String INSERT_PATIENT = "Insert into patient(id, " +
+    private static final String INSERT_PATIENT = "Insert into patient(id, " +
             "name, gender, year_of_birth, phone_number)" +
             " values($1, $2, $3, $4, $5);";
 
-    private final static String SELECT_PATIENT = "select id, name, gender, year_of_birth, phone_number " +
+    private static final String SELECT_PATIENT = "select id, name, gender, year_of_birth, phone_number " +
             "from patient where id = $1";
 
     private final PgPool dbClient;
@@ -29,7 +29,7 @@ public class UserRepository {
                 .execute(Tuple.of(userName),
                         handler -> {
                             if (handler.failed()) {
-                                logger.error("",handler.cause());
+                                logger.error("", handler.cause());
                                 monoSink.error(dbOperationFailed());
                                 return;
                             }

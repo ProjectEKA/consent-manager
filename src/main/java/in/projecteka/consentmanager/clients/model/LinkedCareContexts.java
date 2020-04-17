@@ -4,19 +4,18 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LinkedCareContexts {
-    private class CareContext {
+    private static class CareContext {
         String careContextReference;
         String display;
     }
 
-    private class HipLink {
+    private static class HipLink {
         String hipId;
         String hipName;
         String patientReference;
@@ -28,11 +27,11 @@ public class LinkedCareContexts {
     @JsonProperty("patient")
     private void setPatientLinks(Map<String, Object> patientMap) {
         Object links = patientMap.get("links");
-        if ((links != null) && (links instanceof List)) {
-            ((List) links).stream().forEach(link -> {
+        if ((links instanceof List)) {
+            ((List) links).forEach(link -> {
                 HipLink hipLink = null;
                 Object hipMap = ((Map) link).get("hip");
-                if (hipMap != null && hipMap instanceof Map) {
+                if (hipMap instanceof Map) {
                     hipLink = new HipLink();
                     hipLink.hipId = (String) ((Map) hipMap).get("id");
                     hipLink.hipName = (String) ((Map) hipMap).get("name");
@@ -41,9 +40,8 @@ public class LinkedCareContexts {
                 }
                 Object careContexts = ((Map) link).get("careContexts");
                 if (careContexts instanceof List) {
-                    Iterator iterator = ((List) careContexts).iterator();
-                    while (iterator.hasNext()) {
-                        Map cc = (Map) iterator.next();
+                    for (Object o : (List) careContexts) {
+                        Map cc = (Map) o;
                         if (hipLink != null) {
                             CareContext careContext = new CareContext();
                             careContext.careContextReference = (String) cc.get("referenceNumber");
@@ -69,14 +67,14 @@ public class LinkedCareContexts {
     }
 
     private boolean hasCCReference(String hipId, String ccReference) {
-        Optional<HipLink> hipLink = links.stream().filter(aLink -> {
-            return aLink.hipId.equalsIgnoreCase(hipId);
-        }).findFirst();
+        Optional<HipLink> hipLink = links.stream().filter(aLink -> aLink.hipId.equalsIgnoreCase(hipId)).findFirst();
 
         if (hipLink.isPresent()) {
-            Optional<CareContext> patientCC = hipLink.get().careContexts.stream().filter(cc -> {
-                return cc.careContextReference.equalsIgnoreCase(ccReference);
-            }).findFirst();
+            Optional<CareContext> patientCC = hipLink.get()
+                    .careContexts
+                    .stream()
+                    .filter(cc -> cc.careContextReference.equalsIgnoreCase(ccReference))
+                    .findFirst();
             return patientCC.isPresent();
         }
         return false;

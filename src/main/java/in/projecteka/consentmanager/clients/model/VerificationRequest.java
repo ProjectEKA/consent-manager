@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class verificationRequest {
+public class VerificationRequest {
     private String value;
 }

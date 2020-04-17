@@ -52,7 +52,9 @@ public class SecurityConfiguration {
             ServerHttpSecurity httpSecurity,
             ReactiveAuthenticationManager authenticationManager,
             ServerSecurityContextRepository securityContextRepository) {
+
         final String[] whitelistedUrls = {"/**.json",
+                                          "/ValueSet/**.json",
                                           "/users/verify",
                                           "/users/permit",
                                           "/sessions",

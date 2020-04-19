@@ -7,6 +7,9 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
 import reactor.core.publisher.Mono;
 
+import static in.projecteka.consentmanager.clients.ClientError.dbOperationFailed;
+import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
+
 public class DataFlowRequestRepository {
     private static final String INSERT_TO_DATA_FLOW_REQUEST = "INSERT INTO data_flow_request (transaction_id, " +
             "data_flow_request) VALUES ($1, $2)";
@@ -21,43 +24,48 @@ public class DataFlowRequestRepository {
     }
 
     public Mono<Void> addDataFlowRequest(String transactionId, DataFlowRequest dataFlowRequest) {
-        return Mono.create(monoSink ->
-                dbClient.preparedQuery(
-                        INSERT_TO_DATA_FLOW_REQUEST)
-                        .execute(
-                                Tuple.of(transactionId, JsonObject.mapFrom(dataFlowRequest)),
-                                handler -> {
-                                    if (handler.failed()) {
-                                        monoSink.error(new Exception("Failed to insert to data flow request"));
-                                        return;
-                                    }
-                                    monoSink.success();
-                                }));
+        return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_TO_DATA_FLOW_REQUEST)
+                .execute(Tuple.of(transactionId, JsonObject.mapFrom(dataFlowRequest)),
+                        handler -> {
+                            if (handler.failed()) {
+                                monoSink.error(dbOperationFailed());
+                                return;
+                            }
+                            monoSink.success();
+                        }));
     }
 
+    // TODO: it should not be here. Never read consent artefact table in data flow component.
+    // make an API call.
     public Mono<String> getHipIdFor(String consentId) {
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(SELECT_HIP_ID_FROM_CONSENT_ARTEFACT)
                         .execute(Tuple.of(consentId),
                                 handler -> {
                                     if (handler.failed()) {
-                                        monoSink.error(new Exception("Failed to get hip id from consent Id"));
+                                        monoSink.error(dbOperationFailed());
                                         return;
                                     }
-                                    monoSink.success(handler.result().iterator().next().getString(0));
+                                    var iterator = handler.result().iterator();
+                                    if (!iterator.hasNext()) {
+                                        monoSink.error(unknownErrorOccurred());
+                                        return;
+                                    }
+                                    monoSink.success(iterator.next().getString(0));
                                 }));
     }
 
     public Mono<Void> saveNotificationRequest(HealthInfoNotificationRequest notificationRequest) {
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(INSERT_TO_HEALTH_INFO_NOTIFICATION)
-                        .execute(Tuple.of(notificationRequest.getTransactionId(), JsonObject.mapFrom(notificationRequest)),
-                        handler -> {
-                            if (handler.failed()) {
-                                monoSink.error(new Exception("Failed to insert to data flow notification"));
-                                return;
-                            }
-                            monoSink.success();
-                        }));
+                        .execute(Tuple.of(notificationRequest.getTransactionId(),
+                                JsonObject.mapFrom(notificationRequest)),
+                                handler -> {
+                                    if (handler.failed()) {
+                                        monoSink.error(dbOperationFailed());
+                                        return;
+                                    }
+                                    monoSink.success();
+                                }));
     }
 }

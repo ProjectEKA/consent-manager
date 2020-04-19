@@ -13,8 +13,8 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_NOT_G
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.DB_OPERATION_FAILED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_RANGE;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TOKEN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TRANSACTION_PIN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.NETWORK_SERVICE_ERROR;
@@ -22,6 +22,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_EXPIRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_INVALID;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.PROVIDER_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.QUEUE_NOT_FOUND;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_ID_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_PIN_IS_ALREADY_CREATED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.UNABLE_TO_CONNECT_TO_PROVIDER;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.UNKNOWN_ERROR_OCCURRED;
@@ -94,6 +95,17 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(CONSENT_REQUEST_NOT_FOUND, "Cannot find the consent request")));
     }
 
+    public static ClientError transactionIdNotFound() {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(TRANSACTION_ID_NOT_FOUND, "Failed to get transaction Id")));
+    }
+
+    public static ClientError expiryNotFound() {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(TRANSACTION_ID_NOT_FOUND,
+                        "Failed to get expiry for link reference number")));
+    }
+
     public static ClientError consentArtefactNotFound() {
         return new ClientError(NOT_FOUND,
                 new ErrorRepresentation(new Error(CONSENT_ARTEFACT_NOT_FOUND, "Cannot find the consent artefact")));
@@ -101,8 +113,7 @@ public class ClientError extends Throwable {
 
     public static ClientError consentArtefactForbidden() {
         return new ClientError(FORBIDDEN,
-                new ErrorRepresentation(new Error(CONSENT_ARTEFACT_FORBIDDEN,
-                        "Cannot retrieve Consent artefact. Forbidden")));
+                new ErrorRepresentation(new Error(CONSENT_ARTEFACT_FORBIDDEN, "Cannot retrieve Consent artefact")));
     }
 
     public static ClientError otpNotFound() {
@@ -127,7 +138,8 @@ public class ClientError extends Throwable {
     }
 
     public static ClientError invalidRequester() {
-        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(INVALID_REQUESTER, "Not a valid Requester")));
+        return new ClientError(UNAUTHORIZED,
+                new ErrorRepresentation(new Error(INVALID_REQUESTER, "Not a valid Requester")));
     }
 
     public static ClientError invalidDateRange() {

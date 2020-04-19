@@ -29,23 +29,23 @@ public class UserRepository {
                 .execute(Tuple.of(userName),
                         handler -> {
                             if (handler.failed()) {
-                                logger.error("", handler.cause());
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(dbOperationFailed());
                                 return;
                             }
                             var patientIterator = handler.result().iterator();
-                            if (patientIterator.hasNext()) {
-                                var patientRow = patientIterator.next();
-                                monoSink.success(User.builder()
-                                        .identifier(patientRow.getString("id"))
-                                        .name(patientRow.getString("name"))
-                                        .yearOfBirth(patientRow.getInteger("year_of_birth"))
-                                        .gender(Gender.valueOf(patientRow.getString("gender")))
-                                        .phone(patientRow.getString("phone_number"))
-                                        .build());
+                            if (!patientIterator.hasNext()) {
+                                monoSink.success();
                                 return;
                             }
-                            monoSink.success();
+                            var patientRow = patientIterator.next();
+                            monoSink.success(User.builder()
+                                    .identifier(patientRow.getString("id"))
+                                    .name(patientRow.getString("name"))
+                                    .yearOfBirth(patientRow.getInteger("year_of_birth"))
+                                    .gender(Gender.valueOf(patientRow.getString("gender")))
+                                    .phone(patientRow.getString("phone_number"))
+                                    .build());
                         }));
     }
 

@@ -8,10 +8,12 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.consent.model.ConsentPurpose;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.HIPReference;
+import in.projecteka.consentmanager.consent.model.HIType;
 import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
@@ -70,6 +72,9 @@ class ConsentManagerTest {
     private KeyPair keyPair;
     private ConsentManager consentManager;
 
+    @Mock
+    ConceptValidator conceptValidator;
+
     @Captor
     private ArgumentCaptor<ConsentRequest> captor;
 
@@ -87,7 +92,8 @@ class ConsentManagerTest {
                 centralRegistry,
                 postConsentRequestNotification,
                 patientServiceClient,
-                cmProperties);
+                cmProperties,
+                conceptValidator);
     }
 
     @Test
@@ -95,7 +101,16 @@ class ConsentManagerTest {
         HIPReference hip1 = HIPReference.builder().id("hip1").build();
         HIUReference hiu1 = HIUReference.builder().id("hiu1").build();
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
-        RequestedDetail requestedDetail = RequestedDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
+        String purposeCode = "CAREMGT";
+        ConsentPurpose purpose = new ConsentPurpose();
+        purpose.setCode(purposeCode);
+        RequestedDetail requestedDetail = RequestedDetail.builder()
+                .hip(hip1)
+                .hiu(hiu1)
+                .patient(patient)
+                .purpose(purpose)
+                .hiTypes( new HIType[] { HIType.CONDITION } )
+                .build();
 
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
@@ -103,6 +118,8 @@ class ConsentManagerTest {
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
+        when(conceptValidator.validatePurpose(purposeCode)).thenReturn(Mono.just(true));
+        when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
 
         StepVerifier.create(consentManager.askForConsent(requestedDetail))
                 .expectNextMatches(Objects::nonNull)
@@ -114,7 +131,16 @@ class ConsentManagerTest {
         HIPReference hip1 = HIPReference.builder().id("hip1").build();
         HIUReference hiu1 = HIUReference.builder().id("hiu1").build();
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
-        RequestedDetail requestedDetail = RequestedDetail.builder().hip(hip1).hiu(hiu1).patient(patient).build();
+        String purposeCode = "CAREMGT";
+        ConsentPurpose purpose = new ConsentPurpose();
+        purpose.setCode(purposeCode);
+        RequestedDetail requestedDetail = RequestedDetail.builder()
+                .hip(hip1)
+                .hiu(hiu1)
+                .patient(patient)
+                .purpose(purpose)
+                .hiTypes(new HIType[] { HIType.CONDITION })
+                .build();
 
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
@@ -122,6 +148,8 @@ class ConsentManagerTest {
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
+        when(conceptValidator.validatePurpose(purposeCode)).thenReturn(Mono.just(true));
+        when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
 
         StepVerifier.create(consentManager.askForConsent(requestedDetail))
                 .expectErrorMatches(e -> (e instanceof ClientError) &&

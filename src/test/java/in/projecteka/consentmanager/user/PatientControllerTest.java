@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.user;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
@@ -63,6 +64,10 @@ public class PatientControllerTest {
     @SuppressWarnings("unused")
     @MockBean(name = "identityServiceJWKSet")
     private JWKSet identityServiceJWKSet;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private ConceptValidator conceptValidator;
 
     @Test
     public void createUser() {

@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
@@ -111,6 +112,10 @@ public class DataFlowRequesterUserJourneyTest {
 
     @MockBean
     private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private ConceptValidator conceptValidator;
 
     @AfterAll
     public static void tearDown() throws IOException {

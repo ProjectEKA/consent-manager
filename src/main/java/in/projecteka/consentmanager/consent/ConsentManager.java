@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.CMReference;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
+import in.projecteka.consentmanager.consent.model.ConsentPurpose;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
@@ -16,6 +17,7 @@ import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.GrantedContext;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.HIType;
 import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
@@ -36,6 +38,8 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignedObject;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
@@ -44,6 +48,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_NOT_FOUND;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_HITYPE;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PURPOSE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_STATE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
@@ -68,6 +74,7 @@ public class ConsentManager {
     private final PostConsentRequest postConsentRequest;
     private final PatientServiceClient patientServiceClient;
     private final CMProperties cmProperties;
+    private final ConceptValidator conceptValidator;
 
     private static boolean isNotSameRequester(ConsentArtefact consentDetail, String requesterId) {
         return !consentDetail.getHiu().getId().equals(requesterId) &&
@@ -77,6 +84,8 @@ public class ConsentManager {
     public Mono<String> askForConsent(RequestedDetail requestedDetail) {
         final String requestId = UUID.randomUUID().toString();
         return validatePatient(requestedDetail.getPatient().getId())
+                .then(validatePurpose(requestedDetail.getPurpose()))
+                .then(validateHiTypes(requestedDetail.getHiTypes()))
                 .then(validateHIPAndHIU(requestedDetail))
                 .then(saveRequest(requestedDetail, requestId))
                 .then(postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
@@ -84,6 +93,24 @@ public class ConsentManager {
                         .id(requestId)
                         .build()))
                 .thenReturn(requestId);
+    }
+
+    private Mono<Void> validatePurpose(ConsentPurpose purpose) {
+        return conceptValidator.validatePurpose(purpose.getCode())
+                .flatMap(result -> {
+                    return result ? Mono.empty()
+                            : Mono.error(new ClientError(BAD_REQUEST,
+                            new ErrorRepresentation(new Error(INVALID_PURPOSE, "Invalid Purpose"))));
+                });
+    }
+
+    private Mono<Void> validateHiTypes(HIType[] hiTypes) {
+        return conceptValidator.validateHITypes(Arrays.stream(hiTypes).map(type -> type.getValue()).collect(Collectors.toList()))
+                .flatMap(result -> {
+                    return result ? Mono.empty()
+                            : Mono.error(new ClientError(BAD_REQUEST,
+                            new ErrorRepresentation(new Error(INVALID_HITYPE, "Invalid HI Type"))));
+                });
     }
 
     private Mono<Boolean> validatePatient(String patientId) {
@@ -154,6 +181,7 @@ public class ConsentManager {
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
         return validatePatient(patientId)
+                .then(validateGrantedConsentHITypes(grantedConsents))
                 .then(validateConsentRequest(requestId, patientId))
                 .flatMap(consentRequest -> validateLinkedHips(patientId, grantedConsents)
                         .then(generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)
@@ -164,6 +192,20 @@ public class ConsentManager {
                                                 GRANTED,
                                                 consentRequest.getLastUpdated())
                                                 .thenReturn(consentApprovalResponse(consents)))));
+    }
+
+    private Mono<Void> validateGrantedConsentHITypes(List<GrantedConsent> grantedConsents) {
+        List<String> hiTypeCodes = new ArrayList<>();
+        for (GrantedConsent grantedConsent : grantedConsents) {
+            List<String> codes = Arrays.asList(grantedConsent.getHiTypes()).stream().map(type -> type.getValue()).collect(Collectors.toList());
+            hiTypeCodes.addAll(codes);
+        }
+        return conceptValidator.validateHITypes(hiTypeCodes)
+                .flatMap(result -> {
+                    return result ? Mono.empty()
+                            : Mono.error(new ClientError(BAD_REQUEST,
+                            new ErrorRepresentation(new Error(INVALID_HITYPE, "Invalid HI Type"))));
+                });
     }
 
     private Mono<Void> broadcastConsentArtefacts(List<HIPConsentArtefactRepresentation> consents,

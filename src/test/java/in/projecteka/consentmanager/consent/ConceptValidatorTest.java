@@ -1,35 +1,32 @@
-package in.projecteka.consentmanager;
+package in.projecteka.consentmanager.consent;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import in.projecteka.consentmanager.consent.ConceptValidator;
-import in.projecteka.consentmanager.consent.ConsentManager;
-import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
-import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
-import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.consent.ConsentNotificationPublisher;
+import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.consent.model.HIType;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.converter.ConvertWith;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.test.StepVerifier;
 
-@SuppressWarnings("ALL")
+import java.util.Arrays;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
-public class AuthorizationTest {
+@ActiveProfiles("dev")
+public class ConceptValidatorTest {
+    @Autowired
+    private ConceptValidator validator;
+
     @Autowired
     private WebTestClient webTestClient;
 
@@ -63,28 +60,38 @@ public class AuthorizationTest {
     @MockBean(name = "identityServiceJWKSet")
     private JWKSet identityServiceJWKSet;
 
-    @SuppressWarnings("unused")
-    @MockBean
-    private ConceptValidator conceptValidator;
-
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
     }
 
-    @ParameterizedTest(name = "Authentication Test")
-    @CsvSource({
-            ",",
-            "empty",
-            "null"
-    })
-    public void notAuthenticatedToUse(@ConvertWith(NullableConverter.class) String header) {
-        webTestClient.get()
-                .uri("/providers?name=Max")
-                .accept(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, header)
-                .exchange()
-                .expectStatus().is4xxClientError();
+    @Test
+    public void validatePurpose() {
+        StepVerifier
+                .create(validator.validatePurpose("BTG"))
+                .expectNext(true)
+                .expectComplete()
+                .verify();
+        StepVerifier
+                .create(validator.validatePurpose("NONEXISTENT-PURPOSE"))
+                .expectNext(false)
+                .expectComplete()
+                .verify();
     }
-}
 
+    @Test
+    public void validateHiType() {
+        StepVerifier
+                .create(validator.validateHITypes(Arrays.asList(HIType.CONDITION.getValue(), "DiagnosticReport", "Observation", "MedicationRequest")))
+                .expectNext(true)
+                .expectComplete()
+                .verify();
+        StepVerifier
+                .create(validator.validateHITypes(Arrays.asList("NONEXISTENT-HITYPE")))
+                .expectNext(false)
+                .expectComplete()
+                .verify();
+
+    }
+
+}

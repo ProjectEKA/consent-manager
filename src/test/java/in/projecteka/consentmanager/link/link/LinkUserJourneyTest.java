@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
@@ -106,6 +107,10 @@ public class LinkUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean(name = "identityServiceJWKSet")
     private JWKSet identityServiceJWKSet;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private ConceptValidator conceptValidator;
 
     @AfterAll
     public static void tearDown() throws IOException {

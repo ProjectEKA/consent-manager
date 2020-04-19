@@ -5,6 +5,8 @@ consentmanager:
     defaultPageSize: 20
     maxPageSize: 100
     url: http://localhost:9000
+    purposeOfUseDefUrl: classpath:/static/ValueSet/purpose-of-use.json
+    hiTypesDefUrl: classpath:/static/ValueSet/health-info-type.json
   clientregistry:
     XAuthToken: e178fb45-2a2f-425c-bd45-996c60910d70
     clientId: consent-manager
@@ -15,7 +17,7 @@ consentmanager:
     transactionPinDigitSize: 4
     transactionPinTokenValidity: 2
     userCreationTokenValidity: 5
-    userIdSuffix: @ncg
+    userIdSuffix: atncg
   otpservice:
     url: http://localhost:5000
     identifiers:

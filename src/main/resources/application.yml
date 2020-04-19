@@ -5,6 +5,8 @@ consentmanager:
     defaultPageSize: ${DEFAULT_PAGE_SIZE}
     maxPageSize: ${MAX_PAGE_SIZE}
     url: ${CONSENT_SERVICE_URL}
+    purposeOfUseDefUrl: ${PURPOSE_OF_USE_DEF_URL}
+    hiTypesDefUrl: ${HI_TYPES_DEF_URL}
   clientregistry:
     XAuthToken: ${Auth_Token}
     clientId: ${CENTRAL_REGISTRY_ID}

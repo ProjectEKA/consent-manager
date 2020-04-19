@@ -28,7 +28,6 @@ import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
 import java.util.Collections;
-import java.util.Optional;
 
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
@@ -91,7 +90,7 @@ class UserServiceTest {
         var signUpSession = new SignUpSession(sessionId);
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
         when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq("+91-9788888")))
-                .thenReturn(signUpSession);
+                .thenReturn(Mono.just(signUpSession));
 
         Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
 
@@ -114,7 +113,7 @@ class UserServiceTest {
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(sessionId, otp)).thenReturn(Mono.empty());
         when(signupService.generateToken(sessionId))
-                .thenReturn(new Token(token));
+                .thenReturn(Mono.just(new Token(token)));
 
         StepVerifier.create(userService.permitOtp(otpVerification))
                 .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
@@ -152,7 +151,7 @@ class UserServiceTest {
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
-        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
@@ -168,7 +167,7 @@ class UserServiceTest {
         var signUpRequest = signUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
         var sessionId = string();
         var user = user().identifier(signUpRequest.getUsername()).build();
-        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(string()));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(string()));
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.just(user));
         when(userRepository.save(any())).thenReturn(Mono.empty());
 
@@ -185,7 +184,7 @@ class UserServiceTest {
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
-        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());

@@ -42,6 +42,13 @@ consentmanager:
       url: ${CONSENT_MANAGER_URL}
   linkservice:
     url: ${LINK_SERVICE_URL}
+  #Valid values are guava(for local), redis
+  cacheMethod: ${CACHE_METHOD}
+  redis:
+    #Will not be used if cacheMethod is guava
+    host: ${REDIS_HOST}
+    port: 6379
+    password: ${REDIS_PASSWORD}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}

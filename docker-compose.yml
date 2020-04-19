@@ -2,18 +2,29 @@ version: '3'
 services:
   consent-manager:
     build: .
+    container_name: consent-manager
+    hostname: consent-manager
     ports:
       - "9000:9000"
+    networks:
+      - backend_default
     environment:
       SPRING_PROFILES_ACTIVE: "docker"
-      CONSENTMANAGER_CLIENTREGISTRY_XAUTHTOKEN: "ada9c204-e571-4248-925b-7a1034ed30cb"
-      CONSENTMANAGER_KEYCLOAK_CLIENTSECRET: "ada9c204-e571-4248-925b-7a1034ed30cb"
+      CONSENTMANAGER_CLIENTREGISTRY_XAUTHTOKEN: "0e3f27a0-c167-45b4-a95b-ca1ba019b1bf"
+      CONSENTMANAGER_KEYCLOAK_CLIENTSECRET: "0e3f27a0-c167-45b4-a95b-ca1ba019b1bf"
+      LOG_LOCATION: /applogs/app.log
+    volumes:
+      - demo_logs:/applogs
     depends_on:
       - otp
       - client-registry
 
   otp:
     image: "ganesan92/otp-service:latest"
+    container_name: otp
+    hostname: otp
+    networks:
+      - backend_default
     environment:
       "ConnectionStrings:DefaultConnection": "Host=postgres;Port=5432;Username=postgres;Password=password;Database=otpservice;"
     ports:
@@ -21,6 +32,10 @@ services:
 
   client-registry:
     image: "ganesan92/client-registry:f056f2c"
+    container_name: client-registry
+    hostname: client-registry
+    networks:
+      - backend_default
     ports:
       - "8080:8080"
     environment:
@@ -28,3 +43,21 @@ services:
       CENTRALREGISTRY_IDENTITY_URL: "http://keycloak:8080/auth/"
       CENTRALREGISTRY_IDENTITY_REALM: "central-registry"
       CENTRALREGISTRY_HOST: "http://keycloak:8080"
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.6.2
+    container_name: filebeat
+    hostname: filebeat
+    networks:
+      - backend_default
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - demo_logs:/applogs
+
+volumes:
+  demo_logs:
+    driver: local
+
+networks:
+  backend_default:
+    external: true

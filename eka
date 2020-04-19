@@ -1,0 +1,37 @@
+#!/bin/sh
+
+case $@ in
+    up)
+        docker-compose -f docker-compose-backend.yml -p backend up -d
+        sleep 10
+        echo "Run the below migration command "
+        echo "git clone git@github.com:ProjectEKA/cm-db-initializer.git"
+        echo "java -Djdbc.url=jdbc:postgresql://localhost:5432/consent_manager -Djdbc.username=postgres -Djdbc.password=password -jar target/cmdb-initializer-1.0-SNAPSHOT.jar"
+        echo "To be automated soon!!"
+        read -p "Press enter to continue"
+        echo "Update the environment variables CONSENTMANAGER_CLIENTREGISTRY_XAUTHTOKEN & CONSENTMANAGER_KEYCLOAK_CLIENTSECRET with keycloak secrets"
+        read -p "Press enter to continue"
+        docker-compose -f docker-compose.yml -p apps up --build -d
+        sleep 10
+        docker ps
+        echo "You should see client-registry, consent-manager, otp, filebeat, kibana, keycloak, rabbitmq, postgres, elasticsearch"
+        ;;
+    start)
+        ./gradlew build -x test
+        docker-compose -f docker-compose-backend.yml -p backend start
+        sleep 5
+        docker-compose -f docker-compose.yml -p apps up --build -d
+        ;;
+    stop)
+        docker-compose -f docker-compose.yml -p apps stop
+        docker-compose -f docker-compose-backend.yml -p backend stop
+        ;;
+    down)
+      docker-compose -f docker-compose-backend.yml -p backend down
+      docker-compose -f docker-compose.yml -p apps down
+        ;;
+    *)
+        echo "Invalid option";
+        echo "Available options : up, start, stop, down";
+        ;;
+esac

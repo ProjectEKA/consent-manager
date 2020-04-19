@@ -3,6 +3,8 @@ package in.projecteka.consentmanager.consent;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import in.projecteka.consentmanager.common.Serializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -19,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class ConceptValidator implements InitializingBean {
+    private static final Logger logger = LoggerFactory.getLogger(ConceptValidator.class);
 
     @Value("${consentmanager.consentservice.purposeOfUseDefUrl}")
     private Resource purposeOfUseValueSetResource;
@@ -35,7 +38,7 @@ public class ConceptValidator implements InitializingBean {
     }
 
 
-    private ConcurrentHashMap<String, String> readValueSetFromResource(Resource resource) throws Exception {
+    private ConcurrentHashMap<String, String> readValueSetFromResource(Resource resource) throws IOException {
         try (InputStream in = resource.getInputStream()) {
             ByteArrayOutputStream result = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];
@@ -65,10 +68,8 @@ public class ConceptValidator implements InitializingBean {
             }
             return conceptCodes;
         } catch (IOException e) {
-            //TODO log error
-            System.out.println(e);
+            logger.error("Error occurred while loading processing Valueset", e);
             throw e;
-
         }
     }
 

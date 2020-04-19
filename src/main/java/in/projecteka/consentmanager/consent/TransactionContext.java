@@ -7,7 +7,6 @@ import reactor.core.publisher.MonoSink;
 import java.util.Iterator;
 
 public class TransactionContext {
-    private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
     private Transaction transaction;
     private MonoSink sink;
 
@@ -30,7 +29,7 @@ public class TransactionContext {
         this.sink.error(e);
     }
 
-    public void executeInTransaction(Iterator<Query> iterator) {
+    public void executeInTransaction(Iterator<Query> iterator, String message) {
         if (iterator.hasNext()) {
             Query query = iterator.next();
             transaction.preparedQuery(query.getQueryString())
@@ -38,12 +37,12 @@ public class TransactionContext {
                             handler -> {
                                 if (handler.succeeded()) {
                                     if (iterator.hasNext()) {
-                                        executeInTransaction(iterator);
+                                        executeInTransaction(iterator, message);
                                     } else {
                                         commit();
                                     }
                                 } else {
-                                    error(new RuntimeException(FAILED_TO_SAVE_CONSENT_ARTEFACT));
+                                    error(new RuntimeException(message));
                                 }
                             });
         }

@@ -39,6 +39,7 @@ public class ConsentArtefactRepository {
     private static final String UPDATE_CONSENT_ARTEFACT_STATUS_QUERY = "UPDATE consent_artefact SET status=$1, " +
             "date_modified=$2 WHERE consent_artefact_id=$3";
     private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
+    private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
 
     private PgPool dbClient;
 
@@ -50,7 +51,7 @@ public class ConsentArtefactRepository {
         return Mono.create(monoSink -> dbClient.begin(connectionAttempt -> {
             if (connectionAttempt.succeeded()) {
                 TransactionContext context = new TransactionContext(connectionAttempt.result(), monoSink);
-                context.executeInTransaction(queries.iterator());
+                context.executeInTransaction(queries.iterator(), FAILED_TO_SAVE_CONSENT_ARTEFACT);
             } else {
                 monoSink.error(new RuntimeException("Can not get connectionAttempt to storage."));
             }

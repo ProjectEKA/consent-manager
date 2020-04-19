@@ -61,15 +61,15 @@ public class LinkRepository {
     }
 
     public Mono<String> getHIPIdFromDiscovery(String transactionId) {
-        return getStringMono(Tuple.of(transactionId), SELECT_HIP_ID_FROM_DISCOVERY);
+        return getStringFrom(SELECT_HIP_ID_FROM_DISCOVERY, Tuple.of(transactionId));
     }
 
     public Mono<String> getTransactionIdFromLinkReference(String linkRefNumber) {
-        return getStringMono(Tuple.of(linkRefNumber), SELECT_TRANSACTION_ID_FROM_LINK_REFERENCE);
+        return getStringFrom(SELECT_TRANSACTION_ID_FROM_LINK_REFERENCE, Tuple.of(linkRefNumber));
     }
 
     @NotNull
-    private Mono<String> getStringMono(Tuple parameters, String query) {
+    private Mono<String> getStringFrom(String query, Tuple parameters) {
         return Mono.create(monoSink -> dbClient.preparedQuery(query)
                 .execute(parameters,
                         handler -> {

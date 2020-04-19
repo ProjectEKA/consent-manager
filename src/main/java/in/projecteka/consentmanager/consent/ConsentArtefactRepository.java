@@ -20,18 +20,12 @@ import reactor.core.publisher.MonoSink;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.stream.StreamSupport;
 
 @AllArgsConstructor
 public class ConsentArtefactRepository {
-    private static final String INSERT_CONSENT_ARTEFACT_QUERY = "INSERT INTO consent_artefact" +
-            " (consent_request_id, consent_artefact_id, patient_id, consent_artefact, signature, status) VALUES" +
-            " ($1, $2, $3, $4, $5, $6)";
-    private static final String INSERT_HIP_CONSENT_ARTEFACT_QUERY = "INSERT INTO hip_consent_artefact" +
-            " (consent_request_id, consent_artefact_id, patient_id, consent_artefact, signature, status) VALUES" +
-            " ($1, $2, $3, $4, $5, $6)";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
             "date_modified=$2 WHERE request_id=$3";
     private static final String SELECT_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
@@ -48,44 +42,19 @@ public class ConsentArtefactRepository {
 
     private PgPool dbClient;
 
-    public Mono<Void> addConsentArtefactAndUpdateStatus(ConsentArtefact consentArtefact,
-                                                        String consentRequestId,
-                                                        String patientId,
-                                                        String signature,
-                                                        HIPConsentArtefactRepresentation hipConsentArtefact) {
-        Query insertCA = new Query(INSERT_CONSENT_ARTEFACT_QUERY,
-                Tuple.of(consentRequestId,
-                        consentArtefact.getConsentId(),
-                        patientId,
-                        JsonObject.mapFrom(consentArtefact),
-                        signature,
-                        ConsentStatus.GRANTED.toString()));
-        Query insertHIPCA = new Query(INSERT_HIP_CONSENT_ARTEFACT_QUERY,
-                Tuple.of(consentRequestId,
-                        hipConsentArtefact.getConsentDetail().getConsentId(),
-                        patientId,
-                        JsonObject.mapFrom(hipConsentArtefact.getConsentDetail()),
-                        signature,
-                        ConsentStatus.GRANTED.toString()));
-        Query updateConsentReqStatus = new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
-                Tuple.of(ConsentStatus.GRANTED.toString(),
-                        LocalDateTime.now(),
-                        consentRequestId));
-
-        return doInTransaction(insertCA, insertHIPCA, updateConsentReqStatus);
+    public Mono<Void> process(List<Query> queries) {
+        return doInTransaction(queries);
     }
 
-    private Mono<Void> doInTransaction(Query... queries) {
-        return Mono.create(monoSink -> {
-            dbClient.begin(connectionAttempt -> {
-                if (connectionAttempt.succeeded()) {
-                    TransactionContext context = new TransactionContext(connectionAttempt.result(), monoSink);
-                    context.executeInTransaction(Arrays.asList(queries).iterator());
-                } else {
-                    monoSink.error(new RuntimeException("Can not get connectionAttempt to storage."));
-                }
-            });
-        });
+    private Mono<Void> doInTransaction(List<Query> queries) {
+        return Mono.create(monoSink -> dbClient.begin(connectionAttempt -> {
+            if (connectionAttempt.succeeded()) {
+                TransactionContext context = new TransactionContext(connectionAttempt.result(), monoSink);
+                context.executeInTransaction(queries.iterator());
+            } else {
+                monoSink.error(new RuntimeException("Can not get connectionAttempt to storage."));
+            }
+        }));
     }
 
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(String consentId) {

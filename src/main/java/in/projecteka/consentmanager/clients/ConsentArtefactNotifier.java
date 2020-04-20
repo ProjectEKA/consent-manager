@@ -22,7 +22,7 @@ public class ConsentArtefactNotifier {
     }
 
     public Mono<Void> sendConsentArtefactTo(HIPConsentArtefactRepresentation consentArtefact, String providerUrl) {
-        String hipNotificationUrl = String.format("%s/%s", providerUrl, "consent/");
+        String hipNotificationUrl = String.format("%s/%s", providerUrl, "consent/notification/");
         return post(consentArtefact, hipNotificationUrl);
     }
 

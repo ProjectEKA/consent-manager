@@ -27,7 +27,6 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -58,8 +57,8 @@ import static org.mockito.Mockito.when;
         in.projecteka.consentmanager.consent.ConsentArtefactUserJourneyTest.ContextInitializer.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ConsentArtefactUserJourneyTest {
-    private static MockWebServer clientRegistryServer = new MockWebServer();
-    private static MockWebServer userServer = new MockWebServer();
+    private static final MockWebServer clientRegistryServer = new MockWebServer();
+    private static final MockWebServer userServer = new MockWebServer();
 
     @Autowired
     private WebTestClient webTestClient;
@@ -173,7 +172,7 @@ public class ConsentArtefactUserJourneyTest {
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(anotherUser, false)));
         var consentArtefact = consentArtefactRepresentation().build();
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_FORBIDDEN,
-                "Cannot retrieve Consent artefact. Forbidden"));
+                "Cannot retrieve Consent artefact"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         var consentRequestId = "request-id";
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))

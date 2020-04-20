@@ -71,7 +71,8 @@ public class ConsentConfiguration {
                 postConsentRequest,
                 new PatientServiceClient(builder, identityService::authenticate, linkServiceProperties.getUrl()),
                 new CMProperties(identityService.getConsentManagerId()),
-                conceptValidator);
+                conceptValidator,
+                new ConsentArtefactQueryGenerator());
     }
 
     @Bean

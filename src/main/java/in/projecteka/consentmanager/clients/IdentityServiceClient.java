@@ -21,7 +21,7 @@ public class IdentityServiceClient {
         this.webClientBuilder.baseUrl(identityServiceProperties.getBaseUrl());
     }
 
-    public Mono<?> createUser(Session session, KeycloakUser request) {
+    public Mono<Void> createUser(Session session, KeycloakUser request) {
         String accessToken = String.format("Bearer %s", session.getAccessToken());
         return webClientBuilder.build()
                 .post()

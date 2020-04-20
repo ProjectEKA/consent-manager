@@ -29,7 +29,6 @@ import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -50,7 +49,6 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -113,10 +111,10 @@ public class ConsentRequestUserJourneyTest {
     @Captor
     private ArgumentCaptor<ConsentRequest> captor;
 
-    private static MockWebServer clientRegistryServer = new MockWebServer();
-    private static MockWebServer userServer = new MockWebServer();
-    private static MockWebServer identityServer = new MockWebServer();
-    private static MockWebServer patientLinkServer = new MockWebServer();
+    private static final MockWebServer clientRegistryServer = new MockWebServer();
+    private static final MockWebServer userServer = new MockWebServer();
+    private static final MockWebServer identityServer = new MockWebServer();
+    private static final MockWebServer patientLinkServer = new MockWebServer();
     private static final String CONSENT_GRANT_JSON = "{\n" +
             "    \"consents\": [\n" +
             "        {\n" +
@@ -158,7 +156,7 @@ public class ConsentRequestUserJourneyTest {
         patientLinkServer.shutdown();
     }
 
-    private String requestedConsentJson = "{\n" +
+    private final String requestedConsentJson = "{\n" +
             "            \"status\": \"REQUESTED\",\n" +
             "            \"createdAt\": \"2020-03-14T10:51:05.466+0000\",\n" +
             "            \"purpose\": {\n" +
@@ -339,12 +337,7 @@ public class ConsentRequestUserJourneyTest {
                 .thenReturn(Mono.just(consentRequestDetail));
         when(pinVerificationTokenService.validateToken(token))
                 .thenReturn(Mono.just(new Caller(patientId, false)));
-        when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(
-                any(),
-                eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"),
-                any(),
-                any(),
-                any())).thenReturn(Mono.empty());
+        when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
         when(conceptValidator.validateHITypes(anyList())).thenReturn(Mono.just(true));
 
@@ -407,11 +400,7 @@ public class ConsentRequestUserJourneyTest {
                 .thenReturn(Mono.just(new Caller(patientId, false)));
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
                 .thenReturn(Mono.just(consentRequestDetail));
-        when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(any(),
-                eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"),
-                any(),
-                any(),
-                any())).thenReturn(Mono.empty());
+        when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
         when(conceptValidator.validateHITypes(anyList())).thenReturn(Mono.just(true));
 

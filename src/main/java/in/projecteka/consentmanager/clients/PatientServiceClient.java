@@ -15,7 +15,7 @@ public class PatientServiceClient {
 
     private final WebClient.Builder webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
-    private String baseUrl;
+    private final String baseUrl;
 
     public Mono<LinkedCareContexts> retrievePatientLinks(String username) {
         return tokenGenerator.get()

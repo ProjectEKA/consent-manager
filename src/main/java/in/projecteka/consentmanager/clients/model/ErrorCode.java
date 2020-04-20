@@ -33,10 +33,13 @@ public enum ErrorCode {
     TRANSACTION_PIN_NOT_FOUND(1023),
     CONSENT_NOT_GRANTED(1024),
     INVALID_STATE(1025),
-    INVALID_PURPOSE(1026),
-    INVALID_HITYPE(1027);
+    TRANSACTION_ID_NOT_FOUND(1026),
+    INVALID_PURPOSE(1027),
+    INVALID_HITYPE(1028);
 
-    private int value;
+
+
+    private final int value;
 
     ErrorCode(int val) {
         value = val;

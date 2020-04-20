@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.QueryRepresentation;
 import in.projecteka.consentmanager.consent.model.GrantedContext;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
@@ -75,6 +76,7 @@ public class ConsentManager {
     private final PatientServiceClient patientServiceClient;
     private final CMProperties cmProperties;
     private final ConceptValidator conceptValidator;
+    private final ConsentArtefactQueryGenerator consentArtefactQueryGenerator;
 
     private static boolean isNotSameRequester(ConsentArtefact consentDetail, String requesterId) {
         return !consentDetail.getHiu().getId().equals(requesterId) &&
@@ -245,9 +247,27 @@ public class ConsentManager {
                                                                                   List<GrantedConsent> grantedConsents,
                                                                                   String patientId,
                                                                                   ConsentRequestDetail consentRequest) {
+        return getAllQueries(requestId, grantedConsents, patientId, consentRequest)
+                .map(caQueries -> caQueries.stream().reduce(QueryRepresentation::add).get())
+                .flatMap(queryRepresentation -> consentArtefactRepository.process(queryRepresentation.getQueries())
+                        .thenReturn(queryRepresentation.getHipConsentArtefactRepresentations()));
+    }
+
+    private Mono<List<QueryRepresentation>> getAllQueries(String requestId,
+                                                          List<GrantedConsent> grantedConsents,
+                                                          String patientId,
+                                                          ConsentRequestDetail consentRequest) {
         return Flux.fromIterable(grantedConsents)
-                .flatMap(grantedConsent -> storeConsentArtefact(requestId, patientId, consentRequest, grantedConsent))
-                .collectList();
+                .flatMap(grantedConsent -> toConsentArtefact(consentRequest, grantedConsent)
+                        .flatMap(consentArtefact -> consentArtefactQueryGenerator.toQueries(requestId,
+                                patientId,
+                                consentArtefact,
+                                from(consentArtefact, GRANTED),
+                                signConsentArtefact(consentArtefact)))).collectList();
+    }
+
+    private Mono<ConsentArtefact> toConsentArtefact(ConsentRequestDetail requestDetail, GrantedConsent grantedConsent) {
+        return Mono.just(from(requestDetail, grantedConsent));
     }
 
     private HIPConsentArtefactRepresentation from(ConsentArtefact consentArtefact, ConsentStatus status) {
@@ -270,21 +290,6 @@ public class ConsentManager {
                 .signature(signature)
                 .status(status)
                 .build();
-    }
-
-    private Mono<HIPConsentArtefactRepresentation> storeConsentArtefact(String requestId,
-                                                                        String patientId,
-                                                                        ConsentRequestDetail consentRequest,
-                                                                        GrantedConsent grantedConsent) {
-        var consentArtefact = from(consentRequest, grantedConsent);
-        var hipConsentArtefact = from(consentArtefact, GRANTED);
-        var consentArtefactSignature = signConsentArtefact(consentArtefact);
-        return consentArtefactRepository.addConsentArtefactAndUpdateStatus(consentArtefact,
-                requestId,
-                patientId,
-                consentArtefactSignature,
-                hipConsentArtefact)
-                .thenReturn(hipConsentArtefact);
     }
 
     @SneakyThrows
@@ -374,7 +379,8 @@ public class ConsentManager {
 
     public Mono<ConsentRepresentation> getConsentRepresentation(String consentId, String requesterId) {
         return getConsentWithRequest(consentId)
-                .filter(consentRepresentation -> !isNotSameRequester(consentRepresentation.getConsentDetail(), requesterId))
+                .filter(consentRepresentation -> !isNotSameRequester(consentRepresentation.getConsentDetail(),
+                        requesterId))
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactForbidden()))
                 .filter(this::isGrantedConsent)
                 .switchIfEmpty(Mono.error(ClientError.consentNotGranted()));

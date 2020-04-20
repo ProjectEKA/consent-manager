@@ -1,0 +1,40 @@
+{
+  "resourceType": "ValueSet",
+  "id": "health-information-type",
+  "version": "1",
+  "name": "Types of Health Information Type",
+  "status": "active",
+  "date": "2020-01-01",
+  "publisher": "National Cancer Grid of India",
+  "description": "This is the value set that includes the health information types that may be consented by the patient to share",
+  "compose": {
+    "include": [
+      {
+        "system": "http://hl7.org/fhir/resource-types",
+        "concept": [
+          {
+            "code": "Condition",
+            "display": "Condition"
+          },
+          {
+            "code": "Observation",
+            "display": "Observation"
+          },
+          {
+            "code": "DiagnosticReport",
+            "display": "DiagnosticReport"
+          },
+          {
+            "code": "MedicationRequest",
+            "display": "Medication Request"
+          }
+        ]
+      }
+    ]
+  },
+  "expansion": {
+    "timestamp": "2020-01-01T08:15:30+05:30",
+    "contains": [
+    ]
+  }
+}

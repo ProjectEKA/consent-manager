@@ -14,7 +14,7 @@ import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccur
 
 @AllArgsConstructor
 public class ConsentArtefactNotifier {
-    private WebClient.Builder webClientBuilder;
+    private final WebClient.Builder webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
 
     public Mono<Void> notifyHiu(HIUNotificationRequest request, String consentNotificationUrl) {

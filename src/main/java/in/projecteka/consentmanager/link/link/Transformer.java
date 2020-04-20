@@ -7,6 +7,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Transformer {
+
+    private Transformer() {
+    }
+
     private static List<CareContext> toHIPCareContext(List<in.projecteka.consentmanager.link.link.model.CareContext> careContexts) {
         return careContexts.stream().map(careContext -> new CareContext(careContext.getReferenceNumber())).collect(Collectors.toList());
     }

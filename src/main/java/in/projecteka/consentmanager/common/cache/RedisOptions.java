@@ -19,4 +19,5 @@ import org.springframework.context.annotation.Configuration;
 public class RedisOptions {
     private String host;
     private int port;
+    private String password;
 }

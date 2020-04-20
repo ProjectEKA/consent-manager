@@ -13,10 +13,14 @@ import io.vertx.sqlclient.Tuple;
 import lombok.SneakyThrows;
 import reactor.core.publisher.Mono;
 
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static in.projecteka.consentmanager.clients.ClientError.dbOperationFailed;
+import static in.projecteka.consentmanager.clients.ClientError.expiryNotFound;
+import static in.projecteka.consentmanager.clients.ClientError.transactionIdNotFound;
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.to;
 
@@ -36,7 +40,7 @@ public class LinkRepository {
     private static final String SELECT_EXPIRY_FROM_LINK_REFERENCE = "SELECT patient_link_reference -> 'link' -> " +
             "'meta' ->> 'communicationExpiry' as communicationExpiry FROM link_reference WHERE " +
             "patient_link_reference -> 'link' ->> 'referenceNumber' = $1";
-    private PgPool dbClient;
+    private final PgPool dbClient;
 
     public LinkRepository(PgPool dbClient) {
         this.dbClient = dbClient;
@@ -49,7 +53,7 @@ public class LinkRepository {
                         .execute(Tuple.of(new JsonObject(from(patientLinkReferenceResponse)), hipId),
                                 handler -> {
                                     if (handler.failed()) {
-                                        monoSink.error(new Exception("Failed to insert link reference"));
+                                        monoSink.error(dbOperationFailed());
                                         return;
                                     }
                                     monoSink.success();
@@ -57,38 +61,38 @@ public class LinkRepository {
     }
 
     public Mono<String> getHIPIdFromDiscovery(String transactionId) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_HIP_ID_FROM_DISCOVERY)
-                .execute(Tuple.of(transactionId),
-                        handler -> {
-                            if (handler.failed()) {
-                                monoSink.error(new Exception("Failed to get HIP Id from transaction Id"));
-                                return;
-                            }
-                            monoSink.success(handler.result().iterator().next().getString(0));
-                        }));
+        return getStringFrom(SELECT_HIP_ID_FROM_DISCOVERY, Tuple.of(transactionId));
     }
 
     public Mono<String> getTransactionIdFromLinkReference(String linkRefNumber) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_TRANSACTION_ID_FROM_LINK_REFERENCE)
-                .execute(Tuple.of(linkRefNumber),
+        return getStringFrom(SELECT_TRANSACTION_ID_FROM_LINK_REFERENCE, Tuple.of(linkRefNumber));
+    }
+
+    @NotNull
+    private Mono<String> getStringFrom(String query, Tuple parameters) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(query)
+                .execute(parameters,
                         handler -> {
                             if (handler.failed()) {
-                                monoSink.error(new Exception("Failed to get transaction id from link reference"));
+                                monoSink.error(dbOperationFailed());
                                 return;
                             }
-                            monoSink.success(handler.result().iterator().next().getString(0));
+                            var iterator = handler.result().iterator();
+                            if (!iterator.hasNext()) {
+                                monoSink.error(transactionIdNotFound());
+                                return;
+                            }
+                            monoSink.success(iterator.next().getString(0));
                         }));
     }
 
-    @SneakyThrows
     public Mono<Void> insertToLink(String hipId, String consentManagerUserId, String linkRefNumber,
                                    PatientRepresentation patient) {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_TO_LINK)
-                .execute(
-                        Tuple.of(hipId, consentManagerUserId, linkRefNumber, new JsonObject(from(patient))),
+                .execute(Tuple.of(hipId, consentManagerUserId, linkRefNumber, new JsonObject(from(patient))),
                         handler -> {
                             if (handler.failed()) {
-                                monoSink.error(new Exception("Failed to insert link"));
+                                monoSink.error(dbOperationFailed());
                                 return;
                             }
                             monoSink.success();
@@ -100,10 +104,15 @@ public class LinkRepository {
                 .execute(Tuple.of(linkRefNumber),
                         handler -> {
                             if (handler.failed()) {
-                                monoSink.error(new Exception("Failed to get communicationExpiry from link reference"));
+                                monoSink.error(dbOperationFailed());
                                 return;
                             }
-                            monoSink.success(handler.result().iterator().next().getString(0));
+                            var iterator = handler.result().iterator();
+                            if (!iterator.hasNext()) {
+                                monoSink.error(expiryNotFound());
+                                return;
+                            }
+                            monoSink.success(iterator.next().getString(0));
                         }));
     }
 
@@ -112,7 +121,7 @@ public class LinkRepository {
                 .execute(Tuple.of(patientId),
                         handler -> {
                             if (handler.failed()) {
-                                monoSink.error(new Exception("Failed to get hip_id and care contexts"));
+                                monoSink.error(dbOperationFailed());
                                 return;
                             }
                             RowSet<Row> results = handler.result();

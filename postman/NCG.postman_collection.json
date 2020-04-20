@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "12180772-0814-4b97-9394-f1aae5f84a08",
+		"_postman_id": "321a6787-f695-4bda-acb4-9a3920a78342",
 		"name": "NCG",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -119,9 +119,8 @@
 									"    var jsonData = pm.response.json();",
 									"    var request = JSON.parse(pm.request.body.raw);",
 									"    pm.environment.set(\"AUTHORIZATION\", \"bearer \" + jsonData.accessToken);",
-									"    pm.environment.set(\"USERNAME\", request.userName);",
+									"    pm.environment.set(\"USERNAME\", request.username);",
 									"    pm.environment.set(\"PASSWORD\", request.password);",
-									"    ",
 									"});"
 								],
 								"type": "text/javascript"

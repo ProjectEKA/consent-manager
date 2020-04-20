@@ -97,6 +97,7 @@ public class UserConfiguration {
         RedisURI redisUri = RedisURI.Builder.
                 redis(redisOptions.getHost())
                 .withPort(redisOptions.getPort())
+                .withPassword(redisOptions.getPassword())
                 .build();
         RedisClient redisClient = RedisClient.create(redisUri);
         return new RedisCacheAdapter(redisClient);

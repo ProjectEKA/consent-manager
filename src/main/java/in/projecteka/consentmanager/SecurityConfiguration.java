@@ -33,38 +33,37 @@ import java.util.Map;
 @EnableWebFluxSecurity
 public class SecurityConfiguration {
 
-    private static final List<Map.Entry<String, HttpMethod>> SERVICE_ONLY_URLS = new ArrayList<>() {
-        {
-            add(Map.entry("/consent-requests", HttpMethod.POST));
-            add(Map.entry("/health-information/request", HttpMethod.POST));
-            add(Map.entry("/health-information/notification", HttpMethod.POST));
-            add(Map.entry("/consents/**", HttpMethod.GET));
-            add(Map.entry("/users/**", HttpMethod.GET));
-        }
-    };
+    private static final List<Map.Entry<String, HttpMethod>> SERVICE_ONLY_URLS = new ArrayList<>();
+    private static final List<Map.Entry<String, HttpMethod>> PIN_VERIFICATION_URLS = new ArrayList<>();
 
-    private static final List<Map.Entry<String, HttpMethod>> PIN_VERIFICATION_URLS = new ArrayList<>() {
-        {
-            add(Map.entry("/consent-requests/**/approve", HttpMethod.POST));
-            add(Map.entry("/consents/revoke", HttpMethod.POST));
-        }
-    };
+    static {
+        SERVICE_ONLY_URLS.add(Map.entry("/users/**", HttpMethod.GET));
+        SERVICE_ONLY_URLS.add(Map.entry("/consents/**", HttpMethod.GET));
+        SERVICE_ONLY_URLS.add(Map.entry("/health-information/notification", HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry("/health-information/request", HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry("/consent-requests", HttpMethod.POST));
+        PIN_VERIFICATION_URLS.add(Map.entry("/consent-requests/**/approve", HttpMethod.POST));
+        PIN_VERIFICATION_URLS.add(Map.entry("/consents/revoke", HttpMethod.POST));
+    }
+
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity httpSecurity,
             ReactiveAuthenticationManager authenticationManager,
             ServerSecurityContextRepository securityContextRepository) {
-        final String[] WHITELISTED_URLS = {"/**.json",
-                                           "/users/verify",
-                                           "/users/permit",
-                                           "/sessions",
-                                           "/**.html",
-                                           "/**.js",
-                                           "/**.yaml",
-                                           "/**.css",
-                                           "/**.png"};
-        httpSecurity.authorizeExchange().pathMatchers(WHITELISTED_URLS).permitAll();
+
+        final String[] whitelistedUrls = {"/**.json",
+                                          "/ValueSet/**.json",
+                                          "/users/verify",
+                                          "/users/permit",
+                                          "/sessions",
+                                          "/**.html",
+                                          "/**.js",
+                                          "/**.yaml",
+                                          "/**.css",
+                                          "/**.png"};
+        httpSecurity.authorizeExchange().pathMatchers(whitelistedUrls).permitAll();
         httpSecurity.httpBasic().disable().formLogin().disable().csrf().disable().logout().disable();
         httpSecurity.authorizeExchange().pathMatchers("/**").authenticated();
         return httpSecurity
@@ -96,10 +95,10 @@ public class SecurityConfiguration {
 
     @AllArgsConstructor
     private static class SecurityContextRepository implements ServerSecurityContextRepository {
-        private SignUpService signupService;
-        private Authenticator identityServiceClient;
-        private PinVerificationTokenService pinVerificationTokenService;
-        private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+        private final SignUpService signupService;
+        private final Authenticator identityServiceClient;
+        private final PinVerificationTokenService pinVerificationTokenService;
+        private final CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
         @Override
         public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {
@@ -115,7 +114,7 @@ public class SecurityConfiguration {
             if (isSignUpRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
                 return checkSignUp(token);
             }
-            if(isGrantOrRevokeConsentRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())){
+            if (isGrantOrRevokeConsentRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
                 return validateGrantOrRevokeConsentRequest(token);
             }
             if (isCentralRegistryAuthenticatedOnlyRequest(
@@ -175,7 +174,7 @@ public class SecurityConfiguration {
 
         private Mono<SecurityContext> checkSignUp(String authToken) {
             return Mono.just(authToken)
-                    .filterWhen(token -> signupService.validateToken(token))
+                    .filterWhen(signupService::validateToken)
                     .flatMap(token -> Mono.just(new UsernamePasswordAuthenticationToken(
                             token,
                             token,

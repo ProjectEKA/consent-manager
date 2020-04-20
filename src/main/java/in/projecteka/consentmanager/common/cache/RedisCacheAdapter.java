@@ -23,10 +23,11 @@ public class RedisCacheAdapter implements CacheAdapter<String, String> {
     }
 
     @PreDestroy
-    public void preDestroy () {
+    public void preDestroy() {
         statefulConnection.close();
         redisClient.shutdown();
     }
+
     @Override
     public Mono<String> get(String key) {
         RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
@@ -36,7 +37,9 @@ public class RedisCacheAdapter implements CacheAdapter<String, String> {
     @Override
     public Mono<Void> put(String key, String value) {
         RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
-        return redisCommands.set(key, value).doOnSuccess(s -> redisCommands.expire(key, 5 * 60L)).then();
+        return redisCommands.set(key, value)
+                .then(redisCommands.expire(key, 5 * 60L))
+                .then();
     }
 
     @Override

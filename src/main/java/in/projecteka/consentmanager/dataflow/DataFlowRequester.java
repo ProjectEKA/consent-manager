@@ -17,8 +17,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class DataFlowRequester {
     private final ConsentManagerClient consentManagerClient;
-    private DataFlowRequestRepository dataFlowRequestRepository;
-    private PostDataFlowRequestApproval postDataFlowrequestApproval;
+    private final DataFlowRequestRepository dataFlowRequestRepository;
+    private final PostDataFlowRequestApproval postDataFlowrequestApproval;
 
     public Mono<DataFlowRequestResponse> requestHealthData(
             String hiuId,

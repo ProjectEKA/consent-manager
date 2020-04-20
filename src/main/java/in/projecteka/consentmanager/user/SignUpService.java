@@ -35,7 +35,7 @@ public class SignUpService {
         this.jwtProperties = jwtProperties;
         this.unverifiedSessions = unverifiedSessions;
         this.verifiedSessions = verifiedSessions;
-        jwtTokenValidity = tokenValidityInMinutes * 60 * 60;
+        jwtTokenValidity = (long) tokenValidityInMinutes * 60 * 60;
     }
 
     public Mono<SignUpSession> cacheAndSendSession(String sessionId, String mobileNumber) {
@@ -58,8 +58,8 @@ public class SignUpService {
     }
 
     public Mono<Token> generateToken(String sessionId) {
-       return unverifiedSessions.get(sessionId)
-               .switchIfEmpty(Mono.error(new InvalidSessionException("invalid.session.id")))
+        return unverifiedSessions.get(sessionId)
+                .switchIfEmpty(Mono.error(new InvalidSessionException("invalid.session.id")))
                 .flatMap(number -> {
                     String newSession = UUID.randomUUID().toString();
                     return verifiedSessions.put(newSession, number).thenReturn(newSession);

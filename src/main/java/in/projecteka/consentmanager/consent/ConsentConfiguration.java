@@ -69,7 +69,8 @@ public class ConsentConfiguration {
                 centralRegistry,
                 postConsentRequest,
                 new PatientServiceClient(builder, identityService::authenticate, linkServiceProperties.getUrl()),
-                new CMProperties(identityService.getConsentManagerId()));
+                new CMProperties(identityService.getConsentManagerId()),
+                new ConsentArtefactQueryGenerator());
     }
 
     @Bean

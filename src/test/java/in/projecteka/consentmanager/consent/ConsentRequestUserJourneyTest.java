@@ -49,7 +49,6 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -333,12 +332,7 @@ public class ConsentRequestUserJourneyTest {
                 .thenReturn(Mono.just(consentRequestDetail));
         when(pinVerificationTokenService.validateToken(token))
                 .thenReturn(Mono.just(new Caller(patientId, false)));
-        when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(
-                any(),
-                eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"),
-                any(),
-                any(),
-                any())).thenReturn(Mono.empty());
+        when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
         webTestClient.post()
@@ -400,11 +394,7 @@ public class ConsentRequestUserJourneyTest {
                 .thenReturn(Mono.just(new Caller(patientId, false)));
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
                 .thenReturn(Mono.just(consentRequestDetail));
-        when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(any(),
-                eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"),
-                any(),
-                any(),
-                any())).thenReturn(Mono.empty());
+        when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
         webTestClient.post()

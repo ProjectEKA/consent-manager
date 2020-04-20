@@ -5,12 +5,12 @@ import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.Query;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
-import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Transaction;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
@@ -21,20 +21,13 @@ import reactor.core.publisher.MonoSink;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
 import java.util.stream.StreamSupport;
 
 @AllArgsConstructor
 public class ConsentArtefactRepository {
-    private static final String INSERT_CONSENT_ARTEFACT_QUERY = "INSERT INTO consent_artefact" +
-            " (consent_request_id, consent_artefact_id, patient_id, consent_artefact, signature, status) VALUES" +
-            " ($1, $2, $3, $4, $5, $6)";
-    private static final String INSERT_HIP_CONSENT_ARTEFACT_QUERY = "INSERT INTO hip_consent_artefact" +
-            " (consent_request_id, consent_artefact_id, patient_id, consent_artefact, signature, status) VALUES" +
-            " ($1, $2, $3, $4, $5, $6)";
-    private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
             "date_modified=$2 WHERE request_id=$3";
-    private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
     private static final String SELECT_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
             "FROM consent_artefact WHERE consent_artefact_id = $1";
     private static final String SELECT_CONSENT_WITH_REQUEST_QUERY = "SELECT status, consent_artefact, " +
@@ -46,71 +39,23 @@ public class ConsentArtefactRepository {
     private static final String UPDATE_CONSENT_ARTEFACT_STATUS_QUERY = "UPDATE consent_artefact SET status=$1, " +
             "date_modified=$2 WHERE consent_artefact_id=$3";
     private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
+    private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
 
     private final PgPool dbClient;
 
-    public Mono<Void> addConsentArtefactAndUpdateStatus(ConsentArtefact consentArtefact,
-                                                        String consentRequestId,
-                                                        String patientId,
-                                                        String signature,
-                                                        HIPConsentArtefactRepresentation hipConsentArtefact) {
-        return Mono.create(monoSink -> dbClient.getConnection(connection -> {
-                    if (connection.failed()) {
-                        monoSink.error(new RuntimeException("Error getting connection to database."));
-                        return;
-                    }
-                    SqlConnection sqlConnection = connection.result();
-                    if (sqlConnection == null) {
-                        monoSink.error(new RuntimeException("Error getting connection to database."));
-                        return;
-                    }
-                    Transaction transaction = sqlConnection.begin();
-                    transaction.preparedQuery(INSERT_CONSENT_ARTEFACT_QUERY)
-                            .execute(Tuple.of(consentRequestId,
-                                    consentArtefact.getConsentId(),
-                                    patientId,
-                                    JsonObject.mapFrom(consentArtefact),
-                                    signature,
-                                    ConsentStatus.GRANTED.toString()),
-                                    insertConsentArtefactHandler -> {
-                                        if (insertConsentArtefactHandler.failed()) {
-                                            sqlConnection.close();
-                                            monoSink.error(new Exception(FAILED_TO_SAVE_CONSENT_ARTEFACT));
-                                            return;
-                                        }
-                                        transaction.preparedQuery(INSERT_HIP_CONSENT_ARTEFACT_QUERY)
-                                                .execute(Tuple.of(consentRequestId,
-                                                        hipConsentArtefact.getConsentDetail().getConsentId(),
-                                                        patientId,
-                                                        JsonObject.mapFrom(hipConsentArtefact.getConsentDetail()),
-                                                        signature,
-                                                        ConsentStatus.GRANTED.toString()),
-                                                        insertHipConsentArtefactHandler -> {
-                                                            if (insertHipConsentArtefactHandler.failed()) {
-                                                                sqlConnection.close();
-                                                                monoSink.error(
-                                                                        new Exception(FAILED_TO_SAVE_CONSENT_ARTEFACT));
-                                                                return;
-                                                            }
-                                                            transaction.preparedQuery(
-                                                                    UPDATE_CONSENT_REQUEST_STATUS_QUERY)
-                                                                    .execute(Tuple.of(ConsentStatus.GRANTED.toString(),
-                                                                            LocalDateTime.now(), consentRequestId),
-                                                                            updateConsentRequestHandler -> {
-                                                                                if (updateConsentRequestHandler
-                                                                                        .failed()) {
-                                                                                    sqlConnection.close();
-                                                                                    monoSink.error(new Exception(UNKNOWN_ERROR_OCCURRED));
-                                                                                    return;
-                                                                                }
-                                                                                transaction.commit();
-                                                                                monoSink.success();
-                                                                            });
-                                                        }
-                                                );
-                                    });
-                })
-        );
+    public Mono<Void> process(List<Query> queries) {
+        return doInTransaction(queries);
+    }
+
+    private Mono<Void> doInTransaction(List<Query> queries) {
+        return Mono.create(monoSink -> dbClient.begin(connectionAttempt -> {
+            if (connectionAttempt.succeeded()) {
+                TransactionContext context = new TransactionContext(connectionAttempt.result(), monoSink);
+                context.executeInTransaction(queries.iterator(), FAILED_TO_SAVE_CONSENT_ARTEFACT);
+            } else {
+                monoSink.error(new RuntimeException("Can not get connectionAttempt to storage."));
+            }
+        }));
     }
 
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(String consentId) {

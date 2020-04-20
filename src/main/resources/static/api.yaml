@@ -302,6 +302,65 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /providers/{provider-id}:
+    get:
+      tags:
+        - discovery
+      summary: Get a specific provider
+      description: >
+        Returns a provider
+          1. **Validate token for expiry**
+          3. **Returns a provider associated with the given id**
+      operationId: fetchProvider
+      parameters:
+        - $ref: "#/components/parameters/authorization"
+        - name: provider-id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ProviderRepresentation'
+        '401':
+          description:  >
+            **Causes:**
+              * Expired/Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Provider doesn't exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   # consent-service
   /consent-requests:
     post:

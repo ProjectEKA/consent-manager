@@ -60,8 +60,8 @@ public class LinkRepository {
                                 }));
     }
 
-    public Mono<String> getHIPIdFromDiscovery(String transactionId) {
-        return getStringFrom(SELECT_HIP_ID_FROM_DISCOVERY, Tuple.of(transactionId));
+    public Mono<String> getHIPIdFromDiscovery(String requestId) {
+        return getStringFrom(SELECT_HIP_ID_FROM_DISCOVERY, Tuple.of(requestId));
     }
 
     public Mono<String> getTransactionIdFromLinkReference(String linkRefNumber) {

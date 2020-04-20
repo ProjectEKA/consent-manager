@@ -2,16 +2,16 @@ package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
-import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Patient;
+import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
-import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import lombok.AllArgsConstructor;

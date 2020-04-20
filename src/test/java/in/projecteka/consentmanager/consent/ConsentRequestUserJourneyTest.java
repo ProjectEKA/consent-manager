@@ -511,7 +511,6 @@ public class ConsentRequestUserJourneyTest {
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectBody(in.projecteka.consentmanager.clients.model.Error.class);
-
     }
 
     public static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

@@ -17,7 +17,7 @@ consentmanager:
     transactionPinDigitSize: 4
     transactionPinTokenValidity: 2
     userCreationTokenValidity: 5
-    userIdSuffix: atncg
+    userIdSuffix: "@ncg"
   otpservice:
     url: http://localhost:5000
     identifiers:

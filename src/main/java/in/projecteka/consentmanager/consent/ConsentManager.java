@@ -101,7 +101,7 @@ public class ConsentManager {
         return conceptValidator.validatePurpose(purpose.getCode())
                 .flatMap(result ->
                         result.booleanValue() ? Mono.empty()
-                            : Mono.error(new ClientError(BAD_REQUEST,
+                                : Mono.error(new ClientError(BAD_REQUEST,
                                 new ErrorRepresentation(new Error(INVALID_PURPOSE, "Invalid Purpose"))))
                 );
     }
@@ -109,9 +109,9 @@ public class ConsentManager {
     private Mono<Void> validateHiTypes(HIType[] hiTypes) {
         return conceptValidator.validateHITypes(Arrays.stream(hiTypes).map(type -> type.getValue()).collect(Collectors.toList()))
                 .flatMap(result ->
-                    result.booleanValue() ? Mono.empty()
-                            : Mono.error(new ClientError(BAD_REQUEST,
-                            new ErrorRepresentation(new Error(INVALID_HITYPE, "Invalid HI Type"))))
+                        result.booleanValue() ? Mono.empty()
+                                : Mono.error(new ClientError(BAD_REQUEST,
+                                new ErrorRepresentation(new Error(INVALID_HITYPE, "Invalid HI Type"))))
                 );
     }
 
@@ -204,9 +204,9 @@ public class ConsentManager {
         }
         return conceptValidator.validateHITypes(hiTypeCodes)
                 .flatMap(result ->
-                    result.booleanValue() ? Mono.empty()
-                            : Mono.error(new ClientError(BAD_REQUEST,
-                            new ErrorRepresentation(new Error(INVALID_HITYPE, "Invalid HI Type"))))
+                        result.booleanValue() ? Mono.empty()
+                                : Mono.error(new ClientError(BAD_REQUEST,
+                                new ErrorRepresentation(new Error(INVALID_HITYPE, "Invalid HI Type"))))
                 );
     }
 

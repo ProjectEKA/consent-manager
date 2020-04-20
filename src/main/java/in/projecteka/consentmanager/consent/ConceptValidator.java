@@ -37,7 +37,6 @@ public class ConceptValidator implements InitializingBean {
         this.hiTypes = readValueSetFromResource(hiTypesValueSetResource);
     }
 
-
     private ConcurrentHashMap<String, String> readValueSetFromResource(Resource resource) throws IOException {
         try (InputStream in = resource.getInputStream()) {
             ByteArrayOutputStream result = new ByteArrayOutputStream();
@@ -76,7 +75,6 @@ public class ConceptValidator implements InitializingBean {
     public Mono<Boolean> validatePurpose(String code) {
         return Mono.just(purposesOfUse.get(code) != null);
     }
-
 
     public Mono<Boolean> validateHITypes(List<String> codes) {
         if (codes.isEmpty()) {

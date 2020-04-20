@@ -130,7 +130,7 @@ public class DiscoveryTest {
                 .verifiedIdentifiers(of(identifier))
                 .unverifiedIdentifiers(unverifiedIds)
                 .build();
-        PatientRequest patientRequest = patientRequest().patient(patient).transactionId(transactionId).build();
+        PatientRequest patientRequest = patientRequest().patient(patient).requestId(transactionId).build();
         DiscoveryResponse discoveryResponse = discoveryResponse()
                 .patient(patientResponse.getPatient())
                 .transactionId(transactionId)

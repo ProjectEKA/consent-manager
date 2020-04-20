@@ -33,7 +33,7 @@ public class LinkRepository {
     private static final String INSERT_TO_LINK_REFERENCE = "INSERT INTO link_reference (patient_link_reference, " +
             "hip_id) VALUES ($1, $2)";
     private static final String SELECT_HIP_ID_FROM_DISCOVERY = "SELECT hip_id FROM discovery_request WHERE " +
-            "transaction_id=$1";
+            "request_id=$1";
     private static final String SELECT_TRANSACTION_ID_FROM_LINK_REFERENCE = "SELECT patient_link_reference ->> " +
             "'transactionId' as transactionId FROM link_reference WHERE patient_link_reference -> 'link' ->> " +
             "'referenceNumber' = $1";

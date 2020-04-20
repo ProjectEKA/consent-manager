@@ -98,7 +98,7 @@ public class UserService {
                         .then())
                 .onErrorResume(ClientError.class, error -> {
                     logger.error(error.getMessage(), error);
-                    return userRepository.delete(user).then();
+                    return userRepository.delete(user.getIdentifier()).then();
                 })
                 .then(tokenService.tokenForUser(username, signUpRequest.getPassword()));
     }

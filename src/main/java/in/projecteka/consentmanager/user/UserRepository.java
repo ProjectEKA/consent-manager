@@ -59,9 +59,8 @@ public class UserRepository {
         return doOperation(INSERT_PATIENT, userDetails);
     }
 
-    public Mono<Void> delete(User user) {
-        String identifier = user.getIdentifier();
-        Tuple userDetails = Tuple.of(identifier);
+    public Mono<Void> delete(String username) {
+        Tuple userDetails = Tuple.of(username);
         return doOperation(DELETE_PATIENT, userDetails);
     }
 

@@ -19,11 +19,11 @@ public class QueryRepresentation {
     private List<HIPConsentArtefactRepresentation> hipConsentArtefactRepresentations;
 
     public QueryRepresentation add(QueryRepresentation other) {
-        List<Query> queries =
+        List<Query> consentArtefactQueries =
                 Stream.of(getQueries(), other.getQueries()).flatMap(Collection::stream).collect(Collectors.toList());
-        List<HIPConsentArtefactRepresentation> hipConsentArtefactRepresentations =
+        List<HIPConsentArtefactRepresentation> hipConsentArtefactReps =
                 Stream.of(getHipConsentArtefactRepresentations(), other.getHipConsentArtefactRepresentations())
                         .flatMap(Collection::stream).collect(Collectors.toList());
-        return new QueryRepresentation(queries, hipConsentArtefactRepresentations);
+        return new QueryRepresentation(consentArtefactQueries, hipConsentArtefactReps);
     }
 }

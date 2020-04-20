@@ -8,9 +8,9 @@ import java.util.Iterator;
 
 public class TransactionContext {
     private Transaction transaction;
-    private MonoSink sink;
+    private MonoSink<Void> sink;
 
-    public TransactionContext(Transaction transaction, MonoSink sink) {
+    public TransactionContext(Transaction transaction, MonoSink<Void> sink) {
         this.transaction = transaction;
         this.sink = sink;
     }

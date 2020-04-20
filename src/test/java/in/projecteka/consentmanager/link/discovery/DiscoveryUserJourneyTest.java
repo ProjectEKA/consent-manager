@@ -67,7 +67,7 @@ public class DiscoveryUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
-    private static MockWebServer providerServer = new MockWebServer();
+    private static final MockWebServer providerServer = new MockWebServer();
 
     @Autowired
     private WebTestClient webTestClient;

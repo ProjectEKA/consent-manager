@@ -31,7 +31,7 @@ class UserConfigurationTest {
     @Mock
     private UserServiceProperties properties;
 
-    private UserConfiguration userConfiguration = new UserConfiguration();
+    private final UserConfiguration userConfiguration = new UserConfiguration();
 
     @Test
     public void shouldReturnUserServiceInstance() {

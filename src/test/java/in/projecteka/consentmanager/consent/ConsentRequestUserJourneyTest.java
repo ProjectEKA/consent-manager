@@ -108,10 +108,10 @@ public class ConsentRequestUserJourneyTest {
     @Captor
     private ArgumentCaptor<ConsentRequest> captor;
 
-    private static MockWebServer clientRegistryServer = new MockWebServer();
-    private static MockWebServer userServer = new MockWebServer();
-    private static MockWebServer identityServer = new MockWebServer();
-    private static MockWebServer patientLinkServer = new MockWebServer();
+    private static final MockWebServer clientRegistryServer = new MockWebServer();
+    private static final MockWebServer userServer = new MockWebServer();
+    private static final MockWebServer identityServer = new MockWebServer();
+    private static final MockWebServer patientLinkServer = new MockWebServer();
     private static final String CONSENT_GRANT_JSON = "{\n" +
             "    \"consents\": [\n" +
             "        {\n" +
@@ -153,7 +153,7 @@ public class ConsentRequestUserJourneyTest {
         patientLinkServer.shutdown();
     }
 
-    private String requestedConsentJson = "{\n" +
+    private final String requestedConsentJson = "{\n" +
             "            \"status\": \"REQUESTED\",\n" +
             "            \"createdAt\": \"2020-03-14T10:51:05.466+0000\",\n" +
             "            \"purpose\": {\n" +

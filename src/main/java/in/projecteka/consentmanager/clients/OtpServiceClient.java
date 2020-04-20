@@ -1,14 +1,16 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.OtpRequest;
-import in.projecteka.consentmanager.clients.model.Value;
+import in.projecteka.consentmanager.clients.model.VerificationRequest;
 import in.projecteka.consentmanager.consent.model.Notification;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
+import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 public class OtpServiceClient {
 
@@ -23,9 +25,9 @@ public class OtpServiceClient {
         return webClientBuilder.build()
                 .post()
                 .uri(uriBuilder -> uriBuilder.path("/otp").build())
-                .header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .body(Mono.just(requestBody), OtpRequest.class)
-                .accept(MediaType.APPLICATION_JSON)
+                .accept(APPLICATION_JSON)
                 .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .toBodilessEntity()
@@ -33,18 +35,19 @@ public class OtpServiceClient {
     }
 
     public Mono<Void> verify(String sessionId, String otp) {
-        Value valueOtp = new Value(otp);
         return webClientBuilder.build()
                 .post()
                 .uri(uriBuilder -> uriBuilder
                         .path("/otp/{sessionId}/verify")
                         .build(sessionId))
-                .header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
-                .accept(MediaType.APPLICATION_JSON)
-                .body(Mono.just(valueOtp), Value.class)
+                .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                .accept(APPLICATION_JSON)
+                .body(Mono.just(new VerificationRequest(otp)), VerificationRequest.class)
                 .retrieve()
-                .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(ClientError.otpNotFound()))
-                .onStatus(HttpStatus::is5xxServerError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .onStatus(HttpStatus::is4xxClientError,
+                        clientResponse -> Mono.error(ClientError.otpNotFound()))
+                .onStatus(HttpStatus::is5xxServerError,
+                        clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .toBodilessEntity()
                 .then();
     }
@@ -53,7 +56,7 @@ public class OtpServiceClient {
         return webClientBuilder.build()
                 .post()
                 .uri(uriBuilder -> uriBuilder.path("/notification").build())
-                .header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .bodyValue(notification)
                 .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(unknownErrorOccurred()))

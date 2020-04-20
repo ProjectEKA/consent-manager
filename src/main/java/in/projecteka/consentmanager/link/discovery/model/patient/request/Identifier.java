@@ -8,6 +8,6 @@ import lombok.Value;
 @Value
 @Builder
 public class Identifier {
-    private String type;
-    private String value;
+    String type;
+    String value;
 }

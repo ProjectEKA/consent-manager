@@ -41,7 +41,7 @@ public class ConsentArtefactRepository {
     private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
     private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
 
-    private PgPool dbClient;
+    private final PgPool dbClient;
 
     public Mono<Void> process(List<Query> queries) {
         return doInTransaction(queries);

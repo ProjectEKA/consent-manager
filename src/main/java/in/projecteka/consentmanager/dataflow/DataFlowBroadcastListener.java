@@ -25,12 +25,12 @@ import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 @AllArgsConstructor
 public class DataFlowBroadcastListener {
     private static final Logger logger = LoggerFactory.getLogger(DataFlowBroadcastListener.class);
-    private MessageListenerContainerFactory messageListenerContainerFactory;
-    private DestinationsConfig destinationsConfig;
-    private Jackson2JsonMessageConverter converter;
-    private DataRequestNotifier dataRequestNotifier;
-    private DataFlowRequestRepository dataFlowRequestRepository;
-    private CentralRegistry clientRegistryClient;
+    private final MessageListenerContainerFactory messageListenerContainerFactory;
+    private final DestinationsConfig destinationsConfig;
+    private final Jackson2JsonMessageConverter converter;
+    private final DataRequestNotifier dataRequestNotifier;
+    private final DataFlowRequestRepository dataFlowRequestRepository;
+    private final CentralRegistry clientRegistryClient;
 
     @PostConstruct
     public void subscribe() throws ClientError {

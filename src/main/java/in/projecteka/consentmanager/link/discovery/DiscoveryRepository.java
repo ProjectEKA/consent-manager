@@ -9,7 +9,7 @@ public class DiscoveryRepository {
 
     private static final String INSERT_TO_DISCOVERY_REQUEST = "INSERT INTO discovery_request (transaction_id, " +
             "patient_id, hip_id) VALUES ($1, $2, $3)";
-    private PgPool dbClient;
+    private final PgPool dbClient;
 
     public DiscoveryRepository(PgPool dbClient) {
         this.dbClient = dbClient;

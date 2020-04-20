@@ -15,6 +15,6 @@ import java.util.List;
 @Data
 public class PatientRepresentation {
     private String referenceNumber;
-    private String Display;
+    private String display;
     private List<CareContextRepresentation> careContexts;
 }

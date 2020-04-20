@@ -32,12 +32,12 @@ import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 @AllArgsConstructor
 public class ConsentRequestNotificationListener {
     private static final Logger logger = LoggerFactory.getLogger(ConsentRequestNotificationListener.class);
-    private MessageListenerContainerFactory messageListenerContainerFactory;
-    private DestinationsConfig destinationsConfig;
-    private Jackson2JsonMessageConverter converter;
-    private OtpServiceClient consentNotificationClient;
-    private UserServiceClient userServiceClient;
-    private ConsentServiceProperties consentServiceProperties;
+    private final MessageListenerContainerFactory messageListenerContainerFactory;
+    private final DestinationsConfig destinationsConfig;
+    private final Jackson2JsonMessageConverter converter;
+    private final OtpServiceClient consentNotificationClient;
+    private final UserServiceClient userServiceClient;
+    private final ConsentServiceProperties consentServiceProperties;
 
     @PostConstruct
     public void subscribe() throws ClientError {

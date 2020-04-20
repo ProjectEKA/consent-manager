@@ -1,16 +1,15 @@
 package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.Identifier;
-import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
-import in.projecteka.consentmanager.link.link.model.Hip;
-import in.projecteka.consentmanager.link.link.model.Links;
-import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
+import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
+import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.link.link.model.Hip;
+import in.projecteka.consentmanager.link.link.model.Links;
+import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +60,7 @@ class LinkTest {
 
     @Test
     public void createsLinkReference() {
+        var requestId = string();
         var link = new Link(linkServiceClient, linkRepository, clientRegistryClient);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
@@ -76,6 +76,7 @@ class LinkTest {
         String patientId = "patient";
         PatientLinkReferenceRequest patientLinkReferenceRequest = patientLinkReferenceRequest().build();
         var patientLinkReferenceRequestForHIP = new in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest(
+                requestId,
                 patientLinkReferenceRequest.getTransactionId(),
                 toHIPPatient(patientId, patientLinkReferenceRequest.getPatient()));
         String hipId = "10000005";
@@ -90,7 +91,7 @@ class LinkTest {
                 .thenReturn(Mono.just(hipId));
         when(linkRepository.insertToLinkReference(patientLinkReferenceResponse, hipId)).thenReturn(Mono.empty());
 
-        StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
+        StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest, requestId))
                 .expectNext(patientLinkReferenceResponse)
                 .verifyComplete();
     }
@@ -98,6 +99,7 @@ class LinkTest {
     @Test
     public void shouldGetSystemUrlForOfficialIdentifier() {
         var token = string();
+        var requestId = string();
         var link = new Link(linkServiceClient, linkRepository, clientRegistryClient);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
@@ -123,6 +125,7 @@ class LinkTest {
         PatientLinkReferenceRequest patientLinkReferenceRequest = patientLinkReferenceRequest().build();
         var patientLinkReferenceRequestForHIP =
                 new in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest(
+                        requestId,
                         patientLinkReferenceRequest.getTransactionId(),
                         toHIPPatient(patientId, patientLinkReferenceRequest.getPatient()));
 
@@ -132,7 +135,7 @@ class LinkTest {
                 .thenReturn(Mono.just(hipId));
         when(linkRepository.insertToLinkReference(patientLinkReferenceResponse, hipId)).thenReturn(Mono.empty());
 
-        StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
+        StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest, requestId))
                 .expectNext(patientLinkReferenceResponse)
                 .verifyComplete();
         verify(linkServiceClient).linkPatientEnquiry(patientLinkReferenceRequestForHIP, providerUrl, token);
@@ -140,6 +143,7 @@ class LinkTest {
 
     @Test
     public void shouldGetErrorWhenProviderUrlIsEmpty() {
+        var requestId = string();
         var link = new Link(linkServiceClient, linkRepository, clientRegistryClient);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
@@ -159,7 +163,7 @@ class LinkTest {
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
 
-        StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
+        StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest, requestId))
                 .expectErrorSatisfies(error -> {
                     assertThat(((ClientError) error).getError()).isEqualTo(clientError.getError());
                     assertThat(((ClientError) error).getHttpStatus()).isEqualTo(clientError.getHttpStatus());

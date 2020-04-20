@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class PatientLinkReferenceRequest {
+    private String requestId;
     private String transactionId;
     private Patient patient;
 }

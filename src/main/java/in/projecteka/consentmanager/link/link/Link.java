@@ -34,9 +34,11 @@ public class Link {
     private final CentralRegistry centralRegistry;
 
     public Mono<PatientLinkReferenceResponse> patientWith(String patientId,
-                                                          PatientLinkReferenceRequest patientLinkReferenceRequest) {
+                                                          PatientLinkReferenceRequest patientLinkReferenceRequest,
+                                                          String requestId) {
         Patient patient = toHIPPatient(patientId, patientLinkReferenceRequest.getPatient());
         var linkReferenceRequest = new in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest(
+                requestId,
                 patientLinkReferenceRequest.getTransactionId(),
                 patient);
         return linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId())

@@ -8,6 +8,6 @@ import lombok.Value;
 @Value
 @Builder
 public class IdentifierRepresentation {
-    private String name;
-    private String id;
+    String name;
+    String id;
 }

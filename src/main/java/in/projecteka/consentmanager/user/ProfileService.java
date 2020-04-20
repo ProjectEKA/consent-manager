@@ -11,8 +11,8 @@ import static java.util.Collections.singletonList;
 
 @AllArgsConstructor
 public class ProfileService {
-    private UserService userService;
-    private TransactionPinService transactionPinService;
+    private final UserService userService;
+    private final TransactionPinService transactionPinService;
 
     public Mono<Profile> profileFor(String patientId) {
         return userService.userWith(patientId)

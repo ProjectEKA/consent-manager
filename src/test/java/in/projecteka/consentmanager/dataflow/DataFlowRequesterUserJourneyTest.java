@@ -63,8 +63,8 @@ import static org.mockito.Mockito.when;
 @AutoConfigureWebTestClient
 @ContextConfiguration(initializers = DataFlowRequesterUserJourneyTest.ContextInitializer.class)
 public class DataFlowRequesterUserJourneyTest {
-    private static MockWebServer consentManagerServer = new MockWebServer();
-    private static MockWebServer identityServer = new MockWebServer();
+    private static final MockWebServer consentManagerServer = new MockWebServer();
+    private static final MockWebServer identityServer = new MockWebServer();
 
     @SuppressWarnings("unused")
     @MockBean

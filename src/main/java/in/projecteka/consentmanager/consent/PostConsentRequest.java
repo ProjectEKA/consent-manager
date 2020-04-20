@@ -16,8 +16,8 @@ import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 @AllArgsConstructor
 public class PostConsentRequest {
     private static final Logger logger = LoggerFactory.getLogger(PostConsentRequest.class);
-    private AmqpTemplate amqpTemplate;
-    private DestinationsConfig destinationsConfig;
+    private final AmqpTemplate amqpTemplate;
+    private final DestinationsConfig destinationsConfig;
 
     @SneakyThrows
     public Mono<Void> broadcastConsentRequestNotification(ConsentRequest consentRequest) {

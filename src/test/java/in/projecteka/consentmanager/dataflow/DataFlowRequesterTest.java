@@ -15,6 +15,7 @@ import reactor.core.publisher.MonoSink;
 import reactor.test.StepVerifier;
 
 import java.text.ParseException;
+import java.util.Objects;
 
 import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
@@ -67,7 +68,7 @@ public class DataFlowRequesterTest {
                 any(in.projecteka.consentmanager.dataflow.model.DataFlowRequest.class))).thenReturn(Mono.empty());
 
         StepVerifier.create(dataFlowRequester.requestHealthData(hiuId, request))
-                .expectNextMatches(res -> res != null)
+                .expectNextMatches(Objects::nonNull)
                 .verifyComplete();
     }
 

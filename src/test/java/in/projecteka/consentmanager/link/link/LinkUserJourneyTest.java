@@ -69,10 +69,10 @@ import static org.mockito.Mockito.when;
 @AutoConfigureWebTestClient
 @ContextConfiguration(initializers = LinkUserJourneyTest.ContextInitializer.class)
 public class LinkUserJourneyTest {
-    private static MockWebServer clientRegistryServer = new MockWebServer();
-    private static MockWebServer hipServer = new MockWebServer();
-    private static MockWebServer userServer = new MockWebServer();
-    private static MockWebServer identityServer = new MockWebServer();
+    private static final MockWebServer clientRegistryServer = new MockWebServer();
+    private static final MockWebServer hipServer = new MockWebServer();
+    private static final MockWebServer userServer = new MockWebServer();
+    private static final MockWebServer identityServer = new MockWebServer();
 
     @MockBean
     private DestinationsConfig destinationsConfig;

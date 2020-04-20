@@ -5,6 +5,10 @@ import lombok.SneakyThrows;
 
 public final class Serializer {
 
+    private Serializer() {
+
+    }
+
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @SneakyThrows

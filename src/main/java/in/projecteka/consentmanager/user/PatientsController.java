@@ -40,7 +40,7 @@ public class PatientsController {
     public Mono<Void> pin(@RequestBody CreatePinRequest createPinRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUserName)
+                .map(Caller::getUsername)
                 .flatMap(userName -> transactionPinService.createPinFor(userName, createPinRequest.getPin()));
     }
 
@@ -48,7 +48,7 @@ public class PatientsController {
     public Mono<Profile> profileFor() {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUserName)
+                .map(Caller::getUsername)
                 .flatMap(profileService::profileFor);
     }
 
@@ -56,7 +56,7 @@ public class PatientsController {
     public Mono<Token> validatePin(@RequestBody ValidatePinRequest request) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUserName)
+                .map(Caller::getUsername)
                 .flatMap(userName -> transactionPinService.validatePinFor(userName, request.getPin()));
     }
 

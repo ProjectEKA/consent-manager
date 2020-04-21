@@ -194,4 +194,9 @@ public class ClientError extends Throwable {
         return new ClientError(CONFLICT,
                 new ErrorRepresentation(new Error(CONSENT_NOT_GRANTED, "Not a granted consent.")));
     }
+
+    public static ClientError invalidAccessToken() {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(INVALID_TOKEN, "Expected token of the format `Bearer accessToken`")));
+    }
 }

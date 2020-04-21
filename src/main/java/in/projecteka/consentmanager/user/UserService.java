@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.user;
 
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
@@ -72,17 +73,16 @@ public class UserService {
 
     public Mono<Session> create(SignUpRequest signUpRequest, String sessionId) {
         UserCredential credential = new UserCredential(signUpRequest.getPassword());
-        KeycloakUser user = new KeycloakUser(
+        KeycloakUser keycloakUser = new KeycloakUser(
                 signUpRequest.getName(),
                 signUpRequest.getUsername(),
                 Collections.singletonList(credential),
                 Boolean.TRUE.toString());
 
-        // TODO: If some failure happened in between roll back others.
         return signupService.getMobileNumber(sessionId)
                 .switchIfEmpty(Mono.error(new InvalidRequestException("mobile number not verified")))
                 .flatMap(mobileNumber -> userExistsWith(signUpRequest.getUsername())
-                        .switchIfEmpty(Mono.defer(() -> createUserWith(mobileNumber, signUpRequest, user)))
+                        .switchIfEmpty(Mono.defer(() -> createUserWith(mobileNumber, signUpRequest, keycloakUser)))
                         .cast(Session.class));
     }
 
@@ -94,12 +94,18 @@ public class UserService {
                 });
     }
 
-    private Mono<Session> createUserWith(String mobileNumber, SignUpRequest signUpRequest, KeycloakUser user) {
-        return tokenService.tokenForAdmin()
-                .flatMap(accessToken -> identityServiceClient.createUser(accessToken, user))
-                .then(userRepository.save(User.from(signUpRequest, mobileNumber)))
-                .then(tokenService.tokenForUser(signUpRequest.getUsername(), signUpRequest.getPassword()))
-                .map(keycloakToken -> keycloakToken);
+
+    private Mono<Session> createUserWith(String mobileNumber, SignUpRequest signUpRequest, KeycloakUser keycloakUser) {
+        User user = User.from(signUpRequest, mobileNumber);
+        return userRepository.save(user)
+                .then(tokenService.tokenForAdmin()
+                        .flatMap(accessToken -> identityServiceClient.createUser(accessToken, keycloakUser))
+                        .then())
+                .onErrorResume(ClientError.class, error -> {
+                    logger.error(error.getMessage(), error);
+                    return userRepository.delete(user.getIdentifier()).then();
+                })
+                .then(tokenService.tokenForUser(signUpRequest.getUsername(), signUpRequest.getPassword()));
     }
 
     private boolean validateOtpVerification(OtpVerification otpVerification) {

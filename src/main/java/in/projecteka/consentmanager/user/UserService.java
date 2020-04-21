@@ -65,7 +65,6 @@ public class UserService {
         if (!validateOtpVerification(otpVerification)) {
             throw new InvalidRequestException("invalid.request.body");
         }
-
         return otpServiceClient
                 .verify(otpVerification.getSessionId(), otpVerification.getValue())
                 .then(signupService.generateToken(otpVerification.getSessionId()));

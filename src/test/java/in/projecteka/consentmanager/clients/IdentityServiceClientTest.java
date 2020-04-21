@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.clients;
 
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -99,5 +100,29 @@ class IdentityServiceClientTest {
                 .verify();
         assertThat(captor.getValue().headers().get(HttpHeaders.AUTHORIZATION).get(0))
                 .isEqualTo(format("Bearer %s", token.getAccessToken()));
+    }
+
+    @Test
+    public void shouldLogout() {
+        when(exchangeFunction.exchange(captor.capture())).
+                thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK).build()));
+
+        StepVerifier.create(identityServiceClient.logout(formData))
+                .verifyComplete();
+        Assert.assertTrue(captor.getValue().url().toString().endsWith("realms/consent-manager/protocol/openid-connect/logout"));
+    }
+
+    @Test
+    public void shouldThrowErrorIfUpstreamLogoutRequestFails() {
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(
+                Mono.just(ClientResponse
+                        .create(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .build()));
+
+        StepVerifier.create(identityServiceClient.logout(formData))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is5xxServerError())
+                .verify();
+        Assert.assertTrue(captor.getValue().url().toString().endsWith("realms/consent-manager/protocol/openid-connect/logout"));
     }
 }

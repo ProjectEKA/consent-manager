@@ -38,7 +38,7 @@ public class RedisCacheAdapter implements CacheAdapter<String, String> {
     public Mono<Void> put(String key, String value) {
         RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
         return redisCommands.set(key, value)
-                .then(redisCommands.expire(key, 5 * 60L))
+                .then(redisCommands.expire(key, 5 * 60L))//TODO: Set this value to be same as jwt accessToken expiry(maybe need to make a config)
                 .then();
     }
 
@@ -51,5 +51,11 @@ public class RedisCacheAdapter implements CacheAdapter<String, String> {
     public Mono<Void> invalidate(String key) {
         RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
         return redisCommands.expire(key, 0L).then();
+    }
+
+    @Override
+    public Mono<Boolean> exists(String key) {
+        RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
+        return redisCommands.exists(key).flatMap(existCount -> Mono.just(existCount > 0));
     }
 }

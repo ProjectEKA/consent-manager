@@ -1,0 +1,21 @@
+@startuml
+
+header Thoughtworks
+title HIP initiates LINK with deep link to patient APP (Link contract needs to be modified)
+
+entity Patient
+participant CM
+participant HIP
+
+Patient->HIP: Provides their Consent Manager Id
+HIP -> HIP: Generates discovery entry
+HIP->HIP: Generates deep link
+HIP->Patient: Sends a deep link
+note right of Patient: Sends it to their mobile number (with it's care contexts and provider ID)
+Patient -> CM: Starts the link request initiation
+CM -> HIP: Forwards link request to HIP
+HIP -> Patient: Sends an OTP
+Patient -> CM: Confirms the link
+CM -> HIP: Forwards the link confirmation
+
+@enduml

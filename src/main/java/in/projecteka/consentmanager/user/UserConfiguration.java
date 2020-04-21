@@ -73,7 +73,7 @@ public class UserConfiguration {
     }
 
     @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    @Bean({"unverifiedSessions", "verifiedSessions"})
+    @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens"})
     public CacheAdapter<String, String> createLoadingCacheAdapter(LoadingCache<String,String> cache) {
        return new LoadingCacheAdapter(cache);
     }
@@ -92,7 +92,7 @@ public class UserConfiguration {
     }
 
     @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "redis")
-    @Bean({"unverifiedSessions", "verifiedSessions"})
+    @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens"})
     public CacheAdapter<String, String> createRedisCacheAdapter(RedisOptions redisOptions) {
         RedisURI redisUri = RedisURI.Builder.
                 redis(redisOptions.getHost())
@@ -105,8 +105,9 @@ public class UserConfiguration {
 
 
     @Bean
-    public SessionService sessionService(TokenService tokenService) {
-        return new SessionService(tokenService);
+    public SessionService sessionService(TokenService tokenService,
+                                         CacheAdapter<String,String> blacklistedTokens) {
+        return new SessionService(tokenService, blacklistedTokens);
     }
 
     @Bean

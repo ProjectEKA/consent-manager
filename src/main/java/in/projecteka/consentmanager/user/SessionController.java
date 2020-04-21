@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.user;
 
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.SessionRequest;
@@ -23,6 +24,10 @@ public class SessionController {
     @PostMapping("/logout")
     public Mono<Void> logout(@RequestHeader(name = "Authorization") String accessToken,
                              @RequestBody LogoutRequest logoutRequest) {
-        return Mono.empty();
+        String[] splitAccessToken = accessToken.split(" ");
+        if (splitAccessToken.length != 2) {
+            return Mono.error(ClientError.invalidAccessToken());
+        }
+        return sessionService.logout(splitAccessToken[1], logoutRequest);
     }
 }

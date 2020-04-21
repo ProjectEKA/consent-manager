@@ -16,12 +16,11 @@ public class TransactionPinRepository {
             "transaction_pin (pin, patient_id) VALUES ($1, $2)";
     private static final String SELECT_TRANSACTION_PIN = "SELECT pin, patient_id from " +
             "transaction_pin WHERE patient_id=$1";
-    private PgPool dbClient;
+    private final PgPool dbClient;
 
     public Mono<Void> insert(TransactionPin transactionPin) {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_TRANSACTION_PIN)
-                .execute(
-                        Tuple.of(transactionPin.getPin(), transactionPin.getPatientId()),
+                .execute(Tuple.of(transactionPin.getPin(), transactionPin.getPatientId()),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(ClientError.failedToCreateTransactionPin());
@@ -33,18 +32,17 @@ public class TransactionPinRepository {
 
     public Mono<Optional<TransactionPin>> getTransactionPinFor(String patientId) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_TRANSACTION_PIN)
-                .execute(
-                        Tuple.of(patientId),
+                .execute(Tuple.of(patientId),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(ClientError.failedToFetchTransactionPin());
                                 return;
                             }
                             var transactionPinIterator = handler.result().iterator();
-                            if (transactionPinIterator.hasNext()) {
-                                monoSink.success(transactionPinFrom(transactionPinIterator.next()));
+                            if (!transactionPinIterator.hasNext()) {
+                                monoSink.success(Optional.empty());
                             }
-                            monoSink.success(Optional.empty());
+                            monoSink.success(transactionPinFrom(transactionPinIterator.next()));
                         }));
     }
 

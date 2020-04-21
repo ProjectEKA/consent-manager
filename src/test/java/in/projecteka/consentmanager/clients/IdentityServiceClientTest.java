@@ -32,7 +32,7 @@ class IdentityServiceClientTest {
     @Mock
     private ExchangeFunction exchangeFunction;
     private IdentityServiceClient identityServiceClient;
-    private MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+    private final MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
 
     @BeforeEach
     void setUp() {

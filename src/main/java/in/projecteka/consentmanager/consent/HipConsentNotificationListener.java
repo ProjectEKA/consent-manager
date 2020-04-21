@@ -24,11 +24,11 @@ import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 @AllArgsConstructor
 public class HipConsentNotificationListener {
     private static final Logger logger = LoggerFactory.getLogger(HipConsentNotificationListener.class);
-    private MessageListenerContainerFactory messageListenerContainerFactory;
-    private DestinationsConfig destinationsConfig;
-    private Jackson2JsonMessageConverter converter;
-    private ConsentArtefactNotifier consentArtefactNotifier;
-    private CentralRegistry centralRegistry;
+    private final MessageListenerContainerFactory messageListenerContainerFactory;
+    private final DestinationsConfig destinationsConfig;
+    private final Jackson2JsonMessageConverter converter;
+    private final ConsentArtefactNotifier consentArtefactNotifier;
+    private final CentralRegistry centralRegistry;
 
     @PostConstruct
     public void subscribe() throws ClientError {

@@ -32,9 +32,10 @@ public enum ErrorCode {
     INVALID_TRANSACTION_PIN(1022),
     TRANSACTION_PIN_NOT_FOUND(1023),
     CONSENT_NOT_GRANTED(1024),
-    INVALID_STATE(1025);
+    INVALID_STATE(1025),
+    TRANSACTION_ID_NOT_FOUND(1026);
 
-    private int value;
+    private final int value;
 
     ErrorCode(int val) {
         value = val;

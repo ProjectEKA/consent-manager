@@ -477,7 +477,7 @@
 								"exec": [
 									"pm.test(\"Update user creation token\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.environment.set(\"PIN_AUTHORIZATION\", \"bearer \" + jsonData.temporaryToken);",
+									"    pm.environment.set(\"PIN_AUTHORIZATION\", jsonData.temporaryToken);",
 									"});"
 								],
 								"type": "text/javascript"

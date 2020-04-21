@@ -68,10 +68,7 @@ public class Link {
     public Mono<PatientLinkResponse> verifyToken(String linkRefNumber,
                                                  PatientLinkRequest patientLinkRequest,
                                                  String patientId) {
-        return isOTPExpired(linkRefNumber)
-                .filter(expired -> !expired)
-                .switchIfEmpty(Mono.error(ClientError.otpExpired()))
-                .then(linkCareContexts(patientLinkRequest, linkRefNumber, patientId));
+        return linkCareContexts(patientLinkRequest, linkRefNumber, patientId);
     }
 
     private Mono<PatientLinkResponse> linkCareContexts(PatientLinkRequest patientLinkRequest,
@@ -112,20 +109,6 @@ public class Link {
                         .findFirst()
                         .map(identifier -> Mono.just(identifier.getSystem()))
                         .orElse(Mono.empty()));
-    }
-
-    private Mono<Boolean> isOTPExpired(String linkRefNumber) {
-        return linkRepository.getExpiryFromLinkReference(linkRefNumber)
-                .flatMap(this::isExpired);
-    }
-
-    @SneakyThrows
-    private Mono<Boolean> isExpired(String expiry) {
-        TimeZone tz = TimeZone.getTimeZone("UTC");
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        df.setTimeZone(tz);
-        Date date = df.parse(expiry);
-        return Mono.just(date.before(new Date()));
     }
 
     public Mono<PatientLinksResponse> getLinkedCareContexts(String patientId) {

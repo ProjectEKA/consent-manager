@@ -78,4 +78,58 @@ class OtpServiceClientTest {
         assertThat(captor.getValue().url().getPath()).isEqualTo("/otpservice/otp");
         assertThat(captor.getValue().url().getHost()).isEqualTo("localhost");
     }
+
+    @Test
+    public void shouldVerifyOtp() {
+        var sessionId = easyRandom.nextObject(String.class);
+        var otp = easyRandom.nextObject(String.class);
+
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(
+                Mono.just(ClientResponse
+                        .create(HttpStatus.OK)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .build()));
+
+        StepVerifier.create(otpServiceClient.verify(sessionId, otp)).verifyComplete();
+        assertThat(captor.getValue().url().getPath()).isEqualTo("/otpservice/otp/" + sessionId + "/verify");
+        assertThat(captor.getValue().url().getHost()).isEqualTo("localhost");
+    }
+
+    @Test
+    public void shouldThrowUnauthorizedWhenOtpExpired() {
+        var sessionId = easyRandom.nextObject(String.class);
+        var otp = easyRandom.nextObject(String.class);
+
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(
+                Mono.just(ClientResponse
+                        .create(HttpStatus.UNAUTHORIZED)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .build()));
+
+        StepVerifier.create(otpServiceClient.verify(sessionId, otp))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().value() == 401)
+                .verify();
+        assertThat(captor.getValue().url().getPath()).isEqualTo("/otpservice/otp/" + sessionId + "/verify");
+        assertThat(captor.getValue().url().getHost()).isEqualTo("localhost");
+    }
+
+    @Test
+    public void shouldThrowBadRequestWhenOtpIsInvalid() {
+        var sessionId = easyRandom.nextObject(String.class);
+        var otp = easyRandom.nextObject(String.class);
+
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(
+                Mono.just(ClientResponse
+                        .create(HttpStatus.BAD_REQUEST)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .build()));
+
+        StepVerifier.create(otpServiceClient.verify(sessionId, otp))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().value() == 400)
+                .verify();
+        assertThat(captor.getValue().url().getPath()).isEqualTo("/otpservice/otp/" + sessionId + "/verify");
+        assertThat(captor.getValue().url().getHost()).isEqualTo("localhost");
+    }
 }

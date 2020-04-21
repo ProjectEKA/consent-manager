@@ -116,8 +116,8 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(CONSENT_ARTEFACT_FORBIDDEN, "Cannot retrieve Consent artefact")));
     }
 
-    public static ClientError otpNotFound() {
-        return new ClientError(NOT_FOUND, new ErrorRepresentation(new Error(OTP_INVALID, "Invalid OTP")));
+    public static ClientError invalidOtp() {
+        return new ClientError(BAD_REQUEST, new ErrorRepresentation(new Error(OTP_INVALID, "Invalid OTP")));
     }
 
     public static ClientError unknownErrorOccurred() {

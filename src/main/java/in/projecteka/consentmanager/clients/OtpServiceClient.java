@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.clients;
 
+import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.VerificationRequest;
 import in.projecteka.consentmanager.consent.model.Notification;
@@ -8,6 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
+import static java.util.function.Predicate.not;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -44,8 +46,10 @@ public class OtpServiceClient {
                 .accept(APPLICATION_JSON)
                 .body(Mono.just(new VerificationRequest(otp)), VerificationRequest.class)
                 .retrieve()
-                .onStatus(HttpStatus::is4xxClientError,
-                        clientResponse -> Mono.error(ClientError.otpNotFound()))
+                .onStatus(httpStatus -> httpStatus.value() == 400,
+                        clientResponse -> Mono.error(ClientError.invalidOtp()))
+                .onStatus(httpStatus -> httpStatus.value() == 401,
+                        clientResponse -> Mono.error(ClientError.otpExpired()))
                 .onStatus(HttpStatus::is5xxServerError,
                         clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .toBodilessEntity()

@@ -31,6 +31,7 @@ public class SessionService {
     }
 
     public Mono<Void> logout(String accessToken, LogoutRequest logoutRequest) {
-        return blacklistedTokens.put(String.format(BLACKLIST_FORMAT, BLACKLIST, accessToken),"").then();
+        return blacklistedTokens.put(String.format(BLACKLIST_FORMAT, BLACKLIST, accessToken),"")
+                .then(tokenService.revoke(logoutRequest.getRefreshToken()));
     }
 }

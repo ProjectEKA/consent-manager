@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.user.model.LogoutRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -103,12 +104,16 @@ class SessionServiceTest {
     @Test
     public void shouldBlackListToken() {
         String testAccessToken = "accessToken";
+        String refreshToken = "refreshToken";
+        LogoutRequest logoutRequest = new LogoutRequest(refreshToken);
         when(blacklistedTokens.put(String.format(BLACKLIST_FORMAT, BLACKLIST, testAccessToken),"")).
                 thenReturn(Mono.empty());
+        when(tokenService.revoke(refreshToken)).thenReturn(Mono.empty());
         SessionService sessionService = new SessionService(tokenService, blacklistedTokens);
-        Mono<Void> logout = sessionService.logout(testAccessToken, null);
+        Mono<Void> logout = sessionService.logout(testAccessToken, logoutRequest);
 
         StepVerifier.create(logout).verifyComplete();
         verify(blacklistedTokens).put(String.format(BLACKLIST_FORMAT, BLACKLIST, testAccessToken),"");
+        verify(tokenService).revoke(refreshToken);
     }
 }

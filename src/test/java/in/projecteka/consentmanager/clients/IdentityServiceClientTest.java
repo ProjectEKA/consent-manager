@@ -18,7 +18,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import static in.projecteka.consentmanager.clients.TestBuilders.*;
+import static in.projecteka.consentmanager.clients.TestBuilders.keycloakCreateUser;
+import static in.projecteka.consentmanager.clients.TestBuilders.keycloakProperties;
+import static in.projecteka.consentmanager.clients.TestBuilders.session;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;

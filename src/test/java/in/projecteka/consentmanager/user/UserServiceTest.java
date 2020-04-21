@@ -9,7 +9,11 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
-import in.projecteka.consentmanager.user.model.*;
+import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.SignUpSession;
+import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,11 +34,17 @@ import reactor.test.StepVerifier;
 import java.time.LocalDate;
 import java.util.Collections;
 
-import static in.projecteka.consentmanager.user.TestBuilders.*;
+import static in.projecteka.consentmanager.user.TestBuilders.session;
+import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
+import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static in.projecteka.consentmanager.user.TestBuilders.user;
+import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class UserServiceTest {
 

@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.DbOperationError;
+import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.User;
 import io.vertx.pgclient.PgPool;
@@ -30,7 +30,7 @@ public class UserRepository {
                 .execute(Tuple.of(userName),
                         handler -> {
                             if (handler.failed()) {
-                                logger.error("", handler.cause());
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(new DbOperationError());
                                 return;
                             }

@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.clients.DbOperationError;
+import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.link.link.model.Hip;

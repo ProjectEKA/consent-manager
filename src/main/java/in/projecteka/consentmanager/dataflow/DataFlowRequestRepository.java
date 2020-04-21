@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.dataflow;
 
-import in.projecteka.consentmanager.clients.DbOperationError;
+import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
 import io.vertx.core.json.JsonObject;

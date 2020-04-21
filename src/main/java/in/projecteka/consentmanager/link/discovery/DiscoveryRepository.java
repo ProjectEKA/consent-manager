@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.link.discovery;
 
-import in.projecteka.consentmanager.clients.DbOperationError;
+import in.projecteka.consentmanager.common.DbOperationError;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
 import reactor.core.publisher.Mono;

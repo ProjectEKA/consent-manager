@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.clients;
+package in.projecteka.consentmanager.common;
 
 
 import in.projecteka.consentmanager.clients.model.Error;

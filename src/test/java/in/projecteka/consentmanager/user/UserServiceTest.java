@@ -2,7 +2,7 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.DbOperationError;
+import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpRequest;

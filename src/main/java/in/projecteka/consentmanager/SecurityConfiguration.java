@@ -1,8 +1,11 @@
 package in.projecteka.consentmanager;
 
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.user.SignUpService;
 import lombok.AllArgsConstructor;
@@ -78,8 +81,13 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet) {
-        return new Authenticator(jwkSet);
+    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet, CacheAdapter<String,String> blacklistedTokens, ConfigurableJWTProcessor<com.nimbusds.jose.proc.SecurityContext> jwtProcessor) {
+        return new Authenticator(jwkSet,blacklistedTokens, jwtProcessor);
+    }
+
+    @Bean({"jwtProcessor"})
+    public ConfigurableJWTProcessor<com.nimbusds.jose.proc.SecurityContext> getJWTProcessor() {
+        return new DefaultJWTProcessor<>();
     }
 
     @Bean

@@ -117,7 +117,7 @@ public class ClientError extends Throwable {
     }
 
     public static ClientError invalidOtp() {
-        return new ClientError(BAD_REQUEST, new ErrorRepresentation(new Error(OTP_INVALID, "Invalid OTP")));
+        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(OTP_INVALID, "Invalid OTP")));
     }
 
     public static ClientError unknownErrorOccurred() {

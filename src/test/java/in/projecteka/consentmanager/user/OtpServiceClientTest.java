@@ -121,13 +121,13 @@ class OtpServiceClientTest {
 
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
                 Mono.just(ClientResponse
-                        .create(HttpStatus.BAD_REQUEST)
+                        .create(HttpStatus.UNAUTHORIZED)
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .build()));
 
         StepVerifier.create(otpServiceClient.verify(sessionId, otp))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
-                        ((ClientError) throwable).getHttpStatus().value() == 400)
+                        ((ClientError) throwable).getHttpStatus().value() == 401)
                 .verify();
         assertThat(captor.getValue().url().getPath()).isEqualTo("/otpservice/otp/" + sessionId + "/verify");
         assertThat(captor.getValue().url().getHost()).isEqualTo("localhost");

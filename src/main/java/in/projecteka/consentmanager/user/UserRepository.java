@@ -23,7 +23,7 @@ public class UserRepository {
 
     private final static String DELETE_PATIENT = "DELETE FROM patient WHERE id=$1";
 
-    private PgPool dbClient;
+    private final PgPool dbClient;
 
     public Mono<User> userWith(String userName) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT)
@@ -64,9 +64,9 @@ public class UserRepository {
         return doOperation(DELETE_PATIENT, userDetails);
     }
 
-    private Mono<Void> doOperation(String query, Tuple userDetails) {
+    private Mono<Void> doOperation(String query, Tuple parameters) {
         return Mono.create(monoSink -> dbClient.preparedQuery(query)
-                .execute(userDetails, handler -> {
+                .execute(parameters, handler -> {
                     if (handler.failed()) {
                         logger.error(handler.cause().getMessage(), handler.cause());
                         monoSink.error(new DbOperationError());

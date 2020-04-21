@@ -97,7 +97,6 @@ public class UserService {
 
     private Mono<Session> createUserWith(String mobileNumber, SignUpRequest signUpRequest, KeycloakUser keycloakUser) {
         User user = User.from(signUpRequest, mobileNumber);
-        String username = signUpRequest.getUsername();
         return userRepository.save(user)
                 .then(tokenService.tokenForAdmin()
                         .flatMap(accessToken -> identityServiceClient.createUser(accessToken, keycloakUser))
@@ -106,7 +105,7 @@ public class UserService {
                     logger.error(error.getMessage(), error);
                     return userRepository.delete(user.getIdentifier()).then();
                 })
-                .then(tokenService.tokenForUser(username, signUpRequest.getPassword()));
+                .then(tokenService.tokenForUser(signUpRequest.getUsername(), signUpRequest.getPassword()));
     }
 
     private boolean validateOtpVerification(OtpVerification otpVerification) {

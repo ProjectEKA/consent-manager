@@ -25,12 +25,10 @@ public class TokenService {
 
     private MultiValueMap<String, String> loginRequestWith(String username, String password) {
         var formData = new LinkedMultiValueMap<String, String>();
-        String clientSecret = keyCloakProperties.getClientSecret();
-        String clientId = keyCloakProperties.getClientId();
         formData.add("grant_type", "password");
         formData.add("scope", "openid");
-        formData.add("client_id", clientId);
-        formData.add("client_secret", clientSecret);
+        formData.add("client_id", keyCloakProperties.getClientId());
+        formData.add("client_secret", keyCloakProperties.getClientSecret());
         formData.add("username", username);
         formData.add("password", password);
         return formData;

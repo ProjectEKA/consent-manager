@@ -2,62 +2,62 @@ version: '3'
 services:
   consent-manager:
     build: .
+    container_name: consent-manager
+    hostname: consent-manager
     ports:
-      - "9010:8000"
+      - "9000:9000"
+    networks:
+      - backend_default
     environment:
-      - Auth_Token=${TOKEN}
-      - Client_Registry_Url=${Client_Registry_Url}
-      - CENTRAL_REGISTRY_JWK_URL=${Client_Registry_Url}/certs
-      - CENTRAL_REGISTRY_ID=${CLIENT_ID}
-      - Otp_Service_Url=http://otp
-      - User_Service_Url=http://consent-manager:8000
-      - POSTGRES_HOST=db
-      - POSTGRES_PORT=5432
-      - CONSENT_MANAGER_DB_NAME=consent_manager
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=welcome
-      - DB_CONNECTION_POOL_SIZE=10
-      - JWT_SECRET=secret
-      - KEY_CLOAK_URL=http://keycloak:8080/auth
-      - KEY_CLOAK_CONSENT_CLIENT_ID=consent-service
-      - KEY_CLOAK_CONSENT_CLIENT_SECRET=${SECRET}
-      - KEY_CLOAK_CONSENT_USER_NAME=consent-service-admin-user
-      - KEY_CLOAK_CONSENT_PASSWORD=${PASSWORD}
-      - KEY_CLOAK_JWK_URL=http://keycloak:8080/auth/realms/consent-manager/protocol/openid-connect/certs
-      - KEY_CLOAK_TOKEN_ISSUER=http://keycloak:8080/auth/realms/consent-manager
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - MAX_PAGE_SIZE=10
-      - DEFAULT_PAGE_SIZE=10
+      SPRING_PROFILES_ACTIVE: "docker"
+      CONSENTMANAGER_CLIENTREGISTRY_XAUTHTOKEN: "0e3f27a0-c167-45b4-a95b-ca1ba019b1bf"
+      CONSENTMANAGER_KEYCLOAK_CLIENTSECRET: "0e3f27a0-c167-45b4-a95b-ca1ba019b1bf"
+      LOG_LOCATION: /applogs/app.log
+    volumes:
+      - demo_logs:/applogs
     depends_on:
-      - db
       - otp
-      - rabbitmq
-      - keycloak
+      - client-registry
+
   otp:
-    image: "ganesan92/otp-service"
-    depends_on:
-      - db
+    image: "ganesan92/otp-service:latest"
+    container_name: otp
+    hostname: otp
+    networks:
+      - backend_default
+    environment:
+      "ConnectionStrings:DefaultConnection": "Host=postgres;Port=5432;Username=postgres;Password=password;Database=otpservice;"
     ports:
     - "5000:80"
-  db:
-    image: "postgres:latest"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=welcome
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgresql:/var/lib/postgresql
-      - postgresql_data:/var/lib/postgresql/data
-  rabbitmq:
-    image: "rabbitmq:3"
-    ports:
-      - "5672:5672"
-  keycloak:
-    image: "jboss/keycloak"
+
+  client-registry:
+    image: "ganesan92/client-registry:f056f2c"
+    container_name: client-registry
+    hostname: client-registry
+    networks:
+      - backend_default
     ports:
       - "8080:8080"
+    environment:
+      profile: dev
+      CENTRALREGISTRY_IDENTITY_URL: "http://keycloak:8080/auth/"
+      CENTRALREGISTRY_IDENTITY_REALM: "central-registry"
+      CENTRALREGISTRY_HOST: "http://keycloak:8080"
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.6.2
+    container_name: filebeat
+    hostname: filebeat
+    networks:
+      - backend_default
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - demo_logs:/applogs
+
 volumes:
-  postgresql:
-  postgresql_data:
+  demo_logs:
+    driver: local
+
+networks:
+  backend_default:
+    external: true

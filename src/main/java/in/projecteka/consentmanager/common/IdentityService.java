@@ -27,4 +27,8 @@ public class IdentityService {
         formData.add("client_secret", identityServiceProperties.getClientSecret());
         return formData;
     }
+
+    public String getConsentManagerId() {
+        return identityServiceProperties.getClientId();
+    }
 }

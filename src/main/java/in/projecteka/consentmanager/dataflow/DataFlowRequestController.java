@@ -20,13 +20,13 @@ public class DataFlowRequestController {
             @RequestBody in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(requester -> dataFlowRequester.requestHealthData(requester.getUserName(), dataFlowRequest));
+                .flatMap(requester -> dataFlowRequester.requestHealthData(requester.getUsername(), dataFlowRequest));
     }
 
     @PostMapping("/health-information/notification")
     public Mono<Void> notify(@RequestBody HealthInfoNotificationRequest notificationRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(requester -> dataFlowRequester.notifyHealthInfoStatus(requester.getUserName(), notificationRequest));
+                .flatMap(requester -> dataFlowRequester.notifyHealthInfoStatus(requester.getUsername(), notificationRequest));
     }
 }

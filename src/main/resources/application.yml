@@ -15,6 +15,7 @@ consentmanager:
     transactionPinDigitSize: ${TRANSACTION_PIN_DIGIT_SIZE}
     transactionPinTokenValidity: ${TRANSACTION_PIN_TOKEN_VALIDITY}
     userCreationTokenValidity: ${USER_CREATION_TOKEN_VALIDITY}
+    userIdSuffix: ${USER_ID_SUFFIX}
   otpservice:
     url: ${Otp_Service_Url}
     identifiers:
@@ -41,6 +42,13 @@ consentmanager:
       url: ${CONSENT_MANAGER_URL}
   linkservice:
     url: ${LINK_SERVICE_URL}
+  #Valid values are guava(for local), redis
+  cacheMethod: ${CACHE_METHOD}
+  redis:
+    #Will not be used if cacheMethod is guava
+    host: ${REDIS_HOST}
+    port: 6379
+    password: ${REDIS_PASSWORD}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}

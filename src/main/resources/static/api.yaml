@@ -22,7 +22,7 @@ tags:
 
 paths:
   # discovery service
-  /patients/discover:
+  /patients/discover/carecontexts:
     post:
       tags:
         - discovery
@@ -290,6 +290,65 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ProvidersRepresentation'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /providers/{provider-id}:
+    get:
+      tags:
+        - discovery
+      summary: Get a specific provider
+      description: >
+        Returns a provider
+          1. **Validate token for expiry**
+          3. **Returns a provider associated with the given id**
+      operationId: fetchProvider
+      parameters:
+        - $ref: "#/components/parameters/authorization"
+        - name: provider-id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderRepresentation'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ProviderRepresentation'
+        '401':
+          description:  >
+            **Causes:**
+              * Expired/Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Provider doesn't exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: >
             **Causes:**
@@ -981,7 +1040,7 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /patients:
+  /patients/profile:
     post:
       tags:
         - account
@@ -1148,6 +1207,36 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  # Sessions
+  /logout:
+    post:
+      description: |
+        Logout active user by invalidating the access and refresh tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+        400:
+          description: Bad request(potentially bad request token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Error(On server side) in logging out
 
 components:
   parameters:
@@ -1571,7 +1660,7 @@ components:
             to:
               type: string
               format: date-time
-        dataExpiryAt:
+        dataEraseAt:
           type: string
           format: date-time
         frequency:
@@ -1616,6 +1705,7 @@ components:
             - requester
             - hiTypes
             - permission
+            - consentNotificationUrl
           properties:
             purpose:
               $ref: '#/components/schemas/UsePurpose'
@@ -1645,6 +1735,9 @@ components:
                 $ref: '#/components/schemas/HITypeEnum'
             permission:
               $ref: '#/components/schemas/Permission'
+            consentNotificationUrl:
+              type: string
+              example: 'http://localhost:8003/consent/notification'
     ConsentManagerPatientID:
       type: object
       properties:
@@ -1663,13 +1756,8 @@ components:
       type: object
       required:
         - id
-        - firstName
       properties:
         id:
-          type: string
-        firstName:
-          type: string
-        lastName:
           type: string
         links:
           type: array
@@ -1730,6 +1818,9 @@ components:
         consentDetail:
           type: object
           properties:
+            schemaVersion:
+              type: string
+              format: string
             consentId:
               type: string
               format: uuid
@@ -1766,6 +1857,12 @@ components:
                 - $ref: '#/components/schemas/OrganizationRepresentation'
                 - xml:
                     name: hiu
+            consentManager:
+              type: object
+              allOf:
+                - $ref: '#/components/schemas/Organization'
+                - xml:
+                    name: consentManager
             requester:
               $ref: '#/components/schemas/Requester'
             hiTypes:
@@ -1781,14 +1878,15 @@ components:
       type: object
       required:
         - consentArtefactId
-        - callBackUrl
+        - dataPushUrl
       properties:
         consent:
           $ref: '#/components/schemas/consent'
-        hiDataRange:
-          $ref: '#/components/schemas/hiDataRange'
-        callBackUrl:
+        dateRange:
+          $ref: '#/components/schemas/dateRange'
+        dataPushUrl:
           type: string
+          example: 'http://localhost:8003/data/notification'
         keyMaterial:
           $ref: '#/components/schemas/keyMaterial'
     HealthInformationRequestResponse:
@@ -1808,7 +1906,7 @@ components:
           type: string
         digitalSignature:
           type: string
-    hiDataRange:
+    dateRange:
       type: object
       required:
         - from
@@ -1903,12 +2001,9 @@ components:
         id:
           type: string
           example: user@ncg
-        firstName:
+        name:
           type: string
-          example: Raj
-        lastName:
-          type: string
-          example: Sharma
+          example: Raj Sharma
         gender:
           $ref: '#/components/schemas/Gender'
         hasTransactionPin:
@@ -1974,24 +2069,21 @@ components:
     CreatePatientRequest:
       type: object
       properties:
-        firstName:
+        name:
           type: string
-          example: Raj
-        lastName:
-          type: string
-          example: sharma
+          example: Raj Sharma
         username:
           type: string
           example: raj.sharma@ncg
         password:
           type: string
-        dateOfBirth:
-          type: string
-          format: date
+        yearOfBirth:
+          type: integer
+          example: 2000
         gender:
           $ref: '#/components/schemas/Gender'
       required:
-        - firstName
+        - name
         - username
         - password
         - gender
@@ -2080,4 +2172,9 @@ components:
       type: object
       properties:
         reason:
+          type: string
+    LogoutRequest:
+      type: object
+      properties:
+        refreshToken:
           type: string

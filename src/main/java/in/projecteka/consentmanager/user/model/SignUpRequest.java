@@ -4,16 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.LocalDate;
-
 @Builder
 @Data
 @AllArgsConstructor
 public class SignUpRequest {
-    private String firstName;
-    private String lastName;
-    private String userName;
+    private String name;
+    private String username;
     private String password;
     private Gender gender;
-    private LocalDate dateOfBirth;
+    private Integer yearOfBirth;
 }

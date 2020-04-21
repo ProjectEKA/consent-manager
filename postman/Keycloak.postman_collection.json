@@ -1,0 +1,138 @@
+{
+	"info": {
+		"_postman_id": "e177dba7-5aa3-4120-8a4f-e52e4cef741f",
+		"name": "Keycloak",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "DELETE USER",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{KEYCLOAK_TOKEN}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{KEYCLOAK_HOST}}/auth/admin/realms/consent-manager/users/c6172386-01ed-47d1-bdab-a1e753e92437",
+					"host": [
+						"{{KEYCLOAK_HOST}}"
+					],
+					"path": [
+						"auth",
+						"admin",
+						"realms",
+						"consent-manager",
+						"users",
+						"c6172386-01ed-47d1-bdab-a1e753e92437"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET TOKEN",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "5e3019ea-bd47-47ed-ad5b-73d7cdf1bbef",
+						"exec": [
+							"pm.test(\"Update KEY CLOAK token\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.environment.set(\"KEYCLOAK_TOKEN\", \"bearer \" + jsonData.access_token);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "password",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "consent-manager",
+							"type": "text"
+						},
+						{
+							"key": "client_secret",
+							"value": "f1c12b6c-13e8-4082-8682-ab8d98c24480",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "consent-service-admin-user",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "welcome",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{KEYCLOAK_HOST}}/auth/realms/consent-manager/protocol/openid-connect/token",
+					"host": [
+						"{{KEYCLOAK_HOST}}"
+					],
+					"path": [
+						"auth",
+						"realms",
+						"consent-manager",
+						"protocol",
+						"openid-connect",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET USER",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{KEYCLOAK_TOKEN}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{KEYCLOAK_HOST}}/auth/admin/realms/consent-manager/users?username=zechariah.treutel@ncg",
+					"host": [
+						"{{KEYCLOAK_HOST}}"
+					],
+					"path": [
+						"auth",
+						"admin",
+						"realms",
+						"consent-manager",
+						"users"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "zechariah.treutel@ncg"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

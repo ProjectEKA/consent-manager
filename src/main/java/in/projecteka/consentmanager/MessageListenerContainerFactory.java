@@ -9,8 +9,8 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 
 @AllArgsConstructor
 public class MessageListenerContainerFactory {
-    private ConnectionFactory connectionFactory;
-    private Jackson2JsonMessageConverter converter;
+    private final ConnectionFactory connectionFactory;
+    private final Jackson2JsonMessageConverter converter;
 
     public MessageListenerContainer createMessageListenerContainer(String queueName) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(connectionFactory);

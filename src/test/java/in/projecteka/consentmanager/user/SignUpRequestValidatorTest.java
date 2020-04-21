@@ -17,33 +17,12 @@ class SignUpRequestValidatorTest {
     void returnValidSignUpRequestWithAllFields() {
         var signUpRequest = signUpRequest()
                 .password("aB1 #afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
-                .userName("usernameWithAlphabetsAnd1@ncg")
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().getYear())
+                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
-
-        assertThat(requestValidation.isValid()).isTrue();
-    }
-
-    @ParameterizedTest(name = "Optional last name")
-    @CsvSource({
-            ",",
-            "empty",
-            "null"
-    })
-    void returnValidSignUpRequestWithOptional(@ConvertWith(NullableConverter.class) String lastName) {
-        var signUpRequest = signUpRequest()
-                .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName(lastName)
-                .dateOfBirth(LocalDate.now())
-                .userName("usernameWithAlphabetsAnd1@ncg")
-                .build();
-
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isTrue();
     }
@@ -52,66 +31,62 @@ class SignUpRequestValidatorTest {
     void returnValidSignUpRequestWithOptionalDateOfBirth() {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(null)
-                .userName("usernameWithAlphabetsAnd1@ncg")
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().getYear())
+                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isTrue();
     }
 
     @Test
-    void returnValidSignUpRequestWithFutureDateOfBirth() {
+    void returnValidSignUpRequestWithFutureYearOfBirth() {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now().plusDays(1))
-                .userName("usernameWithAlphabetsAnd1@ncg")
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().plusYears(1).getYear())
+                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
     }
 
-    @ParameterizedTest(name = "Empty first name")
+    @ParameterizedTest(name = "Empty name")
     @CsvSource({
             ",",
             "empty",
             "null"
     })
-    void returnInValidSignUpRequestWithEmpty(@ConvertWith(NullableConverter.class) String firstName) {
+    void returnInValidSignUpRequestWithEmpty(@ConvertWith(NullableConverter.class) String name) {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName(firstName)
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
-                .userName("usernameWithAlphabetsAnd1@ncg")
+                .name(name)
+                .yearOfBirth(LocalDate.now().getYear())
+                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
-                .isSubsetOf("first name can't be empty");
+                .isSubsetOf("Name can't be empty");
     }
 
     @Test
     void returnInValidSignUpRequestWithEmptyGender() {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
-                .userName("usernameWithAlphabetsAnd1@ncg")
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().getYear())
+                .username("usernameWithAlphabetsAnd1@ncg")
                 .gender(null)
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -127,13 +102,12 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithEmptyUser(@ConvertWith(NullableConverter.class) String name) {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
-                .userName(name)
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().getYear())
+                .username(name)
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -149,13 +123,12 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithRandomValues(@ConvertWith(NullableConverter.class) String name) {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
-                .userName(name)
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().getYear())
+                .username(name)
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
     }
@@ -164,13 +137,12 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithUserDoesNotEndWithProvider() {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
-                .userName("userDoesNotEndWith")
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().getYear())
+                .username("userDoesNotEndWith")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -187,13 +159,12 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithUserLesserThanMinimumLength(String username) {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
-                .userName(username)
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().getYear())
+                .username(username)
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -211,13 +182,12 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithWeak(String password) {
         var signUpRequest = signUpRequest()
                 .password(password)
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
-                .userName("username@ncg")
+                .name("onlyAlp habets")
+                .yearOfBirth(LocalDate.now().getYear())
+                .username("username@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
     }
@@ -231,16 +201,61 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithEmptyPassword(@ConvertWith(NullableConverter.class) String password) {
         var signUpRequest = signUpRequest()
                 .password(password)
-                .firstName("onlyAlphabets")
-                .lastName("onlyAlphabets")
-                .dateOfBirth(LocalDate.now())
-                .userName("username@ncg")
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().getYear())
+                .username("username@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
                 .isSubsetOf("password can't be empty");
+    }
+
+    @Test
+    void returnInValidSignUpRequestWithYearOfBirthGreaterThan120() {
+        var signUpRequest = signUpRequest()
+                .password("aB1 #afasas")
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().getYear()-121)
+                .username("usernameWithAlphabetsAnd1@ncg")
+                .build();
+
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+
+        assertThat(requestValidation.isValid()).isFalse();
+        assertThat(requestValidation.getError())
+                .isSubsetOf("Year of birth can't be in future or older than 120 years");
+    }
+
+    @Test
+    void returnInValidSignUpRequestWithYearOfBirthInFuture() {
+        var signUpRequest = signUpRequest()
+                .password("aB1 #afasas")
+                .name("onlyAlphabets")
+                .yearOfBirth(LocalDate.now().getYear()+1)
+                .username("usernameWithAlphabetsAnd1@ncg")
+                .build();
+
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+
+        assertThat(requestValidation.isValid()).isFalse();
+        assertThat(requestValidation.getError())
+                .isSubsetOf("Year of birth can't be in future or older than 120 years");
+    }
+
+    @Test
+    void returnInValidSignUpRequestWithYearOfBirthIsNull() {
+        var signUpRequest = signUpRequest()
+                .password("aB1 #afasas")
+                .name("onlyAlphabets")
+                .yearOfBirth(null)
+                .username("usernameWithAlphabetsAnd1@ncg")
+                .build();
+
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+
+        assertThat(requestValidation.isValid()).isTrue();
     }
 }

@@ -7,7 +7,9 @@ import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import lombok.AllArgsConstructor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
@@ -21,12 +23,12 @@ import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class HipConsentNotificationListener {
-    private static final Logger logger = Logger.getLogger(HiuConsentNotificationListener.class);
-    private MessageListenerContainerFactory messageListenerContainerFactory;
-    private DestinationsConfig destinationsConfig;
-    private Jackson2JsonMessageConverter converter;
-    private ConsentArtefactNotifier consentArtefactNotifier;
-    private CentralRegistry centralRegistry;
+    private static final Logger logger = LoggerFactory.getLogger(HipConsentNotificationListener.class);
+    private final MessageListenerContainerFactory messageListenerContainerFactory;
+    private final DestinationsConfig destinationsConfig;
+    private final Jackson2JsonMessageConverter converter;
+    private final ConsentArtefactNotifier consentArtefactNotifier;
+    private final CentralRegistry centralRegistry;
 
     @PostConstruct
     public void subscribe() throws ClientError {
@@ -45,13 +47,12 @@ public class HipConsentNotificationListener {
             try {
                 HIPConsentArtefactRepresentation consentArtefact =
                         (HIPConsentArtefactRepresentation) converter.fromMessage(message);
-                logger.info(String.format("Received notify consent to hip for consent artefact: %s",
-                        consentArtefact.getConsentDetail().getConsentId()));
+                logger.info("Received notify consent to hip for consent artefact: {}",
+                        consentArtefact.getConsentDetail().getConsentId());
 
                 sendConsentArtefact(consentArtefact);
             } catch (Exception e) {
-                logger.error(e);
-                throw new AmqpRejectAndDontRequeueException(e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
             }
         };
         mlc.setupMessageListener(messageListener);

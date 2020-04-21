@@ -19,14 +19,14 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 public class LinkController {
 
-    private Link link;
+    private final Link link;
 
     @PostMapping("/patients/link")
     public Mono<PatientLinkReferenceResponse> linkCareContexts(
             @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller -> link.patientWith(caller.getUserName(), patientLinkReferenceRequest));
+                .flatMap(caller -> link.patientWith(caller.getUsername(), patientLinkReferenceRequest));
     }
 
     @PostMapping("/patients/link/{linkRefNumber}")
@@ -34,14 +34,14 @@ public class LinkController {
                                                  @RequestBody PatientLinkRequest patientLinkRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller -> link.verifyToken(linkRefNumber, patientLinkRequest, caller.getUserName()));
+                .flatMap(caller -> link.verifyToken(linkRefNumber, patientLinkRequest, caller.getUsername()));
     }
 
     @GetMapping("/patients/links")
     public Mono<PatientLinksResponse> getLinkedCareContexts() {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUserName)
+                .map(Caller::getUsername)
                 .flatMap(link::getLinkedCareContexts);
     }
 

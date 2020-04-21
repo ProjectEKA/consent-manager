@@ -35,6 +35,12 @@ public class Discovery {
                 .map(Transformer::to);
     }
 
+    public Mono<ProviderRepresentation> providerBy(String id) {
+        return centralRegistry.providerWith(id)
+                .filter(this::isValid)
+                .map(Transformer::to);
+    }
+
     public Mono<DiscoveryResponse> patientFor(String userName, List<PatientIdentifier> unverifiedIdentifiers, String providerId, String transactionId) {
         return userWith(userName)
                 .zipWith(providerUrl(providerId))
@@ -70,16 +76,15 @@ public class Discovery {
                 (unverifiedIdentifiers == null || unverifiedIdentifiers.isEmpty())
                         ? Collections.emptyList()
                         : unverifiedIdentifiers.stream().map(patientIdentifier ->
-                            in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
-                                    .type(patientIdentifier.getType().toString())
-                                    .value(patientIdentifier.getValue())
-                                    .build()).collect(Collectors.toList());
+                        in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
+                                .type(patientIdentifier.getType().toString())
+                                .value(patientIdentifier.getValue())
+                                .build()).collect(Collectors.toList());
         Patient patient = Patient.builder()
                 .id(user.getIdentifier())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
+                .name(user.getName())
                 .gender(user.getGender())
-                .dateOfBirth(user.getDateOfBirth())
+                .yearOfBirth(user.getYearOfBirth())
                 .verifiedIdentifiers(List.of(phoneNumber))
                 .unverifiedIdentifiers(unverifiedIds)
                 .build();

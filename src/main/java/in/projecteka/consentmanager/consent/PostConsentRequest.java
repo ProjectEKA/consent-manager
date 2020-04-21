@@ -2,10 +2,11 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
-import in.projecteka.consentmanager.dataflow.PostDataFlowRequestApproval;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.amqp.core.AmqpTemplate;
 import reactor.core.publisher.Mono;
 
@@ -14,9 +15,9 @@ import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class PostConsentRequest {
-    private static final Logger logger = Logger.getLogger(PostDataFlowRequestApproval.class);
-    private AmqpTemplate amqpTemplate;
-    private DestinationsConfig destinationsConfig;
+    private static final Logger logger = LoggerFactory.getLogger(PostConsentRequest.class);
+    private final AmqpTemplate amqpTemplate;
+    private final DestinationsConfig destinationsConfig;
 
     @SneakyThrows
     public Mono<Void> broadcastConsentRequestNotification(ConsentRequest consentRequest) {
@@ -28,7 +29,7 @@ public class PostConsentRequest {
         }
         return Mono.create(monoSink -> {
             amqpTemplate.convertAndSend(destinationInfo.getExchange(), destinationInfo.getRoutingKey(), consentRequest);
-            logger.info("Broadcasting consent request with request id : " + consentRequest.getId());
+            logger.info("Broadcasting consent request with request id : {}", consentRequest.getId());
             monoSink.success();
         });
     }

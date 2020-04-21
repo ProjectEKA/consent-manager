@@ -13,7 +13,9 @@ import in.projecteka.consentmanager.consent.model.Content;
 import in.projecteka.consentmanager.consent.model.HIType;
 import in.projecteka.consentmanager.consent.model.Notification;
 import lombok.AllArgsConstructor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
@@ -29,13 +31,13 @@ import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class ConsentRequestNotificationListener {
-    private static final Logger logger = Logger.getLogger(ConsentRequestNotificationListener.class);
-    private MessageListenerContainerFactory messageListenerContainerFactory;
-    private DestinationsConfig destinationsConfig;
-    private Jackson2JsonMessageConverter converter;
-    private OtpServiceClient consentNotificationClient;
-    private UserServiceClient userServiceClient;
-    private ConsentServiceProperties consentServiceProperties;
+    private static final Logger logger = LoggerFactory.getLogger(ConsentRequestNotificationListener.class);
+    private final MessageListenerContainerFactory messageListenerContainerFactory;
+    private final DestinationsConfig destinationsConfig;
+    private final Jackson2JsonMessageConverter converter;
+    private final OtpServiceClient consentNotificationClient;
+    private final UserServiceClient userServiceClient;
+    private final ConsentServiceProperties consentServiceProperties;
 
     @PostConstruct
     public void subscribe() throws ClientError {
@@ -53,13 +55,12 @@ public class ConsentRequestNotificationListener {
         MessageListener messageListener = message -> {
             try {
                 ConsentRequest consentRequest = (ConsentRequest) converter.fromMessage(message);
-                logger.info(String.format("Received message for Request id : %s", consentRequest.getId()));
+                logger.info("Received message for Request id : {}", consentRequest.getId());
                 createNotificationMessage(consentRequest)
                         .flatMap(this::notifyUserWith)
                         .block();
             } catch (Exception e) {
-                logger.error(e);
-                throw new AmqpRejectAndDontRequeueException(e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
             }
         };
         mlc.setupMessageListener(messageListener);

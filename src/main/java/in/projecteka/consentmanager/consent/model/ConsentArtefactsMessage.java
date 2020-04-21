@@ -17,5 +17,5 @@ public class ConsentArtefactsMessage {
     private Date timestamp;
     private String consentRequestId;
     private List<HIPConsentArtefactRepresentation> consentArtefacts;
-    private String hiuCallBackUrl;
+    private String hiuConsentNotificationUrl;
 }

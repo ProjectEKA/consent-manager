@@ -50,14 +50,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+
 @ExtendWith(SpringExtension.class)
 @AutoConfigureWebTestClient
 @ContextConfiguration(initializers =
         in.projecteka.consentmanager.consent.ConsentArtefactUserJourneyTest.ContextInitializer.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ConsentArtefactUserJourneyTest {
-    private static MockWebServer clientRegistryServer = new MockWebServer();
-    private static MockWebServer userServer = new MockWebServer();
+    private static final MockWebServer clientRegistryServer = new MockWebServer();
+    private static final MockWebServer userServer = new MockWebServer();
 
     @Autowired
     private WebTestClient webTestClient;
@@ -167,7 +168,7 @@ public class ConsentArtefactUserJourneyTest {
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(anotherUser, false)));
         var consentArtefact = consentArtefactRepresentation().build();
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_FORBIDDEN,
-                "Cannot retrieve Consent artefact. Forbidden"));
+                "Cannot retrieve Consent artefact"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         var consentRequestId = "request-id";
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))

@@ -5,7 +5,7 @@ import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
-import in.projecteka.consentmanager.dataflow.model.HIDataRange;
+import in.projecteka.consentmanager.dataflow.model.DateRange;
 import in.projecteka.consentmanager.dataflow.model.HIUReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +15,7 @@ import reactor.core.publisher.MonoSink;
 import reactor.test.StepVerifier;
 
 import java.text.ParseException;
+import java.util.Objects;
 
 import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
@@ -47,7 +48,7 @@ public class DataFlowRequesterTest {
     public void shouldAcceptDataFlowRequest() throws ParseException {
         String hiuId = "10000005";
         in.projecteka.consentmanager.dataflow.model.DataFlowRequest request = dataFlowRequest().build();
-        request.setHiDataRange(HIDataRange.builder().from(toDate("2020-01-16T08:47:48Z")).to(toDate("2020" +
+        request.setDateRange(DateRange.builder().from(toDate("2020-01-16T08:47:48Z")).to(toDate("2020" +
                 "-01-20T08:47:48Z")).build());
         ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
         consentArtefactRepresentation.setStatus(ConsentStatus.GRANTED);
@@ -67,7 +68,7 @@ public class DataFlowRequesterTest {
                 any(in.projecteka.consentmanager.dataflow.model.DataFlowRequest.class))).thenReturn(Mono.empty());
 
         StepVerifier.create(dataFlowRequester.requestHealthData(hiuId, request))
-                .expectNextMatches(res -> res != null)
+                .expectNextMatches(Objects::nonNull)
                 .verifyComplete();
     }
 

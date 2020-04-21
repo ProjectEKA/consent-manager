@@ -9,15 +9,20 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
+import static in.projecteka.consentmanager.common.Constants.API_VERSION;
+
 @Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class ConsentArtefact implements Serializable {
+    @Builder.Default
+    private String schemaVersion = API_VERSION;
     private String consentId;
     private Date createdAt;
     private ConsentPurpose purpose;
     private PatientReference patient;
+    private CMReference consentManager;
     private HIPReference hip;
     private HIUReference hiu;
     private Requester requester;

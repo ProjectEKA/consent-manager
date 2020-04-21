@@ -28,7 +28,6 @@ import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
 import java.util.Collections;
-import java.util.Optional;
 
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
@@ -63,6 +62,9 @@ class UserServiceTest {
     @Mock
     private TokenService tokenService;
 
+    @Mock
+    private UserServiceProperties properties;
+
     private UserService userService;
 
     @BeforeEach
@@ -77,7 +79,8 @@ class UserServiceTest {
                 otpServiceClient,
                 signupService,
                 identityServiceClient,
-                tokenService);
+                tokenService,
+                properties);
     }
 
     @Test
@@ -87,7 +90,7 @@ class UserServiceTest {
         var signUpSession = new SignUpSession(sessionId);
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
         when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq("+91-9788888")))
-                .thenReturn(signUpSession);
+                .thenReturn(Mono.just(signUpSession));
 
         Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
 
@@ -110,7 +113,7 @@ class UserServiceTest {
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(sessionId, otp)).thenReturn(Mono.empty());
         when(signupService.generateToken(sessionId))
-                .thenReturn(new Token(token));
+                .thenReturn(Mono.just(new Token(token)));
 
         StepVerifier.create(userService.permitOtp(otpVerification))
                 .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
@@ -143,38 +146,15 @@ class UserServiceTest {
 
     @Test
     public void shouldCreateUser() {
-        var signUpRequest = signUpRequest().dateOfBirth(LocalDate.now()).build();
+        var signUpRequest = signUpRequest().yearOfBirth(LocalDate.now().getYear()).build();
         var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
-        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
-        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.empty());
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
-
-        StepVerifier.create(userService.create(signUpRequest, sessionId))
-                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
-                .verifyComplete();
-    }
-
-    @ParameterizedTest(name = "Invalid user name")
-    @CsvSource({
-            ",",
-            "empty",
-            "null"
-    })
-    public void shouldCreateUserWhenLastNameIsNullOrEmpty(@ConvertWith(NullableConverter.class) String lastName) {
-        var signUpRequest = signUpRequest().lastName(lastName).dateOfBirth(LocalDate.MIN).build();
-        var userToken = session().build();
-        var sessionId = string();
-        var mobileNumber = string();
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
-        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
-        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.empty());
-        when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
-        when(userRepository.save(any())).thenReturn(Mono.empty());
+        when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 
         StepVerifier.create(userService.create(signUpRequest, sessionId))
@@ -184,29 +164,29 @@ class UserServiceTest {
 
     @Test
     public void shouldReturnUserAlreadyExistsError() {
-        var signUpRequest = signUpRequest().dateOfBirth(LocalDate.MIN).build();
+        var signUpRequest = signUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
         var sessionId = string();
-        var user = user().identifier(signUpRequest.getUserName()).build();
-        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(string()));
-        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.just(user));
+        var user = user().identifier(signUpRequest.getUsername()).build();
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(string()));
+        when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.just(user));
         when(userRepository.save(any())).thenReturn(Mono.empty());
 
         StepVerifier.create(userService.create(signUpRequest, sessionId))
                 .verifyErrorSatisfies(error -> assertThat(error)
                         .asInstanceOf(InstanceOfAssertFactories.type(ClientError.class))
-                        .isEqualToComparingFieldByField(ClientError.userAlreadyExists(signUpRequest.getUserName())));
+                        .isEqualToComparingFieldByField(ClientError.userAlreadyExists(signUpRequest.getUsername())));
     }
 
     @Test
-    public void shouldCreateUserWhenDOBIsNull() {
-        var signUpRequest = signUpRequest().dateOfBirth(null).build();
+    public void shouldCreateUserWhenYOBIsNull() {
+        var signUpRequest = signUpRequest().name("apoorva g a").yearOfBirth(null).build();
         var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
-        when(signupService.getMobileNumber(sessionId)).thenReturn(Optional.of(mobileNumber));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
-        when(userRepository.userWith(signUpRequest.getUserName())).thenReturn(Mono.empty());
+        when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 

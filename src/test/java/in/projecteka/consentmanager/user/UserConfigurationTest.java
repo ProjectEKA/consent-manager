@@ -28,7 +28,10 @@ class UserConfigurationTest {
     @Mock
     private TokenService tokenService;
 
-    private UserConfiguration userConfiguration = new UserConfiguration();
+    @Mock
+    private UserServiceProperties properties;
+
+    private final UserConfiguration userConfiguration = new UserConfiguration();
 
     @Test
     public void shouldReturnUserServiceInstance() {
@@ -38,7 +41,8 @@ class UserConfigurationTest {
                 otpServiceClient,
                 signupService,
                 identityServiceClient,
-                tokenService))
+                tokenService,
+                properties))
                 .isInstanceOf(UserService.class);
     }
 }

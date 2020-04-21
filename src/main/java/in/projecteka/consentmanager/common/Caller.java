@@ -6,6 +6,6 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class Caller {
-    private String userName;
-    private Boolean isServiceAccount;
+    private final String username;
+    private final Boolean isServiceAccount;
 }

@@ -4,7 +4,7 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AmqpTemplate;
 import reactor.core.publisher.Mono;
 
@@ -12,10 +12,10 @@ import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_DATA_
 import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
+@Slf4j
 public class PostDataFlowRequestApproval {
-    private static final Logger logger = Logger.getLogger(PostDataFlowRequestApproval.class);
-    private AmqpTemplate amqpTemplate;
-    private DestinationsConfig destinationsConfig;
+    private final AmqpTemplate amqpTemplate;
+    private final DestinationsConfig destinationsConfig;
 
     @SneakyThrows
     public Mono<Void> broadcastDataFlowRequest(
@@ -24,7 +24,7 @@ public class PostDataFlowRequestApproval {
         DestinationsConfig.DestinationInfo destinationInfo =
                 destinationsConfig.getQueues().get(HIP_DATA_FLOW_REQUEST_QUEUE);
         if (destinationInfo == null) {
-            logger.info(HIP_DATA_FLOW_REQUEST_QUEUE + " not found");
+            log.info(HIP_DATA_FLOW_REQUEST_QUEUE + " not found");
             throw queueNotFound();
         }
         return Mono.create(monoSink -> {
@@ -35,7 +35,7 @@ public class PostDataFlowRequestApproval {
                             .transactionId(transactionId)
                             .dataFlowRequest(dataFlowRequest)
                             .build());
-            logger.info("Broadcasting data flow request with transaction id : " + transactionId);
+            log.info("Broadcasting data flow request with transaction id : " + transactionId);
             monoSink.success();
         });
     }

@@ -27,6 +27,7 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -39,6 +40,7 @@ import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static org.mockito.Mockito.when;
+
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -65,7 +67,7 @@ public class DiscoveryUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
-    private static MockWebServer providerServer = new MockWebServer();
+    private static final MockWebServer providerServer = new MockWebServer();
 
     @Autowired
     private WebTestClient webTestClient;

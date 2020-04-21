@@ -7,15 +7,21 @@ import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisOptions;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.security.PrivateKey;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
@@ -27,13 +33,15 @@ public class UserConfiguration {
                                    OtpServiceClient otpServiceClient,
                                    SignUpService signupService,
                                    IdentityServiceClient identityServiceClient,
-                                   TokenService tokenService) {
+                                   TokenService tokenService,
+                                   UserServiceProperties userServiceProperties) {
         return new UserService(userRepository,
                 otpServiceProperties,
                 otpServiceClient,
                 signupService,
                 identityServiceClient,
-                tokenService);
+                tokenService,
+                userServiceProperties);
     }
 
     @Bean
@@ -55,8 +63,8 @@ public class UserConfiguration {
 
     @Bean
     public SignUpService authenticatorService(JWTProperties jwtProperties,
-                                              LoadingCache<String, Optional<String>> sessionCache,
-                                              LoadingCache<String, Optional<String>> secondSessionCache,
+                                              CacheAdapter<String, String> sessionCache,
+                                              CacheAdapter<String, String> secondSessionCache,
                                               UserServiceProperties userServiceProperties) {
         return new SignUpService(jwtProperties,
                 sessionCache,
@@ -64,17 +72,37 @@ public class UserConfiguration {
                 userServiceProperties.getUserCreationTokenValidity());
     }
 
+    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"unverifiedSessions", "verifiedSessions"})
-    public LoadingCache<String, Optional<String>> createSessionCache() {
+    public CacheAdapter<String, String> createLoadingCacheAdapter(LoadingCache<String,String> cache) {
+       return new LoadingCacheAdapter(cache);
+    }
+
+    @Bean
+    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    public LoadingCache<String, String> createSessionCache() {
         return CacheBuilder
                 .newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES)
-                .build(new CacheLoader<>() {
-                    public Optional<String> load(String key) {
-                        return Optional.empty();
+                .build(new CacheLoader<String, String>() {
+                    public String load(String key) {
+                        return "";
                     }
                 });
     }
+
+    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"unverifiedSessions", "verifiedSessions"})
+    public CacheAdapter<String, String> createRedisCacheAdapter(RedisOptions redisOptions) {
+        RedisURI redisUri = RedisURI.Builder.
+                redis(redisOptions.getHost())
+                .withPort(redisOptions.getPort())
+                .withPassword(redisOptions.getPassword())
+                .build();
+        RedisClient redisClient = RedisClient.create(redisUri);
+        return new RedisCacheAdapter(redisClient);
+    }
+
 
     @Bean
     public SessionService sessionService(TokenService tokenService) {

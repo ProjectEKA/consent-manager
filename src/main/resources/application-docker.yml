@@ -1,0 +1,49 @@
+server:
+  port: 9000
+consentmanager:
+  consentservice:
+    defaultPageSize: 20
+    maxPageSize: 100
+    url: http://consent-manager:9000
+  clientregistry:
+    XAuthToken: ${CONSENTMANAGER_CLIENTREGISTRY_XAUTHTOKEN}
+    clientId: consent-manager
+    url: http://client-registry:8080
+    jwkUrl: http://client-registry:8080/certs
+  userservice:
+    url: http://consent-manager:9000
+    transactionPinDigitSize: 4
+    transactionPinTokenValidity: 2
+    userCreationTokenValidity: 5
+    userIdSuffix: "@ncg"
+  otpservice:
+    url: http://otp:80
+    identifiers:
+      - MOBILE
+  keycloak:
+    baseUrl: http://keycloak:8080/auth
+    clientId: consent-manager
+    clientSecret: ${CONSENTMANAGER_KEYCLOAK_CLIENTSECRET}
+    userName: consent-service-admin-user
+    password: welcome
+    jwkUrl: http://keycloak:8080/auth/realms/consent-manager/protocol/openid-connect/certs
+    issuer: http://keycloak:8080/auth/realms/consent-manager
+  jwt:
+    secret: secret_salt
+  db:
+    host: postgres
+    port: 5432
+    schema: consent_manager
+    user: postgres
+    password: password
+    poolSize: 5
+  dataflow:
+    consentmanager:
+      url: http://consent-manager:9000
+  linkservice:
+    url: http://consent-manager:9000
+
+spring:
+  rabbitmq:
+   host: rabbitmq
+   port: 5672

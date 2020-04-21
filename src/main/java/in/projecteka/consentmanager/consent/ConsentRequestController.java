@@ -49,7 +49,7 @@ public class ConsentRequestController {
         int pageSize = getPageSize(limit);
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller -> consentManager.findRequestsForPatient(caller.getUserName(), pageSize, offset))
+                .flatMap(caller -> consentManager.findRequestsForPatient(caller.getUsername(), pageSize, offset))
                 .map(results -> ConsentRequestsRepresentation.builder()
                         .size(results.size())
                         .requests(results)
@@ -75,7 +75,7 @@ public class ConsentRequestController {
             @Valid @RequestBody ConsentApprovalRequest consentApprovalRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUserName)
+                .map(Caller::getUsername)
                 .flatMap(username ->
                         consentManager.approveConsent(username, requestId, consentApprovalRequest.getConsents()));
     }
@@ -85,7 +85,7 @@ public class ConsentRequestController {
     public Mono<Void> deny(@PathVariable(value = "id") String id) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUserName)
+                .map(Caller::getUsername)
                 .flatMap(username -> consentManager.deny(id, username));
     }
 }

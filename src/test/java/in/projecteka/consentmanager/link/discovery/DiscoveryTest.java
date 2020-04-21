@@ -107,7 +107,7 @@ public class DiscoveryTest {
                 .careContexts(of())
                 .build();
         PatientResponse patientResponse = patientResponse().patient(patientInResponse).build();
-        User user = user().identifier("1").firstName("first name").phone("+91-9999999999").build();
+        User user = user().identifier("1").name("first name").phone("+91-9999999999").build();
         String hipClientUrl = "http://localhost:8001";
         Provider provider = provider()
                 .addresses(of(address))
@@ -124,10 +124,9 @@ public class DiscoveryTest {
                         .build()).collect(Collectors.toList());
         Patient patient = Patient.builder()
                 .id(user.getIdentifier())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
+                .name(user.getName())
                 .gender(user.getGender())
-                .dateOfBirth(user.getDateOfBirth())
+                .yearOfBirth(user.getYearOfBirth())
                 .verifiedIdentifiers(of(identifier))
                 .unverifiedIdentifiers(unverifiedIds)
                 .build();
@@ -161,7 +160,7 @@ public class DiscoveryTest {
                 centralRegistry);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
-        User user = user().identifier("1").firstName("first name").build();
+        User user = user().identifier("1").name("first name").build();
         String hipClientUrl = "http://localhost:8001";
         Provider provider = provider()
                 .addresses(of(address))

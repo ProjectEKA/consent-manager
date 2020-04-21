@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Value;
 
-import java.util.Date;
 import java.util.List;
 
 @AllArgsConstructor
@@ -15,11 +14,10 @@ import java.util.List;
 @Builder
 @Data
 public class Patient {
-    private String id;
-    private String firstName;
-    private String lastName;
-    private Gender gender;
-    private Date dateOfBirth;
-    private List<Identifier> verifiedIdentifiers;
-    private List<Identifier> unverifiedIdentifiers;
+    String id;
+    String name;
+    Gender gender;
+    Integer yearOfBirth;
+    List<Identifier> verifiedIdentifiers;
+    List<Identifier> unverifiedIdentifiers;
 }

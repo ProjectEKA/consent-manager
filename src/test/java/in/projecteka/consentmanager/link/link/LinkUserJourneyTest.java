@@ -35,6 +35,7 @@ import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -62,15 +63,16 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static java.util.List.of;
 import static org.mockito.Mockito.when;
 
+
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 @ContextConfiguration(initializers = LinkUserJourneyTest.ContextInitializer.class)
 public class LinkUserJourneyTest {
-    private static MockWebServer clientRegistryServer = new MockWebServer();
-    private static MockWebServer hipServer = new MockWebServer();
-    private static MockWebServer userServer = new MockWebServer();
-    private static MockWebServer identityServer = new MockWebServer();
+    private static final MockWebServer clientRegistryServer = new MockWebServer();
+    private static final MockWebServer hipServer = new MockWebServer();
+    private static final MockWebServer userServer = new MockWebServer();
+    private static final MockWebServer identityServer = new MockWebServer();
 
     @MockBean
     private DestinationsConfig destinationsConfig;
@@ -258,11 +260,9 @@ public class LinkUserJourneyTest {
         List<Links> linksList = new ArrayList<>();
         linksList.add(links);
         var patientLinks =
-                PatientLinks.builder().
-                        id(patientId).
-                        firstName("").
-                        lastName("").
-                        links(linksList).build();
+                PatientLinks.builder()
+                        .id(patientId)
+                        .links(linksList).build();
         var patientLinksResponse = PatientLinksResponse.builder().patient(patientLinks).build();
         var user = user().build();
         user.setIdentifier(patientId);
@@ -271,8 +271,6 @@ public class LinkUserJourneyTest {
         userServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(userJson));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
-        patientLinksResponse.getPatient().setFirstName(user.getFirstName());
-        patientLinksResponse.getPatient().setLastName(user.getLastName());
         patientLinksResponse.getPatient().setLinks(patientLinks.getLinks().stream()
                 .peek(link -> link.setHip(Hip.builder().id(link.getHip().getId()).name("Max").build()))
                 .collect(Collectors.toList()));

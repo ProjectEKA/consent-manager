@@ -29,6 +29,7 @@ import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -48,9 +49,9 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 
 @ExtendWith(SpringExtension.class)
 @AutoConfigureWebTestClient
@@ -107,10 +108,10 @@ public class ConsentRequestUserJourneyTest {
     @Captor
     private ArgumentCaptor<ConsentRequest> captor;
 
-    private static MockWebServer clientRegistryServer = new MockWebServer();
-    private static MockWebServer userServer = new MockWebServer();
-    private static MockWebServer identityServer = new MockWebServer();
-    private static MockWebServer patientLinkServer = new MockWebServer();
+    private static final MockWebServer clientRegistryServer = new MockWebServer();
+    private static final MockWebServer userServer = new MockWebServer();
+    private static final MockWebServer identityServer = new MockWebServer();
+    private static final MockWebServer patientLinkServer = new MockWebServer();
     private static final String CONSENT_GRANT_JSON = "{\n" +
             "    \"consents\": [\n" +
             "        {\n" +
@@ -133,7 +134,7 @@ public class ConsentRequestUserJourneyTest {
             "                    \"from\": \"2020-01-16T08:47:48.000+0000\",\n" +
             "                    \"to\": \"2020-04-29T08:47:48.000+0000\"\n" +
             "                },\n" +
-            "                \"dataExpiryAt\": \"2020-05-29T08:47:48.000+0000\",\n" +
+            "                \"dataEraseAt\": \"2020-05-29T08:47:48.000+0000\",\n" +
             "                \"frequency\": {\n" +
             "                    \"unit\": \"HOUR\",\n" +
             "                    \"value\": 1,\n" +
@@ -152,7 +153,7 @@ public class ConsentRequestUserJourneyTest {
         patientLinkServer.shutdown();
     }
 
-    private String requestedConsentJson = "{\n" +
+    private final String requestedConsentJson = "{\n" +
             "            \"status\": \"REQUESTED\",\n" +
             "            \"createdAt\": \"2020-03-14T10:51:05.466+0000\",\n" +
             "            \"purpose\": {\n" +
@@ -181,14 +182,14 @@ public class ConsentRequestUserJourneyTest {
             "                    \"from\": \"2020-03-14T10:50:45.032+0000\",\n" +
             "                    \"to\": \"2020-03-14T10:50:45.032+0000\"\n" +
             "                },\n" +
-            "                \"dataExpiryAt\": \"2020-03-18T10:50:00.000+0000\",\n" +
+            "                \"dataEraseAt\": \"2020-03-18T10:50:00.000+0000\",\n" +
             "                \"frequency\": {\n" +
             "                    \"unit\": \"HOUR\",\n" +
             "                    \"value\": 1,\n" +
             "                    \"repeats\": 0\n" +
             "                }\n" +
             "            },\n" +
-            "            \"callBackUrl\": \"http://hiu:8003\",\n" +
+            "            \"consentNotificationUrl\": \"http://hiu:8003\",\n" +
             "            \"lastUpdated\": \"2020-03-14T12:00:52.091+0000\",\n" +
             "            \"id\": \"30d02f6d-de17-405e-b4ab-d31b2bb799d7\"\n" +
             "        }";
@@ -244,13 +245,13 @@ public class ConsentRequestUserJourneyTest {
                 "        \"from\": \"2021-01-16T07:23:41.305Z\",\n" +
                 "        \"to\": \"2021-01-16T07:35:41.305Z\"\n" +
                 "      },\n" +
-                "      \"dataExpiryAt\": \"2022-01-16T07:23:41.305Z\",\n" +
+                "      \"dataEraseAt\": \"2022-01-16T07:23:41.305Z\",\n" +
                 "      \"frequency\": {\n" +
                 "        \"unit\": \"DAY\",\n" +
                 "        \"value\": 1\n" +
                 "      }\n" +
                 "    },\n" +
-                "    \"callBackUrl\": \"https://tmh-hiu/notify\"\n" +
+                "    \"consentNotificationUrl\": \"https://tmh-hiu/notify\"\n" +
                 "  }\n" +
                 "}";
         webTestClient.post()
@@ -331,12 +332,7 @@ public class ConsentRequestUserJourneyTest {
                 .thenReturn(Mono.just(consentRequestDetail));
         when(pinVerificationTokenService.validateToken(token))
                 .thenReturn(Mono.just(new Caller(patientId, false)));
-        when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(
-                any(),
-                eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"),
-                any(),
-                any(),
-                any())).thenReturn(Mono.empty());
+        when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
         webTestClient.post()
@@ -398,11 +394,7 @@ public class ConsentRequestUserJourneyTest {
                 .thenReturn(Mono.just(new Caller(patientId, false)));
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
                 .thenReturn(Mono.just(consentRequestDetail));
-        when(consentArtefactRepository.addConsentArtefactAndUpdateStatus(any(),
-                eq("30d02f6d-de17-405e-b4ab-d31b2bb799d7"),
-                any(),
-                any(),
-                any())).thenReturn(Mono.empty());
+        when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
         webTestClient.post()

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "eb5f157c-b343-488f-83a7-9d23721353d0",
+		"_postman_id": "321a6787-f695-4bda-acb4-9a3920a78342",
 		"name": "NCG",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -8,199 +8,6 @@
 		{
 			"name": "CM",
 			"item": [
-				{
-					"name": "Providers",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "{{AUTHORIZATION}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{CM_HOST}}/providers?name=infi",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"providers"
-							],
-							"query": [
-								{
-									"key": "name",
-									"value": "infi"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Discovery Enquiry",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "eae93b7d-089b-48ac-8f3d-1ce6d902f3b6",
-								"exec": [
-									"pm.test(\"Update patient reference number\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.environment.set(\"PATIENT_REF_NUMBER\", jsonData.patient.referenceNumber);",
-									"    pm.environment.set(\"CARE_CONTEXT1_NUMBER\",",
-									"    jsonData.patient.careContexts[0].referenceNumber)",
-									"    pm.environment.set(\"DISCOVERY_REQUEST_ID\", jsonData.transactionId)",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "patientId",
-								"type": "text",
-								"value": "1",
-								"disabled": true
-							},
-							{
-								"key": "Accept",
-								"type": "text",
-								"value": "application/json",
-								"disabled": true
-							},
-							{
-								"key": "Content-Type",
-								"type": "text",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"type": "text",
-								"value": "{{AUTHORIZATION}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"hip\": {\n\t\t\"id\": \"10000004\"\n\t}\n}"
-						},
-						"url": {
-							"raw": "{{CM_HOST}}/patients/discover",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"patients",
-								"discover"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Link Enquiry",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "eeda8a4e-44d7-4fe4-8300-56571879ad14",
-								"exec": [
-									"pm.test(\"Update link reference number\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.environment.set(\"LINK_REF_NUMBER\", jsonData.link.referenceNumber);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"name": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json",
-								"type": "text",
-								"disabled": true
-							},
-							{
-								"key": "Authorization",
-								"value": "{{AUTHORIZATION}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"transactionId\": \"{{DISCOVERY_REQUEST_ID}}\",\n\t\"patient\": {\n\t\t\"referenceNumber\": \"{{PATIENT_REF_NUMBER}}\",\n\t\t\"careContexts\": [\n            {\n                \"referenceNumber\": \"{{CARE_CONTEXT1_NUMBER}}\"\n            }\n        ]\n\t}\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{CM_HOST}}/patients/link/",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"patients",
-								"link",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Link Confirmation",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json",
-								"type": "text",
-								"disabled": true
-							},
-							{
-								"key": "Authorization",
-								"value": "{{AUTHORIZATION}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"token\": \"666666\"\n}"
-						},
-						"url": {
-							"raw": "{{CM_HOST}}/patients/link/{{LINK_REF_NUMBER}}",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"patients",
-								"link",
-								"{{LINK_REF_NUMBER}}"
-							]
-						}
-					},
-					"response": []
-				},
 				{
 					"name": "New User Enquiry",
 					"event": [
@@ -312,9 +119,8 @@
 									"    var jsonData = pm.response.json();",
 									"    var request = JSON.parse(pm.request.body.raw);",
 									"    pm.environment.set(\"AUTHORIZATION\", \"bearer \" + jsonData.accessToken);",
-									"    pm.environment.set(\"USERNAME\", request.userName);",
+									"    pm.environment.set(\"USERNAME\", request.username);",
 									"    pm.environment.set(\"PASSWORD\", request.password);",
-									"    ",
 									"});"
 								],
 								"type": "text/javascript"
@@ -343,7 +149,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\"firstName\": \"{{$randomFirstName}}\",\n\"lastName\": \"{{$randomLastName}}\",\n\"userName\": \"{{$randomFirstName}}.{{$randomLastName}}@ncg\",\n\"password\": \"{{$randomPassword}}#\",\n\"dateOfBirth\": \"1990-06-09\",\n\"gender\": \"M\"\n}",
+							"raw": "{\n\"name\": \"{{$randomFirstName}} {{$randomLastName}}\",\n\"username\": \"{{$randomFirstName}}.{{$randomLastName}}@ncg\",\n\"password\": \"{{$randomPassword}}#\",\n\"yearOfBirth\": 1990,\n\"gender\": \"M\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -351,12 +157,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{CM_HOST}}/users",
+							"raw": "{{CM_HOST}}/patients/profile",
 							"host": [
 								"{{CM_HOST}}"
 							],
 							"path": [
-								"users"
+								"patients",
+								"profile"
 							]
 						}
 					},
@@ -387,6 +194,200 @@
 					"response": []
 				},
 				{
+					"name": "Providers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{CM_HOST}}/providers?name=infi",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"providers"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "infi"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Discovery Enquiry",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "eae93b7d-089b-48ac-8f3d-1ce6d902f3b6",
+								"exec": [
+									"pm.test(\"Update patient reference number\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"PATIENT_REF_NUMBER\", jsonData.patient.referenceNumber);",
+									"    pm.environment.set(\"CARE_CONTEXT1_NUMBER\",",
+									"    jsonData.patient.careContexts[0].referenceNumber)",
+									"    pm.environment.set(\"DISCOVERY_REQUEST_ID\", jsonData.transactionId)",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "patientId",
+								"type": "text",
+								"value": "1",
+								"disabled": true
+							},
+							{
+								"key": "Accept",
+								"type": "text",
+								"value": "application/json",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{AUTHORIZATION}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"hip\": {\n\t\t\"id\": \"10000004\"\n\t}\n}"
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/discover/carecontexts",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"discover",
+								"carecontexts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Link Enquiry",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "eeda8a4e-44d7-4fe4-8300-56571879ad14",
+								"exec": [
+									"pm.test(\"Update link reference number\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"LINK_REF_NUMBER\", jsonData.link.referenceNumber);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"transactionId\": \"{{DISCOVERY_REQUEST_ID}}\",\n\t\"patient\": {\n\t\t\"referenceNumber\": \"{{PATIENT_REF_NUMBER}}\",\n\t\t\"careContexts\": [\n            {\n                \"referenceNumber\": \"{{CARE_CONTEXT1_NUMBER}}\"\n            }\n        ]\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/link/",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"link",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Link Confirmation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"token\": \"666666\"\n}"
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/link/{{LINK_REF_NUMBER}}",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"link",
+								"{{LINK_REF_NUMBER}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Links",
 					"request": {
 						"method": "GET",
@@ -411,8 +412,31 @@
 					"response": []
 				},
 				{
+					"name": "Consent Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{CM_HOST}}/consent-requests",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"consent-requests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Create pin",
-					"request" : {
+					"request": {
 						"method": "POST",
 						"header": [
 							{
@@ -445,7 +469,22 @@
 				},
 				{
 					"name": "Verify pin",
-					"request" : {
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "ad042029-4326-4ef5-85cf-158f2fb6abcd",
+								"exec": [
+									"pm.test(\"Update user creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"PIN_AUTHORIZATION\", \"bearer \" + jsonData.temporaryToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
 						"method": "POST",
 						"header": [
 							{
@@ -489,7 +528,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"consents\": [\n        {\n            \"hip\": {\n                \"id\": \"10000004\",\n                \"name\": \"Max Health Care\"\n            },\n            \"hiTypes\": [\n            \t\"Observation\"\n                ],\n            \"careContexts\": [\n                {\n                    \"patientReference\": \"{{PATIENT_REF_NUMBER}}\",\n                    \"careContextReference\": \"{{CARE_CONTEXT1_NUMBER}}\"\n                }\n            ],\n            \"permission\": {\n                \"accessMode\": \"VIEW\",\n                \"dateRange\": {\n                    \"from\": \"2020-01-16T08:47:48.000+0000\",\n                    \"to\": \"2020-04-29T08:47:48.000+0000\"\n                },\n                \"dataExpiryAt\": \"2020-05-29T08:47:48.000+0000\",\n                \"frequency\": {\n                    \"unit\": \"HOUR\",\n                    \"value\": 1,\n                    \"repeats\": 0\n                }\n            }\n        }\n    ]\n}",
+							"raw": "{\n    \"consents\": [\n        {\n            \"hip\": {\n                \"id\": \"10000004\",\n                \"name\": \"Max Health Care\"\n            },\n            \"hiTypes\": [\n            \t\"Observation\"\n                ],\n            \"careContexts\": [\n                {\n                    \"patientReference\": \"{{PATIENT_REF_NUMBER}}\",\n                    \"careContextReference\": \"{{CARE_CONTEXT1_NUMBER}}\"\n                }\n            ],\n            \"permission\": {\n                \"accessMode\": \"VIEW\",\n                \"dateRange\": {\n                    \"from\": \"2020-01-16T08:47:48.000+0000\",\n                    \"to\": \"2020-04-29T08:47:48.000+0000\"\n                },\n                \"dataEraseAt\": \"2020-05-29T08:47:48.000+0000\",\n                \"frequency\": {\n                    \"unit\": \"HOUR\",\n                    \"value\": 1,\n                    \"repeats\": 0\n                }\n            }\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -594,29 +633,6 @@
 					"response": []
 				},
 				{
-					"name": "Consent Requests",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "{{AUTHORIZATION}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{CM_HOST}}/consent-requests",
-							"host": [
-								"{{CM_HOST}}"
-							],
-							"path": [
-								"consent-requests"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Consent Request",
 					"event": [
 						{
@@ -644,7 +660,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"ashok1.kumar@ncg\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\",\n      \"text\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"hiu\": {\n    \t\"id\": \"10000005\",\n    \t\"name\": \"something\"\n    },\n    \"requester\": {\n    \t\"name\": \"Dr Lakshmi\",\n    \t\"identifier\": {\n    \t\t\"value\": \"1\",\n    \t\t\"type\": \"identifier\",\n    \t\t\"system\": \"NCG\"\n    \t}\n    },\n    \"permission\": {\n    \t\"accessMode\": \"VIEW\",\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataExpiryAt\": \"2020-04-23T11:06:32.760Z\"\n    },\n    \"callBackUrl\": \"http://localhost:8003\"\n  }\n}",
+							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"ashok1.kumar@ncg\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\",\n      \"text\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"hiu\": {\n    \t\"id\": \"10000005\",\n    \t\"name\": \"something\"\n    },\n    \"requester\": {\n    \t\"name\": \"Dr Lakshmi\",\n    \t\"identifier\": {\n    \t\t\"value\": \"1\",\n    \t\t\"type\": \"identifier\",\n    \t\t\"system\": \"NCG\"\n    \t}\n    },\n    \"permission\": {\n    \t\"accessMode\": \"VIEW\",\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataEraseAt\": \"2020-04-23T11:06:32.760Z\"\n    },\n    \"callBackUrl\": \"http://localhost:8003\"\n  }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -822,14 +838,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{HIP_HOST}}/patients/discover/",
+							"raw": "{{HIP_HOST}}/patients/discover/carecontexts",
 							"host": [
 								"{{HIP_HOST}}"
 							],
 							"path": [
 								"patients",
 								"discover",
-								""
+								"carecontexts"
 							]
 						}
 					},
@@ -1072,7 +1088,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"{{USERNAME}}\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"permission\": {\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataExpiryAt\": \"2020-04-30T11:06:32.760Z\"\n    }\n  }\n}",
+							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"{{USERNAME}}\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"permission\": {\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataEraseAt\": \"2020-04-30T11:06:32.760Z\"\n    }\n  }\n}",
 							"options": {
 								"raw": {
 									"language": "json"

@@ -1,0 +1,10 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    json.message_key: message
+    json.keys_under_root: true
+    json.add_error_key: true
+    paths:
+      - "/applogs/app*"
+output.elasticsearch:
+  hosts: ["elasticsearch:9200"]

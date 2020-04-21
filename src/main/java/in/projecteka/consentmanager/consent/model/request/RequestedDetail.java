@@ -51,5 +51,5 @@ public class RequestedDetail {
     private ConsentPermission permission;
 
     @NotNull(message = "Call back url not specified.")
-    private String callBackUrl;
+    private String consentNotificationUrl;
 }

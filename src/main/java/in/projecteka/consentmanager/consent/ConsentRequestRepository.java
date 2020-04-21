@@ -23,20 +23,23 @@ import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.to;
 
 public class ConsentRequestRepository {
+    private static final String SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS;
+    private static final String SELECT_CONSENT_REQUEST_BY_ID;
+    private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT;
     private static final String INSERT_CONSENT_REQUEST_QUERY = "INSERT INTO consent_request " +
             "(request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";
-    private static final String SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS = "SELECT request_id, status, details, " +
-            "date_created, date_modified FROM consent_request where request_id=$1 and status=$2 and patient_id=$3";
-    private static final String SELECT_CONSENT_REQUEST_BY_ID = "SELECT request_id, status, details, " +
-            "date_created, date_modified FROM consent_request where request_id=$1";
-    private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent request";
-    private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT = "SELECT request_id, status, details, " +
-            "date_created, date_modified FROM consent_request where patient_id=$1 LIMIT $2 OFFSET $3";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
             "date_modified=$2 WHERE request_id=$3";
+    private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent request";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
+    private final PgPool dbClient;
 
-    private PgPool dbClient;
+    static {
+        String s = "SELECT request_id, status, details, date_created, date_modified FROM consent_request where ";
+        SELECT_CONSENT_DETAILS_FOR_PATIENT = s + "patient_id=$1 LIMIT $2 OFFSET $3";
+        SELECT_CONSENT_REQUEST_BY_ID = s + "request_id=$1";
+        SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS = s + "request_id=$1 and status=$2 and patient_id=$3";
+    }
 
     public ConsentRequestRepository(PgPool dbClient) {
         this.dbClient = dbClient;
@@ -117,7 +120,7 @@ public class ConsentRequestRepository {
                 .permission(details.getPermission())
                 .purpose(details.getPurpose())
                 .requester(details.getRequester())
-                .callBackUrl(details.getCallBackUrl())
+                .consentNotificationUrl(details.getConsentNotificationUrl())
                 .lastUpdated(convertToDate(result.getLocalDateTime("date_modified")))
                 .build();
     }

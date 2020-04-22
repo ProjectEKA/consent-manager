@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
@@ -11,6 +12,7 @@ import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Assertions;
@@ -23,6 +25,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.Logger;
+import org.springframework.web.reactive.function.client.ClientRequest;
+import org.springframework.web.reactive.function.client.ExchangeFunction;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -37,6 +42,8 @@ import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class UserServiceTest {
@@ -64,6 +71,15 @@ class UserServiceTest {
 
     @Mock
     private UserServiceProperties properties;
+
+    @Captor
+    private ArgumentCaptor<ClientRequest> captor;
+
+    @Mock
+    private ExchangeFunction exchangeFunction;
+
+    @Mock
+    private Logger logger;
 
     private UserService userService;
 
@@ -171,7 +187,8 @@ class UserServiceTest {
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.just(user));
         when(userRepository.save(any())).thenReturn(Mono.empty());
 
-        StepVerifier.create(userService.create(signUpRequest, sessionId))
+        Mono<Session> publisher = userService.create(signUpRequest, sessionId);
+        StepVerifier.create(publisher)
                 .verifyErrorSatisfies(error -> assertThat(error)
                         .asInstanceOf(InstanceOfAssertFactories.type(ClientError.class))
                         .isEqualToComparingFieldByField(ClientError.userAlreadyExists(signUpRequest.getUsername())));
@@ -194,4 +211,57 @@ class UserServiceTest {
                 .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
                 .verifyComplete();
     }
+
+    @Test
+    public void shouldNotCreateUserWhenIDPClientFails() {
+        var signUpRequest = signUpRequest()
+                .yearOfBirth(LocalDate.MIN.getYear())
+                .build();
+        var mobileNumber = string();
+        var user = User.from(signUpRequest, mobileNumber);
+        var identifier = user.getIdentifier();
+        var sessionId = string();
+        var tokenForAdmin = session().build();
+
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
+        when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
+        when(userRepository.save(any())).thenReturn(Mono.empty());
+        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.empty());
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
+        when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
+        when(userRepository.delete(identifier)).thenReturn(Mono.empty());
+
+        Mono<Session> publisher = userService.create(signUpRequest, sessionId);
+
+        StepVerifier.create(publisher).verifyComplete();
+        verify(userRepository, times(1)).delete(identifier);
+    }
+
+    @Test
+    void shouldNotCreateUserWhenPersistingToDbFails() {
+        var signUpRequest = signUpRequest()
+                .yearOfBirth(LocalDate.MIN.getYear())
+                .build();
+        var mobileNumber = string();
+        var user = User.from(signUpRequest, mobileNumber);
+        var identifier = user.getIdentifier();
+        var sessionId = string();
+        var tokenForAdmin = session().build();
+
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
+        when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
+        when(userRepository.save(any())).thenReturn(Mono.error(new DbOperationError()));
+        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.empty());
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
+        when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
+        when(userRepository.delete(identifier)).thenReturn(Mono.empty());
+
+        Mono<Session> publisher = userService.create(signUpRequest, sessionId);
+
+        StepVerifier.create(publisher)
+                .verifyErrorSatisfies(error -> assertThat(error)
+                        .asInstanceOf(InstanceOfAssertFactories.type(DbOperationError.class))
+                        .isEqualToComparingFieldByField(new DbOperationError()));
+    }
+
 }

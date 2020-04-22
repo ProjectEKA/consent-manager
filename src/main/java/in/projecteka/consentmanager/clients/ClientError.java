@@ -11,7 +11,6 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEF
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_NOT_GRANTED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_NOT_FOUND;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.DB_OPERATION_FAILED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_RANGE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
@@ -70,11 +69,6 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN, "Invalid transaction pin")));
     }
 
-    public static ClientError dbOperationFailed() {
-        return new ClientError(INTERNAL_SERVER_ERROR,
-                new ErrorRepresentation(new Error(DB_OPERATION_FAILED, CANNOT_PROCESS_REQUEST_TRY_LATER)));
-    }
-
     public static ClientError otpExpired() {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(OTP_EXPIRED, "OTP Expired, please try again")));
@@ -116,8 +110,8 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(CONSENT_ARTEFACT_FORBIDDEN, "Cannot retrieve Consent artefact")));
     }
 
-    public static ClientError otpNotFound() {
-        return new ClientError(NOT_FOUND, new ErrorRepresentation(new Error(OTP_INVALID, "Invalid OTP")));
+    public static ClientError invalidOtp() {
+        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(OTP_INVALID, "Invalid OTP")));
     }
 
     public static ClientError unknownErrorOccurred() {

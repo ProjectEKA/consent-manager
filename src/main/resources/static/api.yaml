@@ -2121,6 +2121,8 @@ components:
       properties:
         transactionId:
           type: string
+        consentId:
+          type: string
         doneAt:
           type: string
           format: date-time

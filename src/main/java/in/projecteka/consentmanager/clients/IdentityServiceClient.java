@@ -49,4 +49,16 @@ public class IdentityServiceClient {
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(Session.class);
     }
+
+    public Mono<Void> logout(MultiValueMap<String, String> formData) {
+        return webClientBuilder.build()
+                .post()
+                .uri(uriBuilder ->
+                        uriBuilder.path("/realms/consent-manager/protocol/openid-connect/logout").build())
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(BodyInserters.fromFormData(formData))
+                .retrieve()
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .bodyToMono(Void.class);
+    }
 }

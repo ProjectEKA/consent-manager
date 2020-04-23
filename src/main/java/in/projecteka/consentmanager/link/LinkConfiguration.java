@@ -3,13 +3,13 @@ package in.projecteka.consentmanager.link;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.user.UserServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.DiscoveryRepository;
 import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.link.link.LinkRepository;
+import in.projecteka.consentmanager.user.UserServiceProperties;
 import io.vertx.pgclient.PgPool;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,25 +29,28 @@ public class LinkConfiguration {
     }
 
     @Bean
-    public Link link(WebClient.Builder builder,
-                     LinkRepository linkRepository,
-                     CentralRegistry centralRegistry) {
-        return new Link(new LinkServiceClient(builder),
-                linkRepository,
-                centralRegistry);
+    public Link link(WebClient.Builder builder, LinkRepository linkRepository, CentralRegistry centralRegistry) {
+        return new Link(new LinkServiceClient(builder), linkRepository, centralRegistry);
     }
 
     @Bean
-    public Discovery discovery(WebClient.Builder builder,
-                               UserServiceProperties userServiceProperties,
-                               DiscoveryRepository discoveryRepository,
+    public DiscoveryServiceClient discoveryServiceClient(WebClient.Builder builder,
+                                                         CentralRegistry centralRegistry) {
+        return new DiscoveryServiceClient(builder, centralRegistry::authenticate);
+    }
+
+    @Bean
+    public UserServiceClient userServiceClient(WebClient.Builder builder,
+                                               UserServiceProperties userServiceProperties,
+                                               IdentityService identityService) {
+        return new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate);
+    }
+
+    @Bean
+    public Discovery discovery(DiscoveryRepository discoveryRepository,
                                CentralRegistry centralRegistry,
-                               IdentityService identityService) {
-        UserServiceClient userServiceClient = new UserServiceClient(
-                builder,
-                userServiceProperties.getUrl(),
-                identityService::authenticate);
-        DiscoveryServiceClient discoveryServiceClient = new DiscoveryServiceClient(builder, centralRegistry::authenticate);
+                               DiscoveryServiceClient discoveryServiceClient,
+                               UserServiceClient userServiceClient) {
         return new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry);
     }
 }

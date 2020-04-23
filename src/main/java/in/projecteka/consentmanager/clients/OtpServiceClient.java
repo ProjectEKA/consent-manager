@@ -44,8 +44,10 @@ public class OtpServiceClient {
                 .accept(APPLICATION_JSON)
                 .body(Mono.just(new VerificationRequest(otp)), VerificationRequest.class)
                 .retrieve()
-                .onStatus(HttpStatus::is4xxClientError,
-                        clientResponse -> Mono.error(ClientError.otpNotFound()))
+                .onStatus(httpStatus -> httpStatus.value() == 400,
+                        clientResponse -> Mono.error(ClientError.invalidOtp()))
+                .onStatus(httpStatus -> httpStatus.value() == 401,
+                        clientResponse -> Mono.error(ClientError.otpExpired()))
                 .onStatus(HttpStatus::is5xxServerError,
                         clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .toBodilessEntity()

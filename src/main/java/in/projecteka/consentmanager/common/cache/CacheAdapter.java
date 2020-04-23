@@ -10,4 +10,6 @@ public interface CacheAdapter<K,V> {
     Mono<V> getIfPresent(K key);
 
     Mono<Void> invalidate(K key);
+
+    Mono<Boolean> exists(K key);
 }

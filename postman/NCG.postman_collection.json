@@ -864,7 +864,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"transactionId\": \"{{$guid}}\",\n\t\"patient\": {\n\t\t\"id\": \"{{CONSENT_MANAGER_USER_ID}}\",\n\t\t\"verifiedIdentifiers\": [\n\t\t\t{\n\t\t\t\t\"type\": \"MOBILE\", \n\t\t\t\"value\": \"+91-9999999999\"\n\t\t\t}],\n\t\t\"unverifiedIdentifiers\": []\n\t}\n}",
+							"raw": "{\n\t\"requestId\": \"{{$guid}}\",\n\t\"patient\": {\n\t\t\"id\": \"{{CONSENT_MANAGER_USER_ID}}\",\n\t\t\"verifiedIdentifiers\": [\n\t\t\t{\n\t\t\t\t\"type\": \"MOBILE\", \n\t\t\t\"value\": \"+91-9999999999\"\n\t\t\t}],\n\t\t\"unverifiedIdentifiers\": []\n\t}\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -951,7 +951,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"transactionId\": \"{{DISCOVERY_REQUEST_ID}}\",\n    \"patient\": {\n        \"consentManagerUserID\": \"{{CONSENT_MANAGER_USER_ID}}\",\n        \"referenceNumber\": \"{{PATIENT_REF_NUMBER}}\",\n        \"careContexts\": [\n            {\n                \"referenceNumber\": \"{{CARE_CONTEXT1_NUMBER}}\"\n            }\n        ]\n    }\n}"
+							"raw": "{\n  \"requestId\": \"{{UNIQUE_REQUEST_ID}}\",\n  \"transactionId\": \"{{DISCOVERY_REQUEST_ID}}\",\n    \"patient\": {\n        \"consentManagerUserID\": \"{{CONSENT_MANAGER_USER_ID}}\",\n        \"referenceNumber\": \"{{PATIENT_REF_NUMBER}}\",\n        \"careContexts\": [\n            {\n                \"referenceNumber\": \"{{CARE_CONTEXT1_NUMBER}}\"\n            }\n        ]\n    }\n}"
 						},
 						"url": {
 							"raw": "{{HIP_HOST}}/patients/link",

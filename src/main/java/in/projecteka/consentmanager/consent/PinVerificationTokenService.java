@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
@@ -10,7 +11,6 @@ import io.jsonwebtoken.SignatureException;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import reactor.core.publisher.Mono;
 
 import java.security.PublicKey;
@@ -20,14 +20,36 @@ import java.util.function.Function;
 @AllArgsConstructor
 public class PinVerificationTokenService {
     private final PublicKey publicKey;
+    private final CacheAdapter<String,String> usedTokens;
     private static final Logger logger = LoggerFactory.getLogger(PinVerificationTokenService.class);
 
     public Mono<Caller> validateToken(String authToken) {
         try {
-            return usernameFrom(authToken).map(username -> Mono.just(new Caller(username, false))).orElse(Mono.empty());
+            Optional<String> optionalSessionId = sessionIdFrom(authToken);
+            if(optionalSessionId.isEmpty()) {
+                return Mono.empty();
+            }
+            String sessionId = optionalSessionId.get();
+            return usedTokens.exists(sessionId)
+                    .filter(exists -> {
+                        logger.info("Session id {} does exist? {}",sessionId,exists);
+                        return !exists;
+                    })
+                    .flatMap(doesNotExist -> usernameFrom(authToken).
+                            map(username -> Mono.just(new Caller(username, false,sessionId))).
+                            orElse(Mono.empty()));
         } catch (ExpiredJwtException | MalformedJwtException | SignatureException | IllegalArgumentException e) {
             logger.error(e.getMessage(),e);
             return Mono.empty();
+        }
+    }
+
+    private Optional<String> sessionIdFrom(String token) {
+        try {
+            return Optional.ofNullable(claim(from(token), claims -> claims.get("sid").toString()));
+        } catch (ExpiredJwtException | MalformedJwtException | SignatureException | IllegalArgumentException e) {
+            logger.error(e.getMessage(),e);
+            return Optional.empty();
         }
     }
 

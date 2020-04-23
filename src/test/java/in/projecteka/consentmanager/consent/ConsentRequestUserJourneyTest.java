@@ -330,7 +330,7 @@ public class ConsentRequestUserJourneyTest {
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
                 .thenReturn(Mono.just(consentRequestDetail));
         when(pinVerificationTokenService.validateToken(token))
-                .thenReturn(Mono.just(new Caller(patientId, false)));
+                .thenReturn(Mono.just(new Caller(patientId, false, "randomSessionId")));
         when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 

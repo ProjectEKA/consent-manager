@@ -1,12 +1,15 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.TransactionPin;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import reactor.core.publisher.Mono;
 
@@ -14,6 +17,7 @@ import java.security.PrivateKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.UUID;
 
 @AllArgsConstructor
 public class TransactionPinService {
@@ -21,6 +25,7 @@ public class TransactionPinService {
     private final BCryptPasswordEncoder encoder;
     private final PrivateKey privateKey;
     private final UserServiceProperties userServiceProperties;
+    private static final Logger logger = LoggerFactory.getLogger(PinVerificationTokenService.class);
 
     public Mono<Void> createPinFor(String patientId, String pin) {
         if (!isPinValid(pin)) {
@@ -58,7 +63,6 @@ public class TransactionPinService {
                     if (!encoder.matches(pin, transactionPin.get().getPin())) {
                         return Mono.error(ClientError.transactionPinDidNotMatch());
                     }
-
                     return Mono.empty();
                 }).thenReturn(newToken(patientId));
     }
@@ -66,8 +70,11 @@ public class TransactionPinService {
     @SneakyThrows
     private Token newToken(String userName) {
         int minutes = userServiceProperties.getTransactionPinTokenValidity() * 60 * 1000;
+        HashMap<String, Object> claims = new HashMap<>(1);
+        claims.put("sid" , UUID.randomUUID().toString());
+        logger.info("Putting session id {}", claims.get("sid"));
         return new Token(Jwts.builder()
-                .setClaims(new HashMap<>())
+                .setClaims(claims)
                 .setSubject(userName)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + minutes))

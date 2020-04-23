@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.model.ConsentRequestValidator;
 import in.projecteka.consentmanager.consent.model.request.ConsentApprovalRequest;
 import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
@@ -8,6 +9,8 @@ import in.projecteka.consentmanager.consent.model.response.ConsentApprovalRespon
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.WebDataBinder;
@@ -29,6 +32,8 @@ import javax.validation.Valid;
 public class ConsentRequestController {
     private final ConsentManager consentManager;
     private final ConsentServiceProperties serviceProperties;
+    private final CacheAdapter<String, String> usedTokens;
+    private static final Logger logger = LoggerFactory.getLogger(PinVerificationTokenService.class);
 
     @InitBinder("consentRequest")
     protected void initBinder(WebDataBinder binder) {
@@ -75,9 +80,14 @@ public class ConsentRequestController {
             @Valid @RequestBody ConsentApprovalRequest consentApprovalRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUsername)
-                .flatMap(username ->
-                        consentManager.approveConsent(username, requestId, consentApprovalRequest.getConsents()));
+                .flatMap(caller ->
+                        consentManager.
+                                approveConsent(caller.getUsername(), requestId, consentApprovalRequest.getConsents())
+                                .flatMap(response -> {
+                                    logger.info("[approve] putting %s in used tokens",caller.getSessionId());
+                                    return usedTokens.put(caller.getSessionId(),"").thenReturn(response);
+                                })
+                );
     }
 
     @PostMapping(value = "/consent-requests/{id}/deny")
@@ -85,7 +95,12 @@ public class ConsentRequestController {
     public Mono<Void> deny(@PathVariable(value = "id") String id) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUsername)
-                .flatMap(username -> consentManager.deny(id, username));
+                .flatMap(caller ->
+                        consentManager.deny(id, caller.getUsername())
+                        .flatMap(aVoid -> {
+                            logger.info("[revoke] putting %s in used tokens",caller.getSessionId());
+                            return usedTokens.put(caller.getSessionId(),"");
+                        })
+                );
     }
 }

@@ -12,7 +12,7 @@ import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccur
 
 public class DataFlowRequestRepository {
     private static final String INSERT_TO_DATA_FLOW_REQUEST = "INSERT INTO data_flow_request (transaction_id, " +
-            "data_flow_request) VALUES ($1, $2)";
+            "consent_artefact_id, data_flow_request) VALUES ($1, $2, $3)";
     private static final String SELECT_HIP_ID_FROM_CONSENT_ARTEFACT = "SELECT consent_artefact -> 'hip' ->> 'id' as " +
             "hip_id FROM consent_artefact WHERE consent_artefact_id=$1";
     private static final String INSERT_TO_HEALTH_INFO_NOTIFICATION = "INSERT INTO health_info_notification " +
@@ -25,7 +25,9 @@ public class DataFlowRequestRepository {
 
     public Mono<Void> addDataFlowRequest(String transactionId, DataFlowRequest dataFlowRequest) {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_TO_DATA_FLOW_REQUEST)
-                .execute(Tuple.of(transactionId, JsonObject.mapFrom(dataFlowRequest)),
+                .execute(Tuple.of(transactionId,
+                        dataFlowRequest.getConsent().getId(),
+                        JsonObject.mapFrom(dataFlowRequest)),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError());

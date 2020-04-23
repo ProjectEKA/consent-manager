@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.TransactionPin;
 import io.jsonwebtoken.Jwts;
@@ -25,7 +24,7 @@ public class TransactionPinService {
     private final BCryptPasswordEncoder encoder;
     private final PrivateKey privateKey;
     private final UserServiceProperties userServiceProperties;
-    private static final Logger logger = LoggerFactory.getLogger(PinVerificationTokenService.class);
+    private static final Logger logger = LoggerFactory.getLogger(TransactionPinService.class);
 
     public Mono<Void> createPinFor(String patientId, String pin) {
         if (!isPinValid(pin)) {
@@ -53,7 +52,7 @@ public class TransactionPinService {
         return transactionPinRepository.getTransactionPinFor(patientId).map(Optional::isPresent);
     }
 
-    public Mono<Token> validatePinFor(String patientId, String pin) {
+    public Mono<Token> validatePinFor(String patientId, String pin,String scope) {
         return transactionPinRepository.getTransactionPinFor(patientId)
                 .flatMap(transactionPin -> {
                     if (transactionPin.isEmpty()) {
@@ -64,15 +63,17 @@ public class TransactionPinService {
                         return Mono.error(ClientError.transactionPinDidNotMatch());
                     }
                     return Mono.empty();
-                }).thenReturn(newToken(patientId));
+                }).thenReturn(newToken(patientId, scope));
     }
 
     @SneakyThrows
-    private Token newToken(String userName) {
+    private Token newToken(String userName, String scope) {
         int minutes = userServiceProperties.getTransactionPinTokenValidity() * 60 * 1000;
         HashMap<String, Object> claims = new HashMap<>(1);
         claims.put("sid" , UUID.randomUUID().toString());
-        logger.info("Putting session id {}", claims.get("sid"));
+        claims.put("scope" , scope);
+        logger.debug("Putting session id {}", claims.get("sid"));
+        logger.debug("Putting scope {}", claims.get("scope"));
         return new Token(Jwts.builder()
                 .setClaims(claims)
                 .setSubject(userName)

@@ -1003,10 +1003,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PinVerificationRequest'
+              $ref: '#/components/schemas/ValidatePinRequest'
           application/xml:
             schema:
-              $ref: '#/components/schemas/PinVerificationRequest'
+              $ref: '#/components/schemas/ValidatePinRequest'
       responses:
         '200':
           description: Successful verification of PIN.
@@ -2053,7 +2053,7 @@ components:
           description: '4 digit number'
       required:
         - pin
-    PinVerificationRequest:
+    ValidatePinRequest:
       type: object
       properties:
         pin:
@@ -2061,8 +2061,13 @@ components:
           maximum: 9999
           example: "1234"
           description: '4 digit number'
+        scope:
+          type: string
+          enum : [consentrequest.approve, consent.revoke]
+          description: 'Scope the supplied token will be valid for'
       required:
         - pin
+        - scope
     CreatePatientRequest:
       type: object
       properties:

@@ -33,7 +33,7 @@ public class ConsentRequestController {
     private final ConsentManager consentManager;
     private final ConsentServiceProperties serviceProperties;
     private final CacheAdapter<String, String> usedTokens;
-    private static final Logger logger = LoggerFactory.getLogger(PinVerificationTokenService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ConsentRequestController.class);
 
     @InitBinder("consentRequest")
     protected void initBinder(WebDataBinder binder) {
@@ -84,10 +84,9 @@ public class ConsentRequestController {
                         consentManager.
                                 approveConsent(caller.getUsername(), requestId, consentApprovalRequest.getConsents())
                                 .flatMap(response -> {
-                                    logger.info("[approve] putting %s in used tokens",caller.getSessionId());
+                                    logger.debug("[approve] putting {} in used tokens",caller.getSessionId());
                                     return usedTokens.put(caller.getSessionId(),"").thenReturn(response);
-                                })
-                );
+                                }));
     }
 
     @PostMapping(value = "/consent-requests/{id}/deny")
@@ -95,12 +94,7 @@ public class ConsentRequestController {
     public Mono<Void> deny(@PathVariable(value = "id") String id) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller ->
-                        consentManager.deny(id, caller.getUsername())
-                        .flatMap(aVoid -> {
-                            logger.info("[revoke] putting %s in used tokens",caller.getSessionId());
-                            return usedTokens.put(caller.getSessionId(),"");
-                        })
-                );
+                .map(Caller::getUsername)
+                .flatMap(username -> consentManager.deny(id, username));
     }
 }

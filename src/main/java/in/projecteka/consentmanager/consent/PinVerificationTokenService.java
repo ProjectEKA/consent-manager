@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import io.jsonwebtoken.Claims;
@@ -23,16 +24,22 @@ public class PinVerificationTokenService {
     private final CacheAdapter<String,String> usedTokens;
     private static final Logger logger = LoggerFactory.getLogger(PinVerificationTokenService.class);
 
-    public Mono<Caller> validateToken(String authToken) {
+    public Mono<Caller> validateToken(String authToken, String validScope) {
         try {
             Optional<String> optionalSessionId = sessionIdFrom(authToken);
-            if(optionalSessionId.isEmpty()) {
+            Optional<String> optionalScope = scopeFrom(authToken);
+            if(optionalSessionId.isEmpty() || optionalScope.isEmpty()) {
                 return Mono.empty();
+            }
+            String scope = optionalScope.get();
+            logger.debug("Got scope {} on token", scope);
+            if (!scope.equals(validScope)) {
+                return Mono.error(ClientError.invalidScope());
             }
             String sessionId = optionalSessionId.get();
             return usedTokens.exists(sessionId)
                     .filter(exists -> {
-                        logger.info("Session id {} does exist? {}",sessionId,exists);
+                        logger.debug("Session id {} does exist? {}",sessionId,exists);
                         return !exists;
                     })
                     .flatMap(doesNotExist -> usernameFrom(authToken).
@@ -44,11 +51,19 @@ public class PinVerificationTokenService {
         }
     }
 
+    private Optional<String> scopeFrom(String authToken) {
+        return fetchClaim(authToken, "scope");
+    }
+
     private Optional<String> sessionIdFrom(String token) {
+        return fetchClaim(token, "sid");
+    }
+
+    private Optional<String> fetchClaim(String token, String claim) {
         try {
-            return Optional.ofNullable(claim(from(token), claims -> claims.get("sid").toString()));
+            return Optional.ofNullable(claim(from(token), claims -> claims.get(claim).toString()));
         } catch (ExpiredJwtException | MalformedJwtException | SignatureException | IllegalArgumentException e) {
-            logger.error(e.getMessage(),e);
+            logger.error(e.getMessage(), e);
             return Optional.empty();
         }
     }

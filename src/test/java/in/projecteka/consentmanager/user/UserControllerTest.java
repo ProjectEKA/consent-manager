@@ -35,7 +35,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @SuppressWarnings("ALL")
-
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient

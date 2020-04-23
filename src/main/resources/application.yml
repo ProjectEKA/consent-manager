@@ -53,3 +53,10 @@ spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}
     port: ${RABBITMQ_PORT}
+
+keyStore:
+  filePath: "./src/main/resources/consent-manager-keystore.p12"
+  #For storeType valid values are PKCS12 or JKS
+  storeType: PKCS12
+  password: ${KEYSTORE_PASSWORD}
+  alias: ${KEYSTORE_ALIAS}

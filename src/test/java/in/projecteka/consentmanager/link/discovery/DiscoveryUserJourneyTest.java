@@ -40,7 +40,6 @@ import java.util.stream.Stream;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static org.mockito.Mockito.when;
 
-
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient

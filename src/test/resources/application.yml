@@ -21,3 +21,8 @@ consentmanager:
       url: http://localhost:9001
     consentmanager:
       url: http://localhost:8000
+keyStore:
+  filePath: "./src/test/resources/consent-manager-test-keystore.p12"
+  storeType: PKCS12
+  password: password
+  alias: test-ks

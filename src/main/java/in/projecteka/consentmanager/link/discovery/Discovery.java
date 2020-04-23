@@ -41,16 +41,28 @@ public class Discovery {
                 .map(Transformer::to);
     }
 
-    public Mono<DiscoveryResponse> patientFor(String userName, List<PatientIdentifier> unverifiedIdentifiers, String providerId, String requestId) {
-        return userWith(userName)
-                .zipWith(providerUrl(providerId))
-                .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
-                .flatMap(tuple -> patientIn(tuple.getT2(), tuple.getT1(), requestId, unverifiedIdentifiers))
-                .flatMap(patientResponse ->
-                        insertDiscoveryRequest(patientResponse,
-                                providerId,
-                                userName,
-                                requestId));
+    public Mono<DiscoveryResponse> patientFor(String userName,
+                                              List<PatientIdentifier> unverifiedIdentifiers,
+                                              String providerId,
+                                              String transactionId,
+                                              String requestId) {
+        return isRequestPresent(requestId)
+                .flatMap(requestExists -> (!requestExists)
+                    ? userWith(userName)
+                            .zipWith(providerUrl(providerId))
+                            .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
+                            .flatMap(tuple -> patientIn(tuple.getT2(), tuple.getT1(), transactionId, unverifiedIdentifiers))
+                            .flatMap(patientResponse ->
+                                    insertDiscoveryRequest(patientResponse,
+                                            providerId,
+                                            userName,
+                                            transactionId,
+                                            requestId))
+                    : Mono.error(ClientError.requestAlreadyExists()));
+    }
+
+    private Mono<Boolean> isRequestPresent(String requestId) {
+        return discoveryRepository.isRequestPresent(requestId);
     }
 
     private Mono<User> userWith(String patientId) {
@@ -67,7 +79,7 @@ public class Discovery {
                         .orElse(Mono.empty()));
     }
 
-    private Mono<PatientResponse> patientIn(String hipSystemUrl, User user, String requestId, List<PatientIdentifier> unverifiedIdentifiers) {
+    private Mono<PatientResponse> patientIn(String hipSystemUrl, User user, String transactionId, List<PatientIdentifier> unverifiedIdentifiers) {
         var phoneNumber = in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
                 .type(MOBILE)
                 .value(user.getPhone())
@@ -89,19 +101,20 @@ public class Discovery {
                 .unverifiedIdentifiers(unverifiedIds)
                 .build();
 
-        var patientRequest = PatientRequest.builder().patient(patient).requestId(requestId).build();
+        var patientRequest = PatientRequest.builder().patient(patient).requestId(transactionId).build();
         return discoveryServiceClient.patientFor(patientRequest, hipSystemUrl);
     }
 
     private Mono<DiscoveryResponse> insertDiscoveryRequest(PatientResponse patientResponse,
                                                            String providerId,
                                                            String patientId,
+                                                           String transactionId,
                                                            String requestId) {
-        return discoveryRepository.insert(providerId, patientId, requestId).
+        return discoveryRepository.insert(providerId, patientId, transactionId, requestId).
                 then(Mono.just(DiscoveryResponse.
                         builder().
                         patient(patientResponse.getPatient()).
-                        transactionId(requestId)
+                        transactionId(transactionId)
                         .build()));
     }
 

@@ -24,7 +24,6 @@ import reactor.test.StepVerifier;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
@@ -92,6 +91,7 @@ public class DiscoveryTest {
     public void patientForGivenProviderIdAndPatientId() {
         var providerId = string();
         var transactionId = string();
+        var requestId = string();
         var patientId = string();
         var discovery = new Discovery(
                 userServiceClient,
@@ -140,10 +140,11 @@ public class DiscoveryTest {
         when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
         when(discoveryServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl)))
                 .thenReturn(Mono.just(patientResponse));
-        when(discoveryRepository.insert(providerId, patientId, transactionId)).thenReturn(Mono.empty());
+        when(discoveryRepository.insert(providerId, patientId, transactionId, requestId)).thenReturn(Mono.empty());
+        when(discoveryRepository.isRequestPresent(requestId)).thenReturn(Mono.just(false));
 
         StepVerifier.create(
-                discovery.patientFor(patientId, unverifiedIdentifiers, providerId, transactionId)
+                discovery.patientFor(patientId, unverifiedIdentifiers, providerId, transactionId, requestId)
                         .subscriberContext(cxt -> cxt.put(AUTHORIZATION, string())))
                 .expectNext(discoveryResponse)
                 .verifyComplete();
@@ -153,6 +154,8 @@ public class DiscoveryTest {
     public void shouldGetInvalidHipErrorWhenIdentifierIsNotOfficial() {
         String providerId = "1";
         String userName = "1";
+        var transactionId = string();
+        var requestId = string();
         var discovery = new Discovery(
                 userServiceClient,
                 discoveryServiceClient,
@@ -171,15 +174,42 @@ public class DiscoveryTest {
 
         when(centralRegistry.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
         when(userServiceClient.userOf(eq(userName))).thenReturn(Mono.just(user));
+        when(discoveryRepository.isRequestPresent(requestId)).thenReturn(Mono.just(false));
 
         StepVerifier.create(
-                discovery.patientFor(userName, Collections.emptyList(), providerId, UUID.randomUUID().toString())
+                discovery.patientFor(userName, Collections.emptyList(), providerId, transactionId, requestId)
                         .subscriberContext(context -> context.put(AUTHORIZATION, string())))
                 .expectErrorMatches(error -> ((ClientError) error)
                         .getError()
                         .getError()
                         .getMessage()
                         .equals("Cannot process the request at the moment, please try later."))
+                .verify();
+    }
+
+
+    @Test
+    public void shouldGetRequestAlreadyPresentError() {
+        String providerId = "1";
+        String userName = "1";
+        var transactionId = string();
+        var requestId = string();
+        var discovery = new Discovery(
+                userServiceClient,
+                discoveryServiceClient,
+                discoveryRepository,
+                centralRegistry);
+
+        when(discoveryRepository.isRequestPresent(requestId)).thenReturn(Mono.just(true));
+
+        StepVerifier.create(
+                discovery.patientFor(userName, Collections.emptyList(), providerId, transactionId, requestId)
+                        .subscriberContext(context -> context.put(AUTHORIZATION, string())))
+                .expectErrorMatches(error -> ((ClientError) error)
+                        .getError()
+                        .getError()
+                        .getMessage()
+                        .equals("A request with this request id already exists."))
                 .verify();
     }
 

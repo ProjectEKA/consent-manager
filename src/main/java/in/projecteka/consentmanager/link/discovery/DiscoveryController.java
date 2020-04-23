@@ -33,8 +33,11 @@ public class DiscoveryController {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
-                .flatMap(user -> discovery.patientFor(user, discoveryRequest.getUnverifiedIdentifiers(), discoveryRequest.getHip().getId(),
-                        newRequest()));
+                .flatMap(user -> discovery.patientFor(user,
+                        discoveryRequest.getUnverifiedIdentifiers(),
+                        discoveryRequest.getHip().getId(),
+                        newRequest(),
+                        discoveryRequest.getRequestId().toString()));
     }
 
     private String newRequest() {

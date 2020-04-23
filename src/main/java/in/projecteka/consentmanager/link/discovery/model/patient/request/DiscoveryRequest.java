@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
@@ -15,6 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DiscoveryRequest {
+    private UUID requestId;
     @NotNull(message = "HIP not specified.")
     private HIPReference hip;
     private List<PatientIdentifier> unverifiedIdentifiers;

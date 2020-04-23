@@ -41,16 +41,16 @@ public class Discovery {
                 .map(Transformer::to);
     }
 
-    public Mono<DiscoveryResponse> patientFor(String userName, List<PatientIdentifier> unverifiedIdentifiers, String providerId, String transactionId) {
+    public Mono<DiscoveryResponse> patientFor(String userName, List<PatientIdentifier> unverifiedIdentifiers, String providerId, String requestId) {
         return userWith(userName)
                 .zipWith(providerUrl(providerId))
                 .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
-                .flatMap(tuple -> patientIn(tuple.getT2(), tuple.getT1(), transactionId, unverifiedIdentifiers))
+                .flatMap(tuple -> patientIn(tuple.getT2(), tuple.getT1(), requestId, unverifiedIdentifiers))
                 .flatMap(patientResponse ->
                         insertDiscoveryRequest(patientResponse,
                                 providerId,
                                 userName,
-                                transactionId));
+                                requestId));
     }
 
     private Mono<User> userWith(String patientId) {
@@ -67,7 +67,7 @@ public class Discovery {
                         .orElse(Mono.empty()));
     }
 
-    private Mono<PatientResponse> patientIn(String hipSystemUrl, User user, String transactionId, List<PatientIdentifier> unverifiedIdentifiers) {
+    private Mono<PatientResponse> patientIn(String hipSystemUrl, User user, String requestId, List<PatientIdentifier> unverifiedIdentifiers) {
         var phoneNumber = in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
                 .type(MOBILE)
                 .value(user.getPhone())
@@ -89,19 +89,19 @@ public class Discovery {
                 .unverifiedIdentifiers(unverifiedIds)
                 .build();
 
-        var patientRequest = PatientRequest.builder().patient(patient).transactionId(transactionId).build();
+        var patientRequest = PatientRequest.builder().patient(patient).requestId(requestId).build();
         return discoveryServiceClient.patientFor(patientRequest, hipSystemUrl);
     }
 
     private Mono<DiscoveryResponse> insertDiscoveryRequest(PatientResponse patientResponse,
                                                            String providerId,
                                                            String patientId,
-                                                           String transactionId) {
-        return discoveryRepository.insert(providerId, patientId, transactionId).
+                                                           String requestId) {
+        return discoveryRepository.insert(providerId, patientId, requestId).
                 then(Mono.just(DiscoveryResponse.
                         builder().
                         patient(patientResponse.getPatient()).
-                        transactionId(transactionId)
+                        transactionId(requestId)
                         .build()));
     }
 

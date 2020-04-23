@@ -46,4 +46,10 @@ public class LoadingCacheAdapter implements CacheAdapter<String, String> {
         loadingCache.invalidate(key);
         return Mono.empty();
     }
+
+    @Override
+    public Mono<Boolean> exists(String key) {
+        String value = loadingCache.getIfPresent(key);
+        return Mono.just(value != null);
+    }
 }

@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.link.link;
 
+import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.link.link.model.Hip;
@@ -18,8 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static in.projecteka.consentmanager.clients.ClientError.dbOperationFailed;
-import static in.projecteka.consentmanager.clients.ClientError.expiryNotFound;
 import static in.projecteka.consentmanager.clients.ClientError.transactionIdNotFound;
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.to;
@@ -37,9 +36,6 @@ public class LinkRepository {
     private static final String SELECT_TRANSACTION_ID_FROM_LINK_REFERENCE = "SELECT patient_link_reference ->> " +
             "'transactionId' as transactionId FROM link_reference WHERE patient_link_reference -> 'link' ->> " +
             "'referenceNumber' = $1";
-    private static final String SELECT_EXPIRY_FROM_LINK_REFERENCE = "SELECT patient_link_reference -> 'link' -> " +
-            "'meta' ->> 'communicationExpiry' as communicationExpiry FROM link_reference WHERE " +
-            "patient_link_reference -> 'link' ->> 'referenceNumber' = $1";
     private final PgPool dbClient;
 
     public LinkRepository(PgPool dbClient) {
@@ -53,7 +49,7 @@ public class LinkRepository {
                         .execute(Tuple.of(new JsonObject(from(patientLinkReferenceResponse)), hipId),
                                 handler -> {
                                     if (handler.failed()) {
-                                        monoSink.error(dbOperationFailed());
+                                        monoSink.error(new DbOperationError());
                                         return;
                                     }
                                     monoSink.success();
@@ -74,7 +70,7 @@ public class LinkRepository {
                 .execute(parameters,
                         handler -> {
                             if (handler.failed()) {
-                                monoSink.error(dbOperationFailed());
+                                monoSink.error(new DbOperationError());
                                 return;
                             }
                             var iterator = handler.result().iterator();
@@ -92,27 +88,10 @@ public class LinkRepository {
                 .execute(Tuple.of(hipId, consentManagerUserId, linkRefNumber, new JsonObject(from(patient))),
                         handler -> {
                             if (handler.failed()) {
-                                monoSink.error(dbOperationFailed());
+                                monoSink.error(new DbOperationError());
                                 return;
                             }
                             monoSink.success();
-                        }));
-    }
-
-    public Mono<String> getExpiryFromLinkReference(String linkRefNumber) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_EXPIRY_FROM_LINK_REFERENCE)
-                .execute(Tuple.of(linkRefNumber),
-                        handler -> {
-                            if (handler.failed()) {
-                                monoSink.error(dbOperationFailed());
-                                return;
-                            }
-                            var iterator = handler.result().iterator();
-                            if (!iterator.hasNext()) {
-                                monoSink.error(expiryNotFound());
-                                return;
-                            }
-                            monoSink.success(iterator.next().getString(0));
                         }));
     }
 
@@ -121,7 +100,7 @@ public class LinkRepository {
                 .execute(Tuple.of(patientId),
                         handler -> {
                             if (handler.failed()) {
-                                monoSink.error(dbOperationFailed());
+                                monoSink.error(new DbOperationError());
                                 return;
                             }
                             RowSet<Row> results = handler.result();

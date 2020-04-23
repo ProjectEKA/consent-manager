@@ -33,4 +33,13 @@ public class TokenService {
         formData.add("password", password);
         return formData;
     }
+
+    public Mono<Void> revoke(String refreshToken) {
+        var formData = new LinkedMultiValueMap<String, String>();
+        formData.add("client_id", keyCloakProperties.getClientId());
+        formData.add("client_secret", keyCloakProperties.getClientSecret());
+        formData.add("refresh_token", refreshToken);
+
+        return identityServiceClient.logout(formData);
+    }
 }

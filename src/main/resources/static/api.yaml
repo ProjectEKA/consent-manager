@@ -1207,6 +1207,36 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  # Sessions
+  /logout:
+    post:
+      description: |
+        Logout active user by invalidating the access and refresh tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+        400:
+          description: Bad request(potentially bad request token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Error(On server side) in logging out
 
 components:
   parameters:
@@ -2091,6 +2121,8 @@ components:
       properties:
         transactionId:
           type: string
+        consentId:
+          type: string
         doneAt:
           type: string
           format: date-time
@@ -2142,4 +2174,9 @@ components:
       type: object
       properties:
         reason:
+          type: string
+    LogoutRequest:
+      type: object
+      properties:
+        refreshToken:
           type: string

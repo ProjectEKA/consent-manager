@@ -35,7 +35,6 @@ import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -43,8 +42,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.io.IOException;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -198,8 +195,6 @@ public class LinkUserJourneyTest {
         String transactionId = "transactionId";
         String hipId = "10000005";
         String linkRefNumber = "link-ref-num";
-        ZonedDateTime zonedDateTime = ZonedDateTime.now(ZoneOffset.UTC).withNano(0).plusHours(1);
-        when(linkRepository.getExpiryFromLinkReference(linkRefNumber)).thenReturn(Mono.just(zonedDateTime.toString()));
         when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber)).thenReturn(Mono.just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
         when(linkRepository.insertToLink(hipId, "123@ncg", linkRefNumber, linkRes.getPatient()))
@@ -224,21 +219,23 @@ public class LinkUserJourneyTest {
         var token = string();
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.OTP_EXPIRED, "OTP Expired, please try again"));
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
+        clientRegistryServer.setDispatcher(dispatcher);
+        hipServer.enqueue(
+                new MockResponse()
+                        .setHeader("Content-Type", "application/json")
+                        .setStatus("HTTP/1.1 401")
+                        .setBody(errorResponseJson));
         PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
         String transactionId = "transactionId";
         String hipId = "10000005";
-        String linkRefNumber = "link-ref";
-        ZonedDateTime zonedDateTime = ZonedDateTime.now(ZoneOffset.UTC).withNano(0);
-        when(linkRepository.getExpiryFromLinkReference(linkRefNumber)).thenReturn(Mono.just(zonedDateTime.toString()));
-        when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber))
-                .thenReturn(Mono.just(transactionId));
-        when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
-        clientRegistryServer.setDispatcher(dispatcher);
+        String linkRefNumber = "link-ref-num";
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
+        when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber)).thenReturn(Mono.just(transactionId));
+        when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
 
         webTestClient
                 .post()
-                .uri("/patients/link/link-ref")
+                .uri("/patients/link/link-ref-num")
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)

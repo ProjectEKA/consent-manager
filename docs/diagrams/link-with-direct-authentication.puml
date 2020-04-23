@@ -1,0 +1,15 @@
+@startuml
+
+header Thoughtworks
+title HIP completes the verification and notifies CM
+
+entity Patient
+participant HIP
+participant CM
+
+Patient->HIP: Provides their consent manager Id
+HIP -> CM: Verifies consent manager id
+HIP->Patient: Verifies identity with OTP
+HIP -> CM: Notifies confirmation of linking
+
+@enduml

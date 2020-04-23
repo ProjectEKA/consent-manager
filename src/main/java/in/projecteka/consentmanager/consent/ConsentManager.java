@@ -335,13 +335,17 @@ public class ConsentManager {
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactForbidden()));
     }
 
-    public Mono<ConsentRepresentation> getConsentRepresentation(String consentId, String requesterId) {
+    public Mono<ConsentRepresentation> getGrantedConsentRepresentation(String consentId, String requesterId) {
+        return getConsentRepresentation(consentId, requesterId)
+                .filter(this::isGrantedConsent)
+                .switchIfEmpty(Mono.error(ClientError.consentNotGranted()));
+    }
+
+    private Mono<ConsentRepresentation> getConsentRepresentation(String consentId, String requesterId) {
         return getConsentWithRequest(consentId)
                 .filter(consentRepresentation -> !isNotSameRequester(consentRepresentation.getConsentDetail(),
                         requesterId))
-                .switchIfEmpty(Mono.error(ClientError.consentArtefactForbidden()))
-                .filter(this::isGrantedConsent)
-                .switchIfEmpty(Mono.error(ClientError.consentNotGranted()));
+                .switchIfEmpty(Mono.error(ClientError.consentArtefactForbidden()));
     }
 
     private boolean isGrantedConsent(ConsentRepresentation consentRepresentation) {
@@ -364,7 +368,7 @@ public class ConsentManager {
 
     public Mono<Void> revoke(RevokeRequest revokeRequest, String requesterId) {
         return Flux.fromIterable(revokeRequest.getConsents())
-                .flatMap(consentId -> getConsentRepresentation(consentId, requesterId)
+                .flatMap(consentId -> getGrantedConsentRepresentation(consentId, requesterId)
                         .flatMap(consentRepresentation -> consentRequestRepository.requestOf(
                                 consentRepresentation.getConsentRequestId(),
                                 GRANTED.toString(),

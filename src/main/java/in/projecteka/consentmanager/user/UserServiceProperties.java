@@ -1,19 +1,14 @@
 package in.projecteka.consentmanager.user;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.ConstructorBinding;
 
-@Configuration
 @ConfigurationProperties(prefix = "consentmanager.userservice")
 @Getter
-@Setter
-@NoArgsConstructor(access = AccessLevel.PACKAGE)
 @AllArgsConstructor
+@ConstructorBinding
 public class UserServiceProperties {
     private String url;
     private int transactionPinDigitSize;

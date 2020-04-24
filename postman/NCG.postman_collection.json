@@ -951,7 +951,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"requestId\": \"{{UNIQUE_REQUEST_ID}}\",\n  \"transactionId\": \"{{DISCOVERY_REQUEST_ID}}\",\n    \"patient\": {\n        \"consentManagerUserID\": \"{{CONSENT_MANAGER_USER_ID}}\",\n        \"referenceNumber\": \"{{PATIENT_REF_NUMBER}}\",\n        \"careContexts\": [\n            {\n                \"referenceNumber\": \"{{CARE_CONTEXT1_NUMBER}}\"\n            }\n        ]\n    }\n}"
+							"raw": "{\n  \"requestId\": \"{{$guid}}\",\n  \"transactionId\": \"{{DISCOVERY_REQUEST_ID}}\",\n    \"patient\": {\n        \"consentManagerUserID\": \"{{CONSENT_MANAGER_USER_ID}}\",\n        \"referenceNumber\": \"{{PATIENT_REF_NUMBER}}\",\n        \"careContexts\": [\n            {\n                \"referenceNumber\": \"{{CARE_CONTEXT1_NUMBER}}\"\n            }\n        ]\n    }\n}"
 						},
 						"url": {
 							"raw": "{{HIP_HOST}}/patients/link",

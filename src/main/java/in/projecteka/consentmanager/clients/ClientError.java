@@ -95,12 +95,6 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(TRANSACTION_ID_NOT_FOUND, "Failed to get transaction Id")));
     }
 
-    public static ClientError expiryNotFound() {
-        return new ClientError(BAD_REQUEST,
-                new ErrorRepresentation(new Error(TRANSACTION_ID_NOT_FOUND,
-                        "Failed to get expiry for link reference number")));
-    }
-
     public static ClientError consentArtefactNotFound() {
         return new ClientError(NOT_FOUND,
                 new ErrorRepresentation(new Error(CONSENT_ARTEFACT_NOT_FOUND, "Cannot find the consent artefact")));

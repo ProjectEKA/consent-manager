@@ -46,7 +46,7 @@ public class Discovery {
                                               String providerId,
                                               String transactionId,
                                               String requestId) {
-        return isRequestPresent(requestId)
+        return discoveryRepository.isRequestPresent(requestId)
                 .flatMap(requestExists -> (!requestExists)
                     ? userWith(userName)
                             .zipWith(providerUrl(providerId))
@@ -59,10 +59,6 @@ public class Discovery {
                                             transactionId,
                                             requestId))
                     : Mono.error(ClientError.requestAlreadyExists()));
-    }
-
-    private Mono<Boolean> isRequestPresent(String requestId) {
-        return discoveryRepository.isRequestPresent(requestId);
     }
 
     private Mono<User> userWith(String patientId) {

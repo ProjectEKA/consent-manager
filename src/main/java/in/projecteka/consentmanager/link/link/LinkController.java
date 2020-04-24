@@ -28,7 +28,7 @@ public class LinkController {
             @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller -> link.patientWith(caller.getUsername(), patientLinkReferenceRequest, newRequest()));
+                .flatMap(caller -> link.patientWith(caller.getUsername(), patientLinkReferenceRequest));
     }
 
     @PostMapping("/patients/link/{linkRefNumber}")

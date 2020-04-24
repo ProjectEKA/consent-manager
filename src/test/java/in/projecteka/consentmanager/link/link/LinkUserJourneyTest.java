@@ -133,7 +133,11 @@ public class LinkUserJourneyTest {
         clientRegistryServer.setDispatcher(dispatcher);
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
-        when(linkRepository.insertToLinkReference(linkReference, hipId)).thenReturn(Mono.create(MonoSink::success));
+        when(linkRepository.insertToLinkReference(linkReference, hipId, patientLinkReferenceRequest.getRequestId().toString()))
+                .thenReturn(Mono.create(MonoSink::success));
+        when(linkRepository.isRequestPresent(patientLinkReferenceRequest.getRequestId().toString()))
+                .thenReturn(Mono.just(false));
+
 
         webTestClient
                 .post()
@@ -165,6 +169,8 @@ public class LinkUserJourneyTest {
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
+        when(linkRepository.isRequestPresent(patientLinkReferenceRequest.getRequestId().toString()))
+                .thenReturn(Mono.just(false));
 
         webTestClient
                 .post()
@@ -284,6 +290,37 @@ public class LinkUserJourneyTest {
                 .isOk()
                 .expectBody()
                 .json(patientLinksRes);
+    }
+
+    @Test
+    public void shouldGiveRequestAlreadyExistsError() throws IOException {
+        var token = string();
+        var errorResponse = ErrorRepresentation.builder()
+                .error(Error.builder()
+                        .code(ErrorCode.REQUEST_ALREADY_EXISTS)
+                        .message("A request with this request id already exists.")
+                        .build())
+                .build();
+        var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
+        clientRegistryServer.setDispatcher(dispatcher);
+        var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
+        when(linkRepository.isRequestPresent(patientLinkReferenceRequest.getRequestId().toString()))
+                .thenReturn(Mono.just(true));
+
+        webTestClient
+                .post()
+                .uri("/patients/link")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(patientLinkReferenceRequest)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                .expectBody()
+                .json(errorResponseJson);
     }
 
     public static class ContextInitializer

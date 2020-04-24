@@ -1388,8 +1388,12 @@ components:
     PatientLinkReferenceRequest:
       type: object
       properties:
+        requestId:
+          type: string
+          format: uuid
         transactionId:
           type: string
+          format: uuid
         patient:
           $ref: '#/components/schemas/Patient'
       xml:

@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import static in.projecteka.consentmanager.clients.ClientError.transactionIdNotFound;
+import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.to;
 
@@ -30,12 +31,14 @@ public class LinkRepository {
     private static final String INSERT_TO_LINK = "INSERT INTO link (hip_id, consent_manager_user_id, link_reference," +
             "patient) VALUES ($1, $2, $3, $4)";
     private static final String INSERT_TO_LINK_REFERENCE = "INSERT INTO link_reference (patient_link_reference, " +
-            "hip_id) VALUES ($1, $2)";
+            "hip_id, request_id) VALUES ($1, $2, $3)";
     private static final String SELECT_HIP_ID_FROM_DISCOVERY = "SELECT hip_id FROM discovery_request WHERE " +
-            "request_id=$1";
+            "transaction_id=$1";
     private static final String SELECT_TRANSACTION_ID_FROM_LINK_REFERENCE = "SELECT patient_link_reference ->> " +
             "'transactionId' as transactionId FROM link_reference WHERE patient_link_reference -> 'link' ->> " +
             "'referenceNumber' = $1";
+    private static final String CHECK_REQUEST_ID_EXISTS = "SELECT exists(SELECT * FROM link_reference WHERE " +
+            "request_id=$1);";
     private final PgPool dbClient;
 
     public LinkRepository(PgPool dbClient) {
@@ -43,10 +46,12 @@ public class LinkRepository {
     }
 
     @SneakyThrows
-    public Mono<Void> insertToLinkReference(PatientLinkReferenceResponse patientLinkReferenceResponse, String hipId) {
+    public Mono<Void> insertToLinkReference(PatientLinkReferenceResponse patientLinkReferenceResponse,
+                                            String hipId,
+                                            String requestId) {
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(INSERT_TO_LINK_REFERENCE)
-                        .execute(Tuple.of(new JsonObject(from(patientLinkReferenceResponse)), hipId),
+                        .execute(Tuple.of(new JsonObject(from(patientLinkReferenceResponse)), hipId, requestId),
                                 handler -> {
                                     if (handler.failed()) {
                                         monoSink.error(new DbOperationError());
@@ -56,8 +61,26 @@ public class LinkRepository {
                                 }));
     }
 
-    public Mono<String> getHIPIdFromDiscovery(String requestId) {
-        return getStringFrom(SELECT_HIP_ID_FROM_DISCOVERY, Tuple.of(requestId));
+    public Mono<Boolean> isRequestPresent(String requestId) {
+        return Mono.create(monoSink ->
+                dbClient.preparedQuery(CHECK_REQUEST_ID_EXISTS)
+                        .execute(Tuple.of(requestId),
+                                handler -> {
+                                    if (handler.failed()) {
+                                        monoSink.error(new DbOperationError());
+                                        return;
+                                    }
+                                    var iterator = handler.result().iterator();
+                                    if (!iterator.hasNext()) {
+                                        monoSink.error(unknownErrorOccurred());
+                                        return;
+                                    }
+                                    monoSink.success(iterator.next().getBoolean(0));
+                                }));
+    }
+
+    public Mono<String> getHIPIdFromDiscovery(String transactionId) {
+        return getStringFrom(SELECT_HIP_ID_FROM_DISCOVERY, Tuple.of(transactionId));
     }
 
     public Mono<String> getTransactionIdFromLinkReference(String linkRefNumber) {

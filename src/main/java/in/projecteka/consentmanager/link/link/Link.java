@@ -29,20 +29,22 @@ public class Link {
     private final CentralRegistry centralRegistry;
 
     public Mono<PatientLinkReferenceResponse> patientWith(String patientId,
-                                                          PatientLinkReferenceRequest patientLinkReferenceRequest,
-                                                          String requestId) {
+                                                          PatientLinkReferenceRequest patientLinkReferenceRequest) {
         Patient patient = toHIPPatient(patientId, patientLinkReferenceRequest.getPatient());
         var linkReferenceRequest = new in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest(
-                requestId,
+                patientLinkReferenceRequest.getRequestId().toString(),
                 patientLinkReferenceRequest.getTransactionId(),
                 patient);
-        return linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId())
-                .flatMap(hipId -> providerUrl(hipId)
-                        .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
-                        .flatMap(url -> getPatientLinkReferenceResponse(patientLinkReferenceRequest,
-                                linkReferenceRequest,
-                                hipId,
-                                url)));
+        return linkRepository.isRequestPresent(patientLinkReferenceRequest.getRequestId().toString())
+                .flatMap(requestExists -> (!requestExists)
+                        ? linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId())
+                            .flatMap(hipId -> providerUrl(hipId)
+                            .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
+                            .flatMap(url -> getPatientLinkReferenceResponse(patientLinkReferenceRequest,
+                                    linkReferenceRequest,
+                                    hipId,
+                                    url)))
+                        : Mono.error(ClientError.requestAlreadyExists()));
     }
 
     private Mono<PatientLinkReferenceResponse> getPatientLinkReferenceResponse(
@@ -55,7 +57,9 @@ public class Link {
                 .flatMap(token -> linkServiceClient.linkPatientEnquiry(linkReferenceRequest, url, token))
                 .flatMap(linkReferenceResponse -> {
                     linkReferenceResponse.setTransactionId(patientLinkReferenceRequest.getTransactionId());
-                    return linkRepository.insertToLinkReference(linkReferenceResponse, hipId)
+                    return linkRepository.insertToLinkReference(linkReferenceResponse,
+                            hipId,
+                            patientLinkReferenceRequest.getRequestId().toString())
                             .thenReturn(PatientLinkReferenceResponse.builder()
                                     .transactionId(linkReferenceResponse.getTransactionId())
                                     .link(linkReferenceResponse.getLink()).build());

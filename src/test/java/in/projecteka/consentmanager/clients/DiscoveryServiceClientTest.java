@@ -2,8 +2,6 @@ package in.projecteka.consentmanager.clients;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
-import in.projecteka.consentmanager.link.discovery.model.patient.response.Patient;
-import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -30,7 +28,6 @@ import static in.projecteka.consentmanager.clients.TestBuilders.string;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-
 public class DiscoveryServiceClientTest {
     @Captor
     private ArgumentCaptor<ClientRequest> captor;
@@ -46,15 +43,19 @@ public class DiscoveryServiceClientTest {
         discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder, () -> Mono.just(string()));
     }
 
-
     @Test
     public void shouldDiscoverPatients() throws IOException {
-        Patient expectedPatient = patientInResponse().display("Patient Name").careContexts(List.of(careContext().display("Care context 1").build())).build();
-        PatientResponse patientResponse = patientResponse().patient(expectedPatient).build();
-        String patientResponseBody = new ObjectMapper().writeValueAsString(patientResponse);
-        when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
-                .header("Content-Type", "application/json")
-                .body(patientResponseBody).build()));
+        var expectedPatient = patientInResponse()
+                .display("Patient Name")
+                .careContexts(List.of(careContext().display("Care context 1").build()))
+                .build();
+        var patientResponse = patientResponse().patient(expectedPatient).build();
+        var patientResponseBody = new ObjectMapper().writeValueAsString(patientResponse);
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(
+                ClientResponse.create(HttpStatus.OK)
+                        .header("Content-Type", "application/json")
+                        .body(patientResponseBody)
+                        .build()));
 
         PatientRequest patientRequest = patientRequest().patient(patientInRequest().build()).requestId("transaction-id-1").build();
         StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/"))

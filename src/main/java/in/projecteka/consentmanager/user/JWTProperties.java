@@ -10,5 +10,5 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConstructorBinding
 @Getter
 public class JWTProperties {
-    private String secret;
+    private final String secret;
 }

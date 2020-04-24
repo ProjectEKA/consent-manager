@@ -10,5 +10,5 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConfigurationProperties(prefix = "consentmanager.dataflow.consentmanager")
 @AllArgsConstructor
 public class DataFlowConsentManagerProperties {
-    private String url;
+    private final String url;
 }

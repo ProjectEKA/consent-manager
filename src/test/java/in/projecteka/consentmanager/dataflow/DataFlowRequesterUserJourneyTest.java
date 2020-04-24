@@ -33,7 +33,6 @@ import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -56,7 +55,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -239,9 +237,11 @@ public class DataFlowRequesterUserJourneyTest {
     public void shouldThrowInvalidDateRange() throws IOException, ParseException {
         String token = string();
         var hiuId = "10000005";
-        var dataFlowRequest = dataFlowRequest().build();
-        dataFlowRequest.setDateRange(DateRange.builder().from(toDate("2020-01-14T08:47:48Z")).to(toDate("2020" +
-                "-01-20T08:47:48Z")).build());
+        var dataFlowRequest = dataFlowRequest()
+                .dateRange(DateRange.builder()
+                        .from(toDate("2020-01-14T08:47:48Z"))
+                        .to(toDate("2020-01-20T08:47:48Z")).build())
+                .build();
         var consentArtefactRepresentation = consentArtefactRepresentation().build();
         consentArtefactRepresentation.getConsentDetail().getPermission().
                 setDateRange(AccessPeriod.builder()
@@ -285,9 +285,11 @@ public class DataFlowRequesterUserJourneyTest {
     public void shouldThrowConsentNotGranted() throws IOException, ParseException {
         String token = string();
         var hiuId = "10000005";
-        var dataFlowRequest = dataFlowRequest().build();
-        dataFlowRequest.setDateRange(DateRange.builder().from(toDate("2020-01-14T08:47:48Z")).to(toDate("2020" +
-                "-01-20T08:47:48Z")).build());
+        var dataFlowRequest = dataFlowRequest()
+                .dateRange(DateRange.builder()
+                        .from(toDate("2020-01-14T08:47:48Z"))
+                        .to(toDate("2020-01-20T08:47:48Z")).build())
+                .build();
         var consentArtefactRepresentation = consentArtefactRepresentation().status(ConsentStatus.REVOKED).build();
         consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
         var consentExpiryDate = new Date();

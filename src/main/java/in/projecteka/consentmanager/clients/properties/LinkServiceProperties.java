@@ -10,5 +10,5 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @AllArgsConstructor
 @ConstructorBinding
 public class LinkServiceProperties {
-    private String url;
+    private final String url;
 }

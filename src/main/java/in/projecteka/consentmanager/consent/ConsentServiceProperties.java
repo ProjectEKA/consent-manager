@@ -10,7 +10,7 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @AllArgsConstructor
 @ConstructorBinding
 public class ConsentServiceProperties {
-    private int maxPageSize;
-    private int defaultPageSize;
-    private String url;
+    private final int maxPageSize;
+    private final int defaultPageSize;
+    private final String url;
 }

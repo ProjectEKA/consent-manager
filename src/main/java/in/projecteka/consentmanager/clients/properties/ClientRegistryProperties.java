@@ -10,8 +10,8 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @Getter
 @ConstructorBinding
 public class ClientRegistryProperties {
-    private String url;
-    private String XAuthToken;
-    private String clientId;
-    private String jwkUrl;
+    private final String url;
+    private final String XAuthToken;
+    private final String clientId;
+    private final String jwkUrl;
 }

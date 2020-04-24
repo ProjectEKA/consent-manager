@@ -7,12 +7,17 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @ConfigurationProperties(prefix = "consentmanager.otpservice")
 @AllArgsConstructor
 @ConstructorBinding
 @Getter
 public class OtpServiceProperties {
-    private String url;
-    private List<String> identifiers = new ArrayList<>();
+    private final String url;
+    private final List<String> identifiers;
+
+    public List<String> getIdentifiers() {
+        return Optional.ofNullable(identifiers).orElse(new ArrayList<>());
+    }
 }

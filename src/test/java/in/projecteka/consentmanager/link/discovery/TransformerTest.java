@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.link.discovery;
 
 import in.projecteka.consentmanager.clients.model.Address;
+import in.projecteka.consentmanager.clients.model.Coding;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.Type;
-import in.projecteka.consentmanager.link.discovery.model.Coding;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

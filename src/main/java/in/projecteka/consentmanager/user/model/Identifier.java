@@ -2,11 +2,11 @@ package in.projecteka.consentmanager.user.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Getter;
 
 @AllArgsConstructor
-@Value
 @Builder
+@Getter
 public class Identifier {
     IdentifierType type;
     String value;

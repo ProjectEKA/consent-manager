@@ -1,12 +1,12 @@
 package in.projecteka.consentmanager.user.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
-@Data
 @AllArgsConstructor
-@NoArgsConstructor
+@Getter
+@EqualsAndHashCode
 public class SignUpSession {
-    private String sessionId;
+    private final String sessionId;
 }

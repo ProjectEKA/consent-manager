@@ -12,11 +12,11 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConstructorBinding
 @Getter
 public class IdentityServiceProperties {
-    private String baseUrl;
-    private String clientId;
-    private String clientSecret;
-    private String userName;
-    private String password;
-    private String jwkUrl;
-    private String issuer;
+    private final String baseUrl;
+    private final String clientId;
+    private final String clientSecret;
+    private final String userName;
+    private final String password;
+    private final String jwkUrl;
+    private final String issuer;
 }

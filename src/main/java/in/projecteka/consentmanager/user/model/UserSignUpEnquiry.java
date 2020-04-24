@@ -2,14 +2,14 @@ package in.projecteka.consentmanager.user.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 @Builder
-@Data
+@Getter
 @AllArgsConstructor
-@NoArgsConstructor
+@EqualsAndHashCode
 public class UserSignUpEnquiry {
-    private String identifierType;
-    private String identifier;
+    private final String identifierType;
+    private final String identifier;
 }

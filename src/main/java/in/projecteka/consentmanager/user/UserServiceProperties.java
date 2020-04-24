@@ -10,9 +10,9 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @AllArgsConstructor
 @ConstructorBinding
 public class UserServiceProperties {
-    private String url;
-    private int transactionPinDigitSize;
-    private int transactionPinTokenValidity;
-    private int userCreationTokenValidity;
-    private String userIdSuffix;
+    private final String url;
+    private final int transactionPinDigitSize;
+    private final int transactionPinTokenValidity;
+    private final int userCreationTokenValidity;
+    private final String userIdSuffix;
 }

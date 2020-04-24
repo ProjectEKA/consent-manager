@@ -2,18 +2,16 @@ package in.projecteka.consentmanager.user.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-@Data
-@NoArgsConstructor
+@Getter
 @AllArgsConstructor
 @Builder
 public class SessionRequest {
 
-    private GrantType grantType;
+    private final GrantType grantType;
 
-    private String UserName;
+    private final String UserName;
 
-    private String Password;
+    private final String Password;
 }

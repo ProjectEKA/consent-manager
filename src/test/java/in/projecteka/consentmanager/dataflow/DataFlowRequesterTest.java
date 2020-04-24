@@ -47,10 +47,12 @@ public class DataFlowRequesterTest {
     @Test
     public void shouldAcceptDataFlowRequest() throws ParseException {
         String hiuId = "10000005";
-        in.projecteka.consentmanager.dataflow.model.DataFlowRequest request = dataFlowRequest().build();
-        request.setDateRange(DateRange.builder().from(toDate("2020-01-16T08:47:48Z")).to(toDate("2020" +
-                "-01-20T08:47:48Z")).build());
-        ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
+        var request = dataFlowRequest()
+                .dateRange(DateRange.builder()
+                        .from(toDate("2020-01-16T08:47:48Z"))
+                        .to(toDate("2020-01-20T08:47:48Z")).build())
+                .build();
+        var consentArtefactRepresentation = consentArtefactRepresentation().build();
         consentArtefactRepresentation.setStatus(ConsentStatus.GRANTED);
         consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
         consentArtefactRepresentation.getConsentDetail().getPermission().

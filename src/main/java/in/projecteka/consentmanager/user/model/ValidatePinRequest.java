@@ -1,12 +1,10 @@
 package in.projecteka.consentmanager.user.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
-@NoArgsConstructor
-@Data
+@Getter
 public class ValidatePinRequest {
-    private String pin;
+    private final String pin;
 }

@@ -12,7 +12,7 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @AllArgsConstructor
 @ConstructorBinding
 public class RedisOptions {
-    private String host;
-    private int port;
-    private String password;
+    private final String host;
+    private final int port;
+    private final String password;
 }

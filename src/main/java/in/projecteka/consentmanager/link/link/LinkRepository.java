@@ -38,7 +38,7 @@ public class LinkRepository {
             "'transactionId' as transactionId FROM link_reference WHERE patient_link_reference -> 'link' ->> " +
             "'referenceNumber' = $1";
     private static final String CHECK_REQUEST_ID_EXISTS = "SELECT exists(SELECT * FROM link_reference WHERE " +
-            "request_id=$1);";
+            "request_id=$1)";
     private final PgPool dbClient;
 
     public LinkRepository(PgPool dbClient) {

@@ -117,6 +117,10 @@ public class ClientError extends Throwable {
         return internalServerError("Failed to create transaction pin");
     }
 
+    public static ClientError failedToUpdateTransactionPin() {
+        return internalServerError("Failed to update request_id in transaction pin");
+    }
+
     public static ClientError failedToFetchTransactionPin() {
         return internalServerError("Failed to fetch transaction pin");
     }

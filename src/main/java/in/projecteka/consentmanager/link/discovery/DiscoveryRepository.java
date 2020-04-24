@@ -12,7 +12,7 @@ public class DiscoveryRepository {
     private static final String INSERT_TO_DISCOVERY_REQUEST = "INSERT INTO discovery_request " +
             "(transaction_id, request_id, patient_id, hip_id) VALUES ($1, $2, $3, $4)";
     private static final String CHECK_REQUEST_ID_EXISTS = "SELECT exists(SELECT * FROM discovery_request WHERE " +
-            "request_id=$1);";
+            "request_id=$1)";
     private final PgPool dbClient;
 
     public DiscoveryRepository(PgPool dbClient) {

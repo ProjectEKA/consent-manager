@@ -2066,6 +2066,9 @@ components:
     PinVerificationRequest:
       type: object
       properties:
+        requestId:
+          type: string
+          format: uuid
         pin:
           type: string
           maximum: 9999

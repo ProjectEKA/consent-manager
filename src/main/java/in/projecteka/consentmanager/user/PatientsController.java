@@ -57,7 +57,9 @@ public class PatientsController {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
-                .flatMap(userName -> transactionPinService.validatePinFor(userName, request.getPin()));
+                .flatMap(userName -> transactionPinService.validatePinFor(userName,
+                        request.getPin(),
+                        request.getRequestId().toString()));
     }
 
     @PostMapping("/profile")

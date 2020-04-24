@@ -48,19 +48,21 @@ public class TransactionPinService {
         return transactionPinRepository.getTransactionPinFor(patientId).map(Optional::isPresent);
     }
 
-    public Mono<Token> validatePinFor(String patientId, String pin) {
-        return transactionPinRepository.getTransactionPinFor(patientId)
-                .flatMap(transactionPin -> {
-                    if (transactionPin.isEmpty()) {
-                        return Mono.error(ClientError.transactionPinNotFound());
-                    }
-
-                    if (!encoder.matches(pin, transactionPin.get().getPin())) {
-                        return Mono.error(ClientError.transactionPinDidNotMatch());
-                    }
-
-                    return Mono.empty();
-                }).thenReturn(newToken(patientId));
+    public Mono<Token> validatePinFor(String patientId, String pin, String requestId) {
+        return transactionPinRepository.isRequestPresent(requestId)
+                .flatMap(requestExists -> (!requestExists)
+                        ? transactionPinRepository.updateRequestId(requestId, patientId)
+                        .then(transactionPinRepository.getTransactionPinFor(patientId)
+                        .flatMap(transactionPin -> {
+                            if (transactionPin.isEmpty()) {
+                                return Mono.error(ClientError.transactionPinNotFound());
+                            }
+                            if (!encoder.matches(pin, transactionPin.get().getPin())) {
+                                return Mono.error(ClientError.transactionPinDidNotMatch());
+                            }
+                            return Mono.empty();
+                        }).thenReturn(newToken(patientId)))
+                        : Mono.error(ClientError.requestAlreadyExists()));
     }
 
     @SneakyThrows

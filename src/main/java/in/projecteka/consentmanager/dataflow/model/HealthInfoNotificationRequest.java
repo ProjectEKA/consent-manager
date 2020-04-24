@@ -13,6 +13,7 @@ import java.util.Date;
 @Builder
 public class HealthInfoNotificationRequest {
     private String transactionId;
+    private String consentId;
     private Date doneAt;
     private Notifier notifier;
     private StatusNotification statusNotification;

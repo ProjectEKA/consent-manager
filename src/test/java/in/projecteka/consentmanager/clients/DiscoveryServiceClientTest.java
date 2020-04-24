@@ -56,7 +56,7 @@ public class DiscoveryServiceClientTest {
                 .header("Content-Type", "application/json")
                 .body(patientResponseBody).build()));
 
-        PatientRequest patientRequest = patientRequest().patient(patientInRequest().build()).transactionId("transaction-id-1").build();
+        PatientRequest patientRequest = patientRequest().patient(patientInRequest().build()).requestId("transaction-id-1").build();
         StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/"))
                 .assertNext(response -> {
                     assertThat(response.getPatient().getDisplay()).isEqualTo(expectedPatient.getDisplay());

@@ -2,28 +2,23 @@ package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
-import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Patient;
+import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
-import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 
@@ -34,9 +29,11 @@ public class Link {
     private final CentralRegistry centralRegistry;
 
     public Mono<PatientLinkReferenceResponse> patientWith(String patientId,
-                                                          PatientLinkReferenceRequest patientLinkReferenceRequest) {
+                                                          PatientLinkReferenceRequest patientLinkReferenceRequest,
+                                                          String requestId) {
         Patient patient = toHIPPatient(patientId, patientLinkReferenceRequest.getPatient());
         var linkReferenceRequest = new in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest(
+                requestId,
                 patientLinkReferenceRequest.getTransactionId(),
                 patient);
         return linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId())
@@ -68,10 +65,7 @@ public class Link {
     public Mono<PatientLinkResponse> verifyToken(String linkRefNumber,
                                                  PatientLinkRequest patientLinkRequest,
                                                  String patientId) {
-        return isOTPExpired(linkRefNumber)
-                .filter(expired -> !expired)
-                .switchIfEmpty(Mono.error(ClientError.otpExpired()))
-                .then(linkCareContexts(patientLinkRequest, linkRefNumber, patientId));
+        return linkCareContexts(patientLinkRequest, linkRefNumber, patientId);
     }
 
     private Mono<PatientLinkResponse> linkCareContexts(PatientLinkRequest patientLinkRequest,
@@ -112,20 +106,6 @@ public class Link {
                         .findFirst()
                         .map(identifier -> Mono.just(identifier.getSystem()))
                         .orElse(Mono.empty()));
-    }
-
-    private Mono<Boolean> isOTPExpired(String linkRefNumber) {
-        return linkRepository.getExpiryFromLinkReference(linkRefNumber)
-                .flatMap(this::isExpired);
-    }
-
-    @SneakyThrows
-    private Mono<Boolean> isExpired(String expiry) {
-        TimeZone tz = TimeZone.getTimeZone("UTC");
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        df.setTimeZone(tz);
-        Date date = df.parse(expiry);
-        return Mono.just(date.before(new Date()));
     }
 
     public Mono<PatientLinksResponse> getLinkedCareContexts(String patientId) {

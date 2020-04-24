@@ -34,10 +34,10 @@ public class DiscoveryController {
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
                 .flatMap(user -> discovery.patientFor(user, discoveryRequest.getUnverifiedIdentifiers(), discoveryRequest.getHip().getId(),
-                        newTransaction()));
+                        newRequest()));
     }
 
-    private String newTransaction() {
+    private String newRequest() {
         return UUID.randomUUID().toString();
     }
 }

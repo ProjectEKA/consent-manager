@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 @RestController
 @AllArgsConstructor
 public class LinkController {
@@ -26,7 +28,7 @@ public class LinkController {
             @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller -> link.patientWith(caller.getUsername(), patientLinkReferenceRequest));
+                .flatMap(caller -> link.patientWith(caller.getUsername(), patientLinkReferenceRequest, newRequest()));
     }
 
     @PostMapping("/patients/link/{linkRefNumber}")
@@ -48,5 +50,9 @@ public class LinkController {
     @GetMapping("internal/patients/{username}/links")
     public Mono<PatientLinksResponse> getLinkedCareContextInternal(@PathVariable String username) {
         return link.getLinkedCareContexts(username);
+    }
+
+    private String newRequest() {
+        return UUID.randomUUID().toString();
     }
 }

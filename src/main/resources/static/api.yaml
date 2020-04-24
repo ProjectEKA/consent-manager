@@ -1703,6 +1703,9 @@ components:
     ConsentRequest:
       type: object
       properties:
+        requestId:
+          type: string
+          format: uuid
         consent:
           type: object
           required:

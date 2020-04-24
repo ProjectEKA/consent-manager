@@ -29,7 +29,6 @@ import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -49,6 +48,7 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -198,9 +198,10 @@ public class ConsentRequestUserJourneyTest {
     public void shouldAcceptConsentRequest() {
         var authToken = string();
         when(centralRegistryTokenVerifier.verify(authToken)).thenReturn(Mono.just(new Caller("MAX-ID", true)));
-        when(repository.insert(any(), any())).thenReturn(Mono.empty());
+        when(repository.insert(any(), any(), anyString())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
+        when(repository.isRequestPresent(anyString())).thenReturn(Mono.just(false));
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
         load(clientRegistryServer, "{}");
         load(clientRegistryServer, "{}");
@@ -210,6 +211,7 @@ public class ConsentRequestUserJourneyTest {
         load(userServer, "{}");
 
         String consentRequestJson = "{\n" +
+                "\"requestId\": \"9e1228c3-0d2b-47cb-9ae2-c0eb95aed950\",\n" +
                 "  \"consent\": {\n" +
                 "    \"purpose\": {\n" +
                 "      \"text\": \"For Clinical Reference\",\n" +
@@ -325,7 +327,7 @@ public class ConsentRequestUserJourneyTest {
                 "}";
         load(patientLinkServer, linkedPatientContextsJson);
 
-        when(repository.insert(any(), any())).thenReturn(Mono.empty());
+        when(repository.insert(any(), any(), anyString())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
@@ -350,7 +352,7 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldNotApproveConsentGrantForInvalidCareContext() throws JsonProcessingException {
         var token = string();
-        when(repository.insert(any(), any())).thenReturn(Mono.empty());
+        when(repository.insert(any(), any(), anyString())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.

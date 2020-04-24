@@ -29,6 +29,7 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
@@ -38,6 +39,7 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -94,6 +96,7 @@ class ConsentManagerTest {
 
     @Test
     public void askForConsent() {
+        var requestId = UUID.randomUUID().toString();
         HIPReference hip1 = HIPReference.builder().id("hip1").build();
         HIUReference hiu1 = HIUReference.builder().id("hiu1").build();
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
@@ -101,18 +104,20 @@ class ConsentManagerTest {
 
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
-        when(repository.insert(any(), any())).thenReturn(Mono.empty());
+        when(repository.insert(any(), any(), eq(requestId))).thenReturn(Mono.empty());
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
+        when(repository.isRequestPresent(requestId)).thenReturn(Mono.just(false));
 
-        StepVerifier.create(consentManager.askForConsent(requestedDetail))
+        StepVerifier.create(consentManager.askForConsent(requestedDetail, requestId))
                 .expectNextMatches(Objects::nonNull)
                 .verifyComplete();
     }
 
     @Test
     public void askForConsentWithoutValidHIU() {
+        var requestId = UUID.randomUUID().toString();
         HIPReference hip1 = HIPReference.builder().id("hip1").build();
         HIUReference hiu1 = HIUReference.builder().id("hiu1").build();
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
@@ -120,12 +125,13 @@ class ConsentManagerTest {
 
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
-        when(repository.insert(any(), any())).thenReturn(Mono.empty());
+        when(repository.insert(any(), any(), eq(requestId))).thenReturn(Mono.empty());
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
+        when(repository.isRequestPresent(requestId)).thenReturn(Mono.just(false));
 
-        StepVerifier.create(consentManager.askForConsent(requestedDetail))
+        StepVerifier.create(consentManager.askForConsent(requestedDetail, requestId))
                 .expectErrorMatches(e -> (e instanceof ClientError) &&
                         ((ClientError) e).getHttpStatus().is4xxClientError())
                 .verify();

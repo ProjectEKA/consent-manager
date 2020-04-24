@@ -76,16 +76,19 @@ public class ConsentManager {
                 !consentDetail.getPatient().getId().equals(requesterId);
     }
 
-    public Mono<String> askForConsent(RequestedDetail requestedDetail) {
-        final String requestId = UUID.randomUUID().toString();
-        return validatePatient(requestedDetail.getPatient().getId())
-                .then(validateHIPAndHIU(requestedDetail))
-                .then(saveRequest(requestedDetail, requestId))
-                .then(postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
-                        .detail(requestedDetail)
-                        .id(requestId)
-                        .build()))
-                .thenReturn(requestId);
+    public Mono<String> askForConsent(RequestedDetail requestedDetail, String requestId) {
+        final String consentRequestId = UUID.randomUUID().toString();
+        return consentRequestRepository.isRequestPresent(requestId)
+                .flatMap(requestExists -> (!requestExists)
+                        ? validatePatient(requestedDetail.getPatient().getId())
+                        .then(validateHIPAndHIU(requestedDetail))
+                        .then(saveRequest(requestedDetail, consentRequestId, requestId))
+                        .then(postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
+                                .detail(requestedDetail)
+                                .id(consentRequestId)
+                                .build()))
+                        .thenReturn(consentRequestId)
+                        : Mono.error(ClientError.requestAlreadyExists()));
     }
 
     private Mono<Boolean> validatePatient(String patientId) {
@@ -102,8 +105,8 @@ public class ConsentManager {
         return Mono.zip(checkHIU, checkHIP, (validHIU, validHIP) -> validHIU && validHIP);
     }
 
-    private Mono<Void> saveRequest(RequestedDetail requestedDetail, String requestId) {
-        return consentRequestRepository.insert(requestedDetail, requestId);
+    private Mono<Void> saveRequest(RequestedDetail requestedDetail, String consentRequestId, String requestId) {
+        return consentRequestRepository.insert(requestedDetail, consentRequestId, requestId);
     }
 
     private Mono<Boolean> isValidHIU(RequestedDetail requestedDetail) {

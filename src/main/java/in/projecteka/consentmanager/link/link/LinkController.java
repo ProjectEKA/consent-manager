@@ -51,8 +51,4 @@ public class LinkController {
     public Mono<PatientLinksResponse> getLinkedCareContextInternal(@PathVariable String username) {
         return link.getLinkedCareContexts(username);
     }
-
-    private String newRequest() {
-        return UUID.randomUUID().toString();
-    }
 }

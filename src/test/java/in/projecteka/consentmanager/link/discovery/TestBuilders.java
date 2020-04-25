@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.Type;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier;
+import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
@@ -53,6 +54,10 @@ public class TestBuilders {
 
     public static Identifier.IdentifierBuilder patientIdentifier() {
         return easyRandom.nextObject(Identifier.IdentifierBuilder.class);
+    }
+
+    public static PatientIdentifier.PatientIdentifierBuilder patientIdentifierBuilder() {
+        return easyRandom.nextObject(PatientIdentifier.PatientIdentifierBuilder.class);
     }
 
     public static in.projecteka.consentmanager.clients.model.Identifier.IdentifierBuilder providerIdentifier() {

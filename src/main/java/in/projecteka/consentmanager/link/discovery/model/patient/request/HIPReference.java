@@ -1,12 +1,10 @@
 package in.projecteka.consentmanager.link.discovery.model.patient.request;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Value;
 
-@Getter
-@AllArgsConstructor
+@Value
 @Builder
 public class HIPReference {
-    private final String id;
+    String id;
 }

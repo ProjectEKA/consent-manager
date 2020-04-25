@@ -1,15 +1,11 @@
 package in.projecteka.consentmanager.link.discovery.model.patient.request;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.Value;
 
 @Builder
-@Getter
-@AllArgsConstructor
-@EqualsAndHashCode
+@Value
 public class PatientRequest {
-    private final Patient patient;
-    private final String requestId;
+    Patient patient;
+    String requestId;
 }

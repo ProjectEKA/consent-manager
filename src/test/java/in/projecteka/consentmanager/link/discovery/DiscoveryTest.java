@@ -26,6 +26,7 @@ import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResponse;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.identifier;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientIdentifier;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientIdentifierBuilder;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientInResponse;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientRequest;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientResponse;
@@ -107,7 +108,8 @@ public class DiscoveryTest {
                 .name("Max")
                 .build();
         var identifier = patientIdentifier().type("MOBILE").value("+91-9999999999").build();
-        var unverifiedIdentifiers = Collections.singletonList(new PatientIdentifier(PatientIdentifierType.MR, "NCP1008"));
+        PatientIdentifier ncp1008 = patientIdentifierBuilder().type(PatientIdentifierType.MR).value("NCP1008").build();
+        var unverifiedIdentifiers = Collections.singletonList(ncp1008);
         var unverifiedIds = unverifiedIdentifiers.stream().map(patientIdentifier ->
                 in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
                         .type(patientIdentifier.getType().toString())

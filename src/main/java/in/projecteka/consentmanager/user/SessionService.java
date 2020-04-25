@@ -8,7 +8,6 @@ import in.projecteka.consentmanager.user.model.SessionRequest;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
@@ -31,7 +30,7 @@ public class SessionService {
     }
 
     public Mono<Void> logout(String accessToken, LogoutRequest logoutRequest) {
-        return blacklistedTokens.put(String.format(BLACKLIST_FORMAT, BLACKLIST, accessToken),"")
+        return blacklistedTokens.put(String.format(BLACKLIST_FORMAT, BLACKLIST, accessToken), "")
                 .then(tokenService.revoke(logoutRequest.getRefreshToken()));
     }
 }

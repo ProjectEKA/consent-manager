@@ -1,19 +1,16 @@
 package in.projecteka.consentmanager.link.discovery.model.patient.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Value;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Builder
-@AllArgsConstructor
-@Getter
+@Value
 public class DiscoveryRequest {
-    @NotNull(message = "HIP not specified.")
-    private final HIPReference hip;
-    private final List<PatientIdentifier> unverifiedIdentifiers;
+    @NotNull(message = "HIP not specified.") HIPReference hip;
+    List<PatientIdentifier> unverifiedIdentifiers;
 }

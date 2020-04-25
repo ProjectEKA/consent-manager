@@ -1,11 +1,17 @@
 package in.projecteka.consentmanager.link.discovery;
 
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.AdminRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.DiscoveryRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -35,6 +41,15 @@ public class DiscoveryController {
                 .map(Caller::getUsername)
                 .flatMap(user -> discovery.patientFor(user, discoveryRequest.getUnverifiedIdentifiers(), discoveryRequest.getHip().getId(),
                         newRequest()));
+    }
+
+    @PostMapping("admin/patients/discover/carecontexts")
+    public Mono<DiscoveryResponse> findPatientByAdmin(
+            @RequestBody @Valid AdminRequest<DiscoveryRequest> discoveryRequest) {
+        return discovery.patientFor(discoveryRequest.getConsentManagerId(),
+                discoveryRequest.getData().getUnverifiedIdentifiers(),
+                discoveryRequest.getData().getHip().getId(),
+                newRequest());
     }
 
     private String newRequest() {

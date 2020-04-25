@@ -65,7 +65,10 @@ public class SecurityConfiguration {
                                           "/**.js",
                                           "/**.yaml",
                                           "/**.css",
-                                          "/**.png"};
+                                          "/**.png",
+                                          "/admin/patients/discover/carecontexts",
+                                          "/admin/patients/link/{linkRefNumber}",
+                                          "/admin/patients/link"};
         httpSecurity.authorizeExchange().pathMatchers(whitelistedUrls).permitAll();
         httpSecurity.httpBasic().disable().formLogin().disable().csrf().disable().logout().disable();
         httpSecurity.authorizeExchange().pathMatchers("/**").authenticated();
@@ -81,8 +84,8 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet, CacheAdapter<String,String> blacklistedTokens, ConfigurableJWTProcessor<com.nimbusds.jose.proc.SecurityContext> jwtProcessor) {
-        return new Authenticator(jwkSet,blacklistedTokens, jwtProcessor);
+    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet, CacheAdapter<String, String> blacklistedTokens, ConfigurableJWTProcessor<com.nimbusds.jose.proc.SecurityContext> jwtProcessor) {
+        return new Authenticator(jwkSet, blacklistedTokens, jwtProcessor);
     }
 
     @Bean({"jwtProcessor"})

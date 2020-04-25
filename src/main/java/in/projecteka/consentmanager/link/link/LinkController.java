@@ -4,6 +4,7 @@ import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.AdminRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import lombok.AllArgsConstructor;
@@ -31,12 +32,26 @@ public class LinkController {
                 .flatMap(caller -> link.patientWith(caller.getUsername(), patientLinkReferenceRequest, newRequest()));
     }
 
+    @PostMapping("/admin/patients/link")
+    public Mono<PatientLinkReferenceResponse> linkCareContexts(
+            @RequestBody AdminRequest<PatientLinkReferenceRequest> patientLinkReferenceRequest) {
+        return link.patientWith(patientLinkReferenceRequest.getConsentManagerId().toLowerCase(),
+                patientLinkReferenceRequest.getData(),
+                newRequest());
+    }
+
     @PostMapping("/patients/link/{linkRefNumber}")
     public Mono<PatientLinkResponse> verifyToken(@PathVariable("linkRefNumber") String linkRefNumber,
                                                  @RequestBody PatientLinkRequest patientLinkRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .flatMap(caller -> link.verifyToken(linkRefNumber, patientLinkRequest, caller.getUsername()));
+    }
+
+    @PostMapping("/admin/patients/link/{linkRefNumber}")
+    public Mono<PatientLinkResponse> verifyToken(@PathVariable("linkRefNumber") String linkRefNumber,
+                                                 @RequestBody AdminRequest<PatientLinkRequest> patientLinkRequest) {
+        return link.verifyToken(linkRefNumber, patientLinkRequest.getData(), patientLinkRequest.getConsentManagerId().toLowerCase());
     }
 
     @GetMapping("/patients/links")

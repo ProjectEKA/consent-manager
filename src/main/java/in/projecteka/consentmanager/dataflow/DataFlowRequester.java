@@ -55,11 +55,7 @@ public class DataFlowRequester {
         if (dataFlowRequest.getDateRange() == null) {
             flowRequestBuilder.dateRange(defaultDateRange(consentArtefactRepresentation));
         }
-        var consent = dataFlowRequest
-                .getConsent()
-                .toBuilder()
-                .digitalSignature(consentArtefactRepresentation.getSignature())
-                .build();
+        var consent = dataFlowRequest.getConsent().toBuilder().build();
         return Mono.just(flowRequestBuilder.consent(consent).build());
     }
 

@@ -11,5 +11,4 @@ import lombok.Getter;
 @EqualsAndHashCode
 public class Consent {
     private final String id;
-    private final String digitalSignature;
 }

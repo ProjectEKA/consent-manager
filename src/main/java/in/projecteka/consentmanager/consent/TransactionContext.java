@@ -31,22 +31,16 @@ public class TransactionContext {
     }
 
     private void error(RuntimeException e) {
-        this.transaction.rollback();
+        //this.transaction.rollback();
         this.sink.error(e);
     }
 
     public void executeInTransaction(Iterator<Query> iterator) {
         if (iterator.hasNext()) {
             Query query = iterator.next();
-            boolean hasParams = query.getParams() != null && query.getParams().size() > 0;
-            if (!hasParams) {
-                transaction.preparedQuery(query.getQueryString())
-                        .execute(handler -> handleResponseAndExecNext(handler, iterator));
-            } else {
-                transaction.preparedQuery(query.getQueryString())
-                        .execute(query.getParams(),
-                                handler -> handleResponseAndExecNext(handler, iterator));
-            }
+            transaction.preparedQuery(query.getQueryString())
+                    .execute(query.getParams(),
+                            handler -> handleResponseAndExecNext(handler, iterator));
         }
     }
 

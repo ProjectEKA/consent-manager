@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.StreamSupport;
@@ -38,20 +39,28 @@ public class ConsentArtefactRepository {
             "date_modified=$2 WHERE consent_artefact_id=$3";
     private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
     private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
+    private static final String FAILED_TO_UPDATE_STATUS = "Failed to update status";
+    private static final String CAN_NOT_INITIALIZE_TRANSACTION = "Can not get connection.";
 
     private final PgPool dbClient;
 
-    public Mono<Void> process(List<Query> queries) {
-        return doInTransaction(queries);
+    public Mono<Void> grantConsentRequest(String requestId, List<Query> artefactQueries) {
+        List<Query> queriesInTransaction = new ArrayList<>(artefactQueries);
+        queriesInTransaction.add(new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
+                Tuple.of(ConsentStatus.GRANTED.toString(),
+                        LocalDateTime.now(),
+                        requestId)));
+        return doInTransaction(queriesInTransaction, FAILED_TO_SAVE_CONSENT_ARTEFACT);
+        //return doInTransaction(artefactQueries, FAILED_TO_SAVE_CONSENT_ARTEFACT);
     }
 
-    private Mono<Void> doInTransaction(List<Query> queries) {
+    private Mono<Void> doInTransaction(List<Query> queries, String contextErrorMessage) {
         return Mono.create(monoSink -> dbClient.begin(connectionAttempt -> {
             if (connectionAttempt.succeeded()) {
-                TransactionContext context = new TransactionContext(connectionAttempt.result(), monoSink);
-                context.executeInTransaction(queries.iterator(), FAILED_TO_SAVE_CONSENT_ARTEFACT);
+                TransactionContext context = new TransactionContext(connectionAttempt.result(), monoSink, contextErrorMessage);
+                context.executeInTransaction(queries.iterator());
             } else {
-                monoSink.error(new RuntimeException("Can not get connectionAttempt to storage."));
+                monoSink.error(new RuntimeException(CAN_NOT_INITIALIZE_TRANSACTION));
             }
         }));
     }
@@ -124,15 +133,8 @@ public class ConsentArtefactRepository {
     }
 
     public Mono<Void> updateStatus(String consentId, String consentRequestId, ConsentStatus status) {
-        return Mono.create(monoSink -> dbClient.begin(connectionAttempt -> {
-            List<Query> queries = getUpdateQueries(consentId, consentRequestId, status);
-            if (connectionAttempt.succeeded()) {
-                TransactionContext context = new TransactionContext(connectionAttempt.result(), monoSink);
-                context.executeInTransaction(queries.iterator(), "Failed to update status");
-            } else {
-                monoSink.error(new RuntimeException("Can not get connectionAttempt to storage."));
-            }
-        }));
+        List<Query> queries = getUpdateQueries(consentId, consentRequestId, status);
+        return doInTransaction(queries, FAILED_TO_UPDATE_STATUS);
     }
 
     private List<Query> getUpdateQueries(String consentId, String consentRequestId, ConsentStatus status) {

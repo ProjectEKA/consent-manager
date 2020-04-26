@@ -205,16 +205,16 @@ public class ConsentManager {
                                                                                   List<GrantedConsent> grantedConsents,
                                                                                   String patientId,
                                                                                   ConsentRequestDetail consentRequest) {
-        return getAllQueries(requestId, grantedConsents, patientId, consentRequest)
-                .map(caQueries -> caQueries.stream().reduce(QueryRepresentation::add).get())
-                .flatMap(queryRepresentation -> consentArtefactRepository.process(queryRepresentation.getQueries())
+        return artefactRepresentations(requestId, grantedConsents, patientId, consentRequest)
+                .map(representations -> representations.stream().reduce(QueryRepresentation::add).get())
+                .flatMap(queryRepresentation -> consentArtefactRepository.grantConsentRequest(requestId, queryRepresentation.getQueries())
                         .thenReturn(queryRepresentation.getHipConsentArtefactRepresentations()));
     }
 
-    private Mono<List<QueryRepresentation>> getAllQueries(String requestId,
-                                                          List<GrantedConsent> grantedConsents,
-                                                          String patientId,
-                                                          ConsentRequestDetail consentRequest) {
+    private Mono<List<QueryRepresentation>> artefactRepresentations(String requestId,
+                                                                    List<GrantedConsent> grantedConsents,
+                                                                    String patientId,
+                                                                    ConsentRequestDetail consentRequest) {
         return Flux.fromIterable(grantedConsents)
                 .flatMap(grantedConsent -> toConsentArtefact(consentRequest, grantedConsent)
                         .flatMap(consentArtefact -> consentArtefactQueryGenerator.toQueries(requestId,

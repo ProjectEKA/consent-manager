@@ -43,12 +43,13 @@ public class ConsentArtefactQueryGenerator {
                         JsonObject.mapFrom(hipConsentArtefact.getConsentDetail()),
                         consentArtefactSignature,
                         ConsentStatus.GRANTED.toString()));
-        Query updateConsentReqStatus = new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
-                Tuple.of(ConsentStatus.GRANTED.toString(),
-                        LocalDateTime.now(),
-                        requestId));
+        //TODO: are we creating duplicate update query for consent-request?
+//        Query updateConsentReqStatus = new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
+//                Tuple.of(ConsentStatus.GRANTED.toString(),
+//                        LocalDateTime.now(),
+//                        requestId));
         return Mono.just(QueryRepresentation.builder()
-                .queries(List.of(insertCA, insertHIPCA, updateConsentReqStatus))
+                .queries(List.of(insertCA, insertHIPCA))
                 .hipConsentArtefactRepresentations(List.of(hipConsentArtefact))
                 .build());
     }

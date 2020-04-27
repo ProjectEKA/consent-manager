@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
-import javax.validation.Valid;
 import java.util.List;
 
 @Builder
@@ -18,6 +17,5 @@ public class SignUpRequest {
     private final String password;
     private final Gender gender;
     private final Integer yearOfBirth;
-    @Valid
-    private final List<Identifier> unverifiedIdentifiers;
+    private final List<SignUpIdentifier> unverifiedIdentifiers;
 }

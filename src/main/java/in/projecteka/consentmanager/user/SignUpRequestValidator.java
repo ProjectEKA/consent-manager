@@ -2,11 +2,9 @@ package in.projecteka.consentmanager.user;
 
 import com.google.common.base.Strings;
 import in.projecteka.consentmanager.user.model.Gender;
-import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.SignUpIdentifier;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
 import io.vavr.collection.CharSeq;
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
@@ -24,7 +22,7 @@ import org.passay.SequenceData;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 import static java.lang.String.format;
 
@@ -55,34 +53,41 @@ public class SignUpRequestValidator {
                         .build());
     }
 
-    protected static Validation<String,List<Identifier>> validateUnVerifiedIdentifiers(List<Identifier> unverifiedIdentifiers) {
+    protected static Validation<String,List<SignUpIdentifier>> validateUnVerifiedIdentifiers(List<SignUpIdentifier> unverifiedIdentifiers) {
         if (unverifiedIdentifiers==null || unverifiedIdentifiers.isEmpty()) {
             return Validation.valid(unverifiedIdentifiers);
         }
 
-        List<Identifier> abIdentifiers = unverifiedIdentifiers.stream().
-                filter(identifier -> identifier.getType().equals(IdentifierType.ABPMJAYID)).
-                collect(Collectors.toList());
-        if (abIdentifiers.size() > 1) {
+        if (isInValidIdentifier(unverifiedIdentifiers)) {
+            return Validation.invalid("Invalid identifier");
+        }
+
+        boolean uniqueOrNonExistent = isUniqueOrNonExistent(unverifiedIdentifiers, IdentifierType.ABPMJAYID);
+        if (!uniqueOrNonExistent) {
             return Validation.invalid("More than one AB-PMJAYID are not supported");
         }
-        if (abIdentifiers.size() == 1) {
-            Identifier abIdentifier = abIdentifiers.get(0);
-            String abValue = abIdentifier.getValue();
-            Tuple2<String,Boolean> validatedTuple = validateAbpmjayId(abValue);
-            if (Boolean.FALSE.equals(validatedTuple._2())) {
-                return Validation.invalid(validatedTuple._1());
-            }
+        Optional<Boolean> optionalValidAbId = unverifiedIdentifiers.stream()
+                .filter(identifier -> identifier.getType().equals(IdentifierType.ABPMJAYID.name()))
+                .map(abIdentifier -> IdentifierType.ABPMJAYID.isValid(abIdentifier.getValue()))
+                .findFirst();
+
+        if (optionalValidAbId.isPresent() && (! optionalValidAbId.get())) {
+            return Validation.invalid("Invalid AB-PMJAYID");
         }
+
         return Validation.valid(unverifiedIdentifiers);
     }
 
-    private static Tuple2<String, Boolean> validateAbpmjayId(String abpmJayValue) {
-        String regex = "^P[0-9,A-Z]{8}$";
-        if (!abpmJayValue.matches(regex)) {
-            return Tuple.of("Invalid AB-PMJAYID", false);
-        }
-        return Tuple.of("", true);
+    private static boolean isInValidIdentifier(List<SignUpIdentifier> unverifiedIdentifiers) {
+        return unverifiedIdentifiers.stream()
+                .anyMatch(signUpIdentifier -> Arrays.stream(IdentifierType.values())
+                        .noneMatch(identifierType -> identifierType.name().equals(signUpIdentifier.getType())));
+    }
+
+    private static boolean isUniqueOrNonExistent(List<SignUpIdentifier> unverifiedIdentifiers, IdentifierType identifierType) {
+        return unverifiedIdentifiers.stream().
+                filter(identifier -> identifier.getType().equals(identifierType.name()))
+                .count() <= 1;
     }
 
     private static Validation<String, Gender> validate(Gender gender) {

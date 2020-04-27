@@ -1,8 +1,8 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.NullableConverter;
-import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.SignUpIdentifier;
 import io.vavr.control.Validation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -267,26 +267,34 @@ class SignUpRequestValidatorTest {
 
     @Test
     public void shouldReturnInvalidForMultipleABIds() {
-        Identifier identifier1 = new Identifier(IdentifierType.ABPMJAYID, "ab1");
-        Identifier identifier2 = new Identifier(IdentifierType.ABPMJAYID, "ab2");
-        List<Identifier> multipleAbIds = Arrays.asList(identifier1, identifier2);
-        Validation<String, List<Identifier>> validation = SignUpRequestValidator.validateUnVerifiedIdentifiers(multipleAbIds);
+        SignUpIdentifier identifier1 = new SignUpIdentifier(IdentifierType.ABPMJAYID.name(), "ab1");
+        SignUpIdentifier identifier2 = new SignUpIdentifier(IdentifierType.ABPMJAYID.name(), "ab2");
+        List<SignUpIdentifier> multipleAbIds = Arrays.asList(identifier1, identifier2);
+        Validation<String, List<SignUpIdentifier>> validation = SignUpRequestValidator.validateUnVerifiedIdentifiers(multipleAbIds);
         assertThat(validation.isValid()).isFalse();
     }
 
     @Test
     public void shouldReturnInvalidForIncorrectABId() {
-        Identifier identifier1 = new Identifier(IdentifierType.ABPMJAYID, "pabcd1234");
-        List<Identifier> multipleAbIds = Collections.singletonList(identifier1);
-        Validation<String, List<Identifier>> validation = SignUpRequestValidator.validateUnVerifiedIdentifiers(multipleAbIds);
+        SignUpIdentifier identifier1 = new SignUpIdentifier(IdentifierType.ABPMJAYID.name(), "pabcd1234");
+        List<SignUpIdentifier> multipleAbIds = Collections.singletonList(identifier1);
+        Validation<String, List<SignUpIdentifier>> validation = SignUpRequestValidator.validateUnVerifiedIdentifiers(multipleAbIds);
         assertThat(validation.isValid()).isFalse();
     }
 
     @Test
     public void shouldReturnValidForCorrectABId() {
-        Identifier identifier1 = new Identifier(IdentifierType.ABPMJAYID, "P1234ABCD");
-        List<Identifier> multipleAbIds = Collections.singletonList(identifier1);
-        Validation<String, List<Identifier>> validation = SignUpRequestValidator.validateUnVerifiedIdentifiers(multipleAbIds);
+        SignUpIdentifier identifier1 = new SignUpIdentifier(IdentifierType.ABPMJAYID.name(), "P1234ABCD");
+        List<SignUpIdentifier> multipleAbIds = Collections.singletonList(identifier1);
+        Validation<String, List<SignUpIdentifier>> validation = SignUpRequestValidator.validateUnVerifiedIdentifiers(multipleAbIds);
         assertThat(validation.isValid()).isTrue();
+    }
+
+    @Test
+    public void shouldReturnInvalidForInvalidIdentifier() {
+        SignUpIdentifier identifier1 = new SignUpIdentifier("foobar", "P1234ABCD");
+        List<SignUpIdentifier> multipleAbIds = Collections.singletonList(identifier1);
+        Validation<String, List<SignUpIdentifier>> validation = SignUpRequestValidator.validateUnVerifiedIdentifiers(multipleAbIds);
+        assertThat(validation.isValid()).isFalse();
     }
 }

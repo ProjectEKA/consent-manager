@@ -35,7 +35,7 @@ public class ProfileService {
         JsonArray unverifiedIdentifiersJson = user.getUnverifiedIdentifiers();
         if (unverifiedIdentifiersJson !=null) {
             List<Identifier> unverifiedIdentifiers = IntStream.range(0, user.getUnverifiedIdentifiers().size())
-                    .mapToObj(value -> unverifiedIdentifiersJson.getJsonObject(value))
+                    .mapToObj(unverifiedIdentifiersJson::getJsonObject)
                     .map(jsonObject -> new Identifier(IdentifierType.valueOf(jsonObject.getString("type")),jsonObject.getString("value")))
                     .collect(Collectors.toList());
             builder.unverifiedIdentifiers(unverifiedIdentifiers);

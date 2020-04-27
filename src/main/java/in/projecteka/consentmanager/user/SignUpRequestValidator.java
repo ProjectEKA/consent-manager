@@ -70,7 +70,7 @@ public class SignUpRequestValidator {
             Identifier abIdentifier = abIdentifiers.get(0);
             String abValue = abIdentifier.getValue();
             Tuple2<String,Boolean> validatedTuple = validateAbpmjayId(abValue);
-            if (!validatedTuple._2()) {
+            if (Boolean.FALSE.equals(validatedTuple._2())) {
                 return Validation.invalid(validatedTuple._1());
             }
         }

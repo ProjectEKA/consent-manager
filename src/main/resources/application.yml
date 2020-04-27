@@ -53,3 +53,6 @@ spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}
     port: ${RABBITMQ_PORT}
+  jackson:
+    deserialization:
+      READ_UNKNOWN_ENUM_VALUES_AS_NULL: true

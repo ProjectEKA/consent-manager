@@ -2,7 +2,11 @@ package in.projecteka.consentmanager.user;
 
 import com.google.common.base.Strings;
 import in.projecteka.consentmanager.user.model.Gender;
+import in.projecteka.consentmanager.user.model.Identifier;
+import in.projecteka.consentmanager.user.model.IdentifierType;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import io.vavr.collection.CharSeq;
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
@@ -19,6 +23,8 @@ import org.passay.SequenceData;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -37,14 +43,46 @@ public class SignUpRequestValidator {
                 validate(signUpRequest.getGender()),
                 validateUserName(signUpRequest.getUsername(), userIdSuffix),
                 validatePassword(signUpRequest.getPassword()),
-                validateYearOfBirth(signUpRequest.getYearOfBirth()))
-                .ap((firstName, gender, username, password, dateOfBirth) -> SignUpRequest.builder()
+                validateYearOfBirth(signUpRequest.getYearOfBirth()),
+                validateUnVerifiedIdentifiers(signUpRequest.getUnverifiedIdentifiers()))
+                .ap((firstName, gender, username, password, dateOfBirth, unverifiedIdentifiers) -> SignUpRequest.builder()
                         .name(firstName)
                         .gender(gender)
                         .username(username)
                         .password(password)
                         .yearOfBirth(dateOfBirth)
+                        .unverifiedIdentifiers(unverifiedIdentifiers)
                         .build());
+    }
+
+    protected static Validation<String,List<Identifier>> validateUnVerifiedIdentifiers(List<Identifier> unverifiedIdentifiers) {
+        if (unverifiedIdentifiers==null || unverifiedIdentifiers.isEmpty()) {
+            return Validation.valid(unverifiedIdentifiers);
+        }
+
+        List<Identifier> abIdentifiers = unverifiedIdentifiers.stream().
+                filter(identifier -> identifier.getType().equals(IdentifierType.ABPMJAYID)).
+                collect(Collectors.toList());
+        if (abIdentifiers.size() > 1) {
+            return Validation.invalid("More than one AB-PMJAYID are not supported");
+        }
+        if (abIdentifiers.size() == 1) {
+            Identifier abIdentifier = abIdentifiers.get(0);
+            String abValue = abIdentifier.getValue();
+            Tuple2<String,Boolean> validatedTuple = validateAbpmjayId(abValue);
+            if (!validatedTuple._2()) {
+                return Validation.invalid(validatedTuple._1());
+            }
+        }
+        return Validation.valid(unverifiedIdentifiers);
+    }
+
+    private static Tuple2<String, Boolean> validateAbpmjayId(String abpmJayValue) {
+        String regex = "^P[0-9,A-Z]{8}$";
+        if (!abpmJayValue.matches(regex)) {
+            return Tuple.of("Invalid AB-PMJAYID", false);
+        }
+        return Tuple.of("", true);
     }
 
     private static Validation<String, Gender> validate(Gender gender) {

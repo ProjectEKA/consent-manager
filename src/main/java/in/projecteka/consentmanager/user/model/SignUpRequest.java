@@ -5,14 +5,19 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+import javax.validation.Valid;
+import java.util.List;
+
 @Builder
 @Getter
 @AllArgsConstructor
 @EqualsAndHashCode
 public class SignUpRequest {
-    private final String name;
-    private final String username;
-    private final String password;
-    private final Gender gender;
-    private final Integer yearOfBirth;
+    private String name;
+    private String username;
+    private String password;
+    private Gender gender;
+    private Integer yearOfBirth;
+    @Valid
+    private List<Identifier> unverifiedIdentifiers;
 }

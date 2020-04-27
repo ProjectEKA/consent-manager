@@ -6,12 +6,16 @@ import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import org.jeasy.random.EasyRandom;
+import org.jeasy.random.EasyRandomParameters;
+import org.jeasy.random.FieldPredicates;
 
 public class TestBuilders {
 
     private static final EasyRandom easyRandom = new EasyRandom();
 
     public static SignUpRequest.SignUpRequestBuilder signUpRequest() {
+        EasyRandomParameters excludeUnverifiedIdentifiers = new EasyRandomParameters().excludeField(FieldPredicates.named("unverifiedIdentifiers"));
+        EasyRandom easyRandom = new EasyRandom(excludeUnverifiedIdentifiers);
         return easyRandom.nextObject(SignUpRequest.SignUpRequestBuilder.class);
     }
 

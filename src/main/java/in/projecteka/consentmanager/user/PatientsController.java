@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import javax.validation.Valid;
+
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -61,7 +63,7 @@ public class PatientsController {
     }
 
     @PostMapping("/profile")
-    public Mono<Session> create(@RequestBody SignUpRequest request,
+    public Mono<Session> create(@RequestBody @Valid SignUpRequest request,
                                 @RequestHeader(name = "Authorization") String token) {
         var signUpRequests = SignUpRequestValidator.validate(request, userService.getUserIdSuffix());
         return signUpRequests.isValid()

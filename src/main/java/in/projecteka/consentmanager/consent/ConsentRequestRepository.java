@@ -31,7 +31,7 @@ public class ConsentRequestRepository {
     private static final String INSERT_CONSENT_REQUEST_QUERY = "INSERT INTO consent_request " +
             "(consent_request_id, patient_id, status, details, request_id) VALUES ($1, $2, $3, $4, $5)";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
-            "date_modified=$2 WHERE request_id=$3";
+            "date_modified=$2 WHERE consent_request_id=$3";
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent request";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
     private static final String CHECK_REQUEST_ID_EXISTS = "SELECT exists(SELECT * FROM consent_request WHERE " +
@@ -39,10 +39,11 @@ public class ConsentRequestRepository {
     private final PgPool dbClient;
 
     static {
-        String s = "SELECT request_id, status, details, date_created, date_modified FROM consent_request where ";
+        String s = "SELECT consent_request_id, status, details, date_created, date_modified FROM consent_request " +
+                "where ";
         SELECT_CONSENT_DETAILS_FOR_PATIENT = s + "patient_id=$1 LIMIT $2 OFFSET $3";
-        SELECT_CONSENT_REQUEST_BY_ID = s + "request_id=$1";
-        SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS = s + "request_id=$1 and status=$2 and patient_id=$3";
+        SELECT_CONSENT_REQUEST_BY_ID = s + "consent_request_id=$1";
+        SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS = s + "consent_request_id=$1 and status=$2 and patient_id=$3";
     }
 
     public ConsentRequestRepository(PgPool dbClient) {

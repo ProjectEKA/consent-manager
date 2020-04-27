@@ -2132,6 +2132,9 @@ components:
     HINotification:
       type: object
       properties:
+        requestId:
+          type: string
+          format: uuid
         transactionId:
           type: string
         consentId:

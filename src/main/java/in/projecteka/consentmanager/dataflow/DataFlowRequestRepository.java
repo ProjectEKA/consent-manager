@@ -16,7 +16,9 @@ public class DataFlowRequestRepository {
     private static final String SELECT_HIP_ID_FROM_CONSENT_ARTEFACT = "SELECT consent_artefact -> 'hip' ->> 'id' as " +
             "hip_id FROM consent_artefact WHERE consent_artefact_id=$1";
     private static final String INSERT_TO_HEALTH_INFO_NOTIFICATION = "INSERT INTO health_info_notification " +
-            "(transaction_id, notification_request) VALUES ($1, $2)";
+            "(transaction_id, notification_request, request_id) VALUES ($1, $2, $3)";
+    private static final String CHECK_REQUEST_ID_EXISTS = "SELECT exists(SELECT * FROM health_info_notification WHERE " +
+            "request_id=$1)";
     private final PgPool dbClient;
 
     public DataFlowRequestRepository(PgPool pgPool) {
@@ -61,13 +63,31 @@ public class DataFlowRequestRepository {
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(INSERT_TO_HEALTH_INFO_NOTIFICATION)
                         .execute(Tuple.of(notificationRequest.getTransactionId(),
-                                JsonObject.mapFrom(notificationRequest)),
+                                JsonObject.mapFrom(notificationRequest), notificationRequest.getRequestId().toString()),
                                 handler -> {
                                     if (handler.failed()) {
                                         monoSink.error(new DbOperationError());
                                         return;
                                     }
                                     monoSink.success();
+                                }));
+    }
+
+    public Mono<Boolean> isRequestPresent(String requestId) {
+        return Mono.create(monoSink ->
+                dbClient.preparedQuery(CHECK_REQUEST_ID_EXISTS)
+                        .execute(Tuple.of(requestId),
+                                handler -> {
+                                    if (handler.failed()) {
+                                        monoSink.error(new DbOperationError());
+                                        return;
+                                    }
+                                    var iterator = handler.result().iterator();
+                                    if (!iterator.hasNext()) {
+                                        monoSink.error(unknownErrorOccurred());
+                                        return;
+                                    }
+                                    monoSink.success(iterator.next().getBoolean(0));
                                 }));
     }
 }

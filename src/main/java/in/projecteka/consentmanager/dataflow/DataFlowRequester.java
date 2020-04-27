@@ -111,10 +111,12 @@ public class DataFlowRequester {
     }
 
     public Mono<Void> notifyHealthInfoStatus(String requesterId, HealthInfoNotificationRequest notificationRequest) {
-        if (!validateRequester(requesterId, notificationRequest)) {
-            return Mono.error(ClientError.invalidRequester());
-        }
-        return dataFlowRequestRepository.saveNotificationRequest(notificationRequest);
+        return dataFlowRequestRepository.isRequestPresent(notificationRequest.getRequestId().toString())
+                .flatMap(requestExists -> (!requestExists)
+                        ? (!validateRequester(requesterId, notificationRequest))
+                            ? Mono.error(ClientError.invalidRequester())
+                            : dataFlowRequestRepository.saveNotificationRequest(notificationRequest)
+                        : Mono.error(ClientError.requestAlreadyExists()));
     }
 
     private boolean validateRequester(String requesterId, HealthInfoNotificationRequest notificationRequest) {

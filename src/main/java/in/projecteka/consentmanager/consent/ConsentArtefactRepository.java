@@ -25,7 +25,7 @@ import java.util.stream.StreamSupport;
 @AllArgsConstructor
 public class ConsentArtefactRepository {
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
-            "date_modified=$2 WHERE request_id=$3";
+            "date_modified=$2 WHERE consent_request_id=$3";
     private static final String SELECT_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
             "FROM consent_artefact WHERE consent_artefact_id = $1";
     private static final String SELECT_CONSENT_WITH_REQUEST_QUERY = "SELECT status, consent_artefact, " +

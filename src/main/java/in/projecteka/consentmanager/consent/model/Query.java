@@ -7,6 +7,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class Query {
-    private String queryString;
-    private Tuple params;
+    private final String queryString;
+    private final Tuple params;
 }

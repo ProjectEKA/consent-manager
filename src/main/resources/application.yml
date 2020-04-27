@@ -43,7 +43,7 @@ consentmanager:
   linkservice:
     url: ${LINK_SERVICE_URL}
   #Valid values are guava(for local), redis
-  cacheMethod: ${CACHE_METHOD}
+  cacheMethod: ${CACHE_METHOD:guava}
   redis:
     #Will not be used if cacheMethod is guava
     host: ${REDIS_HOST}

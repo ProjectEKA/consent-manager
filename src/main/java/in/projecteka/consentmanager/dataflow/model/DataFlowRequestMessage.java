@@ -2,14 +2,12 @@ package in.projecteka.consentmanager.dataflow.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-@Data
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
+@Getter
 public class DataFlowRequestMessage {
-    private String transactionId;
-    private DataFlowRequest dataFlowRequest;
+    private final String transactionId;
+    private final DataFlowRequest dataFlowRequest;
 }

@@ -7,8 +7,8 @@ import reactor.core.publisher.MonoSink;
 import java.util.Iterator;
 
 public class TransactionContext {
-    private Transaction transaction;
-    private MonoSink<Void> sink;
+    private final Transaction transaction;
+    private final MonoSink<Void> sink;
 
     public TransactionContext(Transaction transaction, MonoSink<Void> sink) {
         this.transaction = transaction;

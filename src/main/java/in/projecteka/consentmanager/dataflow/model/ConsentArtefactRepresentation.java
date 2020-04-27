@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Date;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -15,4 +17,12 @@ public class ConsentArtefactRepresentation {
     private ConsentStatus status;
     private ConsentArtefact consentDetail;
     private String signature;
+
+    public Date toDate() {
+        return consentDetail.getPermission().getDateRange().getToDate();
+    }
+
+    public Date fromDate() {
+        return consentDetail.getPermission().getDateRange().getFromDate();
+    }
 }

@@ -1,11 +1,15 @@
 package in.projecteka.consentmanager.link.discovery.model.patient.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Value
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CareContext {
-    String referenceNumber;
-    String display;
+    private String referenceNumber;
+    private String display;
 }

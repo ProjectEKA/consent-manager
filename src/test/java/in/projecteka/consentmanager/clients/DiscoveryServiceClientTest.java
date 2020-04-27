@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.clients;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -38,8 +37,7 @@ public class DiscoveryServiceClientTest {
     @BeforeEach
     public void init() {
         MockitoAnnotations.initMocks(this);
-        WebClient.Builder webClientBuilder = WebClient.builder()
-                .exchangeFunction(exchangeFunction);
+        WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder, () -> Mono.just(string()));
     }
 
@@ -56,17 +54,21 @@ public class DiscoveryServiceClientTest {
                         .header("Content-Type", "application/json")
                         .body(patientResponseBody)
                         .build()));
+        var patientRequest = patientRequest()
+                .patient(patientInRequest().build())
+                .requestId("transaction-id-1")
+                .build();
 
-        PatientRequest patientRequest = patientRequest().patient(patientInRequest().build()).requestId("transaction-id-1").build();
         StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/"))
                 .assertNext(response -> {
                     assertThat(response.getPatient().getDisplay()).isEqualTo(expectedPatient.getDisplay());
-                    assertThat(response.getPatient().getReferenceNumber()).isEqualTo(expectedPatient.getReferenceNumber());
+                    assertThat(response.getPatient().getReferenceNumber())
+                            .isEqualTo(expectedPatient.getReferenceNumber());
                     assertThat(response.getPatient().getMatchedBy()).isEqualTo(expectedPatient.getMatchedBy());
-                    assertThat(response.getPatient().getCareContexts().get(0).getDisplay()).isEqualTo(expectedPatient.getCareContexts().get(0).getDisplay());
+                    assertThat(response.getPatient().getCareContexts().get(0).getDisplay())
+                            .isEqualTo(expectedPatient.getCareContexts().get(0).getDisplay());
                 })
                 .verifyComplete();
-
         assertThat(captor.getValue().url().toString()).isEqualTo("http://hip-url/patients/discover/carecontexts");
     }
 }

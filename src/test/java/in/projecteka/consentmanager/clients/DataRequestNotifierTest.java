@@ -30,7 +30,6 @@ public class DataRequestNotifierTest {
     @BeforeEach
     public void init() {
         MockitoAnnotations.initMocks(this);
-
     }
 
     @Test

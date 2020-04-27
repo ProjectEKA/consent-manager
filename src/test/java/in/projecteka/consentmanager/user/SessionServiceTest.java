@@ -41,7 +41,7 @@ class SessionServiceTest {
     void returnSession() {
         var sessionRequest = sessionRequest().build();
         var expectedSession = session().build();
-        when(tokenService.tokenForUser(sessionRequest.getUserName(), sessionRequest.getPassword()))
+        when(tokenService.tokenForUser(sessionRequest.getUsername(), sessionRequest.getPassword()))
                 .thenReturn(Mono.just(expectedSession));
         var sessionService = new SessionService(tokenService, null);
 
@@ -59,7 +59,7 @@ class SessionServiceTest {
             "null"
     })
     void returnUnAuthorizedErrorWhenUsernameIsEmpty(@ConvertWith(NullableConverter.class) String value) {
-        var sessionRequest = sessionRequest().UserName(value).build();
+        var sessionRequest = sessionRequest().username(value).build();
         var sessionService = new SessionService(tokenService, null);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
@@ -78,7 +78,7 @@ class SessionServiceTest {
     })
     void returnUnAuthorizedErrorWhenPasswordIsEmpty(
             @ConvertWith(NullableConverter.class) String value) {
-        var sessionRequest = sessionRequest().Password(value).build();
+        var sessionRequest = sessionRequest().password(value).build();
         var sessionService = new SessionService(tokenService, null);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);

@@ -8,13 +8,9 @@ import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifierType;
-import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
-import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
-import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -23,13 +19,13 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResponse;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.identifier;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientIdentifier;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientIdentifierBuilder;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientInResponse;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientRequest;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientResponse;
@@ -93,36 +89,33 @@ public class DiscoveryTest {
         var transactionId = string();
         var requestId = string();
         var patientId = string();
-        var discovery = new Discovery(
-                userServiceClient,
-                discoveryServiceClient,
-                discoveryRepository,
-                centralRegistry);
-        Address address = address().use("work").build();
-        Telecom telecom = telecom().use("work").build();
-        in.projecteka.consentmanager.link.discovery.model.patient.response.Patient patientInResponse = patientInResponse()
+        var discovery = new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry);
+        var address = address().use("work").build();
+        var telecom = telecom().use("work").build();
+        var patientInResponse = patientInResponse()
                 .display("John Doe")
                 .referenceNumber("123")
                 .matchedBy(of())
                 .careContexts(of())
                 .build();
-        PatientResponse patientResponse = patientResponse().patient(patientInResponse).build();
-        User user = user().identifier("1").name("first name").phone("+91-9999999999").build();
-        String hipClientUrl = "http://localhost:8001";
-        Provider provider = provider()
+        var patientResponse = patientResponse().patient(patientInResponse).build();
+        var user = user().identifier("1").name("first name").phone("+91-9999999999").build();
+        var hipClientUrl = "http://localhost:8001";
+        var provider = provider()
                 .addresses(of(address))
                 .telecoms(of(telecom))
                 .identifiers(of(providerIdentifier().system(hipClientUrl).use("official").build()))
                 .name("Max")
                 .build();
-        Identifier identifier = patientIdentifier().type("MOBILE").value("+91-9999999999").build();
-        List<PatientIdentifier> unverifiedIdentifiers = Collections.singletonList(new PatientIdentifier(PatientIdentifierType.MR, "NCP1008"));
+        var identifier = patientIdentifier().type("MOBILE").value("+91-9999999999").build();
+        PatientIdentifier ncp1008 = patientIdentifierBuilder().type(PatientIdentifierType.MR).value("NCP1008").build();
+        var unverifiedIdentifiers = Collections.singletonList(ncp1008);
         var unverifiedIds = unverifiedIdentifiers.stream().map(patientIdentifier ->
                 in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
                         .type(patientIdentifier.getType().toString())
                         .value(patientIdentifier.getValue())
                         .build()).collect(Collectors.toList());
-        Patient patient = Patient.builder()
+        var patient = Patient.builder()
                 .id(user.getIdentifier())
                 .name(user.getName())
                 .gender(user.getGender())
@@ -130,8 +123,8 @@ public class DiscoveryTest {
                 .verifiedIdentifiers(of(identifier))
                 .unverifiedIdentifiers(unverifiedIds)
                 .build();
-        PatientRequest patientRequest = patientRequest().patient(patient).requestId(transactionId).build();
-        DiscoveryResponse discoveryResponse = discoveryResponse()
+        var patientRequest = patientRequest().patient(patient).requestId(transactionId).build();
+        var discoveryResponse = discoveryResponse()
                 .patient(patientResponse.getPatient())
                 .transactionId(transactionId)
                 .build();

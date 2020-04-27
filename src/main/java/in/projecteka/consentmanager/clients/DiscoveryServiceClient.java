@@ -17,8 +17,7 @@ public class DiscoveryServiceClient {
     private final WebClient.Builder webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
 
-    public Mono<PatientResponse> patientFor(PatientRequest request,
-                                            String url) {
+    public Mono<PatientResponse> patientFor(PatientRequest request, String url) {
         return tokenGenerator.get()
                 .map(token ->
                         webClientBuilder.build()

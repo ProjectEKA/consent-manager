@@ -63,11 +63,11 @@ class SignUpServiceTest {
     }
 
     @Test
-    public void shouldGenerateToken() throws ExecutionException {
+    public void shouldGenerateToken() {
         var sessionId = easyRandom.nextObject(String.class);
         String number = easyRandom.nextObject(String.class);
         when(jwtProperties.getSecret()).thenReturn(easyRandom.nextObject(String.class));
-        when(verifiedSessions.put(anyString(),eq(number))).thenReturn(Mono.empty());
+        when(verifiedSessions.put(anyString(), eq(number))).thenReturn(Mono.empty());
         when(unverifiedSessions.get(sessionId)).thenReturn(Mono.just(number));
 
         assertThat(signupService.generateToken(sessionId).block()).isInstanceOf(Token.class);
@@ -85,7 +85,7 @@ class SignUpServiceTest {
                     }
                 });
         var verifiedSessionsAdapter = new LoadingCacheAdapter(verifiedSessions);
-        var value = "Something";
+        var value = easyRandom.nextObject(String.class);
         verifiedSessions.put(sessionId, value);
         var signUpService = new SignUpService(null, null, verifiedSessionsAdapter, 0);
 

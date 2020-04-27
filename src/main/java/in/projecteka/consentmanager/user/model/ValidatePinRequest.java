@@ -1,15 +1,13 @@
 package in.projecteka.consentmanager.user.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
 import java.util.UUID;
 
 @AllArgsConstructor
-@NoArgsConstructor
-@Data
+@Getter
 public class ValidatePinRequest {
     private UUID requestId;
-    private String pin;
+    private final String pin;
 }

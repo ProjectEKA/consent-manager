@@ -2,15 +2,17 @@ package in.projecteka.consentmanager.user.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 @Builder
-@Data
+@Getter
 @AllArgsConstructor
+@EqualsAndHashCode
 public class SignUpRequest {
-    private String name;
-    private String username;
-    private String password;
-    private Gender gender;
-    private Integer yearOfBirth;
+    private final String name;
+    private final String username;
+    private final String password;
+    private final Gender gender;
+    private final Integer yearOfBirth;
 }

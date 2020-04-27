@@ -589,7 +589,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"userName\": \"{{USERNAME}}\",\n\t\"password\": \"{{PASSWORD}}\",\n\t\"grantType\": \"password\"\n}",
+							"raw": "{\n\t\"username\": \"{{USERNAME}}\",\n\t\"password\": \"{{PASSWORD}}\",\n\t\"grantType\": \"password\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"

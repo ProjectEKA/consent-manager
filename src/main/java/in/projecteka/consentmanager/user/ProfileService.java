@@ -4,8 +4,13 @@ import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
 import in.projecteka.consentmanager.user.model.Profile;
 import in.projecteka.consentmanager.user.model.User;
+import io.vertx.core.json.JsonArray;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.util.Collections.singletonList;
 
@@ -21,12 +26,20 @@ public class ProfileService {
     }
 
     private Profile from(User user, Boolean hasTransactionPin) {
-        return Profile.builder()
+        Profile.ProfileBuilder builder = Profile.builder()
                 .id(user.getIdentifier())
                 .name(user.getName())
                 .gender(user.getGender())
                 .hasTransactionPin(hasTransactionPin)
-                .verifiedIdentifiers(singletonList(new Identifier(IdentifierType.MOBILE, user.getPhone())))
-                .build();
+                .verifiedIdentifiers(singletonList(new Identifier(IdentifierType.MOBILE, user.getPhone())));
+        JsonArray unverifiedIdentifiersJson = user.getUnverifiedIdentifiers();
+        if (unverifiedIdentifiersJson !=null) {
+            List<Identifier> unverifiedIdentifiers = IntStream.range(0, user.getUnverifiedIdentifiers().size())
+                    .mapToObj(value -> unverifiedIdentifiersJson.getJsonObject(value))
+                    .map(jsonObject -> new Identifier(IdentifierType.valueOf(jsonObject.getString("type")),jsonObject.getString("value")))
+                    .collect(Collectors.toList());
+            builder.unverifiedIdentifiers(unverifiedIdentifiers);
+        }
+        return builder.build();
     }
 }

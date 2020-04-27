@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.common.DbOperationError;
+import in.projecteka.consentmanager.common.DbOperation;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.to;
 
@@ -143,21 +142,7 @@ public class ConsentRequestRepository {
     }
 
     public Mono<Boolean> isRequestPresent(String requestId) {
-        return Mono.create(monoSink ->
-                dbClient.preparedQuery(CHECK_REQUEST_ID_EXISTS)
-                        .execute(Tuple.of(requestId),
-                                handler -> {
-                                    if (handler.failed()) {
-                                        monoSink.error(new DbOperationError());
-                                        return;
-                                    }
-                                    var iterator = handler.result().iterator();
-                                    if (!iterator.hasNext()) {
-                                        monoSink.error(unknownErrorOccurred());
-                                        return;
-                                    }
-                                    monoSink.success(iterator.next().getBoolean(0));
-                                }));
+        return DbOperation.getBooleanMono(requestId, dbClient, CHECK_REQUEST_ID_EXISTS);
     }
 
     private ConsentStatus getConsentStatus(String status) {

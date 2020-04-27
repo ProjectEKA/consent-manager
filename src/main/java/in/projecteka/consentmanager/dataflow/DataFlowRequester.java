@@ -23,7 +23,7 @@ public class DataFlowRequester {
     public Mono<DataFlowRequestResponse> requestHealthData(String hiuId, DataFlowRequest dataFlowRequest) {
         final String transactionId = UUID.randomUUID().toString();
         return fetchConsentArtefact(dataFlowRequest.getConsent().getId())
-                .flatMap(caRep -> validate(dataFlowRequest, caRep, hiuId))
+                .flatMap(caRep -> saveNotificationRequest(dataFlowRequest, caRep, hiuId))
                 .flatMap(flowRequest -> dataFlowRequestRepository.addDataFlowRequest(transactionId, flowRequest)
                         .thenReturn(flowRequest))
                 .flatMap(flowRequest -> notifyHIP(transactionId, flowRequest))
@@ -34,7 +34,7 @@ public class DataFlowRequester {
         return postDataFlowrequestApproval.broadcastDataFlowRequest(transactionId, dataFlowRequest);
     }
 
-    private Mono<DataFlowRequest> validate(
+    private Mono<DataFlowRequest> saveNotificationRequest(
             DataFlowRequest dataFlowRequest,
             ConsentArtefactRepresentation consentArtefactRepresentation,
             String hiuId) {
@@ -113,10 +113,14 @@ public class DataFlowRequester {
     public Mono<Void> notifyHealthInfoStatus(String requesterId, HealthInfoNotificationRequest notificationRequest) {
         return dataFlowRequestRepository.isRequestPresent(notificationRequest.getRequestId().toString())
                 .flatMap(requestExists -> (!requestExists)
-                        ? (!validateRequester(requesterId, notificationRequest))
-                            ? Mono.error(ClientError.invalidRequester())
-                            : dataFlowRequestRepository.saveNotificationRequest(notificationRequest)
+                        ? saveNotificationRequest(requesterId, notificationRequest)
                         : Mono.error(ClientError.requestAlreadyExists()));
+    }
+
+    private Mono<Void> saveNotificationRequest(String requesterId, HealthInfoNotificationRequest notificationRequest) {
+        return (!validateRequester(requesterId, notificationRequest))
+            ? Mono.error(ClientError.invalidRequester())
+            : dataFlowRequestRepository.saveNotificationRequest(notificationRequest);
     }
 
     private boolean validateRequester(String requesterId, HealthInfoNotificationRequest notificationRequest) {

@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.link.link;
 
+import in.projecteka.consentmanager.common.DbOperation;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
@@ -62,21 +63,7 @@ public class LinkRepository {
     }
 
     public Mono<Boolean> isRequestPresent(String requestId) {
-        return Mono.create(monoSink ->
-                dbClient.preparedQuery(CHECK_REQUEST_ID_EXISTS)
-                        .execute(Tuple.of(requestId),
-                                handler -> {
-                                    if (handler.failed()) {
-                                        monoSink.error(new DbOperationError());
-                                        return;
-                                    }
-                                    var iterator = handler.result().iterator();
-                                    if (!iterator.hasNext()) {
-                                        monoSink.error(unknownErrorOccurred());
-                                        return;
-                                    }
-                                    monoSink.success(iterator.next().getBoolean(0));
-                                }));
+        return DbOperation.getBooleanMono(requestId, dbClient, CHECK_REQUEST_ID_EXISTS);
     }
 
     public Mono<String> getHIPIdFromDiscovery(String transactionId) {

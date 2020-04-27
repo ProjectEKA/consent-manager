@@ -11,12 +11,10 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
-import io.vertx.sqlclient.Transaction;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoSink;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -126,32 +124,27 @@ public class ConsentArtefactRepository {
     }
 
     public Mono<Void> updateStatus(String consentId, String consentRequestId, ConsentStatus status) {
-        return Mono.create(monoSink -> dbClient.begin(res -> {
-            if (res.succeeded()) {
-                Transaction transaction = res.result();
-                update(consentRequestId, status, monoSink, transaction, UPDATE_CONSENT_REQUEST_STATUS_QUERY);
-                update(consentId, status, monoSink, transaction, UPDATE_CONSENT_ARTEFACT_STATUS_QUERY);
-                transaction.commit();
-                monoSink.success();
+        return Mono.create(monoSink -> dbClient.begin(connectionAttempt -> {
+            List<Query> queries = getUpdateQueries(consentId, consentRequestId, status);
+            if (connectionAttempt.succeeded()) {
+                TransactionContext context = new TransactionContext(connectionAttempt.result(), monoSink);
+                context.executeInTransaction(queries.iterator(), "Failed to update status");
             } else {
-                monoSink.error(new RuntimeException("Error connecting to database. "));
+                monoSink.error(new RuntimeException("Can not get connectionAttempt to storage."));
             }
         }));
     }
 
-    private void update(String id,
-                        ConsentStatus status,
-                        MonoSink<Void> monoSink,
-                        Transaction transaction,
-                        String updateStatusQuery) {
-        transaction.preparedQuery(updateStatusQuery)
-                .execute(Tuple.of(status.toString(), LocalDateTime.now(), id),
-                        updateHandler -> {
-                            if (updateHandler.failed()) {
-                                transaction.close();
-                                monoSink.error(new Exception("Failed to update status"));
-                            }
-                        });
+    private List<Query> getUpdateQueries(String consentId, String consentRequestId, ConsentStatus status) {
+        Query consentRequestUpdate = new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
+                Tuple.of(status.toString(),
+                        LocalDateTime.now(),
+                        consentRequestId));
+        Query consentArtefactUpdate = new Query(UPDATE_CONSENT_ARTEFACT_STATUS_QUERY,
+                Tuple.of(status.toString(),
+                        LocalDateTime.now(),
+                        consentId));
+        return List.of(consentRequestUpdate, consentArtefactUpdate);
     }
 
     public Mono<ConsentRepresentation> getConsentWithRequest(String consentId) {

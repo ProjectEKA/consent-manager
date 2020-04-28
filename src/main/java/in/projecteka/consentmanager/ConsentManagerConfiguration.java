@@ -159,7 +159,7 @@ public class ConsentManagerConfiguration {
     @SneakyThrows
     @Bean("pinSigning")
     public KeyPair keyPair() {
-        return keyPairConfig.getPinVerificationKeyPair();
+        return keyPairConfig.createPinVerificationKeyPair();
     }
 
     @Bean("keySigningPublicKey")

@@ -23,6 +23,10 @@ consentmanager:
       url: http://localhost:8000
 keyStore:
   filePath: "./src/test/resources/consent-manager-test-keystore.p12"
-  storeType: PKCS12
   password: password
-  alias: test-ks
+  signArtefactKeyPair:
+    storeType: PKCS12
+    alias: test-sign-artefact
+  pinVerificationKeyPair:
+    storeType: PKCS12
+    alias: test-pin-verification

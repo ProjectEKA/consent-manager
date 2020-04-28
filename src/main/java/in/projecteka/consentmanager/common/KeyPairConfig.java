@@ -38,11 +38,11 @@ public class KeyPairConfig {
     private String pinVerificationKeyPairAlias;
 
 
-    public KeyPair getSignArtefactKeyPair() {
+    public KeyPair createSignArtefactKeyPair() {
         return getKeyPairForAlias(signArtefactKeyPairAlias, signArtefactKeyPairType);
     }
 
-    public KeyPair getPinVerificationKeyPair() {
+    public KeyPair createPinVerificationKeyPair() {
         return getKeyPairForAlias(pinVerificationKeyPairAlias, pinVerificationKeyPairType);
     }
 

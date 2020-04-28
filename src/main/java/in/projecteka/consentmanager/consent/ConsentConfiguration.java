@@ -150,7 +150,7 @@ public class ConsentConfiguration {
     @SneakyThrows
     @Bean
     public KeyPair keyPair() {
-        return keyPairConfig.getSignArtefactKeyPair();
+        return keyPairConfig.createSignArtefactKeyPair();
     }
 
     @Bean

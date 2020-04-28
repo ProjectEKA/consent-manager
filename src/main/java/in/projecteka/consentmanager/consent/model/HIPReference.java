@@ -15,5 +15,4 @@ import java.io.Serializable;
 public class HIPReference implements Serializable {
     @NotEmpty(message = "HIP identifier is not specified.")
     private String id;
-    private String name;
 }

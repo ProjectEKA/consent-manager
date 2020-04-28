@@ -115,8 +115,7 @@ public class ConsentRequestUserJourneyTest {
             "    \"consents\": [\n" +
             "        {\n" +
             "            \"hip\": {\n" +
-            "                \"id\": \"10000005\",\n" +
-            "                \"name\": \"Max Health Care\"\n" +
+            "                \"id\": \"10000005\"\n" +
             "            },\n" +
             "            \"hiTypes\": [\n" +
             "                \"DiagnosticReport\", \"Observation\"\n" +
@@ -165,8 +164,7 @@ public class ConsentRequestUserJourneyTest {
             "            },\n" +
             "            \"hip\": null,\n" +
             "            \"hiu\": {\n" +
-            "                \"id\": \"10000005\",\n" +
-            "                \"name\": \"Max Health Care\"\n" +
+            "                \"id\": \"10000005\"\n" +
             "            },\n" +
             "            \"requester\": {\n" +
             "                \"name\": \"Dr. Lakshmi\",\n" +
@@ -219,12 +217,10 @@ public class ConsentRequestUserJourneyTest {
                 "      \"id\": \"batman@ncg\"\n" +
                 "    },\n" +
                 "    \"hip\": {\n" +
-                "      \"id\": \"TMH-ID\",\n" +
-                "      \"name\": \"TMH\"\n" +
+                "      \"id\": \"TMH-ID\"\n" +
                 "    },\n" +
                 "    \"hiu\": {\n" +
-                "      \"id\": \"MAX-ID\",\n" +
-                "      \"name\": \"MAX\"\n" +
+                "      \"id\": \"MAX-ID\"\n" +
                 "    },\n" +
                 "    \"requester\": {\n" +
                 "      \"name\": \"Dr Ramandeep\",\n" +
@@ -307,8 +303,7 @@ public class ConsentRequestUserJourneyTest {
                 "        \"links\": [\n" +
                 "            {\n" +
                 "                \"hip\": {\n" +
-                "                    \"id\": \"10000005\",\n" +
-                "                    \"name\": \"Max Health Care\"\n" +
+                "                    \"id\": \"10000005\"\n" +
                 "                },\n" +
                 "                \"referenceNumber\": \"ashokkumar@max\",\n" +
                 "                \"display\": \"Ashok Kumar\",\n" +
@@ -370,8 +365,7 @@ public class ConsentRequestUserJourneyTest {
                 "        \"links\": [\n" +
                 "            {\n" +
                 "                \"hip\": {\n" +
-                "                    \"id\": \"10000005\",\n" +
-                "                    \"name\": \"Max Health Care\"\n" +
+                "                    \"id\": \"10000005\"\n" +
                 "                },\n" +
                 "                \"referenceNumber\": \"ashokkumar@max\",\n" +
                 "                \"display\": \"Ashok Kumar\",\n" +

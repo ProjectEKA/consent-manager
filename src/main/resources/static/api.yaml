@@ -1550,10 +1550,6 @@ components:
           type: string
           xml:
             attribute: true
-        name:
-          type: string
-          xml:
-            attribute: true
       xml:
         name: OrganizationResponse
     Organization:
@@ -1782,7 +1778,6 @@ components:
       type: object
       required:
         - id
-        - name
       properties:
         id:
           type: string

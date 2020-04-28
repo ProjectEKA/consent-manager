@@ -16,6 +16,7 @@ import java.util.Optional;
 public class OtpServiceProperties {
     private final String url;
     private final List<String> identifiers;
+    private final int expiryInMinutes;
 
     public List<String> getIdentifiers() {
         return Optional.ofNullable(identifiers).orElse(new ArrayList<>());

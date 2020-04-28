@@ -114,6 +114,10 @@ public class ClientError extends Throwable {
         return internalServerError("Unknown error occurred");
     }
 
+    public static ClientError failedToGenerateOtp() {
+        return internalServerError("Failed to generate otp");
+    }
+
     public static ClientError failedToCreateTransactionPin() {
         return internalServerError("Failed to create transaction pin");
     }
@@ -126,6 +130,10 @@ public class ClientError extends Throwable {
         return internalServerError("Failed to fetch transaction pin");
     }
 
+    public static ClientError failedToUpdateUser() {
+        return internalServerError("Failed to update user");
+    }
+
     public static ClientError queueNotFound() {
         return new ClientError(INTERNAL_SERVER_ERROR,
                 new ErrorRepresentation(new Error(QUEUE_NOT_FOUND, "Queue not found")));
@@ -134,6 +142,10 @@ public class ClientError extends Throwable {
     public static ClientError invalidRequester() {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(INVALID_REQUESTER, "Not a valid Requester")));
+    }
+
+    public static ClientError invalidRequester(String errorMessage) {
+        return new ClientError(BAD_REQUEST, new ErrorRepresentation(new Error(INVALID_REQUESTER, errorMessage)));
     }
 
     public static ClientError invalidDateRange() {

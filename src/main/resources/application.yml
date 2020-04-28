@@ -56,7 +56,10 @@ spring:
 
 keyStore:
   filePath: "./src/main/resources/consent-manager-keystore.p12"
-  #For storeType valid values are PKCS12 or JKS
-  storeType: PKCS12
   password: ${KEYSTORE_PASSWORD}
-  alias: ${KEYSTORE_ALIAS}
+  signArtefactKeyPair:
+    storeType: PKCS12
+    alias: ${SIGN_ARTEFACT_KEYPAIR_ALIAS}
+  pinVerificationKeyPair:
+    storeType: PKCS12
+    alias: ${PIN_VERIFICATION_KEYPAIR_ALIAS}

@@ -8,11 +8,13 @@ import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.KeyPairConfig;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.user.TokenService;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import lombok.SneakyThrows;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -21,6 +23,7 @@ import org.springframework.amqp.core.Exchange;
 import org.springframework.amqp.core.ExchangeBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
@@ -34,8 +37,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.io.IOException;
 import java.net.URL;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.text.ParseException;
@@ -50,6 +51,14 @@ public class ConsentManagerConfiguration {
     public static final String DEAD_LETTER_QUEUE = "cm-dead-letter-queue";
     private static final String CM_DEAD_LETTER_EXCHANGE = "cm-dead-letter-exchange";
     private static final String CM_DEAD_LETTER_ROUTING_KEY = "cm-dead-letter";
+
+
+    private final KeyPairConfig keyPairConfig;
+
+    @Autowired
+    public ConsentManagerConfiguration(KeyPairConfig keyPairConfig) {
+        this.keyPairConfig = keyPairConfig;
+    }
 
     @Bean
     public CentralRegistry centralRegistry(ClientRegistryClient clientRegistryClient,
@@ -147,11 +156,10 @@ public class ConsentManagerConfiguration {
         return new TokenService(identityServiceProperties, identityServiceClient);
     }
 
+    @SneakyThrows
     @Bean("pinSigning")
-    public KeyPair keyPair() throws NoSuchAlgorithmException {
-        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
-        keyPairGen.initialize(2048);
-        return keyPairGen.genKeyPair();
+    public KeyPair keyPair() {
+        return keyPairConfig.getPinVerificationKeyPair();
     }
 
     @Bean("keySigningPublicKey")

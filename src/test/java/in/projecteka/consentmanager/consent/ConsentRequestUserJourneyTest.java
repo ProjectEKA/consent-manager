@@ -197,7 +197,7 @@ public class ConsentRequestUserJourneyTest {
         var authToken = string();
         when(centralRegistryTokenVerifier.verify(authToken))
                 .thenReturn(Mono.just(new Caller("MAX-ID", true)));
-        when(repository.insert(any(), any(), anyString())).thenReturn(Mono.empty());
+        when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
         when(repository.requestOf(anyString())).thenReturn(Mono.empty());
@@ -323,7 +323,7 @@ public class ConsentRequestUserJourneyTest {
                 "}";
         load(patientLinkServer, linkedPatientContextsJson);
 
-        when(repository.insert(any(), any(), anyString())).thenReturn(Mono.empty());
+        when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
@@ -348,7 +348,7 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldNotApproveConsentGrantForInvalidCareContext() throws JsonProcessingException {
         var token = string();
-        when(repository.insert(any(), any(), anyString())).thenReturn(Mono.empty());
+        when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.

@@ -103,7 +103,7 @@ class ConsentManagerTest {
 
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
-        when(repository.insert(any(), any(), eq(requestId))).thenReturn(Mono.empty());
+        when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
@@ -124,7 +124,7 @@ class ConsentManagerTest {
 
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
-        when(repository.insert(any(), any(), eq(requestId))).thenReturn(Mono.empty());
+        when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));

@@ -82,7 +82,7 @@ public class ConsentManager {
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
                 .flatMap(val -> validatePatient(requestedDetail.getPatient().getId())
                         .then(validateHIPAndHIU(requestedDetail))
-                        .then(saveRequest(requestedDetail, requestId, requestId))
+                        .then(saveRequest(requestedDetail, requestId))
                         .then(postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
                                 .detail(requestedDetail)
                                 .id(requestId)
@@ -110,8 +110,8 @@ public class ConsentManager {
         return Mono.zip(checkHIU, checkHIP, (validHIU, validHIP) -> validHIU && validHIP);
     }
 
-    private Mono<Void> saveRequest(RequestedDetail requestedDetail, String consentRequestId, String requestId) {
-        return consentRequestRepository.insert(requestedDetail, consentRequestId, requestId);
+    private Mono<Void> saveRequest(RequestedDetail requestedDetail, String requestId) {
+        return consentRequestRepository.insert(requestedDetail, requestId);
     }
 
     private Mono<Boolean> isValidHIU(RequestedDetail requestedDetail) {

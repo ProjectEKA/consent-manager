@@ -22,7 +22,7 @@ public class ConsentArtefactQueryGenerator {
             " (consent_request_id, consent_artefact_id, patient_id, consent_artefact, signature, status) VALUES" +
             " ($1, $2, $3, $4, $5, $6)";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
-            "date_modified=$2 WHERE consent_request_id=$3";
+            "date_modified=$2 WHERE request_id=$3";
 
     public Mono<QueryRepresentation> toQueries(String requestId,
                                                String patientId,

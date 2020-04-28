@@ -123,7 +123,7 @@ public class DiscoveryTest {
                 .verifiedIdentifiers(of(identifier))
                 .unverifiedIdentifiers(unverifiedIds)
                 .build();
-        var patientRequest = patientRequest().patient(patient).requestId(transactionId).build();
+        var patientRequest = patientRequest().patient(patient).requestId(requestId).build();
         var discoveryResponse = discoveryResponse()
                 .patient(patientResponse.getPatient())
                 .transactionId(transactionId)

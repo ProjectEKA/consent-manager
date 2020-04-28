@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
 import java.util.Date;
+import java.util.Objects;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -111,16 +112,18 @@ public class DataFlowRequester {
     }
 
     public Mono<Void> notifyHealthInfoStatus(String requesterId, HealthInfoNotificationRequest notificationRequest) {
-        return dataFlowRequestRepository.isRequestPresent(notificationRequest.getRequestId().toString())
-                .flatMap(requestExists -> (!requestExists)
-                        ? saveNotificationRequest(requesterId, notificationRequest)
-                        : Mono.error(ClientError.requestAlreadyExists()));
+        return Mono.just(notificationRequest.getRequestId().toString())
+                .filterWhen(this::validateRequest)
+                .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
+                .flatMap(val -> (!validateRequester(requesterId, notificationRequest))
+                        ? Mono.error(ClientError.invalidRequester())
+                        : dataFlowRequestRepository.saveNotificationRequest(notificationRequest));
     }
 
-    private Mono<Void> saveNotificationRequest(String requesterId, HealthInfoNotificationRequest notificationRequest) {
-        return (!validateRequester(requesterId, notificationRequest))
-            ? Mono.error(ClientError.invalidRequester())
-            : dataFlowRequestRepository.saveNotificationRequest(notificationRequest);
+    private Mono<Boolean> validateRequest(String requestId) {
+        return dataFlowRequestRepository.getIfPresent(requestId)
+                .map(Objects::isNull)
+                .switchIfEmpty(Mono.just(true));
     }
 
     private boolean validateRequester(String requesterId, HealthInfoNotificationRequest notificationRequest) {

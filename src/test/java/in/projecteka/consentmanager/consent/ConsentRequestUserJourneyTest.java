@@ -197,11 +197,12 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldAcceptConsentRequest() {
         var authToken = string();
-        when(centralRegistryTokenVerifier.verify(authToken)).thenReturn(Mono.just(new Caller("MAX-ID", true)));
+        when(centralRegistryTokenVerifier.verify(authToken))
+                .thenReturn(Mono.just(new Caller("MAX-ID", true)));
         when(repository.insert(any(), any(), anyString())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
-        when(repository.isRequestPresent(anyString())).thenReturn(Mono.just(false));
+        when(repository.requestOf(anyString())).thenReturn(Mono.empty());
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
         load(clientRegistryServer, "{}");
         load(clientRegistryServer, "{}");

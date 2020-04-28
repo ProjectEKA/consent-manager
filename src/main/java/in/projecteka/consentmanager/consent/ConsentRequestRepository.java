@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.common.DbOperation;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
@@ -33,8 +32,6 @@ public class ConsentRequestRepository {
             "date_modified=$2 WHERE consent_request_id=$3";
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent request";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
-    private static final String CHECK_REQUEST_ID_EXISTS = "SELECT exists(SELECT * FROM consent_request WHERE " +
-            "request_id=$1)";
     private final PgPool dbClient;
 
     static {
@@ -139,10 +136,6 @@ public class ConsentRequestRepository {
                             }
                             monoSink.success();
                         }));
-    }
-
-    public Mono<Boolean> isRequestPresent(String requestId) {
-        return DbOperation.getBooleanMono(requestId, dbClient, CHECK_REQUEST_ID_EXISTS);
     }
 
     private ConsentStatus getConsentStatus(String status) {

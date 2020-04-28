@@ -39,7 +39,6 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -108,7 +107,7 @@ class ConsentManagerTest {
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
-        when(repository.isRequestPresent(requestId)).thenReturn(Mono.just(false));
+        when(repository.requestOf(requestId)).thenReturn(Mono.empty());
 
         StepVerifier.create(consentManager.askForConsent(requestedDetail, requestId))
                 .expectNextMatches(Objects::nonNull)
@@ -129,7 +128,7 @@ class ConsentManagerTest {
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
-        when(repository.isRequestPresent(requestId)).thenReturn(Mono.just(false));
+        when(repository.requestOf(requestId)).thenReturn(Mono.just(consentRequestDetail().build()));
 
         StepVerifier.create(consentManager.askForConsent(requestedDetail, requestId))
                 .expectErrorMatches(e -> (e instanceof ClientError) &&

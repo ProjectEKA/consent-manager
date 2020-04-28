@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.common.DbOperation;
 import in.projecteka.consentmanager.user.model.TransactionPin;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
@@ -16,12 +15,16 @@ import java.util.Optional;
 public class TransactionPinRepository {
     private static final String INSERT_TRANSACTION_PIN = "INSERT INTO " +
             "transaction_pin (pin, patient_id) VALUES ($1, $2)";
-    private static final String SELECT_TRANSACTION_PIN = "SELECT pin, patient_id from " +
-            "transaction_pin WHERE patient_id=$1";
-    private static final String CHECK_REQUEST_ID_EXISTS = "SELECT exists(SELECT * FROM transaction_pin WHERE " +
-            "request_id=$1)";
+    private static final String SELECT_TRANSACTION_PIN_BY_PATIENT;
+    private static final String SELECT_TRANSACTION_PIN_BY_REQUEST;
     private static final String UPDATE_REQUEST_ID = "UPDATE transaction_pin SET request_id=$1 WHERE patient_id=$2";
     private final PgPool dbClient;
+
+    static {
+        String s = "SELECT pin, patient_id from transaction_pin WHERE ";
+        SELECT_TRANSACTION_PIN_BY_PATIENT = s + "patient_id=$1";
+        SELECT_TRANSACTION_PIN_BY_REQUEST = s + "request_id=$1";
+    }
 
     public Mono<Void> insert(TransactionPin transactionPin) {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_TRANSACTION_PIN)
@@ -35,8 +38,16 @@ public class TransactionPinRepository {
                         }));
     }
 
-    public Mono<Optional<TransactionPin>> getTransactionPinFor(String patientId) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_TRANSACTION_PIN)
+    public Mono<Optional<TransactionPin>> getTransactionPinByPatient(String patientId) {
+        return getTransactionPin(patientId, SELECT_TRANSACTION_PIN_BY_PATIENT);
+    }
+
+    public Mono<Optional<TransactionPin>> getTransactionPinByRequest(String patientId) {
+        return getTransactionPin(patientId, SELECT_TRANSACTION_PIN_BY_REQUEST);
+    }
+
+    private Mono<Optional<TransactionPin>> getTransactionPin(String patientId, String selectTransactionPinByRequest) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(selectTransactionPinByRequest)
                 .execute(Tuple.of(patientId),
                         handler -> {
                             if (handler.failed()) {
@@ -49,9 +60,6 @@ public class TransactionPinRepository {
                             }
                             monoSink.success(transactionPinFrom(transactionPinIterator.next()));
                         }));
-    }
-    public Mono<Boolean> isRequestPresent(String requestId) {
-        return DbOperation.getBooleanMono(requestId, dbClient, CHECK_REQUEST_ID_EXISTS);
     }
 
     private Optional<TransactionPin> transactionPinFrom(Row row) {

@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import static in.projecteka.consentmanager.clients.ClientError.transactionIdNotFound;
-import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.to;
 
@@ -38,8 +37,8 @@ public class LinkRepository {
     private static final String SELECT_TRANSACTION_ID_FROM_LINK_REFERENCE = "SELECT patient_link_reference ->> " +
             "'transactionId' as transactionId FROM link_reference WHERE patient_link_reference -> 'link' ->> " +
             "'referenceNumber' = $1";
-    private static final String CHECK_REQUEST_ID_EXISTS = "SELECT exists(SELECT * FROM link_reference WHERE " +
-            "request_id=$1)";
+    private static final String SELECT_LINK_REFRENCE = "SELECT patient_link_reference FROM link_reference WHERE " +
+            "request_id=$1";
     private final PgPool dbClient;
 
     public LinkRepository(PgPool dbClient) {
@@ -62,8 +61,8 @@ public class LinkRepository {
                                 }));
     }
 
-    public Mono<Boolean> isRequestPresent(String requestId) {
-        return DbOperation.getBooleanMono(requestId, dbClient, CHECK_REQUEST_ID_EXISTS);
+    public Mono<String> selectLinkReference(String requestId) {
+        return DbOperation.select(requestId, dbClient, SELECT_LINK_REFRENCE);
     }
 
     public Mono<String> getHIPIdFromDiscovery(String transactionId) {

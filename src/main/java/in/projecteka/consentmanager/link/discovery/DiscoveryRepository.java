@@ -10,8 +10,8 @@ public class DiscoveryRepository {
 
     private static final String INSERT_TO_DISCOVERY_REQUEST = "INSERT INTO discovery_request " +
             "(transaction_id, request_id, patient_id, hip_id) VALUES ($1, $2, $3, $4)";
-    private static final String CHECK_REQUEST_ID_EXISTS = "SELECT exists(SELECT * FROM discovery_request WHERE " +
-            "request_id=$1)";
+    private static final String SELECT_TRANSACTION_ID = "SELECT transaction_id FROM discovery_request WHERE " +
+            "request_id=$1";
     private final PgPool dbClient;
 
     public DiscoveryRepository(PgPool dbClient) {
@@ -31,7 +31,7 @@ public class DiscoveryRepository {
                                 }));
     }
 
-    public Mono<Boolean> isRequestPresent(String requestId) {
-        return DbOperation.getBooleanMono(requestId, dbClient, CHECK_REQUEST_ID_EXISTS);
+    public Mono<String> getIfPresent(String requestId) {
+        return DbOperation.select(requestId, dbClient, SELECT_TRANSACTION_ID);
     }
 }

@@ -134,7 +134,7 @@ public class DiscoveryTest {
         when(discoveryServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl)))
                 .thenReturn(Mono.just(patientResponse));
         when(discoveryRepository.insert(providerId, patientId, transactionId, requestId)).thenReturn(Mono.empty());
-        when(discoveryRepository.isRequestPresent(requestId)).thenReturn(Mono.just(false));
+        when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.empty());
 
         StepVerifier.create(
                 discovery.patientFor(patientId, unverifiedIdentifiers, providerId, transactionId, requestId)
@@ -167,7 +167,7 @@ public class DiscoveryTest {
 
         when(centralRegistry.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
         when(userServiceClient.userOf(eq(userName))).thenReturn(Mono.just(user));
-        when(discoveryRepository.isRequestPresent(requestId)).thenReturn(Mono.just(false));
+        when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.empty());
 
         StepVerifier.create(
                 discovery.patientFor(userName, Collections.emptyList(), providerId, transactionId, requestId)
@@ -193,7 +193,7 @@ public class DiscoveryTest {
                 discoveryRepository,
                 centralRegistry);
 
-        when(discoveryRepository.isRequestPresent(requestId)).thenReturn(Mono.just(true));
+        when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.just(transactionId));
 
         StepVerifier.create(
                 discovery.patientFor(userName, Collections.emptyList(), providerId, transactionId, requestId)

@@ -18,8 +18,8 @@ public class DataFlowRequestRepository {
             "hip_id FROM consent_artefact WHERE consent_artefact_id=$1";
     private static final String INSERT_TO_HEALTH_INFO_NOTIFICATION = "INSERT INTO health_info_notification " +
             "(transaction_id, notification_request, request_id) VALUES ($1, $2, $3)";
-    private static final String CHECK_REQUEST_ID_EXISTS = "SELECT exists(SELECT * FROM health_info_notification WHERE " +
-            "request_id=$1)";
+    private static final String SELECT_TRANSACTION_ID = "SELECT transaction_id FROM health_info_notification WHERE " +
+            "request_id=$1";
     private final PgPool dbClient;
 
     public DataFlowRequestRepository(PgPool pgPool) {
@@ -74,7 +74,7 @@ public class DataFlowRequestRepository {
                                 }));
     }
 
-    public Mono<Boolean> isRequestPresent(String requestId) {
-        return DbOperation.getBooleanMono(requestId, dbClient, CHECK_REQUEST_ID_EXISTS);
+    public Mono<String> getIfPresent(String requestId) {
+        return DbOperation.select(requestId, dbClient, SELECT_TRANSACTION_ID);
     }
 }

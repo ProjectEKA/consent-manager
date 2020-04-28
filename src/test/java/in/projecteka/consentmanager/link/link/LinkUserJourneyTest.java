@@ -58,6 +58,7 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static java.util.List.of;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -134,8 +135,8 @@ public class LinkUserJourneyTest {
                 .thenReturn(Mono.just(hipId));
         when(linkRepository.insertToLinkReference(linkReference, hipId, patientLinkReferenceRequest.getRequestId().toString()))
                 .thenReturn(Mono.create(MonoSink::success));
-        when(linkRepository.isRequestPresent(patientLinkReferenceRequest.getRequestId().toString()))
-                .thenReturn(Mono.just(false));
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId().toString()))
+                .thenReturn(Mono.empty());
 
 
         webTestClient
@@ -168,8 +169,8 @@ public class LinkUserJourneyTest {
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
-        when(linkRepository.isRequestPresent(patientLinkReferenceRequest.getRequestId().toString()))
-                .thenReturn(Mono.just(false));
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId().toString()))
+                .thenReturn(Mono.empty());
 
         webTestClient
                 .post()
@@ -305,8 +306,8 @@ public class LinkUserJourneyTest {
         var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
-        when(linkRepository.isRequestPresent(patientLinkReferenceRequest.getRequestId().toString()))
-                .thenReturn(Mono.just(true));
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId().toString()))
+                .thenReturn(Mono.just("some string"));
 
         webTestClient
                 .post()

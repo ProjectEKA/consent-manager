@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
@@ -46,19 +47,25 @@ public class Discovery {
                                               String providerId,
                                               String transactionId,
                                               String requestId) {
-        return discoveryRepository.isRequestPresent(requestId)
-                .flatMap(requestExists -> (!requestExists)
-                    ? userWith(userName)
-                            .zipWith(providerUrl(providerId))
-                            .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
-                            .flatMap(tuple -> patientIn(tuple.getT2(), tuple.getT1(), transactionId, unverifiedIdentifiers))
-                            .flatMap(patientResponse ->
-                                    insertDiscoveryRequest(patientResponse,
-                                            providerId,
-                                            userName,
-                                            transactionId,
-                                            requestId))
-                    : Mono.error(ClientError.requestAlreadyExists()));
+        return Mono.just(requestId)
+                .filterWhen(this::validateRequest)
+                .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
+                .flatMap(val -> userWith(userName)
+                        .zipWith(providerUrl(providerId))
+                        .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
+                        .flatMap(tuple -> patientIn(tuple.getT2(), tuple.getT1(), transactionId, unverifiedIdentifiers))
+                        .flatMap(patientResponse ->
+                                insertDiscoveryRequest(patientResponse,
+                                        providerId,
+                                        userName,
+                                        transactionId,
+                                        requestId)));
+    }
+
+    private Mono<Boolean> validateRequest(String requestId) {
+        return discoveryRepository.getIfPresent(requestId)
+                .map(Objects::isNull)
+                .switchIfEmpty(Mono.just(true));
     }
 
     private Mono<User> userWith(String patientId) {

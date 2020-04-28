@@ -77,18 +77,23 @@ public class ConsentManager {
     }
 
     public Mono<String> askForConsent(RequestedDetail requestedDetail, String requestId) {
-        final String consentRequestId = UUID.randomUUID().toString();
-        return consentRequestRepository.isRequestPresent(requestId)
-                .flatMap(requestExists -> (!requestExists)
-                        ? validatePatient(requestedDetail.getPatient().getId())
+        return  Mono.just(requestId)
+                .filterWhen(this::validateRequest)
+                .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
+                .flatMap(val -> validatePatient(requestedDetail.getPatient().getId())
                         .then(validateHIPAndHIU(requestedDetail))
-                        .then(saveRequest(requestedDetail, consentRequestId, requestId))
+                        .then(saveRequest(requestedDetail, requestId, requestId))
                         .then(postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
                                 .detail(requestedDetail)
-                                .id(consentRequestId)
+                                .id(requestId)
                                 .build()))
-                        .thenReturn(consentRequestId)
-                        : Mono.error(ClientError.requestAlreadyExists()));
+                        .thenReturn(requestId));
+    }
+
+    private Mono<Boolean> validateRequest(String requestId) {
+        return consentRequestRepository.requestOf(requestId)
+                .map(Objects::isNull)
+                .switchIfEmpty(Mono.just(true));
     }
 
     private Mono<Boolean> validatePatient(String patientId) {

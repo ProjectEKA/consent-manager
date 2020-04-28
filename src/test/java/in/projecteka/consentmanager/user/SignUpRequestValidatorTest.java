@@ -1,12 +1,17 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.NullableConverter;
+import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.SignUpIdentifier;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -218,7 +223,7 @@ class SignUpRequestValidatorTest {
         var signUpRequest = signUpRequest()
                 .password("aB1 #afasas")
                 .name("onlyAlphabets")
-                .yearOfBirth(LocalDate.now().getYear()-121)
+                .yearOfBirth(LocalDate.now().getYear() - 121)
                 .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -234,7 +239,7 @@ class SignUpRequestValidatorTest {
         var signUpRequest = signUpRequest()
                 .password("aB1 #afasas")
                 .name("onlyAlphabets")
-                .yearOfBirth(LocalDate.now().getYear()+1)
+                .yearOfBirth(LocalDate.now().getYear() + 1)
                 .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -257,5 +262,38 @@ class SignUpRequestValidatorTest {
         var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
 
         assertThat(requestValidation.isValid()).isTrue();
+    }
+
+    @Test
+    public void shouldReturnInvalidForMultipleABIds() {
+        SignUpIdentifier identifier1 = new SignUpIdentifier(IdentifierType.ABPMJAYID.name(), "ab1");
+        SignUpIdentifier identifier2 = new SignUpIdentifier(IdentifierType.ABPMJAYID.name(), "ab2");
+        List<SignUpIdentifier> multipleAbIds = Arrays.asList(identifier1, identifier2);
+        var validation = SignUpRequestValidator.validateUnVerifiedIdentifiers(multipleAbIds);
+        assertThat(validation.isValid()).isFalse();
+    }
+
+    @Test
+    public void shouldReturnInvalidForIncorrectABId() {
+        SignUpIdentifier identifier1 = new SignUpIdentifier(IdentifierType.ABPMJAYID.name(), "pabcd1234");
+        List<SignUpIdentifier> multipleAbIds = Collections.singletonList(identifier1);
+        var validation = SignUpRequestValidator.validateUnVerifiedIdentifiers(multipleAbIds);
+        assertThat(validation.isValid()).isFalse();
+    }
+
+    @Test
+    public void shouldReturnValidForCorrectABId() {
+        SignUpIdentifier identifier1 = new SignUpIdentifier(IdentifierType.ABPMJAYID.name(), "P1234ABCD");
+        List<SignUpIdentifier> multipleAbIds = Collections.singletonList(identifier1);
+        var validation = SignUpRequestValidator.validateUnVerifiedIdentifiers(multipleAbIds);
+        assertThat(validation.isValid()).isTrue();
+    }
+
+    @Test
+    public void shouldReturnInvalidForInvalidIdentifier() {
+        SignUpIdentifier identifier1 = new SignUpIdentifier("foobar", "P1234ABCD");
+        List<SignUpIdentifier> multipleAbIds = Collections.singletonList(identifier1);
+        var validation = SignUpRequestValidator.validateUnVerifiedIdentifiers(multipleAbIds);
+        assertThat(validation.isValid()).isFalse();
     }
 }

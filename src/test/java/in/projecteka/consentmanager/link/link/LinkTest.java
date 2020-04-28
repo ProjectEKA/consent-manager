@@ -31,7 +31,6 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.patientReprese
 import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.telecom;
-import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -218,7 +217,6 @@ class LinkTest {
         var patientRepresentation = patientRepresentation().build();
         var links = links()
                 .hip(Hip.builder()
-                        .name("")
                         .id(hipId)
                         .build())
                 .patientRepresentations(patientRepresentation)
@@ -231,13 +229,9 @@ class LinkTest {
                 .build();
         var provider =
                 provider().build();
-        var user = user()
-                .identifier(patientLinks.getId())
-                .build();
 
         var linksResponse = links()
                 .hip(Hip.builder()
-                        .name(provider.getName())
                         .id(hipId)
                         .build())
                 .patientRepresentations(patientRepresentation)

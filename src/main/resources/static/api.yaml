@@ -1557,10 +1557,6 @@ components:
           type: string
           xml:
             attribute: true
-        name:
-          type: string
-          xml:
-            attribute: true
       xml:
         name: OrganizationResponse
     Organization:
@@ -1792,7 +1788,6 @@ components:
       type: object
       required:
         - id
-        - name
       properties:
         id:
           type: string
@@ -1910,11 +1905,8 @@ components:
       type: object
       required:
         - id
-        - digitalSignature
       properties:
         id:
-          type: string
-        digitalSignature:
           type: string
     dateRange:
       type: object

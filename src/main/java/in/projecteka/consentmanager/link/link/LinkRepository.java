@@ -126,7 +126,7 @@ public class LinkRepository {
                                             .addAll(patientRepresentation.getCareContexts());
                                 } else {
                                     Links links = Links.builder()
-                                            .hip(Hip.builder().id(hipId).name("").build())
+                                            .hip(Hip.builder().id(hipId).build())
                                             .patientRepresentations(patientRepresentation)
                                             .build();
                                     hipIdToLinksMap.put(hipId, links);

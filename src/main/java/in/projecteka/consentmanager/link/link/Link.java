@@ -7,18 +7,12 @@ import in.projecteka.consentmanager.clients.model.Patient;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
-import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.link.link.model.Hip;
-import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
-import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import lombok.AllArgsConstructor;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.Objects;
 
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
@@ -121,31 +115,7 @@ public class Link {
     }
 
     public Mono<PatientLinksResponse> getLinkedCareContexts(String patientId) {
-        return linkRepository.getLinkedCareContextsForAllHip(patientId)
-                .flatMap(patientLinks -> getLinks(patientLinks.getLinks())
-                        .map(links -> PatientLinksResponse.builder()
-                                .patient(PatientLinks.builder()
-                                        .id(patientLinks.getId())
-                                        .links(links)
-                                        .build())
-                                .build()));
-    }
-
-    private Mono<List<Links>> getLinks(List<Links> patientLinks) {
-        return Flux.fromIterable(patientLinks).flatMap(this::getHIPDetails).collectList();
-    }
-
-    private Mono<Links> getHIPDetails(Links links) {
-        return getProviderName(links.getHip().getId())
-                .map(name -> Links.builder()
-                        .hip(Hip.builder().id(links.getHip().getId()).name(name).build())
-                        .patientRepresentations(links.getPatientRepresentations())
-                        .build());
-    }
-
-    private Mono<String> getProviderName(String providerId) {
-        return centralRegistry.providerWith(providerId)
-                .map(Provider::getName)
-                .switchIfEmpty(Mono.empty());
+        return linkRepository.getLinkedCareContextsForAllHip(patientId).map(patientLinks ->
+                PatientLinksResponse.builder().patient(patientLinks).build());
     }
 }

@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -83,13 +84,17 @@ public class SignUpRequestValidator {
             return Validation.invalid(error);
         }
 
-        for (Identifier validatedSignUpIdentifier : identifierValidated) {
-            if (!UniqueIdentifiers.contains(validatedSignUpIdentifier.getType())) {
+        List<IdentifierType> validatedIdentifierTypes = identifierValidated.stream()
+                .map(identifier -> identifier.getType())
+                .distinct()
+                .collect(Collectors.toList());
+        for (IdentifierType identifierType: validatedIdentifierTypes) {
+            if (!UniqueIdentifiers.contains(identifierType)) {
                 continue;
             }
-            if (!isUnique(identifierValidated, validatedSignUpIdentifier.getType())) {
+            if (!isUnique(identifierValidated, identifierType)) {
                 error = error.concat(
-                        format("Only one identifier type {%s} is allowed", validatedSignUpIdentifier.getType()));
+                        format("Only one identifier type {%s} is allowed", identifierType));
             }
         }
         if (!error.equals("")) {

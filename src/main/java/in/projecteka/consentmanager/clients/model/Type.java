@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.clients.model;
 
-import in.projecteka.consentmanager.link.discovery.model.Coding;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @Setter
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Type {
     private List<Coding> coding;
 }

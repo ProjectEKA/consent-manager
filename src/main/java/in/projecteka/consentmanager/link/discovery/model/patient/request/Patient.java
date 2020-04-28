@@ -1,18 +1,13 @@
 package in.projecteka.consentmanager.link.discovery.model.patient.request;
 
-
 import in.projecteka.consentmanager.clients.model.Gender;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Value;
 
 import java.util.List;
 
-@AllArgsConstructor
-@Value
 @Builder
-@Data
+@Value
 public class Patient {
     String id;
     String name;

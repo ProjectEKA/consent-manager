@@ -5,17 +5,17 @@ import in.projecteka.consentmanager.dataflow.model.DateRange;
 import in.projecteka.consentmanager.dataflow.model.KeyMaterial;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
-@Data
-@NoArgsConstructor
+@Getter
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode
 public class DataFlowRequest {
-    private String transactionId;
-    private Consent consent;
-    private DateRange dateRange;
-    private String dataPushUrl;
-    private KeyMaterial keyMaterial;
+    private final String transactionId;
+    private final Consent consent;
+    private final DateRange dateRange;
+    private final String dataPushUrl;
+    private final KeyMaterial keyMaterial;
 }

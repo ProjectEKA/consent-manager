@@ -3,17 +3,16 @@ package in.projecteka.consentmanager.clients.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @AllArgsConstructor
-@Getter
+@Builder
+@Data
 @NoArgsConstructor
 @Setter
-@Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Telecom {
-    private String use;
-    private String value;
+public class Coding {
+    private String code;
 }

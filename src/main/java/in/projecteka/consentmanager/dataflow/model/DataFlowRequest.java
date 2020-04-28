@@ -2,20 +2,14 @@ package in.projecteka.consentmanager.dataflow.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-@Data
-@NoArgsConstructor
+@Getter
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class DataFlowRequest {
-    private Consent consent;
-    private DateRange dateRange;
-    private String dataPushUrl;
-    private KeyMaterial keyMaterial;
-
-    public void setArtefactSignature(String signature) {
-        consent.setDigitalSignature(signature);
-    }
+    private final Consent consent;
+    private final DateRange dateRange;
+    private final String dataPushUrl;
+    private final KeyMaterial keyMaterial;
 }

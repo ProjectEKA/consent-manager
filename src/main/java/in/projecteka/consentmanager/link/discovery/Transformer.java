@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.link.discovery;
 
 import in.projecteka.consentmanager.clients.model.Address;
+import in.projecteka.consentmanager.clients.model.Coding;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Telecom;
-import in.projecteka.consentmanager.link.discovery.model.Coding;
 
 public class Transformer {
 
@@ -46,7 +46,7 @@ public class Transformer {
     private static String typeFrom(Provider provider) {
         return provider.getTypes().stream()
                 .findFirst()
-                .map(type -> type.getCoding().stream().findFirst().orElse(new Coding()).getCode())
+                .map(type -> type.getCoding().stream().findFirst().orElse(new Coding("")).getCode())
                 .orElse("");
     }
 }

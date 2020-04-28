@@ -10,7 +10,7 @@ import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.OtpVerification;
-import in.projecteka.consentmanager.user.model.SignUpRequest;
+import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.User;
@@ -71,18 +71,18 @@ public class UserService {
                 .then(signupService.generateToken(otpVerification.getSessionId()));
     }
 
-    public Mono<Session> create(SignUpRequest signUpRequest, String sessionId) {
-        UserCredential credential = new UserCredential(signUpRequest.getPassword());
+    public Mono<Session> create(CoreSignUpRequest coreSignUpRequest, String sessionId) {
+        UserCredential credential = new UserCredential(coreSignUpRequest.getPassword());
         KeycloakUser keycloakUser = new KeycloakUser(
-                signUpRequest.getName(),
-                signUpRequest.getUsername(),
+                coreSignUpRequest.getName(),
+                coreSignUpRequest.getUsername(),
                 Collections.singletonList(credential),
                 Boolean.TRUE.toString());
 
         return signupService.getMobileNumber(sessionId)
                 .switchIfEmpty(Mono.error(new InvalidRequestException("mobile number not verified")))
-                .flatMap(mobileNumber -> userExistsWith(signUpRequest.getUsername())
-                        .switchIfEmpty(Mono.defer(() -> createUserWith(mobileNumber, signUpRequest, keycloakUser)))
+                .flatMap(mobileNumber -> userExistsWith(coreSignUpRequest.getUsername())
+                        .switchIfEmpty(Mono.defer(() -> createUserWith(mobileNumber, coreSignUpRequest, keycloakUser)))
                         .cast(Session.class));
     }
 
@@ -95,8 +95,8 @@ public class UserService {
     }
 
 
-    private Mono<Session> createUserWith(String mobileNumber, SignUpRequest signUpRequest, KeycloakUser keycloakUser) {
-        User user = User.from(signUpRequest, mobileNumber);
+    private Mono<Session> createUserWith(String mobileNumber, CoreSignUpRequest coreSignUpRequest, KeycloakUser keycloakUser) {
+        User user = User.from(coreSignUpRequest, mobileNumber);
         return userRepository.save(user)
                 .then(tokenService.tokenForAdmin()
                         .flatMap(accessToken -> identityServiceClient.createUser(accessToken, keycloakUser))
@@ -105,7 +105,7 @@ public class UserService {
                     logger.error(error.getMessage(), error);
                     return userRepository.delete(user.getIdentifier()).then();
                 })
-                .then(tokenService.tokenForUser(signUpRequest.getUsername(), signUpRequest.getPassword()));
+                .then(tokenService.tokenForUser(coreSignUpRequest.getUsername(), coreSignUpRequest.getPassword()));
     }
 
     private boolean validateOtpVerification(OtpVerification otpVerification) {

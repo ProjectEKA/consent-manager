@@ -1,24 +1,19 @@
 package in.projecteka.consentmanager;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.ConstructorBinding;
 
-@Configuration
-@ConfigurationProperties(prefix = "consentmanager.db")
+@ConstructorBinding
+@ConfigurationProperties("consentmanager.db")
 @Getter
-@Setter
-@NoArgsConstructor(access = AccessLevel.PACKAGE)
 @AllArgsConstructor
 public class DbOptions {
-    private String host;
-    private int port;
-    private String schema;
-    private String user;
-    private String password;
-    private int poolSize;
+    private final String host;
+    private final int port;
+    private final String schema;
+    private final String user;
+    private final String password;
+    private final int poolSize;
 }

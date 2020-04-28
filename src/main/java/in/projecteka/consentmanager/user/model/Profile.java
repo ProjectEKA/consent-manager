@@ -1,17 +1,19 @@
 package in.projecteka.consentmanager.user.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 
 import java.util.List;
 
-@Data
+@AllArgsConstructor
+@Getter
 @Builder
 public class Profile {
-    private String id;
-    private String name;
-    private Gender gender;
-    private boolean hasTransactionPin;
-    private List<Identifier> verifiedIdentifiers;
-    private List<Identifier> unverifiedIdentifiers;
+    private final String id;
+    private final String name;
+    private final Gender gender;
+    private final boolean hasTransactionPin;
+    private final List<Identifier> verifiedIdentifiers;
+    private final List<Identifier> unverifiedIdentifiers;
 }

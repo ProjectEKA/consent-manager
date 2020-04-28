@@ -24,14 +24,12 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 public class DataRequestNotifierTest {
     @Captor
     private ArgumentCaptor<ClientRequest> captor;
-    private DataRequestNotifier dataRequestNotifier;
     @Mock
     private ExchangeFunction exchangeFunction;
 
     @BeforeEach
     public void init() {
         MockitoAnnotations.initMocks(this);
-
     }
 
     @Test
@@ -42,7 +40,7 @@ public class DataRequestNotifierTest {
                 .build()));
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         DataFlowRequest dataFlowRequest = dataFlowRequestBuilder().build();
-        dataRequestNotifier = new DataRequestNotifier(webClientBuilder, () -> Mono.just(token));
+        DataRequestNotifier dataRequestNotifier = new DataRequestNotifier(webClientBuilder, () -> Mono.just(token));
 
         StepVerifier.create(dataRequestNotifier.notifyHip(dataFlowRequest, "http://hip-url/"))
                 .verifyComplete();

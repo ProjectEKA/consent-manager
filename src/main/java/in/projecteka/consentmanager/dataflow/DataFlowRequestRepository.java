@@ -75,6 +75,6 @@ public class DataFlowRequestRepository {
     }
 
     public Mono<String> getIfPresent(String requestId) {
-        return DbOperation.select(requestId, dbClient, SELECT_TRANSACTION_ID);
+        return DbOperation.select(requestId, dbClient, SELECT_TRANSACTION_ID, row -> row.getString(0));
     }
 }

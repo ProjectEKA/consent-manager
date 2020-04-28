@@ -1,9 +1,9 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.common.DbOperation;
-import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
+import in.projecteka.consentmanager.common.DbOperation;
+import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
@@ -62,7 +62,7 @@ public class LinkRepository {
     }
 
     public Mono<String> selectLinkReference(String requestId) {
-        return DbOperation.select(requestId, dbClient, SELECT_LINK_REFRENCE);
+        return DbOperation.select(requestId, dbClient, SELECT_LINK_REFRENCE, row -> row.getString(0));
     }
 
     public Mono<String> getHIPIdFromDiscovery(String transactionId) {

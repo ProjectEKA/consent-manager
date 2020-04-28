@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +19,12 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
+import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
-import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static java.time.LocalDate.now;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
@@ -66,7 +69,7 @@ public class PatientControllerTest {
 
     @Test
     public void createUser() {
-        var signUpRequest = signUpRequest()
+        var signUpRequest = coreSignUpRequest()
                 .username("username@ncg")
                 .name("RandomName")
                 .password("@2Abaafasfas")
@@ -76,7 +79,7 @@ public class PatientControllerTest {
         var sessionId = string();
         var session = session().build();
         when(signupService.sessionFrom(token)).thenReturn(sessionId);
-        when(userService.create(signUpRequest, sessionId)).thenReturn(Mono.just(session));
+        when(userService.create(any(CoreSignUpRequest.class), eq(sessionId))).thenReturn(Mono.just(session));
         when(userService.getUserIdSuffix()).thenReturn("@ncg");
         when(signupService.validateToken(token)).thenReturn(Mono.just(true));
         when(signupService.removeOf(sessionId)).thenReturn(Mono.empty());
@@ -91,7 +94,7 @@ public class PatientControllerTest {
 
     @Test
     public void returnBadRequestForUserCreation() {
-        var signUpRequest = signUpRequest()
+        var signUpRequest = coreSignUpRequest()
                 .name("RandomName")
                 .yearOfBirth(now().plusDays(1).getYear())
                 .build();

@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.user.model;
 
-public enum  IdentifierType {
+public enum IdentifierType {
     MOBILE {
         @Override
         public boolean isValid(String value) {
-            return false;
+            return true;
         }
     },
     ABPMJAYID {

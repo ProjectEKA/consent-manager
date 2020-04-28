@@ -1,7 +1,9 @@
 package in.projecteka.consentmanager.user;
 
 import com.google.common.base.Strings;
+import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
 import in.projecteka.consentmanager.user.model.Gender;
+import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
 import in.projecteka.consentmanager.user.model.SignUpIdentifier;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
@@ -20,22 +22,23 @@ import org.passay.RuleResultDetail;
 import org.passay.SequenceData;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static java.lang.String.format;
 
 public class SignUpRequestValidator {
 
     private SignUpRequestValidator() {
-
     }
 
     private static final LocalDate TODAY = LocalDate.now();
     private static final String VALID_NAME_CHARS = "[a-zA-Z ]";
+    private static final List<IdentifierType> UniqueIdentifiers = List.of(IdentifierType.ABPMJAYID);
 
-    public static Validation<Seq<String>, SignUpRequest> validate(SignUpRequest signUpRequest, String userIdSuffix) {
+    public static Validation<Seq<String>, CoreSignUpRequest> validate(SignUpRequest signUpRequest,
+                                                                      String userIdSuffix) {
         return Validation.combine(
                 validateName(signUpRequest.getName()),
                 validate(signUpRequest.getGender()),
@@ -43,51 +46,63 @@ public class SignUpRequestValidator {
                 validatePassword(signUpRequest.getPassword()),
                 validateYearOfBirth(signUpRequest.getYearOfBirth()),
                 validateUnVerifiedIdentifiers(signUpRequest.getUnverifiedIdentifiers()))
-                .ap((firstName, gender, username, password, dateOfBirth, unverifiedIdentifiers) -> SignUpRequest.builder()
-                        .name(firstName)
-                        .gender(gender)
-                        .username(username)
-                        .password(password)
-                        .yearOfBirth(dateOfBirth)
-                        .unverifiedIdentifiers(unverifiedIdentifiers)
-                        .build());
+                .ap((firstName, gender, username, password, dateOfBirth, unverifiedIdentifiers) ->
+                        CoreSignUpRequest.builder()
+                                .name(firstName)
+                                .gender(gender)
+                                .username(username)
+                                .password(password)
+                                .yearOfBirth(dateOfBirth)
+                                .unverifiedIdentifiers(unverifiedIdentifiers)
+                                .build());
     }
 
-    protected static Validation<String,List<SignUpIdentifier>> validateUnVerifiedIdentifiers(List<SignUpIdentifier> unverifiedIdentifiers) {
-        if (unverifiedIdentifiers==null || unverifiedIdentifiers.isEmpty()) {
-            return Validation.valid(unverifiedIdentifiers);
+    protected static Validation<String, List<Identifier>> validateUnVerifiedIdentifiers(
+            List<SignUpIdentifier> unverifiedIdentifiers) {
+        if (unverifiedIdentifiers == null || unverifiedIdentifiers.isEmpty()) {
+            return Validation.valid(new ArrayList<>());
         }
 
-        if (isInValidIdentifier(unverifiedIdentifiers)) {
-            return Validation.invalid("Invalid identifier");
+        var identifierValidated = new ArrayList<Identifier>();
+        String error = "";
+        for (var identifier : unverifiedIdentifiers) {
+            try {
+                IdentifierType identifierType = IdentifierType.valueOf(identifier.getType());
+                if (identifierType.isValid(identifier.getValue())) {
+                    identifierValidated.add(new Identifier(identifierType, identifier.getValue()));
+                } else {
+                    error = error.concat(format("{%s} is invalid value for type %s ",
+                            identifier.getValue(),
+                            identifierType));
+                }
+            } catch (IllegalArgumentException | NullPointerException ex) {
+                error = error.concat(format("Invalid identifier type {%s} ", identifier.getType()));
+            }
+        }
+        if (!error.equals("")) {
+            return Validation.invalid(error);
         }
 
-        boolean uniqueOrNonExistent = isUniqueOrNonExistent(unverifiedIdentifiers, IdentifierType.ABPMJAYID);
-        if (!uniqueOrNonExistent) {
-            return Validation.invalid("More than one AB-PMJAYID are not supported");
+        for (Identifier validatedSignUpIdentifier : identifierValidated) {
+            if (!UniqueIdentifiers.contains(validatedSignUpIdentifier.getType())) {
+                continue;
+            }
+            if (!isUnique(identifierValidated, validatedSignUpIdentifier.getType())) {
+                error = error.concat(
+                        format("Only one identifier type {%s} is allowed", validatedSignUpIdentifier.getType()));
+            }
         }
-        Optional<Boolean> optionalValidAbId = unverifiedIdentifiers.stream()
-                .filter(identifier -> identifier.getType().equals(IdentifierType.ABPMJAYID.name()))
-                .map(abIdentifier -> IdentifierType.ABPMJAYID.isValid(abIdentifier.getValue()))
-                .findFirst();
-
-        if (optionalValidAbId.isPresent() && (! optionalValidAbId.get())) {
-            return Validation.invalid("Invalid AB-PMJAYID");
+        if (!error.equals("")) {
+            return Validation.invalid(error);
         }
-
-        return Validation.valid(unverifiedIdentifiers);
+        return Validation.valid(identifierValidated);
     }
 
-    private static boolean isInValidIdentifier(List<SignUpIdentifier> unverifiedIdentifiers) {
-        return unverifiedIdentifiers.stream()
-                .anyMatch(signUpIdentifier -> Arrays.stream(IdentifierType.values())
-                        .noneMatch(identifierType -> identifierType.name().equals(signUpIdentifier.getType())));
-    }
-
-    private static boolean isUniqueOrNonExistent(List<SignUpIdentifier> unverifiedIdentifiers, IdentifierType identifierType) {
+    private static boolean isUnique(List<Identifier> unverifiedIdentifiers,
+                                    IdentifierType identifierType) {
         return unverifiedIdentifiers.stream().
-                filter(identifier -> identifier.getType().equals(identifierType.name()))
-                .count() <= 1;
+                filter(identifier -> identifier.getType().equals(identifierType))
+                .count() == 1;
     }
 
     private static Validation<String, Gender> validate(Gender gender) {
@@ -142,8 +157,8 @@ public class SignUpRequestValidator {
 
     private static Validation<String, Integer> validateYearOfBirth(Integer year) {
         return year == null || ((year <= (TODAY.getYear())) && (year >= TODAY.getYear() - 120))
-                ? Validation.valid(year)
-                : Validation.invalid("Year of birth can't be in future or older than 120 years");
+               ? Validation.valid(year)
+               : Validation.invalid("Year of birth can't be in future or older than 120 years");
     }
 
     private static Validation<String, String> validatePassword(String password) {
@@ -182,3 +197,4 @@ public class SignUpRequestValidator {
         return Validation.invalid(error);
     }
 }
+

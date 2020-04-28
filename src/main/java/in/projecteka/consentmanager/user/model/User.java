@@ -16,12 +16,12 @@ public class User {
     private final String phone;
     private final JsonArray unverifiedIdentifiers;
 
-    public static User from(SignUpRequest request, String mobileNumber) {
+    public static User from(CoreSignUpRequest request, String mobileNumber) {
         return new User(request.getUsername().toLowerCase(),
                 request.getName(),
                 request.getGender(),
                 request.getYearOfBirth(),
                 mobileNumber,
-                request.getUnverifiedIdentifiers()!=null ? new JsonArray(request.getUnverifiedIdentifiers()) : null);
+                request.getUnverifiedIdentifiers() != null ? new JsonArray(request.getUnverifiedIdentifiers()) : null);
     }
 }

@@ -2,12 +2,12 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
@@ -34,8 +34,8 @@ import reactor.test.StepVerifier;
 import java.time.LocalDate;
 import java.util.Collections;
 
+import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
-import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
@@ -160,7 +160,7 @@ class UserServiceTest {
 
     @Test
     public void shouldCreateUser() {
-        var signUpRequest = signUpRequest().yearOfBirth(LocalDate.now().getYear()).build();
+        var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.now().getYear()).build();
         var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();
@@ -178,7 +178,7 @@ class UserServiceTest {
 
     @Test
     public void shouldReturnUserAlreadyExistsError() {
-        var signUpRequest = signUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
+        var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
         var sessionId = string();
         var user = user().identifier(signUpRequest.getUsername()).build();
         when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(string()));
@@ -194,7 +194,7 @@ class UserServiceTest {
 
     @Test
     public void shouldCreateUserWhenYOBIsNull() {
-        var signUpRequest = signUpRequest().name("apoorva g a").yearOfBirth(null).build();
+        var signUpRequest = coreSignUpRequest().name("apoorva g a").yearOfBirth(null).build();
         var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();
@@ -212,7 +212,7 @@ class UserServiceTest {
 
     @Test
     public void shouldNotCreateUserWhenIDPClientFails() {
-        var signUpRequest = signUpRequest()
+        var signUpRequest = coreSignUpRequest()
                 .yearOfBirth(LocalDate.MIN.getYear())
                 .build();
         var mobileNumber = string();
@@ -237,7 +237,7 @@ class UserServiceTest {
 
     @Test
     void shouldNotCreateUserWhenPersistingToDbFails() {
-        var signUpRequest = signUpRequest()
+        var signUpRequest = coreSignUpRequest()
                 .yearOfBirth(LocalDate.MIN.getYear())
                 .build();
         var mobileNumber = string();

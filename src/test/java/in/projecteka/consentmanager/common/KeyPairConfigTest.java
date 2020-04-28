@@ -24,7 +24,7 @@ class KeyPairConfigTest {
 
     @MockBean(name = "identityServiceJWKSet")
     private JWKSet identityServiceJWKSet;
-    
+
     @Test
     void shouldCreateSignArtefactKeyPair() {
         KeyPair signArtefactKeyPair = keyPairConfig.createSignArtefactKeyPair();
@@ -40,11 +40,4 @@ class KeyPairConfigTest {
         assertThat(pinVerificationKeyPair.getPublic()).isNotNull();
         assertThat(pinVerificationKeyPair.getPrivate()).isNotNull();
     }
-
-//    @Test
-//    void shouldThrowKeyStoreExceptionIfCertificateIsNull() throws KeyStoreException {
-//        when(KeyStore.getInstance("PKCS12")).thenReturn(keyStore);
-//        when(keyStore.getCertificate("test-sign-artefact")).thenReturn(null);
-//        assertThrows(KeyStoreException.class, () -> keyPairConfig.createSignArtefactKeyPair());
-//    }
 }

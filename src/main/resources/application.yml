@@ -59,7 +59,7 @@ keyStore:
   password: ${KEYSTORE_PASSWORD}
   signArtefactKeyPair:
     storeType: PKCS12
-    alias: ${SIGN_ARTEFACT_KEYPAIR_ALIAS}
+    alias: cm-sign-artefact
   pinVerificationKeyPair:
     storeType: PKCS12
-    alias: ${PIN_VERIFICATION_KEYPAIR_ALIAS}
+    alias: cm-pin-verification

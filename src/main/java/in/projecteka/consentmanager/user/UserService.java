@@ -9,13 +9,7 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
-import in.projecteka.consentmanager.user.model.OtpVerification;
-import in.projecteka.consentmanager.user.model.SignUpRequest;
-import in.projecteka.consentmanager.user.model.SignUpSession;
-import in.projecteka.consentmanager.user.model.Token;
-import in.projecteka.consentmanager.user.model.User;
-import in.projecteka.consentmanager.user.model.UserCredential;
-import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.consentmanager.user.model.*;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +32,7 @@ public class UserService {
     private final IdentityServiceClient identityServiceClient;
     private final TokenService tokenService;
     private final UserServiceProperties userServiceProperties;
+    private final RegistrationRequestService registrationRequestService;
 
     public Mono<User> userWith(String userName) {
         return userRepository.userWith(userName.toLowerCase()).switchIfEmpty(Mono.error(userNotFound()));
@@ -55,11 +50,13 @@ public class UserService {
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
-        return otpServiceClient
-                .send(otpRequest)
-                .then(signupService.cacheAndSendSession(
-                        otpRequest.getSessionId(),
-                        otpRequest.getCommunication().getValue()));
+        Mono<Void> registrationRequestMono = registrationRequestService.createRegistrationRequestFor(userSignupEnquiry.getIdentifier());
+
+        return registrationRequestMono
+                .then(otpServiceClient.send(otpRequest)
+                        .then(signupService.cacheAndSendSession(
+                                otpRequest.getSessionId(),
+                                otpRequest.getCommunication().getValue())));
     }
 
     public Mono<Token> permitOtp(OtpVerification otpVerification) {

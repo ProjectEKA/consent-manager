@@ -29,6 +29,9 @@ class UserConfigurationTest {
     private TokenService tokenService;
 
     @Mock
+    private RegistrationRequestService registrationRequestService;
+
+    @Mock
     private UserServiceProperties properties;
 
     private final UserConfiguration userConfiguration = new UserConfiguration();
@@ -42,7 +45,8 @@ class UserConfigurationTest {
                 signupService,
                 identityServiceClient,
                 tokenService,
-                properties))
+                properties,
+                registrationRequestService))
                 .isInstanceOf(UserService.class);
     }
 }

@@ -34,14 +34,16 @@ public class UserConfiguration {
                                    SignUpService signupService,
                                    IdentityServiceClient identityServiceClient,
                                    TokenService tokenService,
-                                   UserServiceProperties userServiceProperties) {
+                                   UserServiceProperties userServiceProperties ,
+                                   RegistrationRequestService registrationRequestService) {
         return new UserService(userRepository,
                 otpServiceProperties,
                 otpServiceClient,
                 signupService,
                 identityServiceClient,
                 tokenService,
-                userServiceProperties);
+                userServiceProperties,
+                registrationRequestService);
     }
 
     @Bean

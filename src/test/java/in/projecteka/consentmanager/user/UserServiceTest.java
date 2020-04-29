@@ -64,6 +64,9 @@ class UserServiceTest {
     private SignUpService signupService;
 
     @Mock
+    private RegistrationRequestService registrationRequestService;
+
+    @Mock
     private IdentityServiceClient identityServiceClient;
 
     @Mock
@@ -94,7 +97,8 @@ class UserServiceTest {
                 signupService,
                 identityServiceClient,
                 tokenService,
-                properties);
+                properties,
+                registrationRequestService);
     }
 
     @Test
@@ -105,6 +109,7 @@ class UserServiceTest {
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
         when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq("+91-9788888")))
                 .thenReturn(Mono.just(signUpSession));
+        when(registrationRequestService.createRegistrationRequestFor(userSignUpEnquiry.getIdentifier())).thenReturn(Mono.empty());
 
         Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
 

@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.common;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import org.springframework.http.HttpStatus;
 
@@ -16,6 +17,11 @@ public class DbOperationError extends Throwable {
     private final String errorMessage = "Failed to persist in database";
 
     public DbOperationError() {
+        this.httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        this.error = new ErrorRepresentation(new Error(DB_OPERATION_FAILED, errorMessage));
+    }
+
+    public DbOperationError(String errorMessage) {
         this.httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         this.error = new ErrorRepresentation(new Error(DB_OPERATION_FAILED, errorMessage));
     }

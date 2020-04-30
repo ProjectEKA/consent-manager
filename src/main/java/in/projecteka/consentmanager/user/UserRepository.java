@@ -4,16 +4,21 @@ import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.User;
 import io.vertx.pgclient.PgPool;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @AllArgsConstructor
 public class UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
-
+    private static final List<String> ids = null;
     private static final String INSERT_PATIENT = "Insert into patient(id, " +
             "name, gender, year_of_birth, phone_number)" +
             " values($1, $2, $3, $4, $5);";
@@ -22,6 +27,8 @@ public class UserRepository {
             "from patient where id = $1";
 
     private final static String DELETE_PATIENT = "DELETE FROM patient WHERE id=$1";
+
+    private final static String GET_ALL_PATIENT_IDS = "select id FROM patient";
 
     private final PgPool dbClient;
 
@@ -34,7 +41,8 @@ public class UserRepository {
                                 monoSink.error(new DbOperationError());
                                 return;
                             }
-                            var patientIterator = handler.result().iterator();
+                            RowSet<Row> result = handler.result();
+                            var patientIterator = result.iterator();
                             if (!patientIterator.hasNext()) {
                                 monoSink.success();
                                 return;
@@ -47,6 +55,22 @@ public class UserRepository {
                                     .gender(Gender.valueOf(patientRow.getString("gender")))
                                     .phone(patientRow.getString("phone_number"))
                                     .build());
+                        }));
+    }
+
+    public Mono<List<String>> getGetAllPatientIds() {
+        return Mono.create(monoSink -> dbClient.preparedQuery(GET_ALL_PATIENT_IDS)
+                .execute(handler -> {
+                            if (handler.failed()) {
+                                monoSink.error(new RuntimeException(""));
+                                return;
+                            }
+                            List<String> requestList = new ArrayList<>();
+                            RowSet<Row> results = handler.result();
+                            for (Row result : results) {
+                                requestList.add(result.getString("id"));
+                            }
+                            monoSink.success(requestList);
                         }));
     }
 

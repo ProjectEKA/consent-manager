@@ -3,6 +3,9 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
+import in.projecteka.consentmanager.user.model.OtpPermitRequest;
+import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
+import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +22,16 @@ public class SessionController {
     @PostMapping("/sessions")
     public Mono<Session> forNew(@RequestBody SessionRequest sessionRequest) {
         return sessionService.forNew(sessionRequest);
+    }
+
+    @PostMapping("/otpsession/verify")
+    public Mono<OtpVerificationResponse> verify(@RequestBody OtpVerificationRequest otpVerificationRequest) {
+        return null;
+    }
+
+    @PostMapping("/otpsession/permit")
+    public Mono<Session> permit(@RequestBody OtpPermitRequest otpPermitRequest) {
+        return null;
     }
 
     @PostMapping("/logout")

@@ -50,9 +50,8 @@ public class UserService {
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
-        Mono<Void> registrationRequestMono = registrationRequestService.createRegistrationRequestFor(userSignupEnquiry.getIdentifier());
-
-        return registrationRequestMono
+        return registrationRequestService
+                .validateOTPRequest(userSignupEnquiry.getIdentifier())
                 .then(otpServiceClient.send(otpRequest)
                         .then(signupService.cacheAndSendSession(
                                 otpRequest.getSessionId(),

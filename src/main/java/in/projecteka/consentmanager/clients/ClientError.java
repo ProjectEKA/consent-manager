@@ -6,35 +6,9 @@ import lombok.Getter;
 import lombok.ToString;
 import org.springframework.http.HttpStatus;
 
-import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_EXPIRED;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_FORBIDDEN;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_NOT_FOUND;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_NOT_GRANTED;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_NOT_FOUND;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_RANGE;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TOKEN;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TRANSACTION_PIN;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.NETWORK_SERVICE_ERROR;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_EXPIRED;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_INVALID;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.PROVIDER_NOT_FOUND;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.QUEUE_NOT_FOUND;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_ID_NOT_FOUND;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_PIN_IS_ALREADY_CREATED;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.UNABLE_TO_CONNECT_TO_PROVIDER;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.UNKNOWN_ERROR_OCCURRED;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.USERNAME_OR_PASSWORD_INCORRECT;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_EXISTS;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.*;
 import static java.lang.String.format;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.CONFLICT;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+import static org.springframework.http.HttpStatus.*;
 
 @Getter
 @ToString
@@ -72,6 +46,11 @@ public class ClientError extends Throwable {
     public static ClientError otpExpired() {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(OTP_EXPIRED, "OTP Expired, please try again")));
+    }
+
+    public static ClientError otpRequestLimitExceeded() {
+        return new ClientError(TOO_MANY_REQUESTS,
+                new ErrorRepresentation(new Error(OTP_REQUEST_LIMIT_EXCEEDED, "OTP request limit exceeded")));
     }
 
     public static ClientError networkServiceCallFailed() {

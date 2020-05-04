@@ -85,7 +85,7 @@ public class ConsentManager {
                         .then(saveRequest(requestedDetail, requestId))
                         .then(postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
                                 .detail(requestedDetail)
-                                .id(requestId.toString())
+                                .id(requestId)
                                 .build()))
                         .thenReturn(requestId.toString()));
     }

@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import javax.validation.Valid;
+
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -53,11 +55,10 @@ public class PatientsController {
     }
 
     @PostMapping("/verify-pin")
-    public Mono<Token> validatePin(@RequestBody ValidatePinRequest request) {
+    public Mono<Token> validatePin(@Valid @RequestBody ValidatePinRequest request) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUsername)
-                .flatMap(userName -> transactionPinService.validatePinFor(userName, request.getPin()));
+                .flatMap(caller -> transactionPinService.validatePinFor(caller.getUsername(), request.getPin(), request.getScope()));
     }
 
     @PostMapping("/profile")

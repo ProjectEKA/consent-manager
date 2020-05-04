@@ -163,10 +163,10 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(INVALID_TOKEN, "Token verification failed")));
     }
 
-    public static ClientError unAuthorizedRequest() {
+    public static ClientError unAuthorizedRequest(String errorMessage) {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT,
-                        "Username or password is incorrect")));
+                        errorMessage)));
     }
 
     public static ClientError userAlreadyExists(String username) {

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequest;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,6 @@ import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeFunction;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -60,6 +60,44 @@ class IdentityServiceClientTest {
         StepVerifier.create(identityServiceClient.getToken(formData))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().is5xxServerError())
+                .verify();
+    }
+
+    @Test
+    public void shouldThrowExceptionForExpiredOTP() {
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(
+                Mono.just(ClientResponse
+                        .create(HttpStatus.UNAUTHORIZED)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .body("{\n" +
+                                "    \"error\": \"1003\",\n" +
+                                "    \"error_description\": \"Invalid Otp\"\n" +
+                                "}")
+                        .build()));
+        StepVerifier.create(identityServiceClient.getToken(formData))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is4xxClientError() &&
+                        ((ClientError) throwable).getError().getError().getCode().equals(ErrorCode.OTP_EXPIRED)
+                )
+                .verify();
+    }
+
+    @Test
+    public void shouldThrowExceptionForIncorrectOTP() {
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(
+                Mono.just(ClientResponse
+                        .create(HttpStatus.UNAUTHORIZED)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .body("{\n" +
+                                "    \"error\": \"1002\",\n" +
+                                "    \"error_description\": \"Invalid Otp\"\n" +
+                                "}")
+                        .build()));
+        StepVerifier.create(identityServiceClient.getToken(formData))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is4xxClientError() &&
+                        ((ClientError) throwable).getError().getError().getCode().equals(ErrorCode.OTP_INVALID)
+                )
                 .verify();
     }
 

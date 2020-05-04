@@ -1,38 +1,37 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.user.model.RegistrationRequest;
+import in.projecteka.consentmanager.user.model.OtpAttempt;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 @Service
 @AllArgsConstructor
-public class RegistrationRequestService {
+public class OtpAttemptService {
 
-    private final RegistrationRequestRepository registrationRequestRepository;
+    private final OtpAttemptRepository otpAttemptRepository;
 
-    public Mono<Void> createRegistrationRequestFor(String phoneNumber, boolean blockedStatus) {
-        return registrationRequestRepository.insert(phoneNumber, blockedStatus);
+    public Mono<Void> createOtpAttemptFor(String phoneNumber, boolean blockedStatus) {
+        return otpAttemptRepository.insert(phoneNumber, blockedStatus);
     }
 
 
     public Mono<Void> validateOTPRequest(String phoneNumber) {
-        return registrationRequestRepository.select(phoneNumber)
+        return otpAttemptRepository.select(phoneNumber)
                 .flatMap(requests -> {
                     if(requests.isEmpty()){
                         return Mono.empty();
                     }
-                    RegistrationRequest lastRequest = requests.get(requests.size() - 1);
+                    OtpAttempt lastRequest = requests.get(requests.size() - 1);
                     if (lastRequest.isBlockedStatus()) {
                         return Mono.error(ClientError.otpRequestLimitExceeded());
                     }
                     if (requests.size() >= 5) {
-                        return createRegistrationRequestFor(phoneNumber, true)
+                        return createOtpAttemptFor(phoneNumber, true)
                                 .then(Mono.error(ClientError.otpRequestLimitExceeded()));
                     }
                     return Mono.empty();
-                }).then(createRegistrationRequestFor(phoneNumber, false));
+                }).then(createOtpAttemptFor(phoneNumber, false));
     }
-
 }

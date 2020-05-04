@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @Getter
-public class RegistrationRequest {
+public class OtpAttempt {
     private final String phoneNumber;
     private final boolean blockedStatus;
 }

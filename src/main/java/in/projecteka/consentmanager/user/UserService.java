@@ -32,7 +32,7 @@ public class UserService {
     private final IdentityServiceClient identityServiceClient;
     private final TokenService tokenService;
     private final UserServiceProperties userServiceProperties;
-    private final RegistrationRequestService registrationRequestService;
+    private final OtpAttemptService otpAttemptService;
 
     public Mono<User> userWith(String userName) {
         return userRepository.userWith(userName.toLowerCase()).switchIfEmpty(Mono.error(userNotFound()));
@@ -50,7 +50,7 @@ public class UserService {
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
-        return registrationRequestService
+        return otpAttemptService
                 .validateOTPRequest(userSignupEnquiry.getIdentifier())
                 .then(otpServiceClient.send(otpRequest)
                         .then(signupService.cacheAndSendSession(

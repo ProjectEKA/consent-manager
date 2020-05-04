@@ -6,6 +6,8 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 public class DiscoveryRepository {
 
     private static final String INSERT_TO_DISCOVERY_REQUEST = "INSERT INTO discovery_request " +
@@ -18,10 +20,10 @@ public class DiscoveryRepository {
         this.dbClient = dbClient;
     }
 
-    public Mono<Void> insert(String providerId, String patientId, String transactionId, String requestId) {
+    public Mono<Void> insert(String providerId, String patientId, UUID transactionId, UUID requestId) {
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(INSERT_TO_DISCOVERY_REQUEST)
-                        .execute(Tuple.of(transactionId, requestId, patientId, providerId),
+                        .execute(Tuple.of(transactionId.toString(), requestId.toString(), patientId, providerId),
                                 handler -> {
                                     if (handler.failed()) {
                                         monoSink.error(new DbOperationError());
@@ -31,7 +33,7 @@ public class DiscoveryRepository {
                                 }));
     }
 
-    public Mono<String> getIfPresent(String requestId) {
+    public Mono<String> getIfPresent(UUID requestId) {
         return DbOperation.select(requestId, dbClient, SELECT_TRANSACTION_ID, row -> row.getString(0));
     }
 }

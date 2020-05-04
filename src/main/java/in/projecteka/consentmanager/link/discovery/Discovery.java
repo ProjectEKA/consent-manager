@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
@@ -45,8 +46,8 @@ public class Discovery {
     public Mono<DiscoveryResponse> patientFor(String userName,
                                               List<PatientIdentifier> unverifiedIdentifiers,
                                               String providerId,
-                                              String transactionId,
-                                              String requestId) {
+                                              UUID transactionId,
+                                              UUID requestId) {
         return Mono.just(requestId)
                 .filterWhen(this::validateRequest)
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
@@ -62,7 +63,7 @@ public class Discovery {
                                         requestId)));
     }
 
-    private Mono<Boolean> validateRequest(String requestId) {
+    private Mono<Boolean> validateRequest(UUID requestId) {
         return discoveryRepository.getIfPresent(requestId)
                 .map(Objects::isNull)
                 .switchIfEmpty(Mono.just(true));
@@ -82,7 +83,7 @@ public class Discovery {
                         .orElse(Mono.empty()));
     }
 
-    private Mono<PatientResponse> patientIn(String hipSystemUrl, User user, String requestId, List<PatientIdentifier> unverifiedIdentifiers) {
+    private Mono<PatientResponse> patientIn(String hipSystemUrl, User user, UUID requestId, List<PatientIdentifier> unverifiedIdentifiers) {
         var phoneNumber = in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
                 .type(MOBILE)
                 .value(user.getPhone())
@@ -111,8 +112,8 @@ public class Discovery {
     private Mono<DiscoveryResponse> insertDiscoveryRequest(PatientResponse patientResponse,
                                                            String providerId,
                                                            String patientId,
-                                                           String transactionId,
-                                                           String requestId) {
+                                                           UUID transactionId,
+                                                           UUID requestId) {
         return discoveryRepository.insert(providerId, patientId, transactionId, requestId).
                 then(Mono.just(DiscoveryResponse.
                         builder().

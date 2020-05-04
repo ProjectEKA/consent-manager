@@ -37,10 +37,10 @@ public class DiscoveryController {
                         discoveryRequest.getUnverifiedIdentifiers(),
                         discoveryRequest.getHip().getId(),
                         newRequest(),
-                        discoveryRequest.getRequestId().toString()));
+                        discoveryRequest.getRequestId()));
     }
 
-    private String newRequest() {
-        return UUID.randomUUID().toString();
+    private UUID newRequest() {
+        return UUID.randomUUID();
     }
 }

@@ -108,7 +108,7 @@ public class DataFlowRequester {
     }
 
     public Mono<Void> notifyHealthInfoStatus(String requesterId, HealthInfoNotificationRequest notificationRequest) {
-        return Mono.just(notificationRequest.getRequestId().toString())
+        return Mono.just(notificationRequest.getRequestId())
                 .filterWhen(this::validateRequest)
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
                 .flatMap(val -> (!validateRequester(requesterId, notificationRequest))
@@ -116,7 +116,7 @@ public class DataFlowRequester {
                         : dataFlowRequestRepository.saveNotificationRequest(notificationRequest));
     }
 
-    private Mono<Boolean> validateRequest(String requestId) {
+    private Mono<Boolean> validateRequest(UUID requestId) {
         return dataFlowRequestRepository.getIfPresent(requestId)
                 .map(Objects::isNull)
                 .switchIfEmpty(Mono.just(true));

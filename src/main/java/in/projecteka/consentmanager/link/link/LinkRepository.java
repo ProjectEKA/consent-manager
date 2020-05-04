@@ -19,6 +19,7 @@ import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.ClientError.transactionIdNotFound;
 import static in.projecteka.consentmanager.common.Serializer.from;
@@ -48,10 +49,10 @@ public class LinkRepository {
     @SneakyThrows
     public Mono<Void> insertToLinkReference(PatientLinkReferenceResponse patientLinkReferenceResponse,
                                             String hipId,
-                                            String requestId) {
+                                            UUID requestId) {
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(INSERT_TO_LINK_REFERENCE)
-                        .execute(Tuple.of(new JsonObject(from(patientLinkReferenceResponse)), hipId, requestId),
+                        .execute(Tuple.of(new JsonObject(from(patientLinkReferenceResponse)), hipId, requestId.toString()),
                                 handler -> {
                                     if (handler.failed()) {
                                         monoSink.error(new DbOperationError());
@@ -61,7 +62,7 @@ public class LinkRepository {
                                 }));
     }
 
-    public Mono<String> selectLinkReference(String requestId) {
+    public Mono<String> selectLinkReference(UUID requestId) {
         return DbOperation.select(requestId, dbClient, SELECT_LINK_REFRENCE, row -> row.getString(0));
     }
 

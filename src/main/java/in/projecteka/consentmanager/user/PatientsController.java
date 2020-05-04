@@ -59,7 +59,7 @@ public class PatientsController {
                 .map(Caller::getUsername)
                 .flatMap(userName -> transactionPinService.validatePinFor(userName,
                         request.getPin(),
-                        request.getRequestId().toString()));
+                        request.getRequestId()));
     }
 
     @PostMapping("/profile")

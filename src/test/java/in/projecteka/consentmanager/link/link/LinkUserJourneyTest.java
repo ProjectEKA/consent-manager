@@ -133,9 +133,9 @@ public class LinkUserJourneyTest {
         clientRegistryServer.setDispatcher(dispatcher);
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
-        when(linkRepository.insertToLinkReference(linkReference, hipId, patientLinkReferenceRequest.getRequestId().toString()))
+        when(linkRepository.insertToLinkReference(linkReference, hipId, patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.create(MonoSink::success));
-        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId().toString()))
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.empty());
 
 
@@ -169,7 +169,7 @@ public class LinkUserJourneyTest {
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
-        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId().toString()))
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.empty());
 
         webTestClient
@@ -306,7 +306,7 @@ public class LinkUserJourneyTest {
         var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
-        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId().toString()))
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.just("some string"));
 
         webTestClient

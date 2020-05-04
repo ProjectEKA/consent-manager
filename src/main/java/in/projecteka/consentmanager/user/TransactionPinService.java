@@ -14,6 +14,7 @@ import java.security.PrivateKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.UUID;
 
 @AllArgsConstructor
 public class TransactionPinService {
@@ -48,7 +49,7 @@ public class TransactionPinService {
         return transactionPinRepository.getTransactionPinByPatient(patientId).map(Optional::isPresent);
     }
 
-    public Mono<Token> validatePinFor(String patientId, String pin, String requestId) {
+    public Mono<Token> validatePinFor(String patientId, String pin, UUID requestId) {
         return Mono.just(requestId)
                 .filterWhen(this::validateRequest)
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
@@ -65,7 +66,7 @@ public class TransactionPinService {
                         }).thenReturn(newToken(patientId))));
     }
 
-    private Mono<Boolean> validateRequest(String requestId) {
+    private Mono<Boolean> validateRequest(UUID requestId) {
         return transactionPinRepository.getTransactionPinByRequest(requestId)
                 .map(Optional::isEmpty)
                 .switchIfEmpty(Mono.just(true));

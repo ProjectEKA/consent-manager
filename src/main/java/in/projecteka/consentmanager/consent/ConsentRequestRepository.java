@@ -18,6 +18,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.to;
@@ -46,10 +47,10 @@ public class ConsentRequestRepository {
         this.dbClient = dbClient;
     }
 
-    public Mono<Void> insert(RequestedDetail requestedDetail, String requestId) {
+    public Mono<Void> insert(RequestedDetail requestedDetail, UUID requestId) {
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(INSERT_CONSENT_REQUEST_QUERY)
-                        .execute(Tuple.of(requestId,
+                        .execute(Tuple.of(requestId.toString(),
                                 requestedDetail.getPatient().getId(),
                                 ConsentStatus.REQUESTED.name(),
                                 new JsonObject(from(requestedDetail))),

@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Collections;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
@@ -86,8 +87,8 @@ public class DiscoveryTest {
     @Test
     public void patientForGivenProviderIdAndPatientId() {
         var providerId = string();
-        var transactionId = string();
-        var requestId = string();
+        var transactionId = UUID.randomUUID();
+        var requestId = UUID.randomUUID();
         var patientId = string();
         var discovery = new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry);
         var address = address().use("work").build();
@@ -147,8 +148,8 @@ public class DiscoveryTest {
     public void shouldGetInvalidHipErrorWhenIdentifierIsNotOfficial() {
         String providerId = "1";
         String userName = "1";
-        var transactionId = string();
-        var requestId = string();
+        var transactionId = UUID.randomUUID();
+        var requestId = UUID.randomUUID();
         var discovery = new Discovery(
                 userServiceClient,
                 discoveryServiceClient,
@@ -185,15 +186,15 @@ public class DiscoveryTest {
     public void shouldGetRequestAlreadyPresentError() {
         String providerId = "1";
         String userName = "1";
-        var transactionId = string();
-        var requestId = string();
+        var transactionId = UUID.randomUUID();
+        var requestId = UUID.randomUUID();
         var discovery = new Discovery(
                 userServiceClient,
                 discoveryServiceClient,
                 discoveryRepository,
                 centralRegistry);
 
-        when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.just(transactionId));
+        when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.just(transactionId.toString()));
 
         StepVerifier.create(
                 discovery.patientFor(userName, Collections.emptyList(), providerId, transactionId, requestId)

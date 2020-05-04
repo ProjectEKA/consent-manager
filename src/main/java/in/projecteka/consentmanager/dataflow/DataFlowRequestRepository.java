@@ -9,6 +9,8 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
 
 public class DataFlowRequestRepository {
@@ -74,7 +76,7 @@ public class DataFlowRequestRepository {
                                 }));
     }
 
-    public Mono<String> getIfPresent(String requestId) {
+    public Mono<String> getIfPresent(UUID requestId) {
         return DbOperation.select(requestId, dbClient, SELECT_TRANSACTION_ID, row -> row.getString(0));
     }
 }

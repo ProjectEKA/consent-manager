@@ -86,8 +86,8 @@ class LinkTest {
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
         when(linkRepository.insertToLinkReference(patientLinkReferenceResponse, hipId,
-                patientLinkReferenceRequest.getRequestId().toString())).thenReturn(Mono.empty());
-        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId().toString()))
+                patientLinkReferenceRequest.getRequestId())).thenReturn(Mono.empty());
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.empty());
 
         StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
@@ -132,8 +132,8 @@ class LinkTest {
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
         when(linkRepository.insertToLinkReference(patientLinkReferenceResponse, hipId,
-                patientLinkReferenceRequest.getRequestId().toString())).thenReturn(Mono.empty());
-        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId().toString()))
+                patientLinkReferenceRequest.getRequestId())).thenReturn(Mono.empty());
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.empty());
 
         StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
@@ -162,7 +162,7 @@ class LinkTest {
         when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
-        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId().toString()))
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.empty());
 
         StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))

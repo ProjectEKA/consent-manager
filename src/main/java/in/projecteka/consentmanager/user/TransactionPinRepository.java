@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
+import java.util.UUID;
 
 
 @AllArgsConstructor
@@ -42,8 +43,8 @@ public class TransactionPinRepository {
         return getTransactionPin(patientId, SELECT_TRANSACTION_PIN_BY_PATIENT);
     }
 
-    public Mono<Optional<TransactionPin>> getTransactionPinByRequest(String patientId) {
-        return getTransactionPin(patientId, SELECT_TRANSACTION_PIN_BY_REQUEST);
+    public Mono<Optional<TransactionPin>> getTransactionPinByRequest(UUID requestId) {
+        return getTransactionPin(requestId.toString(), SELECT_TRANSACTION_PIN_BY_REQUEST);
     }
 
     private Mono<Optional<TransactionPin>> getTransactionPin(String patientId, String selectTransactionPinByRequest) {
@@ -70,9 +71,9 @@ public class TransactionPinRepository {
                 .build());
     }
 
-    public Mono<Void> updateRequestId(String requestId, String patientId) {
+    public Mono<Void> updateRequestId(UUID requestId, String patientId) {
         return Mono.create(monoSink -> dbClient.preparedQuery(UPDATE_REQUEST_ID)
-                .execute(Tuple.of(requestId, patientId),
+                .execute(Tuple.of(requestId.toString(), patientId),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(ClientError.failedToUpdateTransactionPin());

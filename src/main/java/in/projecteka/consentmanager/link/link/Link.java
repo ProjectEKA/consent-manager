@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
 import java.util.Objects;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 
@@ -30,7 +31,7 @@ public class Link {
                 patientLinkReferenceRequest.getRequestId().toString(),
                 patientLinkReferenceRequest.getTransactionId(),
                 patient);
-        return Mono.just(patientLinkReferenceRequest.getRequestId().toString())
+        return Mono.just(patientLinkReferenceRequest.getRequestId())
                 .filterWhen(this::validateRequest)
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
                 .flatMap(id -> linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId())
@@ -43,7 +44,7 @@ public class Link {
     }
 
 
-    private Mono<Boolean> validateRequest(String requestId) {
+    private Mono<Boolean> validateRequest(UUID requestId) {
         return linkRepository.selectLinkReference(requestId)
                 .map(Objects::isNull)
                 .switchIfEmpty(Mono.just(true));
@@ -61,7 +62,7 @@ public class Link {
                     linkReferenceResponse.setTransactionId(patientLinkReferenceRequest.getTransactionId());
                     return linkRepository.insertToLinkReference(linkReferenceResponse,
                             hipId,
-                            patientLinkReferenceRequest.getRequestId().toString())
+                            patientLinkReferenceRequest.getRequestId())
                             .thenReturn(PatientLinkReferenceResponse.builder()
                                     .transactionId(linkReferenceResponse.getTransactionId())
                                     .link(linkReferenceResponse.getLink()).build());

@@ -15,4 +15,7 @@ public class UserServiceProperties {
     private final int transactionPinTokenValidity;
     private final int userCreationTokenValidity;
     private final String userIdSuffix;
+    private final int maxOtpAttempts;
+    private final int maxOtpAttemptsPeriodInMin;
+    private final int otpAttemptsBlockPeriodInMin;
 }

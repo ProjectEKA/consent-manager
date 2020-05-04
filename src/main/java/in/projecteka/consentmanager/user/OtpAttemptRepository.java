@@ -17,11 +17,11 @@ import java.util.stream.StreamSupport;
 public class OtpAttemptRepository {
 
     private static final String INSERT_OTP_ATTEMPT = "INSERT INTO " +
-            "otp_attempt (phone_number,blocked_status) VALUES ($1,$2)";
+            "otp_attempt (phone_number,blocked) VALUES ($1,$2)";
 
     private static final String SELECT_OTP_ATTEMPT = "SELECT * FROM otp_attempt " +
-            "WHERE timestamp >= NOW() - INTERVAL '10 MINUTES' AND" +
-            " phone_number = $1";
+            "WHERE phone_number = $1 " +
+            "ORDER BY timestamp DESC LIMIT $2";
 
     private final PgPool dbClient;
 
@@ -37,17 +37,18 @@ public class OtpAttemptRepository {
                         }));
     }
 
-    public Mono<List<OtpAttempt>> select(String phoneNumber) {
+    public Mono<List<OtpAttempt>> select(String phoneNumber, int maxOtpAttempts) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_OTP_ATTEMPT)
-                .execute(Tuple.of(phoneNumber),
+                .execute(Tuple.of(phoneNumber, maxOtpAttempts),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError("Failed to select from otp attempt"));
                             } else {
-
                                 monoSink.success(StreamSupport.stream(handler.result().spliterator(), false)
-                                        .map(row -> new OtpAttempt(row.getString("phone_number"),
-                                                row.getBoolean("blocked_status")))
+                                        .map(row -> new OtpAttempt(
+                                                row.getString("phone_number"),
+                                                row.getBoolean("blocked"),
+                                                row.getLocalDateTime("timestamp")))
                                         .collect(Collectors.toList()));
                             }
                         }));

@@ -9,5 +9,6 @@ import java.time.LocalDateTime;
 @Getter
 public class OtpAttempt {
     private final String phoneNumber;
-    private final boolean blockedStatus;
+    private final boolean blocked;
+    private final LocalDateTime timestamp;
 }

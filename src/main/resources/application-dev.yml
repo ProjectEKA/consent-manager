@@ -16,6 +16,9 @@ consentmanager:
     transactionPinTokenValidity: 2
     userCreationTokenValidity: 5
     userIdSuffix: @ncg
+    maxOtpAttempts: 5
+    maxOtpAttemptsPeriodInMin: 10
+    otpAttemptsBlockPeriodInMin: 2
   otpservice:
     url: http://localhost:5000
     identifiers:

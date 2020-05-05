@@ -8,6 +8,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -22,35 +24,50 @@ public class OtpAttemptService {
 
 
     public Mono<Void> validateOTPRequest(String phoneNumber) {
-        return otpAttemptRepository.select(phoneNumber, userServiceProperties.getMaxOtpAttempts())
+        return otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts())
                 .filter(otpAttempts -> otpAttempts.size() >= userServiceProperties.getMaxOtpAttempts())
-                .flatMap(attempts -> {
-                    OtpAttempt latestAttempt = attempts.get(0);
-                    if (latestAttempt.isBlocked()) {
-                        boolean isInBlockingTime = isWithinTimeLimit(latestAttempt, userServiceProperties.getOtpAttemptsBlockPeriodInMin());
-                        if (isInBlockingTime) {
-                            return Mono.error(ClientError.otpRequestLimitExceeded());
-                        }
-                        return Mono.empty();
-                    }
-                    if (attempts.stream().anyMatch(OtpAttempt::isBlocked)) {
-                        return Mono.empty();
-                    }
-                    boolean isAttemptsLimitExceeded = isWithinTimeLimit(
-                            attempts.get(attempts.size() - 1),
-                            userServiceProperties.getMaxOtpAttemptsPeriodInMin());
-                    if (isAttemptsLimitExceeded) {
-                        return createOtpAttemptFor(phoneNumber, true)
-                                .then(Mono.error(ClientError.otpRequestLimitExceeded()));
-                    }
-                    return Mono.empty();
-                }).then(createOtpAttemptFor(phoneNumber, false));
+                .filter(this::isNoneBlockedExceptLatest)
+                .flatMap(this::validateLatestAttempt)
+                .flatMap(this::validateAttemptsLimit)
+                .switchIfEmpty(createOtpAttemptFor(phoneNumber, false));
     }
 
-    public boolean isWithinTimeLimit(OtpAttempt attempt, int timeLimit) {
+    private Mono<List<OtpAttempt>> validateLatestAttempt(List<OtpAttempt> attempts) {
+        OtpAttempt latestAttempt = attempts.get(0);
+        if (latestAttempt.isBlocked()) {
+            return handleBlockedLatestAttempt(latestAttempt);
+        }
+        return Mono.just(attempts);
+    }
+
+    private Mono<List<OtpAttempt>> handleBlockedLatestAttempt(OtpAttempt latestAttempt) {
+        boolean isInBlockingTime = isWithinTimeLimit(latestAttempt, userServiceProperties.getOtpAttemptsBlockPeriodInMin());
+        if (isInBlockingTime) {
+            return Mono.error(ClientError.otpRequestLimitExceeded());
+        }
+        return Mono.empty();
+    }
+
+    private Mono<Void> validateAttemptsLimit(List<OtpAttempt> attempts) {
+        OtpAttempt firstAttempt = attempts.get(attempts.size() - 1);
+        boolean isAttemptsLimitExceeded = isWithinTimeLimit(firstAttempt, userServiceProperties.getMaxOtpAttemptsPeriodInMin());
+        if (isAttemptsLimitExceeded) {
+            return createOtpAttemptFor(firstAttempt.getPhoneNumber(), true)
+                    .then(Mono.error(ClientError.otpRequestLimitExceeded()));
+        }
+        return Mono.empty();
+    }
+
+    private boolean isNoneBlockedExceptLatest(List<OtpAttempt> attempts) {
+        List<OtpAttempt> duplicateAttempts = new ArrayList<>(attempts);
+        duplicateAttempts.remove(0); //remove latest otp attempt
+        return duplicateAttempts.stream().noneMatch(OtpAttempt::isBlocked);
+    }
+
+    public boolean isWithinTimeLimit(OtpAttempt attempt, int timeLimitInMin) {
         return attempt
                 .getTimestamp()
-                .plusMinutes(timeLimit)
+                .plusMinutes(timeLimitInMin)
                 .isAfter(LocalDateTime.now(ZoneOffset.UTC));
     }
 }

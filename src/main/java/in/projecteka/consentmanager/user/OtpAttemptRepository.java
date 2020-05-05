@@ -37,7 +37,7 @@ public class OtpAttemptRepository {
                         }));
     }
 
-    public Mono<List<OtpAttempt>> select(String phoneNumber, int maxOtpAttempts) {
+    public Mono<List<OtpAttempt>> getOtpAttempts(String phoneNumber, int maxOtpAttempts) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_OTP_ATTEMPT)
                 .execute(Tuple.of(phoneNumber, maxOtpAttempts),
                         handler -> {

@@ -13,6 +13,7 @@ import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -23,11 +24,13 @@ import java.util.UUID;
 import static in.projecteka.consentmanager.common.Constants.BLACKLIST;
 import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
 
+@RequiredArgsConstructor
 @AllArgsConstructor
 public class SessionService {
 
     private final TokenService tokenService;
     private final CacheAdapter<String, String> blacklistedTokens;
+    private CacheAdapter<String, String> unverifiedSessions;
     private final Logger logger = LoggerFactory.getLogger(SessionService.class);
     private final UserRepository userRepository;
     private final OtpServiceClient otpServiceClient;
@@ -52,12 +55,18 @@ public class SessionService {
                 .switchIfEmpty(Mono.error(ClientError.userNotFound()))
                 .map(user -> new OtpCommunicationData("mobile",user.getPhone()))
                 .map(otpCommunicationData -> new OtpRequest(sessionId,otpCommunicationData))
-                .flatMap(requestBody -> otpServiceClient.send(requestBody).thenReturn(requestBody.getCommunication().getValue()))
+                .flatMap(requestBody -> otpServiceClient.send(requestBody)
+                        .then(Mono.defer(() -> unverifiedSessions.put(sessionId, otpVerificationRequest.getUsername())))
+                        .thenReturn(requestBody.getCommunication().getValue()))
                 .map(mobileNumber -> new OtpVerificationResponse(sessionId,mobileNumber,otpServiceProperties.getExpirationTime()));
     }
 
     public Mono<Session> validateOtp(OtpPermitRequest otpPermitRequest) {
-        return tokenService
-                .tokenForOtpUser(otpPermitRequest.getUsername(),otpPermitRequest.getSessionId(),otpPermitRequest.getOtp());
+        return unverifiedSessions.get(otpPermitRequest.getSessionId())
+                .filter(username -> otpPermitRequest.getUsername().equals(username))
+                .switchIfEmpty(Mono.error(ClientError.invalidSession(otpPermitRequest.getSessionId())))
+                .then(Mono.defer(() -> tokenService
+                        .tokenForOtpUser(otpPermitRequest.getUsername(),
+                                otpPermitRequest.getSessionId(),otpPermitRequest.getOtp())));
     }
 }

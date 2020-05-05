@@ -1,25 +1,22 @@
 package in.projecteka.consentmanager.clients.properties;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.ConstructorBinding;
 
 @Builder
-@Configuration
 @ConfigurationProperties(prefix = "consentmanager.keycloak")
-@Data
-@NoArgsConstructor(access = AccessLevel.PACKAGE)
 @AllArgsConstructor
+@ConstructorBinding
+@Getter
 public class IdentityServiceProperties {
-    private String baseUrl;
-    private String clientId;
-    private String clientSecret;
-    private String userName;
-    private String password;
-    private String jwkUrl;
-    private String issuer;
+    private final String baseUrl;
+    private final String clientId;
+    private final String clientSecret;
+    private final String userName;
+    private final String password;
+    private final String jwkUrl;
+    private final String issuer;
 }

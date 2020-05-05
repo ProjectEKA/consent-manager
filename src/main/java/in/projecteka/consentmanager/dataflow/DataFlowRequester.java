@@ -20,25 +20,24 @@ public class DataFlowRequester {
     private final DataFlowRequestRepository dataFlowRequestRepository;
     private final PostDataFlowRequestApproval postDataFlowrequestApproval;
 
-    public Mono<DataFlowRequestResponse> requestHealthData(
-            String hiuId,
-            in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest) {
+    public Mono<DataFlowRequestResponse> requestHealthData(String hiuId, DataFlowRequest dataFlowRequest) {
         final String transactionId = UUID.randomUUID().toString();
         return fetchConsentArtefact(dataFlowRequest.getConsent().getId())
-                .flatMap(caRep -> validateAndSaveConsent(transactionId, dataFlowRequest, caRep, hiuId))
-                .then(notifyHIP(transactionId, dataFlowRequest))
+                .flatMap(caRep -> validate(dataFlowRequest, caRep, hiuId))
+                .flatMap(flowRequest -> dataFlowRequestRepository.addDataFlowRequest(transactionId, flowRequest)
+                        .thenReturn(flowRequest))
+                .flatMap(flowRequest -> notifyHIP(transactionId, flowRequest))
                 .thenReturn(DataFlowRequestResponse.builder().transactionId(transactionId).build());
     }
 
-    private Mono<Void> notifyHIP(String transactionId,
-                                 in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest) {
+    private Mono<Void> notifyHIP(String transactionId, DataFlowRequest dataFlowRequest) {
         return postDataFlowrequestApproval.broadcastDataFlowRequest(transactionId, dataFlowRequest);
     }
 
-    private Mono<Void> validateAndSaveConsent(String transactionId,
-                                              in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
-                                              ConsentArtefactRepresentation consentArtefactRepresentation,
-                                              String hiuId) {
+    private Mono<DataFlowRequest> validate(
+            DataFlowRequest dataFlowRequest,
+            ConsentArtefactRepresentation consentArtefactRepresentation,
+            String hiuId) {
         if (!isValidHIU(hiuId, consentArtefactRepresentation)) {
             return Mono.error(ClientError.invalidRequester());
         }
@@ -48,13 +47,16 @@ public class DataFlowRequester {
         if (!isConsentGranted(consentArtefactRepresentation)) {
             return Mono.error(ClientError.consentNotGranted());
         }
-        if (dataFlowRequest.getDateRange() == null) {
-            dataFlowRequest.setDateRange(defaultDateRange(consentArtefactRepresentation));
-        } else if (!isValidHIDateRange(dataFlowRequest, consentArtefactRepresentation)) {
+        if (dataFlowRequest.getDateRange() != null &&
+                !isValidHIDateRange(dataFlowRequest, consentArtefactRepresentation)) {
             return Mono.error(ClientError.invalidDateRange());
         }
-        dataFlowRequest.setArtefactSignature(consentArtefactRepresentation.getSignature());
-        return dataFlowRequestRepository.addDataFlowRequest(transactionId, dataFlowRequest);
+        var flowRequestBuilder = dataFlowRequest.toBuilder();
+        if (dataFlowRequest.getDateRange() == null) {
+            flowRequestBuilder.dateRange(defaultDateRange(consentArtefactRepresentation));
+        }
+        var consent = dataFlowRequest.getConsent().toBuilder().build();
+        return Mono.just(flowRequestBuilder.consent(consent).build());
     }
 
     private boolean isConsentGranted(ConsentArtefactRepresentation consentArtefactRepresentation) {
@@ -80,27 +82,20 @@ public class DataFlowRequester {
         return consentManagerClient.getConsentArtefact(consentArtefactId);
     }
 
-    private boolean isValidHIDateRange(in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest,
+    private boolean isValidHIDateRange(DataFlowRequest dataFlowRequest,
                                        ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return isEqualOrAfter(dataFlowRequest, consentArtefactRepresentation) &&
-                isEqualOrBefore(dataFlowRequest, consentArtefactRepresentation) &&
+        return isEqualOrAfter(dataFlowRequest.getDateRange().getFrom(), consentArtefactRepresentation.fromDate()) &&
+                isEqualOrBefore(dataFlowRequest.getDateRange().getTo(), consentArtefactRepresentation.toDate()) &&
                 dataFlowRequest.getDateRange().getFrom().before(dataFlowRequest.getDateRange().getTo());
     }
 
-    private boolean isEqualOrBefore(DataFlowRequest dataFlowRequest,
-                                    ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return (dataFlowRequest.getDateRange().getTo()
-                .equals(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getToDate())) ||
-                (dataFlowRequest.getDateRange().getTo()
-                        .before(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getToDate()));
+    private boolean isEqualOrBefore(Date requestDate,
+                                    Date permissionDate) {
+        return requestDate.equals(permissionDate) || requestDate.before(permissionDate);
     }
 
-    private boolean isEqualOrAfter(DataFlowRequest dataFlowRequest,
-                                   ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return (dataFlowRequest.getDateRange().getFrom()
-                .equals(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getFromDate())) ||
-                (dataFlowRequest.getDateRange().getFrom()
-                        .after(consentArtefactRepresentation.getConsentDetail().getPermission().getDateRange().getFromDate()));
+    private boolean isEqualOrAfter(Date requestDate, Date permissionDate) {
+        return requestDate.equals(permissionDate) || requestDate.after(permissionDate);
     }
 
     private boolean isConsentExpired(ConsentArtefactRepresentation consentArtefactRepresentation) {
@@ -112,8 +107,9 @@ public class DataFlowRequester {
     }
 
     public Mono<Void> notifyHealthInfoStatus(String requesterId, HealthInfoNotificationRequest notificationRequest) {
-        if(!validateRequester(requesterId, notificationRequest))
+        if (!validateRequester(requesterId, notificationRequest)) {
             return Mono.error(ClientError.invalidRequester());
+        }
         return dataFlowRequestRepository.saveNotificationRequest(notificationRequest);
     }
 

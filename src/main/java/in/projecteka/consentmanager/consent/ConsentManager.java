@@ -69,7 +69,6 @@ public class ConsentManager {
     private final PostConsentRequest postConsentRequest;
     private final PatientServiceClient patientServiceClient;
     private final CMProperties cmProperties;
-    private final ConsentArtefactQueryGenerator consentArtefactQueryGenerator;
 
     private static boolean isNotSameRequester(ConsentArtefact consentDetail, String requesterId) {
         return !consentDetail.getHiu().getId().equals(requesterId) &&
@@ -217,7 +216,7 @@ public class ConsentManager {
                                                                     ConsentRequestDetail consentRequest) {
         return Flux.fromIterable(grantedConsents)
                 .flatMap(grantedConsent -> toConsentArtefact(consentRequest, grantedConsent)
-                        .flatMap(consentArtefact -> consentArtefactQueryGenerator.toQueries(requestId,
+                        .flatMap(consentArtefact -> consentArtefactRepository.artefactQueries(requestId,
                                 patientId,
                                 consentArtefact,
                                 from(consentArtefact, GRANTED),

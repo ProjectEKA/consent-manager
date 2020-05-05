@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.dataflow;
 
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
 import lombok.AllArgsConstructor;
@@ -16,8 +17,7 @@ public class DataFlowRequestController {
     private final DataFlowRequester dataFlowRequester;
 
     @PostMapping("/health-information/request")
-    public Mono<DataFlowRequestResponse> requestHealthInformation(
-            @RequestBody in.projecteka.consentmanager.dataflow.model.DataFlowRequest dataFlowRequest) {
+    public Mono<DataFlowRequestResponse> requestHealthInformation(@RequestBody DataFlowRequest dataFlowRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .flatMap(requester -> dataFlowRequester.requestHealthData(requester.getUsername(), dataFlowRequest));
@@ -27,6 +27,7 @@ public class DataFlowRequestController {
     public Mono<Void> notify(@RequestBody HealthInfoNotificationRequest notificationRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(requester -> dataFlowRequester.notifyHealthInfoStatus(requester.getUsername(), notificationRequest));
+                .flatMap(requester ->
+                        dataFlowRequester.notifyHealthInfoStatus(requester.getUsername(), notificationRequest));
     }
 }

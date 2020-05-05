@@ -1,11 +1,11 @@
 package in.projecteka.consentmanager.link.discovery.model.patient.response;
 
 import lombok.Builder;
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 @Builder
 public class DiscoveryResponse {
-    private Patient patient;
-    private String transactionId;
+    Patient patient;
+    String transactionId;
 }

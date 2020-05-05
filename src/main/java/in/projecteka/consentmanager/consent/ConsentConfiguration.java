@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.UserServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
@@ -69,8 +70,7 @@ public class ConsentConfiguration {
                 centralRegistry,
                 postConsentRequest,
                 new PatientServiceClient(builder, identityService::authenticate, linkServiceProperties.getUrl()),
-                new CMProperties(identityService.getConsentManagerId()),
-                new ConsentArtefactQueryGenerator());
+                new CMProperties(identityService.getConsentManagerId()));
     }
 
     @Bean
@@ -146,7 +146,8 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    public PinVerificationTokenService pinVerificationTokenService(@Qualifier("keySigningPublicKey") PublicKey key) {
-        return new PinVerificationTokenService(key);
+    public PinVerificationTokenService pinVerificationTokenService(@Qualifier("keySigningPublicKey") PublicKey key,
+                                                                   CacheAdapter<String,String> usedTokens) {
+        return new PinVerificationTokenService(key, usedTokens);
     }
 }

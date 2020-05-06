@@ -9,5 +9,4 @@ import lombok.Data;
 @Builder
 public class Hip {
     private String id;
-    private String name;
 }

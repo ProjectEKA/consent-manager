@@ -7,7 +7,6 @@ import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.Query;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
-import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
@@ -21,6 +20,8 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.StreamSupport;
+
+import static in.projecteka.consentmanager.common.Serializer.to;
 
 @AllArgsConstructor
 public class ConsentArtefactRepository {
@@ -38,6 +39,12 @@ public class ConsentArtefactRepository {
             "date_modified=$2 WHERE consent_artefact_id=$3";
     private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
     private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
+    public static final String CONSENT_ARTEFACT = "consent_artefact";
+    public static final String STATUS = "status";
+    public static final String CONSENT_REQUEST_ID = "consent_request_id";
+    public static final String DATE_MODIFIED = "date_modified";
+    public static final String CONSENT_ARTEFACT_ID = "consent_artefact_id";
+    public static final String SIGNATURE = "signature";
 
     private final PgPool dbClient;
 
@@ -62,23 +69,23 @@ public class ConsentArtefactRepository {
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new RuntimeException(FAILED_TO_RETRIEVE_CA, handler.cause()));
-                            } else {
-                                RowSet<Row> results = handler.result();
-                                if (results.iterator().hasNext()) {
-                                    Row row = results.iterator().next();
-                                    JsonObject artefact = (JsonObject) row.getValue("consent_artefact");
-                                    ConsentArtefact consentArtefact = artefact.mapTo(ConsentArtefact.class);
-                                    ConsentArtefactRepresentation representation = ConsentArtefactRepresentation
-                                            .builder()
-                                            .status(ConsentStatus.valueOf(row.getString("status")))
-                                            .consentDetail(consentArtefact)
-                                            .signature(row.getString("signature"))
-                                            .build();
-                                    monoSink.success(representation);
-                                } else {
-                                    monoSink.success(null);
-                                }
+                                return;
                             }
+                            RowSet<Row> results = handler.result();
+                            if (!results.iterator().hasNext()) {
+                                monoSink.success();
+                                return;
+                            }
+                            Row row = results.iterator().next();
+                            var consentArtefact = to(row.getValue(CONSENT_ARTEFACT).toString(),
+                                    ConsentArtefact.class);
+                            var representation = ConsentArtefactRepresentation
+                                    .builder()
+                                    .status(ConsentStatus.valueOf(row.getString(STATUS)))
+                                    .consentDetail(consentArtefact)
+                                    .signature(row.getString(SIGNATURE))
+                                    .build();
+                            monoSink.success(representation);
                         }));
     }
 
@@ -88,23 +95,23 @@ public class ConsentArtefactRepository {
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new RuntimeException(FAILED_TO_RETRIEVE_CA, handler.cause()));
-                            } else {
-                                RowSet<Row> results = handler.result();
-                                if (results.iterator().hasNext()) {
-                                    Row row = results.iterator().next();
-                                    JsonObject artefact = (JsonObject) row.getValue("consent_artefact");
-                                    HIPConsentArtefact consentArtefact = artefact.mapTo(HIPConsentArtefact.class);
-                                    HIPConsentArtefactRepresentation representation = HIPConsentArtefactRepresentation
-                                            .builder()
-                                            .status(ConsentStatus.valueOf(row.getString("status")))
-                                            .consentDetail(consentArtefact)
-                                            .signature(row.getString("signature"))
-                                            .build();
-                                    monoSink.success(representation);
-                                } else {
-                                    monoSink.success(null);
-                                }
+                                return;
                             }
+                            RowSet<Row> results = handler.result();
+                            if (!results.iterator().hasNext()) {
+                                monoSink.success(null);
+                                return;
+                            }
+                            Row row = results.iterator().next();
+                            var consentArtefact = to(row.getValue(CONSENT_ARTEFACT).toString(),
+                                    HIPConsentArtefact.class);
+                            var representation = HIPConsentArtefactRepresentation
+                                    .builder()
+                                    .status(ConsentStatus.valueOf(row.getString(STATUS)))
+                                    .consentDetail(consentArtefact)
+                                    .signature(row.getString(SIGNATURE))
+                                    .build();
+                            monoSink.success(representation);
                         }));
     }
 
@@ -116,7 +123,7 @@ public class ConsentArtefactRepository {
                                 fluxSink.error(new Exception("Failed to get consent id from consent request Id"));
                             } else {
                                 StreamSupport.stream(handler.result().spliterator(), false)
-                                        .map(row -> row.getString("consent_artefact_id"))
+                                        .map(row -> row.getString(CONSENT_ARTEFACT_ID))
                                         .forEach(fluxSink::next);
                                 fluxSink.complete();
                             }
@@ -125,7 +132,7 @@ public class ConsentArtefactRepository {
 
     public Mono<Void> updateStatus(String consentId, String consentRequestId, ConsentStatus status) {
         return Mono.create(monoSink -> dbClient.begin(connectionAttempt -> {
-            List<Query> queries = getUpdateQueries(consentId, consentRequestId, status);
+            var queries = getUpdateQueries(consentId, consentRequestId, status);
             if (connectionAttempt.succeeded()) {
                 TransactionContext context = new TransactionContext(connectionAttempt.result(), monoSink);
                 context.executeInTransaction(queries.iterator(), "Failed to update status");
@@ -153,24 +160,24 @@ public class ConsentArtefactRepository {
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new RuntimeException(FAILED_TO_RETRIEVE_CA, handler.cause()));
-                            } else {
-                                RowSet<Row> results = handler.result();
-                                if (results.iterator().hasNext()) {
-                                    Row row = results.iterator().next();
-                                    JsonObject artefact = (JsonObject) row.getValue("consent_artefact");
-                                    ConsentArtefact consentArtefact = artefact.mapTo(ConsentArtefact.class);
-                                    ConsentRepresentation representation = ConsentRepresentation
-                                            .builder()
-                                            .status(ConsentStatus.valueOf(row.getString("status")))
-                                            .consentDetail(consentArtefact)
-                                            .consentRequestId(row.getString("consent_request_id"))
-                                            .dateModified(convertToDate(row.getLocalDateTime("date_modified")))
-                                            .build();
-                                    monoSink.success(representation);
-                                } else {
-                                    monoSink.success(null);
-                                }
+                                return;
                             }
+                            RowSet<Row> results = handler.result();
+                            if (!results.iterator().hasNext()) {
+                                monoSink.success();
+                                return;
+                            }
+                            Row row = results.iterator().next();
+                            var consentArtefact = to(row.getValue(CONSENT_ARTEFACT).toString(),
+                                    ConsentArtefact.class);
+                            var representation = ConsentRepresentation
+                                    .builder()
+                                    .status(ConsentStatus.valueOf(row.getString(STATUS)))
+                                    .consentDetail(consentArtefact)
+                                    .consentRequestId(row.getString(CONSENT_REQUEST_ID))
+                                    .dateModified(convertToDate(row.getLocalDateTime(DATE_MODIFIED)))
+                                    .build();
+                            monoSink.success(representation);
                         }));
     }
 

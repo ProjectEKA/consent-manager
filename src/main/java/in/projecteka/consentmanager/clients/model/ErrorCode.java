@@ -35,6 +35,7 @@ public enum ErrorCode {
     INVALID_STATE(1025),
     TRANSACTION_ID_NOT_FOUND(1026),
     OTP_REQUEST_LIMIT_EXCEEDED(1027);
+    INVALID_SCOPE(1027);
 
     private final int value;
 

@@ -1,10 +1,13 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,7 +21,9 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 public class ConsentArtefactsController {
 
+    private static final Logger logger = LoggerFactory.getLogger(ConsentArtefactsController.class);
     private final ConsentManager consentManager;
+    private final CacheAdapter<String, String> usedTokens;
 
     @GetMapping(value = "/consents/{consentId}")
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(@PathVariable(value = "consentId") String consentId) {
@@ -44,7 +49,11 @@ public class ConsentArtefactsController {
     public Mono<Void> revokeConsent(@RequestBody RevokeRequest revokeRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUsername)
-                .flatMap(requesterId -> consentManager.revoke(revokeRequest, requesterId));
+                .flatMap(caller -> consentManager.revoke(revokeRequest, caller.getUsername())
+                        .switchIfEmpty(Mono.defer(() -> {
+                            logger.debug("[revoke] putting {} in used tokens",caller.getSessionId());
+                            return usedTokens.put(caller.getSessionId(),"");
+                        }))
+        );
     }
 }

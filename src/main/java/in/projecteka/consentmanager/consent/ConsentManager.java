@@ -76,16 +76,24 @@ public class ConsentManager {
                 !consentDetail.getPatient().getId().equals(requesterId);
     }
 
-    public Mono<String> askForConsent(RequestedDetail requestedDetail) {
-        final String requestId = UUID.randomUUID().toString();
-        return validatePatient(requestedDetail.getPatient().getId())
-                .then(validateHIPAndHIU(requestedDetail))
-                .then(saveRequest(requestedDetail, requestId))
-                .then(postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
-                        .detail(requestedDetail)
-                        .id(requestId)
-                        .build()))
-                .thenReturn(requestId);
+    public Mono<String> askForConsent(RequestedDetail requestedDetail, UUID requestId) {
+        return  Mono.just(requestId)
+                .filterWhen(this::validateRequest)
+                .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
+                .flatMap(val -> validatePatient(requestedDetail.getPatient().getId())
+                        .then(validateHIPAndHIU(requestedDetail))
+                        .then(saveRequest(requestedDetail, requestId))
+                        .then(postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
+                                .detail(requestedDetail)
+                                .id(requestId)
+                                .build()))
+                        .thenReturn(requestId.toString()));
+    }
+
+    private Mono<Boolean> validateRequest(UUID requestId) {
+        return consentRequestRepository.requestOf(requestId.toString())
+                .map(Objects::isNull)
+                .switchIfEmpty(Mono.just(true));
     }
 
     private Mono<Boolean> validatePatient(String patientId) {
@@ -102,7 +110,7 @@ public class ConsentManager {
         return Mono.zip(checkHIU, checkHIP, (validHIU, validHIP) -> validHIU && validHIP);
     }
 
-    private Mono<Void> saveRequest(RequestedDetail requestedDetail, String requestId) {
+    private Mono<Void> saveRequest(RequestedDetail requestedDetail, UUID requestId) {
         return consentRequestRepository.insert(requestedDetail, requestId);
     }
 

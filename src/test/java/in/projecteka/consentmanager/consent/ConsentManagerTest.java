@@ -29,6 +29,7 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
@@ -94,6 +95,7 @@ class ConsentManagerTest {
 
     @Test
     public void askForConsent() {
+        var requestId = UUID.randomUUID();
         HIPReference hip1 = HIPReference.builder().id("hip1").build();
         HIUReference hiu1 = HIUReference.builder().id("hiu1").build();
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
@@ -105,14 +107,16 @@ class ConsentManagerTest {
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
+        when(repository.requestOf(requestId.toString())).thenReturn(Mono.empty());
 
-        StepVerifier.create(consentManager.askForConsent(requestedDetail))
+        StepVerifier.create(consentManager.askForConsent(requestedDetail, requestId))
                 .expectNextMatches(Objects::nonNull)
                 .verifyComplete();
     }
 
     @Test
     public void askForConsentWithoutValidHIU() {
+        var requestId = UUID.randomUUID();
         HIPReference hip1 = HIPReference.builder().id("hip1").build();
         HIUReference hiu1 = HIUReference.builder().id("hiu1").build();
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
@@ -124,8 +128,9 @@ class ConsentManagerTest {
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
+        when(repository.requestOf(requestId.toString())).thenReturn(Mono.just(consentRequestDetail().build()));
 
-        StepVerifier.create(consentManager.askForConsent(requestedDetail))
+        StepVerifier.create(consentManager.askForConsent(requestedDetail, requestId))
                 .expectErrorMatches(e -> (e instanceof ClientError) &&
                         ((ClientError) e).getHttpStatus().is4xxClientError())
                 .verify();

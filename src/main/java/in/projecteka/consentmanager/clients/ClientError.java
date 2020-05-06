@@ -29,6 +29,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.UNKNOWN_ERROR
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USERNAME_OR_PASSWORD_INCORRECT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.REQUEST_ALREADY_EXISTS;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -95,12 +96,6 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(TRANSACTION_ID_NOT_FOUND, "Failed to get transaction Id")));
     }
 
-    public static ClientError expiryNotFound() {
-        return new ClientError(BAD_REQUEST,
-                new ErrorRepresentation(new Error(TRANSACTION_ID_NOT_FOUND,
-                        "Failed to get expiry for link reference number")));
-    }
-
     public static ClientError consentArtefactNotFound() {
         return new ClientError(NOT_FOUND,
                 new ErrorRepresentation(new Error(CONSENT_ARTEFACT_NOT_FOUND, "Cannot find the consent artefact")));
@@ -121,6 +116,10 @@ public class ClientError extends Throwable {
 
     public static ClientError failedToCreateTransactionPin() {
         return internalServerError("Failed to create transaction pin");
+    }
+
+    public static ClientError failedToUpdateTransactionPin() {
+        return internalServerError("Failed to update request_id in transaction pin");
     }
 
     public static ClientError failedToFetchTransactionPin() {
@@ -193,6 +192,12 @@ public class ClientError extends Throwable {
     public static ClientError invalidAccessToken() {
         return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_TOKEN, "Expected token of the format `Bearer accessToken`")));
+    }
+
+    public static ClientError requestAlreadyExists() {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(REQUEST_ALREADY_EXISTS,
+                        "A request with this request id already exists.")));
     }
 
     public static ClientError invalidScope() {

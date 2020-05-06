@@ -1436,6 +1436,9 @@ components:
     PatientDiscoveryRequest:
       type: object
       properties:
+        requestId:
+          type: string
+          format: uuid
         hip:
           type: object
           properties:
@@ -1453,8 +1456,12 @@ components:
     PatientLinkReferenceRequest:
       type: object
       properties:
+        requestId:
+          type: string
+          format: uuid
         transactionId:
           type: string
+          format: uuid
         patient:
           $ref: '#/components/schemas/Patient'
       xml:
@@ -1760,6 +1767,9 @@ components:
     ConsentRequest:
       type: object
       properties:
+        requestId:
+          type: string
+          format: uuid
         consent:
           type: object
           required:
@@ -2119,6 +2129,9 @@ components:
     ValidatePinRequest:
       type: object
       properties:
+        requestId:
+          type: string
+          format: uuid
         pin:
           type: string
           maximum: 9999
@@ -2184,6 +2197,9 @@ components:
     HINotification:
       type: object
       properties:
+        requestId:
+          type: string
+          format: uuid
         transactionId:
           type: string
         consentId:

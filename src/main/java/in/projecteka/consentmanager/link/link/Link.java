@@ -2,19 +2,19 @@ package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
-import in.projecteka.consentmanager.clients.model.Patient;
 import in.projecteka.consentmanager.clients.model.Identifier;
+import in.projecteka.consentmanager.clients.model.Patient;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
-import in.projecteka.consentmanager.link.link.model.Hip;
-import in.projecteka.consentmanager.link.link.model.Links;
-import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
+
+import java.util.Objects;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 
@@ -25,20 +25,29 @@ public class Link {
     private final CentralRegistry centralRegistry;
 
     public Mono<PatientLinkReferenceResponse> patientWith(String patientId,
-                                                          PatientLinkReferenceRequest patientLinkReferenceRequest,
-                                                          String requestId) {
+                                                          PatientLinkReferenceRequest patientLinkReferenceRequest) {
         Patient patient = toHIPPatient(patientId, patientLinkReferenceRequest.getPatient());
         var linkReferenceRequest = new in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest(
-                requestId,
+                patientLinkReferenceRequest.getRequestId().toString(),
                 patientLinkReferenceRequest.getTransactionId(),
                 patient);
-        return linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId())
-                .flatMap(hipId -> providerUrl(hipId)
-                        .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
-                        .flatMap(url -> getPatientLinkReferenceResponse(patientLinkReferenceRequest,
-                                linkReferenceRequest,
-                                hipId,
-                                url)));
+        return Mono.just(patientLinkReferenceRequest.getRequestId())
+                .filterWhen(this::validateRequest)
+                .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
+                .flatMap(id -> linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId())
+                        .flatMap(hipId -> providerUrl(hipId)
+                                .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
+                                .flatMap(url -> getPatientLinkReferenceResponse(patientLinkReferenceRequest,
+                                        linkReferenceRequest,
+                                        hipId,
+                                        url))));
+    }
+
+
+    private Mono<Boolean> validateRequest(UUID requestId) {
+        return linkRepository.selectLinkReference(requestId)
+                .map(Objects::isNull)
+                .switchIfEmpty(Mono.just(true));
     }
 
     private Mono<PatientLinkReferenceResponse> getPatientLinkReferenceResponse(
@@ -51,7 +60,9 @@ public class Link {
                 .flatMap(token -> linkServiceClient.linkPatientEnquiry(linkReferenceRequest, url, token))
                 .flatMap(linkReferenceResponse -> {
                     linkReferenceResponse.setTransactionId(patientLinkReferenceRequest.getTransactionId());
-                    return linkRepository.insertToLinkReference(linkReferenceResponse, hipId)
+                    return linkRepository.insertToLinkReference(linkReferenceResponse,
+                            hipId,
+                            patientLinkReferenceRequest.getRequestId())
                             .thenReturn(PatientLinkReferenceResponse.builder()
                                     .transactionId(linkReferenceResponse.getTransactionId())
                                     .link(linkReferenceResponse.getLink()).build());

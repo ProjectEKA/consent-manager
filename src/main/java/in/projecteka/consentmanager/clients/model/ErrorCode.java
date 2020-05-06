@@ -34,7 +34,8 @@ public enum ErrorCode {
     CONSENT_NOT_GRANTED(1024),
     INVALID_STATE(1025),
     TRANSACTION_ID_NOT_FOUND(1026),
-    INVALID_SCOPE(1027);
+    INVALID_SCOPE(1027),
+    REQUEST_ALREADY_EXISTS(1028);
 
     private final int value;
 

@@ -15,7 +15,6 @@ import java.util.Optional;
 @Getter
 public class OtpServiceProperties {
     private final String url;
-    private final int expirationTime;
     private final List<String> identifiers;
     private final int expiryInMinutes;
 

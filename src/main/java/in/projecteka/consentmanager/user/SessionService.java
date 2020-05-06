@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.model.Meta;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
@@ -58,7 +59,18 @@ public class SessionService {
                 .flatMap(requestBody -> otpServiceClient.send(requestBody)
                         .then(Mono.defer(() -> unverifiedSessions.put(sessionId, otpVerificationRequest.getUsername())))
                         .thenReturn(requestBody.getCommunication().getValue()))
-                .map(mobileNumber -> new OtpVerificationResponse(sessionId,mobileNumber,otpServiceProperties.getExpirationTime()));
+                .map(mobileNumber -> OtpVerificationResponse.builder()
+                        .sessionId(sessionId)
+                        .meta(Meta.builder()
+                                .communicationExpiry(String.valueOf(otpServiceProperties.getExpiryInMinutes() * 60))
+                                .communicationMedium("MOBILE")
+                                .communicationHint(mask(mobileNumber))
+                                .build())
+                        .build());
+    }
+
+    private String mask(String mobileNumber) {
+        return mobileNumber.replaceFirst("[0-9]{6}", "X".repeat(6));
     }
 
     public Mono<Session> validateOtp(OtpPermitRequest otpPermitRequest) {

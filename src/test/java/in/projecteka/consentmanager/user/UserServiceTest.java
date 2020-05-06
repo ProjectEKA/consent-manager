@@ -28,7 +28,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ExchangeFunction;
 import reactor.core.publisher.Flux;
@@ -92,7 +91,7 @@ class UserServiceTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        var otpServiceProperties = new OtpServiceProperties("",0, Collections.singletonList("MOBILE"),5);
+        var otpServiceProperties = new OtpServiceProperties("",Collections.singletonList("MOBILE"),5);
         userService = new UserService(
                 userRepository,
                 otpServiceProperties,

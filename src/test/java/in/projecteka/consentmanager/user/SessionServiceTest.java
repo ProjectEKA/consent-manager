@@ -71,7 +71,7 @@ class SessionServiceTest {
         var expectedSession = session().build();
         when(tokenService.tokenForUser(sessionRequest.getUsername(), sessionRequest.getPassword()))
                 .thenReturn(Mono.just(expectedSession));
-        var sessionService = new SessionService(tokenService, null,null,null, null);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, userRepository, otpServiceClient, otpServiceProperties);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -88,7 +88,7 @@ class SessionServiceTest {
     })
     void returnUnAuthorizedErrorWhenUsernameIsEmpty(@ConvertWith(NullableConverter.class) String value) {
         var sessionRequest = sessionRequest().username(value).build();
-        var sessionService = new SessionService(tokenService, null,null,null,null);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, userRepository, otpServiceClient, otpServiceProperties);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -107,7 +107,7 @@ class SessionServiceTest {
     void returnUnAuthorizedErrorWhenPasswordIsEmpty(
             @ConvertWith(NullableConverter.class) String value) {
         var sessionRequest = sessionRequest().password(value).build();
-        var sessionService = new SessionService(tokenService, null,null,null,null);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, userRepository, otpServiceClient, otpServiceProperties);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -119,7 +119,7 @@ class SessionServiceTest {
     @Test
     void returnUnAuthorizedWhenAnyOtherErrorHappens() {
         var sessionRequest = sessionRequest().build();
-        var sessionService = new SessionService(tokenService, null,null,null,null);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, userRepository, otpServiceClient, otpServiceProperties);
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new Exception()));
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
@@ -137,7 +137,7 @@ class SessionServiceTest {
         when(blacklistedTokens.put(String.format(BLACKLIST_FORMAT, BLACKLIST, testAccessToken),"")).
                 thenReturn(Mono.empty());
         when(tokenService.revoke(refreshToken)).thenReturn(Mono.empty());
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens,null,null,null);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, userRepository, otpServiceClient, otpServiceProperties);
         Mono<Void> logout = sessionService.logout(testAccessToken, logoutRequest);
 
         StepVerifier.create(logout).verifyComplete();
@@ -152,15 +152,15 @@ class SessionServiceTest {
 
         when(userRepository.userWith(username)).thenReturn(Mono.just(User.builder().phone(testPhone).build()));
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
-        when(otpServiceProperties.getExpirationTime()).thenReturn(300);
+        when(otpServiceProperties.getExpiryInMinutes()).thenReturn(5);
         when(unverifiedSessions.put(any(String.class),eq(username))).thenReturn(Mono.empty());
 
         SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, userRepository, otpServiceClient, otpServiceProperties);
         StepVerifier.create(sessionService.sendOtp(new OtpVerificationRequest(username))).
                 assertNext(response -> {
                     assertThat(response.getSessionId()).isNotEmpty();
-                    assertThat(response.getExpirationTime()).isEqualTo(300);
-                    assertThat(response.getMobile()).isEqualTo(testPhone);
+                    assertThat(response.getMeta().getCommunicationExpiry()).isEqualTo("300");
+                    assertThat(response.getMeta().getCommunicationHint()).endsWith("3210");
                 }).verifyComplete();
 
         verify(userRepository).userWith(username);

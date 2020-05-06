@@ -55,19 +55,18 @@ public class IdentityServiceClient {
                 .accept(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromFormData(formData))
                 .retrieve()
-                .onStatus(httpStatus -> httpStatus.value() == 401 , clientResponse -> {
-                    return clientResponse.bodyToMono(KeyCloakError.class)
-                            .flatMap(keyCloakError -> {
-                                Error.ErrorBuilder errorBuilder = Error.builder().message(keyCloakError.getErrorDescription());
-                                if (keyCloakError.getError().equals("1002")) {
-                                    errorBuilder.code(ErrorCode.OTP_INVALID);
-                                }else if (keyCloakError.getError().equals("1003")) {
-                                    errorBuilder.code(ErrorCode.OTP_EXPIRED);
-                                }else {
-                                    errorBuilder.code(ErrorCode.UNKNOWN_ERROR_OCCURRED);
-                                }
-                                return  Mono.error(new ClientError(clientResponse.statusCode(), new ErrorRepresentation(errorBuilder.build())));});
-                })
+                .onStatus(httpStatus -> httpStatus.value() == 401 , clientResponse -> clientResponse.bodyToMono(KeyCloakError.class)
+                        .flatMap(keyCloakError -> {
+                            Error.ErrorBuilder errorBuilder = Error.builder().message(keyCloakError.getErrorDescription());
+                            String keyCloakErrorValue = keyCloakError.getError();
+                            if (keyCloakErrorValue.equals("1002")) {
+                                errorBuilder.code(ErrorCode.OTP_INVALID);
+                            }else if (keyCloakErrorValue.equals("1003")) {
+                                errorBuilder.code(ErrorCode.OTP_EXPIRED);
+                            }else {
+                                errorBuilder.code(ErrorCode.UNKNOWN_ERROR_OCCURRED);
+                            }
+                            return  Mono.error(new ClientError(clientResponse.statusCode(), new ErrorRepresentation(errorBuilder.build())));}))
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(Session.class);
     }

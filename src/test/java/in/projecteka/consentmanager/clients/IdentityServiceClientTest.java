@@ -24,6 +24,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static in.projecteka.consentmanager.clients.TestBuilders.keycloakCreateUser;
 import static in.projecteka.consentmanager.clients.TestBuilders.keycloakProperties;
 import static in.projecteka.consentmanager.clients.TestBuilders.session;
@@ -64,41 +67,41 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void shouldThrowExceptionForExpiredOTP() {
+    public void shouldThrowExceptionForExpiredOTP() throws JsonProcessingException {
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
                 Mono.just(ClientResponse
                         .create(HttpStatus.UNAUTHORIZED)
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .body("{\n" +
-                                "    \"error\": \"1003\",\n" +
-                                "    \"error_description\": \"Invalid Otp\"\n" +
-                                "}")
+                        .body(InvalidOtpResponse("1003","Invalid Otp"))
                         .build()));
         StepVerifier.create(identityServiceClient.getToken(formData))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().is4xxClientError() &&
-                        ((ClientError) throwable).getError().getError().getCode().equals(ErrorCode.OTP_EXPIRED)
-                )
+                        ((ClientError) throwable).getError().getError().getCode().equals(ErrorCode.OTP_EXPIRED))
                 .verify();
     }
 
     @Test
-    public void shouldThrowExceptionForIncorrectOTP() {
+    public void shouldThrowExceptionForIncorrectOTP() throws JsonProcessingException {
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
                 Mono.just(ClientResponse
                         .create(HttpStatus.UNAUTHORIZED)
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .body("{\n" +
-                                "    \"error\": \"1002\",\n" +
-                                "    \"error_description\": \"Invalid Otp\"\n" +
-                                "}")
+                        .body(InvalidOtpResponse("1002", "Invalid Otp"))
                         .build()));
         StepVerifier.create(identityServiceClient.getToken(formData))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().is4xxClientError() &&
-                        ((ClientError) throwable).getError().getError().getCode().equals(ErrorCode.OTP_INVALID)
-                )
+                        ((ClientError) throwable).getError().getError().getCode().equals(ErrorCode.OTP_INVALID))
                 .verify();
+    }
+
+    private static String InvalidOtpResponse(String error, String description) throws JsonProcessingException {
+        Map<String, String> map = new HashMap<>(2);
+        map.put("error",error);
+        map.put("error_description",description);
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.writeValueAsString(map);
     }
 
     @Test

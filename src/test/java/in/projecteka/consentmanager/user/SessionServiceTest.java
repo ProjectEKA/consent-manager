@@ -4,6 +4,7 @@ import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.exception.InvalidPasswordException;
+import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -97,6 +98,21 @@ class SessionServiceTest {
         var sessionRequest = sessionRequest().build();
         var sessionService = new SessionService(tokenService, null, lockedUsersRepository);
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new InvalidPasswordException("")));
+        when(lockedUsersRepository.getLockedUserFor(any())).thenReturn(Mono.empty());
+        when(lockedUsersRepository.insert(any())).thenReturn(Mono.empty());
+
+        var sessionPublisher = sessionService.forNew(sessionRequest);
+
+        StepVerifier.create(sessionPublisher)
+                .expectErrorSatisfies(throwable -> assertThat(((ClientError) throwable).getHttpStatus() == UNAUTHORIZED))
+                .verify();
+    }
+
+    @Test
+    void returnUnAuthorizedWhenAnyTokenServiceThrowsInvalidUserNameException() {
+        var sessionRequest = sessionRequest().build();
+        var sessionService = new SessionService(tokenService, null, lockedUsersRepository);
+        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new InvalidUserNameException("")));
         when(lockedUsersRepository.getLockedUserFor(any())).thenReturn(Mono.empty());
         when(lockedUsersRepository.insert(any())).thenReturn(Mono.empty());
 

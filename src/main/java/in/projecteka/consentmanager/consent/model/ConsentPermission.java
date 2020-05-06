@@ -25,6 +25,7 @@ public class ConsentPermission implements Serializable {
     @NotNull(message = "Permission period is not specified.")
     private AccessPeriod dateRange;
 
+    @Valid
     @NotNull(message = "Permission expiry is not specified.")
     @Future(message = "Permission expiry must be in future.")
     private Date dataEraseAt;

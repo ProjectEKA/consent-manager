@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.user.model;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -14,6 +15,7 @@ import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE
 @AllArgsConstructor
 @Getter
 public class ValidatePinRequest {
+    private UUID requestId;
     private final String pin;
     @Valid
     @NotBlank

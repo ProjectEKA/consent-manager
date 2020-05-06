@@ -11,34 +11,49 @@ import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
+import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
+import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.security.KeyPair;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
+import static in.projecteka.consentmanager.consent.TestBuilders.artefactLightRepresentation;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
+import static in.projecteka.consentmanager.consent.TestBuilders.hipConsentArtefactRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
+import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -93,7 +108,89 @@ class ConsentManagerTest {
     }
 
     @Test
+    public void getConsents() throws ParseException {
+        ConsentRepresentation consentRepresentation = consentRepresentation().build();
+        consentRepresentation.setStatus(ConsentStatus.GRANTED);
+        String consentRequestId = consentRepresentation.getConsentRequestId();
+        String consentId = consentRepresentation.getConsentDetail().getConsentId();
+        String patientId = "user@ncg";
+        consentRepresentation.getConsentDetail().getPatient().setId(patientId);
+        consentRepresentation.getConsentDetail().getHiu().setId(patientId);
+        String[] consentIds = new String[]{consentId};
+        ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
+        consentArtefactRepresentation.setConsentDetail(consentRepresentation.getConsentDetail());
+        consentArtefactRepresentation.getConsentDetail().getPermission().setDataEraseAt(toDateWithMilliSeconds("253379772420000"));
+
+        when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
+        when(consentArtefactRepository.getConsentArtefacts(consentRequestId)).thenReturn(Flux.fromArray(consentIds));
+        when(consentArtefactRepository.getConsentArtefact(consentId)).thenReturn(Mono.just(consentArtefactRepresentation));
+
+        StepVerifier.create(consentManager.getConsents(consentRequestId, patientId)
+                .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+                .expectNext(consentArtefactRepresentation)
+                .expectComplete()
+                .verify();
+        verify(consentArtefactRepository, times(0)).updateConsentArtefactStatus(any(), any());
+        verifyNoInteractions(consentNotificationPublisher);
+    }
+
+    @Test
+    public void getConsent() throws ParseException {
+        ConsentRepresentation consentRepresentation = consentRepresentation().build();
+        consentRepresentation.setStatus(ConsentStatus.GRANTED);
+        String consentRequestId = consentRepresentation.getConsentRequestId();
+        String patientId = consentRepresentation.getConsentDetail().getPatient().getId();
+        consentRepresentation.getConsentDetail().getHiu().setId(patientId);
+        ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
+        consentArtefactRepresentation.setConsentDetail(consentRepresentation.getConsentDetail());
+        consentArtefactRepresentation.getConsentDetail().getPermission().setDataEraseAt(toDateWithMilliSeconds("253379772420000"));
+
+        when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
+        when(consentArtefactRepository.getConsentArtefact(consentRequestId)).thenReturn(Mono.just(consentArtefactRepresentation));
+
+        StepVerifier.create(consentManager.getConsent(consentRequestId, patientId)
+                .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+                .expectNext(consentArtefactRepresentation)
+                .expectComplete()
+                .verify();
+        verify(consentArtefactRepository, times(0)).updateConsentArtefactStatus(any(), any());
+        verifyNoInteractions(consentNotificationPublisher);
+    }
+
+    @Test
+    public void getConsentArtefactLight() throws ParseException {
+        ConsentRepresentation consentRepresentation = consentRepresentation().build();
+        consentRepresentation.setStatus(ConsentStatus.GRANTED);
+        String patientId = consentRepresentation.getConsentDetail().getPatient().getId();
+        String consentId = consentRepresentation.getConsentDetail().getConsentId();
+        consentRepresentation.getConsentDetail().getHiu().setId(patientId);
+        ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
+        consentArtefactRepresentation.setConsentDetail(consentRepresentation.getConsentDetail());
+        consentArtefactRepresentation.setStatus(ConsentStatus.GRANTED);
+        consentArtefactRepresentation.getConsentDetail().getPermission().setDataEraseAt(toDateWithMilliSeconds("253379772420000"));
+        HIPConsentArtefactRepresentation hipConsentArtefactRepresentation = hipConsentArtefactRepresentation().build();
+        ConsentArtefactLightRepresentation artefactLightRepresentation = artefactLightRepresentation().build();
+        artefactLightRepresentation.getConsentDetail().setHiu(consentArtefactRepresentation.getConsentDetail().getHiu());
+        artefactLightRepresentation.getConsentDetail().setPermission(consentArtefactRepresentation.getConsentDetail().getPermission());
+        artefactLightRepresentation.setSignature(hipConsentArtefactRepresentation.getSignature());
+        artefactLightRepresentation.setStatus(consentArtefactRepresentation.getStatus());
+
+        when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
+        when(consentArtefactRepository.getHipConsentArtefact(consentId)).thenReturn(Mono.just(hipConsentArtefactRepresentation));
+        when(consentArtefactRepository.getConsentArtefact(consentId)).thenReturn(Mono.just(consentArtefactRepresentation));
+
+        StepVerifier.create(consentManager.getConsentArtefactLight(consentId)
+                .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+                .expectNext(artefactLightRepresentation)
+                .expectComplete()
+                .verify();
+        verify(consentArtefactRepository, times(0)).updateConsentArtefactStatus(any(), any());
+        verifyNoInteractions(consentNotificationPublisher);
+    }
+
+    @Test
     public void askForConsent() {
+        var requestId = UUID.randomUUID();
         HIPReference hip1 = HIPReference.builder().id("hip1").build();
         HIUReference hiu1 = HIUReference.builder().id("hiu1").build();
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
@@ -105,14 +202,16 @@ class ConsentManagerTest {
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
+        when(repository.requestOf(requestId.toString())).thenReturn(Mono.empty());
 
-        StepVerifier.create(consentManager.askForConsent(requestedDetail))
+        StepVerifier.create(consentManager.askForConsent(requestedDetail, requestId))
                 .expectNextMatches(Objects::nonNull)
                 .verifyComplete();
     }
 
     @Test
     public void askForConsentWithoutValidHIU() {
+        var requestId = UUID.randomUUID();
         HIPReference hip1 = HIPReference.builder().id("hip1").build();
         HIUReference hiu1 = HIUReference.builder().id("hiu1").build();
         PatientReference patient = PatientReference.builder().id("chethan@ncg").build();
@@ -124,8 +223,9 @@ class ConsentManagerTest {
         when(centralRegistry.providerWith(eq("hip1"))).thenReturn(Mono.just(new Provider()));
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.error(ClientError.providerNotFound()));
         when(userClient.userOf(eq("chethan@ncg"))).thenReturn(Mono.just(new User()));
+        when(repository.requestOf(requestId.toString())).thenReturn(Mono.just(consentRequestDetail().build()));
 
-        StepVerifier.create(consentManager.askForConsent(requestedDetail))
+        StepVerifier.create(consentManager.askForConsent(requestedDetail, requestId))
                 .expectErrorMatches(e -> (e instanceof ClientError) &&
                         ((ClientError) e).getHttpStatus().is4xxClientError())
                 .verify();
@@ -167,7 +267,7 @@ class ConsentManagerTest {
                 .status(REQUESTED);
         when(repository.requestOf(requestId))
                 .thenReturn(Mono.just(consentRequestDetail.build()),
-                Mono.just(consentRequestDetail.status(DENIED).build()));
+                        Mono.just(consentRequestDetail.status(DENIED).build()));
         when(repository.updateStatus(requestId, DENIED)).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 

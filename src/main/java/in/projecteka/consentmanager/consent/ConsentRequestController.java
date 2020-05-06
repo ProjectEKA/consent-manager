@@ -43,7 +43,7 @@ public class ConsentRequestController {
     @PostMapping(value = "/consent-requests")
     public Mono<RequestCreatedRepresentation> requestConsent(
             @RequestBody @Valid @ModelAttribute("consentRequest") ConsentRequest request) {
-        return consentManager.askForConsent(request.getConsent())
+        return consentManager.askForConsent(request.getConsent(), request.getRequestId())
                 .map(ConsentRequestController::buildResponse);
     }
 

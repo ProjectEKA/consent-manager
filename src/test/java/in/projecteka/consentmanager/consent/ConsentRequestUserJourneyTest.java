@@ -48,6 +48,7 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -194,10 +195,12 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldAcceptConsentRequest() {
         var authToken = string();
-        when(centralRegistryTokenVerifier.verify(authToken)).thenReturn(Mono.just(new Caller("MAX-ID", true)));
+        when(centralRegistryTokenVerifier.verify(authToken))
+                .thenReturn(Mono.just(new Caller("MAX-ID", true)));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
+        when(repository.requestOf(anyString())).thenReturn(Mono.empty());
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
         load(clientRegistryServer, "{}");
         load(clientRegistryServer, "{}");
@@ -207,6 +210,7 @@ public class ConsentRequestUserJourneyTest {
         load(userServer, "{}");
 
         String consentRequestJson = "{\n" +
+                "\"requestId\": \"9e1228c3-0d2b-47cb-9ae2-c0eb95aed950\",\n" +
                 "  \"consent\": {\n" +
                 "    \"purpose\": {\n" +
                 "      \"text\": \"For Clinical Reference\",\n" +

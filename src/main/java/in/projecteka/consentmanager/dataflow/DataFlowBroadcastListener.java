@@ -60,7 +60,7 @@ public class DataFlowBroadcastListener {
                         .build();
                 configureAndSendDataRequestFor(dataFlowRequest);
             } catch (Exception e) {
-                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
             }
         };
         mlc.setupMessageListener(messageListener);

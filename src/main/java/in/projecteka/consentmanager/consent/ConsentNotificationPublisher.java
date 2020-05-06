@@ -57,7 +57,8 @@ public class ConsentNotificationPublisher {
                     sendMessage(consentArtefact, destinationInfo.getExchange(), destinationInfo.getRoutingKey());
                     logger.info(
                             "Broadcasting consent artefact notification to hip for consent artefact: {}",
-                            consentArtefact.getConsentDetail().getConsentId());
+                            consentArtefact.getConsentId()
+                    );
                 });
     }
 

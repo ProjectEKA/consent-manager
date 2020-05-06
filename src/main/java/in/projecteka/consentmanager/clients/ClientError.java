@@ -111,7 +111,7 @@ public class ClientError extends Throwable {
     }
 
     public static ClientError failedToFetchLockedUser() {
-        return internalServerError("Failed to fetch transaction pin");
+        return internalServerError("Failed to fetch Locked User");
     }
 
     public static ClientError queueNotFound() {

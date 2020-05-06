@@ -1,6 +1,8 @@
 server:
   port: 8000
 consentmanager:
+  scheduler:
+    consentExpiryCronExpr: "0 */1 * ? * *"
   clientregistry:
     XAuthToken: dummy-auth-token
     clientId: dummy-client-id

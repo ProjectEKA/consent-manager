@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
+import in.projecteka.consentmanager.consent.model.ConsentExpiry;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
@@ -12,6 +13,7 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -35,6 +37,9 @@ public class ConsentArtefactRepository {
             "FROM hip_consent_artefact WHERE consent_artefact_id = $1";
     private static final String SELECT_CONSENT_IDS_FROM_CONSENT_ARTEFACT = "SELECT consent_artefact_id " +
             "FROM consent_artefact WHERE consent_request_id=$1";
+    private static final String SELECT_CONSENTS_TO_VALIDATE_EXPIRY = "SELECT consent_artefact_id, " +
+            "consent_artefact -> 'permission' ->> 'dataEraseAt' as consent_expiry_date, patient_id " +
+            "FROM consent_artefact WHERE status=$1";
     private static final String UPDATE_CONSENT_ARTEFACT_STATUS_QUERY = "UPDATE consent_artefact SET status=$1, " +
             "date_modified=$2 WHERE consent_artefact_id=$3";
     private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
@@ -130,6 +135,29 @@ public class ConsentArtefactRepository {
                         }));
     }
 
+    @SneakyThrows
+    public Flux<ConsentExpiry> getConsentArtefacts(ConsentStatus consentStatus) {
+        return Flux.create(fluxSink -> dbClient.preparedQuery(SELECT_CONSENTS_TO_VALIDATE_EXPIRY)
+                .execute(Tuple.of(consentStatus.toString()),
+                        handler -> {
+                            if (handler.failed()) {
+                                fluxSink.error(new Exception("Failed to get GRANTED consents"));
+                                return;
+                            }
+                            RowSet<Row> results = handler.result();
+                            if (results.iterator().hasNext()) {
+                                results.forEach(row -> {
+                                    fluxSink.next(ConsentExpiry.builder()
+                                            .consentId(row.getString("consent_artefact_id"))
+                                            .patientId(row.getString("patient_id"))
+                                            .consentExpiryDate(new Date(Long.parseLong(row.getString("consent_expiry_date"))))
+                                            .build());
+                                });
+                            }
+                            fluxSink.complete();
+                        }));
+    }
+
     public Mono<Void> updateStatus(String consentId, String consentRequestId, ConsentStatus status) {
         return Mono.create(monoSink -> dbClient.begin(connectionAttempt -> {
             var queries = getUpdateQueries(consentId, consentRequestId, status);
@@ -140,6 +168,20 @@ public class ConsentArtefactRepository {
                 monoSink.error(new RuntimeException("Can not get connectionAttempt to storage."));
             }
         }));
+    }
+
+    public Mono<Void> updateConsentArtefactStatus(String consentId, ConsentStatus status) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(UPDATE_CONSENT_ARTEFACT_STATUS_QUERY)
+                .execute(Tuple.of(status.toString(),
+                        LocalDateTime.now(),
+                        consentId),
+                        updateHandler -> {
+                            if (updateHandler.failed()) {
+                                monoSink.error(new Exception("Failed to update consent artefact status"));
+                                return;
+                            }
+                            monoSink.success();
+                        }));
     }
 
     private List<Query> getUpdateQueries(String consentId, String consentRequestId, ConsentStatus status) {

@@ -4,8 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.Date;
-
 
 @Builder
 @AllArgsConstructor
@@ -16,6 +14,6 @@ public class LockedUser {
     @Builder.Default
     private final Boolean isLocked = false;
     @Builder.Default
-    private final Date lockedTime = null;
+    private final String lockedTime = null;
 }
 

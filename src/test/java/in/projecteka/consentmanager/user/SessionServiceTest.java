@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.user.exception.InvalidPasswordException;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,9 @@ class SessionServiceTest {
     @Mock
     CacheAdapter<String, String> blacklistedTokens;
 
+    @Mock
+    LockedUsersRepository lockedUsersRepository;
+
     @BeforeEach
     void init() {
         initMocks(this);
@@ -43,7 +47,7 @@ class SessionServiceTest {
         var expectedSession = session().build();
         when(tokenService.tokenForUser(sessionRequest.getUsername(), sessionRequest.getPassword()))
                 .thenReturn(Mono.just(expectedSession));
-        var sessionService = new SessionService(tokenService, null);
+        var sessionService = new SessionService(tokenService, null, lockedUsersRepository);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -60,7 +64,7 @@ class SessionServiceTest {
     })
     void returnUnAuthorizedErrorWhenUsernameIsEmpty(@ConvertWith(NullableConverter.class) String value) {
         var sessionRequest = sessionRequest().username(value).build();
-        var sessionService = new SessionService(tokenService, null);
+        var sessionService = new SessionService(tokenService, null, lockedUsersRepository);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -79,7 +83,7 @@ class SessionServiceTest {
     void returnUnAuthorizedErrorWhenPasswordIsEmpty(
             @ConvertWith(NullableConverter.class) String value) {
         var sessionRequest = sessionRequest().password(value).build();
-        var sessionService = new SessionService(tokenService, null);
+        var sessionService = new SessionService(tokenService, null, lockedUsersRepository);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -89,10 +93,12 @@ class SessionServiceTest {
     }
 
     @Test
-    void returnUnAuthorizedWhenAnyOtherErrorHappens() {
+    void returnUnAuthorizedWhenAnyTokenServiceThrowsInvalidPasswordException() {
         var sessionRequest = sessionRequest().build();
-        var sessionService = new SessionService(tokenService, null);
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new Exception()));
+        var sessionService = new SessionService(tokenService, null, lockedUsersRepository);
+        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new InvalidPasswordException("")));
+        when(lockedUsersRepository.getLockedUserFor(any())).thenReturn(Mono.empty());
+        when(lockedUsersRepository.insert(any())).thenReturn(Mono.empty());
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -106,14 +112,14 @@ class SessionServiceTest {
         String testAccessToken = "accessToken";
         String refreshToken = "refreshToken";
         LogoutRequest logoutRequest = new LogoutRequest(refreshToken);
-        when(blacklistedTokens.put(String.format(BLACKLIST_FORMAT, BLACKLIST, testAccessToken),"")).
+        when(blacklistedTokens.put(String.format(BLACKLIST_FORMAT, BLACKLIST, testAccessToken), "")).
                 thenReturn(Mono.empty());
         when(tokenService.revoke(refreshToken)).thenReturn(Mono.empty());
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, lockedUsersRepository);
         Mono<Void> logout = sessionService.logout(testAccessToken, logoutRequest);
 
         StepVerifier.create(logout).verifyComplete();
-        verify(blacklistedTokens).put(String.format(BLACKLIST_FORMAT, BLACKLIST, testAccessToken),"");
+        verify(blacklistedTokens).put(String.format(BLACKLIST_FORMAT, BLACKLIST, testAccessToken), "");
         verify(tokenService).revoke(refreshToken);
     }
 }

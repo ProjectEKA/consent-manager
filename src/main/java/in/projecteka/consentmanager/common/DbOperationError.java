@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.common;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 import org.springframework.http.HttpStatus;
 

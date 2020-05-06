@@ -72,6 +72,6 @@ public class HipConsentNotificationListener {
     }
 
     private Mono<String> getProviderUrl(String hipId) {
-        return centralRegistry.providerWith(hipId).flatMap(provider -> Mono.just("http://localhost:8000"));
+        return centralRegistry.providerWith(hipId).flatMap(provider -> Mono.just(provider.getProviderUrl()));
     }
 }

@@ -18,18 +18,17 @@ public class OtpAttemptService {
     private final OtpAttemptRepository otpAttemptRepository;
     private final UserServiceProperties userServiceProperties;
 
-    public Mono<Void> createOtpAttemptFor(String phoneNumber, boolean blockedStatus) {
-        return otpAttemptRepository.insert(phoneNumber, blockedStatus);
-    }
-
-
     public Mono<Void> validateOTPRequest(String phoneNumber) {
         return otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts())
                 .filter(otpAttempts -> otpAttempts.size() >= userServiceProperties.getMaxOtpAttempts())
                 .filter(this::isNoneBlockedExceptLatest)
                 .flatMap(this::validateLatestAttempt)
                 .flatMap(this::validateAttemptsLimit)
-                .switchIfEmpty(createOtpAttemptFor(phoneNumber, false));
+                .switchIfEmpty(Mono.defer(() -> createOtpAttemptFor(phoneNumber, false)));
+    }
+
+    private Mono<Void> createOtpAttemptFor(String phoneNumber, boolean blockedStatus) {
+        return otpAttemptRepository.insert(phoneNumber, blockedStatus);
     }
 
     private Mono<List<OtpAttempt>> validateLatestAttempt(List<OtpAttempt> attempts) {

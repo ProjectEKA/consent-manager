@@ -109,7 +109,7 @@ class UserServiceTest {
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
         when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq("+91-9788888")))
                 .thenReturn(Mono.just(signUpSession));
-        when(otpAttemptService.createOtpAttemptFor(userSignUpEnquiry.getIdentifier(),false)).thenReturn(Mono.empty());
+        when(otpAttemptService.validateOTPRequest(userSignUpEnquiry.getIdentifier())).thenReturn(Mono.empty());
 
         Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
 

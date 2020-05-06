@@ -14,6 +14,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUE
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_RANGE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SCOPE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TOKEN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TRANSACTION_PIN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.NETWORK_SERVICE_ERROR;
@@ -197,5 +198,10 @@ public class ClientError extends Throwable {
         return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(REQUEST_ALREADY_EXISTS,
                         "A request with this request id already exists.")));
+    }
+
+    public static ClientError invalidScope() {
+        return new ClientError(UNAUTHORIZED,
+                new ErrorRepresentation(new Error(INVALID_SCOPE, "The scope provided is invalid for current operation")));
     }
 }

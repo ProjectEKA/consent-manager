@@ -322,14 +322,15 @@ public class ConsentRequestUserJourneyTest {
                 "    }\n" +
                 "}";
         load(patientLinkServer, linkedPatientContextsJson);
+        String scope = "consentrequest.approve";
 
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
                 .thenReturn(Mono.just(consentRequestDetail));
-        when(pinVerificationTokenService.validateToken(token))
-                .thenReturn(Mono.just(new Caller(patientId, false)));
+        when(pinVerificationTokenService.validateToken(token, scope))
+                .thenReturn(Mono.just(new Caller(patientId, false, "randomSessionId")));
         when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
@@ -387,7 +388,8 @@ public class ConsentRequestUserJourneyTest {
         var consentRequestDetail = OBJECT_MAPPER.readValue(requestedConsentJson, ConsentRequestDetail.class);
         String patientId = "ashok.kumar@ncg";
 
-        when(pinVerificationTokenService.validateToken(token))
+        String scope = "consentrequest.approve";
+        when(pinVerificationTokenService.validateToken(token, scope))
                 .thenReturn(Mono.just(new Caller(patientId, false)));
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
                 .thenReturn(Mono.just(consentRequestDetail));

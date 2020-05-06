@@ -5,10 +5,12 @@ import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
+import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -29,6 +31,7 @@ public class SessionService {
     private final Logger logger = LoggerFactory.getLogger(SessionService.class);
     private final UserRepository userRepository;
     private final OtpServiceClient otpServiceClient;
+    private final OtpServiceProperties otpServiceProperties;
 
     public Mono<Session> forNew(SessionRequest request) {
         if (StringUtils.isEmpty(request.getUsername()) || StringUtils.isEmpty(request.getPassword()))
@@ -43,14 +46,14 @@ public class SessionService {
                 .then(tokenService.revoke(logoutRequest.getRefreshToken()));
     }
 
-    public Mono<String> sendOtp(OtpVerificationRequest otpVerificationRequest) {
+    public Mono<OtpVerificationResponse> sendOtp(OtpVerificationRequest otpVerificationRequest) {
         String sessionId = UUID.randomUUID().toString();
         return userRepository.userWith(otpVerificationRequest.getUsername())
                 .switchIfEmpty(Mono.error(ClientError.userNotFound()))
                 .map(user -> new OtpCommunicationData("mobile",user.getPhone()))
                 .map(otpCommunicationData -> new OtpRequest(sessionId,otpCommunicationData))
-                .flatMap(otpServiceClient::send)
-                .thenReturn(sessionId);
+                .flatMap(requestBody -> otpServiceClient.send(requestBody).thenReturn(requestBody.getCommunication().getValue()))
+                .map(mobileNumber -> new OtpVerificationResponse(sessionId,mobileNumber,otpServiceProperties.getExpirationTime()));
     }
 
     public Mono<Session> validateOtp(OtpPermitRequest otpPermitRequest) {

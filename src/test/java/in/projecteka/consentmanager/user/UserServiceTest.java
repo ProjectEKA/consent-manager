@@ -92,7 +92,7 @@ class UserServiceTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"),5);
+        var otpServiceProperties = new OtpServiceProperties("",0, Collections.singletonList("MOBILE"),5);
         userService = new UserService(
                 userRepository,
                 otpServiceProperties,

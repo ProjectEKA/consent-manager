@@ -22,6 +22,7 @@ consentmanager:
     userCreationTokenValidity: ${USER_CREATION_TOKEN_VALIDITY}
     userIdSuffix: ${USER_ID_SUFFIX}
   otpservice:
+    expirationTime: 300
     url: ${Otp_Service_Url}
     identifiers:
       - MOBILE

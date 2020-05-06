@@ -107,9 +107,10 @@ public class UserConfiguration {
     @Bean
     public SessionService sessionService(TokenService tokenService,
                                          CacheAdapter<String,String> blacklistedTokens,
-                                        UserRepository userRepository,
-                                         OtpServiceClient otpServiceClient) {
-        return new SessionService(tokenService, blacklistedTokens, userRepository, otpServiceClient);
+                                         UserRepository userRepository,
+                                         OtpServiceClient otpServiceClient,
+                                         OtpServiceProperties otpServiceProperties) {
+        return new SessionService(tokenService, blacklistedTokens, userRepository, otpServiceClient,otpServiceProperties);
     }
 
     @Bean

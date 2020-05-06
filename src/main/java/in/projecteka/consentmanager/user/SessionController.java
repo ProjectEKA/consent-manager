@@ -26,9 +26,7 @@ public class SessionController {
 
     @PostMapping("/otpsession/verify")
     public Mono<OtpVerificationResponse> verify(@RequestBody OtpVerificationRequest otpVerificationRequest) {
-        return sessionService.sendOtp(otpVerificationRequest).map(sessionId -> {
-            return new OtpVerificationResponse(sessionId);
-        });
+        return sessionService.sendOtp(otpVerificationRequest);
     }
 
     @PostMapping("/otpsession/permit")

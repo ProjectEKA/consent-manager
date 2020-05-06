@@ -72,14 +72,14 @@ public class UserConfiguration {
                 userServiceProperties.getUserCreationTokenValidity());
     }
 
-    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens", "usedTokens"})
-    public CacheAdapter<String, String> createLoadingCacheAdapter(LoadingCache<String,String> cache) {
-       return new LoadingCacheAdapter(cache);
+    public CacheAdapter<String, String> createLoadingCacheAdapter(LoadingCache<String, String> cache) {
+        return new LoadingCacheAdapter(cache);
     }
 
     @Bean
-    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     public LoadingCache<String, String> createSessionCache() {
         return CacheBuilder
                 .newBuilder()
@@ -91,7 +91,7 @@ public class UserConfiguration {
                 });
     }
 
-    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "redis")
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens", "usedTokens"})
     public CacheAdapter<String, String> createRedisCacheAdapter(RedisOptions redisOptions) {
         RedisURI redisUri = RedisURI.Builder.
@@ -103,11 +103,15 @@ public class UserConfiguration {
         return new RedisCacheAdapter(redisClient);
     }
 
+    @Bean
+    LockedUserService lockedUserService(LockedUsersRepository lockedUsersRepository) {
+        return new LockedUserService(lockedUsersRepository);
+    }
 
     @Bean
     public SessionService sessionService(TokenService tokenService,
-                                         CacheAdapter<String,String> blacklistedTokens, LockedUsersRepository lockedUsersRepository) {
-        return new SessionService(tokenService, blacklistedTokens, lockedUsersRepository);
+                                         CacheAdapter<String, String> blacklistedTokens, LockedUserService lockedUserService) {
+        return new SessionService(tokenService, blacklistedTokens, lockedUserService);
     }
 
     @Bean

@@ -35,7 +35,7 @@ class SessionServiceTest {
     CacheAdapter<String, String> blacklistedTokens;
 
     @Mock
-    LockedUsersRepository lockedUsersRepository;
+    LockedUserService lockedUserService;
 
     @BeforeEach
     void init() {
@@ -48,7 +48,7 @@ class SessionServiceTest {
         var expectedSession = session().build();
         when(tokenService.tokenForUser(sessionRequest.getUsername(), sessionRequest.getPassword()))
                 .thenReturn(Mono.just(expectedSession));
-        var sessionService = new SessionService(tokenService, null, lockedUsersRepository);
+        var sessionService = new SessionService(tokenService, null, lockedUserService);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -65,7 +65,7 @@ class SessionServiceTest {
     })
     void returnUnAuthorizedErrorWhenUsernameIsEmpty(@ConvertWith(NullableConverter.class) String value) {
         var sessionRequest = sessionRequest().username(value).build();
-        var sessionService = new SessionService(tokenService, null, lockedUsersRepository);
+        var sessionService = new SessionService(tokenService, null, lockedUserService);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -84,7 +84,7 @@ class SessionServiceTest {
     void returnUnAuthorizedErrorWhenPasswordIsEmpty(
             @ConvertWith(NullableConverter.class) String value) {
         var sessionRequest = sessionRequest().password(value).build();
-        var sessionService = new SessionService(tokenService, null, lockedUsersRepository);
+        var sessionService = new SessionService(tokenService, null, lockedUserService);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -96,10 +96,10 @@ class SessionServiceTest {
     @Test
     void returnUnAuthorizedWhenAnyTokenServiceThrowsInvalidPasswordException() {
         var sessionRequest = sessionRequest().build();
-        var sessionService = new SessionService(tokenService, null, lockedUsersRepository);
+        var sessionService = new SessionService(tokenService, null, lockedUserService);
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new InvalidPasswordException("")));
-        when(lockedUsersRepository.getLockedUserFor(any())).thenReturn(Mono.empty());
-        when(lockedUsersRepository.insert(any())).thenReturn(Mono.empty());
+        when(lockedUserService.getLockedUser(any())).thenReturn(Mono.empty());
+        when(lockedUserService.insertUser(any())).thenReturn(Mono.empty());
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -111,10 +111,10 @@ class SessionServiceTest {
     @Test
     void returnUnAuthorizedWhenAnyTokenServiceThrowsInvalidUserNameException() {
         var sessionRequest = sessionRequest().build();
-        var sessionService = new SessionService(tokenService, null, lockedUsersRepository);
+        var sessionService = new SessionService(tokenService, null, lockedUserService);
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new InvalidUserNameException("")));
-        when(lockedUsersRepository.getLockedUserFor(any())).thenReturn(Mono.empty());
-        when(lockedUsersRepository.insert(any())).thenReturn(Mono.empty());
+        when(lockedUserService.getLockedUser(any())).thenReturn(Mono.empty());
+        when(lockedUserService.insertUser(any())).thenReturn(Mono.empty());
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -131,7 +131,7 @@ class SessionServiceTest {
         when(blacklistedTokens.put(String.format(BLACKLIST_FORMAT, BLACKLIST, testAccessToken), "")).
                 thenReturn(Mono.empty());
         when(tokenService.revoke(refreshToken)).thenReturn(Mono.empty());
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, lockedUsersRepository);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, lockedUserService);
         Mono<Void> logout = sessionService.logout(testAccessToken, logoutRequest);
 
         StepVerifier.create(logout).verifyComplete();

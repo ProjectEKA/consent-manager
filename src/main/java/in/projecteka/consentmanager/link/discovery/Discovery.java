@@ -54,7 +54,7 @@ public class Discovery {
                 .flatMap(val -> userWith(userName)
                         .zipWith(providerUrl(providerId))
                         .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
-                        .flatMap(tuple -> patientIn(tuple.getT2(), tuple.getT1(), requestId, unverifiedIdentifiers))
+                        .flatMap(tuple -> patientIn(tuple.getT2(), tuple.getT1(), transactionId, unverifiedIdentifiers))
                         .flatMap(patientResponse ->
                                 insertDiscoveryRequest(patientResponse,
                                         providerId,
@@ -83,7 +83,7 @@ public class Discovery {
                         .orElse(Mono.empty()));
     }
 
-    private Mono<PatientResponse> patientIn(String hipSystemUrl, User user, UUID requestId, List<PatientIdentifier> unverifiedIdentifiers) {
+    private Mono<PatientResponse> patientIn(String hipSystemUrl, User user, UUID transactionId, List<PatientIdentifier> unverifiedIdentifiers) {
         var phoneNumber = in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
                 .type(MOBILE)
                 .value(user.getPhone())
@@ -105,7 +105,7 @@ public class Discovery {
                 .unverifiedIdentifiers(unverifiedIds)
                 .build();
 
-        var patientRequest = PatientRequest.builder().patient(patient).requestId(requestId).build();
+        var patientRequest = PatientRequest.builder().patient(patient).requestId(transactionId).build();
         return discoveryServiceClient.patientFor(patientRequest, hipSystemUrl);
     }
 

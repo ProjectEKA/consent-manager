@@ -106,8 +106,8 @@ public class UserConfiguration {
 
     @Bean
     public SessionService sessionService(TokenService tokenService,
-                                         CacheAdapter<String,String> blacklistedTokens) {
-        return new SessionService(tokenService, blacklistedTokens);
+                                         CacheAdapter<String,String> blacklistedTokens, LockedUsersRepository lockedUsersRepository) {
+        return new SessionService(tokenService, blacklistedTokens, lockedUsersRepository);
     }
 
     @Bean

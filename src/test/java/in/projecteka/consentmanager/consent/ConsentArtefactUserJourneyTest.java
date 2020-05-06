@@ -200,8 +200,9 @@ public class ConsentArtefactUserJourneyTest {
         RevokeRequest revokeRequest = RevokeRequest.builder().consents(consentIds).build();
         String patientId = consentRepresentation.getConsentDetail().getPatient().getId();
 
-        when(pinVerificationTokenService.validateToken(token))
-                .thenReturn(Mono.just(new Caller(patientId, false)));
+        String scope = "consent.revoke";
+        when(pinVerificationTokenService.validateToken(token, scope))
+                .thenReturn(Mono.just(new Caller(patientId, false, "testSessionId")));
         when(consentArtefactRepository.getConsentWithRequest(eq(consentId)))
                 .thenReturn(Mono.just(consentRepresentation));
         when(repository.requestOf(consentRequestId, ConsentStatus.GRANTED.toString(), patientId))
@@ -224,6 +225,7 @@ public class ConsentArtefactUserJourneyTest {
     @Test
     public void shouldNotRevokeConsentArtefactWhenItIsNotInGrantedState() throws JsonProcessingException {
         var token = string();
+        String scope = "consent.revoke";
         var consentRepresentation = consentRepresentation().status(ConsentStatus.REVOKED).build();
         String consentRequestId = consentRepresentation.getConsentRequestId();
         List<String> consentIds = new ArrayList<>();
@@ -234,7 +236,7 @@ public class ConsentArtefactUserJourneyTest {
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_NOT_GRANTED, "Not a granted consent."));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
 
-        when(pinVerificationTokenService.validateToken(token))
+        when(pinVerificationTokenService.validateToken(token, scope))
                 .thenReturn(Mono.just(new Caller(patientId, false)));
         when(consentArtefactRepository.getConsentWithRequest(eq(consentId)))
                 .thenReturn(Mono.just(consentRepresentation));

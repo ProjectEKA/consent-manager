@@ -1003,10 +1003,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PinVerificationRequest'
+              $ref: '#/components/schemas/ValidatePinRequest'
           application/xml:
             schema:
-              $ref: '#/components/schemas/PinVerificationRequest'
+              $ref: '#/components/schemas/ValidatePinRequest'
       responses:
         '200':
           description: Successful verification of PIN.
@@ -1208,6 +1208,74 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   # Sessions
+  /otpsession/verify:
+    post:
+      description: |
+        Request Otp for consent manager id.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OtpVerificationRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/OtpVerificationRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OtpVerificationResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/OtpVerificationResponse'
+        404:
+          description: User Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Error(On server side)
+  /otpsession/permit:
+    post:
+      description: |
+        validate otp.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OtpPermitRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/OtpPermitRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Error(On server side)
   /logout:
     post:
       description: |
@@ -1550,10 +1618,6 @@ components:
           type: string
           xml:
             attribute: true
-        name:
-          type: string
-          xml:
-            attribute: true
       xml:
         name: OrganizationResponse
     Organization:
@@ -1782,7 +1846,6 @@ components:
       type: object
       required:
         - id
-        - name
       properties:
         id:
           type: string
@@ -2053,7 +2116,7 @@ components:
           description: '4 digit number'
       required:
         - pin
-    PinVerificationRequest:
+    ValidatePinRequest:
       type: object
       properties:
         pin:
@@ -2061,8 +2124,13 @@ components:
           maximum: 9999
           example: "1234"
           description: '4 digit number'
+        scope:
+          type: string
+          enum : [consentrequest.approve, consent.revoke]
+          description: 'Scope the supplied token will be valid for'
       required:
         - pin
+        - scope
     CreatePatientRequest:
       type: object
       properties:
@@ -2177,3 +2245,35 @@ components:
       properties:
         refreshToken:
           type: string
+    OtpVerificationRequest:
+      type: object
+      properties:
+        username:
+          type: string
+      required:
+        - username
+    OtpVerificationResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        mobile:
+          type: string
+          description: Mobile number used for registration
+        expirationTime:
+          type: integer
+          description: in seconds for the session.
+    OtpPermitRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        sessionId:
+          type: string
+        otp:
+          type: string
+      required:
+        - username
+        - otp
+        - sessionId
+

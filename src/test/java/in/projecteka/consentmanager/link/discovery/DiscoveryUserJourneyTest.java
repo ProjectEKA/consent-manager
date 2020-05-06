@@ -100,7 +100,8 @@ public class DiscoveryUserJourneyTest {
                 });
         var token = string();
         var session = "{\"accessToken\": \"eyJhbGc\"}";
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("consent-manager-service", true)));
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(
+                "consent-manager-service", true)));
         providerServer.enqueue(new MockResponse()
                 .setHeader("Content-Type", "application/json")
                 .setBody(session));
@@ -120,6 +121,39 @@ public class DiscoveryUserJourneyTest {
                 .jsonPath("$.[0].city").isEqualTo("Bangalore")
                 .jsonPath("$.[0].telephone").isEqualTo("08080887876")
                 .jsonPath("$.[0].type").isEqualTo("prov");
+    }
+
+    @Test
+    public void shouldGetProviderById() throws IOException {
+        var providers = new ObjectMapper().readValue(
+                Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource("providerById.json")),
+                new TypeReference<JsonNode>() {
+                });
+        var token = string();
+        var session = "{\"accessToken\": \"eyJhbGc\"}";
+        String providerId = "12345";
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(
+                "consent-manager-service", true)));
+        providerServer.enqueue(new MockResponse()
+                .setHeader("Content-Type", "application/json")
+                .setBody(session));
+        providerServer.enqueue(new MockResponse()
+                .setHeader("Content-Type", "application/json")
+                .setBody(providers.toString()));
+
+        webTestClient.get()
+                .uri("/providers/" + providerId)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.identifier.name").isEqualTo("Max Health Care")
+                .jsonPath("$.identifier.id").isEqualTo(providerId)
+                .jsonPath("$.city").isEqualTo("Bangalore")
+                .jsonPath("$.telephone").isEqualTo("08080887876")
+                .jsonPath("$.type").isEqualTo("prov");
     }
 
     public static class ContextInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

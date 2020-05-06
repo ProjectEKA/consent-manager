@@ -115,8 +115,7 @@ public class ConsentRequestUserJourneyTest {
             "    \"consents\": [\n" +
             "        {\n" +
             "            \"hip\": {\n" +
-            "                \"id\": \"10000005\",\n" +
-            "                \"name\": \"Max Health Care\"\n" +
+            "                \"id\": \"10000005\"\n" +
             "            },\n" +
             "            \"hiTypes\": [\n" +
             "                \"DiagnosticReport\", \"Observation\"\n" +
@@ -165,8 +164,7 @@ public class ConsentRequestUserJourneyTest {
             "            },\n" +
             "            \"hip\": null,\n" +
             "            \"hiu\": {\n" +
-            "                \"id\": \"10000005\",\n" +
-            "                \"name\": \"Max Health Care\"\n" +
+            "                \"id\": \"10000005\"\n" +
             "            },\n" +
             "            \"requester\": {\n" +
             "                \"name\": \"Dr. Lakshmi\",\n" +
@@ -219,12 +217,10 @@ public class ConsentRequestUserJourneyTest {
                 "      \"id\": \"batman@ncg\"\n" +
                 "    },\n" +
                 "    \"hip\": {\n" +
-                "      \"id\": \"TMH-ID\",\n" +
-                "      \"name\": \"TMH\"\n" +
+                "      \"id\": \"TMH-ID\"\n" +
                 "    },\n" +
                 "    \"hiu\": {\n" +
-                "      \"id\": \"MAX-ID\",\n" +
-                "      \"name\": \"MAX\"\n" +
+                "      \"id\": \"MAX-ID\"\n" +
                 "    },\n" +
                 "    \"requester\": {\n" +
                 "      \"name\": \"Dr Ramandeep\",\n" +
@@ -307,8 +303,7 @@ public class ConsentRequestUserJourneyTest {
                 "        \"links\": [\n" +
                 "            {\n" +
                 "                \"hip\": {\n" +
-                "                    \"id\": \"10000005\",\n" +
-                "                    \"name\": \"Max Health Care\"\n" +
+                "                    \"id\": \"10000005\"\n" +
                 "                },\n" +
                 "                \"referenceNumber\": \"ashokkumar@max\",\n" +
                 "                \"display\": \"Ashok Kumar\",\n" +
@@ -323,14 +318,15 @@ public class ConsentRequestUserJourneyTest {
                 "    }\n" +
                 "}";
         load(patientLinkServer, linkedPatientContextsJson);
+        String scope = "consentrequest.approve";
 
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
                 .thenReturn(Mono.just(consentRequestDetail));
-        when(pinVerificationTokenService.validateToken(token))
-                .thenReturn(Mono.just(new Caller(patientId, false)));
+        when(pinVerificationTokenService.validateToken(token, scope))
+                .thenReturn(Mono.just(new Caller(patientId, false, "randomSessionId")));
         when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
@@ -370,8 +366,7 @@ public class ConsentRequestUserJourneyTest {
                 "        \"links\": [\n" +
                 "            {\n" +
                 "                \"hip\": {\n" +
-                "                    \"id\": \"10000005\",\n" +
-                "                    \"name\": \"Max Health Care\"\n" +
+                "                    \"id\": \"10000005\"\n" +
                 "                },\n" +
                 "                \"referenceNumber\": \"ashokkumar@max\",\n" +
                 "                \"display\": \"Ashok Kumar\",\n" +
@@ -389,7 +384,8 @@ public class ConsentRequestUserJourneyTest {
         var consentRequestDetail = OBJECT_MAPPER.readValue(requestedConsentJson, ConsentRequestDetail.class);
         String patientId = "ashok.kumar@ncg";
 
-        when(pinVerificationTokenService.validateToken(token))
+        String scope = "consentrequest.approve";
+        when(pinVerificationTokenService.validateToken(token, scope))
                 .thenReturn(Mono.just(new Caller(patientId, false)));
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
                 .thenReturn(Mono.just(consentRequestDetail));

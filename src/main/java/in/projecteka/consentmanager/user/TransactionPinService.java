@@ -7,6 +7,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import reactor.core.publisher.Mono;
 
@@ -14,6 +16,7 @@ import java.security.PrivateKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.UUID;
 
 @AllArgsConstructor
 public class TransactionPinService {
@@ -21,6 +24,7 @@ public class TransactionPinService {
     private final BCryptPasswordEncoder encoder;
     private final PrivateKey privateKey;
     private final UserServiceProperties userServiceProperties;
+    private static final Logger logger = LoggerFactory.getLogger(TransactionPinService.class);
 
     public Mono<Void> createPinFor(String patientId, String pin) {
         if (!isPinValid(pin)) {
@@ -48,7 +52,7 @@ public class TransactionPinService {
         return transactionPinRepository.getTransactionPinFor(patientId).map(Optional::isPresent);
     }
 
-    public Mono<Token> validatePinFor(String patientId, String pin) {
+    public Mono<Token> validatePinFor(String patientId, String pin,String scope) {
         return transactionPinRepository.getTransactionPinFor(patientId)
                 .flatMap(transactionPin -> {
                     if (transactionPin.isEmpty()) {
@@ -58,16 +62,20 @@ public class TransactionPinService {
                     if (!encoder.matches(pin, transactionPin.get().getPin())) {
                         return Mono.error(ClientError.transactionPinDidNotMatch());
                     }
-
                     return Mono.empty();
-                }).thenReturn(newToken(patientId));
+                }).thenReturn(newToken(patientId, scope));
     }
 
     @SneakyThrows
-    private Token newToken(String userName) {
+    private Token newToken(String userName, String scope) {
         int minutes = userServiceProperties.getTransactionPinTokenValidity() * 60 * 1000;
+        HashMap<String, Object> claims = new HashMap<>(1);
+        claims.put("sid" , UUID.randomUUID().toString());
+        claims.put("scope" , scope);
+        logger.debug("Putting session id {}", claims.get("sid"));
+        logger.debug("Putting scope {}", claims.get("scope"));
         return new Token(Jwts.builder()
-                .setClaims(new HashMap<>())
+                .setClaims(claims)
                 .setSubject(userName)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + minutes))

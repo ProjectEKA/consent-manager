@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.User;
+import io.vertx.core.json.JsonArray;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
@@ -19,10 +20,10 @@ public class UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
     private static final List<String> ids = null;
     private static final String INSERT_PATIENT = "Insert into patient(id, " +
-            "name, gender, year_of_birth, phone_number)" +
-            " values($1, $2, $3, $4, $5);";
+            "name, gender, year_of_birth, phone_number, unverified_identifiers)" +
+            " values($1, $2, $3, $4, $5, $6);";
 
-    private static final String SELECT_PATIENT = "select id, name, gender, year_of_birth, phone_number " +
+    private static final String SELECT_PATIENT = "select id, name, gender, year_of_birth, phone_number, unverified_identifiers " +
             "from patient where id = $1";
 
     private final static String DELETE_PATIENT = "DELETE FROM patient WHERE id=$1";
@@ -51,6 +52,7 @@ public class UserRepository {
                                     .yearOfBirth(patientRow.getInteger("year_of_birth"))
                                     .gender(Gender.valueOf(patientRow.getString("gender")))
                                     .phone(patientRow.getString("phone_number"))
+                                    .unverifiedIdentifiers((JsonArray) patientRow.getValue("unverified_identifiers"))
                                     .build());
                         }));
     }
@@ -60,7 +62,8 @@ public class UserRepository {
                 user.getName(),
                 user.getGender().toString(),
                 user.getYearOfBirth(),
-                user.getPhone());
+                user.getPhone(),
+                user.getUnverifiedIdentifiers());
         return doOperation(INSERT_PATIENT, userDetails);
     }
 

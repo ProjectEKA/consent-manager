@@ -10,6 +10,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.*;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.*;
 
+
 @Getter
 @ToString
 public class ClientError extends Throwable {

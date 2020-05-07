@@ -47,7 +47,7 @@ public class ConsentArtefactsController {
     }
 
     @GetMapping(value = "/consent-requests/consent-artefacts")
-    public Flux<ConsentArtefact> getAllConsentArtefacts() {
+    public Flux<ConsentArtefactRepresentation> getAllConsentArtefacts() {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)

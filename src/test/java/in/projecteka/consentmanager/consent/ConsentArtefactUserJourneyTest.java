@@ -266,11 +266,11 @@ public class ConsentArtefactUserJourneyTest {
     void shouldGetAllConsentArtefacts() {
         String token = string();
 
-        ConsentArtefact consentArtefact = consentArtefact().build();
-        String patientId = consentArtefact.getPatient().getId();
+        ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
+        String patientId = consentArtefactRepresentation.getConsentDetail().getPatient().getId();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
 
-        when(consentArtefactRepository.getAllConsentArtefacts()).thenReturn(Flux.just(consentArtefact));
+        when(consentArtefactRepository.getAllConsentArtefacts()).thenReturn(Flux.just(consentArtefactRepresentation));
 
         webTestClient.get()
                 .uri("/consent-requests/consent-artefacts")
@@ -279,11 +279,11 @@ public class ConsentArtefactUserJourneyTest {
                 .exchange()
                 .expectStatus()
                 .isEqualTo(200)
-                .expectBody(new ParameterizedTypeReference<List<ConsentArtefact>>() {
+                .expectBody(new ParameterizedTypeReference<List<ConsentArtefactRepresentation>>() {
                 })
-                .value(value -> value.get(0).getConsentId(), equalTo(consentArtefact.getConsentId()))
-                .value(value -> value.get(0).getPatient(), is(consentArtefact.getPatient()))
-                .value(value -> value.get(0).getHiu(), is(consentArtefact.getHiu()));
+                .value(value -> value.get(0).getStatus(), equalTo(consentArtefactRepresentation.getStatus()))
+                .value(value -> value.get(0).getConsentDetail(), equalTo(consentArtefactRepresentation.getConsentDetail()))
+                .value(value -> value.get(0).getSignature(), equalTo(consentArtefactRepresentation.getSignature()));
     }
 
     public static class ContextInitializer

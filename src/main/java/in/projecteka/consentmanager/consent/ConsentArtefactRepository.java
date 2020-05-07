@@ -49,7 +49,7 @@ public class ConsentArtefactRepository {
             "FROM consent_artefact WHERE status=$1";
     private static final String UPDATE_CONSENT_ARTEFACT_STATUS_QUERY = "UPDATE consent_artefact SET status=$1, " +
             "date_modified=$2 WHERE consent_artefact_id=$3";
-    private static final String SELECT_ALL_CONSENT_ARTEFACTS = "SELECT * FROM consent_artefact";
+    private static final String SELECT_ALL_CONSENT_ARTEFACTS = "SELECT status, consent_artefact, signature FROM consent_artefact";
     private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
     private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
     private final PgPool dbClient;
@@ -136,7 +136,7 @@ public class ConsentArtefactRepository {
                         }));
     }
 
-    public Flux<ConsentArtefact> getAllConsentArtefacts() {
+    public Flux<ConsentArtefactRepresentation> getAllConsentArtefacts() {
         return Flux.create(fluxSink -> dbClient.preparedQuery(SELECT_ALL_CONSENT_ARTEFACTS)
                 .execute(handler -> {
                     if (handler.failed()) {
@@ -144,7 +144,16 @@ public class ConsentArtefactRepository {
                         return;
                     }
                     StreamSupport.stream(handler.result().spliterator(), false)
-                            .map(row -> to(row.getValue("consent_artefact").toString(), ConsentArtefact.class))
+                            .map(row -> {
+                                var consentArtefact = to(row.getValue(CONSENT_ARTEFACT).toString(),
+                                        ConsentArtefact.class);
+                                return ConsentArtefactRepresentation
+                                        .builder()
+                                        .status(ConsentStatus.valueOf(row.getString(STATUS)))
+                                        .consentDetail(consentArtefact)
+                                        .signature(row.getString(SIGNATURE))
+                                        .build();
+                            })
                             .forEach(fluxSink::next);
                     fluxSink.complete();
                 }));

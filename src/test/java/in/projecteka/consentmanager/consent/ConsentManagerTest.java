@@ -316,12 +316,12 @@ class ConsentManagerTest {
 
     @Test
     void shouldGetAllTheConsentArtefacts() {
-        ConsentArtefact artefact1 = consentRepresentation().status(GRANTED).build().getConsentDetail();
-        ConsentArtefact artefact2 = consentRepresentation().status(EXPIRED).build().getConsentDetail();
-        ConsentArtefact artefact3 = consentRepresentation().status(REVOKED).build().getConsentDetail();
+        ConsentArtefactRepresentation artefact1 = consentArtefactRepresentation().status(GRANTED).build();
+        ConsentArtefactRepresentation artefact2 = consentArtefactRepresentation().status(REVOKED).build();
+        ConsentArtefactRepresentation artefact3 = consentArtefactRepresentation().status(EXPIRED).build();
 
         when(consentArtefactRepository.getAllConsentArtefacts()).thenReturn(Flux.just(artefact1, artefact2, artefact3));
-        Flux<ConsentArtefact> publisher = consentManager.getAllConsentArtefact();
+        Flux<ConsentArtefactRepresentation> publisher = consentManager.getAllConsentArtefact();
         StepVerifier.create(publisher
                 .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
                 .expectNext(artefact1)
@@ -334,7 +334,7 @@ class ConsentManagerTest {
     @Test
     void shouldGetEmptyFluxIfNoConsentArtefactsPresent() {
         when(consentArtefactRepository.getAllConsentArtefacts()).thenReturn(Flux.empty());
-        Flux<ConsentArtefact> publisher = consentManager.getAllConsentArtefact();
+        Flux<ConsentArtefactRepresentation> publisher = consentManager.getAllConsentArtefact();
         StepVerifier.create(publisher
                 .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
                 .expectComplete()

@@ -398,7 +398,7 @@ public class ConsentManager {
                         consentRequest.getLastUpdated()));
     }
 
-    public Flux<ConsentArtefact> getAllConsentArtefact() {
+    public Flux<ConsentArtefactRepresentation> getAllConsentArtefact() {
         return consentArtefactRepository.getAllConsentArtefacts();
     }
 }

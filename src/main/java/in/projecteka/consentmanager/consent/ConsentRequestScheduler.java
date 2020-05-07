@@ -5,6 +5,8 @@ import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import reactor.core.publisher.Mono;
@@ -19,6 +21,8 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED
 
 @AllArgsConstructor
 public class ConsentRequestScheduler {
+    private static final Logger logger = LoggerFactory.getLogger(PostConsentRequest.class);
+
     private final ConsentRequestRepository consentRequestRepository;
     private final ConsentServiceProperties consentServiceProperties;
     private final ConsentNotificationPublisher consentNotificationPublisher;
@@ -26,6 +30,7 @@ public class ConsentRequestScheduler {
     @Scheduled(cron = "${consentmanager.scheduler.consentRequestExpiryCronExpr}")
     @Async
     public void processExpiredConsentRequests() {
+        logger.info("Processing consent requests for expiry");
         List<ConsentRequestDetail> consentRequestDetails = consentRequestRepository.getConsentsByStatus(REQUESTED).
                 collectList().block();
         if (consentRequestDetails != null) {
@@ -35,8 +40,9 @@ public class ConsentRequestScheduler {
                     broadcastConsentArtefacts(List.of(),
                             consentRequestDetail.getConsentNotificationUrl(),
                             consentRequestDetail.getRequestId(),
-                            consentRequestDetail.getStatus(),
+                            EXPIRED,
                             consentRequestDetail.getLastUpdated()).block();
+                    logger.info("Consent request with id {} is expired", consentRequestDetail.getRequestId());
                 }
             });
         }
@@ -45,7 +51,7 @@ public class ConsentRequestScheduler {
     private boolean isConsentRequestExpired(Date createdAt) {
         Instant requestExpiry =
                 createdAt.toInstant().plus(Duration.ofMinutes(consentServiceProperties.getConsentRequestExpiry()));
-        return requestExpiry.isAfter(new Date().toInstant());
+        return requestExpiry.isBefore(new Date().toInstant());
     }
 
     private Mono<Void> broadcastConsentArtefacts(List<HIPConsentArtefactRepresentation> consents,

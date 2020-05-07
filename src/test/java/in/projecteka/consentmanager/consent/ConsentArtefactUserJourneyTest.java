@@ -8,11 +8,13 @@ import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import net.minidev.json.writer.ArraysMapper;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
@@ -33,24 +35,19 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.validation.constraints.NotEmpty;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
-import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
-import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
-import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
-import static in.projecteka.consentmanager.consent.TestBuilders.string;
+import static in.projecteka.consentmanager.consent.TestBuilders.*;
 import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 
 @ExtendWith(SpringExtension.class)
@@ -135,9 +132,9 @@ public class ConsentArtefactUserJourneyTest {
                 .expectStatus().isOk()
                 .expectBody(new ParameterizedTypeReference<List<ConsentArtefactRepresentation>>() {
                 })
-                .value(value -> value.get(0).getConsentDetail(), Matchers.equalTo(consentArtefact.getConsentDetail()))
-                .value(value -> value.get(0).getStatus(), Matchers.is(consentArtefact.getStatus()))
-                .value(value -> value.get(0).getSignature(), Matchers.is(consentArtefact.getSignature()));
+                .value(value -> value.get(0).getConsentDetail(), equalTo(consentArtefact.getConsentDetail()))
+                .value(value -> value.get(0).getStatus(), is(consentArtefact.getStatus()))
+                .value(value -> value.get(0).getSignature(), is(consentArtefact.getSignature()));
     }
 
     @Test
@@ -263,6 +260,30 @@ public class ConsentArtefactUserJourneyTest {
 
         verify(consentArtefactRepository, times(0)).updateStatus(any(), any(), any());
         verifyNoInteractions(consentNotificationPublisher);
+    }
+
+    @Test
+    void shouldGetAllConsentArtefacts() {
+        String token = string();
+
+        ConsentArtefact consentArtefact = consentArtefact().build();
+        String patientId = consentArtefact.getPatient().getId();
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
+
+        when(consentArtefactRepository.getAllConsentArtefacts()).thenReturn(Flux.just(consentArtefact));
+
+        webTestClient.get()
+                .uri("/consent-requests/consent-artefacts")
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", token)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(200)
+                .expectBody(new ParameterizedTypeReference<List<ConsentArtefact>>() {
+                })
+                .value(value -> value.get(0).getConsentId(), equalTo(consentArtefact.getConsentId()))
+                .value(value -> value.get(0).getPatient(), is(consentArtefact.getPatient()))
+                .value(value -> value.get(0).getHiu(), is(consentArtefact.getHiu()));
     }
 
     public static class ContextInitializer

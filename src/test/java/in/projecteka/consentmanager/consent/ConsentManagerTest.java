@@ -8,15 +8,7 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
-import in.projecteka.consentmanager.consent.model.ConsentRequest;
-import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
-import in.projecteka.consentmanager.consent.model.ConsentStatus;
-import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
-import in.projecteka.consentmanager.consent.model.HIPReference;
-import in.projecteka.consentmanager.consent.model.HIUReference;
-import in.projecteka.consentmanager.consent.model.PatientReference;
-import in.projecteka.consentmanager.consent.model.RevokeRequest;
+import in.projecteka.consentmanager.consent.model.*;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
@@ -38,16 +30,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.consent.TestBuilders.artefactLightRepresentation;
-import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
-import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
-import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
-import static in.projecteka.consentmanager.consent.TestBuilders.hipConsentArtefactRepresentation;
-import static in.projecteka.consentmanager.consent.TestBuilders.string;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
+import static in.projecteka.consentmanager.consent.TestBuilders.*;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.*;
 import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -327,6 +311,33 @@ class ConsentManagerTest {
         StepVerifier.create(publisher)
                 .expectErrorMatches(e -> (e instanceof ClientError) &&
                         ((ClientError) e).getHttpStatus() == NOT_FOUND)
+                .verify();
+    }
+
+    @Test
+    void shouldGetAllTheConsentArtefacts() {
+        ConsentArtefact artefact1 = consentRepresentation().status(GRANTED).build().getConsentDetail();
+        ConsentArtefact artefact2 = consentRepresentation().status(EXPIRED).build().getConsentDetail();
+        ConsentArtefact artefact3 = consentRepresentation().status(REVOKED).build().getConsentDetail();
+
+        when(consentArtefactRepository.getAllConsentArtefacts()).thenReturn(Flux.just(artefact1, artefact2, artefact3));
+        Flux<ConsentArtefact> publisher = consentManager.getAllConsentArtefact();
+        StepVerifier.create(publisher
+                .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+                .expectNext(artefact1)
+                .expectNext(artefact2)
+                .expectNext(artefact3)
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    void shouldGetEmptyFluxIfNoConsentArtefactsPresent() {
+        when(consentArtefactRepository.getAllConsentArtefacts()).thenReturn(Flux.empty());
+        Flux<ConsentArtefact> publisher = consentManager.getAllConsentArtefact();
+        StepVerifier.create(publisher
+                .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+                .expectComplete()
                 .verify();
     }
 }

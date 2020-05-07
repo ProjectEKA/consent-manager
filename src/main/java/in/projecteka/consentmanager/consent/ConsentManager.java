@@ -6,26 +6,10 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.consent.model.CMReference;
-import in.projecteka.consentmanager.consent.model.ConsentArtefact;
-import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
-import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
-import in.projecteka.consentmanager.consent.model.ConsentRequest;
-import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
-import in.projecteka.consentmanager.consent.model.ConsentStatus;
-import in.projecteka.consentmanager.consent.model.QueryRepresentation;
-import in.projecteka.consentmanager.consent.model.GrantedContext;
-import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
-import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
-import in.projecteka.consentmanager.consent.model.PatientReference;
-import in.projecteka.consentmanager.consent.model.RevokeRequest;
+import in.projecteka.consentmanager.consent.model.*;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
-import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
-import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLight;
-import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
-import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
-import in.projecteka.consentmanager.consent.model.response.ConsentReference;
+import in.projecteka.consentmanager.consent.model.response.*;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
@@ -37,25 +21,13 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignedObject;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_NOT_FOUND;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_STATE;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.*;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.*;
 import static java.lang.String.format;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.CONFLICT;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.*;
 
 @AllArgsConstructor
 public class ConsentManager {
@@ -77,7 +49,7 @@ public class ConsentManager {
     }
 
     public Mono<String> askForConsent(RequestedDetail requestedDetail, UUID requestId) {
-        return  Mono.just(requestId)
+        return Mono.just(requestId)
                 .filterWhen(this::validateRequest)
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
                 .flatMap(val -> validatePatient(requestedDetail.getPatient().getId())
@@ -424,5 +396,9 @@ public class ConsentManager {
                         consentRequest.getRequestId(),
                         consentRequest.getStatus(),
                         consentRequest.getLastUpdated()));
+    }
+
+    public Flux<ConsentArtefact> getAllConsentArtefact() {
+        return consentArtefactRepository.getAllConsentArtefacts();
     }
 }

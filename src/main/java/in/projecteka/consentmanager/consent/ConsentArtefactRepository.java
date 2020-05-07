@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
+import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentExpiry;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
@@ -27,6 +28,12 @@ import static in.projecteka.consentmanager.common.Serializer.to;
 
 @AllArgsConstructor
 public class ConsentArtefactRepository {
+    public static final String CONSENT_ARTEFACT = "consent_artefact";
+    public static final String STATUS = "status";
+    public static final String CONSENT_REQUEST_ID = "consent_request_id";
+    public static final String DATE_MODIFIED = "date_modified";
+    public static final String CONSENT_ARTEFACT_ID = "consent_artefact_id";
+    public static final String SIGNATURE = "signature";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
             "date_modified=$2 WHERE request_id=$3";
     private static final String SELECT_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
@@ -42,15 +49,9 @@ public class ConsentArtefactRepository {
             "FROM consent_artefact WHERE status=$1";
     private static final String UPDATE_CONSENT_ARTEFACT_STATUS_QUERY = "UPDATE consent_artefact SET status=$1, " +
             "date_modified=$2 WHERE consent_artefact_id=$3";
+    private static final String SELECT_ALL_CONSENT_ARTEFACTS = "SELECT * FROM consent_artefact";
     private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
     private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
-    public static final String CONSENT_ARTEFACT = "consent_artefact";
-    public static final String STATUS = "status";
-    public static final String CONSENT_REQUEST_ID = "consent_request_id";
-    public static final String DATE_MODIFIED = "date_modified";
-    public static final String CONSENT_ARTEFACT_ID = "consent_artefact_id";
-    public static final String SIGNATURE = "signature";
-
     private final PgPool dbClient;
 
     public Mono<Void> process(List<Query> queries) {
@@ -133,6 +134,20 @@ public class ConsentArtefactRepository {
                                 fluxSink.complete();
                             }
                         }));
+    }
+
+    public Flux<ConsentArtefact> getAllConsentArtefacts() {
+        return Flux.create(fluxSink -> dbClient.preparedQuery(SELECT_ALL_CONSENT_ARTEFACTS)
+                .execute(handler -> {
+                    if (handler.failed()) {
+                        fluxSink.error(new DbOperationError());
+                        return;
+                    }
+                    StreamSupport.stream(handler.result().spliterator(), false)
+                            .map(row -> to(row.getValue("consent_artefact").toString(), ConsentArtefact.class))
+                            .forEach(fluxSink::next);
+                    fluxSink.complete();
+                }));
     }
 
     @SneakyThrows

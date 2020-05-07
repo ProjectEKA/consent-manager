@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
@@ -43,6 +44,14 @@ public class ConsentArtefactsController {
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
                 .flatMapMany(patient -> consentManager.getConsents(requestId, patient));
+    }
+
+    @GetMapping(value = "/consent-requests/consent-artefacts")
+    public Flux<ConsentArtefact> getAllConsentArtefacts() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .map(Caller::getUsername)
+                .flatMapMany(artefact -> consentManager.getAllConsentArtefact());
     }
 
     @PostMapping(value = "/consents/revoke")

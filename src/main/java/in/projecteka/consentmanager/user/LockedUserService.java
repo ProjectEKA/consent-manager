@@ -12,6 +12,7 @@ import java.util.Date;
 @AllArgsConstructor
 public class LockedUserService {
     private final LockedUsersRepository lockedUsersRepository;
+    private final LockedServiceProperties lockedServiceProperties;
     private final Logger logger = LoggerFactory.getLogger(LockedUserService.class);
 
     public Mono<LockedUser> userFor(String patientId) {
@@ -27,8 +28,8 @@ public class LockedUserService {
         var isLocked = user.getIsLocked();
         var blockedTime = user.getLockedTime();
         var clientError = ClientError.unAuthorizedRequest();
-        if (user.getInvalidAttempts() >= 5) {
-            if (user.getInvalidAttempts() == 5) {
+        if (user.getInvalidAttempts() >= lockedServiceProperties.getMaximumInvalidAttempts()) {
+            if (user.getInvalidAttempts() == lockedServiceProperties.getMaximumInvalidAttempts()) {
                 blockedTime = new Date().toString();
             }
             isLocked = true;

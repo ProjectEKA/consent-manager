@@ -16,6 +16,8 @@ class LockedUserServiceTest {
     @Mock
     LockedUsersRepository lockedUsersRepository;
 
+    @Mock
+    LockedServiceProperties lockedServiceProperties;
 
     @BeforeEach
     void init() {
@@ -28,7 +30,7 @@ class LockedUserServiceTest {
         var lockedUser = new LockedUser(1, patientId, false, "");
         when(lockedUsersRepository.getLockedUserFor(patientId))
                 .thenReturn(Mono.just(lockedUser));
-        LockedUserService lockedUserService = new LockedUserService(lockedUsersRepository);
+        LockedUserService lockedUserService = new LockedUserService(lockedUsersRepository,lockedServiceProperties);
         Mono<LockedUser> sessionPublisher = lockedUserService.userFor(patientId);
 
         StepVerifier.create(sessionPublisher)

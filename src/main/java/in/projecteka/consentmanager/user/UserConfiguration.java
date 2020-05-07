@@ -104,8 +104,8 @@ public class UserConfiguration {
     }
 
     @Bean
-    LockedUserService lockedUserService(LockedUsersRepository lockedUsersRepository) {
-        return new LockedUserService(lockedUsersRepository);
+    LockedUserService lockedUserService(LockedUsersRepository lockedUsersRepository, LockedServiceProperties lockedServiceProperties) {
+        return new LockedUserService(lockedUsersRepository, lockedServiceProperties);
     }
 
     @Bean

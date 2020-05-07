@@ -16,6 +16,7 @@ import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.consentmanager.user.model.OtpAttempt;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +56,6 @@ public class UserService {
         OtpRequest otpRequest = new OtpRequest(
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
-
         return otpAttemptService
                 .validateOTPRequest(userSignupEnquiry.getIdentifier(), OtpAttempt.Action.REGISTRATION)
                 .then(otpServiceClient.send(otpRequest)

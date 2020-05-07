@@ -13,7 +13,7 @@ public class OtpAttempt {
     private final LocalDateTime attemptAt;
     private final Action action;
 
-    public static enum Action{
+    public enum Action{
         REGISTRATION
     }
 }

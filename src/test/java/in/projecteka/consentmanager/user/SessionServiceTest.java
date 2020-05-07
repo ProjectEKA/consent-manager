@@ -98,8 +98,8 @@ class SessionServiceTest {
         var sessionRequest = sessionRequest().build();
         var sessionService = new SessionService(tokenService, null, lockedUserService);
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new InvalidPasswordException("")));
-        when(lockedUserService.getLockedUser(any())).thenReturn(Mono.empty());
-        when(lockedUserService.insertUser(any())).thenReturn(Mono.empty());
+        when(lockedUserService.userFor(any())).thenReturn(Mono.empty());
+        when(lockedUserService.createUser(any())).thenReturn(Mono.empty());
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -113,8 +113,8 @@ class SessionServiceTest {
         var sessionRequest = sessionRequest().build();
         var sessionService = new SessionService(tokenService, null, lockedUserService);
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new InvalidUserNameException("")));
-        when(lockedUserService.getLockedUser(any())).thenReturn(Mono.empty());
-        when(lockedUserService.insertUser(any())).thenReturn(Mono.empty());
+        when(lockedUserService.userFor(any())).thenReturn(Mono.empty());
+        when(lockedUserService.createUser(any())).thenReturn(Mono.empty());
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 

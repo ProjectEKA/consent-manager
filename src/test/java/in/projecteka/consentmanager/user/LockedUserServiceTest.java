@@ -29,7 +29,7 @@ class LockedUserServiceTest {
         when(lockedUsersRepository.getLockedUserFor(patientId))
                 .thenReturn(Mono.just(lockedUser));
         LockedUserService lockedUserService = new LockedUserService(lockedUsersRepository);
-        Mono<LockedUser> sessionPublisher = lockedUserService.getLockedUser(patientId);
+        Mono<LockedUser> sessionPublisher = lockedUserService.userFor(patientId);
 
         StepVerifier.create(sessionPublisher)
                 .assertNext(session -> assertThat(session).isEqualTo(lockedUser))

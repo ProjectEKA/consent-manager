@@ -291,7 +291,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"hip\": {\n\t\t\"id\": \"10000004\"\n\t}\n}"
+							"raw": "{\n    \"requestId\": \"{{$guid}}\",\n    \"hip\": {\n        \"id\": \"10000005\"\n    }\n}"
 						},
 						"url": {
 							"raw": "{{CM_HOST}}/patients/discover/carecontexts",
@@ -347,7 +347,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"transactionId\": \"{{DISCOVERY_REQUEST_ID}}\",\n\t\"patient\": {\n\t\t\"referenceNumber\": \"{{PATIENT_REF_NUMBER}}\",\n\t\t\"careContexts\": [\n            {\n                \"referenceNumber\": \"{{CARE_CONTEXT1_NUMBER}}\"\n            }\n        ]\n\t}\n}",
+							"raw": "{\n\t\"requestId\": \"{{$guid}}\",\n\t\"transactionId\": \"{{DISCOVERY_REQUEST_ID}}\",\n\t\"patient\": {\n\t\t\"referenceNumber\": \"{{PATIENT_REF_NUMBER}}\",\n\t\t\"careContexts\": [\n            {\n                \"referenceNumber\": \"{{CARE_CONTEXT1_NUMBER}}\"\n            }\n        ]\n\t}\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -516,7 +516,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"pin\": \"6666\",\n\t\"scope\" : \"consent.revoke\"\n}",
+							"raw": "{\n\t\"requestId\" : \"{{$guid}}\",\n\t\"pin\": \"6666\",\n\t\"scope\" : \"consent.revoke\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -730,7 +730,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"{{USERNAME}}\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\",\n      \"text\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"hiu\": {\n    \t\"id\": \"10000005\",\n    \t\"name\": \"something\"\n    },\n    \"requester\": {\n    \t\"name\": \"Dr Lakshmi\",\n    \t\"identifier\": {\n    \t\t\"value\": \"1\",\n    \t\t\"type\": \"identifier\",\n    \t\t\"system\": \"NCG\"\n    \t}\n    },\n    \"permission\": {\n    \t\"accessMode\": \"VIEW\",\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataEraseAt\": \"2020-05-23T11:06:32.760Z\"\n    },\n    \"consentNotificationUrl\": \"http://localhost:8003\"\n  }\n}",
+							"raw": "{\n \"requestId\": \"{{$guid}}\",\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"{{USERNAME}}\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\",\n      \"text\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"hiu\": {\n    \t\"id\": \"10000005\",\n    \t\"name\": \"something\"\n    },\n    \"requester\": {\n    \t\"name\": \"Dr Lakshmi\",\n    \t\"identifier\": {\n    \t\t\"value\": \"1\",\n    \t\t\"type\": \"identifier\",\n    \t\t\"system\": \"NCG\"\n    \t}\n    },\n    \"permission\": {\n    \t\"accessMode\": \"VIEW\",\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataEraseAt\": \"2020-05-23T11:06:32.760Z\"\n    },\n    \"consentNotificationUrl\": \"http://localhost:8003\"\n  }\n}",
 							"options": {
 								"raw": {
 									"language": "json"

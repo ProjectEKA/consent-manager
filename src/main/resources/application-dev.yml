@@ -5,6 +5,8 @@ consentmanager:
     defaultPageSize: 20
     maxPageSize: 100
     url: http://localhost:9000
+  scheduler:
+    consentExpiryCronExpr: '0 0 * ? * *'
   clientregistry:
     XAuthToken: e178fb45-2a2f-425c-bd45-996c60910d70
     clientId: consent-manager

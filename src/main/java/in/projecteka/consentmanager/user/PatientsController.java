@@ -58,7 +58,10 @@ public class PatientsController {
     public Mono<Token> validatePin(@Valid @RequestBody ValidatePinRequest request) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller -> transactionPinService.validatePinFor(caller.getUsername(), request.getPin(), request.getScope()));
+                .flatMap(caller -> transactionPinService.validatePinFor(caller.getUsername(),
+                request.getPin(),
+                request.getRequestId(),
+                request.getScope()));
     }
 
     @PostMapping("/profile")

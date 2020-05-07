@@ -48,7 +48,7 @@ public class HipConsentNotificationListener {
                 HIPConsentArtefactRepresentation consentArtefact =
                         (HIPConsentArtefactRepresentation) converter.fromMessage(message);
                 logger.info("Received notify consent to hip for consent artefact: {}",
-                        consentArtefact.getConsentDetail().getConsentId());
+                        consentArtefact.getConsentId());
 
                 sendConsentArtefact(consentArtefact);
             } catch (Exception e) {

@@ -10,7 +10,6 @@ import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
@@ -52,7 +51,7 @@ public class HiuConsentNotificationListener {
 
                 notifyHiu(consentArtefactsMessage);
             } catch (Exception e) {
-                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
             }
 
         };
@@ -84,7 +83,7 @@ public class HiuConsentNotificationListener {
                 .stream()
                 .map(consentArtefact -> ConsentArtefactReference
                         .builder()
-                        .id(consentArtefact.getConsentDetail().getConsentId())
+                        .id(consentArtefact.getConsentId())
                         .build())
                 .collect(Collectors.toList());
     }

@@ -6,11 +6,13 @@ import lombok.Value;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Builder
 @Value
 public class DiscoveryRequest {
+    private UUID requestId;
     @NotNull(message = "HIP not specified.") HIPReference hip;
     List<PatientIdentifier> unverifiedIdentifiers;
 }

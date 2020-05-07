@@ -34,6 +34,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -43,6 +44,7 @@ import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactR
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
+import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -112,11 +114,13 @@ public class ConsentArtefactUserJourneyTest {
     }
 
     @Test
-    public void shouldListConsentArtifacts() {
+    public void shouldListConsentArtifacts() throws ParseException {
         var consentArtefact = consentArtefactRepresentation().build();
         var token = string();
         var patientId = consentArtefact.getConsentDetail().getPatient().getId();
         var consentRequestId = "request-id";
+        consentArtefact.getConsentDetail().getPermission().setDataEraseAt(toDateWithMilliSeconds("253379772420000"));
+
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))
                 .thenReturn(Flux.just(consentArtefact.getConsentDetail().getConsentId()));
@@ -141,11 +145,12 @@ public class ConsentArtefactUserJourneyTest {
         var token = string();
         var consentArtefact = consentArtefactRepresentation().build();
         var patientId = consentArtefact.getConsentDetail().getPatient().getId();
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_NOT_FOUND, "Cannot find the " +
                 "consent artefact"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         var consentRequestId = "request-id";
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))
                 .thenReturn(Flux.empty());
         when(consentArtefactRepository.getConsentArtefact(eq(consentArtefact.getConsentDetail().getConsentId())))
@@ -165,12 +170,13 @@ public class ConsentArtefactUserJourneyTest {
     public void shouldThrowInvalidRequester() throws JsonProcessingException {
         var token = string();
         var anotherUser = string();
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(anotherUser, false)));
         var consentArtefact = consentArtefactRepresentation().build();
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_FORBIDDEN,
                 "Cannot retrieve Consent artefact"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         var consentRequestId = "request-id";
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(anotherUser, false)));
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))
                 .thenReturn(Flux.just(consentArtefact.getConsentDetail().getConsentId()));
         when(consentArtefactRepository.getConsentArtefact(eq(consentArtefact.getConsentDetail().getConsentId())))
@@ -227,14 +233,14 @@ public class ConsentArtefactUserJourneyTest {
         var token = string();
         String scope = "consent.revoke";
         var consentRepresentation = consentRepresentation().status(ConsentStatus.REVOKED).build();
+        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_NOT_GRANTED, "Not a granted consent."));
+        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         String consentRequestId = consentRepresentation.getConsentRequestId();
         List<String> consentIds = new ArrayList<>();
         String consentId = consentRepresentation.getConsentDetail().getConsentId();
         consentIds.add(consentRepresentation.getConsentDetail().getConsentId());
         RevokeRequest revokeRequest = RevokeRequest.builder().consents(consentIds).build();
         String patientId = consentRepresentation.getConsentDetail().getPatient().getId();
-        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_NOT_GRANTED, "Not a granted consent."));
-        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
 
         when(pinVerificationTokenService.validateToken(token, scope))
                 .thenReturn(Mono.just(new Caller(patientId, false)));

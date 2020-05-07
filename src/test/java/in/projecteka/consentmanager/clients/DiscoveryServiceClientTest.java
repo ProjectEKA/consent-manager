@@ -17,6 +17,7 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.TestBuilders.careContext;
 import static in.projecteka.consentmanager.clients.TestBuilders.patientInRequest;
@@ -56,7 +57,7 @@ public class DiscoveryServiceClientTest {
                         .build()));
         var patientRequest = patientRequest()
                 .patient(patientInRequest().build())
-                .requestId("transaction-id-1")
+                .requestId(UUID.randomUUID())
                 .build();
 
         StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/"))

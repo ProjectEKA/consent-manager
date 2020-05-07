@@ -5,6 +5,8 @@ consentmanager:
     defaultPageSize: ${DEFAULT_PAGE_SIZE}
     maxPageSize: ${MAX_PAGE_SIZE}
     url: ${CONSENT_SERVICE_URL}
+  scheduler:
+    consentExpiryCronExpr: ${CONSENT_EXPIRY_CRON_EXPRESSION}
   clientregistry:
     XAuthToken: ${Auth_Token}
     clientId: ${CENTRAL_REGISTRY_ID}

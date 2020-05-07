@@ -87,7 +87,8 @@ public class DiscoveryTest {
     @Test
     public void patientForGivenProviderIdAndPatientId() {
         var providerId = string();
-        var transactionId = string();
+        var transactionId = UUID.randomUUID();
+        var requestId = UUID.randomUUID();
         var patientId = string();
         var discovery = new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry);
         var address = address().use("work").build();
@@ -133,10 +134,11 @@ public class DiscoveryTest {
         when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
         when(discoveryServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl)))
                 .thenReturn(Mono.just(patientResponse));
-        when(discoveryRepository.insert(providerId, patientId, transactionId)).thenReturn(Mono.empty());
+        when(discoveryRepository.insert(providerId, patientId, transactionId, requestId)).thenReturn(Mono.empty());
+        when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.empty());
 
         StepVerifier.create(
-                discovery.patientFor(patientId, unverifiedIdentifiers, providerId, transactionId)
+                discovery.patientFor(patientId, unverifiedIdentifiers, providerId, transactionId, requestId)
                         .subscriberContext(cxt -> cxt.put(AUTHORIZATION, string())))
                 .expectNext(discoveryResponse)
                 .verifyComplete();
@@ -146,6 +148,8 @@ public class DiscoveryTest {
     public void shouldGetInvalidHipErrorWhenIdentifierIsNotOfficial() {
         String providerId = "1";
         String userName = "1";
+        var transactionId = UUID.randomUUID();
+        var requestId = UUID.randomUUID();
         var discovery = new Discovery(
                 userServiceClient,
                 discoveryServiceClient,
@@ -164,15 +168,42 @@ public class DiscoveryTest {
 
         when(centralRegistry.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
         when(userServiceClient.userOf(eq(userName))).thenReturn(Mono.just(user));
+        when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.empty());
 
         StepVerifier.create(
-                discovery.patientFor(userName, Collections.emptyList(), providerId, UUID.randomUUID().toString())
+                discovery.patientFor(userName, Collections.emptyList(), providerId, transactionId, requestId)
                         .subscriberContext(context -> context.put(AUTHORIZATION, string())))
                 .expectErrorMatches(error -> ((ClientError) error)
                         .getError()
                         .getError()
                         .getMessage()
                         .equals("Cannot process the request at the moment, please try later."))
+                .verify();
+    }
+
+
+    @Test
+    public void shouldGetRequestAlreadyPresentError() {
+        String providerId = "1";
+        String userName = "1";
+        var transactionId = UUID.randomUUID();
+        var requestId = UUID.randomUUID();
+        var discovery = new Discovery(
+                userServiceClient,
+                discoveryServiceClient,
+                discoveryRepository,
+                centralRegistry);
+
+        when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.just(transactionId.toString()));
+
+        StepVerifier.create(
+                discovery.patientFor(userName, Collections.emptyList(), providerId, transactionId, requestId)
+                        .subscriberContext(context -> context.put(AUTHORIZATION, string())))
+                .expectErrorMatches(error -> ((ClientError) error)
+                        .getError()
+                        .getError()
+                        .getMessage()
+                        .equals("A request with this request id already exists."))
                 .verify();
     }
 

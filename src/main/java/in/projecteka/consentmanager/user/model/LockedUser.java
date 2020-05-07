@@ -14,6 +14,8 @@ public class LockedUser {
     @Builder.Default
     private final Boolean isLocked = false;
     @Builder.Default
-    private final String lockedTime = null;
+    private final String lockedTime = "";
+    @Builder.Default
+    private final String firstInvalidAttempt = "";
 }
 

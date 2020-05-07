@@ -21,7 +21,8 @@ public class LockedUserService {
     }
 
     public Mono<Void> createUser(String patientId) {
-        return lockedUsersRepository.insert(new LockedUser(1, patientId, false, null));
+        var lockedUser = new LockedUser(1, patientId, false, null, new Date().toString());
+        return lockedUsersRepository.insert(lockedUser);
     }
 
     public Mono<ClientError> updateUser(LockedUser user) {

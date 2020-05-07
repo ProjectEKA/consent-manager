@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 public class LockedUsersRepository {
 
     private static final String INSERT_INVALID_ATTEMPTS = "INSERT INTO " +
-            "locked_users (patient_id,locked_time,invalid_attempts,is_locked) VALUES ($1, $2, $3, $4)";
+            "locked_users (patient_id,locked_time,invalid_attempts,is_locked, first_invalid_attempt_time) VALUES ($1, $2, $3, $4, $5)";
 
     private static final String UPDATE_LOCKED_STATUS = "UPDATE locked_users " +
             "SET is_locked=$1, locked_time=$2, invalid_attempts=$3 WHERE patient_id=$4";
@@ -25,7 +25,7 @@ public class LockedUsersRepository {
     public Mono<Void> insert(LockedUser lockedUser) {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_INVALID_ATTEMPTS)
                 .execute(Tuple.of(lockedUser.getPatientId(), lockedUser.getLockedTime(),
-                        lockedUser.getInvalidAttempts(), lockedUser.getIsLocked()),
+                        lockedUser.getInvalidAttempts(), lockedUser.getIsLocked(), lockedUser.getFirstInvalidAttempt()),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(ClientError.failedToInsertLockedUser());
@@ -71,6 +71,7 @@ public class LockedUsersRepository {
                 .isLocked(row.getBoolean("is_locked"))
                 .invalidAttempts((Integer) row.getValue("invalid_attempts"))
                 .lockedTime(row.getString("locked_time"))
+                .firstInvalidAttempt(row.getString("first_invalid_attempt_time"))
                 .build();
     }
 }

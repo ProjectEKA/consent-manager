@@ -3,10 +3,10 @@ package in.projecteka.consentmanager.common.cache;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
+import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Mono;
@@ -23,12 +23,12 @@ class RedisCacheAdapterTest {
     private StatefulRedisConnection<String, String> statefulConnection;
     @Mock
     private RedisReactiveCommands<String,String> redisReactiveCommands;
-    @InjectMocks
     private RedisCacheAdapter redisCacheAdapter;
 
     @BeforeEach
     public void init() {
         MockitoAnnotations.initMocks(this);
+        redisCacheAdapter = new RedisCacheAdapter(redisClient,5);
         when(redisClient.connect()).thenReturn(statefulConnection);
         when(statefulConnection.reactive()).thenReturn(redisReactiveCommands);
         redisCacheAdapter.postConstruct();
@@ -66,5 +66,33 @@ class RedisCacheAdapterTest {
 
         StepVerifier.create(redisCacheAdapter.invalidate(testKey)).verifyComplete();
         verify(redisReactiveCommands).expire(testKey,0L);
+    }
+
+    @Test
+    public void shouldIncrement() {
+        String testKey = "testKey";
+        long expectedIncrement = 2L;
+        when(redisReactiveCommands.incr(testKey)).thenReturn(Mono.just(expectedIncrement));
+
+        StepVerifier.create(redisCacheAdapter.increment(testKey))
+                .assertNext(increment -> Assertions.assertThat(increment).isEqualTo(expectedIncrement))
+                .verifyComplete();
+
+        verify(redisReactiveCommands).incr(testKey);
+    }
+
+    @Test
+    public void shouldIncrementAndSetExpiry() {
+        String testKey = "testKey";
+        long expectedIncrement = 1L;
+        when(redisReactiveCommands.incr(testKey)).thenReturn(Mono.just(expectedIncrement));
+        when(redisReactiveCommands.expire(testKey,5 * 60)).thenReturn(Mono.just(true));
+
+        StepVerifier.create(redisCacheAdapter.increment(testKey))
+                .assertNext(increment -> Assertions.assertThat(increment).isEqualTo(expectedIncrement))
+                .verifyComplete();
+
+        verify(redisReactiveCommands).incr(testKey);
+        verify(redisReactiveCommands).expire(testKey,5 * 60);
     }
 }

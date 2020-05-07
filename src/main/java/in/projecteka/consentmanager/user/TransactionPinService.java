@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.TransactionPin;
 import io.jsonwebtoken.Jwts;
@@ -24,6 +25,7 @@ public class TransactionPinService {
     private final BCryptPasswordEncoder encoder;
     private final PrivateKey privateKey;
     private final UserServiceProperties userServiceProperties;
+    private final CacheAdapter<String,String> dayCache;
     private static final Logger logger = LoggerFactory.getLogger(TransactionPinService.class);
 
     public Mono<Void> createPinFor(String patientId, String pin) {
@@ -62,11 +64,24 @@ public class TransactionPinService {
                             if (transactionPin.isEmpty()) {
                                 return Mono.error(ClientError.transactionPinNotFound());
                             }
-                            if (!encoder.matches(pin, transactionPin.get().getPin())) {
-                                return Mono.error(ClientError.transactionPinDidNotMatch());
-                            }
-                            return Mono.empty();
+                            return dayCache.exists(blockedKey(patientId))
+                                    .filter(exists -> !exists)
+                                    .switchIfEmpty(Mono.error(ClientError.invalidAttemptsExceeded()))
+                                    .then(Mono.defer(()-> Mono.just(encoder.matches(pin, transactionPin.get().getPin()))))
+                                    .filter(matches-> !matches)
+                                    .flatMap(doesNotMatch -> dayCache.increment(incorrectAttemptKey(patientId))
+                                            .filter(count-> count != userServiceProperties.getMaxIncorrectPinAttempts())
+                                            .switchIfEmpty(Mono.defer(() -> dayCache.put(blockedKey(patientId),"true").thenReturn(userServiceProperties.getMaxIncorrectPinAttempts())))
+                                            .flatMap(attemptCount -> Mono.error(ClientError.transactionPinDidNotMatch(String.format("%s attempts left",userServiceProperties.getMaxIncorrectPinAttempts() - attemptCount)))));
                         }).thenReturn(newToken(patientId, scope))));
+    }
+
+    private String incorrectAttemptKey(String patientId) {
+        return String.format("%s.incorrect.attempts",patientId);
+    }
+
+    private String blockedKey(String patientId) {
+        return String.format("%s.blocked",patientId);
     }
 
     private Mono<Boolean> validateRequest(UUID requestId) {

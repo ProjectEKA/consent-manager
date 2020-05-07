@@ -12,4 +12,6 @@ public interface CacheAdapter<K,V> {
     Mono<Void> invalidate(K key);
 
     Mono<Boolean> exists(K key);
+
+    Mono<Long> increment(String key);
 }

@@ -10,5 +10,10 @@ import java.time.LocalDateTime;
 public class OtpAttempt {
     private final String phoneNumber;
     private final boolean blocked;
-    private final LocalDateTime timestamp;
+    private final LocalDateTime attemptAt;
+    private final Action action;
+
+    public static enum Action{
+        REGISTRATION
+    }
 }

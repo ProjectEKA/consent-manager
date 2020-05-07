@@ -57,7 +57,7 @@ public class UserService {
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
         return otpAttemptService
-                .validateOTPRequest(userSignupEnquiry.getIdentifier())
+                .validateOTPRequest(userSignupEnquiry.getIdentifier(), OtpAttempt.Action.REGISTRATION)
                 .then(otpServiceClient.send(otpRequest)
                         .then(signupService.cacheAndSendSession(
                                 otpRequest.getSessionId(),

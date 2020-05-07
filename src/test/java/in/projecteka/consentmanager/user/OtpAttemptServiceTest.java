@@ -47,26 +47,26 @@ class OtpAttemptServiceTest {
 
     @Test
     public void shouldInsertOTPAttemptForFirstNAttempts() { // where N is maxOtpAttempts
-        when(otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts()))
+        when(otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts(),OtpAttempt.Action.REGISTRATION))
                 .thenReturn(Mono.just(new ArrayList<>()));
-        when(otpAttemptRepository.insert(eq(phoneNumber), eq(false))).thenReturn(Mono.empty());
+        when(otpAttemptRepository.insert(eq(phoneNumber), eq(false), eq(OtpAttempt.Action.REGISTRATION))).thenReturn(Mono.empty());
 
-        StepVerifier.create(otpAttemptService.validateOTPRequest(phoneNumber))
+        StepVerifier.create(otpAttemptService.validateOTPRequest(phoneNumber,OtpAttempt.Action.REGISTRATION))
                 .verifyComplete();
     }
 
     @Test
     void shouldInsertOTPAttemptIfAnyOfTheAttemptIsBlockedExcludingLatest() {
         var otpAttempts = new ArrayList<OtpAttempt>();
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, LocalDateTime.now()));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, LocalDateTime.now()));
-        otpAttempts.add(new OtpAttempt(phoneNumber, true, LocalDateTime.now()));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, LocalDateTime.now()));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, LocalDateTime.now()));
-        when(otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts()))
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, LocalDateTime.now(),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, LocalDateTime.now(),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, true, LocalDateTime.now(),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, LocalDateTime.now(),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, LocalDateTime.now(),OtpAttempt.Action.REGISTRATION));
+        when(otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts(),OtpAttempt.Action.REGISTRATION))
                 .thenReturn(Mono.just(otpAttempts));
-        when(otpAttemptRepository.insert(eq(phoneNumber), eq(false))).thenReturn(Mono.empty());
-        StepVerifier.create(otpAttemptService.validateOTPRequest(phoneNumber))
+        when(otpAttemptRepository.insert(eq(phoneNumber), eq(false),eq(OtpAttempt.Action.REGISTRATION))).thenReturn(Mono.empty());
+        StepVerifier.create(otpAttemptService.validateOTPRequest(phoneNumber,OtpAttempt.Action.REGISTRATION))
                 .verifyComplete();
     }
 
@@ -74,15 +74,15 @@ class OtpAttemptServiceTest {
     void shouldInsertOTPAttemptWhenLatestAttemptIsBlockedAndBlockingTimeIsPassed() {
         var otpAttempts = new ArrayList<OtpAttempt>();
         var currentTimestamp = LocalDateTime.now(ZoneOffset.UTC);
-        otpAttempts.add(new OtpAttempt(phoneNumber, true, currentTimestamp.minusMinutes(5)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(6)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(7)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(8)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(9)));
-        when(otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts()))
+        otpAttempts.add(new OtpAttempt(phoneNumber, true, currentTimestamp.minusMinutes(5),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(6),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(7),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(8),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(9),OtpAttempt.Action.REGISTRATION));
+        when(otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts(),OtpAttempt.Action.REGISTRATION))
                 .thenReturn(Mono.just(otpAttempts));
-        when(otpAttemptRepository.insert(eq(phoneNumber), eq(false))).thenReturn(Mono.empty());
-        StepVerifier.create(otpAttemptService.validateOTPRequest(phoneNumber))
+        when(otpAttemptRepository.insert(eq(phoneNumber), eq(false),eq(OtpAttempt.Action.REGISTRATION))).thenReturn(Mono.empty());
+        StepVerifier.create(otpAttemptService.validateOTPRequest(phoneNumber,OtpAttempt.Action.REGISTRATION))
                 .verifyComplete();
     }
 
@@ -90,15 +90,15 @@ class OtpAttemptServiceTest {
     void shouldInsertOTPAttemptWhenMaxOTPAttemptsLimitIsNotReached() {
         var otpAttempts = new ArrayList<OtpAttempt>();
         var currentTimestamp = LocalDateTime.now(ZoneOffset.UTC);
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(5)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(6)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(9)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(12)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(17)));
-        when(otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts()))
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(5),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(6),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(9),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(12),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(17),OtpAttempt.Action.REGISTRATION));
+        when(otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts(),OtpAttempt.Action.REGISTRATION))
                 .thenReturn(Mono.just(otpAttempts));
-        when(otpAttemptRepository.insert(eq(phoneNumber), eq(false))).thenReturn(Mono.empty());
-        StepVerifier.create(otpAttemptService.validateOTPRequest(phoneNumber))
+        when(otpAttemptRepository.insert(eq(phoneNumber), eq(false),eq(OtpAttempt.Action.REGISTRATION))).thenReturn(Mono.empty());
+        StepVerifier.create(otpAttemptService.validateOTPRequest(phoneNumber,OtpAttempt.Action.REGISTRATION))
                 .verifyComplete();
     }
 
@@ -106,14 +106,14 @@ class OtpAttemptServiceTest {
     void shouldThrowLimitExceededErrorWhenBlockingTimeIsNotPassed() {
         var otpAttempts = new ArrayList<OtpAttempt>();
         var currentTimestamp = LocalDateTime.now(ZoneOffset.UTC);
-        otpAttempts.add(new OtpAttempt(phoneNumber, true, currentTimestamp.minusMinutes(1)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(2)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(3)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(4)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(5)));
-        when(otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts()))
+        otpAttempts.add(new OtpAttempt(phoneNumber, true, currentTimestamp.minusMinutes(1),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(2),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(3),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(4),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(5),OtpAttempt.Action.REGISTRATION));
+        when(otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts(),OtpAttempt.Action.REGISTRATION))
                 .thenReturn(Mono.just(otpAttempts));
-        StepVerifier.create(otpAttemptService.validateOTPRequest(phoneNumber))
+        StepVerifier.create(otpAttemptService.validateOTPRequest(phoneNumber,OtpAttempt.Action.REGISTRATION))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError && ((ClientError) throwable)
                         .getError()
                         .getError()
@@ -126,15 +126,15 @@ class OtpAttemptServiceTest {
     void shouldThrowLimitExceededErrorOnExceedingMaxOTPAttempts() {
         var otpAttempts = new ArrayList<OtpAttempt>();
         var currentTimestamp = LocalDateTime.now(ZoneOffset.UTC);
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(1)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(2)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(3)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(4)));
-        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(5)));
-        when(otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts()))
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(1),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(2),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(3),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(4),OtpAttempt.Action.REGISTRATION));
+        otpAttempts.add(new OtpAttempt(phoneNumber, false, currentTimestamp.minusMinutes(5),OtpAttempt.Action.REGISTRATION));
+        when(otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts(),OtpAttempt.Action.REGISTRATION))
                 .thenReturn(Mono.just(otpAttempts));
-        when(otpAttemptRepository.insert(eq(phoneNumber), eq(true))).thenReturn(Mono.empty());
-        StepVerifier.create(otpAttemptService.validateOTPRequest(phoneNumber))
+        when(otpAttemptRepository.insert(eq(phoneNumber), eq(true),eq(OtpAttempt.Action.REGISTRATION))).thenReturn(Mono.empty());
+        StepVerifier.create(otpAttemptService.validateOTPRequest(phoneNumber,OtpAttempt.Action.REGISTRATION))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError && ((ClientError) throwable)
                         .getError()
                         .getError()

@@ -17,17 +17,17 @@ import java.util.stream.StreamSupport;
 public class OtpAttemptRepository {
 
     private static final String INSERT_OTP_ATTEMPT = "INSERT INTO " +
-            "otp_attempt (phone_number,blocked) VALUES ($1,$2)";
+            "otp_attempt (phone_number,blocked,action) VALUES ($1,$2,$3)";
 
     private static final String SELECT_OTP_ATTEMPT = "SELECT * FROM otp_attempt " +
-            "WHERE phone_number = $1 " +
-            "ORDER BY timestamp DESC LIMIT $2";
+            "WHERE phone_number = $1 AND action = $3" +
+            "ORDER BY attempt_at DESC LIMIT $2";
 
     private final PgPool dbClient;
 
-    public Mono<Void> insert(String phoneNumber, Boolean blockedStatus) {
+    public Mono<Void> insert(String phoneNumber, Boolean blockedStatus, OtpAttempt.Action action) {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_OTP_ATTEMPT)
-                .execute(Tuple.of(phoneNumber, blockedStatus),
+                .execute(Tuple.of(phoneNumber, blockedStatus, action.name()),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError("Failed to create otp attempt"));
@@ -37,9 +37,9 @@ public class OtpAttemptRepository {
                         }));
     }
 
-    public Mono<List<OtpAttempt>> getOtpAttempts(String phoneNumber, int maxOtpAttempts) {
+    public Mono<List<OtpAttempt>> getOtpAttempts(String phoneNumber, int maxOtpAttempts, OtpAttempt.Action action) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_OTP_ATTEMPT)
-                .execute(Tuple.of(phoneNumber, maxOtpAttempts),
+                .execute(Tuple.of(phoneNumber, maxOtpAttempts, action.name()),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError("Failed to select from otp attempt"));
@@ -48,7 +48,8 @@ public class OtpAttemptRepository {
                                         .map(row -> new OtpAttempt(
                                                 row.getString("phone_number"),
                                                 row.getBoolean("blocked"),
-                                                row.getLocalDateTime("timestamp")))
+                                                row.getLocalDateTime("attempt_at"),
+                                                OtpAttempt.Action.valueOf(row.getString("action"))))
                                         .collect(Collectors.toList()));
                             }
                         }));

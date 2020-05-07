@@ -18,17 +18,17 @@ public class OtpAttemptService {
     private final OtpAttemptRepository otpAttemptRepository;
     private final UserServiceProperties userServiceProperties;
 
-    public Mono<Void> validateOTPRequest(String phoneNumber) {
-        return otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts())
+    public Mono<Void> validateOTPRequest(String phoneNumber, OtpAttempt.Action action) {
+        return otpAttemptRepository.getOtpAttempts(phoneNumber, userServiceProperties.getMaxOtpAttempts(), action)
                 .filter(otpAttempts -> otpAttempts.size() >= userServiceProperties.getMaxOtpAttempts())
                 .filter(this::isNoneBlockedExceptLatest)
                 .flatMap(this::validateLatestAttempt)
                 .flatMap(this::validateAttemptsLimit)
-                .switchIfEmpty(Mono.defer(() -> createOtpAttemptFor(phoneNumber, false)));
+                .switchIfEmpty(Mono.defer(() -> createOtpAttemptFor(phoneNumber, false, action)));
     }
 
-    private Mono<Void> createOtpAttemptFor(String phoneNumber, boolean blockedStatus) {
-        return otpAttemptRepository.insert(phoneNumber, blockedStatus);
+    private Mono<Void> createOtpAttemptFor(String phoneNumber, boolean blockedStatus, OtpAttempt.Action action) {
+        return otpAttemptRepository.insert(phoneNumber, blockedStatus, action);
     }
 
     private Mono<List<OtpAttempt>> validateLatestAttempt(List<OtpAttempt> attempts) {
@@ -51,7 +51,7 @@ public class OtpAttemptService {
         OtpAttempt firstAttempt = attempts.get(attempts.size() - 1);
         boolean isAttemptsLimitExceeded = isWithinTimeLimit(firstAttempt, userServiceProperties.getMaxOtpAttemptsPeriodInMin());
         if (isAttemptsLimitExceeded) {
-            return createOtpAttemptFor(firstAttempt.getPhoneNumber(), true)
+            return createOtpAttemptFor(firstAttempt.getPhoneNumber(), true, firstAttempt.getAction())
                     .then(Mono.error(ClientError.otpRequestLimitExceeded()));
         }
         return Mono.empty();
@@ -65,7 +65,7 @@ public class OtpAttemptService {
 
     public boolean isWithinTimeLimit(OtpAttempt attempt, int timeLimitInMin) {
         return attempt
-                .getTimestamp()
+                .getAttemptAt()
                 .plusMinutes(timeLimitInMin)
                 .isAfter(LocalDateTime.now(ZoneOffset.UTC));
     }

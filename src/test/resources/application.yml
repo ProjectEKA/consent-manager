@@ -3,6 +3,7 @@ server:
 consentmanager:
   scheduler:
     consentExpiryCronExpr: "0 */1 * ? * *"
+    consentRequestExpiryCronExpr: '0 0 0/12 ? * *'
   clientregistry:
     XAuthToken: dummy-auth-token
     clientId: dummy-client-id

@@ -136,21 +136,10 @@ public class ConsentArtefactRepository {
                         return;
                     }
                     StreamSupport.stream(handler.result().spliterator(), false)
-                            .map(row -> getConsentArtefactRepresentation(row))
+                            .map(this::getConsentArtefactRepresentation)
                             .forEach(fluxSink::next);
                     fluxSink.complete();
                 }));
-    }
-
-    private ConsentArtefactRepresentation getConsentArtefactRepresentation(Row row) {
-        ConsentArtefact consentArtefact = to(row.getValue(CONSENT_ARTEFACT).toString(),
-                ConsentArtefact.class);
-        return ConsentArtefactRepresentation
-                .builder()
-                .status(ConsentStatus.valueOf(row.getString(STATUS)))
-                .consentDetail(consentArtefact)
-                .signature(row.getString(SIGNATURE))
-                .build();
     }
 
     @SneakyThrows
@@ -246,5 +235,16 @@ public class ConsentArtefactRepository {
                         LocalDateTime.now(),
                         consentId));
         return List.of(consentRequestUpdate, consentArtefactUpdate);
+    }
+
+    private ConsentArtefactRepresentation getConsentArtefactRepresentation(Row row) {
+        ConsentArtefact consentArtefact = to(row.getValue(CONSENT_ARTEFACT).toString(),
+                ConsentArtefact.class);
+        return ConsentArtefactRepresentation
+                .builder()
+                .status(ConsentStatus.valueOf(row.getString(STATUS)))
+                .consentDetail(consentArtefact)
+                .signature(row.getString(SIGNATURE))
+                .build();
     }
 }

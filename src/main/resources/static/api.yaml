@@ -739,7 +739,54 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+  /consent-requests/consent-artefacts:
+    get:
+      tags:
+        - consent
+      summary: Gets list of consents artefacts
+      description: Fetch all consent artefacts
+      operationId: allConsentArtefacts
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+        - name: consent-request-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: list of consent artefacts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentArtefacts'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ConsentArtefacts'
+        '401':
+          description:  >
+            **Causes:**
+              * Expired/Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /health-information/request:
     post:
       tags:
@@ -1878,10 +1925,10 @@ components:
     ConsentStatus:
       type: string
       enum:
+        - GRANTED
         - REQUESTED
         - EXPIRED
         - DENIED
-        - GRANTED
         - ROVKED
     ConsentArtefactRepresentation:
       type: object

@@ -21,7 +21,7 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED
 
 @AllArgsConstructor
 public class ConsentRequestScheduler {
-    private static final Logger logger = LoggerFactory.getLogger(PostConsentRequest.class);
+    private static final Logger logger = LoggerFactory.getLogger(ConsentRequestScheduler.class);
 
     private final ConsentRequestRepository consentRequestRepository;
     private final ConsentServiceProperties consentServiceProperties;

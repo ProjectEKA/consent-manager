@@ -164,9 +164,7 @@ public class ConsentRequestRepository {
                             }
                             RowSet<Row> results = handler.result();
                             if (results.iterator().hasNext()) {
-                                results.forEach(row -> {
-                                    fluxSink.next(mapToConsentRequestDetail(row));
-                                });
+                                results.forEach(row -> fluxSink.next(mapToConsentRequestDetail(row)));
                             }
                             fluxSink.complete();
                         }));

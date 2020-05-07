@@ -83,15 +83,7 @@ public class ConsentArtefactRepository {
                                 return;
                             }
                             Row row = results.iterator().next();
-                            var consentArtefact = to(row.getValue(CONSENT_ARTEFACT).toString(),
-                                    ConsentArtefact.class);
-                            var representation = ConsentArtefactRepresentation
-                                    .builder()
-                                    .status(ConsentStatus.valueOf(row.getString(STATUS)))
-                                    .consentDetail(consentArtefact)
-                                    .signature(row.getString(SIGNATURE))
-                                    .build();
-                            monoSink.success(representation);
+                            monoSink.success(getConsentArtefactRepresentation(row));
                         }));
     }
 
@@ -144,19 +136,21 @@ public class ConsentArtefactRepository {
                         return;
                     }
                     StreamSupport.stream(handler.result().spliterator(), false)
-                            .map(row -> {
-                                var consentArtefact = to(row.getValue(CONSENT_ARTEFACT).toString(),
-                                        ConsentArtefact.class);
-                                return ConsentArtefactRepresentation
-                                        .builder()
-                                        .status(ConsentStatus.valueOf(row.getString(STATUS)))
-                                        .consentDetail(consentArtefact)
-                                        .signature(row.getString(SIGNATURE))
-                                        .build();
-                            })
+                            .map(row -> getConsentArtefactRepresentation(row))
                             .forEach(fluxSink::next);
                     fluxSink.complete();
                 }));
+    }
+
+    private ConsentArtefactRepresentation getConsentArtefactRepresentation(Row row) {
+        ConsentArtefact consentArtefact = to(row.getValue(CONSENT_ARTEFACT).toString(),
+                ConsentArtefact.class);
+        return ConsentArtefactRepresentation
+                .builder()
+                .status(ConsentStatus.valueOf(row.getString(STATUS)))
+                .consentDetail(consentArtefact)
+                .signature(row.getString(SIGNATURE))
+                .build();
     }
 
     @SneakyThrows
@@ -208,18 +202,6 @@ public class ConsentArtefactRepository {
                         }));
     }
 
-    private List<Query> getUpdateQueries(String consentId, String consentRequestId, ConsentStatus status) {
-        Query consentRequestUpdate = new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
-                Tuple.of(status.toString(),
-                        LocalDateTime.now(),
-                        consentRequestId));
-        Query consentArtefactUpdate = new Query(UPDATE_CONSENT_ARTEFACT_STATUS_QUERY,
-                Tuple.of(status.toString(),
-                        LocalDateTime.now(),
-                        consentId));
-        return List.of(consentRequestUpdate, consentArtefactUpdate);
-    }
-
     public Mono<ConsentRepresentation> getConsentWithRequest(String consentId) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_WITH_REQUEST_QUERY)
                 .execute(Tuple.of(consentId),
@@ -253,4 +235,17 @@ public class ConsentArtefactRepository {
         }
         return null;
     }
+
+    private List<Query> getUpdateQueries(String consentId, String consentRequestId, ConsentStatus status) {
+        Query consentRequestUpdate = new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
+                Tuple.of(status.toString(),
+                        LocalDateTime.now(),
+                        consentRequestId));
+        Query consentArtefactUpdate = new Query(UPDATE_CONSENT_ARTEFACT_STATUS_QUERY,
+                Tuple.of(status.toString(),
+                        LocalDateTime.now(),
+                        consentId));
+        return List.of(consentRequestUpdate, consentArtefactUpdate);
+    }
+
 }

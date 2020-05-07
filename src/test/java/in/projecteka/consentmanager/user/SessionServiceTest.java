@@ -97,7 +97,7 @@ class SessionServiceTest {
     void returnUnAuthorizedWhenAnyTokenServiceThrowsInvalidPasswordException() {
         var sessionRequest = sessionRequest().build();
         var sessionService = new SessionService(tokenService, null, lockedUserService);
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new InvalidPasswordException("")));
+        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new InvalidPasswordException()));
         when(lockedUserService.userFor(any())).thenReturn(Mono.empty());
         when(lockedUserService.createUser(any())).thenReturn(Mono.empty());
 
@@ -112,7 +112,7 @@ class SessionServiceTest {
     void returnUnAuthorizedWhenAnyTokenServiceThrowsInvalidUserNameException() {
         var sessionRequest = sessionRequest().build();
         var sessionService = new SessionService(tokenService, null, lockedUserService);
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new InvalidUserNameException("")));
+        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new InvalidUserNameException()));
         when(lockedUserService.userFor(any())).thenReturn(Mono.empty());
         when(lockedUserService.createUser(any())).thenReturn(Mono.empty());
 

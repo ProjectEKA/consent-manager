@@ -25,8 +25,8 @@ public class TokenService {
     public Mono<Session> tokenForUser(String userName, String password) {
         return identityServiceClient.getToken(loginRequestWith(userName, password))
                 .onErrorResume(error -> userRepository.userWith(userName)
-                        .switchIfEmpty(Mono.error(new InvalidUserNameException("")))
-                        .flatMap(user -> Mono.error(new InvalidPasswordException(""))));
+                        .switchIfEmpty(Mono.error(new InvalidUserNameException()))
+                        .flatMap(user -> Mono.error(new InvalidPasswordException())));
     }
 
     private MultiValueMap<String, String> loginRequestWith(String username, String password) {

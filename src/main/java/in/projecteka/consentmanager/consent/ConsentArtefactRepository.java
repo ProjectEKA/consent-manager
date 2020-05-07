@@ -247,5 +247,4 @@ public class ConsentArtefactRepository {
                         consentId));
         return List.of(consentRequestUpdate, consentArtefactUpdate);
     }
-
 }

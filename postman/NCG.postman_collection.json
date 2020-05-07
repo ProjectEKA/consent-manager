@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "321a6787-f695-4bda-acb4-9a3920a78342",
+		"_postman_id": "0d7a837b-2e83-4366-af73-fdc66ec7f02f",
 		"name": "NCG",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -14,7 +14,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "b1329605-e1bf-471d-b9f8-ecec587d6d55",
+								"id": "6d26dd0b-1854-46e6-b9df-53897facf008",
 								"exec": [
 									"pm.test(\"Update session id\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -64,7 +64,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "de2af3fb-8122-442d-bf31-316203732c5d",
+								"id": "794f01ee-587a-47a4-9a00-58cb644ee7eb",
 								"exec": [
 									"pm.test(\"Update user creation token\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -113,7 +113,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "51c7be74-e15f-4ee1-8a73-10d001796a21",
+								"id": "5e048e0b-e895-49d8-9e75-01be7cb27856",
 								"exec": [
 									"pm.test(\"Update auth creation token\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -129,7 +129,7 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "32e7c8aa-5af3-43c2-bec0-cc4b0ec34372",
+								"id": "37346df2-2e8d-4349-a37a-bcd71f88250c",
 								"exec": [
 									"let firstname = pm.variables.replaceIn('{{$randomFirstName}}')",
 									"",
@@ -249,7 +249,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "eae93b7d-089b-48ac-8f3d-1ce6d902f3b6",
+								"id": "46545113-edf5-40d2-91cc-648f689130c7",
 								"exec": [
 									"pm.test(\"Update patient reference number\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -313,7 +313,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "eeda8a4e-44d7-4fe4-8300-56571879ad14",
+								"id": "b400d1ee-b189-4038-845c-83c8a8be1ef5",
 								"exec": [
 									"pm.test(\"Update link reference number\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -494,7 +494,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "ad042029-4326-4ef5-85cf-158f2fb6abcd",
+								"id": "264a93ca-fd65-450b-84d8-9dc0610c9563",
 								"exec": [
 									"pm.test(\"Update user creation token\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -542,7 +542,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "17dc3c3f-e5e3-4946-8729-b4732e6a0a69",
+								"id": "3428ca3f-607a-49e5-9a84-99cb41dde76a",
 								"exec": [
 									"pm.test(\"Update Consent Artefact ID\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -624,7 +624,7 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "7b472baa-bf1e-4dfc-a29d-323431dce9a1",
+								"id": "50b3660e-ea37-40db-8aa2-7443b385e325",
 								"exec": [
 									""
 								],
@@ -634,7 +634,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "62056aa2-1cea-4719-814d-071315c3de8f",
+								"id": "78b2d400-d4eb-449d-8a22-09995182935e",
 								"exec": [
 									"pm.test(\"Update user creation token\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -708,7 +708,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "ac6f1af2-2cf8-41c4-9597-1bc7cc1d9770",
+								"id": "291e46d4-d57e-48e9-aecc-cc47af039dc9",
 								"exec": [
 									"pm.test(\"Update user creation token\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -888,6 +888,30 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "{{CM_HOST}}/consent-requests/consent-artefacts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{CM_HOST}}/consent-requests/consent-artefacts",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"consent-requests",
+								"consent-artefacts"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"protocolProfileBehavior": {}
@@ -901,7 +925,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "5f5ac6e3-3631-4092-bdb7-5d51c5f2888e",
+								"id": "b96114e3-1fa6-4b12-ab61-8db4d6a27331",
 								"exec": [
 									"pm.test(\"Update patient reference number\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -994,7 +1018,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "d27728f6-5674-4f34-9e45-255968cd5297",
+								"id": "625701e9-92ce-4a1f-a182-9ebc35a4b7c9",
 								"exec": [
 									"pm.test(\"Update link reference number\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -1163,7 +1187,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "d9abc533-2ff7-42a5-98b4-f3789a43497c",
+								"id": "9f3a2f0a-9de5-409b-a457-004ff992e692",
 								"exec": [
 									"pm.test(\"Update consent request id\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -1191,7 +1215,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"{{USERNAME}}\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"permission\": {\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataEraseAt\": \"2020-04-30T11:06:32.760Z\"\n    }\n  }\n}",
+							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"{{USERNAME}}\"\n    },\n    \"purpose\": {\n      \"code\": \"PUBHLTH\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"permission\": {\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataEraseAt\": \"2025-05-08T01:30:32.760Z\"\n    }\n  }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1216,7 +1240,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "d4cad720-30e3-4cab-b173-61e35e44ae27",
+								"id": "2d2dfde8-672a-482b-954d-9c06234857a5",
 								"exec": [
 									"pm.test(\"Update auth creation token\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -1358,7 +1382,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "b514cd0a-5ec3-4814-a989-e002aa4f36ff",
+								"id": "124b37dc-eb7b-4705-8b0d-9910cd292419",
 								"exec": [
 									"pm.test(\"Update central registry token\", function () {",
 									"    var jsonData = pm.response.json();",

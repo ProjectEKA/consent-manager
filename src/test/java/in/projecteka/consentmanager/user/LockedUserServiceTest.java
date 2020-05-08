@@ -27,7 +27,7 @@ class LockedUserServiceTest {
     @Test
     void getLockedUser() {
         var patientId = "patientId";
-        var lockedUser = new LockedUser(1, patientId, false, "");
+        var lockedUser = new LockedUser(1, patientId, false, "","");
         when(lockedUsersRepository.getLockedUserFor(patientId))
                 .thenReturn(Mono.just(lockedUser));
         LockedUserService lockedUserService = new LockedUserService(lockedUsersRepository,lockedServiceProperties);

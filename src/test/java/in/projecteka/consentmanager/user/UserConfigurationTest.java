@@ -29,7 +29,7 @@ class UserConfigurationTest {
     private TokenService tokenService;
 
     @Mock
-    private OtpAttemptService otpAttemptService;
+    private OtpRequestAttemptService otpRequestAttemptService;
 
     @Mock
     private UserServiceProperties properties;
@@ -46,7 +46,7 @@ class UserConfigurationTest {
                 identityServiceClient,
                 tokenService,
                 properties,
-                otpAttemptService))
+                otpRequestAttemptService))
                 .isInstanceOf(UserService.class);
     }
 }

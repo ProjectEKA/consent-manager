@@ -35,7 +35,7 @@ public class UserConfiguration {
                                    IdentityServiceClient identityServiceClient,
                                    TokenService tokenService,
                                    UserServiceProperties userServiceProperties ,
-                                   OtpAttemptService otpAttemptService) {
+                                   OtpRequestAttemptService otpRequestAttemptService) {
         return new UserService(userRepository,
                 otpServiceProperties,
                 otpServiceClient,
@@ -43,7 +43,7 @@ public class UserConfiguration {
                 identityServiceClient,
                 tokenService,
                 userServiceProperties,
-                otpAttemptService);
+                otpRequestAttemptService);
     }
 
     @Bean

@@ -2517,12 +2517,8 @@ components:
       properties:
         sessionId:
           type: string
-        mobile:
-          type: string
-          description: Mobile number used for registration
-        expirationTime:
-          type: integer
-          description: in seconds for the session.
+        meta:
+          $ref: '#/components/schemas/Meta'
     OtpPermitRequest:
       type: object
       properties:

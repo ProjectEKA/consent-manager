@@ -149,7 +149,6 @@ public class ClientError extends Throwable {
   
     public static ClientError failedToUpdateUser() {
         return internalServerError("Failed to update user");
-
     }
 
     public static ClientError queueNotFound() {
@@ -196,7 +195,7 @@ public class ClientError extends Throwable {
     public static ClientError userBlocked() {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(USER_TEMPORARILY_BLOCKED,
-                        "User Blocked temporarily")));
+                        "User blocked temporarily")));
     }
 
     public static ClientError userAlreadyExists(String username) {

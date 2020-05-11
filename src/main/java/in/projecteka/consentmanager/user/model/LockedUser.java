@@ -16,6 +16,7 @@ public class LockedUser {
     @Builder.Default
     private final String lockedTime = "";
     @Builder.Default
+    //RenameVariable
     private final String firstInvalidAttempt = "";
 }
 

@@ -173,7 +173,7 @@ public class ClientError extends Throwable {
                         "Username or password is incorrect")));
     }
 
-    public static ClientError unAuthorizedRequest1() {
+    public static ClientError invalidUserName() {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT,
                         "Username incorrect")));

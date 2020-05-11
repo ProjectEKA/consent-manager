@@ -11,4 +11,5 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConstructorBinding
 public class LockedServiceProperties {
     private final int maximumInvalidAttempts;
+    private final int coolOfPeriod;
 }

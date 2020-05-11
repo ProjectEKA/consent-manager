@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.user.model.LockedUser;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -32,11 +31,7 @@ public class LockedUserService {
         var blockedTime = user.getLockedTime();
         var firstInvalidAttempt = user.getFirstInvalidAttempt();
 
-        if (user.getInvalidAttempts() > MAXIMUM_INVALID_PASSWORD_ATTEMPTS && isAfterEightHours(blockedTime)) {
-            return reAddUser(user.getPatientId());
-        }
-
-        if (user.getInvalidAttempts() < MAXIMUM_INVALID_PASSWORD_ATTEMPTS && isAfterEightHours(firstInvalidAttempt)) {
+        if (isAfterEightHours(firstInvalidAttempt) || isAfterEightHours(blockedTime)) {
             return reAddUser(user.getPatientId());
         }
 
@@ -77,13 +72,16 @@ public class LockedUserService {
                 .thenReturn(ClientError.userBlocked());
     }
 
-    @SneakyThrows
     private boolean isAfterEightHours(String time) {
-        var MAXIMUM_INVALID_PASSWORD_ATTEMPTS = lockedServiceProperties.getMaximumInvalidAttempts();
+        var MAXIMUM_COOL_OFF_PERIOD = lockedServiceProperties.getCoolOfPeriod();
         var MILLI_TO_HOUR = 1000 * 60 * 60;
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
-        Date now = sdf.parse(new Date().toString());
-        Date pastDate = sdf.parse(time);
-        return ((now.getTime() - pastDate.getTime()) / MILLI_TO_HOUR) >= MAXIMUM_INVALID_PASSWORD_ATTEMPTS;
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
+            Date now = sdf.parse(new Date().toString());
+            Date pastDate = sdf.parse(time);
+            return ((now.getTime() - pastDate.getTime()) / MILLI_TO_HOUR) >= MAXIMUM_COOL_OFF_PERIOD;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

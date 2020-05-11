@@ -28,7 +28,7 @@ public class SessionService {
             return Mono.error(ClientError.unAuthorizedRequest());
         return tokenService.tokenForUser(request.getUsername(), request.getPassword())
                 .doOnError(error -> logger.error(error.getMessage(), error))
-                .onErrorResume(InvalidUserNameException.class, error -> Mono.error(ClientError.unAuthorizedRequest1()))
+                .onErrorResume(InvalidUserNameException.class, error -> Mono.error(ClientError.invalidUserName()))
                 .onErrorResume(error -> lockedUserService.userFor(request.getUsername())
                         .switchIfEmpty(
                                 lockedUserService.createUser(request.getUsername())

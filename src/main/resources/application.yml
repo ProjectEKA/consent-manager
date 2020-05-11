@@ -21,8 +21,9 @@ consentmanager:
     transactionPinTokenValidity: ${TRANSACTION_PIN_TOKEN_VALIDITY}
     userCreationTokenValidity: ${USER_CREATION_TOKEN_VALIDITY}
     userIdSuffix: ${USER_ID_SUFFIX}
-    lockeduserservice:
+  lockeduserservice:
       maximumInvalidAttempts: 5
+      coolOfPeriod: 8
   otpservice:
     url: ${Otp_Service_Url}
     identifiers:

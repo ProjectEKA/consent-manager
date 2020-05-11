@@ -23,6 +23,7 @@ consentmanager:
     userIdSuffix: @ncg
   lockeduserservice:
     maximumInvalidAttempts: 5
+    coolOfPeriod: 8
   otpservice:
     url: http://localhost:5000
     identifiers:

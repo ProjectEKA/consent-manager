@@ -16,6 +16,7 @@ public class LockedUsersRepository {
 
     private static final String DELETE_LOCKED_USER = "DELETE FROM " +
             "locked_users WHERE patient_id=$1";
+
     private static final String UPDATE_LOCKED_USER = "UPDATE locked_users " +
             "SET is_locked=$1, locked_time=$2, invalid_attempts=$3 WHERE patient_id=$4";
 
@@ -72,6 +73,7 @@ public class LockedUsersRepository {
                             }
                             var lockedUserIterator = handler.result().iterator();
                             if (!lockedUserIterator.hasNext()) {
+                                //TODo
                                 monoSink.success();
                             }
                             monoSink.success(lockedUserFrom(lockedUserIterator.next()));

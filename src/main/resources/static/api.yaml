@@ -801,6 +801,124 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /patients/generateotp:
+    post:
+      tags:
+        - account
+      summary: Generate OTP for the user
+      description: Generates OTP for the given user and sent to the users' verified identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateOtpRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/GenerateOtpRequest'
+      responses:
+        '200':
+          description: Details of the session and otp are sent in response. otpMedium defines verified identifier where it would be sent to. Its value is mentioned in otpMediumValue. OTP has an expiry time in minutes which is also sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateOtpResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/GenerateOtpResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Verified identifier is non existent for the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: >
+            **Causes:**
+              * User does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patients/verifyotp:
+    post:
+      tags:
+        - account
+      summary: Verify OTP of the user for reset-password user flow
+      description: Verifies OTP for the given user as part of reset-password flow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOtpRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/VerifyOtpRequest'
+      responses:
+        '200':
+          description: A temporary token which will allow the user to reset profile password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyOtpResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/VerifyOtpResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Verified identifier is non existent for the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: >
+            **Causes:**
+              * User does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /patients/enquiries:
     post:
       tags:
@@ -1065,6 +1183,72 @@ paths:
       responses:
         '200':
           description: Profile created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Invalid/expired token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patients/profile/reset-password:
+    put:
+      tags:
+        - account
+      summary: Update Account
+      description: Profile password is updated with the given value.
+      parameters:
+        - name: Authorization
+          description: Token received after successful verification of OTP.
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePatientRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/UpdatePatientRequest'
+      responses:
+        '200':
+          description: Profile updated successfully.
           content:
             application/json:
               schema:
@@ -1625,6 +1809,10 @@ components:
           type: string
           xml:
             attribute: true
+        name:
+          type: string
+          xml:
+            attribute: true
       xml:
         name: OrganizationResponse
     Organization:
@@ -1830,6 +2018,7 @@ components:
       type: object
       required:
         - id
+        - name
       properties:
         id:
           type: string
@@ -2027,6 +2216,54 @@ components:
         keyValue:
           type: string
           format: string
+
+    GenerateOtpRequest:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+          format: string
+          example: raj.sharma@ncg
+    GenerateOtpResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        otpMedium:
+          type: string
+          enum: [MOBILE | EMAIL]
+          example: MOBILE
+        otpMediumValue:
+          type: string
+          format: string
+          example: 9999999999
+        expiryInMinutes:
+          type: integer
+          example: 5
+    VerifyOtpRequest:
+      type: object
+      required:
+        - sessionId
+        - value
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          example: 6357247d-6b9d-425e-a9a5-6ba9915c12ea
+        value:
+          type: integer
+          example: 666666
+          description: '6 digit number'
+    VerifyOtpResponse:
+      type: object
+      properties:
+        temporaryToken:
+          type: string
+          description: JWT Token
     MobileNumberEnquiryRequest:
       type: object
       required:
@@ -2165,6 +2402,13 @@ components:
         - username
         - password
         - gender
+    UpdatePatientRequest:
+      type: object
+      properties:
+        password:
+          type: string
+      required:
+        - password
     AuthResponse:
       type: object
       properties:

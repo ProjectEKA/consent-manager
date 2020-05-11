@@ -18,4 +18,5 @@ public class UserServiceProperties {
     private final int maxOtpAttempts;
     private final int maxOtpAttemptsPeriodInMin;
     private final int otpAttemptsBlockPeriodInMin;
+    private final long maxIncorrectPinAttempts;
 }

@@ -24,6 +24,7 @@ consentmanager:
     maxOtpAttempts: ${MAX_OTP_ATTEMPTS}
     maxOtpAttemptsPeriodInMin: ${MAX_OTP_ATTEMPTS_PERIOD_IN_MIN}
     otpAttemptsBlockPeriodInMin: ${OTP_ATTEMPTS_BLOCK_PERIOD_IN_MIN}
+    maxIncorrectPinAttempts: 5
   otpservice:
     url: ${Otp_Service_Url}
     identifiers:

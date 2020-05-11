@@ -12,6 +12,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEF
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_NOT_GRANTED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_RANGE;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PIN_ATTEMPTS_EXCEEDED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SCOPE;
@@ -64,9 +65,14 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(USER_NOT_FOUND, "Cannot find the user")));
     }
 
-    public static ClientError transactionPinDidNotMatch() {
+    public static ClientError transactionPinDidNotMatch(String auxMessage) {
         return new ClientError(UNAUTHORIZED,
-                new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN, "Invalid transaction pin")));
+                new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN, String.format("%s;%s","Invalid transaction pin",auxMessage))));
+    }
+
+    public static ClientError invalidAttemptsExceeded() {
+        return new ClientError(UNAUTHORIZED,
+                new ErrorRepresentation(new Error(INVALID_PIN_ATTEMPTS_EXCEEDED, "Invalid Pin attempts exceeded; Try again after sometime.")));
     }
 
     public static ClientError invalidTransactionPin() {

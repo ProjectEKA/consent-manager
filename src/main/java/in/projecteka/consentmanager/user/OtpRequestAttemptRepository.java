@@ -25,9 +25,9 @@ public class OtpRequestAttemptRepository {
 
     private final PgPool dbClient;
 
-    public Mono<Void> insert(String cm_id, String identifierType, String identifierValue, OtpRequestAttempt.AttemptStatus attemptStatus, OtpRequestAttempt.Action action) {
+    public Mono<Void> insert(String cmId, String identifierType, String identifierValue, OtpRequestAttempt.AttemptStatus attemptStatus, OtpRequestAttempt.Action action) {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_OTP_REQUEST_ATTEMPT)
-                .execute(Tuple.of(cm_id, identifierType, identifierValue, attemptStatus.name(), action.toString()),
+                .execute(Tuple.of(cmId, identifierType, identifierValue, attemptStatus.name(), action.toString()),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError("Failed to create otp attempt"));

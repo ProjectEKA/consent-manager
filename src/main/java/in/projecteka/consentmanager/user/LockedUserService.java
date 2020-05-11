@@ -27,19 +27,19 @@ public class LockedUserService {
     }
 
     public Mono<ClientError> validateAndUpdate(LockedUser user) {
-        var MAXIMUM_INVALID_PASSWORD_ATTEMPTS = lockedServiceProperties.getMaximumInvalidAttempts();
+        var maximumInvalidAttempts = lockedServiceProperties.getMaximumInvalidAttempts();
         var blockedTime = user.getLockedTime();
-        var firstInvalidAttempt = user.getFirstInvalidAttempt();
+        var firstInvalidAttempt = user.getFirstInvalidAttemptTime();
 
         if (isAfterEightHours(firstInvalidAttempt) || isAfterEightHours(blockedTime)) {
             return reAddUser(user.getPatientId());
         }
 
-        if (user.getInvalidAttempts() == MAXIMUM_INVALID_PASSWORD_ATTEMPTS) {
+        if (user.getInvalidAttempts() == maximumInvalidAttempts) {
             return blockUser(user.getPatientId());
         }
 
-        if (user.getInvalidAttempts() < MAXIMUM_INVALID_PASSWORD_ATTEMPTS) {
+        if (user.getInvalidAttempts() < maximumInvalidAttempts) {
             return updateUserAndReturnError(user, ClientError.unAuthorizedRequest());
         } else {
             return updateUserAndReturnError(user, ClientError.userBlocked());
@@ -64,22 +64,22 @@ public class LockedUserService {
     }
 
     private Mono<ClientError> blockUser(String patientId) {
-        var MAXIMUM_INVALID_PASSWORD_ATTEMPTS = lockedServiceProperties.getMaximumInvalidAttempts();
+        var maximumInvalidAttempts = lockedServiceProperties.getMaximumInvalidAttempts();
         return lockedUsersRepository.updateUser(true,
                 new Date().toString(),
                 patientId,
-                MAXIMUM_INVALID_PASSWORD_ATTEMPTS + 1)
+                maximumInvalidAttempts + 1)
                 .thenReturn(ClientError.userBlocked());
     }
 
     private boolean isAfterEightHours(String time) {
-        var MAXIMUM_COOL_OFF_PERIOD = lockedServiceProperties.getCoolOfPeriod();
-        var MILLI_TO_HOUR = 1000 * 60 * 60;
+        var coolOfPeriod = lockedServiceProperties.getCoolOfPeriod();
+        var milliToHour = 1000 * 60 * 60;
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
             Date now = sdf.parse(new Date().toString());
             Date pastDate = sdf.parse(time);
-            return ((now.getTime() - pastDate.getTime()) / MILLI_TO_HOUR) >= MAXIMUM_COOL_OFF_PERIOD;
+            return ((now.getTime() - pastDate.getTime()) / milliToHour) >= coolOfPeriod;
         } catch (Exception e) {
             return false;
         }

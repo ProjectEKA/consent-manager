@@ -28,7 +28,7 @@ public class LockedUsersRepository {
     public Mono<Void> insert(LockedUser lockedUser) {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_INVALID_ATTEMPTS)
                 .execute(Tuple.of(lockedUser.getPatientId(), lockedUser.getLockedTime(),
-                        lockedUser.getInvalidAttempts(), lockedUser.getIsLocked(), lockedUser.getFirstInvalidAttempt()),
+                        lockedUser.getInvalidAttempts(), lockedUser.getIsLocked(), lockedUser.getFirstInvalidAttemptTime()),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(ClientError.failedToInsertLockedUser());
@@ -73,7 +73,6 @@ public class LockedUsersRepository {
                             }
                             var lockedUserIterator = handler.result().iterator();
                             if (!lockedUserIterator.hasNext()) {
-                                //TODo
                                 monoSink.success();
                             }
                             monoSink.success(lockedUserFrom(lockedUserIterator.next()));
@@ -87,7 +86,7 @@ public class LockedUsersRepository {
                 .isLocked(row.getBoolean("is_locked"))
                 .invalidAttempts((Integer) row.getValue("invalid_attempts"))
                 .lockedTime(row.getString("locked_time"))
-                .firstInvalidAttempt(row.getString("first_invalid_attempt_time"))
+                .firstInvalidAttemptTime(row.getString("first_invalid_attempt_time"))
                 .build();
     }
 }

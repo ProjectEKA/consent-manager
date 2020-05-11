@@ -12,9 +12,11 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEF
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_NOT_GRANTED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_RANGE;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PIN_ATTEMPTS_EXCEEDED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SCOPE;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SESSION;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TOKEN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TRANSACTION_PIN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.NETWORK_SERVICE_ERROR;
@@ -63,9 +65,14 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(USER_NOT_FOUND, "Cannot find the user")));
     }
 
-    public static ClientError transactionPinDidNotMatch() {
+    public static ClientError transactionPinDidNotMatch(String auxMessage) {
         return new ClientError(UNAUTHORIZED,
-                new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN, "Invalid transaction pin")));
+                new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN, String.format("%s;%s","Invalid transaction pin",auxMessage))));
+    }
+
+    public static ClientError invalidAttemptsExceeded() {
+        return new ClientError(UNAUTHORIZED,
+                new ErrorRepresentation(new Error(INVALID_PIN_ATTEMPTS_EXCEEDED, "Invalid Pin attempts exceeded; Try again after sometime.")));
     }
 
     public static ClientError invalidTransactionPin() {
@@ -180,10 +187,10 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(INVALID_TOKEN, "Token verification failed")));
     }
 
-    public static ClientError unAuthorizedRequest() {
+    public static ClientError unAuthorizedRequest(String errorMessage) {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT,
-                        "Username or password is incorrect")));
+                        errorMessage)));
     }
 
     public static ClientError invalidUserName() {
@@ -244,5 +251,10 @@ public class ClientError extends Throwable {
     public static ClientError invalidScope() {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(INVALID_SCOPE, "The scope provided is invalid for current operation")));
+    }
+
+    public static ClientError invalidSession(String session) {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(INVALID_SESSION, String.format("The sessionId: %s is invalid",session))));
     }
 }

@@ -29,14 +29,31 @@ public class TokenService {
                         .flatMap(user -> Mono.error(new InvalidPasswordException())));
     }
 
+    public Mono<Session> tokenForOtpUser(String username, String sessionId, String otp) {
+        return identityServiceClient.getToken(loginRequestForOtp(username,sessionId,otp));
+    }
+
+    private MultiValueMap<String, String> loginRequestForOtp(String username, String sessionId, String otp) {
+        LinkedMultiValueMap<String, String> formData = loginRequestCommon();
+        formData.add("username",username);
+        formData.add("session_id",sessionId);
+        formData.add("otp",otp);
+        return formData;
+    }
+
     private MultiValueMap<String, String> loginRequestWith(String username, String password) {
+        LinkedMultiValueMap<String, String> formData = loginRequestCommon();
+        formData.add("username", username);
+        formData.add("password", password);
+        return formData;
+    }
+
+    private LinkedMultiValueMap<String, String> loginRequestCommon() {
         var formData = new LinkedMultiValueMap<String, String>();
         formData.add("grant_type", "password");
         formData.add("scope", "openid");
         formData.add("client_id", keyCloakProperties.getClientId());
         formData.add("client_secret", keyCloakProperties.getClientSecret());
-        formData.add("username", username);
-        formData.add("password", password);
         return formData;
     }
 

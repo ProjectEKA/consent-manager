@@ -15,4 +15,5 @@ public class UserServiceProperties {
     private final int transactionPinTokenValidity;
     private final int userCreationTokenValidity;
     private final String userIdSuffix;
+    private final long maxIncorrectPinAttempts;
 }

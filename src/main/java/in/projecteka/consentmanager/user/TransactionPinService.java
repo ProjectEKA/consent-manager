@@ -60,20 +60,17 @@ public class TransactionPinService {
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
                 .flatMap(val -> transactionPinRepository.updateRequestId(requestId, patientId)
                         .then(transactionPinRepository.getTransactionPinByPatient(patientId)
-                                .flatMap(transactionPin -> {
-                                    if (transactionPin.isEmpty()) {
-                                        return Mono.error(ClientError.transactionPinNotFound());
-                                    }
-                                    return dayCache.exists(blockedKey(patientId))
-                                            .filter(exists -> !exists)
-                                            .switchIfEmpty(Mono.error(ClientError.invalidAttemptsExceeded()))
-                                            .then(Mono.defer(()-> Mono.just(encoder.matches(pin, transactionPin.get().getPin()))))
-                                            .filter(matches-> !matches)
-                                            .flatMap(doesNotMatch -> dayCache.increment(incorrectAttemptKey(patientId))
-                                                    .filter(count-> count != userServiceProperties.getMaxIncorrectPinAttempts())
-                                                    .switchIfEmpty(Mono.defer(() -> dayCache.put(blockedKey(patientId),"true").thenReturn(userServiceProperties.getMaxIncorrectPinAttempts())))
-                                                    .flatMap(attemptCount -> Mono.error(ClientError.transactionPinDidNotMatch(String.format("%s attempts left",userServiceProperties.getMaxIncorrectPinAttempts() - attemptCount)))));
-                                }).thenReturn(newToken(patientId, scope))));
+                                .filter(transactionPin -> !transactionPin.isEmpty())
+                                .switchIfEmpty(Mono.error(ClientError.transactionPinNotFound()))
+                                .flatMap(transactionPin -> dayCache.exists(blockedKey(patientId))
+                                        .filter(exists -> !exists)
+                                        .switchIfEmpty(Mono.error(ClientError.invalidAttemptsExceeded()))
+                                        .then(Mono.defer(()-> Mono.just(encoder.matches(pin, transactionPin.get().getPin()))))
+                                        .filter(matches-> !matches)
+                                        .flatMap(doesNotMatch -> dayCache.increment(incorrectAttemptKey(patientId))
+                                                .filter(count-> count != userServiceProperties.getMaxIncorrectPinAttempts())
+                                                .switchIfEmpty(Mono.defer(() -> dayCache.put(blockedKey(patientId),"true").thenReturn(userServiceProperties.getMaxIncorrectPinAttempts())))
+                                                .flatMap(attemptCount -> Mono.error(ClientError.transactionPinDidNotMatch(String.format("%s attempts left",userServiceProperties.getMaxIncorrectPinAttempts() - attemptCount)))))).thenReturn(newToken(patientId, scope))));
     }
 
     static String incorrectAttemptKey(String patientId) {

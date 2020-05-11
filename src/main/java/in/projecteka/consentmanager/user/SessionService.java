@@ -33,7 +33,7 @@ public class SessionService {
                         .switchIfEmpty(
                                 lockedUserService.createUser(request.getUsername())
                                         .then(Mono.error(ClientError.unAuthorizedRequest())))
-                        .flatMap(optionalLockedUser -> lockedUserService.updateUser(optionalLockedUser).flatMap(Mono::error)));
+                        .flatMap(optionalLockedUser -> lockedUserService.validateAndUpdate(optionalLockedUser).flatMap(Mono::error)));
     }
 
     public Mono<Void> logout(String accessToken, LogoutRequest logoutRequest) {

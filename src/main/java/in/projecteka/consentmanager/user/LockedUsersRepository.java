@@ -14,7 +14,9 @@ public class LockedUsersRepository {
     private static final String INSERT_INVALID_ATTEMPTS = "INSERT INTO " +
             "locked_users (patient_id,locked_time,invalid_attempts,is_locked, first_invalid_attempt_time) VALUES ($1, $2, $3, $4, $5)";
 
-    private static final String UPDATE_LOCKED_STATUS = "UPDATE locked_users " +
+    private static final String DELETE_LOCKED_USER = "DELETE FROM " +
+            "locked_users WHERE patient_id=$1";
+    private static final String UPDATE_LOCKED_USER = "UPDATE locked_users " +
             "SET is_locked=$1, locked_time=$2, invalid_attempts=$3 WHERE patient_id=$4";
 
     private static final String SELECT_LOCKED_USER = "SELECT * from " +
@@ -36,8 +38,20 @@ public class LockedUsersRepository {
     }
 
     public Mono<Void> updateUser(boolean isLocked, String lockedTime, String patientsId, int invalidAttempts) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(UPDATE_LOCKED_STATUS)
+        return Mono.create(monoSink -> dbClient.preparedQuery(UPDATE_LOCKED_USER)
                 .execute(Tuple.of(isLocked, lockedTime, invalidAttempts, patientsId),
+                        handler -> {
+                            if (handler.failed()) {
+                                monoSink.error(ClientError.failedToUpdateLockedUser());
+                                return;
+                            }
+                            monoSink.success();
+                        }));
+    }
+
+    public Mono<Void> deleteUser(String patientsId) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(DELETE_LOCKED_USER)
+                .execute(Tuple.of(patientsId),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(ClientError.failedToUpdateLockedUser());

@@ -15,6 +15,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SCOPE;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SESSION;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TOKEN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TRANSACTION_PIN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.NETWORK_SERVICE_ERROR;
@@ -170,10 +171,10 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(INVALID_TOKEN, "Token verification failed")));
     }
 
-    public static ClientError unAuthorizedRequest() {
+    public static ClientError unAuthorizedRequest(String errorMessage) {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT,
-                        "Username or password is incorrect")));
+                        errorMessage)));
     }
 
     public static ClientError userAlreadyExists(String username) {
@@ -222,5 +223,10 @@ public class ClientError extends Throwable {
     public static ClientError invalidScope() {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(INVALID_SCOPE, "The scope provided is invalid for current operation")));
+    }
+
+    public static ClientError invalidSession(String session) {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(INVALID_SESSION, String.format("The sessionId: %s is invalid",session))));
     }
 }

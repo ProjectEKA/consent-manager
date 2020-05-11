@@ -74,6 +74,10 @@ public class LockedUserService {
     }
 
     private boolean isAfterEightHours(String time) {
+        if (time == null || time.equals("")) {
+            return false;
+        }
+
         var coolOfPeriod = lockedServiceProperties.getCoolOfPeriod();
         var milliToHour = 1000 * 60 * 60;
         try {
@@ -81,7 +85,7 @@ public class LockedUserService {
             Date now = sdf.parse(new Date().toString());
             Date pastDate = sdf.parse(time);
             return ((now.getTime() - pastDate.getTime()) / milliToHour) >= coolOfPeriod;
-        } catch (NullPointerException | ParseException e) {
+        } catch (ParseException e) {
             return false;
         }
     }

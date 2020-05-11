@@ -13,8 +13,10 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
@@ -31,11 +33,11 @@ public class ConsentRequestScheduler {
     @Async
     public void processExpiredConsentRequests() {
         logger.info("Processing consent requests for expiry");
-        List<ConsentRequestDetail> consentRequestDetails = consentRequestRepository.getConsentsByStatus(REQUESTED).
-                collectList().block();
-        if (consentRequestDetails != null) {
-            consentRequestDetails.forEach(consentRequestDetail -> {
-                if (isConsentRequestExpired(consentRequestDetail.getCreatedAt())) {
+        Optional<List<ConsentRequestDetail>> consentRequestDetails =
+                consentRequestRepository.getConsentsByStatus(REQUESTED).collectList().blockOptional();
+        consentRequestDetails.orElse(Collections.emptyList()).stream()
+                .filter(consentRequestDetail -> isConsentRequestExpired(consentRequestDetail.getCreatedAt()))
+                .forEach(consentRequestDetail -> {
                     consentRequestRepository.updateStatus(consentRequestDetail.getRequestId(), EXPIRED).block();
                     broadcastConsentArtefacts(List.of(),
                             consentRequestDetail.getConsentNotificationUrl(),
@@ -43,9 +45,7 @@ public class ConsentRequestScheduler {
                             EXPIRED,
                             consentRequestDetail.getLastUpdated()).block();
                     logger.info("Consent request with id {} is expired", consentRequestDetail.getRequestId());
-                }
-            });
-        }
+                });
     }
 
     private boolean isConsentRequestExpired(Date createdAt) {

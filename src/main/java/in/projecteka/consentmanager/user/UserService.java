@@ -80,11 +80,12 @@ public class UserService {
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
-        return otpServiceClient
+        return otpRequestAttemptService.validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(),OtpRequestAttempt.Action.RECOVER_PASSWORD,userName)
+                .then(otpServiceClient
                 .send(otpRequest)
                 .then(signupService.updatedVerfiedSession(
                         otpRequest.getSessionId(),
-                        userName));
+                        userName)));
     }
 
     public Mono<Token> permitOtp(OtpVerification otpVerification) {

@@ -9,10 +9,11 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
-import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
@@ -23,8 +24,10 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.clients.ClientError.failedToUpdateUser;
 import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
 import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
 import static java.lang.String.format;
@@ -65,6 +68,25 @@ public class UserService {
                                 otpRequest.getCommunication().getValue())));
     }
 
+    public Mono<SignUpSession> sendOtpForPasswordChange(UserSignUpEnquiry userSignupEnquiry, String userName) {
+        String identifierType = userSignupEnquiry.getIdentifierType().toUpperCase();
+
+        if (!otpServiceProperties.getIdentifiers().contains(identifierType)) {
+            throw new InvalidRequestException("invalid.identifier.type");
+        }
+
+        String sessionId = UUID.randomUUID().toString();
+        OtpRequest otpRequest = new OtpRequest(
+                sessionId,
+                new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
+
+        return otpServiceClient
+                .send(otpRequest)
+                .then(signupService.updatedVerfiedSession(
+                        otpRequest.getSessionId(),
+                        userName));
+    }
+
     public Mono<Token> permitOtp(OtpVerification otpVerification) {
         if (!validateOtpVerification(otpVerification)) {
             throw new InvalidRequestException("invalid.request.body");
@@ -72,6 +94,15 @@ public class UserService {
         return otpServiceClient
                 .verify(otpVerification.getSessionId(), otpVerification.getValue())
                 .then(signupService.generateToken(otpVerification.getSessionId()));
+    }
+
+    public Mono<Token> verifyOtp(OtpVerification otpVerification) {
+        if (!validateOtpVerification(otpVerification)) {
+            throw new InvalidRequestException("invalid.request.body");
+        }
+        return otpServiceClient
+                .verify(otpVerification.getSessionId(), otpVerification.getValue())
+                .then(signupService.generateToken(new HashMap<>(), otpVerification.getSessionId()));
     }
 
     public Mono<Session> create(CoreSignUpRequest coreSignUpRequest, String sessionId) {
@@ -87,6 +118,23 @@ public class UserService {
                 .flatMap(mobileNumber -> userExistsWith(coreSignUpRequest.getUsername())
                         .switchIfEmpty(Mono.defer(() -> createUserWith(mobileNumber, coreSignUpRequest, keycloakUser)))
                         .cast(Session.class));
+    }
+
+    public Mono<Session> update(UpdateUserRequest updateUserRequest, String sessionId) {
+        return signupService.getUserName(sessionId)
+                .switchIfEmpty(Mono.error(new InvalidRequestException("user not verified")))
+                .flatMap(userName -> updatedSessionFor(updateUserRequest, userName));
+    }
+
+    private Mono<Session> updatedSessionFor(UpdateUserRequest updateUserRequest, String userName) {
+        return tokenService.tokenForAdmin()
+                .flatMap(adminSession -> {
+                    return identityServiceClient.getUser(userName, String.format("Bearer %s", adminSession.getAccessToken()))
+                            .flatMap(cloakUsers -> identityServiceClient.updateUser(adminSession, cloakUsers.getId(),
+                                    updateUserRequest.getPassword())).then();
+                })
+                .doOnError(error -> Mono.error(failedToUpdateUser()))
+                .then(tokenService.tokenForUser(userName, updateUserRequest.getPassword()));
     }
 
     private Mono<Object> userExistsWith(String username) {
@@ -120,5 +168,9 @@ public class UserService {
 
     public String getUserIdSuffix() {
         return userServiceProperties.getUserIdSuffix();
+    }
+
+    public int getExpiryInMinutes() {
+        return otpServiceProperties.getExpiryInMinutes();
     }
 }

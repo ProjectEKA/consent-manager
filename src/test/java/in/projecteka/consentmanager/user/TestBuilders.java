@@ -4,6 +4,7 @@ import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
+import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import org.jeasy.random.EasyRandom;
@@ -18,6 +19,12 @@ public class TestBuilders {
         EasyRandomParameters excludeUnverifiedIdentifiers = new EasyRandomParameters().excludeField(FieldPredicates.named("unverifiedIdentifiers"));
         EasyRandom easyRandom = new EasyRandom(excludeUnverifiedIdentifiers);
         return easyRandom.nextObject(SignUpRequest.SignUpRequestBuilder.class);
+    }
+
+    public static UpdateUserRequest.UpdateUserRequestBuilder updateUserRequest() {
+        EasyRandomParameters excludeUnverifiedIdentifiers = new EasyRandomParameters().excludeField(FieldPredicates.named("unverifiedIdentifiers"));
+        EasyRandom easyRandom = new EasyRandom(excludeUnverifiedIdentifiers);
+        return easyRandom.nextObject(UpdateUserRequest.UpdateUserRequestBuilder.class);
     }
 
     public static CoreSignUpRequest.CoreSignUpRequestBuilder coreSignUpRequest() {

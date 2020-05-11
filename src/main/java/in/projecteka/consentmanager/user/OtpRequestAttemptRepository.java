@@ -27,7 +27,7 @@ public class OtpRequestAttemptRepository {
 
     public Mono<Void> insert(String cmId, String identifierType, String identifierValue, OtpRequestAttempt.AttemptStatus attemptStatus, OtpRequestAttempt.Action action) {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_OTP_REQUEST_ATTEMPT)
-                .execute(Tuple.of(cmId, identifierType, identifierValue, attemptStatus.name(), action.toString()),
+                .execute(Tuple.of(cmId, identifierType.toUpperCase(), identifierValue, attemptStatus.name(), action.toString()),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError("Failed to create otp attempt"));
@@ -39,7 +39,7 @@ public class OtpRequestAttemptRepository {
 
     public Mono<List<OtpRequestAttempt>> getOtpAttempts(String cmId, String identifierType, String identifierValue, int maxOtpAttempts, OtpRequestAttempt.Action action) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_OTP_REQUEST_ATTEMPT)
-                .execute(Tuple.of(identifierValue, maxOtpAttempts, action.toString(), cmId, identifierType),
+                .execute(Tuple.of(identifierValue, maxOtpAttempts, action.toString(), cmId, identifierType.toUpperCase()),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError("Failed to select from otp attempt"));

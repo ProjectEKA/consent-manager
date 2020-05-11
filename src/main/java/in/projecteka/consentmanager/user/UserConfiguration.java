@@ -134,7 +134,7 @@ public class UserConfiguration {
                                          OtpServiceClient otpServiceClient,
                                          OtpServiceProperties otpServiceProperties,
                                          OtpRequestAttemptService otpRequestAttemptService) {
-        return new SessionService(tokenService, blacklistedTokens,unverifiedSessions, userRepository, otpServiceClient,otpServiceProperties,otpRequestAttemptService);
+        return new SessionService(tokenService, blacklistedTokens,unverifiedSessions,lockedUserService, userRepository, otpServiceClient,otpServiceProperties,otpRequestAttemptService);
     }
 
     @Bean

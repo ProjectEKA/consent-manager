@@ -44,6 +44,12 @@ public class SignUpService {
                 .then(Mono.just(signupSession));
     }
 
+    public Mono<SignUpSession> updatedVerfiedSession(String sessionId, String userName) {
+        SignUpSession signupSession = new SignUpSession(sessionId);
+        return verifiedSessions.put(signupSession.getSessionId(), userName)
+                .then(Mono.just(signupSession));
+    }
+
     public Mono<Boolean> validateToken(String token) {
         try {
             var session = sessionFrom(token);
@@ -66,7 +72,7 @@ public class SignUpService {
                 }).flatMap(newSession -> generateToken(new HashMap<>(), newSession));
     }
 
-    private Mono<Token> generateToken(Map<String, Object> claims, String subject) {
+    public Mono<Token> generateToken(Map<String, Object> claims, String subject) {
         return Mono.just(new Token(Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
@@ -84,6 +90,10 @@ public class SignUpService {
     }
 
     public Mono<String> getMobileNumber(String sessionId) {
+        return verifiedSessions.getIfPresent(sessionId);
+    }
+
+    public Mono<String> getUserName(String sessionId) {
         return verifiedSessions.getIfPresent(sessionId);
     }
 

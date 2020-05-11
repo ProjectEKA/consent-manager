@@ -25,6 +25,7 @@ consentmanager:
     url: http://localhost:5000
     identifiers:
       - MOBILE
+    expiryInMinutes: 5
   keycloak:
     baseUrl: http://host.docker.internal:9001/auth
     clientId: consent-service

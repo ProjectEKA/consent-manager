@@ -20,7 +20,7 @@ import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.sessionRequest;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -96,31 +96,43 @@ class SessionServiceTest {
     @Test
     void returnUnAuthorizedWhenAnyTokenServiceThrowsInvalidPasswordException() {
         var sessionRequest = sessionRequest().build();
+        var patientId = sessionRequest.getUsername();
+        var password = sessionRequest.getPassword();
         var sessionService = new SessionService(tokenService, null, lockedUserService);
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new InvalidPasswordException()));
-        when(lockedUserService.userFor(any())).thenReturn(Mono.empty());
-        when(lockedUserService.createUser(any())).thenReturn(Mono.empty());
+
+        when(tokenService.tokenForUser(patientId, password)).thenReturn(Mono.error(new InvalidPasswordException()));
+        when(lockedUserService.userFor(patientId)).thenReturn(Mono.empty());
+        when(lockedUserService.createUser(patientId)).thenReturn(Mono.empty());
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
         StepVerifier.create(sessionPublisher)
                 .expectErrorSatisfies(throwable -> assertThat(((ClientError) throwable).getHttpStatus() == UNAUTHORIZED))
                 .verify();
+        verify(tokenService, times(1)).tokenForUser(patientId, password);
+        verify(lockedUserService, times(1)).userFor(patientId);
+        verify(lockedUserService, times(1)).createUser(patientId);
     }
 
     @Test
     void returnUnAuthorizedWhenAnyTokenServiceThrowsInvalidUserNameException() {
         var sessionRequest = sessionRequest().build();
+        var patientId = sessionRequest.getUsername();
+        var password = sessionRequest.getPassword();
+
         var sessionService = new SessionService(tokenService, null, lockedUserService);
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.error(new InvalidUserNameException()));
-        when(lockedUserService.userFor(any())).thenReturn(Mono.empty());
-        when(lockedUserService.createUser(any())).thenReturn(Mono.empty());
+        when(tokenService.tokenForUser(patientId, password)).thenReturn(Mono.error(new InvalidUserNameException()));
+        when(lockedUserService.userFor(patientId)).thenReturn(Mono.empty());
+        when(lockedUserService.createUser(patientId)).thenReturn(Mono.empty());
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
         StepVerifier.create(sessionPublisher)
                 .expectErrorSatisfies(throwable -> assertThat(((ClientError) throwable).getHttpStatus() == UNAUTHORIZED))
                 .verify();
+        verify(tokenService, times(1)).tokenForUser(patientId, password);
+        verify(lockedUserService, times(1)).userFor(patientId);
+        verify(lockedUserService, times(1)).createUser(patientId);
     }
 
     @Test

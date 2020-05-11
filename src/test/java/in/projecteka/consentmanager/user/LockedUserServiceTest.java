@@ -8,6 +8,8 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -36,5 +38,6 @@ class LockedUserServiceTest {
         StepVerifier.create(sessionPublisher)
                 .assertNext(session -> assertThat(session).isEqualTo(lockedUser))
                 .verifyComplete();
+        verify(lockedUsersRepository, times(1)).getLockedUserFor(patientId);
     }
 }

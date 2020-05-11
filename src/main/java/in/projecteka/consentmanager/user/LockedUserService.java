@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -17,7 +18,7 @@ public class LockedUserService {
     private final Logger logger = LoggerFactory.getLogger(LockedUserService.class);
 
     public Mono<LockedUser> userFor(String patientId) {
-        logger.info("Invoking repository go get the locked user for patientId " + patientId);
+        logger.debug("Invoking repository go get the locked user for patientId " + patientId);
         return lockedUsersRepository.getLockedUserFor(patientId);
     }
 
@@ -80,7 +81,7 @@ public class LockedUserService {
             Date now = sdf.parse(new Date().toString());
             Date pastDate = sdf.parse(time);
             return ((now.getTime() - pastDate.getTime()) / milliToHour) >= coolOfPeriod;
-        } catch (Exception e) {
+        } catch (NullPointerException | ParseException e) {
             return false;
         }
     }

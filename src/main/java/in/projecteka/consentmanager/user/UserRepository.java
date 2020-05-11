@@ -5,8 +5,6 @@ import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.User;
 import io.vertx.core.json.JsonArray;
 import io.vertx.pgclient.PgPool;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -36,8 +34,7 @@ public class UserRepository {
                                 monoSink.error(new DbOperationError());
                                 return;
                             }
-                            RowSet<Row> result = handler.result();
-                            var patientIterator = result.iterator();
+                            var patientIterator = handler.result().iterator();
                             if (!patientIterator.hasNext()) {
                                 monoSink.success();
                                 return;

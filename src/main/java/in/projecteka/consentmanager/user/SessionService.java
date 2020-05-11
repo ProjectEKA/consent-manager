@@ -52,10 +52,8 @@ public class SessionService {
                 .onErrorResume(error -> lockedUserService.userFor(request.getUsername())
                         .switchIfEmpty(
                                 lockedUserService.createUser(request.getUsername())
-                                        .then(Mono.error(ClientError.unAuthorizedRequest())))
+                                        .then(Mono.error(ClientError.unAuthorizedRequest("Username or password is incorrect"))))
                         .flatMap(optionalLockedUser -> lockedUserService.validateAndUpdate(optionalLockedUser).flatMap(Mono::error)));
-
-                .onErrorResume(error -> Mono.error(ClientError.unAuthorizedRequest("Username or password is incorrect")));
 
     }
 
@@ -68,8 +66,8 @@ public class SessionService {
         String sessionId = UUID.randomUUID().toString();
         return userRepository.userWith(otpVerificationRequest.getUsername())
                 .switchIfEmpty(Mono.error(ClientError.userNotFound()))
-                .map(user -> new OtpCommunicationData("mobile",user.getPhone()))
-                .map(otpCommunicationData -> new OtpRequest(sessionId,otpCommunicationData))
+                .map(user -> new OtpCommunicationData("mobile", user.getPhone()))
+                .map(otpCommunicationData -> new OtpRequest(sessionId, otpCommunicationData))
                 .flatMap(requestBody -> otpServiceClient.send(requestBody)
                         .then(Mono.defer(() -> unverifiedSessions.put(sessionId, otpVerificationRequest.getUsername())))
                         .thenReturn(requestBody.getCommunication().getValue()))
@@ -93,6 +91,6 @@ public class SessionService {
                 .switchIfEmpty(Mono.error(ClientError.invalidSession(otpPermitRequest.getSessionId())))
                 .then(Mono.defer(() -> tokenService
                         .tokenForOtpUser(otpPermitRequest.getUsername(),
-                                otpPermitRequest.getSessionId(),otpPermitRequest.getOtp())));
+                                otpPermitRequest.getSessionId(), otpPermitRequest.getOtp())));
     }
 }

@@ -74,11 +74,6 @@ public class UserConfiguration {
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens", "usedTokens"})
-
-    public CacheAdapter<String, String> createLoadingCacheAdapter(LoadingCache<String, String> cache) {
-        return new LoadingCacheAdapter(cache);
-    }
-  
     public CacheAdapter<String, String> createLoadingCacheAdapter() {
        return new LoadingCacheAdapter(createSessionCache(5));
     }
@@ -130,17 +125,13 @@ public class UserConfiguration {
 
     @Bean
     public SessionService sessionService(TokenService tokenService,
-                                         CacheAdapter<String, String> blacklistedTokens, LockedUserService lockedUserService) {
-        return new SessionService(tokenService, blacklistedTokens, lockedUserService);
-
-    @Bean
-    public SessionService sessionService(TokenService tokenService,
                                          CacheAdapter<String,String> blacklistedTokens,
                                          CacheAdapter<String,String> unverifiedSessions,
+                                         LockedUserService lockedUserService,
                                          UserRepository userRepository,
                                          OtpServiceClient otpServiceClient,
                                          OtpServiceProperties otpServiceProperties) {
-        return new SessionService(tokenService, blacklistedTokens,unverifiedSessions, userRepository, otpServiceClient,otpServiceProperties);
+        return new SessionService(tokenService, blacklistedTokens,unverifiedSessions,lockedUserService, userRepository, otpServiceClient,otpServiceProperties);
 
     }
 

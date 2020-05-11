@@ -41,7 +41,7 @@ public class LockedUserService {
         }
 
         if (user.getInvalidAttempts() < maximumInvalidAttempts) {
-            return updateUserAndReturnError(user, ClientError.unAuthorizedRequest());
+            return updateUserAndReturnError(user, ClientError.unAuthorizedRequest("Username or password is incorrect"));
         } else {
             return updateUserAndReturnError(user, ClientError.userBlocked());
         }
@@ -61,7 +61,7 @@ public class LockedUserService {
         return lockedUsersRepository
                 .deleteUser(patientId)
                 .then(createUser(patientId)
-                        .thenReturn(ClientError.unAuthorizedRequest()));
+                        .thenReturn(ClientError.unAuthorizedRequest("Username or password is incorrect")));
     }
 
     private Mono<ClientError> blockUser(String patientId) {

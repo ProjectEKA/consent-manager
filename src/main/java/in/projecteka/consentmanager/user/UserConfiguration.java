@@ -72,7 +72,7 @@ public class UserConfiguration {
                 userServiceProperties.getUserCreationTokenValidity());
     }
 
-    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens", "usedTokens"})
     public CacheAdapter<String, String> createLoadingCacheAdapter() {
        return new LoadingCacheAdapter(createSessionCache(5));
@@ -95,7 +95,7 @@ public class UserConfiguration {
                 });
     }
 
-    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "redis")
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens", "usedTokens"})
     public CacheAdapter<String, String> createRedisCacheAdapter(RedisOptions redisOptions) {
         RedisClient redisClient = getRedisClient(redisOptions);
@@ -119,13 +119,20 @@ public class UserConfiguration {
     }
 
     @Bean
+    LockedUserService lockedUserService(LockedUsersRepository lockedUsersRepository, LockedServiceProperties lockedServiceProperties) {
+        return new LockedUserService(lockedUsersRepository, lockedServiceProperties);
+    }
+
+    @Bean
     public SessionService sessionService(TokenService tokenService,
                                          CacheAdapter<String,String> blacklistedTokens,
                                          CacheAdapter<String,String> unverifiedSessions,
+                                         LockedUserService lockedUserService,
                                          UserRepository userRepository,
                                          OtpServiceClient otpServiceClient,
                                          OtpServiceProperties otpServiceProperties) {
-        return new SessionService(tokenService, blacklistedTokens,unverifiedSessions, userRepository, otpServiceClient,otpServiceProperties);
+        return new SessionService(tokenService, blacklistedTokens,unverifiedSessions,lockedUserService, userRepository, otpServiceClient,otpServiceProperties);
+
     }
 
     @Bean

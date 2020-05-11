@@ -14,7 +14,6 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 public class UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
-
     private static final String INSERT_PATIENT = "Insert into patient(id, " +
             "name, gender, year_of_birth, phone_number, unverified_identifiers)" +
             " values($1, $2, $3, $4, $5, $6);";

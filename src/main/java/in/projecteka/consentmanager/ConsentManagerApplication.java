@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.common.cache.RedisOptions;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.dataflow.DataFlowConsentManagerProperties;
 import in.projecteka.consentmanager.user.JWTProperties;
+import in.projecteka.consentmanager.user.LockedServiceProperties;
 import in.projecteka.consentmanager.user.UserServiceProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -25,6 +26,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
                                 IdentityServiceProperties.class,
                                 LinkServiceProperties.class,
                                 UserServiceProperties.class,
+                                LockedServiceProperties.class,
                                 JWTProperties.class,
                                 ConsentServiceProperties.class,
                                 RedisOptions.class})

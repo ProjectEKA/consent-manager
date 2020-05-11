@@ -44,7 +44,8 @@ class OtpRequestAttemptServiceTest {
                 "",
                 5,
                 10,
-                2);
+                2,
+                5);
         otpRequestAttemptService = new OtpRequestAttemptService(otpRequestAttemptRepository, userServiceProperties);
         identifierValue = "+91-6666666666";
         cmId = "";

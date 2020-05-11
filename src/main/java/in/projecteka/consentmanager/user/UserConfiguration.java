@@ -126,8 +126,9 @@ public class UserConfiguration {
                                          CacheAdapter<String,String> unverifiedSessions,
                                          UserRepository userRepository,
                                          OtpServiceClient otpServiceClient,
-                                         OtpServiceProperties otpServiceProperties) {
-        return new SessionService(tokenService, blacklistedTokens,unverifiedSessions, userRepository, otpServiceClient,otpServiceProperties);
+                                         OtpServiceProperties otpServiceProperties,
+                                         OtpRequestAttemptService otpRequestAttemptService) {
+        return new SessionService(tokenService, blacklistedTokens,unverifiedSessions, userRepository, otpServiceClient,otpServiceProperties,otpRequestAttemptService);
     }
 
     @Bean

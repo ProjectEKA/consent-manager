@@ -1,5 +1,7 @@
 package in.projecteka.consentmanager.clients;
 
+import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequest;
+import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
@@ -9,7 +11,10 @@ import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import static java.lang.String.format;
 
 public class IdentityServiceClient {
 
@@ -22,7 +27,7 @@ public class IdentityServiceClient {
     }
 
     public Mono<Void> createUser(Session session, KeycloakUser request) {
-        String accessToken = String.format("Bearer %s", session.getAccessToken());
+        String accessToken = format("Bearer %s", session.getAccessToken());
         return webClientBuilder.build()
                 .post()
                 .uri(uriBuilder ->
@@ -50,6 +55,20 @@ public class IdentityServiceClient {
                 .bodyToMono(Session.class);
     }
 
+    public Flux<KeyCloakUserRepresentation> getUser(String userName, String accessToken) {
+        String uri = format("/admin/realms/consent-manager/users?username=%s", userName);
+        return webClientBuilder.build()
+                .get()
+                .uri(uri)
+                .header(HttpHeaders.AUTHORIZATION, accessToken)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatus::isError, clientResponse -> {
+                    return Mono.error(ClientError.userNotFound());
+                })
+                .bodyToFlux(KeyCloakUserRepresentation.class);
+    }
+
     public Mono<Void> logout(MultiValueMap<String, String> formData) {
         return webClientBuilder.build()
                 .post()
@@ -60,5 +79,27 @@ public class IdentityServiceClient {
                 .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(Void.class);
+    }
+
+    public Mono<Void> updateUser(Session session, String keyCloakUserId, String userPassword) {
+        String accessToken = format("Bearer %s", session.getAccessToken());
+        String uri = format("/admin/realms/consent-manager/users/%s/reset-password", keyCloakUserId);
+        KeyCloakUserPasswordChangeRequest keyCloakUserPasswordChangeRequest = KeyCloakUserPasswordChangeRequest
+                .builder()
+                .value(userPassword)
+                .build();
+
+        return webClientBuilder.build()
+                .put()
+                .uri(uriBuilder ->
+                        uriBuilder.path(uri).build())
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(HttpHeaders.AUTHORIZATION, accessToken)
+                .body(Mono.just(keyCloakUserPasswordChangeRequest), KeyCloakUserPasswordChangeRequest.class)
+                .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(ClientError.userNotFound()))
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .toBodilessEntity()
+                .then();
     }
 }

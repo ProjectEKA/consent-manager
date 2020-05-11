@@ -24,6 +24,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_EXPIRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_INVALID;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.PROVIDER_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.QUEUE_NOT_FOUND;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.REQUEST_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_ID_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_PIN_IS_ALREADY_CREATED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.UNABLE_TO_CONNECT_TO_PROVIDER;
@@ -33,6 +34,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_REQUEST_LIMIT_EXCEEDED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.REQUEST_ALREADY_EXISTS;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -41,6 +43,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
+
 
 @Getter
 @ToString
@@ -136,6 +139,16 @@ public class ClientError extends Throwable {
         return internalServerError("Failed to create transaction pin");
     }
 
+
+    public static ClientError failedToInsertLockedUser() {
+        return internalServerError("Failed to insert locked user");
+    }
+
+
+    public static ClientError failedToUpdateLockedUser() {
+        return internalServerError("Failed to update locked user");
+    }
+
     public static ClientError failedToUpdateTransactionPin() {
         return internalServerError("Failed to update request_id in transaction pin");
     }
@@ -144,6 +157,11 @@ public class ClientError extends Throwable {
         return internalServerError("Failed to fetch transaction pin");
     }
 
+
+    public static ClientError failedToFetchLockedUser() {
+        return internalServerError("Failed to fetch Locked User");
+    }
+  
     public static ClientError failedToUpdateUser() {
         return internalServerError("Failed to update user");
     }
@@ -181,6 +199,18 @@ public class ClientError extends Throwable {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT,
                         errorMessage)));
+    }
+
+    public static ClientError invalidUserName() {
+        return new ClientError(UNAUTHORIZED,
+                new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT,
+                        "Username incorrect")));
+    }
+
+    public static ClientError userBlocked() {
+        return new ClientError(UNAUTHORIZED,
+                new ErrorRepresentation(new Error(USER_TEMPORARILY_BLOCKED,
+                        "User blocked temporarily")));
     }
 
     public static ClientError userAlreadyExists(String username) {

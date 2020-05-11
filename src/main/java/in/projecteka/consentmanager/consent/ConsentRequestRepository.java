@@ -10,6 +10,7 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
@@ -27,12 +28,15 @@ public class ConsentRequestRepository {
     private static final String SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS;
     private static final String SELECT_CONSENT_REQUEST_BY_ID;
     private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT;
+    private static final String SELECT_CONSENT_REQUEST_BY_STATUS;
     private static final String INSERT_CONSENT_REQUEST_QUERY = "INSERT INTO consent_request " +
             "(request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
             "date_modified=$2 WHERE request_id=$3";
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent request";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
+    private static final String FAILED_TO_GET_CONSENT_REQUEST_BY_STATUS = "Failed to get consent requests by status";
+
     private final PgPool dbClient;
 
     static {
@@ -41,6 +45,7 @@ public class ConsentRequestRepository {
         SELECT_CONSENT_DETAILS_FOR_PATIENT = s + "patient_id=$1 LIMIT $2 OFFSET $3";
         SELECT_CONSENT_REQUEST_BY_ID = s + "request_id=$1";
         SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS = s + "request_id=$1 and status=$2 and patient_id=$3";
+        SELECT_CONSENT_REQUEST_BY_STATUS = s + "status=$1";
     }
 
     public ConsentRequestRepository(PgPool dbClient) {
@@ -147,5 +152,21 @@ public class ConsentRequestRepository {
             return Date.from(timestamp.atZone(ZoneId.systemDefault()).toInstant());
         }
         return null;
+    }
+
+    public Flux<ConsentRequestDetail> getConsentsByStatus(ConsentStatus status) {
+        return Flux.create(fluxSink -> dbClient.preparedQuery(SELECT_CONSENT_REQUEST_BY_STATUS)
+                .execute(Tuple.of(status.toString()),
+                        handler -> {
+                            if (handler.failed()) {
+                                fluxSink.error(new Exception(FAILED_TO_GET_CONSENT_REQUEST_BY_STATUS));
+                                return;
+                            }
+                            RowSet<Row> results = handler.result();
+                            if (results.iterator().hasNext()) {
+                                results.forEach(row -> fluxSink.next(mapToConsentRequestDetail(row)));
+                            }
+                            fluxSink.complete();
+                        }));
     }
 }

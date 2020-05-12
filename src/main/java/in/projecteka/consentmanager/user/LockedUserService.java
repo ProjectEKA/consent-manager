@@ -27,6 +27,12 @@ public class LockedUserService {
         return lockedUsersRepository.insert(lockedUser);
     }
 
+    public boolean isUserBlocked(LockedUser user) {
+        return user != null &&
+                (!isAfterEightHours(user.getFirstInvalidAttemptTime())
+                        || !isAfterEightHours(user.getLockedTime())) && user.getIsLocked();
+    }
+
     public Mono<ClientError> validateAndUpdate(LockedUser user) {
         var maximumInvalidAttempts = lockedServiceProperties.getMaximumInvalidAttempts();
         var blockedTime = user.getLockedTime();

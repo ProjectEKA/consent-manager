@@ -1,13 +1,16 @@
 package in.projecteka.consentmanager.consent;
 
+import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentExpiry;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.Query;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
+import io.vertx.core.AsyncResult;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
@@ -19,6 +22,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.StreamSupport;
@@ -27,14 +31,20 @@ import static in.projecteka.consentmanager.common.Serializer.to;
 
 @AllArgsConstructor
 public class ConsentArtefactRepository {
+    public static final String CONSENT_ARTEFACT = "consent_artefact";
+    public static final String STATUS = "status";
+    public static final String CONSENT_REQUEST_ID = "consent_request_id";
+    public static final String DATE_MODIFIED = "date_modified";
+    public static final String CONSENT_ARTEFACT_ID = "consent_artefact_id";
+    public static final String SIGNATURE = "signature";
+    private static final String SELECT_CONSENT_QUERY;
+    private static final String SELECT_HIP_CONSENT_QUERY;
+    private static final String SELECT_ALL_CONSENT_ARTEFACTS_WITH_STATUS;
+    private static final String SELECT_ALL_CONSENT_ARTEFACTS;
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
             "date_modified=$2 WHERE request_id=$3";
-    private static final String SELECT_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
-            "FROM consent_artefact WHERE consent_artefact_id = $1";
     private static final String SELECT_CONSENT_WITH_REQUEST_QUERY = "SELECT status, consent_artefact, " +
             "consent_request_id, date_modified FROM consent_artefact WHERE consent_artefact_id = $1";
-    private static final String SELECT_HIP_CONSENT_QUERY = "SELECT status, consent_artefact, signature " +
-            "FROM hip_consent_artefact WHERE consent_artefact_id = $1";
     private static final String SELECT_CONSENT_IDS_FROM_CONSENT_ARTEFACT = "SELECT consent_artefact_id " +
             "FROM consent_artefact WHERE consent_request_id=$1";
     private static final String SELECT_CONSENTS_TO_VALIDATE_EXPIRY = "SELECT consent_artefact_id, " +
@@ -42,15 +52,23 @@ public class ConsentArtefactRepository {
             "FROM consent_artefact WHERE status=$1";
     private static final String UPDATE_CONSENT_ARTEFACT_STATUS_QUERY = "UPDATE consent_artefact SET status=$1, " +
             "date_modified=$2 WHERE consent_artefact_id=$3";
+    private static final String SELECT_CONSENT_ARTEFACTS_COUNT_FOR_STATUS = "SELECT COUNT(*) FROM consent_artefact " +
+            "WHERE patient_id=$1 AND status=$2";
+    private static final String SELECT_CONSENT_ARTEFACTS_COUNT = "SELECT COUNT(*) FROM consent_artefact " +
+            "WHERE patient_id=$1";
+
+    static {
+        String s = "SELECT status, consent_artefact, signature FROM ";
+        SELECT_CONSENT_QUERY = s + "consent_artefact where consent_artefact_id = $1";
+        SELECT_HIP_CONSENT_QUERY = s + "hip_consent_artefact WHERE consent_artefact_id = $1";
+        SELECT_ALL_CONSENT_ARTEFACTS_WITH_STATUS = s + "consent_artefact WHERE patient_id=$1 AND " +
+                "status=$2 LIMIT $3 OFFSET $4 ";
+        SELECT_ALL_CONSENT_ARTEFACTS = s + "consent_artefact WHERE patient_id=$1 LIMIT $2 OFFSET $3 ";
+    }
+
+
     private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
     private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
-    public static final String CONSENT_ARTEFACT = "consent_artefact";
-    public static final String STATUS = "status";
-    public static final String CONSENT_REQUEST_ID = "consent_request_id";
-    public static final String DATE_MODIFIED = "date_modified";
-    public static final String CONSENT_ARTEFACT_ID = "consent_artefact_id";
-    public static final String SIGNATURE = "signature";
-
     private final PgPool dbClient;
 
     public Mono<Void> process(List<Query> queries) {
@@ -82,15 +100,7 @@ public class ConsentArtefactRepository {
                                 return;
                             }
                             Row row = results.iterator().next();
-                            var consentArtefact = to(row.getValue(CONSENT_ARTEFACT).toString(),
-                                    ConsentArtefact.class);
-                            var representation = ConsentArtefactRepresentation
-                                    .builder()
-                                    .status(ConsentStatus.valueOf(row.getString(STATUS)))
-                                    .consentDetail(consentArtefact)
-                                    .signature(row.getString(SIGNATURE))
-                                    .build();
-                            monoSink.success(representation);
+                            monoSink.success(getConsentArtefactRepresentation(row));
                         }));
     }
 
@@ -133,6 +143,52 @@ public class ConsentArtefactRepository {
                                 fluxSink.complete();
                             }
                         }));
+    }
+
+    public Mono<ListResult<List<ConsentArtefactRepresentation>>> getAllConsentArtefacts(
+            String username, int limit, int offset) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_ALL_CONSENT_ARTEFACTS)
+                .execute(Tuple.of(username, limit, offset), handler -> {
+                    List<ConsentArtefactRepresentation> artefacts = getConsentArtefactRepresentation(handler);
+                    dbClient.preparedQuery(SELECT_CONSENT_ARTEFACTS_COUNT)
+                            .execute(Tuple.of(username), counter -> {
+                                if (counter.failed()) {
+                                    monoSink.error(new DbOperationError());
+                                    return;
+                                }
+                                Integer count = counter.result().iterator().next().getInteger("count");
+                                monoSink.success(new ListResult<>(artefacts, count));
+                            });
+                }));
+    }
+
+    public Mono<ListResult<List<ConsentArtefactRepresentation>>> getConsentArtefactsByStatus(
+            String username, String status, int limit, int offset) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_ALL_CONSENT_ARTEFACTS_WITH_STATUS)
+                .execute(Tuple.of(username, status, limit, offset), handler -> {
+                    List<ConsentArtefactRepresentation> artefacts = getConsentArtefactRepresentation(handler);
+                    dbClient.preparedQuery(SELECT_CONSENT_ARTEFACTS_COUNT_FOR_STATUS)
+                            .execute(Tuple.of(username, status), counter -> {
+                                if (counter.failed()) {
+                                    monoSink.error(new DbOperationError());
+                                    return;
+                                }
+                                Integer count = counter.result().iterator().next().getInteger("count");
+                                monoSink.success(new ListResult<>(artefacts, count));
+                            });
+                }));
+    }
+
+    private List<ConsentArtefactRepresentation> getConsentArtefactRepresentation(AsyncResult<RowSet<Row>> handler) {
+        if (handler.failed()) {
+            return new ArrayList<>();
+        }
+        List<ConsentArtefactRepresentation> artefacts = new ArrayList<>();
+        RowSet<Row> results = handler.result();
+        for (Row result : results) {
+            artefacts.add(getConsentArtefactRepresentation(result));
+        }
+        return artefacts;
     }
 
     @SneakyThrows
@@ -184,18 +240,6 @@ public class ConsentArtefactRepository {
                         }));
     }
 
-    private List<Query> getUpdateQueries(String consentId, String consentRequestId, ConsentStatus status) {
-        Query consentRequestUpdate = new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
-                Tuple.of(status.toString(),
-                        LocalDateTime.now(),
-                        consentRequestId));
-        Query consentArtefactUpdate = new Query(UPDATE_CONSENT_ARTEFACT_STATUS_QUERY,
-                Tuple.of(status.toString(),
-                        LocalDateTime.now(),
-                        consentId));
-        return List.of(consentRequestUpdate, consentArtefactUpdate);
-    }
-
     public Mono<ConsentRepresentation> getConsentWithRequest(String consentId) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_WITH_REQUEST_QUERY)
                 .execute(Tuple.of(consentId),
@@ -228,5 +272,28 @@ public class ConsentArtefactRepository {
             return Date.from(timestamp.atZone(ZoneId.systemDefault()).toInstant());
         }
         return null;
+    }
+
+    private List<Query> getUpdateQueries(String consentId, String consentRequestId, ConsentStatus status) {
+        Query consentRequestUpdate = new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
+                Tuple.of(status.toString(),
+                        LocalDateTime.now(),
+                        consentRequestId));
+        Query consentArtefactUpdate = new Query(UPDATE_CONSENT_ARTEFACT_STATUS_QUERY,
+                Tuple.of(status.toString(),
+                        LocalDateTime.now(),
+                        consentId));
+        return List.of(consentRequestUpdate, consentArtefactUpdate);
+    }
+
+    private ConsentArtefactRepresentation getConsentArtefactRepresentation(Row row) {
+        ConsentArtefact consentArtefact = to(row.getValue(CONSENT_ARTEFACT).toString(),
+                ConsentArtefact.class);
+        return ConsentArtefactRepresentation
+                .builder()
+                .status(ConsentStatus.valueOf(row.getString(STATUS)))
+                .consentDetail(consentArtefact)
+                .signature(row.getString(SIGNATURE))
+                .build();
     }
 }

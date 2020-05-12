@@ -7,13 +7,11 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
-import in.projecteka.consentmanager.user.exception.InvalidPasswordException;
-import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
+import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.User;
-import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -140,7 +138,7 @@ class SessionServiceTest {
                 thenReturn(Mono.empty());
         when(tokenService.revoke(refreshToken)).thenReturn(Mono.empty());
 
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties,otpRequestAttemptService);
         Mono<Void> logout = sessionService.logout(testAccessToken, logoutRequest);
 
         StepVerifier.create(logout).verifyComplete();

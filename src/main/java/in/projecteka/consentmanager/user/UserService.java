@@ -17,6 +17,7 @@ import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,7 @@ public class UserService {
     private final IdentityServiceClient identityServiceClient;
     private final TokenService tokenService;
     private final UserServiceProperties userServiceProperties;
+    private final OtpRequestAttemptService otpRequestAttemptService;
 
     public Mono<User> userWith(String userName) {
         return userRepository.userWith(userName.toLowerCase()).switchIfEmpty(Mono.error(userNotFound()));
@@ -58,11 +60,12 @@ public class UserService {
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
-        return otpServiceClient
-                .send(otpRequest)
-                .then(signupService.cacheAndSendSession(
-                        otpRequest.getSessionId(),
-                        otpRequest.getCommunication().getValue()));
+        return otpRequestAttemptService
+                .validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(), OtpRequestAttempt.Action.REGISTRATION)
+                .then(otpServiceClient.send(otpRequest)
+                        .then(signupService.cacheAndSendSession(
+                                otpRequest.getSessionId(),
+                                otpRequest.getCommunication().getValue())));
     }
 
     public Mono<SignUpSession> sendOtpForPasswordChange(UserSignUpEnquiry userSignupEnquiry, String userName) {
@@ -77,11 +80,12 @@ public class UserService {
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
-        return otpServiceClient
+        return otpRequestAttemptService.validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(),OtpRequestAttempt.Action.RECOVER_PASSWORD,userName)
+                .then(otpServiceClient
                 .send(otpRequest)
                 .then(signupService.updatedVerfiedSession(
                         otpRequest.getSessionId(),
-                        userName));
+                        userName)));
     }
 
     public Mono<Token> permitOtp(OtpVerification otpVerification) {

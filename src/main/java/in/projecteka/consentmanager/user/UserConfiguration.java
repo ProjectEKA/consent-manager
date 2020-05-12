@@ -34,14 +34,16 @@ public class UserConfiguration {
                                    SignUpService signupService,
                                    IdentityServiceClient identityServiceClient,
                                    TokenService tokenService,
-                                   UserServiceProperties userServiceProperties) {
+                                   UserServiceProperties userServiceProperties ,
+                                   OtpRequestAttemptService otpRequestAttemptService) {
         return new UserService(userRepository,
                 otpServiceProperties,
                 otpServiceClient,
                 signupService,
                 identityServiceClient,
                 tokenService,
-                userServiceProperties);
+                userServiceProperties,
+                otpRequestAttemptService);
     }
 
     @Bean
@@ -130,9 +132,9 @@ public class UserConfiguration {
                                          LockedUserService lockedUserService,
                                          UserRepository userRepository,
                                          OtpServiceClient otpServiceClient,
-                                         OtpServiceProperties otpServiceProperties) {
-        return new SessionService(tokenService, blacklistedTokens,unverifiedSessions,lockedUserService, userRepository, otpServiceClient,otpServiceProperties);
-
+                                         OtpServiceProperties otpServiceProperties,
+                                         OtpRequestAttemptService otpRequestAttemptService) {
+        return new SessionService(tokenService, blacklistedTokens,unverifiedSessions,lockedUserService, userRepository, otpServiceClient,otpServiceProperties,otpRequestAttemptService);
     }
 
     @Bean

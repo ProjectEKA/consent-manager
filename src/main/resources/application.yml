@@ -21,6 +21,10 @@ consentmanager:
     transactionPinTokenValidity: ${TRANSACTION_PIN_TOKEN_VALIDITY}
     userCreationTokenValidity: ${USER_CREATION_TOKEN_VALIDITY}
     userIdSuffix: ${USER_ID_SUFFIX}
+    maxOtpAttempts: ${MAX_OTP_ATTEMPTS}
+    maxOtpAttemptsPeriodInMin: ${MAX_OTP_ATTEMPTS_PERIOD_IN_MIN}
+    otpAttemptsBlockPeriodInMin: ${OTP_ATTEMPTS_BLOCK_PERIOD_IN_MIN}
+    maxIncorrectPinAttempts: 5
   lockeduserservice:
     maximumInvalidAttempts: ${MAXIMUM_INVALID_ATTEMPTS}
     coolOfPeriod: ${COOL_OF_PERIOD}

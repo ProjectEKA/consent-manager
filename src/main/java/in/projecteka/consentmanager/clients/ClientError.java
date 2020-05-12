@@ -32,6 +32,8 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.UNKNOWN_ERROR
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USERNAME_OR_PASSWORD_INCORRECT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_REQUEST_LIMIT_EXCEEDED;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.REQUEST_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -40,6 +42,8 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
+
 
 
 @Getter
@@ -83,6 +87,11 @@ public class ClientError extends Throwable {
     public static ClientError otpExpired() {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(OTP_EXPIRED, "OTP Expired, please try again")));
+    }
+
+    public static ClientError otpRequestLimitExceeded() {
+        return new ClientError(TOO_MANY_REQUESTS,
+                new ErrorRepresentation(new Error(OTP_REQUEST_LIMIT_EXCEEDED, "OTP request limit exceeded")));
     }
 
     public static ClientError networkServiceCallFailed() {

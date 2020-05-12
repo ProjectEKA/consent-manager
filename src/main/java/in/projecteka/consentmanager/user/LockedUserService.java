@@ -79,7 +79,7 @@ public class LockedUserService {
                 .thenReturn(ClientError.userBlocked());
     }
 
-    public boolean isAfterEightHours(String time) {
+    private boolean isAfterEightHours(String time) {
         if (time == null || time.equals("")) {
             return false;
         }

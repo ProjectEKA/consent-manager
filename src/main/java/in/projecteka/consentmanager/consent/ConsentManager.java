@@ -13,11 +13,12 @@ import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
-import in.projecteka.consentmanager.consent.model.QueryRepresentation;
 import in.projecteka.consentmanager.consent.model.GrantedContext;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.QueryRepresentation;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
@@ -60,6 +61,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 @AllArgsConstructor
 public class ConsentManager {
     public static final String SHA_1_WITH_RSA = "SHA1withRSA";
+    public static final String ALL_CONSENT_ARTEFACTS = "ALL";
     private final UserServiceClient userServiceClient;
     private final ConsentRequestRepository consentRequestRepository;
     private final ConsentArtefactRepository consentArtefactRepository;
@@ -77,7 +79,7 @@ public class ConsentManager {
     }
 
     public Mono<String> askForConsent(RequestedDetail requestedDetail, UUID requestId) {
-        return  Mono.just(requestId)
+        return Mono.just(requestId)
                 .filterWhen(this::validateRequest)
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
                 .flatMap(val -> validatePatient(requestedDetail.getPatient().getId())
@@ -424,5 +426,11 @@ public class ConsentManager {
                         consentRequest.getRequestId(),
                         consentRequest.getStatus(),
                         consentRequest.getLastUpdated()));
+    }
+
+    public Mono<ListResult<List<ConsentArtefactRepresentation>>> getAllConsentArtefacts(String username, String status, int limit, int offset) {
+        return status.equals(ALL_CONSENT_ARTEFACTS)
+                ? consentArtefactRepository.getAllConsentArtefacts(username, limit, offset)
+                : consentArtefactRepository.getConsentArtefactsByStatus(username, status, limit, offset);
     }
 }

@@ -9,12 +9,14 @@ import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
+
 import in.projecteka.consentmanager.user.model.LockedUser;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
+import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -41,6 +43,8 @@ public class SessionService {
     private final UserRepository userRepository;
     private final OtpServiceClient otpServiceClient;
     private final OtpServiceProperties otpServiceProperties;
+    private final OtpRequestAttemptService otpRequestAttemptService;
+
 
 
     public Mono<Session> forNew(SessionRequest request) {
@@ -77,9 +81,11 @@ public class SessionService {
                 .switchIfEmpty(Mono.error(ClientError.userNotFound()))
                 .map(user -> new OtpCommunicationData("mobile", user.getPhone()))
                 .map(otpCommunicationData -> new OtpRequest(sessionId, otpCommunicationData))
-                .flatMap(requestBody -> otpServiceClient.send(requestBody)
-                        .then(Mono.defer(() -> unverifiedSessions.put(sessionId, otpVerificationRequest.getUsername())))
-                        .thenReturn(requestBody.getCommunication().getValue()))
+                .flatMap(requestBody ->
+                        otpRequestAttemptService.validateOTPRequest(requestBody.getCommunication().getMode(), requestBody.getCommunication().getValue(), OtpRequestAttempt.Action.LOGIN, otpVerificationRequest.getUsername())
+                                .then(otpServiceClient.send(requestBody)
+                                        .then(Mono.defer(() -> unverifiedSessions.put(sessionId, otpVerificationRequest.getUsername())))
+                                        .thenReturn(requestBody.getCommunication().getValue())))
                 .map(mobileNumber -> OtpVerificationResponse.builder()
                         .sessionId(sessionId)
                         .meta(Meta.builder()

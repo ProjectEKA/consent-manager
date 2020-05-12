@@ -20,7 +20,7 @@ public class OtpRequestAttemptService {
 
     public Mono<Void> validateOTPRequest(String identifierType, String identifierValue, OtpRequestAttempt.Action action, String cmId) {
         return otpRequestAttemptRepository.getOtpAttempts(cmId, identifierType, identifierValue, userServiceProperties.getMaxOtpAttempts(), action)
-                .filter(otpAttempts -> otpAttempts.size() >= userServiceProperties.getMaxOtpAttempts())
+                .filter(otpAttempts -> otpAttempts.size() == userServiceProperties.getMaxOtpAttempts())
                 .filter(this::isNoneBlockedExceptLatest)
                 .flatMap(this::validateLatestAttempt)
                 .flatMap(this::validateAttemptsLimit)

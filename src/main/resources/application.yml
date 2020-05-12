@@ -22,8 +22,8 @@ consentmanager:
     userCreationTokenValidity: ${USER_CREATION_TOKEN_VALIDITY}
     userIdSuffix: ${USER_ID_SUFFIX}
   lockeduserservice:
-      maximumInvalidAttempts: ${MAXIMUM_INVALID_ATTEMPTS}
-      coolOfPeriod: ${COOL_OF_PERIOD}
+    maximumInvalidAttempts: ${MAXIMUM_INVALID_ATTEMPTS}
+    coolOfPeriod: ${COOL_OF_PERIOD}
   otpservice:
     url: ${Otp_Service_Url}
     identifiers:

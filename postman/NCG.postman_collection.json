@@ -444,12 +444,26 @@
 							}
 						],
 						"url": {
-							"raw": "{{CM_HOST}}/consent-requests",
+							"raw": "{{CM_HOST}}/consent-requests?status=REVOKED&limit=-1&offset=0",
 							"host": [
 								"{{CM_HOST}}"
 							],
 							"path": [
 								"consent-requests"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "REVOKED"
+								},
+								{
+									"key": "limit",
+									"value": "-1"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
 							]
 						}
 					},

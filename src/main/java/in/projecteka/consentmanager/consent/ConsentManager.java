@@ -141,8 +141,13 @@ public class ConsentManager {
         return requestedDetail.getHiu().getId();
     }
 
-    public Mono<List<ConsentRequestDetail>> findRequestsForPatient(String patientId, int limit, int offset) {
-        return consentRequestRepository.requestsForPatient(patientId, limit, offset);
+    public Mono<ListResult<List<ConsentRequestDetail>>> findRequestsForPatient(String patientId,
+                                                                               int limit,
+                                                                               int offset,
+                                                                               String status) {
+        return status.equals(ALL_CONSENT_ARTEFACTS)
+                ? consentRequestRepository.requestsForPatient(patientId, limit, offset)
+                : consentRequestRepository.requestsForPatientByStatus(patientId, limit, offset, status);
     }
 
     private Mono<Void> validateLinkedHips(String username, List<GrantedConsent> grantedConsents) {

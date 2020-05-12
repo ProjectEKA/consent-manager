@@ -46,8 +46,11 @@ import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDe
 import static in.projecteka.consentmanager.consent.TestBuilders.notificationMessage;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static java.lang.String.format;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -282,9 +285,37 @@ public class ConsentRequestUserJourneyTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ConsentRequestsRepresentation.class)
-                .value(ConsentRequestsRepresentation::getLimit, Matchers.is(20))
-                .value(ConsentRequestsRepresentation::getOffset, Matchers.is(0))
-                .value(response -> response.getRequests().size(), Matchers.is(0));
+                .value(ConsentRequestsRepresentation::getLimit, is(20))
+                .value(ConsentRequestsRepresentation::getOffset, is(0))
+                .value(ConsentRequestsRepresentation::getRequests, is(requests))
+                .value(ConsentRequestsRepresentation::getSize, is(0));
+    }
+
+    @Test
+    public void shouldGetConsentRequestsForStatus() {
+        var token = string();
+        List<ConsentRequestDetail> requests = new ArrayList<>();
+        ConsentRequestDetail detail = ConsentRequestDetail.builder().build();
+        detail.setStatus(EXPIRED);
+        requests.add(detail);
+        ListResult<List<ConsentRequestDetail>> result = new ListResult<>(requests, 1);
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("Ganesh@ncg", true)));
+        when(repository.requestsForPatientByStatus("Ganesh@ncg", 20, 0, "EXPIRED")).
+                thenReturn(Mono.just(result));
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/consent-requests")
+                        .queryParam("limit", "20")
+                        .queryParam("status", "EXPIRED")
+                        .build())
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", token)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ConsentRequestsRepresentation.class)
+                .value(ConsentRequestsRepresentation::getLimit, is(20))
+                .value(ConsentRequestsRepresentation::getOffset, is(0))
+                .value(ConsentRequestsRepresentation::getSize, is(1));
     }
 
     @Test

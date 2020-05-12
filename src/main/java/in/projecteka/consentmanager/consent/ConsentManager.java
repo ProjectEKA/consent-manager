@@ -141,7 +141,10 @@ public class ConsentManager {
         return requestedDetail.getHiu().getId();
     }
 
-    public Mono<ListResult<List<ConsentRequestDetail>>> findRequestsForPatient(String patientId, int limit, int offset, String status) {
+    public Mono<ListResult<List<ConsentRequestDetail>>> findRequestsForPatient(String patientId,
+                                                                               int limit,
+                                                                               int offset,
+                                                                               String status) {
         return status.equals(ALL_CONSENT_ARTEFACTS)
                 ? consentRequestRepository.requestsForPatient(patientId, limit, offset)
                 : consentRequestRepository.requestsForPatientByStatus(patientId, limit, offset, status);

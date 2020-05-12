@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
@@ -269,8 +270,10 @@ public class ConsentRequestUserJourneyTest {
     public void shouldGetConsentRequests() {
         var token = string();
         List<ConsentRequestDetail> requests = new ArrayList<>();
+        ListResult<List<ConsentRequestDetail>> result = new ListResult<>(requests, 0);
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("Ganesh@ncg", true)));
-        when(repository.requestsForPatient("Ganesh@ncg", 20, 0)).thenReturn(Mono.just(requests));
+        when(repository.requestsForPatient("Ganesh@ncg", 20, 0)).
+                thenReturn(Mono.just(result));
 
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/consent-requests").queryParam("limit", "20").build())

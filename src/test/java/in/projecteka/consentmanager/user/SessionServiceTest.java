@@ -13,6 +13,7 @@ import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -64,6 +65,9 @@ class SessionServiceTest {
     private OtpServiceProperties otpServiceProperties;
 
     @Mock
+    private OtpRequestAttemptService otpRequestAttemptService;
+
+    @Mock
     CacheAdapter<String, String> unverifiedSessions;
 
     @BeforeEach
@@ -78,7 +82,7 @@ class SessionServiceTest {
         when(tokenService.tokenForUser(sessionRequest.getUsername(), sessionRequest.getPassword()))
                 .thenReturn(Mono.just(expectedSession));
 
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties,otpRequestAttemptService);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -95,7 +99,8 @@ class SessionServiceTest {
     })
     void returnUnAuthorizedErrorWhenUsernameIsEmpty(@ConvertWith(NullableConverter.class) String value) {
         var sessionRequest = sessionRequest().username(value).build();
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties);
+
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties,otpRequestAttemptService);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -114,7 +119,7 @@ class SessionServiceTest {
     void returnUnAuthorizedErrorWhenPasswordIsEmpty(
             @ConvertWith(NullableConverter.class) String value) {
         var sessionRequest = sessionRequest().password(value).build();
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties,otpRequestAttemptService);
 
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
@@ -133,7 +138,7 @@ class SessionServiceTest {
         when(tokenService.tokenForUser(patientId, password)).thenReturn(Mono.error(new InvalidPasswordException()));
         when(lockedUserService.userFor(patientId)).thenReturn(Mono.empty());
         when(lockedUserService.createUser(patientId)).thenReturn(Mono.empty());
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties,otpRequestAttemptService);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -154,7 +159,7 @@ class SessionServiceTest {
         when(tokenService.tokenForUser(patientId, password)).thenReturn(Mono.error(new InvalidUserNameException()));
         when(lockedUserService.userFor(patientId)).thenReturn(Mono.empty());
         when(lockedUserService.createUser(patientId)).thenReturn(Mono.empty());
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties,otpRequestAttemptService);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -174,9 +179,7 @@ class SessionServiceTest {
         when(blacklistedTokens.put(String.format(BLACKLIST_FORMAT, BLACKLIST, testAccessToken), "")).
                 thenReturn(Mono.empty());
         when(tokenService.revoke(refreshToken)).thenReturn(Mono.empty());
-
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties);
-
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties,otpRequestAttemptService);
         Mono<Void> logout = sessionService.logout(testAccessToken, logoutRequest);
 
         StepVerifier.create(logout).verifyComplete();
@@ -188,13 +191,15 @@ class SessionServiceTest {
     public void shouldMakeOtpRequestAndReturnSessionId() {
         String username = "foobar@ncg";
         String testPhone = "9876543210";
+        String testIdentifierType = "mobile";
 
         when(userRepository.userWith(username)).thenReturn(Mono.just(User.builder().phone(testPhone).build()));
+        when(otpRequestAttemptService.validateOTPRequest(testIdentifierType, testPhone, OtpRequestAttempt.Action.LOGIN,username)).thenReturn(Mono.empty());
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
         when(otpServiceProperties.getExpiryInMinutes()).thenReturn(5);
         when(unverifiedSessions.put(any(String.class), eq(username))).thenReturn(Mono.empty());
 
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties,otpRequestAttemptService);
         StepVerifier.create(sessionService.sendOtp(new OtpVerificationRequest(username))).
                 assertNext(response -> {
                     assertThat(response.getSessionId()).isNotEmpty();
@@ -212,7 +217,7 @@ class SessionServiceTest {
         String username = "foobar@ncg";
 
         when(userRepository.userWith(username)).thenReturn(Mono.empty());
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties,otpRequestAttemptService);
         StepVerifier.create(sessionService.sendOtp(new OtpVerificationRequest(username)))
                 .expectErrorSatisfies(throwable -> assertThat(((ClientError) throwable).getHttpStatus() == NOT_FOUND))
                 .verify();
@@ -222,11 +227,13 @@ class SessionServiceTest {
     public void shouldThrowExceptionWhenOtpCallFails() {
         String username = "foobar@ncg";
         String testPhone = "9876543210";
+        String testIdentifierType = "mobile";
 
         when(userRepository.userWith(username)).thenReturn(Mono.just(User.builder().phone(testPhone).build()));
+        when(otpRequestAttemptService.validateOTPRequest(testIdentifierType, testPhone, OtpRequestAttempt.Action.LOGIN,username)).thenReturn(Mono.empty());
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.error(ClientError.unknownErrorOccurred()));
 
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties,otpRequestAttemptService);
         StepVerifier.create(sessionService.sendOtp(new OtpVerificationRequest(username)))
                 .expectErrorSatisfies(throwable -> assertThat(((ClientError) throwable).getHttpStatus() == INTERNAL_SERVER_ERROR))
                 .verify();
@@ -240,8 +247,7 @@ class SessionServiceTest {
         String testSession = "testSession";
         OtpPermitRequest otpPermitRequest = new OtpPermitRequest(null, testSession, null);
         when(unverifiedSessions.get(testSession)).thenReturn(Mono.empty());
-
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties,otpRequestAttemptService);
 
         StepVerifier.create(sessionService.validateOtp(otpPermitRequest))
                 .expectErrorSatisfies(throwable -> assertThat(((ClientError) throwable).getHttpStatus() == BAD_REQUEST))
@@ -257,7 +263,7 @@ class SessionServiceTest {
         OtpPermitRequest otpPermitRequest = new OtpPermitRequest(testUser, testSession, null);
         when(unverifiedSessions.get(testSession)).thenReturn(Mono.just(differentUser));
 
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties,otpRequestAttemptService);
 
         StepVerifier.create(sessionService.validateOtp(otpPermitRequest))
                 .expectErrorSatisfies(throwable -> assertThat(((ClientError) throwable).getHttpStatus() == BAD_REQUEST))
@@ -275,7 +281,7 @@ class SessionServiceTest {
         Session expectedSession = in.projecteka.consentmanager.clients.TestBuilders.session().build();
         when(tokenService.tokenForOtpUser(eq(username), eq(testSession), eq(testOtp))).thenReturn(Mono.just(expectedSession));
 
-        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties);
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties,otpRequestAttemptService);
 
         StepVerifier.create(sessionService.validateOtp(otpPermitRequest))
                 .assertNext(session -> assertThat(session).isEqualTo(expectedSession))

@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
 import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpMediumType;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.Profile;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -65,6 +67,11 @@ public class PatientsController {
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
                 .flatMap(profileService::profileFor);
+    }
+
+    @GetMapping("/profile/loginmode")
+    public Mono<LoginModeResponse> fetchLoginMode(@RequestParam String userName) {
+        return userService.getLoginMode(userName);
     }
 
     @PostMapping("/verify-pin")

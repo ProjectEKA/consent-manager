@@ -428,7 +428,10 @@ public class ConsentManager {
                         consentRequest.getLastUpdated()));
     }
 
-    public Mono<ListResult<List<ConsentArtefactRepresentation>>> getAllConsentArtefacts(String username, String status, int limit, int offset) {
+    public Mono<ListResult<List<ConsentArtefactRepresentation>>> getAllConsentArtefacts(String username,
+                                                                                        String status,
+                                                                                        int limit,
+                                                                                        int offset) {
         return status.equals(ALL_CONSENT_ARTEFACTS)
                 ? consentArtefactRepository.getAllConsentArtefacts(username, limit, offset)
                 : consentArtefactRepository.getConsentArtefactsByStatus(username, status, limit, offset);

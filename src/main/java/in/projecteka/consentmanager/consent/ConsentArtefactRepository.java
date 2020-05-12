@@ -56,6 +56,8 @@ public class ConsentArtefactRepository {
             "WHERE patient_id=$1 AND status=$2";
     private static final String SELECT_CONSENT_ARTEFACTS_COUNT = "SELECT COUNT(*) FROM consent_artefact " +
             "WHERE patient_id=$1";
+    private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
+    private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
 
     static {
         String s = "SELECT status, consent_artefact, signature FROM ";
@@ -66,9 +68,6 @@ public class ConsentArtefactRepository {
         SELECT_ALL_CONSENT_ARTEFACTS = s + "consent_artefact WHERE patient_id=$1 LIMIT $2 OFFSET $3 ";
     }
 
-
-    private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
-    private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
     private final PgPool dbClient;
 
     public Mono<Void> process(List<Query> queries) {
@@ -145,8 +144,9 @@ public class ConsentArtefactRepository {
                         }));
     }
 
-    public Mono<ListResult<List<ConsentArtefactRepresentation>>> getAllConsentArtefacts(
-            String username, int limit, int offset) {
+    public Mono<ListResult<List<ConsentArtefactRepresentation>>> getAllConsentArtefacts(String username,
+                                                                                        int limit,
+                                                                                        int offset) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_ALL_CONSENT_ARTEFACTS)
                 .execute(Tuple.of(username, limit, offset), handler -> {
                     List<ConsentArtefactRepresentation> artefacts = getConsentArtefactRepresentation(handler);
@@ -162,8 +162,10 @@ public class ConsentArtefactRepository {
                 }));
     }
 
-    public Mono<ListResult<List<ConsentArtefactRepresentation>>> getConsentArtefactsByStatus(
-            String username, String status, int limit, int offset) {
+    public Mono<ListResult<List<ConsentArtefactRepresentation>>> getConsentArtefactsByStatus(String username,
+                                                                                             String status,
+                                                                                             int limit,
+                                                                                             int offset) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_ALL_CONSENT_ARTEFACTS_WITH_STATUS)
                 .execute(Tuple.of(username, status, limit, offset), handler -> {
                     List<ConsentArtefactRepresentation> artefacts = getConsentArtefactRepresentation(handler);
@@ -206,7 +208,8 @@ public class ConsentArtefactRepository {
                                     fluxSink.next(ConsentExpiry.builder()
                                             .consentId(row.getString("consent_artefact_id"))
                                             .patientId(row.getString("patient_id"))
-                                            .consentExpiryDate(new Date(Long.parseLong(row.getString("consent_expiry_date"))))
+                                            .consentExpiryDate(new Date(Long.parseLong(
+                                                    row.getString("consent_expiry_date"))))
                                             .build());
                                 });
                             }

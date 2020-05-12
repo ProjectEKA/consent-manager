@@ -9,14 +9,13 @@ import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
-
 import in.projecteka.consentmanager.user.model.LockedUser;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
+import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
-import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -46,28 +45,30 @@ public class SessionService {
     private final OtpRequestAttemptService otpRequestAttemptService;
 
 
-
     public Mono<Session> forNew(SessionRequest request) {
         if (StringUtils.isEmpty(request.getUsername()) || StringUtils.isEmpty(request.getPassword()))
             return Mono.error(ClientError.unAuthorizedRequest("Username or password is incorrect"));
 
+        var newLockedUser = new LockedUser(0, request.getUsername(), false, "", "");
         Mono<LockedUser> lockedUser = lockedUserService.userFor(request.getUsername())
-                .switchIfEmpty(Mono.empty());
+                .switchIfEmpty(
+                        Mono.just(newLockedUser));
 
-        return lockedUser.flatMap(user -> {
-            if (lockedUserService.isUserBlocked(user)) {
-                return Mono.error(ClientError.userBlocked());
-            } else {
-                return tokenService.tokenForUser(request.getUsername(), request.getPassword())
-                        .doOnError(error -> logger.error(error.getMessage(), error))
-                        .onErrorResume(InvalidUserNameException.class, error -> Mono.error(ClientError.invalidUserName()))
-                        .onErrorResume(error -> lockedUserService.userFor(request.getUsername())
-                                .switchIfEmpty(
-                                        lockedUserService.createUser(request.getUsername())
-                                                .then(Mono.error(ClientError.unAuthorizedRequest("Username or password is incorrect"))))
-                                .flatMap(optionalLockedUser -> lockedUserService.validateAndUpdate(optionalLockedUser).flatMap(Mono::error)));
-            }
-        });
+        return lockedUser
+                .flatMap(user -> {
+                    if (lockedUserService.isUserBlocked(user)) {
+                        return Mono.error(ClientError.userBlocked());
+                    } else {
+                        return tokenService.tokenForUser(request.getUsername(), request.getPassword())
+                                .doOnError(error -> logger.error(error.getMessage(), error))
+                                .onErrorResume(InvalidUserNameException.class, error -> Mono.error(ClientError.invalidUserName()))
+                                .onErrorResume(error -> lockedUserService.userFor(request.getUsername())
+                                        .switchIfEmpty(
+                                                lockedUserService.createUser(request.getUsername())
+                                                        .then(Mono.error(ClientError.unAuthorizedRequest("Username or password is incorrect"))))
+                                        .flatMap(optionalLockedUser -> lockedUserService.validateAndUpdate(optionalLockedUser).flatMap(Mono::error)));
+                    }
+                });
     }
 
     public Mono<Void> logout(String accessToken, LogoutRequest logoutRequest) {

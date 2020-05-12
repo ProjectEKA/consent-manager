@@ -58,6 +58,10 @@ consentmanager:
       url: http://localhost:9000
   linkservice:
     url: http://localhost:9000
+  listeners:
+    maximumRetries: 3
+    # In minutes
+    retryInterval: 10000
 spring:
   rabbitmq:
     host: localhost

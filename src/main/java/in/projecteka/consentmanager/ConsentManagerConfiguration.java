@@ -9,7 +9,9 @@ import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
+import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
+import in.projecteka.consentmanager.user.UserRepository;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
@@ -61,6 +63,11 @@ public class ConsentManagerConfiguration {
     public ClientRegistryClient clientRegistryClient(WebClient.Builder builder,
                                                      ClientRegistryProperties clientRegistryProperties) {
         return new ClientRegistryClient(builder, clientRegistryProperties.getUrl());
+    }
+
+    @Bean
+    public LockedUsersRepository lockedUsersRepository(DbOptions dbOptions) {
+        return new LockedUsersRepository(pgPool(dbOptions));
     }
 
     @Bean
@@ -143,8 +150,8 @@ public class ConsentManagerConfiguration {
 
     @Bean
     public TokenService tokenService(IdentityServiceProperties identityServiceProperties,
-                                     IdentityServiceClient identityServiceClient) {
-        return new TokenService(identityServiceProperties, identityServiceClient);
+                                     IdentityServiceClient identityServiceClient, UserRepository userRepository) {
+        return new TokenService(identityServiceProperties, identityServiceClient, userRepository);
     }
 
     @Bean("pinSigning")

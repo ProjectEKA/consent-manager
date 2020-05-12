@@ -444,12 +444,26 @@
 							}
 						],
 						"url": {
-							"raw": "{{CM_HOST}}/consent-requests",
+							"raw": "{{CM_HOST}}/consent-requests?status=REVOKED&limit=-1&offset=0",
 							"host": [
 								"{{CM_HOST}}"
 							],
 							"path": [
 								"consent-requests"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "REVOKED"
+								},
+								{
+									"key": "limit",
+									"value": "-1"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
 							]
 						}
 					},
@@ -1003,6 +1017,43 @@
 							],
 							"path": [
 								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User Consent Artefacts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{CM_HOST}}/consentArtefacts?status=GRANTED&limit=3&offset=1",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"consentArtefacts"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "GRANTED"
+								},
+								{
+									"key": "limit",
+									"value": "3"
+								},
+								{
+									"key": "offset",
+									"value": "1"
+								}
 							]
 						}
 					},

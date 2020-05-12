@@ -8,8 +8,11 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
+import in.projecteka.consentmanager.user.model.LockedUser;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
+import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
@@ -33,16 +36,39 @@ public class SessionService {
     private final CacheAdapter<String, String> blacklistedTokens;
     private CacheAdapter<String, String> unverifiedSessions;
     private final Logger logger = LoggerFactory.getLogger(SessionService.class);
+
+    private final LockedUserService lockedUserService;
+
     private final UserRepository userRepository;
     private final OtpServiceClient otpServiceClient;
     private final OtpServiceProperties otpServiceProperties;
+    private final OtpRequestAttemptService otpRequestAttemptService;
+
 
     public Mono<Session> forNew(SessionRequest request) {
         if (StringUtils.isEmpty(request.getUsername()) || StringUtils.isEmpty(request.getPassword()))
             return Mono.error(ClientError.unAuthorizedRequest("Username or password is incorrect"));
-        return tokenService.tokenForUser(request.getUsername(), request.getPassword())
-                .doOnError(error -> logger.error(error.getMessage(), error))
-                .onErrorResume(error -> Mono.error(ClientError.unAuthorizedRequest("Username or password is incorrect")));
+
+        var newLockedUser = new LockedUser(0, request.getUsername(), false, "", "");
+        Mono<LockedUser> lockedUser = lockedUserService.userFor(request.getUsername())
+                .switchIfEmpty(
+                        Mono.just(newLockedUser));
+
+        return lockedUser
+                .flatMap(user -> {
+                    if (lockedUserService.isUserBlocked(user)) {
+                        return Mono.error(ClientError.userBlocked());
+                    } else {
+                        return tokenService.tokenForUser(request.getUsername(), request.getPassword())
+                                .doOnError(error -> logger.error(error.getMessage(), error))
+                                .onErrorResume(InvalidUserNameException.class, error -> Mono.error(ClientError.invalidUserName()))
+                                .onErrorResume(error -> lockedUserService.userFor(request.getUsername())
+                                        .switchIfEmpty(
+                                                lockedUserService.createUser(request.getUsername())
+                                                        .then(Mono.error(ClientError.unAuthorizedRequest("Username or password is incorrect"))))
+                                        .flatMap(optionalLockedUser -> lockedUserService.validateAndUpdate(optionalLockedUser).flatMap(Mono::error)));
+                    }
+                });
     }
 
     public Mono<Void> logout(String accessToken, LogoutRequest logoutRequest) {
@@ -54,11 +80,13 @@ public class SessionService {
         String sessionId = UUID.randomUUID().toString();
         return userRepository.userWith(otpVerificationRequest.getUsername())
                 .switchIfEmpty(Mono.error(ClientError.userNotFound()))
-                .map(user -> new OtpCommunicationData("mobile",user.getPhone()))
-                .map(otpCommunicationData -> new OtpRequest(sessionId,otpCommunicationData))
-                .flatMap(requestBody -> otpServiceClient.send(requestBody)
-                        .then(Mono.defer(() -> unverifiedSessions.put(sessionId, otpVerificationRequest.getUsername())))
-                        .thenReturn(requestBody.getCommunication().getValue()))
+                .map(user -> new OtpCommunicationData("mobile", user.getPhone()))
+                .map(otpCommunicationData -> new OtpRequest(sessionId, otpCommunicationData))
+                .flatMap(requestBody ->
+                        otpRequestAttemptService.validateOTPRequest(requestBody.getCommunication().getMode(), requestBody.getCommunication().getValue(), OtpRequestAttempt.Action.LOGIN, otpVerificationRequest.getUsername())
+                                .then(otpServiceClient.send(requestBody)
+                                        .then(Mono.defer(() -> unverifiedSessions.put(sessionId, otpVerificationRequest.getUsername())))
+                                        .thenReturn(requestBody.getCommunication().getValue())))
                 .map(mobileNumber -> OtpVerificationResponse.builder()
                         .sessionId(sessionId)
                         .meta(Meta.builder()
@@ -79,6 +107,6 @@ public class SessionService {
                 .switchIfEmpty(Mono.error(ClientError.invalidSession(otpPermitRequest.getSessionId())))
                 .then(Mono.defer(() -> tokenService
                         .tokenForOtpUser(otpPermitRequest.getUsername(),
-                                otpPermitRequest.getSessionId(),otpPermitRequest.getOtp())));
+                                otpPermitRequest.getSessionId(), otpPermitRequest.getOtp())));
     }
 }

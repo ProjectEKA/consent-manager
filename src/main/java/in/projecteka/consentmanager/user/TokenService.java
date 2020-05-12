@@ -3,6 +3,8 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
+import in.projecteka.consentmanager.user.exception.InvalidPasswordException;
+import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
 import lombok.AllArgsConstructor;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -13,6 +15,7 @@ public class TokenService {
 
     private final IdentityServiceProperties keyCloakProperties;
     private final IdentityServiceClient identityServiceClient;
+    private final UserRepository userRepository;
 
     public Mono<Session> tokenForAdmin() {
         return identityServiceClient.getToken(
@@ -20,7 +23,10 @@ public class TokenService {
     }
 
     public Mono<Session> tokenForUser(String userName, String password) {
-        return identityServiceClient.getToken(loginRequestWith(userName, password));
+        return identityServiceClient.getToken(loginRequestWith(userName, password))
+                .onErrorResume(error -> userRepository.userWith(userName)
+                        .switchIfEmpty(Mono.error(new InvalidUserNameException()))
+                        .flatMap(user -> Mono.error(new InvalidPasswordException())));
     }
 
     public Mono<Session> tokenForOtpUser(String username, String sessionId, String otp) {

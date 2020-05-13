@@ -33,8 +33,8 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.USERNAME_OR_P
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_REQUEST_LIMIT_EXCEEDED;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.REQUEST_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_OTP_ATTEMPTS_EXCEEDED;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -162,7 +162,7 @@ public class ClientError extends Throwable {
     public static ClientError failedToFetchLockedUser() {
         return internalServerError("Failed to fetch Locked User");
     }
-  
+
     public static ClientError failedToUpdateUser() {
         return internalServerError("Failed to update user");
     }
@@ -265,5 +265,10 @@ public class ClientError extends Throwable {
     public static ClientError invalidSession(String session) {
         return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_SESSION, String.format("The sessionId: %s is invalid",session))));
+    }
+
+    public static ClientError tooManyInvalidOtpAttempts() {
+        return new ClientError(TOO_MANY_REQUESTS,
+                new ErrorRepresentation(new Error(INVALID_OTP_ATTEMPTS_EXCEEDED, "Invalid OTP attempts limit exceeded")));
     }
 }

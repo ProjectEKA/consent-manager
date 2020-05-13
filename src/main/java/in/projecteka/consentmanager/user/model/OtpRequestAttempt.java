@@ -18,18 +18,10 @@ public class OtpRequestAttempt {
     private final String cmId;
 
     public enum Action {
-        REGISTRATION,
-        LOGIN,
-        RECOVER_PASSWORD;
-
-        public static Action from(String name) {
-            return Action.valueOf(name.replace("OTP_REQUEST_", ""));
-        }
-
-        @Override
-        public String toString() {
-            return "OTP_REQUEST_" + this.name();
-        }
+        OTP_REQUEST_REGISTRATION,
+        OTP_REQUEST_LOGIN,
+        OTP_REQUEST_RECOVER_PASSWORD,
+        OTP_SUBMIT_REGISTRATION;
     }
 
     public enum AttemptStatus {

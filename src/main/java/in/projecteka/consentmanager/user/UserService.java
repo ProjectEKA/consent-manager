@@ -61,7 +61,7 @@ public class UserService {
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
         return otpRequestAttemptService
-                .validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(), OtpRequestAttempt.Action.REGISTRATION)
+                .validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(), OtpRequestAttempt.Action.OTP_REQUEST_REGISTRATION)
                 .then(otpServiceClient.send(otpRequest)
                         .then(signupService.cacheAndSendSession(
                                 otpRequest.getSessionId(),
@@ -80,7 +80,7 @@ public class UserService {
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
-        return otpRequestAttemptService.validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(),OtpRequestAttempt.Action.RECOVER_PASSWORD,userName)
+        return otpRequestAttemptService.validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(), OtpRequestAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD, userName)
                 .then(otpServiceClient
                 .send(otpRequest)
                 .then(signupService.updatedVerfiedSession(
@@ -92,9 +92,24 @@ public class UserService {
         if (!validateOtpVerification(otpVerification)) {
             throw new InvalidRequestException("invalid.request.body");
         }
-        return otpServiceClient
-                .verify(otpVerification.getSessionId(), otpVerification.getValue())
-                .then(signupService.generateToken(otpVerification.getSessionId()));
+
+        return signupService.getMobileNumber(otpVerification.getSessionId()).flatMap(mobileNumber -> {
+            OtpRequestAttempt attempt = OtpRequestAttempt.builder()
+                    .sessionId(otpVerification.getSessionId())
+                    .identifierType("MOBILE")
+                    .identifierValue(mobileNumber)
+                    .action(OtpRequestAttempt.Action.OTP_SUBMIT_REGISTRATION)
+                    .cmId("")
+                    .build();
+            return otpRequestAttemptService.validateOTPSubmission(attempt)
+                    .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue(), () -> otpRequestAttemptService.createOtpAttemptFor(
+                            otpVerification.getSessionId(),
+                            "",
+                            "MOBILE", mobileNumber,
+                            OtpRequestAttempt.AttemptStatus.FAILURE,
+                            OtpRequestAttempt.Action.OTP_SUBMIT_REGISTRATION)))
+                    .then(signupService.generateToken(otpVerification.getSessionId()));
+        });
     }
 
     public Mono<Token> verifyOtp(OtpVerification otpVerification) {

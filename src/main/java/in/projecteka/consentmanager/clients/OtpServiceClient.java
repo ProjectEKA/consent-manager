@@ -2,7 +2,10 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.VerificationRequest;
+import in.projecteka.consentmanager.common.MonoVoidOperator;
 import in.projecteka.consentmanager.consent.model.Notification;
+import in.projecteka.consentmanager.user.OtpRequestAttemptService;
+import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -35,6 +38,10 @@ public class OtpServiceClient {
     }
 
     public Mono<Void> verify(String sessionId, String otp) {
+        return verify(sessionId, otp, Mono::empty);
+    }
+
+    public Mono<Void> verify(String sessionId, String otp, MonoVoidOperator onInvalidOTP) {
         return webClientBuilder.build()
                 .post()
                 .uri(uriBuilder -> uriBuilder
@@ -45,7 +52,7 @@ public class OtpServiceClient {
                 .body(Mono.just(new VerificationRequest(otp)), VerificationRequest.class)
                 .retrieve()
                 .onStatus(httpStatus -> httpStatus.value() == 400,
-                        clientResponse -> Mono.error(ClientError.invalidOtp()))
+                        clientResponse -> onInvalidOTP.perform().then(Mono.error(ClientError.invalidOtp())))
                 .onStatus(httpStatus -> httpStatus.value() == 401,
                         clientResponse -> Mono.error(ClientError.otpExpired()))
                 .onStatus(HttpStatus::is5xxServerError,

@@ -83,7 +83,7 @@ public class SessionService {
                 .map(user -> new OtpCommunicationData("mobile", user.getPhone()))
                 .map(otpCommunicationData -> new OtpRequest(sessionId, otpCommunicationData))
                 .flatMap(requestBody ->
-                        otpRequestAttemptService.validateOTPRequest(requestBody.getCommunication().getMode(), requestBody.getCommunication().getValue(), OtpRequestAttempt.Action.LOGIN, otpVerificationRequest.getUsername())
+                        otpRequestAttemptService.validateOTPRequest(requestBody.getCommunication().getMode(), requestBody.getCommunication().getValue(), OtpRequestAttempt.Action.OTP_REQUEST_LOGIN, otpVerificationRequest.getUsername())
                                 .then(otpServiceClient.send(requestBody)
                                         .then(Mono.defer(() -> unverifiedSessions.put(sessionId, otpVerificationRequest.getUsername())))
                                         .thenReturn(requestBody.getCommunication().getValue())))

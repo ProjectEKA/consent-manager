@@ -52,4 +52,17 @@ public class LoadingCacheAdapter implements CacheAdapter<String, String> {
         String value = loadingCache.getIfPresent(key);
         return Mono.just(value != null);
     }
+
+    @Override
+    public Mono<Long> increment(String key) {//TODO test
+        String value = loadingCache.getIfPresent(key);
+        if (value == null || value.isEmpty()) {
+            value = "1";
+            loadingCache.put(key, value);
+            return Mono.just(1L);
+        }
+        long increment = Long.parseLong(value) + 1;
+        loadingCache.put(key,String.valueOf(increment));
+        return Mono.just(increment);
+    }
 }

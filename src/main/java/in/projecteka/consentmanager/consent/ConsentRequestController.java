@@ -50,14 +50,15 @@ public class ConsentRequestController {
     @GetMapping(value = "/consent-requests")
     public Mono<ConsentRequestsRepresentation> allConsents(
             @RequestParam(defaultValue = "-1") int limit,
-            @RequestParam(defaultValue = "0") int offset) {
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "ALL") String status) {
         int pageSize = getPageSize(limit);
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller -> consentManager.findRequestsForPatient(caller.getUsername(), pageSize, offset))
-                .map(results -> ConsentRequestsRepresentation.builder()
-                        .size(results.size())
-                        .requests(results)
+                .flatMap(caller -> consentManager.findRequestsForPatient(caller.getUsername(), pageSize, offset, status))
+                .map(requests -> ConsentRequestsRepresentation.builder()
+                        .size(requests.getTotal())
+                        .requests(requests.getResult())
                         .limit(pageSize)
                         .offset(offset)
                         .build());

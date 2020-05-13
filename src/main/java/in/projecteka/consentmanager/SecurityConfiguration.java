@@ -79,6 +79,8 @@ public class SecurityConfiguration {
                                           "/patients/verifyotp",
                                           "/users/verify",
                                           "/users/permit",
+                                          "/otpsession/verify",
+                                          "/otpsession/permit",
                                           "/sessions",
                                           "/**.html",
                                           "/**.js",

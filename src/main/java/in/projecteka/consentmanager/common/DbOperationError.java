@@ -19,4 +19,9 @@ public class DbOperationError extends Throwable {
         this.httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         this.error = new ErrorRepresentation(new Error(DB_OPERATION_FAILED, errorMessage));
     }
+
+    public DbOperationError(String errorMessage) {
+        this.httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        this.error = new ErrorRepresentation(new Error(DB_OPERATION_FAILED, errorMessage));
+    }
 }

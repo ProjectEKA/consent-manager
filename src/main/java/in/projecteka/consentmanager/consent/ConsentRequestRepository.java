@@ -1,7 +1,9 @@
 package in.projecteka.consentmanager.consent;
 
+import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -29,6 +31,11 @@ public class ConsentRequestRepository {
     private static final String SELECT_CONSENT_REQUEST_BY_ID;
     private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT;
     private static final String SELECT_CONSENT_REQUEST_BY_STATUS;
+    private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT_BY_STATUS;
+    private static final String SELECT_CONSENT_REQUEST_COUNT_FOR_STATUS = "SELECT COUNT(*) FROM consent_request " +
+            "WHERE patient_id=$1 AND status=$2";
+    private static final String SELECT_CONSENT_REQUEST_COUNT = "SELECT COUNT(*) FROM consent_request " +
+            "WHERE patient_id=$1";
     private static final String INSERT_CONSENT_REQUEST_QUERY = "INSERT INTO consent_request " +
             "(request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
@@ -42,6 +49,7 @@ public class ConsentRequestRepository {
     static {
         String s = "SELECT request_id, status, details, date_created, date_modified FROM consent_request " +
                 "where ";
+        SELECT_CONSENT_DETAILS_FOR_PATIENT_BY_STATUS = s + "patient_id=$1 and status=$4 LIMIT $2 OFFSET $3";
         SELECT_CONSENT_DETAILS_FOR_PATIENT = s + "patient_id=$1 LIMIT $2 OFFSET $3";
         SELECT_CONSENT_REQUEST_BY_ID = s + "request_id=$1";
         SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS = s + "request_id=$1 and status=$2 and patient_id=$3";
@@ -68,22 +76,58 @@ public class ConsentRequestRepository {
                                 }));
     }
 
-    public Mono<List<ConsentRequestDetail>> requestsForPatient(String patientId, int limit, int offset) {
+    public Mono<ListResult<List<ConsentRequestDetail>>> requestsForPatientByStatus(String patientId,
+                                                                                   int limit,
+                                                                                   int offset,
+                                                                                   String status) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_DETAILS_FOR_PATIENT_BY_STATUS)
+                .execute(Tuple.of(patientId, limit, offset, status),
+                        handler -> {
+                            List<ConsentRequestDetail> requestList = getConsentRequestDetails(handler);
+                            dbClient.preparedQuery(SELECT_CONSENT_REQUEST_COUNT_FOR_STATUS)
+                                    .execute(Tuple.of(patientId, status), counter -> {
+                                                if (handler.failed()) {
+                                                    monoSink.error(new DbOperationError());
+                                                }
+                                                Integer count = counter.result().iterator()
+                                                        .next().getInteger("count");
+                                                monoSink.success(new ListResult<>(requestList, count));
+                                            }
+                                    );
+                        }));
+    }
+
+    public Mono<ListResult<List<ConsentRequestDetail>>> requestsForPatient(String patientId,
+                                                                           int limit,
+                                                                           int offset) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_DETAILS_FOR_PATIENT)
                 .execute(Tuple.of(patientId, limit, offset),
                         handler -> {
-                            if (handler.failed()) {
-                                monoSink.error(new RuntimeException(UNKNOWN_ERROR_OCCURRED));
-                                return;
-                            }
-                            List<ConsentRequestDetail> requestList = new ArrayList<>();
-                            RowSet<Row> results = handler.result();
-                            for (Row result : results) {
-                                ConsentRequestDetail aDetail = mapToConsentRequestDetail(result);
-                                requestList.add(aDetail);
-                            }
-                            monoSink.success(requestList);
+                            List<ConsentRequestDetail> requestList = getConsentRequestDetails(handler);
+                            dbClient.preparedQuery(SELECT_CONSENT_REQUEST_COUNT)
+                                    .execute(Tuple.of(patientId), counter -> {
+                                                if (handler.failed()) {
+                                                    monoSink.error(new DbOperationError());
+                                                }
+                                                Integer count = counter.result().iterator()
+                                                        .next().getInteger("count");
+                                                monoSink.success(new ListResult<>(requestList, count));
+                                            }
+                                    );
                         }));
+    }
+
+    private List<ConsentRequestDetail> getConsentRequestDetails(AsyncResult<RowSet<Row>> handler) {
+        if (handler.failed()) {
+            return new ArrayList<>();
+        }
+        List<ConsentRequestDetail> requestList = new ArrayList<>();
+        RowSet<Row> results = handler.result();
+        for (Row result : results) {
+            ConsentRequestDetail aDetail = mapToConsentRequestDetail(result);
+            requestList.add(aDetail);
+        }
+        return requestList;
     }
 
     public Mono<ConsentRequestDetail> requestOf(String requestId, String status, String patientId) {

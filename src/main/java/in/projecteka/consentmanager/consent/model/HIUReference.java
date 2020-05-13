@@ -15,5 +15,4 @@ import java.io.Serializable;
 public class HIUReference implements Serializable {
     @NotEmpty(message = "HIU identifier is not specified.")
     private String id;
-    private String name;
 }

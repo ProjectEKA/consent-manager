@@ -7,6 +7,11 @@ consentmanager:
     url: http://localhost:9000
     purposeOfUseDefUrl: classpath:/static/ValueSet/purpose-of-use.json
     hiTypesDefUrl: classpath:/static/ValueSet/health-info-type.json
+    #in minutes
+    consentRequestExpiry: 60
+  scheduler:
+    consentExpiryCronExpr: '0 0 * ? * *'
+    consentRequestExpiryCronExpr: '0 0 0/12 ? * *'
   clientregistry:
     XAuthToken: e178fb45-2a2f-425c-bd45-996c60910d70
     clientId: consent-manager
@@ -18,10 +23,17 @@ consentmanager:
     transactionPinTokenValidity: 2
     userCreationTokenValidity: 5
     userIdSuffix: "@ncg"
+    maxOtpAttempts: 5
+    maxOtpAttemptsPeriodInMin: 10
+    otpAttemptsBlockPeriodInMin: 2
+  lockeduserservice:
+    maximumInvalidAttempts: ${MAXIMUM_INVALID_ATTEMPTS}
+    coolOfPeriod: ${COOL_OF_PERIOD}
   otpservice:
     url: http://localhost:5000
     identifiers:
       - MOBILE
+    expiryInMinutes: 5
   keycloak:
     baseUrl: http://host.docker.internal:9001/auth
     clientId: consent-service

@@ -20,6 +20,7 @@ import java.util.Objects;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.Utils.toDate;
+import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -47,12 +48,15 @@ public class DataFlowRequesterTest {
     @Test
     public void shouldAcceptDataFlowRequest() throws ParseException {
         String hiuId = "10000005";
-        in.projecteka.consentmanager.dataflow.model.DataFlowRequest request = dataFlowRequest().build();
-        request.setDateRange(DateRange.builder().from(toDate("2020-01-16T08:47:48Z")).to(toDate("2020" +
-                "-01-20T08:47:48Z")).build());
-        ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
+        var request = dataFlowRequest()
+                .dateRange(DateRange.builder()
+                        .from(toDate("2020-01-16T08:47:48Z"))
+                        .to(toDate("2020-01-20T08:47:48Z")).build())
+                .build();
+        var consentArtefactRepresentation = consentArtefactRepresentation().build();
         consentArtefactRepresentation.setStatus(ConsentStatus.GRANTED);
         consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
+        consentArtefactRepresentation.getConsentDetail().getPermission().setDataEraseAt(toDateWithMilliSeconds("253379772420000"));
         consentArtefactRepresentation.getConsentDetail().getPermission().
                 setDateRange(AccessPeriod.builder()
                         .fromDate(toDate("2020-01-15T08:47:48Z"))

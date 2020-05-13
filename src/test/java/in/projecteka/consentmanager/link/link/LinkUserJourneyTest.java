@@ -36,7 +36,6 @@ import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -44,8 +43,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.io.IOException;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -62,8 +59,8 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static java.util.List.of;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -141,7 +138,11 @@ public class LinkUserJourneyTest {
         clientRegistryServer.setDispatcher(dispatcher);
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
-        when(linkRepository.insertToLinkReference(linkReference, hipId)).thenReturn(Mono.create(MonoSink::success));
+        when(linkRepository.insertToLinkReference(linkReference, hipId, patientLinkReferenceRequest.getRequestId()))
+                .thenReturn(Mono.create(MonoSink::success));
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
+                .thenReturn(Mono.empty());
+
 
         webTestClient
                 .post()
@@ -173,6 +174,8 @@ public class LinkUserJourneyTest {
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
+                .thenReturn(Mono.empty());
 
         webTestClient
                 .post()
@@ -203,8 +206,6 @@ public class LinkUserJourneyTest {
         String transactionId = "transactionId";
         String hipId = "10000005";
         String linkRefNumber = "link-ref-num";
-        ZonedDateTime zonedDateTime = ZonedDateTime.now(ZoneOffset.UTC).withNano(0).plusHours(1);
-        when(linkRepository.getExpiryFromLinkReference(linkRefNumber)).thenReturn(Mono.just(zonedDateTime.toString()));
         when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber)).thenReturn(Mono.just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
         when(linkRepository.insertToLink(hipId, "123@ncg", linkRefNumber, linkRes.getPatient()))
@@ -229,21 +230,23 @@ public class LinkUserJourneyTest {
         var token = string();
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.OTP_EXPIRED, "OTP Expired, please try again"));
         var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
+        clientRegistryServer.setDispatcher(dispatcher);
+        hipServer.enqueue(
+                new MockResponse()
+                        .setHeader("Content-Type", "application/json")
+                        .setStatus("HTTP/1.1 401")
+                        .setBody(errorResponseJson));
         PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
         String transactionId = "transactionId";
         String hipId = "10000005";
-        String linkRefNumber = "link-ref";
-        ZonedDateTime zonedDateTime = ZonedDateTime.now(ZoneOffset.UTC).withNano(0);
-        when(linkRepository.getExpiryFromLinkReference(linkRefNumber)).thenReturn(Mono.just(zonedDateTime.toString()));
-        when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber))
-                .thenReturn(Mono.just(transactionId));
-        when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
-        clientRegistryServer.setDispatcher(dispatcher);
+        String linkRefNumber = "link-ref-num";
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
+        when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber)).thenReturn(Mono.just(transactionId));
+        when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
 
         webTestClient
                 .post()
-                .uri("/patients/link/link-ref")
+                .uri("/patients/link/link-ref-num")
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -260,7 +263,7 @@ public class LinkUserJourneyTest {
         var token = string();
         var patientId = "5@ncg";
         var links = Links.builder()
-                .hip(Hip.builder().id("10000004").name("").build())
+                .hip(Hip.builder().id("10000004").build())
                 .patientRepresentations(patientRepresentation().build()).build();
         List<Links> linksList = new ArrayList<>();
         linksList.add(links);
@@ -277,7 +280,7 @@ public class LinkUserJourneyTest {
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
         patientLinksResponse.getPatient().setLinks(patientLinks.getLinks().stream()
-                .peek(link -> link.setHip(Hip.builder().id(link.getHip().getId()).name("Max").build()))
+                .peek(link -> link.setHip(Hip.builder().id(link.getHip().getId()).build()))
                 .collect(Collectors.toList()));
         var patientLinksRes = new ObjectMapper().writeValueAsString(patientLinksResponse);
         when(linkRepository.getLinkedCareContextsForAllHip(patientId)).thenReturn(Mono.just(patientLinks));
@@ -292,6 +295,37 @@ public class LinkUserJourneyTest {
                 .isOk()
                 .expectBody()
                 .json(patientLinksRes);
+    }
+
+    @Test
+    public void shouldGiveRequestAlreadyExistsError() throws IOException {
+        var token = string();
+        var errorResponse = ErrorRepresentation.builder()
+                .error(Error.builder()
+                        .code(ErrorCode.REQUEST_ALREADY_EXISTS)
+                        .message("A request with this request id already exists.")
+                        .build())
+                .build();
+        var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
+        clientRegistryServer.setDispatcher(dispatcher);
+        var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
+                .thenReturn(Mono.just("some string"));
+
+        webTestClient
+                .post()
+                .uri("/patients/link")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(patientLinkReferenceRequest)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                .expectBody()
+                .json(errorResponseJson);
     }
 
     public static class ContextInitializer

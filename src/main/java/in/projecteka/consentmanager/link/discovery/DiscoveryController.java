@@ -33,11 +33,14 @@ public class DiscoveryController {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
-                .flatMap(user -> discovery.patientFor(user, discoveryRequest.getUnverifiedIdentifiers(), discoveryRequest.getHip().getId(),
-                        newTransaction()));
+                .flatMap(user -> discovery.patientFor(user,
+                        discoveryRequest.getUnverifiedIdentifiers(),
+                        discoveryRequest.getHip().getId(),
+                        newRequest(),
+                        discoveryRequest.getRequestId()));
     }
 
-    private String newTransaction() {
-        return UUID.randomUUID().toString();
+    private UUID newRequest() {
+        return UUID.randomUUID();
     }
 }

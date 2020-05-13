@@ -10,8 +10,10 @@ import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.response.ConsentArtefactResponse;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
@@ -34,6 +36,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -43,6 +46,9 @@ import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactR
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
+import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -116,11 +122,13 @@ public class ConsentArtefactUserJourneyTest {
     }
 
     @Test
-    public void shouldListConsentArtifacts() {
+    public void shouldListConsentArtifacts() throws ParseException {
         var consentArtefact = consentArtefactRepresentation().build();
         var token = string();
         var patientId = consentArtefact.getConsentDetail().getPatient().getId();
         var consentRequestId = "request-id";
+        consentArtefact.getConsentDetail().getPermission().setDataEraseAt(toDateWithMilliSeconds("253379772420000"));
+
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))
                 .thenReturn(Flux.just(consentArtefact.getConsentDetail().getConsentId()));
@@ -135,9 +143,9 @@ public class ConsentArtefactUserJourneyTest {
                 .expectStatus().isOk()
                 .expectBody(new ParameterizedTypeReference<List<ConsentArtefactRepresentation>>() {
                 })
-                .value(value -> value.get(0).getConsentDetail(), Matchers.equalTo(consentArtefact.getConsentDetail()))
-                .value(value -> value.get(0).getStatus(), Matchers.is(consentArtefact.getStatus()))
-                .value(value -> value.get(0).getSignature(), Matchers.is(consentArtefact.getSignature()));
+                .value(value -> value.get(0).getConsentDetail(), equalTo(consentArtefact.getConsentDetail()))
+                .value(value -> value.get(0).getStatus(), is(consentArtefact.getStatus()))
+                .value(value -> value.get(0).getSignature(), is(consentArtefact.getSignature()));
     }
 
     @Test
@@ -145,11 +153,12 @@ public class ConsentArtefactUserJourneyTest {
         var token = string();
         var consentArtefact = consentArtefactRepresentation().build();
         var patientId = consentArtefact.getConsentDetail().getPatient().getId();
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_NOT_FOUND, "Cannot find the " +
                 "consent artefact"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         var consentRequestId = "request-id";
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))
                 .thenReturn(Flux.empty());
         when(consentArtefactRepository.getConsentArtefact(eq(consentArtefact.getConsentDetail().getConsentId())))
@@ -169,12 +178,13 @@ public class ConsentArtefactUserJourneyTest {
     public void shouldThrowInvalidRequester() throws JsonProcessingException {
         var token = string();
         var anotherUser = string();
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(anotherUser, false)));
         var consentArtefact = consentArtefactRepresentation().build();
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_FORBIDDEN,
                 "Cannot retrieve Consent artefact"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         var consentRequestId = "request-id";
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(anotherUser, false)));
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))
                 .thenReturn(Flux.just(consentArtefact.getConsentDetail().getConsentId()));
         when(consentArtefactRepository.getConsentArtefact(eq(consentArtefact.getConsentDetail().getConsentId())))
@@ -204,8 +214,9 @@ public class ConsentArtefactUserJourneyTest {
         RevokeRequest revokeRequest = RevokeRequest.builder().consents(consentIds).build();
         String patientId = consentRepresentation.getConsentDetail().getPatient().getId();
 
-        when(pinVerificationTokenService.validateToken(token))
-                .thenReturn(Mono.just(new Caller(patientId, false)));
+        String scope = "consent.revoke";
+        when(pinVerificationTokenService.validateToken(token, scope))
+                .thenReturn(Mono.just(new Caller(patientId, false, "testSessionId")));
         when(consentArtefactRepository.getConsentWithRequest(eq(consentId)))
                 .thenReturn(Mono.just(consentRepresentation));
         when(repository.requestOf(consentRequestId, ConsentStatus.GRANTED.toString(), patientId))
@@ -228,17 +239,18 @@ public class ConsentArtefactUserJourneyTest {
     @Test
     public void shouldNotRevokeConsentArtefactWhenItIsNotInGrantedState() throws JsonProcessingException {
         var token = string();
+        String scope = "consent.revoke";
         var consentRepresentation = consentRepresentation().status(ConsentStatus.REVOKED).build();
+        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_NOT_GRANTED, "Not a granted consent."));
+        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         String consentRequestId = consentRepresentation.getConsentRequestId();
         List<String> consentIds = new ArrayList<>();
         String consentId = consentRepresentation.getConsentDetail().getConsentId();
         consentIds.add(consentRepresentation.getConsentDetail().getConsentId());
         RevokeRequest revokeRequest = RevokeRequest.builder().consents(consentIds).build();
         String patientId = consentRepresentation.getConsentDetail().getPatient().getId();
-        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_NOT_GRANTED, "Not a granted consent."));
-        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
 
-        when(pinVerificationTokenService.validateToken(token))
+        when(pinVerificationTokenService.validateToken(token, scope))
                 .thenReturn(Mono.just(new Caller(patientId, false)));
         when(consentArtefactRepository.getConsentWithRequest(eq(consentId)))
                 .thenReturn(Mono.just(consentRepresentation));
@@ -259,6 +271,58 @@ public class ConsentArtefactUserJourneyTest {
 
         verify(consentArtefactRepository, times(0)).updateStatus(any(), any(), any());
         verifyNoInteractions(consentNotificationPublisher);
+    }
+
+    @Test
+    void shouldGetAllConsentArtefacts() {
+        String token = string();
+        List<ConsentArtefactRepresentation> response = new ArrayList<>();
+        ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
+        response.add(consentArtefactRepresentation);
+        ListResult<List<ConsentArtefactRepresentation>> result = new ListResult<>(response, response.size());
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("shweta@ncg", true)));
+        when(consentArtefactRepository.getAllConsentArtefacts("shweta@ncg", 20, 0))
+                .thenReturn(Mono.just(result));
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/consent-artefacts").queryParam("limit", "20").build())
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", token)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ConsentArtefactResponse.class)
+                .value(ConsentArtefactResponse::getConsentArtefacts, equalTo(response))
+                .value(ConsentArtefactResponse::getLimit, Matchers.is(20))
+                .value(ConsentArtefactResponse::getSize, Matchers.is(1))
+                .value(ConsentArtefactResponse::getOffset, Matchers.is(0));
+    }
+
+    @Test
+    void shouldGetAllConsentArtefactsForStatus() {
+        String token = string();
+        List<ConsentArtefactRepresentation> response = new ArrayList<>();
+        ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
+        consentArtefactRepresentation.setStatus(ConsentStatus.EXPIRED);
+        response.add(consentArtefactRepresentation);
+        ListResult<List<ConsentArtefactRepresentation>> result = new ListResult<>(response, response.size());
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("shweta@ncg", true)));
+        when(consentArtefactRepository.getConsentArtefactsByStatus("shweta@ncg", "EXPIRED", 20, 0))
+                .thenReturn(Mono.just(result));
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/consent-artefacts")
+                        .queryParam("limit", "20")
+                        .queryParam("status", "EXPIRED")
+                        .build())
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", token)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ConsentArtefactResponse.class)
+                .value(ConsentArtefactResponse::getConsentArtefacts, equalTo(response))
+                .value(ConsentArtefactResponse::getLimit, Matchers.is(20))
+                .value(ConsentArtefactResponse::getSize, Matchers.is(1))
+                .value(ConsentArtefactResponse::getOffset, Matchers.is(0));
     }
 
     public static class ContextInitializer

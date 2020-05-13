@@ -10,6 +10,7 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
@@ -18,6 +19,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.to;
@@ -26,29 +28,34 @@ public class ConsentRequestRepository {
     private static final String SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS;
     private static final String SELECT_CONSENT_REQUEST_BY_ID;
     private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT;
+    private static final String SELECT_CONSENT_REQUEST_BY_STATUS;
     private static final String INSERT_CONSENT_REQUEST_QUERY = "INSERT INTO consent_request " +
             "(request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
             "date_modified=$2 WHERE request_id=$3";
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent request";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
+    private static final String FAILED_TO_GET_CONSENT_REQUEST_BY_STATUS = "Failed to get consent requests by status";
+
     private final PgPool dbClient;
 
     static {
-        String s = "SELECT request_id, status, details, date_created, date_modified FROM consent_request where ";
+        String s = "SELECT request_id, status, details, date_created, date_modified FROM consent_request " +
+                "where ";
         SELECT_CONSENT_DETAILS_FOR_PATIENT = s + "patient_id=$1 LIMIT $2 OFFSET $3";
         SELECT_CONSENT_REQUEST_BY_ID = s + "request_id=$1";
         SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS = s + "request_id=$1 and status=$2 and patient_id=$3";
+        SELECT_CONSENT_REQUEST_BY_STATUS = s + "status=$1";
     }
 
     public ConsentRequestRepository(PgPool dbClient) {
         this.dbClient = dbClient;
     }
 
-    public Mono<Void> insert(RequestedDetail requestedDetail, String requestId) {
+    public Mono<Void> insert(RequestedDetail requestedDetail, UUID requestId) {
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(INSERT_CONSENT_REQUEST_QUERY)
-                        .execute(Tuple.of(requestId,
+                        .execute(Tuple.of(requestId.toString(),
                                 requestedDetail.getPatient().getId(),
                                 ConsentStatus.REQUESTED.name(),
                                 new JsonObject(from(requestedDetail))),
@@ -145,5 +152,21 @@ public class ConsentRequestRepository {
             return Date.from(timestamp.atZone(ZoneId.systemDefault()).toInstant());
         }
         return null;
+    }
+
+    public Flux<ConsentRequestDetail> getConsentsByStatus(ConsentStatus status) {
+        return Flux.create(fluxSink -> dbClient.preparedQuery(SELECT_CONSENT_REQUEST_BY_STATUS)
+                .execute(Tuple.of(status.toString()),
+                        handler -> {
+                            if (handler.failed()) {
+                                fluxSink.error(new Exception(FAILED_TO_GET_CONSENT_REQUEST_BY_STATUS));
+                                return;
+                            }
+                            RowSet<Row> results = handler.result();
+                            if (results.iterator().hasNext()) {
+                                results.forEach(row -> fluxSink.next(mapToConsentRequestDetail(row)));
+                            }
+                            fluxSink.complete();
+                        }));
     }
 }

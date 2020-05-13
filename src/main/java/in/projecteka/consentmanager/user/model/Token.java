@@ -1,12 +1,10 @@
 package in.projecteka.consentmanager.user.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-@Data
-@NoArgsConstructor
 @AllArgsConstructor
+@Getter
 public class Token {
-    private String temporaryToken;
+    private final String temporaryToken;
 }

@@ -9,6 +9,8 @@ import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.user.SignUpService;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,13 +33,26 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
+import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
+import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
 
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfiguration {
 
     private static final List<Map.Entry<String, HttpMethod>> SERVICE_ONLY_URLS = new ArrayList<>();
-    private static final List<Map.Entry<String, HttpMethod>> PIN_VERIFICATION_URLS = new ArrayList<>();
+    private static final List<RequestMatcher> PIN_VERIFICATION_MATCHERS = new ArrayList<>();
+
+    @RequiredArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    private static class RequestMatcher {
+        private final String pattern;
+        private final HttpMethod httpMethod;
+        private String scope;
+    }
 
     static {
         SERVICE_ONLY_URLS.add(Map.entry("/users/**", HttpMethod.GET));
@@ -45,8 +60,10 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/notification", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/request", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/consent-requests", HttpMethod.POST));
-        PIN_VERIFICATION_URLS.add(Map.entry("/consent-requests/**/approve", HttpMethod.POST));
-        PIN_VERIFICATION_URLS.add(Map.entry("/consents/revoke", HttpMethod.POST));
+        RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve", HttpMethod.POST, SCOPE_CONSENT_APPROVE);
+        RequestMatcher revokeMatcher = new RequestMatcher("/consents/revoke", HttpMethod.POST, SCOPE_CONSENT_REVOKE);
+        PIN_VERIFICATION_MATCHERS.add(approveMatcher);
+        PIN_VERIFICATION_MATCHERS.add(revokeMatcher);
     }
 
 
@@ -58,8 +75,12 @@ public class SecurityConfiguration {
 
         final String[] whitelistedUrls = {"/**.json",
                                           "/ValueSet/**.json",
+                                          "/patients/generateotp",
+                                          "/patients/verifyotp",
                                           "/users/verify",
                                           "/users/permit",
+                                          "/otpsession/verify",
+                                          "/otpsession/permit",
                                           "/sessions",
                                           "/**.html",
                                           "/**.js",
@@ -81,8 +102,8 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet, CacheAdapter<String,String> blacklistedTokens, ConfigurableJWTProcessor<com.nimbusds.jose.proc.SecurityContext> jwtProcessor) {
-        return new Authenticator(jwkSet,blacklistedTokens, jwtProcessor);
+    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet, CacheAdapter<String, String> blacklistedTokens, ConfigurableJWTProcessor<com.nimbusds.jose.proc.SecurityContext> jwtProcessor) {
+        return new Authenticator(jwkSet, blacklistedTokens, jwtProcessor);
     }
 
     @Bean({"jwtProcessor"})
@@ -119,15 +140,21 @@ public class SecurityConfiguration {
             if (isEmpty(token)) {
                 return Mono.empty();
             }
-            if (isSignUpRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
+            String requestPath = exchange.getRequest().getPath().toString();
+            HttpMethod requestMethod = exchange.getRequest().getMethod();
+            if (isSignUpRequest(requestPath, requestMethod)) {
                 return checkSignUp(token);
             }
-            if (isGrantOrRevokeConsentRequest(exchange.getRequest().getPath().toString(), exchange.getRequest().getMethod())) {
-                return validateGrantOrRevokeConsentRequest(token);
+            if (isGrantOrRevokeConsentRequest(requestPath, requestMethod)) {
+                Optional<String> validScope = getScope(requestPath,requestMethod);
+                if(validScope.isEmpty()) {
+                    return Mono.empty();//TODO handle better?
+                }
+                return validateGrantOrRevokeConsentRequest(token, validScope.get());
             }
             if (isCentralRegistryAuthenticatedOnlyRequest(
-                    exchange.getRequest().getPath().toString(),
-                    exchange.getRequest().getMethod())) {
+                    requestPath,
+                    requestMethod)) {
                 return checkCentralRegistry(token);
             }
 
@@ -144,8 +171,8 @@ public class SecurityConfiguration {
                     .map(SecurityContextImpl::new);
         }
 
-        private Mono<SecurityContext> validateGrantOrRevokeConsentRequest(String token) {
-            return pinVerificationTokenService.validateToken(token)
+        private Mono<SecurityContext> validateGrantOrRevokeConsentRequest(String token, String validScope) {
+            return pinVerificationTokenService.validateToken(token, validScope)
                     .map(caller -> new UsernamePasswordAuthenticationToken(
                             caller,
                             token,
@@ -162,9 +189,18 @@ public class SecurityConfiguration {
 
         private boolean isGrantOrRevokeConsentRequest(String url, HttpMethod method) {
             AntPathMatcher antPathMatcher = new AntPathMatcher();
-            return PIN_VERIFICATION_URLS.stream()
-                    .anyMatch(pattern ->
-                            antPathMatcher.match(pattern.getKey(), url) && pattern.getValue().equals(method));
+            return PIN_VERIFICATION_MATCHERS.stream()
+                    .anyMatch(matcher ->
+                            antPathMatcher.match(matcher.getPattern(), url) && matcher.getHttpMethod().equals(method));
+        }
+
+        private Optional<String> getScope(String url, HttpMethod method) {
+            AntPathMatcher antPathMatcher = new AntPathMatcher();
+            return PIN_VERIFICATION_MATCHERS.stream()
+                    .filter(matcher ->
+                            antPathMatcher.match(matcher.getPattern(), url) && matcher.getHttpMethod().equals(method))
+                    .findFirst()
+                    .map(RequestMatcher::getScope);
         }
 
         private Mono<SecurityContext> check(String authToken) {
@@ -191,7 +227,8 @@ public class SecurityConfiguration {
         }
 
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
-            return ("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod);
+            boolean isSignUp = (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) || (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod));
+            return isSignUp;
         }
     }
 

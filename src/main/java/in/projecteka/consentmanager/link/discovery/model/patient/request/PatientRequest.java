@@ -1,11 +1,13 @@
 package in.projecteka.consentmanager.link.discovery.model.patient.request;
 
 import lombok.Builder;
-import lombok.Data;
+import lombok.Value;
+
+import java.util.UUID;
 
 @Builder
-@Data
+@Value
 public class PatientRequest {
-    private Patient patient;
-    private String transactionId;
+    Patient patient;
+    UUID requestId;
 }

@@ -12,9 +12,11 @@ public class RedisCacheAdapter implements CacheAdapter<String, String> {
 
     private final RedisClient redisClient;
     private StatefulRedisConnection<String, String> statefulConnection;
+    private int expirationInMinutes;
 
-    public RedisCacheAdapter(RedisClient redisClient) {
+    public RedisCacheAdapter(RedisClient redisClient, int expirationInMinutes) {
         this.redisClient = redisClient;
+        this.expirationInMinutes = expirationInMinutes;
     }
 
     @PostConstruct
@@ -38,7 +40,7 @@ public class RedisCacheAdapter implements CacheAdapter<String, String> {
     public Mono<Void> put(String key, String value) {
         RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
         return redisCommands.set(key, value)
-                .then(redisCommands.expire(key, 5 * 60L))//TODO: Set this value to be same as jwt accessToken expiry(maybe need to make a config)
+                .then(redisCommands.expire(key, expirationInMinutes * 60L))
                 .then();
     }
 
@@ -57,5 +59,13 @@ public class RedisCacheAdapter implements CacheAdapter<String, String> {
     public Mono<Boolean> exists(String key) {
         RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
         return redisCommands.exists(key).flatMap(existCount -> Mono.just(existCount > 0));
+    }
+
+    @Override
+    public Mono<Long> increment(String key) {
+        RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
+        return redisCommands.incr(key)
+                .filter(count -> count!=1)
+                .switchIfEmpty(Mono.defer(() -> redisCommands.expire(key,expirationInMinutes * 60L).thenReturn(1L)));
     }
 }

@@ -6,11 +6,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @AllArgsConstructor
 @Data
 @Builder
 @NoArgsConstructor
 public class ConsentRequest {
-    private String id;
+    private UUID id;
     private RequestedDetail detail;
 }

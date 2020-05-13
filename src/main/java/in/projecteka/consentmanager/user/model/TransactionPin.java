@@ -1,11 +1,13 @@
 package in.projecteka.consentmanager.user.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 
-@Data
 @Builder
+@AllArgsConstructor
+@Getter
 public class TransactionPin {
-    private String pin;
-    private String patientId;
+    private final String pin;
+    private final String patientId;
 }

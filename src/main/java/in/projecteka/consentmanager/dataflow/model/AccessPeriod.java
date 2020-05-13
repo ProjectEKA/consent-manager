@@ -13,16 +13,14 @@ import java.util.Date;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
-@Setter
 @AllArgsConstructor
-@NoArgsConstructor
 @Builder
 public class AccessPeriod {
     @JsonProperty("from")
     @NotNull(message = "From Date is not specified.")
-    private Date fromDate;
+    private final Date fromDate;
 
     @JsonProperty("to")
     @NotNull(message = "To Date is not specified.")
-    private Date toDate;
+    private final Date toDate;
 }

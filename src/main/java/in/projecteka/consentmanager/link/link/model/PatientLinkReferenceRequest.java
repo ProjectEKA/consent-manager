@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
 @AllArgsConstructor
@@ -15,5 +17,6 @@ import lombok.Setter;
 @Setter
 public class PatientLinkReferenceRequest {
     private String transactionId;
+    private UUID requestId;
     private Patient patient;
 }

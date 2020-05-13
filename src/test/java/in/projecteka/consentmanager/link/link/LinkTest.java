@@ -1,16 +1,15 @@
 package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.Identifier;
-import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
-import in.projecteka.consentmanager.link.link.model.Hip;
-import in.projecteka.consentmanager.link.link.model.Links;
-import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
+import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
+import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.link.link.model.Hip;
+import in.projecteka.consentmanager.link.link.model.Links;
+import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,8 +17,6 @@ import org.mockito.Mock;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -34,7 +31,6 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.patientReprese
 import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.telecom;
-import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,6 +72,7 @@ class LinkTest {
         String patientId = "patient";
         PatientLinkReferenceRequest patientLinkReferenceRequest = patientLinkReferenceRequest().build();
         var patientLinkReferenceRequestForHIP = new in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest(
+                patientLinkReferenceRequest.getRequestId().toString(),
                 patientLinkReferenceRequest.getTransactionId(),
                 toHIPPatient(patientId, patientLinkReferenceRequest.getPatient()));
         String hipId = "10000005";
@@ -88,7 +85,10 @@ class LinkTest {
         when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
-        when(linkRepository.insertToLinkReference(patientLinkReferenceResponse, hipId)).thenReturn(Mono.empty());
+        when(linkRepository.insertToLinkReference(patientLinkReferenceResponse, hipId,
+                patientLinkReferenceRequest.getRequestId())).thenReturn(Mono.empty());
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
+                .thenReturn(Mono.empty());
 
         StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
                 .expectNext(patientLinkReferenceResponse)
@@ -123,6 +123,7 @@ class LinkTest {
         PatientLinkReferenceRequest patientLinkReferenceRequest = patientLinkReferenceRequest().build();
         var patientLinkReferenceRequestForHIP =
                 new in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest(
+                        patientLinkReferenceRequest.getRequestId().toString(),
                         patientLinkReferenceRequest.getTransactionId(),
                         toHIPPatient(patientId, patientLinkReferenceRequest.getPatient()));
 
@@ -130,7 +131,10 @@ class LinkTest {
                 .thenReturn(Mono.just(patientLinkReferenceResponse));
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
-        when(linkRepository.insertToLinkReference(patientLinkReferenceResponse, hipId)).thenReturn(Mono.empty());
+        when(linkRepository.insertToLinkReference(patientLinkReferenceResponse, hipId,
+                patientLinkReferenceRequest.getRequestId())).thenReturn(Mono.empty());
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
+                .thenReturn(Mono.empty());
 
         StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
                 .expectNext(patientLinkReferenceResponse)
@@ -158,6 +162,8 @@ class LinkTest {
         when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
+                .thenReturn(Mono.empty());
 
         StepVerifier.create(link.patientWith(patientId, patientLinkReferenceRequest))
                 .expectErrorSatisfies(error -> {
@@ -195,8 +201,6 @@ class LinkTest {
         String hipId = "10000005";
         when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
         String transactionId = "transactionId";
-        ZonedDateTime zonedDateTime = ZonedDateTime.now(ZoneOffset.UTC).withNano(0).plusHours(1);
-        when(linkRepository.getExpiryFromLinkReference(linkRefNumber)).thenReturn(Mono.just(zonedDateTime.toString()));
         when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber)).thenReturn(Mono.just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
         when(linkRepository.insertToLink(hipId, patientId, linkRefNumber, patientLinkResponse.getPatient())).thenReturn(Mono.empty());
@@ -213,7 +217,6 @@ class LinkTest {
         var patientRepresentation = patientRepresentation().build();
         var links = links()
                 .hip(Hip.builder()
-                        .name("")
                         .id(hipId)
                         .build())
                 .patientRepresentations(patientRepresentation)
@@ -226,13 +229,9 @@ class LinkTest {
                 .build();
         var provider =
                 provider().build();
-        var user = user()
-                .identifier(patientLinks.getId())
-                .build();
 
         var linksResponse = links()
                 .hip(Hip.builder()
-                        .name(provider.getName())
                         .id(hipId)
                         .build())
                 .patientRepresentations(patientRepresentation)

@@ -1,12 +1,15 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.TransactionPin;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import reactor.core.publisher.Mono;
 
@@ -14,6 +17,7 @@ import java.security.PrivateKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.UUID;
 
 @AllArgsConstructor
 public class TransactionPinService {
@@ -21,6 +25,8 @@ public class TransactionPinService {
     private final BCryptPasswordEncoder encoder;
     private final PrivateKey privateKey;
     private final UserServiceProperties userServiceProperties;
+    private final CacheAdapter<String,String> dayCache;
+    private static final Logger logger = LoggerFactory.getLogger(TransactionPinService.class);
 
     public Mono<Void> createPinFor(String patientId, String pin) {
         if (!isPinValid(pin)) {
@@ -45,29 +51,52 @@ public class TransactionPinService {
     }
 
     public Mono<Boolean> isTransactionPinSet(String patientId) {
-        return transactionPinRepository.getTransactionPinFor(patientId).map(Optional::isPresent);
+        return transactionPinRepository.getTransactionPinByPatient(patientId).map(Optional::isPresent);
     }
 
-    public Mono<Token> validatePinFor(String patientId, String pin) {
-        return transactionPinRepository.getTransactionPinFor(patientId)
-                .flatMap(transactionPin -> {
-                    if (transactionPin.isEmpty()) {
-                        return Mono.error(ClientError.transactionPinNotFound());
-                    }
+    public Mono<Token> validatePinFor(String patientId, String pin, UUID requestId, String scope) {
+        return Mono.just(requestId)
+                .filterWhen(this::validateRequest)
+                .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
+                .flatMap(val -> transactionPinRepository.updateRequestId(requestId, patientId)
+                        .then(transactionPinRepository.getTransactionPinByPatient(patientId)
+                                .filter(transactionPin -> !transactionPin.isEmpty())
+                                .switchIfEmpty(Mono.error(ClientError.transactionPinNotFound()))
+                                .flatMap(transactionPin -> dayCache.exists(blockedKey(patientId))
+                                        .filter(exists -> !exists)
+                                        .switchIfEmpty(Mono.error(ClientError.invalidAttemptsExceeded()))
+                                        .then(Mono.defer(()-> Mono.just(encoder.matches(pin, transactionPin.get().getPin()))))
+                                        .filter(matches-> !matches)
+                                        .flatMap(doesNotMatch -> dayCache.increment(incorrectAttemptKey(patientId))
+                                                .filter(count-> count != userServiceProperties.getMaxIncorrectPinAttempts())
+                                                .switchIfEmpty(Mono.defer(() -> dayCache.put(blockedKey(patientId),"true").thenReturn(userServiceProperties.getMaxIncorrectPinAttempts())))
+                                                .flatMap(attemptCount -> Mono.error(ClientError.transactionPinDidNotMatch(String.format("%s attempts left",userServiceProperties.getMaxIncorrectPinAttempts() - attemptCount)))))).thenReturn(newToken(patientId, scope))));
+    }
 
-                    if (!encoder.matches(pin, transactionPin.get().getPin())) {
-                        return Mono.error(ClientError.transactionPinDidNotMatch());
-                    }
+    static String incorrectAttemptKey(String patientId) {
+        return String.format("%s.incorrect.attempts",patientId);
+    }
 
-                    return Mono.empty();
-                }).thenReturn(newToken(patientId));
+    static String blockedKey(String patientId) {
+        return String.format("%s.blocked",patientId);
+    }
+
+    Mono<Boolean> validateRequest(UUID requestId) {
+        return transactionPinRepository.getTransactionPinByRequest(requestId)
+                .map(Optional::isEmpty)
+                .switchIfEmpty(Mono.just(true));
     }
 
     @SneakyThrows
-    private Token newToken(String userName) {
+    Token newToken(String userName, String scope) {
         int minutes = userServiceProperties.getTransactionPinTokenValidity() * 60 * 1000;
+        HashMap<String, Object> claims = new HashMap<>(1);
+        claims.put("sid" , UUID.randomUUID().toString());
+        claims.put("scope" , scope);
+        logger.debug("Putting session id {}", claims.get("sid"));
+        logger.debug("Putting scope {}", claims.get("scope"));
         return new Token(Jwts.builder()
-                .setClaims(new HashMap<>())
+                .setClaims(claims)
                 .setSubject(userName)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + minutes))

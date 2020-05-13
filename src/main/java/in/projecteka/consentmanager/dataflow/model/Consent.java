@@ -2,14 +2,13 @@ package in.projecteka.consentmanager.dataflow.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
-@Data
-@NoArgsConstructor
+@Getter
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
+@EqualsAndHashCode
 public class Consent {
-    private String id;
-    private String digitalSignature;
+    private final String id;
 }

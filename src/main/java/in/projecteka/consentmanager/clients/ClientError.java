@@ -11,10 +11,12 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEF
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_NOT_GRANTED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_NOT_FOUND;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.DB_OPERATION_FAILED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_RANGE;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PIN_ATTEMPTS_EXCEEDED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SCOPE;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SESSION;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TOKEN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TRANSACTION_PIN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.NETWORK_SERVICE_ERROR;
@@ -22,6 +24,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_EXPIRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_INVALID;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.PROVIDER_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.QUEUE_NOT_FOUND;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.REQUEST_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_ID_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_PIN_IS_ALREADY_CREATED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.UNABLE_TO_CONNECT_TO_PROVIDER;
@@ -29,6 +32,9 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.UNKNOWN_ERROR
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USERNAME_OR_PASSWORD_INCORRECT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_REQUEST_LIMIT_EXCEEDED;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.REQUEST_ALREADY_EXISTS;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -36,6 +42,8 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
+
 
 @Getter
 @ToString
@@ -60,9 +68,14 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(USER_NOT_FOUND, "Cannot find the user")));
     }
 
-    public static ClientError transactionPinDidNotMatch() {
+    public static ClientError transactionPinDidNotMatch(String auxMessage) {
         return new ClientError(UNAUTHORIZED,
-                new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN, "Invalid transaction pin")));
+                new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN, String.format("%s;%s","Invalid transaction pin",auxMessage))));
+    }
+
+    public static ClientError invalidAttemptsExceeded() {
+        return new ClientError(UNAUTHORIZED,
+                new ErrorRepresentation(new Error(INVALID_PIN_ATTEMPTS_EXCEEDED, "Invalid Pin attempts exceeded; Try again after sometime.")));
     }
 
     public static ClientError invalidTransactionPin() {
@@ -70,14 +83,14 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN, "Invalid transaction pin")));
     }
 
-    public static ClientError dbOperationFailed() {
-        return new ClientError(INTERNAL_SERVER_ERROR,
-                new ErrorRepresentation(new Error(DB_OPERATION_FAILED, CANNOT_PROCESS_REQUEST_TRY_LATER)));
-    }
-
     public static ClientError otpExpired() {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(OTP_EXPIRED, "OTP Expired, please try again")));
+    }
+
+    public static ClientError otpRequestLimitExceeded() {
+        return new ClientError(TOO_MANY_REQUESTS,
+                new ErrorRepresentation(new Error(OTP_REQUEST_LIMIT_EXCEEDED, "OTP request limit exceeded")));
     }
 
     public static ClientError networkServiceCallFailed() {
@@ -100,12 +113,6 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(TRANSACTION_ID_NOT_FOUND, "Failed to get transaction Id")));
     }
 
-    public static ClientError expiryNotFound() {
-        return new ClientError(BAD_REQUEST,
-                new ErrorRepresentation(new Error(TRANSACTION_ID_NOT_FOUND,
-                        "Failed to get expiry for link reference number")));
-    }
-
     public static ClientError consentArtefactNotFound() {
         return new ClientError(NOT_FOUND,
                 new ErrorRepresentation(new Error(CONSENT_ARTEFACT_NOT_FOUND, "Cannot find the consent artefact")));
@@ -116,20 +123,47 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(CONSENT_ARTEFACT_FORBIDDEN, "Cannot retrieve Consent artefact")));
     }
 
-    public static ClientError otpNotFound() {
-        return new ClientError(NOT_FOUND, new ErrorRepresentation(new Error(OTP_INVALID, "Invalid OTP")));
+    public static ClientError invalidOtp() {
+        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(OTP_INVALID, "Invalid OTP")));
     }
 
     public static ClientError unknownErrorOccurred() {
         return internalServerError("Unknown error occurred");
     }
 
+    public static ClientError failedToGenerateOtp() {
+        return internalServerError("Failed to generate otp");
+    }
+
     public static ClientError failedToCreateTransactionPin() {
         return internalServerError("Failed to create transaction pin");
     }
 
+
+    public static ClientError failedToInsertLockedUser() {
+        return internalServerError("Failed to insert locked user");
+    }
+
+
+    public static ClientError failedToUpdateLockedUser() {
+        return internalServerError("Failed to update locked user");
+    }
+
+    public static ClientError failedToUpdateTransactionPin() {
+        return internalServerError("Failed to update request_id in transaction pin");
+    }
+
     public static ClientError failedToFetchTransactionPin() {
         return internalServerError("Failed to fetch transaction pin");
+    }
+
+
+    public static ClientError failedToFetchLockedUser() {
+        return internalServerError("Failed to fetch Locked User");
+    }
+  
+    public static ClientError failedToUpdateUser() {
+        return internalServerError("Failed to update user");
     }
 
     public static ClientError queueNotFound() {
@@ -140,6 +174,10 @@ public class ClientError extends Throwable {
     public static ClientError invalidRequester() {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(INVALID_REQUESTER, "Not a valid Requester")));
+    }
+
+    public static ClientError invalidRequester(String errorMessage) {
+        return new ClientError(BAD_REQUEST, new ErrorRepresentation(new Error(INVALID_REQUESTER, errorMessage)));
     }
 
     public static ClientError invalidDateRange() {
@@ -157,10 +195,22 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(INVALID_TOKEN, "Token verification failed")));
     }
 
-    public static ClientError unAuthorizedRequest() {
+    public static ClientError unAuthorizedRequest(String errorMessage) {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT,
-                        "Username or password is incorrect")));
+                        errorMessage)));
+    }
+
+    public static ClientError invalidUserName() {
+        return new ClientError(UNAUTHORIZED,
+                new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT,
+                        "Username incorrect")));
+    }
+
+    public static ClientError userBlocked() {
+        return new ClientError(UNAUTHORIZED,
+                new ErrorRepresentation(new Error(USER_TEMPORARILY_BLOCKED,
+                        "User blocked temporarily")));
     }
 
     public static ClientError userAlreadyExists(String username) {
@@ -198,5 +248,21 @@ public class ClientError extends Throwable {
     public static ClientError invalidAccessToken() {
         return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_TOKEN, "Expected token of the format `Bearer accessToken`")));
+    }
+
+    public static ClientError requestAlreadyExists() {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(REQUEST_ALREADY_EXISTS,
+                        "A request with this request id already exists.")));
+    }
+
+    public static ClientError invalidScope() {
+        return new ClientError(UNAUTHORIZED,
+                new ErrorRepresentation(new Error(INVALID_SCOPE, "The scope provided is invalid for current operation")));
+    }
+
+    public static ClientError invalidSession(String session) {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(INVALID_SESSION, String.format("The sessionId: %s is invalid",session))));
     }
 }

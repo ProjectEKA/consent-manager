@@ -1,13 +1,13 @@
 package in.projecteka.consentmanager.user.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
-@Data
 @AllArgsConstructor
-@NoArgsConstructor
+@Getter
+@EqualsAndHashCode
 public class OtpVerification {
-    private String sessionId;
-    private String value;
+    private final String sessionId;
+    private final String value;
 }

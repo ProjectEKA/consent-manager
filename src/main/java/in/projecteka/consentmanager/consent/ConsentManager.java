@@ -146,8 +146,8 @@ public class ConsentManager {
                                                                                int offset,
                                                                                String status) {
         return status.equals(ALL_CONSENT_ARTEFACTS)
-                ? consentRequestRepository.requestsForPatient(patientId, limit, offset)
-                : consentRequestRepository.requestsForPatientByStatus(patientId, limit, offset, status);
+                ? consentRequestRepository.requestsForPatient(patientId, limit, offset, null)
+                : consentRequestRepository.requestsForPatient(patientId, limit, offset, status);
     }
 
     private Mono<Void> validateLinkedHips(String username, List<GrantedConsent> grantedConsents) {
@@ -434,11 +434,11 @@ public class ConsentManager {
     }
 
     public Mono<ListResult<List<ConsentArtefactRepresentation>>> getAllConsentArtefacts(String username,
-                                                                                        String status,
                                                                                         int limit,
-                                                                                        int offset) {
+                                                                                        int offset,
+                                                                                        String status) {
         return status.equals(ALL_CONSENT_ARTEFACTS)
-                ? consentArtefactRepository.getAllConsentArtefacts(username, limit, offset)
-                : consentArtefactRepository.getConsentArtefactsByStatus(username, status, limit, offset);
+                ? consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, null)
+                : consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, status);
     }
 }

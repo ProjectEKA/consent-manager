@@ -38,7 +38,6 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
@@ -185,7 +184,6 @@ public class DiscoveryUserJourneyTest {
     public void shouldDiscoverCareContext() throws Exception {
         var token = string();
         String requestId = "cecd3ed2-a7ea-406e-90f2-b51aa78741b9";
-        String transactionId = "discoveryTxId";
         String patientDiscoveryRequest = "{\n" +
                 "  \"requestId\": \""+ requestId + "\",\n" +
                 "  \"hip\": {\n" +
@@ -197,7 +195,7 @@ public class DiscoveryUserJourneyTest {
         when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
-        when(discoveryServiceClient.patientFor(any(), any())).thenReturn(Mono.just(PatientResponse.builder().build()));
+        when(discoveryServiceClient.patientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(PatientResponse.builder().build()));
         webTestClient.post()
                 .uri("/patients/care-contexts/discover")
                 .accept(MediaType.APPLICATION_JSON)

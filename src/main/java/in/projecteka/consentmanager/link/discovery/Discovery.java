@@ -30,6 +30,7 @@ public class Discovery {
     private final DiscoveryServiceClient discoveryServiceClient;
     private final DiscoveryRepository discoveryRepository;
     private final CentralRegistry centralRegistry;
+    private final GatewayServiceProperties gatewayServiceProperties;
 
     public Flux<ProviderRepresentation> providersFrom(String name) {
         return centralRegistry.providersOf(name)
@@ -54,7 +55,7 @@ public class Discovery {
                 .flatMap(val -> userWith(userName)
                         .zipWith(providerUrl(providerId))
                         .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
-                        .flatMap(tuple -> patientIn(tuple.getT2(), tuple.getT1(), transactionId, unverifiedIdentifiers))
+                        .flatMap(tuple -> patientIn(providerId, tuple.getT2(), tuple.getT1(), transactionId, unverifiedIdentifiers))
                         .flatMap(patientResponse ->
                                 insertDiscoveryRequest(patientResponse,
                                         providerId,
@@ -73,7 +74,7 @@ public class Discovery {
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
                 .flatMap(val -> userWith(userName)
                                     .zipWith(gatewaySystemUrl())
-                                    .flatMap(userAndGateway -> patientIn(userAndGateway.getT2(), userAndGateway.getT1(), transactionId, unverifiedIdentifiers))
+                                    .flatMap(userAndGateway -> patientIn(providerId, userAndGateway.getT2(), userAndGateway.getT1(), transactionId, unverifiedIdentifiers))
                                     .flatMap(patientResponse ->
                                             insertDiscoveryRequest(patientResponse,
                                                     providerId,
@@ -83,7 +84,7 @@ public class Discovery {
     }
 
     private Mono<String> gatewaySystemUrl() {
-        return Mono.just("http://tmc.gov.in/ncg-gateway");
+        return Mono.just(gatewayServiceProperties.getBaseUrl());
     }
 
 
@@ -107,7 +108,7 @@ public class Discovery {
                         .orElse(Mono.empty()));
     }
 
-    private Mono<PatientResponse> patientIn(String hipSystemUrl, User user, UUID transactionId, List<PatientIdentifier> unverifiedIdentifiers) {
+    private Mono<PatientResponse> patientIn(String hipId, String hipSystemUrl, User user, UUID transactionId, List<PatientIdentifier> unverifiedIdentifiers) {
         var phoneNumber = in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
                 .type(MOBILE)
                 .value(user.getPhone())
@@ -130,7 +131,7 @@ public class Discovery {
                 .build();
 
         var patientRequest = PatientRequest.builder().patient(patient).requestId(transactionId).build();
-        return discoveryServiceClient.patientFor(patientRequest, hipSystemUrl);
+        return discoveryServiceClient.patientFor(patientRequest, hipSystemUrl, hipId);
     }
 
     private Mono<DiscoveryResponse> insertDiscoveryRequest(PatientResponse patientResponse,

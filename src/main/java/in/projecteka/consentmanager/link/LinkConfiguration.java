@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.DiscoveryRepository;
+import in.projecteka.consentmanager.link.discovery.GatewayServiceProperties;
 import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.link.link.LinkRepository;
 import in.projecteka.consentmanager.user.UserServiceProperties;
@@ -50,7 +51,8 @@ public class LinkConfiguration {
     public Discovery discovery(DiscoveryRepository discoveryRepository,
                                CentralRegistry centralRegistry,
                                DiscoveryServiceClient discoveryServiceClient,
-                               UserServiceClient userServiceClient) {
-        return new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry);
+                               UserServiceClient userServiceClient,
+                               GatewayServiceProperties gatewayServiceProperties) {
+        return new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry, gatewayServiceProperties);
     }
 }

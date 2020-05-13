@@ -17,13 +17,14 @@ public class DiscoveryServiceClient {
     private final WebClient.Builder webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
 
-    public Mono<PatientResponse> patientFor(PatientRequest request, String url) {
+    public Mono<PatientResponse> patientFor(PatientRequest request, String url, String hipId) {
         return tokenGenerator.get()
                 .map(token ->
                         webClientBuilder.build()
                                 .post()
                                 .uri(url + "/patients/discover/carecontexts")
                                 .header(AUTHORIZATION, token)
+                                .header("X-HIP-ID", hipId)
                                 .bodyValue(request)
                                 .retrieve())
                 .map(responseSpec -> responseSpec

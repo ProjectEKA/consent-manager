@@ -1335,13 +1335,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /patients/profile/logintype:
+  /patients/profile/loginmode:
     get:
       tags:
         - account
       summary: Get login type of the given user
       description: Fetch a login type associated with the user-name
-      operationId: fetchLoginType
+      operationId: fetchLoginMode
       parameters:
         - name: userName
           in: query
@@ -1352,14 +1352,14 @@ paths:
             example: raj.sharma@ncg
       responses:
         '200':
-          description: Login type of the user.
+          description: Login mode of the user. If the mode is CREDENTIAL, it signifies that the consent-manager id of the user has the password set. Otherwise, user logs in via OTP.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginTypeResponse'
+                $ref: '#/components/schemas/LoginModeResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/LoginTypeResponse'
+                $ref: '#/components/schemas/LoginModeResponse'
         '404':
           description: User doesn't exist.
           content:
@@ -2462,13 +2462,13 @@ components:
             {type: "PAN", value: "EEE****00J"},
             {type: "ABPMJAYID", value: "P1234ABCD"}
             ]
-    LoginTypeResponse:
+    LoginModeResponse:
       type: object
       properties:
         loginType:
           type: string
-          enum: [CM_ID, OTP]
-          example: CM_ID | OTP
+          enum: [CREDENTIAL, OTP]
+          example: CREDENTIAL | OTP
     IdentifierReference:
       type: object
       properties:

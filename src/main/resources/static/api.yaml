@@ -1290,6 +1290,58 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /patients/profile/update-password:
+    put:
+      tags:
+        - account
+      summary: Update password
+      description: Profile password is updated with the given new password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfilePassword'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/UpdateProfilePassword'
+      responses:
+        '200':
+          description: Password updated successfully.
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Unauthorised.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /consents/revoke:
     post:
       tags:
@@ -2409,6 +2461,16 @@ components:
           type: string
       required:
         - password
+    UpdateProfilePassword:
+      type: object
+      properties:
+        oldPassword:
+          type: string
+        newPassword:
+          type: string
+      required:
+        - oldPassword
+        - newPassword
     AuthResponse:
       type: object
       properties:

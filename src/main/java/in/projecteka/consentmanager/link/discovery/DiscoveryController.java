@@ -40,6 +40,18 @@ public class DiscoveryController {
                         discoveryRequest.getRequestId()));
     }
 
+    @PostMapping("/patients/care-contexts/discover")
+    public Mono<DiscoveryResponse> discoverPatientCareContexts(@RequestBody @Valid DiscoveryRequest discoveryRequest) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .map(Caller::getUsername)
+                .flatMap(user -> discovery.patientFor(user,
+                        discoveryRequest.getUnverifiedIdentifiers(),
+                        discoveryRequest.getHip().getId(),
+                        newRequest(),
+                        discoveryRequest.getRequestId()));
+    }
+
     private UUID newRequest() {
         return UUID.randomUUID();
     }

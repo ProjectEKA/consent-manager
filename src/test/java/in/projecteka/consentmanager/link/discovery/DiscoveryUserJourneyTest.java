@@ -164,4 +164,16 @@ public class DiscoveryUserJourneyTest {
             values.applyTo(applicationContext);
         }
     }
+
+    @Test
+    public void shouldDiscoverCareContext() throws Exception {
+        var token = string();
+        webTestClient.post()
+                .uri("/patients/care-contexts/discover")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .exchange()
+                .expectStatus().isOk();
+    }
 }

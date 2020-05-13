@@ -2387,6 +2387,9 @@ components:
           example: Raj Sharma
         gender:
           $ref: '#/components/schemas/Gender'
+        yearOfBirth:
+          type: integer
+          example: 1979
         hasTransactionPin:
           type: boolean
         verifiedIdentifiers:
@@ -2407,8 +2410,10 @@ components:
             name: unverifiedIdentifiers
             wrapped: true
           example:
-            type: "PAN"
-            value: "EEE****00J"
+            [
+            {type: "PAN", value: "EEE****00J"},
+            {type: "ABPMJAYID", value: "P1234ABCD"}
+            ]
     IdentifierReference:
       type: object
       properties:
@@ -2420,7 +2425,7 @@ components:
         name: Identifier
     IdentifierType:
       type: string
-      enum: [MOBILE, PAN]
+      enum: [MOBILE, PAN, ABPMJAYID]
     Gender:
       type: string
       enum:

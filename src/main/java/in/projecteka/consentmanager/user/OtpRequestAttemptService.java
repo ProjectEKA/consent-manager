@@ -32,7 +32,13 @@ public class OtpRequestAttemptService {
     }
 
     private Mono<Void> createOtpAttemptFor(String cmId, String identifierType, String identifierValue, OtpRequestAttempt.AttemptStatus attemptStatus, OtpRequestAttempt.Action action) {
-        return otpRequestAttemptRepository.insert(cmId, identifierType, identifierValue, attemptStatus, action);
+        return otpRequestAttemptRepository.insert(OtpRequestAttempt.builder()
+                .cmId(cmId)
+                .identifierType(identifierType)
+                .identifierValue(identifierValue)
+                .attemptStatus(attemptStatus)
+                .action(action)
+                .build());
     }
 
     private Mono<List<OtpRequestAttempt>> validateLatestAttempt(List<OtpRequestAttempt> attempts) {

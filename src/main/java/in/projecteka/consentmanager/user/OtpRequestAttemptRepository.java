@@ -17,17 +17,22 @@ import java.util.stream.StreamSupport;
 public class OtpRequestAttemptRepository {
 
     private static final String INSERT_OTP_REQUEST_ATTEMPT = "INSERT INTO " +
-            "otp_attempt (cm_id,identifier_type, identifier_value,status,action) VALUES ($1,$2,$3,$4,$5)";
+            "otp_attempt (session_id ,cm_id, identifier_type, identifier_value, status, action) VALUES ($1,$2,$3,$4,$5,$6)";
 
-    private static final String SELECT_OTP_REQUEST_ATTEMPT = "SELECT identifier_type,identifier_value,status,attempt_at,action,cm_id FROM otp_attempt " +
+    private static final String SELECT_OTP_REQUEST_ATTEMPT = "SELECT session_id,identifier_type,identifier_value,status,attempt_at,action,cm_id FROM otp_attempt " +
             "WHERE identifier_value = $1 AND action = $3 AND cm_id = $4 AND identifier_type = $5" +
             " ORDER BY attempt_at DESC LIMIT $2";
 
     private final PgPool dbClient;
 
-    public Mono<Void> insert(String cmId, String identifierType, String identifierValue, OtpRequestAttempt.AttemptStatus attemptStatus, OtpRequestAttempt.Action action) {
+    public Mono<Void> insert(OtpRequestAttempt otpRequestAttempt) {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_OTP_REQUEST_ATTEMPT)
-                .execute(Tuple.of(cmId, identifierType.toUpperCase(), identifierValue, attemptStatus.name(), action.toString()),
+                .execute(Tuple.of(otpRequestAttempt.getSessionId(),
+                        otpRequestAttempt.getCmId(),
+                        otpRequestAttempt.getIdentifierType().toUpperCase(),
+                        otpRequestAttempt.getIdentifierValue(),
+                        otpRequestAttempt.getAttemptStatus().name(),
+                        otpRequestAttempt.getAction().toString()),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError("Failed to create otp attempt"));
@@ -45,13 +50,15 @@ public class OtpRequestAttemptRepository {
                                 monoSink.error(new DbOperationError("Failed to select from otp attempt"));
                             } else {
                                 monoSink.success(StreamSupport.stream(handler.result().spliterator(), false)
-                                        .map(row -> new OtpRequestAttempt(
-                                                row.getString("identifier_type"),
-                                                row.getString("identifier_value"),
-                                                OtpRequestAttempt.AttemptStatus.valueOf(row.getString("status")),
-                                                row.getLocalDateTime("attempt_at"),
-                                                OtpRequestAttempt.Action.from(row.getString("action")),
-                                                row.getString("cm_id")))
+                                        .map(row -> OtpRequestAttempt.builder()
+                                                .action(OtpRequestAttempt.Action.from(row.getString("action")))
+                                                .attemptAt(row.getLocalDateTime("attempt_at"))
+                                                .attemptStatus(OtpRequestAttempt.AttemptStatus.valueOf(row.getString("status")))
+                                                .cmId(row.getString("cm_id"))
+                                                .identifierType(row.getString("identifier_type"))
+                                                .identifierValue(row.getString("identifier_value"))
+                                                .sessionId(row.getString("session_id"))
+                                                .build())
                                         .collect(Collectors.toList()));
                             }
                         }));

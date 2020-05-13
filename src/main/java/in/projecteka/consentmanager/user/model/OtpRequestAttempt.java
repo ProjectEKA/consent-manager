@@ -1,13 +1,15 @@
 package in.projecteka.consentmanager.user.model;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-@AllArgsConstructor
+@Builder
 @Getter
 public class OtpRequestAttempt {
+    private final String sessionId;
     private final String identifierType;
     private final String identifierValue;
     private final AttemptStatus attemptStatus;

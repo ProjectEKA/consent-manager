@@ -38,6 +38,10 @@ public class LockedUserService {
         var blockedTime = user.getLockedTime();
         var firstInvalidAttempt = user.getFirstInvalidAttemptTime();
 
+        if (user.getInvalidAttempts() == 0) {
+            return createUser(user.getPatientId())
+                    .then(Mono.error(ClientError.unAuthorizedRequest("Username or password is incorrect")));
+        }
         if (isAfterEightHours(firstInvalidAttempt) || isAfterEightHours(blockedTime)) {
             return reAddUser(user.getPatientId());
         }

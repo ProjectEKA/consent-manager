@@ -63,6 +63,30 @@ public class Discovery {
                                         requestId)));
     }
 
+    public Mono<DiscoveryResponse> patientInHIP(String userName,
+                                              List<PatientIdentifier> unverifiedIdentifiers,
+                                              String providerId,
+                                              UUID transactionId,
+                                              UUID requestId) {
+        return Mono.just(requestId)
+                .filterWhen(this::validateRequest)
+                .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
+                .flatMap(val -> userWith(userName)
+                                    .zipWith(gatewaySystemUrl())
+                                    .flatMap(userAndGateway -> patientIn(userAndGateway.getT2(), userAndGateway.getT1(), transactionId, unverifiedIdentifiers))
+                                    .flatMap(patientResponse ->
+                                            insertDiscoveryRequest(patientResponse,
+                                                    providerId,
+                                                    userName,
+                                                    transactionId,
+                                                    requestId)));
+    }
+
+    private Mono<String> gatewaySystemUrl() {
+        return Mono.just("http://tmc.gov.in/ncg-gateway");
+    }
+
+
     private Mono<Boolean> validateRequest(UUID requestId) {
         return discoveryRepository.getIfPresent(requestId)
                 .map(Objects::isNull)

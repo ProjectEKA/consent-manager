@@ -42,10 +42,11 @@ public class DiscoveryController {
 
     @PostMapping("/patients/care-contexts/discover")
     public Mono<DiscoveryResponse> discoverPatientCareContexts(@RequestBody @Valid DiscoveryRequest discoveryRequest) {
+        System.out.println(discoveryRequest);
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
-                .flatMap(user -> discovery.patientFor(user,
+                .flatMap(user -> discovery.patientInHIP(user,
                         discoveryRequest.getUnverifiedIdentifiers(),
                         discoveryRequest.getHip().getId(),
                         newRequest(),

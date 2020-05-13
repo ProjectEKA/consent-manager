@@ -5,12 +5,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
+import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterAll;
@@ -35,15 +38,19 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient
+@AutoConfigureWebTestClient(timeout = "6000000")
 @ContextConfiguration(initializers = DiscoveryUserJourneyTest.ContextInitializer.class)
 public class DiscoveryUserJourneyTest {
 
@@ -81,6 +88,15 @@ public class DiscoveryUserJourneyTest {
 
     @MockBean
     private Authenticator authenticator;
+
+    @MockBean
+    private UserServiceClient userServiceClient;
+
+    @MockBean
+    private DiscoveryRepository discoveryRepository;
+
+    @MockBean
+    private DiscoveryServiceClient discoveryServiceClient;
 
     @BeforeEach
     public void setUp() {
@@ -168,11 +184,26 @@ public class DiscoveryUserJourneyTest {
     @Test
     public void shouldDiscoverCareContext() throws Exception {
         var token = string();
+        String requestId = "cecd3ed2-a7ea-406e-90f2-b51aa78741b9";
+        String transactionId = "discoveryTxId";
+        String patientDiscoveryRequest = "{\n" +
+                "  \"requestId\": \""+ requestId + "\",\n" +
+                "  \"hip\": {\n" +
+                "    \"id\": \"12345\"\n" +
+                "  }\n" +
+                "}";
+        String userId = "test-user-id";
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userId, false)));
+        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
+        when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
+        when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
+        when(discoveryServiceClient.patientFor(any(), any())).thenReturn(Mono.just(PatientResponse.builder().build()));
         webTestClient.post()
                 .uri("/patients/care-contexts/discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientDiscoveryRequest)
                 .exchange()
                 .expectStatus().isOk();
     }

@@ -16,7 +16,7 @@ public class LockedUserService {
     private final LockedUsersRepository lockedUsersRepository;
     private final LockedServiceProperties lockedServiceProperties;
     private final Logger logger = LoggerFactory.getLogger(LockedUserService.class);
-    private final String INVALID_USER_OR_PASSWORD_ERROR_MESSAGE = "Username or password is incorrect";
+    private final static String INVALID_USER_OR_PASSWORD_ERROR_MESSAGE = "Username or password is incorrect";
 
     public Mono<LockedUser> userFor(String patientId) {
         logger.debug("Invoking repository go get the locked user for patientId " + patientId);

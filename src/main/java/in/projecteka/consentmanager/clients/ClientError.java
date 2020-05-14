@@ -271,4 +271,8 @@ public class ClientError extends Throwable {
         return new ClientError(TOO_MANY_REQUESTS,
                 new ErrorRepresentation(new Error(INVALID_OTP_ATTEMPTS_EXCEEDED, "Invalid OTP attempts limit exceeded")));
     }
+
+    public static ClientError unknownUnauthroziedError(String message) {
+        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(UNKNOWN_ERROR_OCCURRED, message)));
+    }
 }

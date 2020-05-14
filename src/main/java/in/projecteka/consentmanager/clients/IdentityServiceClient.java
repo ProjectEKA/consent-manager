@@ -8,6 +8,8 @@ import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
+import in.projecteka.consentmanager.common.MonoVoidOperator;
+import in.projecteka.consentmanager.user.OtpAttemptService;
 import in.projecteka.consentmanager.user.model.KeyCloakError;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -47,6 +49,10 @@ public class IdentityServiceClient {
     }
 
     public Mono<Session> getToken(MultiValueMap<String, String> formData) {
+        return getToken(formData, Mono::empty);
+    }
+
+    public Mono<Session> getToken(MultiValueMap<String, String> formData, MonoVoidOperator onInvalidOTP) {
         return webClientBuilder.build()
                 .post()
                 .uri(uriBuilder ->
@@ -55,18 +61,18 @@ public class IdentityServiceClient {
                 .accept(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromFormData(formData))
                 .retrieve()
-                .onStatus(httpStatus -> httpStatus.value() == 401 , clientResponse -> clientResponse.bodyToMono(KeyCloakError.class)
+                .onStatus(httpStatus -> httpStatus.value() == 401, clientResponse -> clientResponse.bodyToMono(KeyCloakError.class)
                         .flatMap(keyCloakError -> {
-                            Error.ErrorBuilder errorBuilder = Error.builder().message(keyCloakError.getErrorDescription());
                             String keyCloakErrorValue = keyCloakError.getError();
-                            if (keyCloakErrorValue.equals("1002")) {
-                                errorBuilder.code(ErrorCode.OTP_INVALID);
-                            }else if (keyCloakErrorValue.equals("1003")) {
-                                errorBuilder.code(ErrorCode.OTP_EXPIRED);
-                            }else {
-                                errorBuilder.code(ErrorCode.UNKNOWN_ERROR_OCCURRED);
+                            switch (keyCloakErrorValue) {
+                                case "1002":
+                                    return onInvalidOTP.perform().then(Mono.error(ClientError.invalidOtp()));
+                                case "1003":
+                                    return Mono.error(ClientError.otpExpired());
+                                default:
+                                    return Mono.error(ClientError.unknownUnauthroziedError(keyCloakError.getErrorDescription()));
                             }
-                            return  Mono.error(new ClientError(clientResponse.statusCode(), new ErrorRepresentation(errorBuilder.build())));}))
+                        }))
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(Session.class);
     }

@@ -105,8 +105,23 @@ public class SessionService {
         return unverifiedSessions.get(otpPermitRequest.getSessionId())
                 .filter(username -> otpPermitRequest.getUsername().equals(username))
                 .switchIfEmpty(Mono.error(ClientError.invalidSession(otpPermitRequest.getSessionId())))
-                .then(Mono.defer(() -> tokenService
-                        .tokenForOtpUser(otpPermitRequest.getUsername(),
-                                otpPermitRequest.getSessionId(), otpPermitRequest.getOtp())));
+                .flatMap(userRepository::userWith)
+                .flatMap(user -> {
+                    OtpAttempt attempt = OtpAttempt.builder()
+                            .action(OtpAttempt.Action.OTP_SUBMIT_LOGIN)
+                            .cmId(otpPermitRequest.getUsername())
+                            .sessionId(otpPermitRequest.getSessionId())
+                            .identifierType("MOBILE")
+                            .identifierValue(user.getPhone())
+                            .build();
+                    return otpAttemptService.validateOTPSubmission(attempt)
+                            .then(tokenService
+                                    .tokenForOtpUser(otpPermitRequest.getUsername(), otpPermitRequest.getSessionId(),
+                                            otpPermitRequest.getOtp(),
+                                            () -> otpAttemptService.createOtpAttemptFor(otpPermitRequest.getSessionId(),
+                                                    otpPermitRequest.getUsername(), "MOBILE",
+                                                    user.getPhone(), OtpAttempt.AttemptStatus.FAILURE,
+                                                    OtpAttempt.Action.OTP_SUBMIT_LOGIN)));
+                });
     }
 }

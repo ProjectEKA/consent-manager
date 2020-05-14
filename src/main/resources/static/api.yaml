@@ -1308,10 +1308,17 @@ paths:
       responses:
         '200':
           description: Password updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
         '400':
           description: >
             **Causes:**
-              * Invalid Request
+              * Invalid Old Password
           content:
             application/json:
               schema:

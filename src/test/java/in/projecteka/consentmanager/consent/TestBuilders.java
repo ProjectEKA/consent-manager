@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
@@ -15,6 +16,10 @@ public class TestBuilders {
 
     public static ConsentArtefactRepresentation.ConsentArtefactRepresentationBuilder consentArtefactRepresentation() {
         return easyRandom.nextObject(ConsentArtefactRepresentation.ConsentArtefactRepresentationBuilder.class);
+    }
+
+    public static ConsentArtefact.ConsentArtefactBuilder consentArtefact() {
+        return easyRandom.nextObject(ConsentArtefact.ConsentArtefactBuilder.class);
     }
 
     public static ConsentRepresentation.ConsentRepresentationBuilder consentRepresentation() {

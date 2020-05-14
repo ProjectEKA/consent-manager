@@ -5,8 +5,11 @@ consentmanager:
     defaultPageSize: ${DEFAULT_PAGE_SIZE}
     maxPageSize: ${MAX_PAGE_SIZE}
     url: ${CONSENT_SERVICE_URL}
+    #in minutes
+    consentRequestExpiry: ${CONSENT_REQUEST_EXPIRY}
   scheduler:
     consentExpiryCronExpr: ${CONSENT_EXPIRY_CRON_EXPRESSION}
+    consentRequestExpiryCronExpr: ${CONSENT_REQUEST_EXPIRY_CRON_EXPRESSION}
   clientregistry:
     XAuthToken: ${Auth_Token}
     clientId: ${CENTRAL_REGISTRY_ID}
@@ -18,10 +21,18 @@ consentmanager:
     transactionPinTokenValidity: ${TRANSACTION_PIN_TOKEN_VALIDITY}
     userCreationTokenValidity: ${USER_CREATION_TOKEN_VALIDITY}
     userIdSuffix: ${USER_ID_SUFFIX}
+    maxOtpAttempts: ${MAX_OTP_ATTEMPTS}
+    maxOtpAttemptsPeriodInMin: ${MAX_OTP_ATTEMPTS_PERIOD_IN_MIN}
+    otpAttemptsBlockPeriodInMin: ${OTP_ATTEMPTS_BLOCK_PERIOD_IN_MIN}
+    maxIncorrectPinAttempts: 5
+  lockeduserservice:
+    maximumInvalidAttempts: ${MAXIMUM_INVALID_ATTEMPTS}
+    coolOfPeriod: ${COOL_OF_PERIOD}
   otpservice:
     url: ${Otp_Service_Url}
     identifiers:
       - MOBILE
+    expiryInMinutes: ${OTP_EXPIRY_IN_MINUTES}
   jwt:
     secret: ${JWT_SECRET}
   keycloak:

@@ -20,6 +20,7 @@ consentmanager:
     url: http://otp:80
     identifiers:
       - MOBILE
+    expiryInMinutes: 5
   keycloak:
     baseUrl: http://keycloak:8080/auth
     clientId: consent-manager

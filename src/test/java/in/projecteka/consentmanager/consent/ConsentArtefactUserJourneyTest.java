@@ -10,8 +10,10 @@ import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.response.ConsentArtefactResponse;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
@@ -45,6 +47,8 @@ import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresent
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -135,9 +139,9 @@ public class ConsentArtefactUserJourneyTest {
                 .expectStatus().isOk()
                 .expectBody(new ParameterizedTypeReference<List<ConsentArtefactRepresentation>>() {
                 })
-                .value(value -> value.get(0).getConsentDetail(), Matchers.equalTo(consentArtefact.getConsentDetail()))
-                .value(value -> value.get(0).getStatus(), Matchers.is(consentArtefact.getStatus()))
-                .value(value -> value.get(0).getSignature(), Matchers.is(consentArtefact.getSignature()));
+                .value(value -> value.get(0).getConsentDetail(), equalTo(consentArtefact.getConsentDetail()))
+                .value(value -> value.get(0).getStatus(), is(consentArtefact.getStatus()))
+                .value(value -> value.get(0).getSignature(), is(consentArtefact.getSignature()));
     }
 
     @Test
@@ -263,6 +267,58 @@ public class ConsentArtefactUserJourneyTest {
 
         verify(consentArtefactRepository, times(0)).updateStatus(any(), any(), any());
         verifyNoInteractions(consentNotificationPublisher);
+    }
+
+    @Test
+    void shouldGetAllConsentArtefacts() {
+        String token = string();
+        List<ConsentArtefactRepresentation> response = new ArrayList<>();
+        ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
+        response.add(consentArtefactRepresentation);
+        ListResult<List<ConsentArtefactRepresentation>> result = new ListResult<>(response, response.size());
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("shweta@ncg", true)));
+        when(consentArtefactRepository.getAllConsentArtefacts("shweta@ncg", 20, 0, null))
+                .thenReturn(Mono.just(result));
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/consent-artefacts").queryParam("limit", "20").build())
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", token)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ConsentArtefactResponse.class)
+                .value(ConsentArtefactResponse::getConsentArtefacts, equalTo(response))
+                .value(ConsentArtefactResponse::getLimit, Matchers.is(20))
+                .value(ConsentArtefactResponse::getSize, Matchers.is(1))
+                .value(ConsentArtefactResponse::getOffset, Matchers.is(0));
+    }
+
+    @Test
+    void shouldGetAllConsentArtefactsForStatus() {
+        String token = string();
+        List<ConsentArtefactRepresentation> response = new ArrayList<>();
+        ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
+        consentArtefactRepresentation.setStatus(ConsentStatus.EXPIRED);
+        response.add(consentArtefactRepresentation);
+        ListResult<List<ConsentArtefactRepresentation>> result = new ListResult<>(response, response.size());
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("shweta@ncg", true)));
+        when(consentArtefactRepository.getAllConsentArtefacts("shweta@ncg", 20, 0, "EXPIRED"))
+                .thenReturn(Mono.just(result));
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/consent-artefacts")
+                        .queryParam("limit", "20")
+                        .queryParam("status", "EXPIRED")
+                        .build())
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", token)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ConsentArtefactResponse.class)
+                .value(ConsentArtefactResponse::getConsentArtefacts, equalTo(response))
+                .value(ConsentArtefactResponse::getLimit, Matchers.is(20))
+                .value(ConsentArtefactResponse::getSize, Matchers.is(1))
+                .value(ConsentArtefactResponse::getOffset, Matchers.is(0));
     }
 
     public static class ContextInitializer

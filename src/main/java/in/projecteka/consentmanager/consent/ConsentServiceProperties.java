@@ -13,4 +13,5 @@ public class ConsentServiceProperties {
     private final int maxPageSize;
     private final int defaultPageSize;
     private final String url;
+    private final int consentRequestExpiry;
 }

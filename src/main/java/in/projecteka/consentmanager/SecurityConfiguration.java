@@ -75,8 +75,12 @@ public class SecurityConfiguration {
 
         final String[] whitelistedUrls = {"/**.json",
                                           "/ValueSet/**.json",
+                                          "/patients/generateotp",
+                                          "/patients/verifyotp",
                                           "/users/verify",
                                           "/users/permit",
+                                          "/otpsession/verify",
+                                          "/otpsession/permit",
                                           "/sessions",
                                           "/**.html",
                                           "/**.js",
@@ -98,8 +102,8 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet, CacheAdapter<String,String> blacklistedTokens, ConfigurableJWTProcessor<com.nimbusds.jose.proc.SecurityContext> jwtProcessor) {
-        return new Authenticator(jwkSet,blacklistedTokens, jwtProcessor);
+    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet, CacheAdapter<String, String> blacklistedTokens, ConfigurableJWTProcessor<com.nimbusds.jose.proc.SecurityContext> jwtProcessor) {
+        return new Authenticator(jwkSet, blacklistedTokens, jwtProcessor);
     }
 
     @Bean({"jwtProcessor"})
@@ -223,7 +227,8 @@ public class SecurityConfiguration {
         }
 
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
-            return ("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod);
+            boolean isSignUp = (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) || (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod));
+            return isSignUp;
         }
     }
 

@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.link.discovery;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.DiscoveryRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -41,7 +42,7 @@ public class DiscoveryController {
     }
 
     @PostMapping("/patients/care-contexts/discover")
-    public Mono<DiscoveryResponse> discoverPatientCareContexts(@RequestBody @Valid DiscoveryRequest discoveryRequest) {
+    public Mono<DiscoveryResult> discoverPatientCareContexts(@RequestBody @Valid DiscoveryRequest discoveryRequest) {
         System.out.println(discoveryRequest);
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())

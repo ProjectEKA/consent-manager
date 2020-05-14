@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Flux;
@@ -70,7 +71,7 @@ public class Discovery {
                                         requestId)));
     }
 
-    public Mono<DiscoveryResponse> patientInHIP(String userName,
+    public Mono<DiscoveryResult> patientInHIP(String userName,
                                               List<PatientIdentifier> unverifiedIdentifiers,
                                               String providerId,
                                               UUID transactionId,
@@ -92,7 +93,7 @@ public class Discovery {
                                         .switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
                                         .map(this::responseFromHIP))
                         .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed())))
-                        .flatMap(patientResponse -> insertDiscoveryRequest(patientResponse,
+                        .flatMap(patientResponse -> insertDiscoveryCareContextRequest(patientResponse,
                                                 providerId,
                                                 userName,
                                                 transactionId,
@@ -179,6 +180,19 @@ public class Discovery {
                         builder().
                         patient(patientResponse.getPatient()).
                         transactionId(transactionId)
+                        .build()));
+    }
+
+    private Mono<DiscoveryResult> insertDiscoveryCareContextRequest(PatientResponse patientResponse,
+                                                           String providerId,
+                                                           String patientId,
+                                                           UUID transactionId,
+                                                           UUID requestId) {
+        return discoveryRepository.insert(providerId, patientId, transactionId, requestId).
+                then(Mono.just(DiscoveryResult.
+                        builder().
+                        requestId(requestId).
+                        patient(patientResponse.getPatient())
                         .build()));
     }
 

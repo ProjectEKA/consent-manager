@@ -29,4 +29,5 @@ public class ConsentArtefact implements Serializable {
     private HIType[] hiTypes;
     private ConsentPermission permission;
     private List<GrantedContext> careContexts;
+    private Date lastUpdated;
 }

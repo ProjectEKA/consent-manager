@@ -107,22 +107,18 @@ public class SessionService {
                 .switchIfEmpty(Mono.error(ClientError.invalidSession(otpPermitRequest.getSessionId())))
                 .flatMap(userRepository::userWith)
                 .flatMap(user -> {
-                    OtpAttempt attempt = OtpAttempt.builder()
+                    OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
                             .action(OtpAttempt.Action.OTP_SUBMIT_LOGIN)
                             .cmId(otpPermitRequest.getUsername())
                             .sessionId(otpPermitRequest.getSessionId())
                             .identifierType("MOBILE")
-                            .identifierValue(user.getPhone())
-                            .build();
-                    return otpAttemptService.validateOTPSubmission(attempt)
+                            .identifierValue(user.getPhone());
+                    return otpAttemptService.validateOTPSubmission(builder.build())
                             .then(tokenService
                                     .tokenForOtpUser(otpPermitRequest.getUsername(), otpPermitRequest.getSessionId(),
                                             otpPermitRequest.getOtp(),
-                                            () -> otpAttemptService.createOtpAttemptFor(otpPermitRequest.getSessionId(),
-                                                    otpPermitRequest.getUsername(), "MOBILE",
-                                                    user.getPhone(), OtpAttempt.AttemptStatus.FAILURE,
-                                                    OtpAttempt.Action.OTP_SUBMIT_LOGIN)))
-                            .flatMap(session -> otpAttemptService.removeMatchingAttempts(attempt).then(Mono.just(session)));
+                                            () -> otpAttemptService.saveOTPAttempt(builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build())))
+                            .flatMap(session -> otpAttemptService.removeMatchingAttempts(builder.build()).then(Mono.just(session)));
                 });
     }
 }

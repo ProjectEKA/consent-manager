@@ -19,16 +19,17 @@ public class OtpAttemptService {
     private final UserServiceProperties userServiceProperties;
 
     public Mono<Void> validateOTPRequest(String identifierType, String identifierValue, OtpAttempt.Action action, String cmId) {
-        return otpAttemptRepository.getOtpAttempts(OtpAttempt.builder()
+        OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
                 .identifierType(identifierType)
                 .identifierValue(identifierValue)
                 .action(action)
-                .cmId(cmId).build(), userServiceProperties.getMaxOtpAttempts())
+                .cmId(cmId);
+        return otpAttemptRepository.getOtpAttempts(builder.build(), userServiceProperties.getMaxOtpAttempts())
                 .filter(otpAttempts -> otpAttempts.size() == userServiceProperties.getMaxOtpAttempts())
                 .filter(this::isNoneBlockedExceptLatest)
                 .flatMap(this::validateLatestAttempt)
                 .flatMap(this::validateAttemptsLimit)
-                .switchIfEmpty(Mono.defer(() -> createOtpAttemptFor("", cmId, identifierType, identifierValue, OtpAttempt.AttemptStatus.SUCCESS, action)));
+                .switchIfEmpty(Mono.defer(() -> saveOTPAttempt(builder.attemptStatus(OtpAttempt.AttemptStatus.SUCCESS).build())));
     }
 
     public Mono<Void> validateOTPRequest(String identifierType, String identifierValue, OtpAttempt.Action action) {
@@ -49,15 +50,8 @@ public class OtpAttemptService {
         return otpAttemptRepository.removeAttempts(otpAttempt);
     }
 
-    public Mono<Void> createOtpAttemptFor(String sessionId, String cmId, String identifierType, String identifierValue, OtpAttempt.AttemptStatus attemptStatus, OtpAttempt.Action action) {
-        return otpAttemptRepository.insert(OtpAttempt.builder()
-                .cmId(cmId)
-                .sessionId(sessionId)
-                .identifierType(identifierType)
-                .identifierValue(identifierValue)
-                .attemptStatus(attemptStatus)
-                .action(action)
-                .build());
+    public Mono<Void> saveOTPAttempt(OtpAttempt attempt) {
+        return otpAttemptRepository.insert(attempt);
     }
 
     private Mono<List<OtpAttempt>> validateLatestAttempt(List<OtpAttempt> attempts) {
@@ -80,7 +74,7 @@ public class OtpAttemptService {
         OtpAttempt firstAttempt = attempts.get(attempts.size() - 1);
         boolean isAttemptsLimitExceeded = isWithinTimeLimit(firstAttempt, userServiceProperties.getMaxOtpAttemptsPeriodInMin());
         if (isAttemptsLimitExceeded) {
-            return createOtpAttemptFor("", firstAttempt.getCmId(), firstAttempt.getIdentifierType(), firstAttempt.getIdentifierValue(), OtpAttempt.AttemptStatus.FAILURE, firstAttempt.getAction())
+            return saveOTPAttempt(firstAttempt.toBuilder().attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build())
                     .then(Mono.error(ClientError.otpRequestLimitExceeded()));
         }
         return Mono.empty();

@@ -82,10 +82,10 @@ public class UserService {
 
         return otpAttemptService.validateOTPRequest(identifierType, userSignupEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD, userName)
                 .then(otpServiceClient
-                .send(otpRequest)
-                .then(signupService.updatedVerfiedSession(
-                        otpRequest.getSessionId(),
-                        userName)));
+                        .send(otpRequest)
+                        .then(signupService.updatedVerfiedSession(
+                                otpRequest.getSessionId(),
+                                userName)));
     }
 
     public Mono<Token> permitOtp(OtpVerification otpVerification) {
@@ -96,22 +96,17 @@ public class UserService {
         return signupService.getMobileNumber(otpVerification.getSessionId())
                 .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
                 .flatMap(mobileNumber -> {
-            OtpAttempt attempt = OtpAttempt.builder()
-                    .sessionId(otpVerification.getSessionId())
-                    .identifierType("MOBILE")
-                    .identifierValue(mobileNumber)
-                    .action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION)
-                    .build();
-            return otpAttemptService.validateOTPSubmission(attempt)
-                    .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue(), () -> otpAttemptService.createOtpAttemptFor(
-                            otpVerification.getSessionId(),
-                            "",
-                            "MOBILE", mobileNumber,
-                            OtpAttempt.AttemptStatus.FAILURE,
-                            OtpAttempt.Action.OTP_SUBMIT_REGISTRATION)))
-                    .then(otpAttemptService.removeMatchingAttempts(attempt))
-                    .then(signupService.generateToken(otpVerification.getSessionId()));
-        });
+                    OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
+                            .sessionId(otpVerification.getSessionId())
+                            .identifierType("MOBILE")
+                            .identifierValue(mobileNumber)
+                            .action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION);
+                    return otpAttemptService.validateOTPSubmission(builder.build())
+                            .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue(),
+                                    () -> otpAttemptService.saveOTPAttempt(builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build())))
+                            .then(otpAttemptService.removeMatchingAttempts(builder.build()))
+                            .then(signupService.generateToken(otpVerification.getSessionId()));
+                });
     }
 
     public Mono<Token> verifyOtp(OtpVerification otpVerification) {
@@ -122,23 +117,18 @@ public class UserService {
                 .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
                 .flatMap(userRepository::userWith)
                 .flatMap(user -> {
-                    OtpAttempt attempt = OtpAttempt.builder()
+                    OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
                             .sessionId(otpVerification.getSessionId())
                             .identifierType("MOBILE")
                             .identifierValue(user.getPhone())
                             .action(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD)
-                            .cmId(user.getIdentifier())
-                            .build();
-                    return otpAttemptService.validateOTPSubmission(attempt)
-                            .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue(), () -> otpAttemptService.createOtpAttemptFor(
-                                    otpVerification.getSessionId(),
-                                    user.getIdentifier(),
-                                    "MOBILE", user.getPhone(),
-                                    OtpAttempt.AttemptStatus.FAILURE,
-                                    OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD)))
-                            .then(otpAttemptService.removeMatchingAttempts(attempt));
-                })
-                .then(signupService.generateToken(new HashMap<>(), otpVerification.getSessionId()));
+                            .cmId(user.getIdentifier());
+                    return otpAttemptService.validateOTPSubmission(builder.build())
+                            .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue(),
+                                    () -> otpAttemptService.saveOTPAttempt(builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build())))
+                            .then(otpAttemptService.removeMatchingAttempts(builder.build()))
+                            .then(signupService.generateToken(new HashMap<>(), otpVerification.getSessionId()));
+                });
     }
 
     public Mono<Session> create(CoreSignUpRequest coreSignUpRequest, String sessionId) {

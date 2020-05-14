@@ -8,13 +8,16 @@ import java.time.LocalDateTime;
 @Builder
 @Getter
 public class OtpAttempt {
-    private final String sessionId;
+    @Builder.Default
+    private String sessionId = "";
+    @Builder.Default
+    private String cmId = "";
+
     private final String identifierType;
     private final String identifierValue;
     private final AttemptStatus attemptStatus;
     private final LocalDateTime attemptAt;
     private final Action action;
-    private final String cmId;
 
     public String getIdentifierType(){
         return this.identifierType.toUpperCase();

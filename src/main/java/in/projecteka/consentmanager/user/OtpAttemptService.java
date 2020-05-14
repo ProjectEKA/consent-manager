@@ -45,7 +45,7 @@ public class OtpAttemptService {
                 });
     }
 
-    private Mono<Void> removeMatchingAttempts(OtpAttempt otpAttempt) {
+    public Mono<Void> removeMatchingAttempts(OtpAttempt otpAttempt) {
         return otpAttemptRepository.removeAttempts(otpAttempt);
     }
 

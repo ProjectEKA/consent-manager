@@ -101,7 +101,6 @@ public class UserService {
                     .identifierType("MOBILE")
                     .identifierValue(mobileNumber)
                     .action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION)
-                    .cmId("")
                     .build();
             return otpAttemptService.validateOTPSubmission(attempt)
                     .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue(), () -> otpAttemptService.createOtpAttemptFor(
@@ -110,6 +109,7 @@ public class UserService {
                             "MOBILE", mobileNumber,
                             OtpAttempt.AttemptStatus.FAILURE,
                             OtpAttempt.Action.OTP_SUBMIT_REGISTRATION)))
+                    .then(otpAttemptService.removeMatchingAttempts(attempt))
                     .then(signupService.generateToken(otpVerification.getSessionId()));
         });
     }
@@ -135,7 +135,8 @@ public class UserService {
                                     user.getIdentifier(),
                                     "MOBILE", user.getPhone(),
                                     OtpAttempt.AttemptStatus.FAILURE,
-                                    OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD)));
+                                    OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD)))
+                            .then(otpAttemptService.removeMatchingAttempts(attempt));
                 })
                 .then(signupService.generateToken(new HashMap<>(), otpVerification.getSessionId()));
     }

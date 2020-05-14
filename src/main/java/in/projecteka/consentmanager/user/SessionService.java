@@ -121,7 +121,8 @@ public class SessionService {
                                             () -> otpAttemptService.createOtpAttemptFor(otpPermitRequest.getSessionId(),
                                                     otpPermitRequest.getUsername(), "MOBILE",
                                                     user.getPhone(), OtpAttempt.AttemptStatus.FAILURE,
-                                                    OtpAttempt.Action.OTP_SUBMIT_LOGIN)));
+                                                    OtpAttempt.Action.OTP_SUBMIT_LOGIN)))
+                            .flatMap(session -> otpAttemptService.removeMatchingAttempts(attempt).then(Mono.just(session)));
                 });
     }
 }

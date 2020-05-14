@@ -17,7 +17,7 @@ import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
-import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
+import in.projecteka.consentmanager.user.model.OtpAttempt;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +42,7 @@ public class UserService {
     private final IdentityServiceClient identityServiceClient;
     private final TokenService tokenService;
     private final UserServiceProperties userServiceProperties;
-    private final OtpRequestAttemptService otpRequestAttemptService;
+    private final OtpAttemptService otpAttemptService;
 
     public Mono<User> userWith(String userName) {
         return userRepository.userWith(userName.toLowerCase()).switchIfEmpty(Mono.error(userNotFound()));
@@ -60,8 +60,8 @@ public class UserService {
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
-        return otpRequestAttemptService
-                .validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(), OtpRequestAttempt.Action.OTP_REQUEST_REGISTRATION)
+        return otpAttemptService
+                .validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_REGISTRATION)
                 .then(otpServiceClient.send(otpRequest)
                         .then(signupService.cacheAndSendSession(
                                 otpRequest.getSessionId(),
@@ -80,7 +80,7 @@ public class UserService {
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
-        return otpRequestAttemptService.validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(), OtpRequestAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD, userName)
+        return otpAttemptService.validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD, userName)
                 .then(otpServiceClient
                 .send(otpRequest)
                 .then(signupService.updatedVerfiedSession(
@@ -94,20 +94,20 @@ public class UserService {
         }
 
         return signupService.getMobileNumber(otpVerification.getSessionId()).flatMap(mobileNumber -> {
-            OtpRequestAttempt attempt = OtpRequestAttempt.builder()
+            OtpAttempt attempt = OtpAttempt.builder()
                     .sessionId(otpVerification.getSessionId())
                     .identifierType("MOBILE")
                     .identifierValue(mobileNumber)
-                    .action(OtpRequestAttempt.Action.OTP_SUBMIT_REGISTRATION)
+                    .action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION)
                     .cmId("")
                     .build();
-            return otpRequestAttemptService.validateOTPSubmission(attempt)
-                    .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue(), () -> otpRequestAttemptService.createOtpAttemptFor(
+            return otpAttemptService.validateOTPSubmission(attempt)
+                    .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue(), () -> otpAttemptService.createOtpAttemptFor(
                             otpVerification.getSessionId(),
                             "",
                             "MOBILE", mobileNumber,
-                            OtpRequestAttempt.AttemptStatus.FAILURE,
-                            OtpRequestAttempt.Action.OTP_SUBMIT_REGISTRATION)))
+                            OtpAttempt.AttemptStatus.FAILURE,
+                            OtpAttempt.Action.OTP_SUBMIT_REGISTRATION)))
                     .then(signupService.generateToken(otpVerification.getSessionId()));
         });
     }

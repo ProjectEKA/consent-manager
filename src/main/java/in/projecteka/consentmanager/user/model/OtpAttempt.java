@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Builder
 @Getter
-public class OtpRequestAttempt {
+public class OtpAttempt {
     private final String sessionId;
     private final String identifierType;
     private final String identifierValue;

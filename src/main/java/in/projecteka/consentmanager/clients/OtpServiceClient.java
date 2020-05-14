@@ -4,8 +4,6 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.VerificationRequest;
 import in.projecteka.consentmanager.common.MonoVoidOperator;
 import in.projecteka.consentmanager.consent.model.Notification;
-import in.projecteka.consentmanager.user.OtpRequestAttemptService;
-import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;

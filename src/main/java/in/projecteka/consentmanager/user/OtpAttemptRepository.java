@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.common.DbOperationError;
-import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
+import in.projecteka.consentmanager.user.model.OtpAttempt;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
@@ -14,7 +14,7 @@ import java.util.stream.StreamSupport;
 
 @Repository
 @AllArgsConstructor
-public class OtpRequestAttemptRepository {
+public class OtpAttemptRepository {
 
     private static final String INSERT_OTP_REQUEST_ATTEMPT = "INSERT INTO " +
             "otp_attempt (session_id ,cm_id, identifier_type, identifier_value, status, action) VALUES ($1,$2,$3,$4,$5,$6)";
@@ -28,14 +28,14 @@ public class OtpRequestAttemptRepository {
 
     private final PgPool dbClient;
 
-    public Mono<Void> insert(OtpRequestAttempt otpRequestAttempt) {
+    public Mono<Void> insert(OtpAttempt otpAttempt) {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_OTP_REQUEST_ATTEMPT)
-                .execute(Tuple.of(otpRequestAttempt.getSessionId(),
-                        otpRequestAttempt.getCmId(),
-                        otpRequestAttempt.getIdentifierType().toUpperCase(),
-                        otpRequestAttempt.getIdentifierValue(),
-                        otpRequestAttempt.getAttemptStatus().name(),
-                        otpRequestAttempt.getAction().toString()),
+                .execute(Tuple.of(otpAttempt.getSessionId(),
+                        otpAttempt.getCmId(),
+                        otpAttempt.getIdentifierType().toUpperCase(),
+                        otpAttempt.getIdentifierValue(),
+                        otpAttempt.getAttemptStatus().name(),
+                        otpAttempt.getAction().toString()),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError("Failed to create otp attempt"));
@@ -45,7 +45,7 @@ public class OtpRequestAttemptRepository {
                         }));
     }
 
-    public Mono<List<OtpRequestAttempt>> getOtpAttempts(String cmId, String identifierType, String identifierValue, int maxOtpAttempts, OtpRequestAttempt.Action action) {
+    public Mono<List<OtpAttempt>> getOtpAttempts(String cmId, String identifierType, String identifierValue, int maxOtpAttempts, OtpAttempt.Action action) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_OTP_REQUEST_ATTEMPT)
                 .execute(Tuple.of(identifierValue, maxOtpAttempts, action.toString(), cmId, identifierType.toUpperCase()),
                         handler -> {
@@ -53,10 +53,10 @@ public class OtpRequestAttemptRepository {
                                 monoSink.error(new DbOperationError("Failed to select from otp attempt"));
                             } else {
                                 monoSink.success(StreamSupport.stream(handler.result().spliterator(), false)
-                                        .map(row -> OtpRequestAttempt.builder()
-                                                .action(OtpRequestAttempt.Action.valueOf(row.getString("action")))
+                                        .map(row -> OtpAttempt.builder()
+                                                .action(OtpAttempt.Action.valueOf(row.getString("action")))
                                                 .attemptAt(row.getLocalDateTime("attempt_at"))
-                                                .attemptStatus(OtpRequestAttempt.AttemptStatus.valueOf(row.getString("status")))
+                                                .attemptStatus(OtpAttempt.AttemptStatus.valueOf(row.getString("status")))
                                                 .cmId(row.getString("cm_id"))
                                                 .identifierType(row.getString("identifier_type"))
                                                 .identifierValue(row.getString("identifier_value"))
@@ -67,7 +67,7 @@ public class OtpRequestAttemptRepository {
                         }));
     }
 
-    public Mono<Void> removeAttempts(OtpRequestAttempt attempt){
+    public Mono<Void> removeAttempts(OtpAttempt attempt){
         return Mono.create(monoSink -> dbClient.preparedQuery(DELETE_OTP_ATTEMPT)
                 .execute(Tuple.of(attempt.getIdentifierValue(), attempt.getAction().toString(), attempt.getCmId(), attempt.getIdentifierType().toUpperCase()),
                         handler -> {

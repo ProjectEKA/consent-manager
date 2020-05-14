@@ -19,7 +19,11 @@ public class OtpAttemptService {
     private final UserServiceProperties userServiceProperties;
 
     public Mono<Void> validateOTPRequest(String identifierType, String identifierValue, OtpAttempt.Action action, String cmId) {
-        return otpAttemptRepository.getOtpAttempts(cmId, identifierType, identifierValue, userServiceProperties.getMaxOtpAttempts(), action)
+        return otpAttemptRepository.getOtpAttempts(OtpAttempt.builder()
+                .identifierType(identifierType)
+                .identifierValue(identifierValue)
+                .action(action)
+                .cmId(cmId).build(), userServiceProperties.getMaxOtpAttempts())
                 .filter(otpAttempts -> otpAttempts.size() == userServiceProperties.getMaxOtpAttempts())
                 .filter(this::isNoneBlockedExceptLatest)
                 .flatMap(this::validateLatestAttempt)
@@ -31,12 +35,8 @@ public class OtpAttemptService {
         return validateOTPRequest(identifierType, identifierValue, action, "");
     }
 
-    public Mono<Void> validateOTPSubmission(OtpAttempt otpAttempt){
-        return otpAttemptRepository.getOtpAttempts(otpAttempt.getCmId(),
-                otpAttempt.getIdentifierType(),
-                otpAttempt.getIdentifierValue(),
-                userServiceProperties.getOtpMaxInvalidAttempts(),
-                otpAttempt.getAction())
+    public Mono<Void> validateOTPSubmission(OtpAttempt otpAttempt) {
+        return otpAttemptRepository.getOtpAttempts(otpAttempt, userServiceProperties.getOtpMaxInvalidAttempts())
                 .filter(otpRequestAttempts -> otpRequestAttempts.size() == userServiceProperties.getOtpMaxInvalidAttempts())
                 .flatMap(otpRequestAttempts -> {
                     OtpAttempt latestAttempt = otpRequestAttempts.stream().findFirst().get();
@@ -45,7 +45,7 @@ public class OtpAttemptService {
                 });
     }
 
-    public Mono<Void> removeMatchingAttempts(OtpAttempt otpAttempt){
+    private Mono<Void> removeMatchingAttempts(OtpAttempt otpAttempt) {
         return otpAttemptRepository.removeAttempts(otpAttempt);
     }
 

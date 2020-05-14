@@ -2,14 +2,10 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequest;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
-import in.projecteka.consentmanager.clients.model.Error;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
-import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.MonoVoidOperator;
-import in.projecteka.consentmanager.user.OtpAttemptService;
 import in.projecteka.consentmanager.user.model.KeyCloakError;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

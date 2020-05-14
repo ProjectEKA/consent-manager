@@ -32,7 +32,7 @@ public class OtpAttemptRepository {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_OTP_REQUEST_ATTEMPT)
                 .execute(Tuple.of(otpAttempt.getSessionId(),
                         otpAttempt.getCmId(),
-                        otpAttempt.getIdentifierType().toUpperCase(),
+                        otpAttempt.getIdentifierType(),
                         otpAttempt.getIdentifierValue(),
                         otpAttempt.getAttemptStatus().name(),
                         otpAttempt.getAction().toString()),
@@ -45,9 +45,9 @@ public class OtpAttemptRepository {
                         }));
     }
 
-    public Mono<List<OtpAttempt>> getOtpAttempts(String cmId, String identifierType, String identifierValue, int maxOtpAttempts, OtpAttempt.Action action) {
+    public Mono<List<OtpAttempt>> getOtpAttempts(OtpAttempt attempt, int maxOtpAttempts) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_OTP_REQUEST_ATTEMPT)
-                .execute(Tuple.of(identifierValue, maxOtpAttempts, action.toString(), cmId, identifierType.toUpperCase()),
+                .execute(Tuple.of(attempt.getIdentifierValue(), maxOtpAttempts, attempt.getAction().toString(), attempt.getCmId(), attempt.getIdentifierType()),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError("Failed to select from otp attempt"));
@@ -69,7 +69,7 @@ public class OtpAttemptRepository {
 
     public Mono<Void> removeAttempts(OtpAttempt attempt){
         return Mono.create(monoSink -> dbClient.preparedQuery(DELETE_OTP_ATTEMPT)
-                .execute(Tuple.of(attempt.getIdentifierValue(), attempt.getAction().toString(), attempt.getCmId(), attempt.getIdentifierType().toUpperCase()),
+                .execute(Tuple.of(attempt.getIdentifierValue(), attempt.getAction().toString(), attempt.getCmId(), attempt.getIdentifierType()),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError("Failed to delete from otp attempts"));

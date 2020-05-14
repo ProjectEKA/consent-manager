@@ -16,6 +16,10 @@ public class OtpAttempt {
     private final Action action;
     private final String cmId;
 
+    public String getIdentifierType(){
+        return this.identifierType.toUpperCase();
+    }
+
     public enum Action {
         OTP_REQUEST_REGISTRATION,
         OTP_REQUEST_LOGIN,

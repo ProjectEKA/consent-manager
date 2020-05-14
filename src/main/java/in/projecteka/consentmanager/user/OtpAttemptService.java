@@ -52,6 +52,7 @@ public class OtpAttemptService {
     public Mono<Void> createOtpAttemptFor(String sessionId, String cmId, String identifierType, String identifierValue, OtpAttempt.AttemptStatus attemptStatus, OtpAttempt.Action action) {
         return otpAttemptRepository.insert(OtpAttempt.builder()
                 .cmId(cmId)
+                .sessionId(sessionId)
                 .identifierType(identifierType)
                 .identifierValue(identifierValue)
                 .attemptStatus(attemptStatus)

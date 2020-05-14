@@ -80,7 +80,7 @@ public class UserService {
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
-        return otpAttemptService.validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD, userName)
+        return otpAttemptService.validateOTPRequest(identifierType, userSignupEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD, userName)
                 .then(otpServiceClient
                 .send(otpRequest)
                 .then(signupService.updatedVerfiedSession(
@@ -93,7 +93,9 @@ public class UserService {
             throw new InvalidRequestException("invalid.request.body");
         }
 
-        return signupService.getMobileNumber(otpVerification.getSessionId()).flatMap(mobileNumber -> {
+        return signupService.getMobileNumber(otpVerification.getSessionId())
+                .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
+                .flatMap(mobileNumber -> {
             OtpAttempt attempt = OtpAttempt.builder()
                     .sessionId(otpVerification.getSessionId())
                     .identifierType("MOBILE")
@@ -116,8 +118,25 @@ public class UserService {
         if (!validateOtpVerification(otpVerification)) {
             throw new InvalidRequestException("invalid.request.body");
         }
-        return otpServiceClient
-                .verify(otpVerification.getSessionId(), otpVerification.getValue())
+        return signupService.getUserName(otpVerification.getSessionId())
+                .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
+                .flatMap(userRepository::userWith)
+                .flatMap(user -> {
+                    OtpAttempt attempt = OtpAttempt.builder()
+                            .sessionId(otpVerification.getSessionId())
+                            .identifierType("MOBILE")
+                            .identifierValue(user.getPhone())
+                            .action(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD)
+                            .cmId(user.getIdentifier())
+                            .build();
+                    return otpAttemptService.validateOTPSubmission(attempt)
+                            .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue(), () -> otpAttemptService.createOtpAttemptFor(
+                                    otpVerification.getSessionId(),
+                                    user.getIdentifier(),
+                                    "MOBILE", user.getPhone(),
+                                    OtpAttempt.AttemptStatus.FAILURE,
+                                    OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD)));
+                })
                 .then(signupService.generateToken(new HashMap<>(), otpVerification.getSessionId()));
     }
 

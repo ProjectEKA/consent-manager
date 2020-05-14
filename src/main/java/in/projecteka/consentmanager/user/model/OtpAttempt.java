@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.user.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -21,7 +20,8 @@ public class OtpAttempt {
         OTP_REQUEST_REGISTRATION,
         OTP_REQUEST_LOGIN,
         OTP_REQUEST_RECOVER_PASSWORD,
-        OTP_SUBMIT_REGISTRATION;
+        OTP_SUBMIT_REGISTRATION,
+        OTP_SUBMIT_RECOVER_PASSWORD;
     }
 
     public enum AttemptStatus {

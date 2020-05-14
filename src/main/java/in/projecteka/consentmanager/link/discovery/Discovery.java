@@ -1,5 +1,7 @@
 package in.projecteka.consentmanager.link.discovery;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
@@ -7,6 +9,7 @@ import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
@@ -16,11 +19,13 @@ import lombok.AllArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 
 @AllArgsConstructor
 public class Discovery {
@@ -31,6 +36,7 @@ public class Discovery {
     private final DiscoveryRepository discoveryRepository;
     private final CentralRegistry centralRegistry;
     private final GatewayServiceProperties gatewayServiceProperties;
+    private final CacheAdapter<String,String> discoveryResults;
 
     public Flux<ProviderRepresentation> providersFrom(String name) {
         return centralRegistry.providersOf(name)
@@ -73,14 +79,39 @@ public class Discovery {
                 .filterWhen(this::validateRequest)
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
                 .flatMap(val -> userWith(userName)
-                                    .zipWith(gatewaySystemUrl())
-                                    .flatMap(userAndGateway -> patientIn(providerId, userAndGateway.getT2(), userAndGateway.getT1(), transactionId, unverifiedIdentifiers))
-                                    .flatMap(patientResponse ->
-                                            insertDiscoveryRequest(patientResponse,
-                                                    providerId,
-                                                    userName,
-                                                    transactionId,
-                                                    requestId)));
+                        .zipWith(gatewaySystemUrl())
+                        .flatMap(userAndGateway ->
+                                discoveryServiceClient.requestPatientFor(
+                                        requestFor(userAndGateway.getT1(), transactionId, unverifiedIdentifiers),
+                                        userAndGateway.getT2(),
+                                        providerId))
+                        .zipWith(Mono.delay(Duration.ofSeconds(getExpectedFlowResponseDuration())))
+                        .flatMap(tuple2 ->
+                                discoveryResults
+                                        .get(transactionId.toString())
+                                        .switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
+                                        .map(this::responseFromHIP))
+                        .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed())))
+                        .flatMap(patientResponse -> insertDiscoveryRequest(patientResponse,
+                                                providerId,
+                                                userName,
+                                                transactionId,
+                                                requestId));
+
+    }
+
+    private PatientResponse responseFromHIP(String responseBody) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.readValue(responseBody, PatientResponse.class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private long getExpectedFlowResponseDuration() {
+        return 3L;
     }
 
     private Mono<String> gatewaySystemUrl() {
@@ -109,6 +140,11 @@ public class Discovery {
     }
 
     private Mono<PatientResponse> patientIn(String hipId, String hipSystemUrl, User user, UUID transactionId, List<PatientIdentifier> unverifiedIdentifiers) {
+        var patientRequest = requestFor(user, transactionId, unverifiedIdentifiers);
+        return discoveryServiceClient.patientFor(patientRequest, hipSystemUrl, hipId);
+    }
+
+    private PatientRequest requestFor(User user, UUID transactionId, List<PatientIdentifier> unverifiedIdentifiers) {
         var phoneNumber = in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
                 .type(MOBILE)
                 .value(user.getPhone())
@@ -130,8 +166,7 @@ public class Discovery {
                 .unverifiedIdentifiers(unverifiedIds)
                 .build();
 
-        var patientRequest = PatientRequest.builder().patient(patient).requestId(transactionId).build();
-        return discoveryServiceClient.patientFor(patientRequest, hipSystemUrl, hipId);
+        return  PatientRequest.builder().patient(patient).requestId(transactionId).build();
     }
 
     private Mono<DiscoveryResponse> insertDiscoveryRequest(PatientResponse patientResponse,

@@ -739,6 +739,51 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /consent-artefacts:
+    get:
+      tags:
+        - consent
+      summary: List all consent artefacts
+      description: Return list of consent artefacts which are matching filter criteria.
+      operationId: listConsentArtefacts
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/status'
+      responses:
+        '200':
+          description: List of consent artefacts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentArtefactResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ConsentArtefactResponse'
+        '401':
+          description:  >
+            **Causes:**
+              * Expired/Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /health-information/request:
     post:
@@ -1581,6 +1626,21 @@ components:
       schema:
         type: integer
         format: int32
+    status:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+      description: >
+        1. Query string parameter restricts the data returned from your request.
+        2. Possible values of status
+            | status | logic |
+            | ------ | ------ |
+            | GRANTED | Gets all Granted consent artefacts |
+            | EXPIRED | Gets all Expired consent artefacts |
+            | REVOKED | Gets all Revoked consent artefacts |
+            | ALL | Gets all consent artefacts |
     filters:
       name: filters
       in: query
@@ -2195,6 +2255,20 @@ components:
         signature:
           type: string
           example: Signature of CM as defined in W3C standards; Base64 encoded
+    ConsentArtefactResponse:
+      type: object
+      properties:
+        limit:
+          type: integer
+        size:
+          type: integer
+        offset:
+          type: integer
+        consentArtefacts:
+          $ref: '#/components/schemas/ConsentArtefacts'
+        signature:
+          type: string
+          example: Signature of CM as defined in W3C standards; Base64 encoded
     HealthInformationRequest:
       type: object
       required:
@@ -2372,6 +2446,9 @@ components:
           example: Raj Sharma
         gender:
           $ref: '#/components/schemas/Gender'
+        yearOfBirth:
+          type: integer
+          example: 1979
         hasTransactionPin:
           type: boolean
         verifiedIdentifiers:
@@ -2392,8 +2469,10 @@ components:
             name: unverifiedIdentifiers
             wrapped: true
           example:
-            type: "PAN"
-            value: "EEE****00J"
+            [
+            {type: "PAN", value: "EEE****00J"},
+            {type: "ABPMJAYID", value: "P1234ABCD"}
+            ]
     IdentifierReference:
       type: object
       properties:
@@ -2405,7 +2484,7 @@ components:
         name: Identifier
     IdentifierType:
       type: string
-      enum: [MOBILE, PAN]
+      enum: [MOBILE, PAN, ABPMJAYID]
     Gender:
       type: string
       enum:
@@ -2586,12 +2665,8 @@ components:
       properties:
         sessionId:
           type: string
-        mobile:
-          type: string
-          description: Mobile number used for registration
-        expirationTime:
-          type: integer
-          description: in seconds for the session.
+        meta:
+          $ref: '#/components/schemas/Meta'
     OtpPermitRequest:
       type: object
       properties:

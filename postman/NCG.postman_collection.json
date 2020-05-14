@@ -444,12 +444,26 @@
 							}
 						],
 						"url": {
-							"raw": "{{CM_HOST}}/consent-requests",
+							"raw": "{{CM_HOST}}/consent-requests?status=REVOKED&limit=-1&offset=0",
 							"host": [
 								"{{CM_HOST}}"
 							],
 							"path": [
 								"consent-requests"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "REVOKED"
+								},
+								{
+									"key": "limit",
+									"value": "-1"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
 							]
 						}
 					},
@@ -678,6 +692,125 @@
 					"response": []
 				},
 				{
+					"name": "Create Session (Request OTP)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "c16669fe-76ce-4129-a364-3275df912310",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "de8e5e8b-341d-43a9-b696-a39266964c4a",
+								"exec": [
+									"pm.test(\"Update user creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"OTP_SESSION_ID\", jsonData.sessionId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"{{USERNAME}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/otpsession/verify",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"otpsession",
+								"verify"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Session (Verify OTP)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "9a3c24b0-2780-407b-b630-f402c4cadd02",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "aeca9bac-3e31-413c-9140-3cb434f0232c",
+								"exec": [
+									"pm.test(\"Update user creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"AUTHORIZATION\", \"bearer \" + jsonData.accessToken);",
+									"    pm.environment.set(\"REFRESH_TOKEN\", jsonData.refreshToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"{{USERNAME}}\",\n\t\"sessionId\": \"{{OTP_SESSION_ID}}\",\n\t\"otp\" : \"666666\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/otpsession/permit",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"otpsession",
+								"permit"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Consent Artefacts",
 					"request": {
 						"method": "GET",
@@ -884,6 +1017,43 @@
 							],
 							"path": [
 								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User Consent Artefacts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{CM_HOST}}/consentArtefacts?status=GRANTED&limit=3&offset=1",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"consentArtefacts"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "GRANTED"
+								},
+								{
+									"key": "limit",
+									"value": "3"
+								},
+								{
+									"key": "offset",
+									"value": "1"
+								}
 							]
 						}
 					},

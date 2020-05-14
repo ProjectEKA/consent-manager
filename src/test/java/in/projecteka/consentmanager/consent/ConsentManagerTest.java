@@ -15,6 +15,7 @@ import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIUReference;
+import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
@@ -45,6 +46,7 @@ import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDe
 import static in.projecteka.consentmanager.consent.TestBuilders.hipConsentArtefactRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
@@ -327,6 +329,41 @@ class ConsentManagerTest {
         StepVerifier.create(publisher)
                 .expectErrorMatches(e -> (e instanceof ClientError) &&
                         ((ClientError) e).getHttpStatus() == NOT_FOUND)
+                .verify();
+    }
+
+    @Test
+    void shouldGetAllTheConsentArtefacts() {
+        ConsentArtefactRepresentation artefact1 = consentArtefactRepresentation().status(GRANTED).build();
+        ConsentArtefactRepresentation artefact2 = consentArtefactRepresentation().status(REVOKED).build();
+        ConsentArtefactRepresentation artefact3 = consentArtefactRepresentation().status(EXPIRED).build();
+        List<ConsentArtefactRepresentation> response = new ArrayList<>();
+        response.add(artefact1);
+        response.add(artefact2);
+        response.add(artefact3);
+
+        ListResult<List<ConsentArtefactRepresentation>> result = new ListResult<>(response, response.size());
+
+        when(consentArtefactRepository.getAllConsentArtefacts("shweta@ncg", 20, 0, null))
+                .thenReturn(Mono.just(result));
+        Mono<ListResult<List<ConsentArtefactRepresentation>>> publisher =
+                consentManager.getAllConsentArtefacts("shweta@ncg", 20, 0, "ALL");
+        StepVerifier.create(publisher
+                .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+                .expectNext(result)
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    void shouldGetEmptyIfNoConsentArtefactsPresent() {
+        when(consentArtefactRepository.getAllConsentArtefacts("shweta@ncg", 20, 0, null))
+                .thenReturn(Mono.empty());
+        Mono<ListResult<List<ConsentArtefactRepresentation>>> publisher =
+                consentManager.getAllConsentArtefacts("shweta@ncg", 20, 0, "ALL");
+        StepVerifier.create(publisher
+                .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
+                .expectComplete()
                 .verify();
     }
 }

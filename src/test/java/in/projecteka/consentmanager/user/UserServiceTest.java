@@ -16,6 +16,7 @@ import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +29,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ExchangeFunction;
 import reactor.core.publisher.Flux;
@@ -70,6 +70,9 @@ class UserServiceTest {
     private SignUpService signupService;
 
     @Mock
+    private OtpRequestAttemptService otpRequestAttemptService;
+
+    @Mock
     private IdentityServiceClient identityServiceClient;
 
     @Mock
@@ -92,7 +95,7 @@ class UserServiceTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"),5);
+        var otpServiceProperties = new OtpServiceProperties("",Collections.singletonList("MOBILE"),5);
         userService = new UserService(
                 userRepository,
                 otpServiceProperties,
@@ -100,7 +103,8 @@ class UserServiceTest {
                 signupService,
                 identityServiceClient,
                 tokenService,
-                properties);
+                properties,
+                otpRequestAttemptService);
     }
 
     @Test
@@ -111,6 +115,7 @@ class UserServiceTest {
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
         when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq("+91-9788888")))
                 .thenReturn(Mono.just(signUpSession));
+        when(otpRequestAttemptService.validateOTPRequest(userSignUpEnquiry.getIdentifierType(), userSignUpEnquiry.getIdentifier(), OtpRequestAttempt.Action.REGISTRATION)).thenReturn(Mono.empty());
 
         Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
 

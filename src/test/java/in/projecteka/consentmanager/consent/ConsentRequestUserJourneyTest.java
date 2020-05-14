@@ -49,7 +49,6 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static java.lang.String.format;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -275,7 +274,7 @@ public class ConsentRequestUserJourneyTest {
         List<ConsentRequestDetail> requests = new ArrayList<>();
         ListResult<List<ConsentRequestDetail>> result = new ListResult<>(requests, 0);
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("Ganesh@ncg", true)));
-        when(repository.requestsForPatient("Ganesh@ncg", 20, 0)).
+        when(repository.requestsForPatient("Ganesh@ncg", 20, 0, null)).
                 thenReturn(Mono.just(result));
 
         webTestClient.get()
@@ -300,7 +299,7 @@ public class ConsentRequestUserJourneyTest {
         requests.add(detail);
         ListResult<List<ConsentRequestDetail>> result = new ListResult<>(requests, 1);
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("Ganesh@ncg", true)));
-        when(repository.requestsForPatientByStatus("Ganesh@ncg", 20, 0, "EXPIRED")).
+        when(repository.requestsForPatient("Ganesh@ncg", 20, 0, "EXPIRED")).
                 thenReturn(Mono.just(result));
 
         webTestClient.get()

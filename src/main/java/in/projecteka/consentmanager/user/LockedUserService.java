@@ -16,6 +16,7 @@ public class LockedUserService {
     private final LockedUsersRepository lockedUsersRepository;
     private final LockedServiceProperties lockedServiceProperties;
     private final Logger logger = LoggerFactory.getLogger(LockedUserService.class);
+    private final String INVALID_USER_OR_PASSWORD_ERROR_MESSAGE = "Username or password is incorrect";
 
     public Mono<LockedUser> userFor(String patientId) {
         logger.debug("Invoking repository go get the locked user for patientId " + patientId);
@@ -40,7 +41,7 @@ public class LockedUserService {
 
         if (user.getInvalidAttempts() == 0) {
             return createUser(user.getPatientId())
-                    .then(Mono.error(ClientError.unAuthorizedRequest("Username or password is incorrect")));
+                    .then(Mono.error(ClientError.unAuthorizedRequest(INVALID_USER_OR_PASSWORD_ERROR_MESSAGE)));
         }
         if (isAfterEightHours(firstInvalidAttempt) || isAfterEightHours(blockedTime)) {
             return reAddUser(user.getPatientId());
@@ -51,7 +52,7 @@ public class LockedUserService {
         }
 
         if (user.getInvalidAttempts() < maximumInvalidAttempts) {
-            return updateUserAndReturnError(user, ClientError.unAuthorizedRequest("Username or password is incorrect"));
+            return updateUserAndReturnError(user, ClientError.unAuthorizedRequest(INVALID_USER_OR_PASSWORD_ERROR_MESSAGE));
         } else {
             return updateUserAndReturnError(user, ClientError.userBlocked());
         }
@@ -71,7 +72,7 @@ public class LockedUserService {
         return lockedUsersRepository
                 .deleteUser(patientId)
                 .then(createUser(patientId)
-                        .thenReturn(ClientError.unAuthorizedRequest("Username or password is incorrect")));
+                        .thenReturn(ClientError.unAuthorizedRequest(INVALID_USER_OR_PASSWORD_ERROR_MESSAGE)));
     }
 
     private Mono<ClientError> blockUser(String patientId) {

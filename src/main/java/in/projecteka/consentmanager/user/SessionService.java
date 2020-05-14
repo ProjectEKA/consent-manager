@@ -53,8 +53,7 @@ public class SessionService {
         var newLockedUser = new LockedUser(0, request.getUsername(), false, "", new Date().toString());
 
         return lockedUserService.userFor(request.getUsername())
-                .switchIfEmpty(
-                        Mono.just(newLockedUser))
+                .switchIfEmpty(Mono.just(newLockedUser))
                 .flatMap(user -> {
                     if (lockedUserService.isUserBlocked(user)) {
                         return lockedUserService.validateAndUpdate(user).then(Mono.error(ClientError.userBlocked()));

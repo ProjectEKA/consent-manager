@@ -19,12 +19,15 @@ import reactor.core.publisher.MonoSink;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.to;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 
 public class ConsentRequestRepository {
     private static final String SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS;
@@ -33,7 +36,7 @@ public class ConsentRequestRepository {
 
     private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT;
     private static final String SELECT_CONSENT_REQUEST_COUNT = "SELECT COUNT(*) FROM consent_request " +
-            "WHERE patient_id=$1 and (status=$2 OR $2 IS NULL)";
+            "WHERE patient_id=$1  and status!=$3 and (status=$2 OR $2 IS NULL)";
     private static final String INSERT_CONSENT_REQUEST_QUERY = "INSERT INTO consent_request " +
             "(request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
@@ -47,7 +50,7 @@ public class ConsentRequestRepository {
     static {
         String s = "SELECT request_id, status, details, date_created, date_modified FROM consent_request " +
                 "where ";
-        SELECT_CONSENT_DETAILS_FOR_PATIENT = s + "patient_id=$1 and (status=$4 OR $4 IS NULL) " +
+        SELECT_CONSENT_DETAILS_FOR_PATIENT = s + "patient_id=$1 and status!=$5 and (status=$4 OR $4 IS NULL) " +
                 "LIMIT $2 OFFSET $3";
         SELECT_CONSENT_REQUEST_BY_ID = s + "request_id=$1";
         SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS = s + "request_id=$1 and status=$2 and patient_id=$3";
@@ -77,11 +80,11 @@ public class ConsentRequestRepository {
     public Mono<ListResult<List<ConsentRequestDetail>>> requestsForPatient(String patientId, int limit,
                                                                            int offset, String status) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_DETAILS_FOR_PATIENT)
-                .execute(Tuple.of(patientId, limit, offset, status),
+                .execute(Tuple.of(patientId, limit, offset, status, GRANTED.toString()),
                         handler -> {
                             List<ConsentRequestDetail> requestList = getConsentRequestDetails(handler);
                             dbClient.preparedQuery(SELECT_CONSENT_REQUEST_COUNT)
-                                    .execute(Tuple.of(patientId, status), counter -> {
+                                    .execute(Tuple.of(patientId, status, GRANTED.toString()), counter -> {
                                                 if (handler.failed()) {
                                                     monoSink.error(new DbOperationError());
                                                 }
@@ -103,7 +106,9 @@ public class ConsentRequestRepository {
             ConsentRequestDetail aDetail = mapToConsentRequestDetail(result);
             requestList.add(aDetail);
         }
-        return requestList;
+        return requestList.stream().
+                sorted(Comparator.comparing(ConsentRequestDetail::getLastUpdated).reversed())
+                .collect(Collectors.toList());
     }
 
     public Mono<ConsentRequestDetail> requestOf(String requestId, String status, String patientId) {

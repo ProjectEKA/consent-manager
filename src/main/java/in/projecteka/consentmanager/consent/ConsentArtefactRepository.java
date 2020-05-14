@@ -23,8 +23,10 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static in.projecteka.consentmanager.common.Serializer.to;
@@ -57,7 +59,7 @@ public class ConsentArtefactRepository {
     private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
 
     static {
-        String s = "SELECT status, consent_artefact, signature FROM ";
+        String s = "SELECT status, consent_artefact, signature, date_modified FROM ";
         SELECT_CONSENT_QUERY = s + "consent_artefact where consent_artefact_id = $1";
         SELECT_HIP_CONSENT_QUERY = s + "hip_consent_artefact WHERE consent_artefact_id = $1";
         SELECT_ALL_CONSENT_ARTEFACTS = s + "consent_artefact WHERE patient_id=$1 and (status=$4 OR $4 IS NULL) " +
@@ -166,7 +168,10 @@ public class ConsentArtefactRepository {
         for (Row result : results) {
             artefacts.add(getConsentArtefactRepresentation(result));
         }
-        return artefacts;
+        return artefacts.stream().
+                sorted(Comparator.comparing(c ->
+                        c.getConsentDetail().getLastUpdated(), Comparator.reverseOrder()))
+                .collect(Collectors.toList());
     }
 
     @SneakyThrows
@@ -268,6 +273,7 @@ public class ConsentArtefactRepository {
     private ConsentArtefactRepresentation getConsentArtefactRepresentation(Row row) {
         ConsentArtefact consentArtefact = to(row.getValue(CONSENT_ARTEFACT).toString(),
                 ConsentArtefact.class);
+        consentArtefact.setLastUpdated(convertToDate(row.getLocalDateTime(DATE_MODIFIED)));
         return ConsentArtefactRepresentation
                 .builder()
                 .status(ConsentStatus.valueOf(row.getString(STATUS)))

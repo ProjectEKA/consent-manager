@@ -17,6 +17,8 @@ import in.projecteka.consentmanager.link.discovery.model.patient.response.Discov
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -38,6 +40,8 @@ public class Discovery {
     private final CentralRegistry centralRegistry;
     private final GatewayServiceProperties gatewayServiceProperties;
     private final CacheAdapter<String,String> discoveryResults;
+
+    private static final Logger logger = LoggerFactory.getLogger(Discovery.class);
 
     public Flux<ProviderRepresentation> providersFrom(String name) {
         return centralRegistry.providersOf(name)
@@ -93,11 +97,11 @@ public class Discovery {
                                                 .switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
                                                 .flatMap(dr -> resultFromHIP(dr))
                 ))
-                //.filter(result -> !result.getTransactionId().equals(transactionId))
                 .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
                 .flatMap(discoveryResult -> {
                     if (discoveryResult.getError() != null) {
-                        //TODO get the error and throw client error with the errors
+                        //Should we get the error and throw client error with the errors
+                        logger.error("[Discovery] Patient care-contexts discovery resulted in error {}", discoveryResult.getError().getMessage());
                         return Mono.error(ClientError.networkServiceCallFailed());
                     }
                     return Mono.just(DiscoveryResponse.builder()

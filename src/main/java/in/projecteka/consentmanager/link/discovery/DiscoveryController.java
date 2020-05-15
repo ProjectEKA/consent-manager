@@ -42,7 +42,7 @@ public class DiscoveryController {
     }
 
     @PostMapping("/patients/care-contexts/discover")
-    public Mono<DiscoveryResult> discoverPatientCareContexts(@RequestBody @Valid DiscoveryRequest discoveryRequest) {
+    public Mono<DiscoveryResponse> discoverPatientCareContexts(@RequestBody @Valid DiscoveryRequest discoveryRequest) {
         System.out.println(discoveryRequest);
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())

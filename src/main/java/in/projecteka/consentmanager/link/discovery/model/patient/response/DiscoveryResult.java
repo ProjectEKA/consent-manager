@@ -9,6 +9,7 @@ import java.util.UUID;
 @Builder
 public class DiscoveryResult {
     private UUID requestId;
+    private UUID transactionId;
     private Patient patient;
     private Error error;
 }

@@ -71,7 +71,7 @@ public class Discovery {
                                         requestId)));
     }
 
-    public Mono<DiscoveryResult> patientInHIP(String userName,
+    public Mono<DiscoveryResponse> patientInHIP(String userName,
                                               List<PatientIdentifier> unverifiedIdentifiers,
                                               String providerId,
                                               UUID transactionId,
@@ -79,32 +79,40 @@ public class Discovery {
         return Mono.just(requestId)
                 .filterWhen(this::validateRequest)
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
-                .flatMap(val -> userWith(userName)
-                        .zipWith(gatewaySystemUrl())
-                        .flatMap(userAndGateway ->
-                                discoveryServiceClient.requestPatientFor(
-                                        requestFor(userAndGateway.getT1(), transactionId, unverifiedIdentifiers),
-                                        userAndGateway.getT2(),
-                                        providerId))
-                        .zipWith(Mono.delay(Duration.ofSeconds(getExpectedFlowResponseDuration())))
-                        .flatMap(tuple2 ->
-                                discoveryResults
-                                        .get(transactionId.toString())
-                                        .switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
-                                        .map(this::responseFromHIP))
-                        .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed())))
-                        .flatMap(patientResponse -> insertDiscoveryCareContextRequest(patientResponse,
-                                                providerId,
-                                                userName,
-                                                transactionId,
-                                                requestId));
+                .flatMap(val ->
+                        userWith(userName)
+                                .zipWith(gatewaySystemUrl())
+                                .flatMap(userAndGateway ->
+                                        discoveryServiceClient.requestPatientFor(
+                                                requestFor(userAndGateway.getT1(), transactionId, unverifiedIdentifiers),
+                                                userAndGateway.getT2(),
+                                                providerId))
+                                .zipWith(Mono.delay(Duration.ofSeconds(getExpectedFlowResponseDuration())))
+                                .flatMap(tuple2 ->
+                                        discoveryResults.get(transactionId.toString())
+                                                .switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
+                                                .flatMap(dr -> resultFromHIP(dr))
+                ))
+                //.filter(result -> !result.getTransactionId().equals(transactionId))
+                .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
+                .flatMap(discoveryResult -> {
+                    if (discoveryResult.getError() != null) {
+                        //TODO get the error and throw client error with the errors
+                        return Mono.error(ClientError.networkServiceCallFailed());
+                    }
+                    return Mono.just(DiscoveryResponse.builder()
+                            .patient(discoveryResult.getPatient())
+                            .transactionId(transactionId)
+                            .build());
+                })
+                .doOnSuccess(r -> discoveryRepository.insert(providerId, userName, transactionId, requestId));
 
     }
 
-    private PatientResponse responseFromHIP(String responseBody) {
+    private Mono<DiscoveryResult> resultFromHIP(String responseBody) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            return objectMapper.readValue(responseBody, PatientResponse.class);
+            return Mono.just(objectMapper.readValue(responseBody, DiscoveryResult.class));
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
@@ -180,19 +188,6 @@ public class Discovery {
                         builder().
                         patient(patientResponse.getPatient()).
                         transactionId(transactionId)
-                        .build()));
-    }
-
-    private Mono<DiscoveryResult> insertDiscoveryCareContextRequest(PatientResponse patientResponse,
-                                                           String providerId,
-                                                           String patientId,
-                                                           UUID transactionId,
-                                                           UUID requestId) {
-        return discoveryRepository.insert(providerId, patientId, transactionId, requestId).
-                then(Mono.just(DiscoveryResult.
-                        builder().
-                        requestId(requestId).
-                        patient(patientResponse.getPatient())
                         .build()));
     }
 

@@ -118,10 +118,11 @@ public class Discovery {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        return null;
+        return Mono.empty();
     }
 
     private long getExpectedFlowResponseDuration() {
+        //externalize configuration
         return 3L;
     }
 

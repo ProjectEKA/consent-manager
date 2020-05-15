@@ -5,6 +5,8 @@ consentmanager:
     defaultPageSize: ${DEFAULT_PAGE_SIZE}
     maxPageSize: ${MAX_PAGE_SIZE}
     url: ${CONSENT_SERVICE_URL}
+    purposeOfUseDefUrl: classpath:/static/ValueSet/purpose-of-use.json
+    hiTypesDefUrl: classpath:/static/ValueSet/health-info-type.json
     #in minutes
     consentRequestExpiry: ${CONSENT_REQUEST_EXPIRY}
   scheduler:

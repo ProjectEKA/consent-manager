@@ -30,6 +30,7 @@ public class ProfileService {
                 .id(user.getIdentifier())
                 .name(user.getName())
                 .gender(user.getGender())
+                .yearOfBirth(user.getYearOfBirth())
                 .hasTransactionPin(hasTransactionPin)
                 .verifiedIdentifiers(singletonList(new Identifier(IdentifierType.MOBILE, user.getPhone())));
         JsonArray unverifiedIdentifiersJson = user.getUnverifiedIdentifiers();

@@ -33,4 +33,5 @@ public class DiscoveryServiceClient {
                                 clientResponse -> Mono.error(ClientError.networkServiceCallFailed())))
                 .flatMap(responseSpec -> responseSpec.bodyToMono(PatientResponse.class));
     }
+
 }

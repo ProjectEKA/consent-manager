@@ -36,6 +36,9 @@ class OtpAttemptServiceTest {
     private String identifierValue;
 
     private String cmId;
+    private ArgumentCaptor<OtpAttempt> argument;
+    private OtpAttempt.OtpAttemptBuilder builder;
+    private LocalDateTime currentTime;
 
     @BeforeEach
     public void setUp() {
@@ -56,11 +59,16 @@ class OtpAttemptServiceTest {
         identifierValue = "+91-6666666666";
         cmId = "";
         identifierType = "mobile";
+        argument = ArgumentCaptor.forClass(OtpAttempt.class);
+        builder = OtpAttempt.builder()
+                .cmId(cmId)
+                .identifierType(identifierType)
+                .identifierValue(identifierValue);
+        currentTime = LocalDateTime.now(ZoneOffset.UTC);
     }
 
     @Test
     public void shouldInsertOTPAttemptForFirstNAttempts() { // where N is maxOtpAttempts
-        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         when(otpAttemptRepository.getOtpAttempts(argument.capture(), eq(userServiceProperties.getMaxOtpAttempts())))
                 .thenReturn(Mono.just(new ArrayList<>()));
         when(otpAttemptRepository.insert(argument.capture())).thenReturn(Mono.empty());
@@ -81,16 +89,10 @@ class OtpAttemptServiceTest {
 
     @Test
     void shouldInsertOTPAttemptIfAnyOfTheAttemptIsBlockedExcludingLatest() {
-        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         var otpAttempts = new ArrayList<OtpAttempt>();
-        var builder = OtpAttempt.builder()
-                .cmId(cmId)
-                .identifierType(identifierType)
-                .identifierValue(identifierValue)
-                .attemptAt(LocalDateTime.now())
-                .action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
-        OtpAttempt successfulAttempt = builder.attemptStatus(OtpAttempt.AttemptStatus.SUCCESS).build();
-        OtpAttempt failedAttempt = builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build();
+        var localBuilder = builder.attemptAt(LocalDateTime.now()).action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
+        OtpAttempt successfulAttempt = localBuilder.attemptStatus(OtpAttempt.AttemptStatus.SUCCESS).build();
+        OtpAttempt failedAttempt = localBuilder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build();
         otpAttempts.add(successfulAttempt);
         otpAttempts.add(successfulAttempt);
         otpAttempts.add(failedAttempt);
@@ -117,16 +119,9 @@ class OtpAttemptServiceTest {
 
     @Test
     void shouldInsertOTPAttemptWhenLatestAttemptIsBlockedAndBlockingTimeIsPassed() {
-        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
-        var currentTimestamp = LocalDateTime.now(ZoneOffset.UTC);
-        var builder = OtpAttempt.builder()
-                .cmId(cmId)
-                .identifierType(identifierType)
-                .identifierValue(identifierValue)
-                .attemptAt(currentTimestamp.minusMinutes(3))
-                .action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
-        OtpAttempt successfulAttempt = builder.attemptStatus(OtpAttempt.AttemptStatus.SUCCESS).build();
-        OtpAttempt failedAttempt = builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build();
+        var localBuilder = builder.attemptAt(currentTime.minusMinutes(3)).action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
+        OtpAttempt successfulAttempt = localBuilder.attemptStatus(OtpAttempt.AttemptStatus.SUCCESS).build();
+        OtpAttempt failedAttempt = localBuilder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build();
         var otpAttempts = Arrays.asList(failedAttempt, successfulAttempt, successfulAttempt, successfulAttempt, successfulAttempt);
         when(otpAttemptRepository.getOtpAttempts(argument.capture(), eq(userServiceProperties.getMaxOtpAttempts())))
                 .thenReturn(Mono.just(otpAttempts));
@@ -149,19 +144,12 @@ class OtpAttemptServiceTest {
 
     @Test
     void shouldInsertOTPAttemptWhenMaxOTPAttemptsLimitIsNotReached() {
-        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
-        var currentTimestamp = LocalDateTime.now(ZoneOffset.UTC);
-        var builder = OtpAttempt.builder()
-                .cmId(cmId)
-                .identifierType(identifierType)
-                .identifierValue(identifierValue)
-                .action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION)
-                .attemptStatus(OtpAttempt.AttemptStatus.SUCCESS);
-        var otpAttempts = Arrays.asList(builder.attemptAt(currentTimestamp.minusMinutes(1)).build(),
-                builder.attemptAt(currentTimestamp.minusMinutes(4)).build(),
-                builder.attemptAt(currentTimestamp.minusMinutes(5)).build(),
-                builder.attemptAt(currentTimestamp.minusMinutes(9)).build(),
-                builder.attemptAt(currentTimestamp.minusMinutes(11)).build());
+        var localBuilder = builder.action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION).attemptStatus(OtpAttempt.AttemptStatus.SUCCESS);
+        var otpAttempts = Arrays.asList(localBuilder.attemptAt(currentTime.minusMinutes(1)).build(),
+                localBuilder.attemptAt(currentTime.minusMinutes(4)).build(),
+                localBuilder.attemptAt(currentTime.minusMinutes(5)).build(),
+                localBuilder.attemptAt(currentTime.minusMinutes(9)).build(),
+                localBuilder.attemptAt(currentTime.minusMinutes(11)).build());
         when(otpAttemptRepository.getOtpAttempts(argument.capture(), eq(userServiceProperties.getMaxOtpAttempts())))
                 .thenReturn(Mono.just(otpAttempts));
         when(otpAttemptRepository.insert(argument.capture())).thenReturn(Mono.empty());
@@ -183,16 +171,9 @@ class OtpAttemptServiceTest {
 
     @Test
     void shouldThrowLimitExceededErrorWhenBlockingTimeIsNotPassed() {
-        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
-        var currentTimestamp = LocalDateTime.now(ZoneOffset.UTC);
-        var builder = OtpAttempt.builder()
-                .cmId(cmId)
-                .identifierType(identifierType)
-                .identifierValue(identifierValue)
-                .attemptAt(currentTimestamp.minusMinutes(1))
-                .action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
-        OtpAttempt successfulAttempt = builder.attemptStatus(OtpAttempt.AttemptStatus.SUCCESS).build();
-        OtpAttempt failedAttempt = builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build();
+        var localBuilder = builder.attemptAt(currentTime.minusMinutes(1)).action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
+        OtpAttempt successfulAttempt = localBuilder.attemptStatus(OtpAttempt.AttemptStatus.SUCCESS).build();
+        OtpAttempt failedAttempt = localBuilder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build();
         var otpAttempts = Arrays.asList(failedAttempt, successfulAttempt, successfulAttempt, successfulAttempt, successfulAttempt);
 
         when(otpAttemptRepository.getOtpAttempts(argument.capture(), eq(userServiceProperties.getMaxOtpAttempts())))
@@ -213,15 +194,8 @@ class OtpAttemptServiceTest {
 
     @Test
     void shouldThrowLimitExceededErrorOnExceedingMaxOTPAttempts() {
-        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
-        var currentTimestamp = LocalDateTime.now(ZoneOffset.UTC);
-        var builder = OtpAttempt.builder()
-                .cmId(cmId)
-                .identifierType(identifierType)
-                .identifierValue(identifierValue)
-                .attemptAt(currentTimestamp.minusMinutes(3))
-                .action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
-        OtpAttempt successfulAttempt = builder.attemptStatus(OtpAttempt.AttemptStatus.SUCCESS).build();
+        var localBuilder = builder.attemptAt(currentTime.minusMinutes(3)).action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
+        OtpAttempt successfulAttempt = localBuilder.attemptStatus(OtpAttempt.AttemptStatus.SUCCESS).build();
         var otpAttempts = Arrays.asList(successfulAttempt, successfulAttempt, successfulAttempt, successfulAttempt, successfulAttempt);
 
         when(otpAttemptRepository.getOtpAttempts(argument.capture(), eq(userServiceProperties.getMaxOtpAttempts())))
@@ -242,12 +216,8 @@ class OtpAttemptServiceTest {
     }
 
     @Test
-    void shouldRemoveMatchingAttempts(){
-        var attempt = OtpAttempt.builder().cmId(cmId)
-                .identifierType(identifierType)
-                .identifierValue(identifierValue)
-                .action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION)
-                .build();
+    void shouldRemoveMatchingAttempts() {
+        var attempt = builder.action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION).build();
         when(otpAttemptRepository.removeAttempts(eq(attempt))).thenReturn(Mono.empty());
 
         StepVerifier.create(otpAttemptService.removeMatchingAttempts(attempt))
@@ -256,14 +226,11 @@ class OtpAttemptServiceTest {
     }
 
     @Test
-    void shouldPassTheValidationIfOtpSubmitAttemptsAreLessThanMaxOtpAttempts(){
-        var builder = OtpAttempt.builder().cmId(cmId)
-                .identifierType(identifierType)
-                .identifierValue(identifierValue)
-                .action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
+    void shouldPassTheValidationIfOtpSubmitAttemptsAreLessThanMaxOtpAttempts() {
+        var localBuilder = builder.action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION);
 
-        var attempt = builder.build();
-        var failedAttempt = builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build();
+        var attempt = localBuilder.build();
+        var failedAttempt = localBuilder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build();
         var failedAttempts = Arrays.asList(failedAttempt, failedAttempt, failedAttempt);
         when(otpAttemptRepository.getOtpAttempts(eq(attempt), eq(userServiceProperties.getOtpMaxInvalidAttempts()))).thenReturn(Mono.just(failedAttempts));
 
@@ -271,15 +238,11 @@ class OtpAttemptServiceTest {
     }
 
     @Test
-    void shouldPassTheValidationAndRemoveMatchingAttemptsIfLatestAttemptIsNotInBlockingPeriod(){
-        var currentTime = LocalDateTime.now(ZoneOffset.UTC);
-        var builder = OtpAttempt.builder().cmId(cmId)
-                .identifierType(identifierType)
-                .identifierValue(identifierValue)
-                .action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
+    void shouldPassTheValidationAndRemoveMatchingAttemptsIfLatestAttemptIsNotInBlockingPeriod() {
+        var localBuilder = builder.action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION);
 
-        var attempt = builder.build();
-        var failedAttempt = builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).attemptAt(currentTime.minusMinutes(3)).build();
+        var attempt = localBuilder.build();
+        var failedAttempt = localBuilder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).attemptAt(currentTime.minusMinutes(3)).build();
         var failedAttempts = Arrays.asList(failedAttempt, failedAttempt, failedAttempt, failedAttempt, failedAttempt);
         when(otpAttemptRepository.getOtpAttempts(eq(attempt), eq(userServiceProperties.getOtpMaxInvalidAttempts()))).thenReturn(Mono.just(failedAttempts));
         when(otpAttemptRepository.removeAttempts(eq(attempt))).thenReturn(Mono.empty());
@@ -287,23 +250,19 @@ class OtpAttemptServiceTest {
     }
 
     @Test
-    void shouldThrowErrorIfLatestAttemptIsInBlockingPeriod(){
-        var currentTime = LocalDateTime.now(ZoneOffset.UTC);
-        var builder = OtpAttempt.builder().cmId(cmId)
-                .identifierType(identifierType)
-                .identifierValue(identifierValue)
-                .action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
+    void shouldThrowErrorIfLatestAttemptIsInBlockingPeriod() {
+        var localBuilder = builder.action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION);
 
-        var attempt = builder.build();
-        var failedAttempt = builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).attemptAt(currentTime.minusMinutes(1)).build();
+        var attempt = localBuilder.build();
+        var failedAttempt = localBuilder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).attemptAt(currentTime.minusMinutes(1)).build();
         var failedAttempts = Arrays.asList(failedAttempt, failedAttempt, failedAttempt, failedAttempt, failedAttempt);
         when(otpAttemptRepository.getOtpAttempts(eq(attempt), eq(userServiceProperties.getOtpMaxInvalidAttempts()))).thenReturn(Mono.just(failedAttempts));
         StepVerifier.create(otpAttemptService.validateOTPSubmission(attempt))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError && ((ClientError) throwable)
-                .getError()
-                .getError()
-                .getCode()
-                .equals(ErrorCode.INVALID_OTP_ATTEMPTS_EXCEEDED))
+                        .getError()
+                        .getError()
+                        .getCode()
+                        .equals(ErrorCode.INVALID_OTP_ATTEMPTS_EXCEEDED))
                 .verify();
     }
 }

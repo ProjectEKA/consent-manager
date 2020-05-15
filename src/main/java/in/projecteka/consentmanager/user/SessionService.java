@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
+import java.util.Date;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.common.Constants.BLACKLIST;
@@ -49,24 +50,18 @@ public class SessionService {
         if (StringUtils.isEmpty(request.getUsername()) || StringUtils.isEmpty(request.getPassword()))
             return Mono.error(ClientError.unAuthorizedRequest("Username or password is incorrect"));
 
-        var newLockedUser = new LockedUser(0, request.getUsername(), false, "", "");
-        Mono<LockedUser> lockedUser = lockedUserService.userFor(request.getUsername())
-                .switchIfEmpty(
-                        Mono.just(newLockedUser));
+        var newLockedUser = new LockedUser(0, request.getUsername(), false, "", new Date().toString());
 
-        return lockedUser
+        return lockedUserService.userFor(request.getUsername())
+                .switchIfEmpty(Mono.just(newLockedUser))
                 .flatMap(user -> {
                     if (lockedUserService.isUserBlocked(user)) {
-                        return Mono.error(ClientError.userBlocked());
+                        return lockedUserService.validateAndUpdate(user).then(Mono.error(ClientError.userBlocked()));
                     } else {
                         return tokenService.tokenForUser(request.getUsername(), request.getPassword())
                                 .doOnError(error -> logger.error(error.getMessage(), error))
                                 .onErrorResume(InvalidUserNameException.class, error -> Mono.error(ClientError.invalidUserName()))
-                                .onErrorResume(error -> lockedUserService.userFor(request.getUsername())
-                                        .switchIfEmpty(
-                                                lockedUserService.createUser(request.getUsername())
-                                                        .then(Mono.error(ClientError.unAuthorizedRequest("Username or password is incorrect"))))
-                                        .flatMap(optionalLockedUser -> lockedUserService.validateAndUpdate(optionalLockedUser).flatMap(Mono::error)));
+                                .onErrorResume(error -> lockedUserService.validateAndUpdate(user).flatMap(Mono::error));
                     }
                 });
     }

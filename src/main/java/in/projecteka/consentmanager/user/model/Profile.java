@@ -13,6 +13,7 @@ public class Profile {
     private final String id;
     private final String name;
     private final Gender gender;
+    private final Integer yearOfBirth;
     private final boolean hasTransactionPin;
     private final List<Identifier> verifiedIdentifiers;
     private final List<Identifier> unverifiedIdentifiers;

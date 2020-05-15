@@ -9,6 +9,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.function.Supplier;
 
+import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
@@ -36,7 +37,7 @@ public class DiscoveryServiceClient {
                 .flatMap(responseSpec -> responseSpec.bodyToMono(PatientResponse.class));
     }
 
-    public Mono<PatientResponse> requestPatientFor(PatientRequest request, String url, String hipId) {
+    public Mono<Boolean> requestPatientFor(PatientRequest request, String url, String hipId) {
         return tokenGenerator.get()
                 .map(token ->
                         webClientBuilder.build()
@@ -51,6 +52,6 @@ public class DiscoveryServiceClient {
                                 clientResponse -> Mono.error(ClientError.userNotFound()))
                         .onStatus(HttpStatus::is5xxServerError,
                                 clientResponse -> Mono.error(ClientError.networkServiceCallFailed())))
-                .flatMap(responseSpec -> responseSpec.bodyToMono(PatientResponse.class));
+                .thenReturn(Boolean.TRUE);
     }
 }

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
@@ -18,10 +17,8 @@ import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
-import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
@@ -214,7 +211,7 @@ public class DiscoveryUserJourneyTest {
         when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
-        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(PatientResponse.builder().build()));
+        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.empty());
         var errorResponse = new ErrorRepresentation(
                 new Error(ErrorCode.NO_RESULT_FROM_GATEWAY,"Didn't receive any result from Gateway"));
@@ -258,7 +255,7 @@ public class DiscoveryUserJourneyTest {
         when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
-        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(TestBuilders.patientResponse().build()));
+        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         webTestClient.post()
                 .uri("/patients/care-contexts/discover")
@@ -296,7 +293,7 @@ public class DiscoveryUserJourneyTest {
         when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
-        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(TestBuilders.patientResponse().build()));
+        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.empty());
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         var errorResponse = new ErrorRepresentation(
                 new Error(ErrorCode.NETWORK_SERVICE_ERROR,"Cannot process the request at the moment, please try later."));

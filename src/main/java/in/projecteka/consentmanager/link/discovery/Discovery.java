@@ -85,18 +85,16 @@ public class Discovery {
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
                 .flatMap(val ->
                         userWith(userName)
-                                .zipWith(gatewaySystemUrl())
-                                .flatMap(userAndGateway ->
-                                        discoveryServiceClient.requestPatientFor(
-                                                requestFor(userAndGateway.getT1(), transactionId, unverifiedIdentifiers),
-                                                userAndGateway.getT2(),
-                                                providerId))
-                                .zipWith(Mono.delay(Duration.ofSeconds(getExpectedFlowResponseDuration())))
-                                .flatMap(tuple2 ->
-                                        discoveryResults.get(transactionId.toString())
-                                                .switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
-                                                .flatMap(dr -> resultFromHIP(dr))
-                ))
+                                .flatMap(user -> discoveryServiceClient.requestPatientFor(
+                                        requestFor(user, transactionId, unverifiedIdentifiers),
+                                        gatewaySystemUrl(),
+                                        providerId)
+                                        .zipWith(Mono.delay(Duration.ofSeconds(getExpectedFlowResponseDuration())))
+                                        .flatMap(tuple ->
+                                                discoveryResults.get(transactionId.toString())
+                                                        .switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
+                                                        .flatMap(dr -> resultFromHIP(dr))
+                                        )))
                 .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
                 .flatMap(discoveryResult -> {
                     if (discoveryResult.getError() != null) {
@@ -127,8 +125,8 @@ public class Discovery {
         return 3L;
     }
 
-    private Mono<String> gatewaySystemUrl() {
-        return Mono.just(gatewayServiceProperties.getBaseUrl());
+    private String gatewaySystemUrl() {
+        return gatewayServiceProperties.getBaseUrl();
     }
 
 

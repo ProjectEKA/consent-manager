@@ -7,8 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -36,8 +34,4 @@ public class DiscoveryServiceClient {
                 .flatMap(responseSpec -> responseSpec.bodyToMono(PatientResponse.class));
     }
 
-    public static void main(String[] args) {
-        var uuid = UUID.fromString("bc66b230-966d-11ea-bdcc-1f09e9d0eff2");
-        System.out.println(new Date(uuid.timestamp()));
-    }
 }

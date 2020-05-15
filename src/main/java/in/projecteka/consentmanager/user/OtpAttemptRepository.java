@@ -16,10 +16,10 @@ import java.util.stream.StreamSupport;
 @AllArgsConstructor
 public class OtpAttemptRepository {
 
-    private static final String INSERT_OTP_REQUEST_ATTEMPT = "INSERT INTO " +
+    private static final String INSERT_OTP_ATTEMPT = "INSERT INTO " +
             "otp_attempt (session_id ,cm_id, identifier_type, identifier_value, status, action) VALUES ($1,$2,$3,$4,$5,$6)";
 
-    private static final String SELECT_OTP_REQUEST_ATTEMPT = "SELECT session_id,identifier_type,identifier_value,status,attempt_at,action,cm_id FROM otp_attempt " +
+    private static final String SELECT_OTP_ATTEMPT = "SELECT session_id,identifier_type,identifier_value,status,attempt_at,action,cm_id FROM otp_attempt " +
             "WHERE identifier_value = $1 AND action = $3 AND cm_id = $4 AND identifier_type = $5" +
             " ORDER BY attempt_at DESC LIMIT $2";
 
@@ -29,7 +29,7 @@ public class OtpAttemptRepository {
     private final PgPool dbClient;
 
     public Mono<Void> insert(OtpAttempt otpAttempt) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_OTP_REQUEST_ATTEMPT)
+        return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_OTP_ATTEMPT)
                 .execute(Tuple.of(otpAttempt.getSessionId(),
                         otpAttempt.getCmId(),
                         otpAttempt.getIdentifierType(),
@@ -46,7 +46,7 @@ public class OtpAttemptRepository {
     }
 
     public Mono<List<OtpAttempt>> getOtpAttempts(OtpAttempt attempt, int maxOtpAttempts) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_OTP_REQUEST_ATTEMPT)
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_OTP_ATTEMPT)
                 .execute(Tuple.of(attempt.getIdentifierValue(), maxOtpAttempts, attempt.getAction().toString(), attempt.getCmId(), attempt.getIdentifierType()),
                         handler -> {
                             if (handler.failed()) {

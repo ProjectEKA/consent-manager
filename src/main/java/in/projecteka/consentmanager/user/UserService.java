@@ -18,6 +18,7 @@ import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
+import in.projecteka.consentmanager.user.model.IdentifierType;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +99,7 @@ public class UserService {
                 .flatMap(mobileNumber -> {
                     OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
                             .sessionId(otpVerification.getSessionId())
-                            .identifierType("MOBILE")
+                            .identifierType(IdentifierType.MOBILE.name())
                             .identifierValue(mobileNumber)
                             .action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION);
                     return otpAttemptService.validateOTPSubmission(builder.build())
@@ -119,7 +120,7 @@ public class UserService {
                 .flatMap(user -> {
                     OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
                             .sessionId(otpVerification.getSessionId())
-                            .identifierType("MOBILE")
+                            .identifierType(IdentifierType.MOBILE.name())
                             .identifierValue(user.getPhone())
                             .action(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD)
                             .cmId(user.getIdentifier());

@@ -16,6 +16,7 @@ import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
+import in.projecteka.consentmanager.user.model.IdentifierType;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -111,7 +112,7 @@ public class SessionService {
                             .action(OtpAttempt.Action.OTP_SUBMIT_LOGIN)
                             .cmId(otpPermitRequest.getUsername())
                             .sessionId(otpPermitRequest.getSessionId())
-                            .identifierType("MOBILE")
+                            .identifierType(IdentifierType.MOBILE.name())
                             .identifierValue(user.getPhone());
                     return otpAttemptService.validateOTPSubmission(builder.build())
                             .then(tokenService

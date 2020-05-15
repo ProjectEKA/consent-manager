@@ -38,9 +38,9 @@ public class OtpAttemptService {
 
     public Mono<Void> validateOTPSubmission(OtpAttempt otpAttempt) {
         return otpAttemptRepository.getOtpAttempts(otpAttempt, userServiceProperties.getOtpMaxInvalidAttempts())
-                .filter(otpRequestAttempts -> otpRequestAttempts.size() == userServiceProperties.getOtpMaxInvalidAttempts())
+                .filter(otpAttempts -> otpAttempts.size() == userServiceProperties.getOtpMaxInvalidAttempts())
                 .flatMap(otpRequestAttempts -> {
-                    OtpAttempt latestAttempt = otpRequestAttempts.stream().findFirst().get();
+                    OtpAttempt latestAttempt = otpRequestAttempts.get(0);
                     boolean isBlocked = isWithinTimeLimit(latestAttempt, userServiceProperties.getOtpInvalidAttemptsBlockPeriodInMin());
                     return isBlocked ? Mono.error(ClientError.tooManyInvalidOtpAttempts()) : removeMatchingAttempts(otpAttempt);
                 });

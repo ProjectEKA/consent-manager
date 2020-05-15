@@ -9,15 +9,7 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
-import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
-import in.projecteka.consentmanager.user.model.OtpVerification;
-import in.projecteka.consentmanager.user.model.SignUpSession;
-import in.projecteka.consentmanager.user.model.Token;
-import in.projecteka.consentmanager.user.model.UpdateUserRequest;
-import in.projecteka.consentmanager.user.model.User;
-import in.projecteka.consentmanager.user.model.UserCredential;
-import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
-import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
+import in.projecteka.consentmanager.user.model.*;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,9 +19,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.clients.ClientError.failedToUpdateUser;
-import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
-import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
+import static in.projecteka.consentmanager.clients.ClientError.*;
 import static java.lang.String.format;
 
 @AllArgsConstructor
@@ -124,18 +114,27 @@ public class UserService {
     public Mono<Session> update(UpdateUserRequest updateUserRequest, String sessionId) {
         return signupService.getUserName(sessionId)
                 .switchIfEmpty(Mono.error(new InvalidRequestException("user not verified")))
-                .flatMap(userName -> updatedSessionFor(updateUserRequest, userName));
+                .flatMap(userName -> updatedSessionFor(updateUserRequest.getPassword(), userName));
     }
 
-    private Mono<Session> updatedSessionFor(UpdateUserRequest updateUserRequest, String userName) {
+
+    public Mono<Session> updatePasswordFor(String password, String userName) {
+        return getSession(password, userName, failedToUpdatePassword());
+    }
+
+    private Mono<Session> updatedSessionFor(String password, String userName) {
+        return getSession(password, userName, failedToUpdateUser());
+    }
+
+    private Mono<Session> getSession(String password, String userName, ClientError clientError) {
         return tokenService.tokenForAdmin()
                 .flatMap(adminSession -> {
                     return identityServiceClient.getUser(userName, String.format("Bearer %s", adminSession.getAccessToken()))
                             .flatMap(cloakUsers -> identityServiceClient.updateUser(adminSession, cloakUsers.getId(),
-                                    updateUserRequest.getPassword())).then();
+                                    password)).then();
                 })
-                .doOnError(error -> Mono.error(failedToUpdateUser()))
-                .then(tokenService.tokenForUser(userName, updateUserRequest.getPassword()));
+                .doOnError(error -> Mono.error(clientError))
+                .then(tokenService.tokenForUser(userName, password));
     }
 
     private Mono<Object> userExistsWith(String username) {

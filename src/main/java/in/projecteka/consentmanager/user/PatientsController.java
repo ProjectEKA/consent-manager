@@ -5,19 +5,7 @@ import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.common.Caller;
-import in.projecteka.consentmanager.user.model.CreatePinRequest;
-import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
-import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
-import in.projecteka.consentmanager.user.model.Identifier;
-import in.projecteka.consentmanager.user.model.IdentifierType;
-import in.projecteka.consentmanager.user.model.OtpMediumType;
-import in.projecteka.consentmanager.user.model.OtpVerification;
-import in.projecteka.consentmanager.user.model.Profile;
-import in.projecteka.consentmanager.user.model.SignUpRequest;
-import in.projecteka.consentmanager.user.model.Token;
-import in.projecteka.consentmanager.user.model.UpdateUserRequest;
-import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
-import in.projecteka.consentmanager.user.model.ValidatePinRequest;
+import in.projecteka.consentmanager.user.model.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -171,4 +159,13 @@ public class PatientsController {
                         .flatMap(tuple -> signupService.removeOf(tuple.getT2()).thenReturn(tuple.getT1())))
                 : Mono.error(invalidRequester(updateUserRequests.getError()));
     }
+
+    @PutMapping("/profile/update-password")
+    public Mono<Session> updatePassword(@RequestBody UpdatePasswordRequest request) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .map(Caller::getUsername)
+                .flatMap(userName -> userService.updatePasswordFor(request.getNewPassword(), userName));
+    }
+
 }

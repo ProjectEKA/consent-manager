@@ -6,12 +6,14 @@ import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.common.MonoVoidOperator;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.User;
+import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -29,6 +31,7 @@ import static in.projecteka.consentmanager.user.TestBuilders.lockedUser;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.sessionRequest;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -153,7 +156,7 @@ class SessionServiceTest {
         String testIdentifierType = "mobile";
 
         when(userRepository.userWith(username)).thenReturn(Mono.just(User.builder().phone(testPhone).build()));
-        when(otpAttemptService.validateOTPRequest(testIdentifierType, testPhone, OtpAttempt.Action.LOGIN,username)).thenReturn(Mono.empty());
+        when(otpAttemptService.validateOTPRequest(testIdentifierType, testPhone, OtpAttempt.Action.OTP_REQUEST_LOGIN,username)).thenReturn(Mono.empty());
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
         when(otpServiceProperties.getExpiryInMinutes()).thenReturn(5);
         when(unverifiedSessions.put(any(String.class), eq(username))).thenReturn(Mono.empty());
@@ -192,7 +195,7 @@ class SessionServiceTest {
         String testIdentifierType = "mobile";
 
         when(userRepository.userWith(username)).thenReturn(Mono.just(User.builder().phone(testPhone).build()));
-        when(otpAttemptService.validateOTPRequest(testIdentifierType, testPhone, OtpAttempt.Action.LOGIN,username)).thenReturn(Mono.empty());
+        when(otpAttemptService.validateOTPRequest(testIdentifierType, testPhone, OtpAttempt.Action.OTP_REQUEST_LOGIN,username)).thenReturn(Mono.empty());
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.error(ClientError.unknownErrorOccurred()));
 
         SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties, otpAttemptService);
@@ -237,18 +240,37 @@ class SessionServiceTest {
     public void shouldValidateOtp() {
         String testSession = "testSession";
         String testOtp = "666666";
-        String username = "testUser";
+        User user = new EasyRandom().nextObject(User.class);
+        String username = user.getIdentifier();
+        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpPermitRequest otpPermitRequest = new OtpPermitRequest(username, testSession, testOtp);
         when(unverifiedSessions.get(testSession)).thenReturn(Mono.just(username));
         Session expectedSession = in.projecteka.consentmanager.clients.TestBuilders.session().build();
-        when(tokenService.tokenForOtpUser(eq(username), eq(testSession), eq(testOtp))).thenReturn(Mono.just(expectedSession));
-
+        when(tokenService.tokenForOtpUser(eq(username), eq(testSession), eq(testOtp), any(MonoVoidOperator.class))).thenReturn(Mono.just(expectedSession));
+        when(userRepository.userWith(username)).thenReturn(Mono.just(user));
+        when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
+        when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
         SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties, otpAttemptService);
 
         StepVerifier.create(sessionService.validateOtp(otpPermitRequest))
                 .assertNext(session -> assertThat(session).isEqualTo(expectedSession))
                 .verifyComplete();
         verify(unverifiedSessions).get(testSession);
-        verify(tokenService).tokenForOtpUser(eq(username), eq(testSession), eq(testOtp));
+        verify(tokenService).tokenForOtpUser(eq(username), eq(testSession), eq(testOtp), any(MonoVoidOperator.class));
+
+        var capturedAttempts = argument.getAllValues();
+        var validateOTPSubmissionArgument = capturedAttempts.get(0);
+        assertEquals(testSession, validateOTPSubmissionArgument.getSessionId());
+        assertEquals("MOBILE", validateOTPSubmissionArgument.getIdentifierType());
+        assertEquals(user.getPhone(), validateOTPSubmissionArgument.getIdentifierValue());
+        assertEquals(OtpAttempt.Action.OTP_SUBMIT_LOGIN, validateOTPSubmissionArgument.getAction());
+        assertEquals(user.getIdentifier(), validateOTPSubmissionArgument.getCmId());
+
+        var removeMatchingAttemptsArgument = capturedAttempts.get(1);
+        assertEquals(testSession, removeMatchingAttemptsArgument.getSessionId());
+        assertEquals("MOBILE", removeMatchingAttemptsArgument.getIdentifierType());
+        assertEquals(user.getPhone(), removeMatchingAttemptsArgument.getIdentifierValue());
+        assertEquals(OtpAttempt.Action.OTP_SUBMIT_LOGIN, removeMatchingAttemptsArgument.getAction());
+        assertEquals(user.getIdentifier(), removeMatchingAttemptsArgument.getCmId());
     }
 }

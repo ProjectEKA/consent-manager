@@ -49,9 +49,9 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static java.lang.String.format;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -108,6 +108,9 @@ public class ConsentRequestUserJourneyTest {
 
     @MockBean
     private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+
+    @MockBean
+    private ConceptValidator conceptValidator;
 
     @Captor
     private ArgumentCaptor<ConsentRequest> captor;
@@ -204,6 +207,8 @@ public class ConsentRequestUserJourneyTest {
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
+        when(conceptValidator.validatePurpose("CAREMGT")).thenReturn(Mono.just(true));
+        when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
         when(repository.requestOf(anyString())).thenReturn(Mono.empty());
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
         load(clientRegistryServer, "{}");
@@ -217,9 +222,9 @@ public class ConsentRequestUserJourneyTest {
                 "\"requestId\": \"9e1228c3-0d2b-47cb-9ae2-c0eb95aed950\",\n" +
                 "  \"consent\": {\n" +
                 "    \"purpose\": {\n" +
-                "      \"text\": \"For Clinical Reference\",\n" +
-                "      \"code\": \"CLINICAL\",\n" +
-                "      \"refUri\": \"http://nha.gov.in/value-set/purpose.txt\"\n" +
+                "      \"text\": \"Care Management\",\n" +
+                "      \"code\": \"CAREMGT\",\n" +
+                "      \"refUri\": \"http://projecteka.in/ValueSet/purpose-of-use.json\"\n" +
                 "    },\n" +
                 "    \"patient\": {\n" +
                 "      \"id\": \"batman@ncg\"\n" +
@@ -275,7 +280,7 @@ public class ConsentRequestUserJourneyTest {
         List<ConsentRequestDetail> requests = new ArrayList<>();
         ListResult<List<ConsentRequestDetail>> result = new ListResult<>(requests, 0);
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("Ganesh@ncg", true)));
-        when(repository.requestsForPatient("Ganesh@ncg", 20, 0)).
+        when(repository.requestsForPatient("Ganesh@ncg", 20, 0, null)).
                 thenReturn(Mono.just(result));
 
         webTestClient.get()
@@ -300,7 +305,7 @@ public class ConsentRequestUserJourneyTest {
         requests.add(detail);
         ListResult<List<ConsentRequestDetail>> result = new ListResult<>(requests, 1);
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("Ganesh@ncg", true)));
-        when(repository.requestsForPatientByStatus("Ganesh@ncg", 20, 0, "EXPIRED")).
+        when(repository.requestsForPatient("Ganesh@ncg", 20, 0, "EXPIRED")).
                 thenReturn(Mono.just(result));
 
         webTestClient.get()
@@ -367,6 +372,7 @@ public class ConsentRequestUserJourneyTest {
                 .thenReturn(Mono.just(new Caller(patientId, false, "randomSessionId")));
         when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
+        when(conceptValidator.validateHITypes(anyList())).thenReturn(Mono.just(true));
 
         webTestClient.post()
                 .uri("/consent-requests/30d02f6d-de17-405e-b4ab-d31b2bb799d7/approve")
@@ -429,6 +435,7 @@ public class ConsentRequestUserJourneyTest {
                 .thenReturn(Mono.just(consentRequestDetail));
         when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
+        when(conceptValidator.validateHITypes(anyList())).thenReturn(Mono.just(true));
 
         webTestClient.post()
                 .uri("/consent-requests/30d02f6d-de17-405e-b4ab-d31b2bb799d7/approve")
@@ -464,6 +471,81 @@ public class ConsentRequestUserJourneyTest {
                 .exchange()
                 .expectStatus()
                 .isNoContent();
+    }
+
+    @Test
+    public void shouldThrowErrorForInvalidPurposeInConsentRequest() {
+        var authToken = string();
+        when(centralRegistryTokenVerifier.verify(authToken)).thenReturn(Mono.just(new Caller("MAX-ID", true)));
+        when(repository.insert(any(), any())).thenReturn(Mono.empty());
+        when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
+                .thenReturn(Mono.empty());
+        when(conceptValidator.validatePurpose("INVALID-CODE")).thenReturn(Mono.just(false));
+        when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
+        when(repository.requestOf(any())).thenReturn(Mono.empty());
+        // TODO: Two calls being made to CR to get token within one single request, have to make it single.
+        load(clientRegistryServer, "{}");
+        load(clientRegistryServer, "{}");
+        load(clientRegistryServer, "{}");
+        load(clientRegistryServer, "{}");
+        load(identityServer, "{}");
+        load(userServer, "{}");
+
+        String consentRequestJson = "{\n" +
+                "  \"requestId\": \"5e812965-671c-4b8d-9696-31a024777d37\",\n" +
+                "  \"consent\": {\n" +
+                "    \"purpose\": {\n" +
+                "      \"text\": \"Care Management\",\n" +
+                "      \"code\": \"INVALID-CODE\",\n" +
+                "      \"refUri\": \"http://projecteka.in/ValueSet/purpose-of-use.json\"\n" +
+                "    },\n" +
+                "    \"patient\": {\n" +
+                "      \"id\": \"batman@ncg\"\n" +
+                "    },\n" +
+                "    \"hip\": {\n" +
+                "      \"id\": \"TMH-ID\",\n" +
+                "      \"name\": \"TMH\"\n" +
+                "    },\n" +
+                "    \"hiu\": {\n" +
+                "      \"id\": \"MAX-ID\",\n" +
+                "      \"name\": \"MAX\"\n" +
+                "    },\n" +
+                "    \"requester\": {\n" +
+                "      \"name\": \"Dr Ramandeep\",\n" +
+                "      \"identifier\": {\n" +
+                "        \"value\": \"MCI-10\",\n" +
+                "        \"type\": \"Oncologist\",\n" +
+                "        \"system\": \"http://mci.org/\"\n" +
+                "      }\n" +
+                "    },\n" +
+                "    \"hiTypes\": [\n" +
+                "      \"Condition\",\n" +
+                "      \"Observation\"\n" +
+                "    ],\n" +
+                "    \"permission\": {\n" +
+                "      \"accessMode\": \"VIEW\",\n" +
+                "      \"dateRange\": {\n" +
+                "        \"from\": \"2021-01-16T07:23:41.305Z\",\n" +
+                "        \"to\": \"2021-01-16T07:35:41.305Z\"\n" +
+                "      },\n" +
+                "      \"dataEraseAt\": \"2022-01-16T07:23:41.305Z\",\n" +
+                "      \"frequency\": {\n" +
+                "        \"unit\": \"DAY\",\n" +
+                "        \"value\": 1\n" +
+                "      }\n" +
+                "    },\n" +
+                "    \"consentNotificationUrl\": \"https://tmh-hiu/notify\"\n" +
+                "  }\n" +
+                "}";
+        webTestClient.post()
+                .uri("/consent-requests")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", authToken)
+                .body(BodyInserters.fromValue(consentRequestJson))
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody(in.projecteka.consentmanager.clients.model.Error.class);
     }
 
     public static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

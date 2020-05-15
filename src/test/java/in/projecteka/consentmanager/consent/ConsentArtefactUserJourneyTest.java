@@ -111,6 +111,10 @@ public class ConsentArtefactUserJourneyTest {
     @MockBean(name = "identityServiceJWKSet")
     private JWKSet identityServiceJWKSet;
 
+    @SuppressWarnings("unused")
+    @MockBean
+    private ConceptValidator conceptValidator;
+
     @AfterAll
     public static void tearDown() throws IOException {
         clientRegistryServer.shutdown();
@@ -277,7 +281,7 @@ public class ConsentArtefactUserJourneyTest {
         response.add(consentArtefactRepresentation);
         ListResult<List<ConsentArtefactRepresentation>> result = new ListResult<>(response, response.size());
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("shweta@ncg", true)));
-        when(consentArtefactRepository.getAllConsentArtefacts("shweta@ncg", 20, 0))
+        when(consentArtefactRepository.getAllConsentArtefacts("shweta@ncg", 20, 0, null))
                 .thenReturn(Mono.just(result));
 
         webTestClient.get()
@@ -302,7 +306,7 @@ public class ConsentArtefactUserJourneyTest {
         response.add(consentArtefactRepresentation);
         ListResult<List<ConsentArtefactRepresentation>> result = new ListResult<>(response, response.size());
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("shweta@ncg", true)));
-        when(consentArtefactRepository.getConsentArtefactsByStatus("shweta@ncg", "EXPIRED", 20, 0))
+        when(consentArtefactRepository.getAllConsentArtefacts("shweta@ncg", 20, 0, "EXPIRED"))
                 .thenReturn(Mono.just(result));
 
         webTestClient.get()

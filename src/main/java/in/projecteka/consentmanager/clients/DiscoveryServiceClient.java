@@ -53,23 +53,4 @@ public class DiscoveryServiceClient {
                                 clientResponse -> Mono.error(ClientError.networkServiceCallFailed())))
                 .flatMap(responseSpec -> responseSpec.bodyToMono(PatientResponse.class));
     }
-
-//    public Mono<Void> requestPatientFor(PatientRequest request, String url, String hipId) {
-//        return tokenGenerator.get()
-//                .flatMap(token ->
-//                        webClientBuilder.build()
-//                                .post()
-//                                .uri(url + PATIENTS_CARE_CONTEXTS_DISCOVERY_URL_PATH)
-//                                .header(AUTHORIZATION, token)
-//                                .header("X-HIP-ID", hipId)
-//                                .bodyValue(request)
-//                                .retrieve()
-//                                .onStatus(httpStatus -> httpStatus.value() == 404,
-//                                        clientResponse -> Mono.error(ClientError.userNotFound()))
-//                                .onStatus(HttpStatus::is5xxServerError,
-//                                        clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
-//                                .toBodilessEntity())
-//                                .then();
-//
-//    }
 }

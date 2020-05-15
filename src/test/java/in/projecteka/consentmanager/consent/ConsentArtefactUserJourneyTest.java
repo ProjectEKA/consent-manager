@@ -111,6 +111,10 @@ public class ConsentArtefactUserJourneyTest {
     @MockBean(name = "identityServiceJWKSet")
     private JWKSet identityServiceJWKSet;
 
+    @SuppressWarnings("unused")
+    @MockBean
+    private ConceptValidator conceptValidator;
+
     @AfterAll
     public static void tearDown() throws IOException {
         clientRegistryServer.shutdown();

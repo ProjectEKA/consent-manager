@@ -45,6 +45,7 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
 
 
+
 @Getter
 @ToString
 public class ClientError extends Throwable {

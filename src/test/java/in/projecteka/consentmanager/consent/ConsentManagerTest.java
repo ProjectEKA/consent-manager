@@ -372,10 +372,10 @@ class ConsentManagerTest {
 
         ListResult<List<ConsentArtefactRepresentation>> result = new ListResult<>(response, response.size());
 
-        when(consentArtefactRepository.getAllConsentArtefacts("shweta@ncg", 20, 0))
+        when(consentArtefactRepository.getAllConsentArtefacts("shweta@ncg", 20, 0, null))
                 .thenReturn(Mono.just(result));
         Mono<ListResult<List<ConsentArtefactRepresentation>>> publisher =
-                consentManager.getAllConsentArtefacts("shweta@ncg", "ALL", 20, 0);
+                consentManager.getAllConsentArtefacts("shweta@ncg", 20, 0, "ALL");
         StepVerifier.create(publisher
                 .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
                 .expectNext(result)
@@ -385,10 +385,10 @@ class ConsentManagerTest {
 
     @Test
     void shouldGetEmptyIfNoConsentArtefactsPresent() {
-        when(consentArtefactRepository.getAllConsentArtefacts("shweta@ncg", 20, 0))
+        when(consentArtefactRepository.getAllConsentArtefacts("shweta@ncg", 20, 0, null))
                 .thenReturn(Mono.empty());
         Mono<ListResult<List<ConsentArtefactRepresentation>>> publisher =
-                consentManager.getAllConsentArtefacts("shweta@ncg", "ALL", 20, 0);
+                consentManager.getAllConsentArtefacts("shweta@ncg", 20, 0, "ALL");
         StepVerifier.create(publisher
                 .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
                 .expectComplete()

@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
@@ -45,8 +46,10 @@ import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDe
 import static in.projecteka.consentmanager.consent.TestBuilders.notificationMessage;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static java.lang.String.format;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -275,8 +278,10 @@ public class ConsentRequestUserJourneyTest {
     public void shouldGetConsentRequests() {
         var token = string();
         List<ConsentRequestDetail> requests = new ArrayList<>();
+        ListResult<List<ConsentRequestDetail>> result = new ListResult<>(requests, 0);
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("Ganesh@ncg", true)));
-        when(repository.requestsForPatient("Ganesh@ncg", 20, 0)).thenReturn(Mono.just(requests));
+        when(repository.requestsForPatient("Ganesh@ncg", 20, 0, null)).
+                thenReturn(Mono.just(result));
 
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/consent-requests").queryParam("limit", "20").build())
@@ -285,9 +290,37 @@ public class ConsentRequestUserJourneyTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ConsentRequestsRepresentation.class)
-                .value(ConsentRequestsRepresentation::getLimit, Matchers.is(20))
-                .value(ConsentRequestsRepresentation::getOffset, Matchers.is(0))
-                .value(response -> response.getRequests().size(), Matchers.is(0));
+                .value(ConsentRequestsRepresentation::getLimit, is(20))
+                .value(ConsentRequestsRepresentation::getOffset, is(0))
+                .value(ConsentRequestsRepresentation::getRequests, is(requests))
+                .value(ConsentRequestsRepresentation::getSize, is(0));
+    }
+
+    @Test
+    public void shouldGetConsentRequestsForStatus() {
+        var token = string();
+        List<ConsentRequestDetail> requests = new ArrayList<>();
+        ConsentRequestDetail detail = ConsentRequestDetail.builder().build();
+        detail.setStatus(EXPIRED);
+        requests.add(detail);
+        ListResult<List<ConsentRequestDetail>> result = new ListResult<>(requests, 1);
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("Ganesh@ncg", true)));
+        when(repository.requestsForPatient("Ganesh@ncg", 20, 0, "EXPIRED")).
+                thenReturn(Mono.just(result));
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/consent-requests")
+                        .queryParam("limit", "20")
+                        .queryParam("status", "EXPIRED")
+                        .build())
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", token)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ConsentRequestsRepresentation.class)
+                .value(ConsentRequestsRepresentation::getLimit, is(20))
+                .value(ConsentRequestsRepresentation::getOffset, is(0))
+                .value(ConsentRequestsRepresentation::getSize, is(1));
     }
 
     @Test
@@ -449,6 +482,7 @@ public class ConsentRequestUserJourneyTest {
                 .thenReturn(Mono.empty());
         when(conceptValidator.validatePurpose("INVALID-CODE")).thenReturn(Mono.just(false));
         when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
+        when(repository.requestOf(any())).thenReturn(Mono.empty());
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
         load(clientRegistryServer, "{}");
         load(clientRegistryServer, "{}");
@@ -458,6 +492,7 @@ public class ConsentRequestUserJourneyTest {
         load(userServer, "{}");
 
         String consentRequestJson = "{\n" +
+                "  \"requestId\": \"5e812965-671c-4b8d-9696-31a024777d37\",\n" +
                 "  \"consent\": {\n" +
                 "    \"purpose\": {\n" +
                 "      \"text\": \"Care Management\",\n" +

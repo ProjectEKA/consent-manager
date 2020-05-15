@@ -27,8 +27,8 @@ consentmanager:
     maxOtpAttemptsPeriodInMin: 10
     otpAttemptsBlockPeriodInMin: 2
   lockeduserservice:
-    maximumInvalidAttempts: ${MAXIMUM_INVALID_ATTEMPTS}
-    coolOfPeriod: ${COOL_OF_PERIOD}
+    maximumInvalidAttempts: 5
+    coolOfPeriod: 8
   otpservice:
     url: http://localhost:5000
     identifiers:

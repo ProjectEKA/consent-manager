@@ -90,6 +90,8 @@ public class ConsentManager {
                 .filterWhen(this::validateRequest)
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
                 .flatMap(val -> validatePatient(requestedDetail.getPatient().getId())
+                        .then(validatePurpose(requestedDetail.getPurpose()))
+                        .then(validateHiTypes(requestedDetail.getHiTypes()))
                         .then(validateHIPAndHIU(requestedDetail))
                         .then(saveRequest(requestedDetail, requestId))
                         .then(postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
@@ -166,8 +168,13 @@ public class ConsentManager {
         return requestedDetail.getHiu().getId();
     }
 
-    public Mono<List<ConsentRequestDetail>> findRequestsForPatient(String patientId, int limit, int offset) {
-        return consentRequestRepository.requestsForPatient(patientId, limit, offset);
+    public Mono<ListResult<List<ConsentRequestDetail>>> findRequestsForPatient(String patientId,
+                                                                               int limit,
+                                                                               int offset,
+                                                                               String status) {
+        return status.equals(ALL_CONSENT_ARTEFACTS)
+                ? consentRequestRepository.requestsForPatient(patientId, limit, offset, null)
+                : consentRequestRepository.requestsForPatient(patientId, limit, offset, status);
     }
 
     private Mono<Void> validateLinkedHips(String username, List<GrantedConsent> grantedConsents) {
@@ -468,9 +475,12 @@ public class ConsentManager {
                         consentRequest.getLastUpdated()));
     }
 
-    public Mono<ListResult<List<ConsentArtefactRepresentation>>> getAllConsentArtefacts(String username, String status, int limit, int offset) {
+    public Mono<ListResult<List<ConsentArtefactRepresentation>>> getAllConsentArtefacts(String username,
+                                                                                        int limit,
+                                                                                        int offset,
+                                                                                        String status) {
         return status.equals(ALL_CONSENT_ARTEFACTS)
-                ? consentArtefactRepository.getAllConsentArtefacts(username, limit, offset)
-                : consentArtefactRepository.getConsentArtefactsByStatus(username, status, limit, offset);
+                ? consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, null)
+                : consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, status);
     }
 }

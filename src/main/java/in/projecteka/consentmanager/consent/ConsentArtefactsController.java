@@ -56,7 +56,7 @@ public class ConsentArtefactsController {
         int pageSize = getPageSize(limit);
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller -> consentManager.getAllConsentArtefacts(caller.getUsername(), status, pageSize, offset))
+                .flatMap(caller -> consentManager.getAllConsentArtefacts(caller.getUsername(), pageSize, offset, status))
                 .map(artefacts -> ConsentArtefactResponse.builder()
                         .consentArtefacts(artefacts.getResult())
                         .size(artefacts.getTotal())

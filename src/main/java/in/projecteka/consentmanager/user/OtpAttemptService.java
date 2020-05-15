@@ -42,7 +42,7 @@ public class OtpAttemptService {
                 .flatMap(otpRequestAttempts -> {
                     OtpAttempt latestAttempt = otpRequestAttempts.stream().findFirst().get();
                     boolean isBlocked = isWithinTimeLimit(latestAttempt, userServiceProperties.getOtpInvalidAttemptsBlockPeriodInMin());
-                    return isBlocked ? Mono.error(ClientError.tooManyInvalidOtpAttempts()) : removeMatchingAttempts(otpAttempt).then(Mono.empty());
+                    return isBlocked ? Mono.error(ClientError.tooManyInvalidOtpAttempts()) : removeMatchingAttempts(otpAttempt);
                 });
     }
 

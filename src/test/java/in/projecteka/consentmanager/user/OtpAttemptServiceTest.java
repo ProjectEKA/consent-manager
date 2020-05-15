@@ -18,6 +18,7 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class OtpAttemptServiceTest {
@@ -238,5 +239,71 @@ class OtpAttemptServiceTest {
         assertEquals(identifierType.toUpperCase(), argument.getValue().getIdentifierType());
         assertEquals(identifierValue, argument.getValue().getIdentifierValue());
         assertEquals(OtpAttempt.Action.OTP_REQUEST_REGISTRATION, argument.getValue().getAction());
+    }
+
+    @Test
+    void shouldRemoveMatchingAttempts(){
+        var attempt = OtpAttempt.builder().cmId(cmId)
+                .identifierType(identifierType)
+                .identifierValue(identifierValue)
+                .action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION)
+                .build();
+        when(otpAttemptRepository.removeAttempts(eq(attempt))).thenReturn(Mono.empty());
+
+        StepVerifier.create(otpAttemptService.removeMatchingAttempts(attempt))
+                .verifyComplete();
+        verify(otpAttemptRepository).removeAttempts(eq(attempt));
+    }
+
+    @Test
+    void shouldPassTheValidationIfOtpSubmitAttemptsAreLessThanMaxOtpAttempts(){
+        var builder = OtpAttempt.builder().cmId(cmId)
+                .identifierType(identifierType)
+                .identifierValue(identifierValue)
+                .action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
+
+        var attempt = builder.build();
+        var failedAttempt = builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build();
+        var failedAttempts = Arrays.asList(failedAttempt, failedAttempt, failedAttempt);
+        when(otpAttemptRepository.getOtpAttempts(eq(attempt), eq(userServiceProperties.getOtpMaxInvalidAttempts()))).thenReturn(Mono.just(failedAttempts));
+
+        StepVerifier.create(otpAttemptService.validateOTPSubmission(attempt)).verifyComplete();
+    }
+
+    @Test
+    void shouldPassTheValidationAndRemoveMatchingAttemptsIfLatestAttemptIsNotInBlockingPeriod(){
+        var currentTime = LocalDateTime.now(ZoneOffset.UTC);
+        var builder = OtpAttempt.builder().cmId(cmId)
+                .identifierType(identifierType)
+                .identifierValue(identifierValue)
+                .action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
+
+        var attempt = builder.build();
+        var failedAttempt = builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).attemptAt(currentTime.minusMinutes(3)).build();
+        var failedAttempts = Arrays.asList(failedAttempt, failedAttempt, failedAttempt, failedAttempt, failedAttempt);
+        when(otpAttemptRepository.getOtpAttempts(eq(attempt), eq(userServiceProperties.getOtpMaxInvalidAttempts()))).thenReturn(Mono.just(failedAttempts));
+        when(otpAttemptRepository.removeAttempts(eq(attempt))).thenReturn(Mono.empty());
+        StepVerifier.create(otpAttemptService.validateOTPSubmission(attempt)).verifyComplete();
+    }
+
+    @Test
+    void shouldThrowErrorIfLatestAttemptIsInBlockingPeriod(){
+        var currentTime = LocalDateTime.now(ZoneOffset.UTC);
+        var builder = OtpAttempt.builder().cmId(cmId)
+                .identifierType(identifierType)
+                .identifierValue(identifierValue)
+                .action(OtpAttempt.Action.OTP_REQUEST_REGISTRATION);
+
+        var attempt = builder.build();
+        var failedAttempt = builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).attemptAt(currentTime.minusMinutes(1)).build();
+        var failedAttempts = Arrays.asList(failedAttempt, failedAttempt, failedAttempt, failedAttempt, failedAttempt);
+        when(otpAttemptRepository.getOtpAttempts(eq(attempt), eq(userServiceProperties.getOtpMaxInvalidAttempts()))).thenReturn(Mono.just(failedAttempts));
+        StepVerifier.create(otpAttemptService.validateOTPSubmission(attempt))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError && ((ClientError) throwable)
+                .getError()
+                .getError()
+                .getCode()
+                .equals(ErrorCode.INVALID_OTP_ATTEMPTS_EXCEEDED))
+                .verify();
     }
 }

@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
-import in.projecteka.consentmanager.common.MonoVoidOperator;
 import in.projecteka.consentmanager.user.exception.InvalidPasswordException;
 import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
 import lombok.AllArgsConstructor;
@@ -30,8 +29,8 @@ public class TokenService {
                         .flatMap(user -> Mono.error(new InvalidPasswordException())));
     }
 
-    public Mono<Session> tokenForOtpUser(String username, String sessionId, String otp, MonoVoidOperator onInvalidOtp) {
-        return identityServiceClient.getToken(loginRequestForOtp(username,sessionId,otp), onInvalidOtp);
+    public Mono<Session> tokenForOtpUser(String username, String sessionId, String otp) {
+        return identityServiceClient.getToken(loginRequestForOtp(username,sessionId,otp));
     }
 
     private MultiValueMap<String, String> loginRequestForOtp(String username, String sessionId, String otp) {

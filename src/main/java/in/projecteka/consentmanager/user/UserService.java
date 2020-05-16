@@ -89,6 +89,13 @@ public class UserService {
                                 userName)));
     }
 
+    private Mono<Void> validateAndVerifyOtp(OtpVerification otpVerification, OtpAttempt.OtpAttemptBuilder builder){
+        return otpAttemptService.validateOTPSubmission(builder.build())
+                .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue()))
+                .onErrorResume(ClientError.class, (error) -> otpAttemptService.handleInvalidOTPError(error, builder))
+                .then(otpAttemptService.removeMatchingAttempts(builder.build()));
+    }
+
     public Mono<Token> verifyOtpForRegistration(OtpVerification otpVerification) {
         if (!validateOtpVerification(otpVerification)) {
             throw new InvalidRequestException("invalid.request.body");
@@ -102,10 +109,7 @@ public class UserService {
                             .identifierType(IdentifierType.MOBILE.name())
                             .identifierValue(mobileNumber)
                             .action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION);
-                    return otpAttemptService.validateOTPSubmission(builder.build())
-                            .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue(),
-                                    () -> otpAttemptService.saveOTPAttempt(builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build())))
-                            .then(otpAttemptService.removeMatchingAttempts(builder.build()))
+                    return validateAndVerifyOtp(otpVerification, builder)
                             .then(signupService.generateToken(otpVerification.getSessionId()));
                 });
     }
@@ -124,10 +128,7 @@ public class UserService {
                             .identifierValue(user.getPhone())
                             .action(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD)
                             .cmId(user.getIdentifier());
-                    return otpAttemptService.validateOTPSubmission(builder.build())
-                            .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue(),
-                                    () -> otpAttemptService.saveOTPAttempt(builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build())))
-                            .then(otpAttemptService.removeMatchingAttempts(builder.build()))
+                    return validateAndVerifyOtp(otpVerification, builder)
                             .then(signupService.generateToken(new HashMap<>(), otpVerification.getSessionId()));
                 });
     }

@@ -9,7 +9,6 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.DbOperationError;
-import in.projecteka.consentmanager.common.MonoVoidOperator;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
@@ -142,7 +141,7 @@ class UserServiceTest {
 
         ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
-        when(otpServiceClient.verify(eq(sessionId), eq(otp), any(MonoVoidOperator.class))).thenReturn(Mono.empty());
+        when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
         when(signupService.generateToken(sessionId))
                 .thenReturn(Mono.just(new Token(token)));
         when(signupService.getMobileNumber(eq(sessionId))).thenReturn(Mono.just(mobileNumber));
@@ -198,7 +197,7 @@ class UserServiceTest {
         var user = new EasyRandom().nextObject(User.class);
         ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
-        when(otpServiceClient.verify(eq(sessionId), eq(otp), any(MonoVoidOperator.class))).thenReturn(Mono.empty());
+        when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
         when(signupService.generateToken(new HashMap<>(),sessionId))
                 .thenReturn(Mono.just(new Token(token)));
         when(signupService.getUserName(eq(sessionId))).thenReturn(Mono.just(user.getIdentifier()));

@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.Error;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import lombok.Getter;
 import lombok.ToString;
@@ -57,6 +58,10 @@ public class ClientError extends Throwable {
     public ClientError(HttpStatus httpStatus, ErrorRepresentation errorRepresentation) {
         this.httpStatus = httpStatus;
         error = errorRepresentation;
+    }
+
+    public ErrorCode getErrorCode(){
+        return this.error.getError().getCode();
     }
 
     public static ClientError unableToConnectToProvider() {

@@ -111,9 +111,8 @@ public class SessionService {
                             .identifierValue(user.getPhone());
                     return otpAttemptService.validateOTPSubmission(builder.build())
                             .then(tokenService
-                                    .tokenForOtpUser(otpPermitRequest.getUsername(), otpPermitRequest.getSessionId(),
-                                            otpPermitRequest.getOtp(),
-                                            () -> otpAttemptService.saveOTPAttempt(builder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build())))
+                                    .tokenForOtpUser(otpPermitRequest.getUsername(), otpPermitRequest.getSessionId(), otpPermitRequest.getOtp()))
+                            .onErrorResume(ClientError.class, error -> otpAttemptService.handleInvalidOTPError(error, builder))
                             .flatMap(session -> otpAttemptService.removeMatchingAttempts(builder.build()).then(Mono.just(session)));
                 });
     }

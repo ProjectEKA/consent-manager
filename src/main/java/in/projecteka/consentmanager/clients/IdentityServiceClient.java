@@ -5,7 +5,6 @@ import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
-import in.projecteka.consentmanager.common.MonoVoidOperator;
 import in.projecteka.consentmanager.user.model.KeyCloakError;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -45,10 +44,6 @@ public class IdentityServiceClient {
     }
 
     public Mono<Session> getToken(MultiValueMap<String, String> formData) {
-        return getToken(formData, Mono::empty);
-    }
-
-    public Mono<Session> getToken(MultiValueMap<String, String> formData, MonoVoidOperator onInvalidOTP) {
         return webClientBuilder.build()
                 .post()
                 .uri(uriBuilder ->
@@ -62,7 +57,7 @@ public class IdentityServiceClient {
                             String keyCloakErrorValue = keyCloakError.getError();
                             switch (keyCloakErrorValue) {
                                 case "1002":
-                                    return onInvalidOTP.perform().then(Mono.error(ClientError.invalidOtp()));
+                                    return Mono.error(ClientError.invalidOtp());
                                 case "1003":
                                     return Mono.error(ClientError.otpExpired());
                                 default:

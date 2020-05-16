@@ -6,7 +6,6 @@ import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
-import in.projecteka.consentmanager.common.MonoVoidOperator;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
@@ -246,7 +245,7 @@ class SessionServiceTest {
         OtpPermitRequest otpPermitRequest = new OtpPermitRequest(username, testSession, testOtp);
         when(unverifiedSessions.get(testSession)).thenReturn(Mono.just(username));
         Session expectedSession = in.projecteka.consentmanager.clients.TestBuilders.session().build();
-        when(tokenService.tokenForOtpUser(eq(username), eq(testSession), eq(testOtp), any(MonoVoidOperator.class))).thenReturn(Mono.just(expectedSession));
+        when(tokenService.tokenForOtpUser(eq(username), eq(testSession), eq(testOtp))).thenReturn(Mono.just(expectedSession));
         when(userRepository.userWith(username)).thenReturn(Mono.just(user));
         when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
         when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
@@ -256,7 +255,7 @@ class SessionServiceTest {
                 .assertNext(session -> assertThat(session).isEqualTo(expectedSession))
                 .verifyComplete();
         verify(unverifiedSessions).get(testSession);
-        verify(tokenService).tokenForOtpUser(eq(username), eq(testSession), eq(testOtp), any(MonoVoidOperator.class));
+        verify(tokenService).tokenForOtpUser(eq(username), eq(testSession), eq(testOtp));
 
         var capturedAttempts = argument.getAllValues();
         var validateOTPSubmissionArgument = capturedAttempts.get(0);

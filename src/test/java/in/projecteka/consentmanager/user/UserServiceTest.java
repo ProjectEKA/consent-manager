@@ -148,7 +148,7 @@ class UserServiceTest {
         when(signupService.getMobileNumber(eq(sessionId))).thenReturn(Mono.just(mobileNumber));
         when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
         when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
-        StepVerifier.create(userService.permitOtp(otpVerification))
+        StepVerifier.create(userService.verifyOtpForRegistration(otpVerification))
                 .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
                 .verifyComplete();
 
@@ -175,7 +175,7 @@ class UserServiceTest {
     public void shouldThrowInvalidRequestExceptionForInvalidOtpValue(
             @ConvertWith(NullableConverter.class) String value) {
         OtpVerification otpVerification = new OtpVerification(string(), value);
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.permitOtp(otpVerification));
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForRegistration(otpVerification));
     }
 
     @ParameterizedTest(name = "Invalid session id")
@@ -187,7 +187,7 @@ class UserServiceTest {
     public void shouldThrowInvalidRequestExceptionForInvalidOtpSessionId(
             @ConvertWith(NullableConverter.class) String sessionId) {
         OtpVerification otpVerification = new OtpVerification(sessionId, string());
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.permitOtp(otpVerification));
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForRegistration(otpVerification));
     }
 
     @Test
@@ -205,7 +205,7 @@ class UserServiceTest {
         when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));
         when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
         when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
-        StepVerifier.create(userService.verifyOtp(otpVerification))
+        StepVerifier.create(userService.verifyOtpForForgetPassword(otpVerification))
                 .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
                 .verifyComplete();
 
@@ -234,7 +234,7 @@ class UserServiceTest {
     public void shouldThrowErrorForInvalidOtpValue(
             @ConvertWith(NullableConverter.class) String value) {
         OtpVerification otpVerification = new OtpVerification(string(), value);
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtp(otpVerification));
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForForgetPassword(otpVerification));
     }
 
     @ParameterizedTest(name = "Invalid session id")
@@ -246,7 +246,7 @@ class UserServiceTest {
     public void shouldThrowErrorForInvalidOtpSessionId(
             @ConvertWith(NullableConverter.class) String sessionId) {
         OtpVerification otpVerification = new OtpVerification(sessionId, string());
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtp(otpVerification));
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForForgetPassword(otpVerification));
     }
 
     @Test

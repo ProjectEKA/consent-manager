@@ -89,7 +89,7 @@ public class UserService {
                                 userName)));
     }
 
-    public Mono<Token> permitOtp(OtpVerification otpVerification) {
+    public Mono<Token> verifyOtpForRegistration(OtpVerification otpVerification) {
         if (!validateOtpVerification(otpVerification)) {
             throw new InvalidRequestException("invalid.request.body");
         }
@@ -110,7 +110,7 @@ public class UserService {
                 });
     }
 
-    public Mono<Token> verifyOtp(OtpVerification otpVerification) {
+    public Mono<Token> verifyOtpForForgetPassword(OtpVerification otpVerification) {
         if (!validateOtpVerification(otpVerification)) {
             throw new InvalidRequestException("invalid.request.body");
         }

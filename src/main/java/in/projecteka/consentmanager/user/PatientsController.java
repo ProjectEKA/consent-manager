@@ -104,7 +104,7 @@ public class PatientsController {
 
     @PostMapping("/verifyotp")
     public Mono<Token> verifyOtp(@RequestBody OtpVerification request) {
-        return userService.verifyOtp(request);
+        return userService.verifyOtpForForgetPassword(request);
     }
 
     private Mono<GenerateOtpResponse> getGenerateOtpResponse(UserSignUpEnquiry userSignUpEnquiry, String userName) {

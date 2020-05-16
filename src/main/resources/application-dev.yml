@@ -17,6 +17,9 @@ consentmanager:
     clientId: consent-manager
     url: http://host.docker.internal:8080
     jwkUrl: http://host.docker.internal:8080/certs
+  gatewayservice:
+    baseUrl: http://host.docker.internal:8081
+    responseTimeout: 3
   userservice:
     url: http://localhost:9000
     transactionPinDigitSize: 4

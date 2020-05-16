@@ -9,7 +9,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.function.Supplier;
 
-import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor

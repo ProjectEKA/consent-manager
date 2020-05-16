@@ -116,14 +116,13 @@ public class Discovery {
         try {
             return Mono.just(objectMapper.readValue(responseBody, DiscoveryResult.class));
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            logger.error("[Discovery] Can not deserialize response from HIP", e);
         }
         return Mono.empty();
     }
 
     private long getExpectedFlowResponseDuration() {
-        //externalize configuration
-        return 3L;
+        return gatewayServiceProperties.getResponseTimeout();
     }
 
     private String gatewaySystemUrl() {

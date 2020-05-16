@@ -11,4 +11,5 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConstructorBinding
 public class GatewayServiceProperties {
     private final String baseUrl;
+    private final int responseTimeout;
 }

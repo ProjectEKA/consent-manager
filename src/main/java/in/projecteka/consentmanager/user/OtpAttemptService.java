@@ -51,10 +51,10 @@ public class OtpAttemptService {
         return otpAttemptRepository.removeAttempts(otpAttempt);
     }
 
-    public <T> Mono<T> handleInvalidOTPError(ClientError error, OtpAttempt.OtpAttemptBuilder otpAttemptBuilder){
+    public <T> Mono<T> handleInvalidOTPError(ClientError error, OtpAttempt attempt){
         Mono<T> invalidOTPError = Mono.error(error);
         if(error.getErrorCode().equals(ErrorCode.OTP_INVALID)) {
-            return saveOTPAttempt(otpAttemptBuilder.attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build()).then(invalidOTPError);
+            return saveOTPAttempt(attempt.toBuilder().attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build()).then(invalidOTPError);
         }
         return invalidOTPError;
     }

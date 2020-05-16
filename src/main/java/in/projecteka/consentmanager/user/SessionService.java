@@ -112,7 +112,7 @@ public class SessionService {
                     return otpAttemptService.validateOTPSubmission(builder.build())
                             .then(tokenService
                                     .tokenForOtpUser(otpPermitRequest.getUsername(), otpPermitRequest.getSessionId(), otpPermitRequest.getOtp()))
-                            .onErrorResume(ClientError.class, error -> otpAttemptService.handleInvalidOTPError(error, builder))
+                            .onErrorResume(ClientError.class, error -> otpAttemptService.handleInvalidOTPError(error, builder.build()))
                             .flatMap(session -> otpAttemptService.removeMatchingAttempts(builder.build()).then(Mono.just(session)));
                 });
     }

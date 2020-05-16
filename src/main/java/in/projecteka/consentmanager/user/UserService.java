@@ -89,11 +89,11 @@ public class UserService {
                                 userName)));
     }
 
-    private Mono<Void> validateAndVerifyOtp(OtpVerification otpVerification, OtpAttempt.OtpAttemptBuilder builder){
-        return otpAttemptService.validateOTPSubmission(builder.build())
+    private Mono<Void> validateAndVerifyOtp(OtpVerification otpVerification, OtpAttempt attempt){
+        return otpAttemptService.validateOTPSubmission(attempt)
                 .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue()))
-                .onErrorResume(ClientError.class, (error) -> otpAttemptService.handleInvalidOTPError(error, builder))
-                .then(otpAttemptService.removeMatchingAttempts(builder.build()));
+                .onErrorResume(ClientError.class, (error) -> otpAttemptService.handleInvalidOTPError(error, attempt))
+                .then(otpAttemptService.removeMatchingAttempts(attempt));
     }
 
     public Mono<Token> verifyOtpForRegistration(OtpVerification otpVerification) {
@@ -109,7 +109,7 @@ public class UserService {
                             .identifierType(IdentifierType.MOBILE.name())
                             .identifierValue(mobileNumber)
                             .action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION);
-                    return validateAndVerifyOtp(otpVerification, builder)
+                    return validateAndVerifyOtp(otpVerification, builder.build())
                             .then(signupService.generateToken(otpVerification.getSessionId()));
                 });
     }
@@ -128,7 +128,7 @@ public class UserService {
                             .identifierValue(user.getPhone())
                             .action(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD)
                             .cmId(user.getIdentifier());
-                    return validateAndVerifyOtp(otpVerification, builder)
+                    return validateAndVerifyOtp(otpVerification, builder.build())
                             .then(signupService.generateToken(new HashMap<>(), otpVerification.getSessionId()));
                 });
     }

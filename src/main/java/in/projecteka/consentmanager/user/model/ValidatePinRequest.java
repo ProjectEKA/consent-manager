@@ -11,6 +11,7 @@ import javax.validation.constraints.Pattern;
 
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
+import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
 
 @AllArgsConstructor
 @Getter
@@ -20,6 +21,6 @@ public class ValidatePinRequest {
     @Valid
     @NotBlank
     @NotNull
-    @Pattern(regexp = SCOPE_CONSENT_APPROVE + "|" + SCOPE_CONSENT_REVOKE, message = "Invalid scope provided")
+    @Pattern(regexp = SCOPE_CONSENT_APPROVE + "|" + SCOPE_CONSENT_REVOKE + "|" + SCOPE_CHANGE_PIN, message = "Invalid scope provided")
     private final String scope;
 }

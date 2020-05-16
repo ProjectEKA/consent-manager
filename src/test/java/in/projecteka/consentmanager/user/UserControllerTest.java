@@ -104,7 +104,7 @@ class UserControllerTest {
         var otpVerification = new OtpVerification(string(), string());
         Token token = new Token(string());
 
-        when(userService.permitOtp(any())).thenReturn(Mono.just(token));
+        when(userService.verifyOtpForRegistration(any())).thenReturn(Mono.just(token));
 
         webClient.post()
                 .uri("/users/permit")
@@ -112,7 +112,7 @@ class UserControllerTest {
                 .body(BodyInserters.fromValue(otpVerification))
                 .exchange().expectStatus().isOk();
 
-        Mockito.verify(userService, times(1)).permitOtp(otpVerification);
+        Mockito.verify(userService, times(1)).verifyOtpForRegistration(otpVerification);
     }
 
     @Test

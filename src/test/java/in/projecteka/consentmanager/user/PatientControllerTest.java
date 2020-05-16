@@ -210,7 +210,7 @@ PatientControllerTest {
         var otpVerification = new OtpVerification(string(), string());
         Token token = new Token(string());
 
-        when(userService.verifyOtp(any())).thenReturn(Mono.just(token));
+        when(userService.verifyOtpForForgetPassword(any())).thenReturn(Mono.just(token));
 
         webClient.post()
                 .uri("/patients/verifyotp")
@@ -218,7 +218,7 @@ PatientControllerTest {
                 .body(BodyInserters.fromValue(otpVerification))
                 .exchange().expectStatus().isOk();
 
-        verify(userService, times(1)).verifyOtp(otpVerification);
+        verify(userService, times(1)).verifyOtpForForgetPassword(otpVerification);
     }
 
     @Test

@@ -117,13 +117,14 @@ public class UserService {
                 .flatMap(userName -> updatedSessionFor(updateUserRequest.getPassword(), userName));
     }
 
-
-    public Mono<Session> updatePasswordFor(String password, String userName) {
-        return getSession(password, userName, failedToUpdatePassword());
-    }
-
     private Mono<Session> updatedSessionFor(String password, String userName) {
         return getSession(password, userName, failedToUpdateUser());
+    }
+
+    public Mono<Session> updatePasswordFor(UpdatePasswordRequest request, String userName) {
+        return tokenService.tokenForUser( userName, request.getOldPassword())
+                .switchIfEmpty(Mono.error(new InvalidRequestException("Invalid Old Password")))
+                .then(getSession(request.getNewPassword(), userName, failedToUpdatePassword()));
     }
 
     private Mono<Session> getSession(String password, String userName, ClientError clientError) {

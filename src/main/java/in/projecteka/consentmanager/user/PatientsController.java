@@ -165,7 +165,7 @@ public class PatientsController {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
-                .flatMap(userName -> userService.updatePasswordFor(request.getNewPassword(), userName));
+                .flatMap(userName -> userService.updatePasswordFor(request, userName));
     }
 
 }

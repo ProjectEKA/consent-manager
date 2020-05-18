@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
@@ -80,6 +81,10 @@ class UserControllerTest {
     @MockBean
     private Authenticator authenticator;
 
+    @SuppressWarnings("unused")
+    @MockBean
+    private ConceptValidator conceptValidator;
+
     @Test
     public void shouldReturnTemporarySessionIfOtpRequestIsSuccessful() {
         var userSignupEnquiry = new UserSignUpEnquiry("MOBILE", string());
@@ -99,7 +104,7 @@ class UserControllerTest {
         var otpVerification = new OtpVerification(string(), string());
         Token token = new Token(string());
 
-        when(userService.permitOtp(any())).thenReturn(Mono.just(token));
+        when(userService.verifyOtpForRegistration(any())).thenReturn(Mono.just(token));
 
         webClient.post()
                 .uri("/users/permit")
@@ -107,7 +112,7 @@ class UserControllerTest {
                 .body(BodyInserters.fromValue(otpVerification))
                 .exchange().expectStatus().isOk();
 
-        Mockito.verify(userService, times(1)).permitOtp(otpVerification);
+        Mockito.verify(userService, times(1)).verifyOtpForRegistration(otpVerification);
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
@@ -52,7 +53,8 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
-public class PatientControllerTest {
+public class
+PatientControllerTest {
 
     @MockBean
     private UserService userService;
@@ -89,6 +91,10 @@ public class PatientControllerTest {
     @SuppressWarnings("unused")
     @MockBean(name = "identityServiceJWKSet")
     private JWKSet identityServiceJWKSet;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private ConceptValidator conceptValidator;
 
     @Test
     public void createUser() {
@@ -204,7 +210,7 @@ public class PatientControllerTest {
         var otpVerification = new OtpVerification(string(), string());
         Token token = new Token(string());
 
-        when(userService.verifyOtp(any())).thenReturn(Mono.just(token));
+        when(userService.verifyOtpForForgetPassword(any())).thenReturn(Mono.just(token));
 
         webClient.post()
                 .uri("/patients/verifyotp")
@@ -212,7 +218,7 @@ public class PatientControllerTest {
                 .body(BodyInserters.fromValue(otpVerification))
                 .exchange().expectStatus().isOk();
 
-        verify(userService, times(1)).verifyOtp(otpVerification);
+        verify(userService, times(1)).verifyOtpForForgetPassword(otpVerification);
     }
 
     @Test

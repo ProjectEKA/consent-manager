@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
@@ -14,6 +15,8 @@ import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
 import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.LoginMode;
+import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpMediumType;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.Profile;
@@ -39,7 +42,9 @@ import java.util.List;
 import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static java.lang.String.format;
 import static java.time.LocalDate.now;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -52,7 +57,8 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
-public class PatientControllerTest {
+public class
+PatientControllerTest {
 
     @MockBean
     private UserService userService;
@@ -89,6 +95,10 @@ public class PatientControllerTest {
     @SuppressWarnings("unused")
     @MockBean(name = "identityServiceJWKSet")
     private JWKSet identityServiceJWKSet;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private ConceptValidator conceptValidator;
 
     @Test
     public void createUser() {
@@ -200,11 +210,11 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void verifyOtp(){
+    public void verifyOtp() {
         var otpVerification = new OtpVerification(string(), string());
         Token token = new Token(string());
 
-        when(userService.verifyOtp(any())).thenReturn(Mono.just(token));
+        when(userService.verifyOtpForForgetPassword(any())).thenReturn(Mono.just(token));
 
         webClient.post()
                 .uri("/patients/verifyotp")
@@ -212,7 +222,7 @@ public class PatientControllerTest {
                 .body(BodyInserters.fromValue(otpVerification))
                 .exchange().expectStatus().isOk();
 
-        verify(userService, times(1)).verifyOtp(otpVerification);
+        verify(userService, times(1)).verifyOtpForForgetPassword(otpVerification);
     }
 
     @Test
@@ -273,5 +283,27 @@ public class PatientControllerTest {
         verify(userService, times(0)).update(request, "oldSession");
         verify(signupService, times(0)).sessionFrom(token);
         verify(signupService, times(0)).removeOf(any());
+    }
+
+    @Test
+    public void fetchLoginMode() {
+        LoginModeResponse loginModeResponse = LoginModeResponse.builder()
+                .loginMode(LoginMode.CREDENTIAL)
+                .build();
+        String userName = "user@ncg";
+
+        when(userService.getLoginMode(userName)).thenReturn(Mono.just(loginModeResponse));
+
+        webClient
+                .get()
+                .uri(format("/patients/profile/loginmode?userName=%s", userName))
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(LoginModeResponse.class)
+                .value(LoginModeResponse::getLoginMode, is(LoginMode.CREDENTIAL));
+
+        verify(userService, times(1)).getLoginMode(userName);
     }
 }

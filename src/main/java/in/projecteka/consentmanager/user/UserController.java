@@ -35,7 +35,7 @@ public class UserController {
 
     @PostMapping("/users/permit")
     public Mono<Token> permitOtp(@RequestBody OtpVerification request) {
-        return userService.permitOtp(request);
+        return userService.verifyOtpForRegistration(request);
     }
 
     // TODO: should be moved to patients and need to make sure only consent manager service uses it.

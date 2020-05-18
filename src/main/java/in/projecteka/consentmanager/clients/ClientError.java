@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.Error;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import lombok.Getter;
 import lombok.ToString;
@@ -33,8 +34,8 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.USERNAME_OR_P
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_REQUEST_LIMIT_EXCEEDED;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.REQUEST_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_OTP_ATTEMPTS_EXCEEDED;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -57,6 +58,10 @@ public class ClientError extends Throwable {
     public ClientError(HttpStatus httpStatus, ErrorRepresentation errorRepresentation) {
         this.httpStatus = httpStatus;
         error = errorRepresentation;
+    }
+
+    public ErrorCode getErrorCode(){
+        return this.error.getError().getCode();
     }
 
     public static ClientError unableToConnectToProvider() {
@@ -166,9 +171,13 @@ public class ClientError extends Throwable {
     public static ClientError failedToFetchLockedUser() {
         return internalServerError("Failed to fetch Locked User");
     }
-  
+
     public static ClientError failedToUpdateUser() {
         return internalServerError("Failed to update user");
+    }
+
+    public static ClientError failedToFetchUserCredentials() {
+        return internalServerError("Failed to get user credentials");
     }
 
     public static ClientError queueNotFound() {
@@ -269,5 +278,14 @@ public class ClientError extends Throwable {
     public static ClientError invalidSession(String session) {
         return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_SESSION, String.format("The sessionId: %s is invalid",session))));
+    }
+
+    public static ClientError tooManyInvalidOtpAttempts() {
+        return new ClientError(TOO_MANY_REQUESTS,
+                new ErrorRepresentation(new Error(INVALID_OTP_ATTEMPTS_EXCEEDED, "Invalid OTP attempts limit exceeded")));
+    }
+
+    public static ClientError unknownUnauthroziedError(String message) {
+        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(UNKNOWN_ERROR_OCCURRED, message)));
     }
 }

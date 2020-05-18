@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.CreatePinRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
@@ -19,6 +20,7 @@ import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.ValidatePinRequest;
+import in.projecteka.consentmanager.user.model.ChangePinRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -51,6 +53,7 @@ public class PatientsController {
     private final TransactionPinService transactionPinService;
     private final SignUpService signupService;
     private final UserService userService;
+    private final CacheAdapter<String, String> usedTokens;
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/pin")
@@ -177,5 +180,15 @@ public class PatientsController {
                         .zipWith(Mono.just(sessionId))
                         .flatMap(tuple -> signupService.removeOf(tuple.getT2()).thenReturn(tuple.getT1())))
                 : Mono.error(invalidRequester(updateUserRequests.getError()));
+    }
+
+    @PostMapping("/change-pin")
+    public Mono<Void> changeTransactionPin(@RequestBody ChangePinRequest request) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .flatMap(caller ->
+                        transactionPinService.changeTransactionPinFor(caller.getUsername(),
+                                request.getPin())
+                                .switchIfEmpty(Mono.defer(() -> usedTokens.put(caller.getSessionId(), ""))));
     }
 }

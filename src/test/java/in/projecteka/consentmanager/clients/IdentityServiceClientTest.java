@@ -2,10 +2,11 @@ package in.projecteka.consentmanager.clients;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequest;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.Session;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,7 +73,7 @@ class IdentityServiceClientTest {
                 Mono.just(ClientResponse
                         .create(HttpStatus.UNAUTHORIZED)
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .body(InvalidOtpResponse("1003","Invalid Otp"))
+                        .body(InvalidOtpResponse("1003", "Invalid Otp"))
                         .build()));
         StepVerifier.create(identityServiceClient.getToken(formData))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
@@ -98,8 +99,8 @@ class IdentityServiceClientTest {
 
     private static String InvalidOtpResponse(String error, String description) throws JsonProcessingException {
         Map<String, String> map = new HashMap<>(2);
-        map.put("error",error);
-        map.put("error_description",description);
+        map.put("error", error);
+        map.put("error_description", description);
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.writeValueAsString(map);
     }
@@ -188,7 +189,7 @@ class IdentityServiceClientTest {
 
         StepVerifier.create(identityServiceClient.updateUser(session, keyCloakUserId, userPwd))
                 .verifyComplete();
-        assertThat(captor.getValue().headers().get(HttpHeaders.AUTHORIZATION).get(0)).isEqualTo("Bearer " +session.getAccessToken());
+        assertThat(captor.getValue().headers().get(HttpHeaders.AUTHORIZATION).get(0)).isEqualTo("Bearer " + session.getAccessToken());
     }
 
     @Test
@@ -253,5 +254,43 @@ class IdentityServiceClientTest {
                         ((ClientError) throwable).getHttpStatus().is5xxServerError())
                 .verify();
         Assert.assertTrue(captor.getValue().url().toString().endsWith("realms/consent-manager/protocol/openid-connect/logout"));
+    }
+
+    @Test
+    public void getCredentials() throws JsonProcessingException {
+        var userName = string();
+        var accessToken = string();
+        KeyCloakUserCredentialRepresentation keyCreds = KeyCloakUserCredentialRepresentation.builder()
+                .id("credid").build();
+        String getUserResponseBody = new ObjectMapper().writeValueAsString(keyCreds);
+
+        when(exchangeFunction.exchange(captor.capture()))
+                .thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
+                        .header("Content-Type", "application/json")
+                        .body(getUserResponseBody).build()));
+
+        StepVerifier.create(identityServiceClient.getCredentials(userName, accessToken))
+                .assertNext(keyCloakUserCredentialRepresentation ->
+                        assertThat(keyCloakUserCredentialRepresentation.getId().equals(keyCreds.getId())))
+                .verifyComplete();
+        assertThat(captor.getValue().headers().get(HttpHeaders.AUTHORIZATION).get(0)).isEqualTo(accessToken);
+    }
+
+    @Test
+    public void getCredentialsFailsFromKeyCloak() throws JsonProcessingException {
+        var userName = string();
+        var accessToken = string();
+
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(
+                Mono.just(ClientResponse
+                        .create(HttpStatus.NOT_FOUND)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .build()));
+
+        StepVerifier.create(identityServiceClient.getCredentials(userName, accessToken))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is4xxClientError())
+                .verify();
+        assertThat(captor.getValue().headers().get(HttpHeaders.AUTHORIZATION).get(0)).isEqualTo(accessToken);
     }
 }

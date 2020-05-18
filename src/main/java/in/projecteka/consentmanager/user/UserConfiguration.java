@@ -75,19 +75,6 @@ public class UserConfiguration {
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    @Bean({"accessToken","tokenType"})
-    public CacheAdapter<String, String> createLoadingCacheAdapterForAccessToken() {
-        return new LoadingCacheAdapter(createSessionCache(5));
-    }
-
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    @Bean({"refreshToken"})
-    public CacheAdapter<String, String> createLoadingCacheAdapterForRefreshToken() {
-        return new LoadingCacheAdapter(createSessionCache(30));
-    }
-
-
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens", "usedTokens"})
     public CacheAdapter<String, String> createLoadingCacheAdapter() {
        return new LoadingCacheAdapter(createSessionCache(5));

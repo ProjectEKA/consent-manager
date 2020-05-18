@@ -1,6 +1,7 @@
 server:
   port: 8000
 consentmanager:
+  cacheMethod: guava
   scheduler:
     consentExpiryCronExpr: "0 */1 * ? * *"
     consentRequestExpiryCronExpr: '0 0 0/12 ? * *'

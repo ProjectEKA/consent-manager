@@ -76,7 +76,6 @@ public class ConsentManagerConfiguration {
         return new LoadingCacheAdapter(createSessionCache(30));
     }
 
-
     public LoadingCache<String, String> createSessionCache(int duration) {
         return CacheBuilder
                 .newBuilder()

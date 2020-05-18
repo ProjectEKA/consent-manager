@@ -59,7 +59,6 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static java.util.List.of;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -344,6 +343,7 @@ public class LinkUserJourneyTest {
     final Dispatcher dispatcher = new Dispatcher() {
         @Override
         public MockResponse dispatch(RecordedRequest request) {
+            var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
             var official = identifier().use("official").system(hipServer.url("").toString()).build();
             var maxProvider = provider().name("Max").identifiers(of(official)).build();
             var tmhProvider = provider().name("TMH").identifiers(of(official)).build();
@@ -364,7 +364,7 @@ public class LinkUserJourneyTest {
                     return new MockResponse().setResponseCode(200).setBody(tmhJson).setHeader("content-type",
                             "application/json");
                 case "/api/1.0/sessions":
-                    return new MockResponse().setResponseCode(200).setBody("{}").setHeader("content-type",
+                    return new MockResponse().setResponseCode(200).setBody(session).setHeader("content-type",
                             "application/json");
             }
             return new MockResponse().setResponseCode(404);

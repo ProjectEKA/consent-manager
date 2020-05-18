@@ -10,6 +10,8 @@ import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.LoginMode;
+import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
@@ -17,7 +19,8 @@ import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
-import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
+import in.projecteka.consentmanager.user.model.OtpAttempt;
+import in.projecteka.consentmanager.user.model.IdentifierType;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.clients.ClientError.failedToFetchUserCredentials;
 import static in.projecteka.consentmanager.clients.ClientError.failedToUpdateUser;
 import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
 import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
@@ -42,7 +46,7 @@ public class UserService {
     private final IdentityServiceClient identityServiceClient;
     private final TokenService tokenService;
     private final UserServiceProperties userServiceProperties;
-    private final OtpRequestAttemptService otpRequestAttemptService;
+    private final OtpAttemptService otpAttemptService;
 
     public Mono<User> userWith(String userName) {
         return userRepository.userWith(userName.toLowerCase()).switchIfEmpty(Mono.error(userNotFound()));
@@ -60,8 +64,8 @@ public class UserService {
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
-        return otpRequestAttemptService
-                .validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(), OtpRequestAttempt.Action.REGISTRATION)
+        return otpAttemptService
+                .validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_REGISTRATION)
                 .then(otpServiceClient.send(otpRequest)
                         .then(signupService.cacheAndSendSession(
                                 otpRequest.getSessionId(),
@@ -80,30 +84,56 @@ public class UserService {
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
-        return otpRequestAttemptService.validateOTPRequest(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier(),OtpRequestAttempt.Action.RECOVER_PASSWORD,userName)
+        return otpAttemptService.validateOTPRequest(identifierType, userSignupEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD, userName)
                 .then(otpServiceClient
-                .send(otpRequest)
-                .then(signupService.updatedVerfiedSession(
-                        otpRequest.getSessionId(),
-                        userName)));
+                        .send(otpRequest)
+                        .then(signupService.updatedVerfiedSession(
+                                otpRequest.getSessionId(),
+                                userName)));
     }
 
-    public Mono<Token> permitOtp(OtpVerification otpVerification) {
+    private Mono<Void> validateAndVerifyOtp(OtpVerification otpVerification, OtpAttempt attempt){
+        return otpAttemptService.validateOTPSubmission(attempt)
+                .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue()))
+                .onErrorResume(ClientError.class, (error) -> otpAttemptService.handleInvalidOTPError(error, attempt))
+                .then(otpAttemptService.removeMatchingAttempts(attempt));
+    }
+
+    public Mono<Token> verifyOtpForRegistration(OtpVerification otpVerification) {
         if (!validateOtpVerification(otpVerification)) {
             throw new InvalidRequestException("invalid.request.body");
         }
-        return otpServiceClient
-                .verify(otpVerification.getSessionId(), otpVerification.getValue())
-                .then(signupService.generateToken(otpVerification.getSessionId()));
+
+        return signupService.getMobileNumber(otpVerification.getSessionId())
+                .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
+                .flatMap(mobileNumber -> {
+                    OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
+                            .sessionId(otpVerification.getSessionId())
+                            .identifierType(IdentifierType.MOBILE.name())
+                            .identifierValue(mobileNumber)
+                            .action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION);
+                    return validateAndVerifyOtp(otpVerification, builder.build())
+                            .then(signupService.generateToken(otpVerification.getSessionId()));
+                });
     }
 
-    public Mono<Token> verifyOtp(OtpVerification otpVerification) {
+    public Mono<Token> verifyOtpForForgetPassword(OtpVerification otpVerification) {
         if (!validateOtpVerification(otpVerification)) {
             throw new InvalidRequestException("invalid.request.body");
         }
-        return otpServiceClient
-                .verify(otpVerification.getSessionId(), otpVerification.getValue())
-                .then(signupService.generateToken(new HashMap<>(), otpVerification.getSessionId()));
+        return signupService.getUserName(otpVerification.getSessionId())
+                .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
+                .flatMap(userRepository::userWith)
+                .flatMap(user -> {
+                    OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
+                            .sessionId(otpVerification.getSessionId())
+                            .identifierType(IdentifierType.MOBILE.name())
+                            .identifierValue(user.getPhone())
+                            .action(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD)
+                            .cmId(user.getIdentifier());
+                    return validateAndVerifyOtp(otpVerification, builder.build())
+                            .then(signupService.generateToken(new HashMap<>(), otpVerification.getSessionId()));
+                });
     }
 
     public Mono<Session> create(CoreSignUpRequest coreSignUpRequest, String sessionId) {
@@ -136,6 +166,24 @@ public class UserService {
                 })
                 .doOnError(error -> Mono.error(failedToUpdateUser()))
                 .then(tokenService.tokenForUser(userName, updateUserRequest.getPassword()));
+    }
+
+    public Mono<LoginModeResponse> getLoginMode(String userName) {
+        return tokenService.tokenForAdmin()
+                .flatMap(adminSession -> {
+                    String accessToken = format("Bearer %s", adminSession.getAccessToken());
+                    return identityServiceClient.getUser(userName, accessToken)
+                            .switchIfEmpty(Mono.error(userNotFound()))
+                            .flatMap(cloakUsers -> identityServiceClient.getCredentials(cloakUsers.getId(), accessToken))
+                            .doOnError(error -> Mono.error(failedToFetchUserCredentials()))
+                            .collectList()
+                            .flatMap(userCreds -> {
+                                if (userCreds.isEmpty())
+                                    return Mono.just(LoginModeResponse.builder().loginMode(LoginMode.OTP).build());
+                                else
+                                    return Mono.just(LoginModeResponse.builder().loginMode(LoginMode.CREDENTIAL).build());
+                            });
+                });
     }
 
     private Mono<Object> userExistsWith(String username) {

@@ -12,10 +12,11 @@ import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
 import in.projecteka.consentmanager.user.model.LockedUser;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
-import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
+import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
+import in.projecteka.consentmanager.user.model.IdentifierType;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -43,7 +44,7 @@ public class SessionService {
     private final UserRepository userRepository;
     private final OtpServiceClient otpServiceClient;
     private final OtpServiceProperties otpServiceProperties;
-    private final OtpRequestAttemptService otpRequestAttemptService;
+    private final OtpAttemptService otpAttemptService;
 
 
     public Mono<Session> forNew(SessionRequest request) {
@@ -78,7 +79,7 @@ public class SessionService {
                 .map(user -> new OtpCommunicationData("mobile", user.getPhone()))
                 .map(otpCommunicationData -> new OtpRequest(sessionId, otpCommunicationData))
                 .flatMap(requestBody ->
-                        otpRequestAttemptService.validateOTPRequest(requestBody.getCommunication().getMode(), requestBody.getCommunication().getValue(), OtpRequestAttempt.Action.LOGIN, otpVerificationRequest.getUsername())
+                        otpAttemptService.validateOTPRequest(requestBody.getCommunication().getMode(), requestBody.getCommunication().getValue(), OtpAttempt.Action.OTP_REQUEST_LOGIN, otpVerificationRequest.getUsername())
                                 .then(otpServiceClient.send(requestBody)
                                         .then(Mono.defer(() -> unverifiedSessions.put(sessionId, otpVerificationRequest.getUsername())))
                                         .thenReturn(requestBody.getCommunication().getValue())))
@@ -100,8 +101,19 @@ public class SessionService {
         return unverifiedSessions.get(otpPermitRequest.getSessionId())
                 .filter(username -> otpPermitRequest.getUsername().equals(username))
                 .switchIfEmpty(Mono.error(ClientError.invalidSession(otpPermitRequest.getSessionId())))
-                .then(Mono.defer(() -> tokenService
-                        .tokenForOtpUser(otpPermitRequest.getUsername(),
-                                otpPermitRequest.getSessionId(), otpPermitRequest.getOtp())));
+                .flatMap(userRepository::userWith)
+                .flatMap(user -> {
+                    OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
+                            .action(OtpAttempt.Action.OTP_SUBMIT_LOGIN)
+                            .cmId(otpPermitRequest.getUsername())
+                            .sessionId(otpPermitRequest.getSessionId())
+                            .identifierType(IdentifierType.MOBILE.name())
+                            .identifierValue(user.getPhone());
+                    return otpAttemptService.validateOTPSubmission(builder.build())
+                            .then(tokenService
+                                    .tokenForOtpUser(otpPermitRequest.getUsername(), otpPermitRequest.getSessionId(), otpPermitRequest.getOtp()))
+                            .onErrorResume(ClientError.class, error -> otpAttemptService.handleInvalidOTPError(error, builder.build()))
+                            .flatMap(session -> otpAttemptService.removeMatchingAttempts(builder.build()).then(Mono.just(session)));
+                });
     }
 }

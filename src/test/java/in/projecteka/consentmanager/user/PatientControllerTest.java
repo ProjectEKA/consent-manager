@@ -12,7 +12,19 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.user.model.*;
+import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
+import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
+import in.projecteka.consentmanager.user.model.Identifier;
+import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.OtpMediumType;
+import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.Profile;
+import in.projecteka.consentmanager.user.model.SignUpSession;
+import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
+import in.projecteka.consentmanager.user.model.UpdateUserRequest;
+import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -284,7 +296,7 @@ public class PatientControllerTest {
         var token = string();
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
-        when(userService.updatePasswordFor(request, userName)).thenReturn(Mono.just(expectedSession));
+        when(userService.updatePassword(request, userName)).thenReturn(Mono.just(expectedSession));
 
         webClient.put()
                 .uri("/patients/profile/update-password")
@@ -296,7 +308,8 @@ public class PatientControllerTest {
                 .expectStatus()
                 .isOk();
 
-        verify(userService, times(1)).updatePasswordFor(request, userName);
+        verify(userService, times(1)).updatePassword(request, userName);
+        verify(authenticator, times(1)).verify(token);
     }
 
     @Test
@@ -306,10 +319,6 @@ public class PatientControllerTest {
                 .newPassword("Test")
                 .build();
         String userName = "user@ncg";
-        Session expectedSession = Session.builder()
-                .accessToken("New access token")
-                .tokenType("bearer")
-                .build();
         var token = string();
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
@@ -323,6 +332,9 @@ public class PatientControllerTest {
                 .exchange()
                 .expectStatus()
                 .isBadRequest();
+
+        verify(authenticator, times(1)).verify(token);
+        verifyNoInteractions(userService);
     }
 
     @Test
@@ -335,7 +347,7 @@ public class PatientControllerTest {
         var token = string();
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
-        when(userService.updatePasswordFor(request, userName)).thenReturn(Mono.error(ClientError.failedToUpdatePassword()));
+        when(userService.updatePassword(request, userName)).thenReturn(Mono.error(ClientError.failedToUpdateUser()));
 
         webClient.put()
                 .uri("/patients/profile/update-password")
@@ -346,10 +358,13 @@ public class PatientControllerTest {
                 .exchange()
                 .expectStatus()
                 .is5xxServerError();
+
+        verify(userService, times(1)).updatePassword(request, userName);
+        verify(authenticator, times(1)).verify(token);
     }
 
     @Test
-    public void shouldReturnErrorIfOldPasswordValidationFails() {
+    public void shouldReturnErrorIfIncorrectOldPasswordGiven() {
         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                 .oldPassword("Test@1234")
                 .newPassword("TestPassword@2020")
@@ -358,7 +373,7 @@ public class PatientControllerTest {
         var token = string();
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
-        when(userService.updatePasswordFor(request, userName)).thenReturn(Mono.error(ClientError.unAuthorizedRequest("Invalid old password")));
+        when(userService.updatePassword(request, userName)).thenReturn(Mono.error(ClientError.unAuthorizedRequest("Invalid old password")));
 
         webClient.put()
                 .uri("/patients/profile/update-password")
@@ -369,5 +384,8 @@ public class PatientControllerTest {
                 .exchange()
                 .expectStatus()
                 .isUnauthorized();
+
+        verify(userService, times(1)).updatePassword(request, userName);
+        verify(authenticator, times(1)).verify(token);
     }
 }

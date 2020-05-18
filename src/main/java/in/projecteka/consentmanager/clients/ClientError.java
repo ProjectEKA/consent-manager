@@ -167,10 +167,6 @@ public class ClientError extends Throwable {
         return internalServerError("Failed to update user");
     }
 
-    public static ClientError failedToUpdatePassword() {
-        return internalServerError("Failed to update password");
-    }
-
     public static ClientError queueNotFound() {
         return new ClientError(INTERNAL_SERVER_ERROR,
                 new ErrorRepresentation(new Error(QUEUE_NOT_FOUND, "Queue not found")));

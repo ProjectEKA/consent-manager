@@ -9,7 +9,16 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
-import in.projecteka.consentmanager.user.model.*;
+import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
+import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.SignUpSession;
+import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
+import in.projecteka.consentmanager.user.model.UpdateUserRequest;
+import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.consentmanager.user.model.UserCredential;
+import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +28,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.clients.ClientError.*;
+import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
+import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
 import static java.lang.String.format;
 
 @AllArgsConstructor
@@ -117,24 +127,20 @@ public class UserService {
                 .flatMap(userName -> updatedSessionFor(updateUserRequest.getPassword(), userName));
     }
 
-    private Mono<Session> updatedSessionFor(String password, String userName) {
-        return getSession(password, userName, failedToUpdateUser());
-    }
-
-    public Mono<Session> updatePasswordFor(UpdatePasswordRequest request, String userName) {
+    public Mono<Session> updatePassword(UpdatePasswordRequest request, String userName) {
         return tokenService.tokenForUser( userName, request.getOldPassword())
                 .onErrorResume(error -> Mono.error(ClientError.unAuthorizedRequest("Invalid old password")))
-                .flatMap(session -> getSession(request.getNewPassword(), userName, failedToUpdatePassword()));
+                .flatMap(session -> updatedSessionFor(request.getNewPassword(), userName));
     }
 
-    private Mono<Session> getSession(String password, String userName, ClientError clientError) {
+    private Mono<Session> updatedSessionFor(String password, String userName) {
         return tokenService.tokenForAdmin()
                 .flatMap(adminSession -> {
                     return identityServiceClient.getUser(userName, String.format("Bearer %s", adminSession.getAccessToken()))
                             .flatMap(cloakUsers -> identityServiceClient.updateUser(adminSession, cloakUsers.getId(),
                                     password)).then();
                 })
-                .doOnError(error -> Mono.error(clientError))
+                .doOnError(error -> Mono.error(ClientError.failedToUpdateUser()))
                 .then(tokenService.tokenForUser(userName, password));
     }
 

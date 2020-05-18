@@ -160,7 +160,7 @@ public class ClientError extends Throwable {
     }
 
     public static ClientError failedToEditTransactionPin() {
-        return internalServerError("Failed to update pin in transaction pin");
+        return internalServerError("Failed to update transaction pin");
     }
 
     public static ClientError failedToFetchTransactionPin() {

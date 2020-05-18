@@ -10,6 +10,8 @@ import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.LoginMode;
+import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
@@ -28,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.clients.ClientError.failedToFetchUserCredentials;
 import static in.projecteka.consentmanager.clients.ClientError.failedToUpdateUser;
 import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
 import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
@@ -163,6 +166,24 @@ public class UserService {
                 })
                 .doOnError(error -> Mono.error(failedToUpdateUser()))
                 .then(tokenService.tokenForUser(userName, updateUserRequest.getPassword()));
+    }
+
+    public Mono<LoginModeResponse> getLoginMode(String userName) {
+        return tokenService.tokenForAdmin()
+                .flatMap(adminSession -> {
+                    String accessToken = format("Bearer %s", adminSession.getAccessToken());
+                    return identityServiceClient.getUser(userName, accessToken)
+                            .switchIfEmpty(Mono.error(userNotFound()))
+                            .flatMap(cloakUsers -> identityServiceClient.getCredentials(cloakUsers.getId(), accessToken))
+                            .doOnError(error -> Mono.error(failedToFetchUserCredentials()))
+                            .collectList()
+                            .flatMap(userCreds -> {
+                                if (userCreds.isEmpty())
+                                    return Mono.just(LoginModeResponse.builder().loginMode(LoginMode.OTP).build());
+                                else
+                                    return Mono.just(LoginModeResponse.builder().loginMode(LoginMode.CREDENTIAL).build());
+                            });
+                });
     }
 
     private Mono<Object> userExistsWith(String username) {

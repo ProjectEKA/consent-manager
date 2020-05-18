@@ -4,12 +4,15 @@ import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
+import in.projecteka.consentmanager.user.model.LoginMode;
+import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
@@ -97,7 +100,7 @@ class UserServiceTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        var otpServiceProperties = new OtpServiceProperties("",Collections.singletonList("MOBILE"),5);
+        var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"), 5);
         userService = new UserService(
                 userRepository,
                 otpServiceProperties,
@@ -417,4 +420,74 @@ class UserServiceTest {
         verifyNoInteractions(identityServiceClient);
     }
 
+    @Test
+    public void getLoginMode() {
+        String userName = "user@ncg";
+        Session tokenForAdmin = session().build();
+        String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
+        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder()
+                .id("keycloakuserid")
+                .build();
+        Flux<KeyCloakUserCredentialRepresentation> userCreds = Flux.just(KeyCloakUserCredentialRepresentation
+                .builder()
+                .id("credid")
+                .type("password")
+                .build());
+
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
+        when(identityServiceClient.getCredentials(userRepresentation.getId(), token)).thenReturn(userCreds);
+
+        Mono<LoginModeResponse> loginModeResponse = userService.getLoginMode(userName);
+
+        StepVerifier.create(loginModeResponse)
+                .assertNext(response -> assertThat(response.getLoginMode()).isEqualTo(LoginMode.CREDENTIAL))
+                .verifyComplete();
+        verify(tokenService, times(1)).tokenForAdmin();
+        verify(identityServiceClient, times(1)).getUser(userName, token);
+        verify(identityServiceClient, times(1)).getCredentials(userRepresentation.getId(), token);
+    }
+
+    @Test
+    public void getLoginModeAsOTPWhenPasswordNotSet() {
+        String userName = "user@ncg";
+        Session tokenForAdmin = session().build();
+        String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
+        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder()
+                .id("keycloakuserid")
+                .build();
+
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
+        when(identityServiceClient.getCredentials(userRepresentation.getId(), token)).thenReturn(Flux.empty());
+
+        Mono<LoginModeResponse> loginModeResponse = userService.getLoginMode(userName);
+
+        StepVerifier.create(loginModeResponse)
+                .assertNext(response -> assertThat(response.getLoginMode()).isEqualTo(LoginMode.OTP))
+                .verifyComplete();
+        verify(tokenService, times(1)).tokenForAdmin();
+        verify(identityServiceClient, times(1)).getUser(userName, token);
+        verify(identityServiceClient, times(1)).getCredentials(userRepresentation.getId(), token);
+    }
+
+    @Test
+    public void getLoginModeReturnsErrorForNonExistentUser() {
+        String userName = "user@ncg";
+        Session tokenForAdmin = session().build();
+        String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
+        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder().build();
+
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.empty());
+
+        Mono<LoginModeResponse> loginModeResponse = userService.getLoginMode(userName);
+
+        StepVerifier.create(loginModeResponse)
+                .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().value() == 404);
+        verify(tokenService, times(1)).tokenForAdmin();
+        verify(identityServiceClient, times(1)).getUser(userName, token);
+        verify(identityServiceClient, times(0)).getCredentials(any(), any());
+    }
 }

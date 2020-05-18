@@ -15,6 +15,8 @@ import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
 import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.LoginMode;
+import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpMediumType;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.Profile;
@@ -40,7 +42,9 @@ import java.util.List;
 import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static java.lang.String.format;
 import static java.time.LocalDate.now;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -206,7 +210,7 @@ PatientControllerTest {
     }
 
     @Test
-    public void verifyOtp(){
+    public void verifyOtp() {
         var otpVerification = new OtpVerification(string(), string());
         Token token = new Token(string());
 
@@ -279,5 +283,27 @@ PatientControllerTest {
         verify(userService, times(0)).update(request, "oldSession");
         verify(signupService, times(0)).sessionFrom(token);
         verify(signupService, times(0)).removeOf(any());
+    }
+
+    @Test
+    public void fetchLoginMode() {
+        LoginModeResponse loginModeResponse = LoginModeResponse.builder()
+                .loginMode(LoginMode.CREDENTIAL)
+                .build();
+        String userName = "user@ncg";
+
+        when(userService.getLoginMode(userName)).thenReturn(Mono.just(loginModeResponse));
+
+        webClient
+                .get()
+                .uri(format("/patients/profile/loginmode?userName=%s", userName))
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(LoginModeResponse.class)
+                .value(LoginModeResponse::getLoginMode, is(LoginMode.CREDENTIAL));
+
+        verify(userService, times(1)).getLoginMode(userName);
     }
 }

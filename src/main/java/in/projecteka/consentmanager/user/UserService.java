@@ -123,7 +123,7 @@ public class UserService {
 
     public Mono<Session> updatePasswordFor(UpdatePasswordRequest request, String userName) {
         return tokenService.tokenForUser( userName, request.getOldPassword())
-                .switchIfEmpty(Mono.error(new InvalidRequestException("Invalid Old Password")))
+                .onErrorResume(error -> Mono.error(ClientError.unAuthorizedRequest("Invalid old password")))
                 .then(getSession(request.getNewPassword(), userName, failedToUpdatePassword()));
     }
 

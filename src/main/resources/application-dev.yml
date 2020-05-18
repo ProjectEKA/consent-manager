@@ -5,6 +5,8 @@ consentmanager:
     defaultPageSize: 20
     maxPageSize: 100
     url: http://localhost:9000
+    purposeOfUseDefUrl: classpath:/static/ValueSet/purpose-of-use.json
+    hiTypesDefUrl: classpath:/static/ValueSet/health-info-type.json
     #in minutes
     consentRequestExpiry: 60
   scheduler:
@@ -20,10 +22,13 @@ consentmanager:
     transactionPinDigitSize: 4
     transactionPinTokenValidity: 2
     userCreationTokenValidity: 5
-    userIdSuffix: @ncg
+    userIdSuffix: "@ncg"
     maxOtpAttempts: 5
     maxOtpAttemptsPeriodInMin: 10
     otpAttemptsBlockPeriodInMin: 2
+    otpInvalidAttemptsBlockPeriodInMin: 2
+    otpMaxInvalidAttempts: 5
+    maxIncorrectPinAttempts: 5
   lockeduserservice:
     maximumInvalidAttempts: 5
     coolOfPeriod: 8

@@ -4,13 +4,15 @@ import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
-import in.projecteka.consentmanager.user.model.OtpRequestAttempt;
+import in.projecteka.consentmanager.user.model.LoginMode;
+import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
@@ -18,7 +20,9 @@ import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.consentmanager.user.model.OtpAttempt;
 import org.assertj.core.api.InstanceOfAssertFactories;
+import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +50,7 @@ import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -71,7 +76,7 @@ class UserServiceTest {
     private SignUpService signupService;
 
     @Mock
-    private OtpRequestAttemptService otpRequestAttemptService;
+    private OtpAttemptService otpAttemptService;
 
     @Mock
     private IdentityServiceClient identityServiceClient;
@@ -96,7 +101,7 @@ class UserServiceTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        var otpServiceProperties = new OtpServiceProperties("",Collections.singletonList("MOBILE"),5);
+        var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"), 5);
         userService = new UserService(
                 userRepository,
                 otpServiceProperties,
@@ -105,7 +110,7 @@ class UserServiceTest {
                 identityServiceClient,
                 tokenService,
                 properties,
-                otpRequestAttemptService);
+                otpAttemptService);
     }
 
     @Test
@@ -116,7 +121,7 @@ class UserServiceTest {
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
         when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq("+91-9788888")))
                 .thenReturn(Mono.just(signUpSession));
-        when(otpRequestAttemptService.validateOTPRequest(userSignUpEnquiry.getIdentifierType(), userSignUpEnquiry.getIdentifier(), OtpRequestAttempt.Action.REGISTRATION)).thenReturn(Mono.empty());
+        when(otpAttemptService.validateOTPRequest(userSignUpEnquiry.getIdentifierType(), userSignUpEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_REGISTRATION)).thenReturn(Mono.empty());
 
         Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
 
@@ -136,14 +141,32 @@ class UserServiceTest {
         var sessionId = string();
         var otp = string();
         var token = string();
+        var mobileNumber = "+91-8888888888";
+
+        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
-        when(otpServiceClient.verify(sessionId, otp)).thenReturn(Mono.empty());
+        when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
         when(signupService.generateToken(sessionId))
                 .thenReturn(Mono.just(new Token(token)));
-
-        StepVerifier.create(userService.permitOtp(otpVerification))
+        when(signupService.getMobileNumber(eq(sessionId))).thenReturn(Mono.just(mobileNumber));
+        when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
+        when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
+        StepVerifier.create(userService.verifyOtpForRegistration(otpVerification))
                 .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
                 .verifyComplete();
+
+        var capturedAttempts = argument.getAllValues();
+        var validateOTPSubmissionArgument = capturedAttempts.get(0);
+        assertEquals(sessionId, validateOTPSubmissionArgument.getSessionId());
+        assertEquals("MOBILE", validateOTPSubmissionArgument.getIdentifierType());
+        assertEquals(mobileNumber, validateOTPSubmissionArgument.getIdentifierValue());
+        assertEquals(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION, validateOTPSubmissionArgument.getAction());
+
+        var removeMatchingAttemptsArgument = capturedAttempts.get(1);
+        assertEquals(sessionId, removeMatchingAttemptsArgument.getSessionId());
+        assertEquals("MOBILE", removeMatchingAttemptsArgument.getIdentifierType());
+        assertEquals(mobileNumber, removeMatchingAttemptsArgument.getIdentifierValue());
+        assertEquals(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION, removeMatchingAttemptsArgument.getAction());
     }
 
     @ParameterizedTest(name = "Invalid values")
@@ -155,7 +178,7 @@ class UserServiceTest {
     public void shouldThrowInvalidRequestExceptionForInvalidOtpValue(
             @ConvertWith(NullableConverter.class) String value) {
         OtpVerification otpVerification = new OtpVerification(string(), value);
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.permitOtp(otpVerification));
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForRegistration(otpVerification));
     }
 
     @ParameterizedTest(name = "Invalid session id")
@@ -167,7 +190,7 @@ class UserServiceTest {
     public void shouldThrowInvalidRequestExceptionForInvalidOtpSessionId(
             @ConvertWith(NullableConverter.class) String sessionId) {
         OtpVerification otpVerification = new OtpVerification(sessionId, string());
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.permitOtp(otpVerification));
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForRegistration(otpVerification));
     }
 
     @Test
@@ -175,14 +198,34 @@ class UserServiceTest {
         var sessionId = string();
         var otp = string();
         var token = string();
+        var user = new EasyRandom().nextObject(User.class);
+        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
-        when(otpServiceClient.verify(sessionId, otp)).thenReturn(Mono.empty());
+        when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
         when(signupService.generateToken(new HashMap<>(),sessionId))
                 .thenReturn(Mono.just(new Token(token)));
-
-        StepVerifier.create(userService.verifyOtp(otpVerification))
+        when(signupService.getUserName(eq(sessionId))).thenReturn(Mono.just(user.getIdentifier()));
+        when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));
+        when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
+        when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
+        StepVerifier.create(userService.verifyOtpForForgetPassword(otpVerification))
                 .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
                 .verifyComplete();
+
+        var capturedAttempts = argument.getAllValues();
+        var validateOTPSubmissionArgument = capturedAttempts.get(0);
+        assertEquals(sessionId, validateOTPSubmissionArgument.getSessionId());
+        assertEquals("MOBILE", validateOTPSubmissionArgument.getIdentifierType());
+        assertEquals(user.getPhone(), validateOTPSubmissionArgument.getIdentifierValue());
+        assertEquals(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD, validateOTPSubmissionArgument.getAction());
+        assertEquals(user.getIdentifier(), validateOTPSubmissionArgument.getCmId());
+
+        var removeMatchingAttemptsArgument = capturedAttempts.get(1);
+        assertEquals(sessionId, removeMatchingAttemptsArgument.getSessionId());
+        assertEquals("MOBILE", removeMatchingAttemptsArgument.getIdentifierType());
+        assertEquals(user.getPhone(), removeMatchingAttemptsArgument.getIdentifierValue());
+        assertEquals(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD, removeMatchingAttemptsArgument.getAction());
+        assertEquals(user.getIdentifier(), removeMatchingAttemptsArgument.getCmId());
     }
 
     @ParameterizedTest(name = "Invalid values")
@@ -194,7 +237,7 @@ class UserServiceTest {
     public void shouldThrowErrorForInvalidOtpValue(
             @ConvertWith(NullableConverter.class) String value) {
         OtpVerification otpVerification = new OtpVerification(string(), value);
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtp(otpVerification));
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForForgetPassword(otpVerification));
     }
 
     @ParameterizedTest(name = "Invalid session id")
@@ -206,7 +249,7 @@ class UserServiceTest {
     public void shouldThrowErrorForInvalidOtpSessionId(
             @ConvertWith(NullableConverter.class) String sessionId) {
         OtpVerification otpVerification = new OtpVerification(sessionId, string());
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtp(otpVerification));
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForForgetPassword(otpVerification));
     }
 
     @Test
@@ -463,5 +506,75 @@ class UserServiceTest {
         verify(identityServiceClient, times(1)).getUser(userName, token);
         verify(identityServiceClient, times(1)).updateUser(tokenForAdmin, userRepresentation.getId(), request.getNewPassword());
         verify(tokenService, times(1)).tokenForUser(userName, request.getNewPassword());
+    }
+    @Test
+    public void getLoginMode() {
+        String userName = "user@ncg";
+        Session tokenForAdmin = session().build();
+        String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
+        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder()
+                .id("keycloakuserid")
+                .build();
+        Flux<KeyCloakUserCredentialRepresentation> userCreds = Flux.just(KeyCloakUserCredentialRepresentation
+                .builder()
+                .id("credid")
+                .type("password")
+                .build());
+
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
+        when(identityServiceClient.getCredentials(userRepresentation.getId(), token)).thenReturn(userCreds);
+
+        Mono<LoginModeResponse> loginModeResponse = userService.getLoginMode(userName);
+
+        StepVerifier.create(loginModeResponse)
+                .assertNext(response -> assertThat(response.getLoginMode()).isEqualTo(LoginMode.CREDENTIAL))
+                .verifyComplete();
+        verify(tokenService, times(1)).tokenForAdmin();
+        verify(identityServiceClient, times(1)).getUser(userName, token);
+        verify(identityServiceClient, times(1)).getCredentials(userRepresentation.getId(), token);
+    }
+
+    @Test
+    public void getLoginModeAsOTPWhenPasswordNotSet() {
+        String userName = "user@ncg";
+        Session tokenForAdmin = session().build();
+        String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
+        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder()
+                .id("keycloakuserid")
+                .build();
+
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
+        when(identityServiceClient.getCredentials(userRepresentation.getId(), token)).thenReturn(Flux.empty());
+
+        Mono<LoginModeResponse> loginModeResponse = userService.getLoginMode(userName);
+
+        StepVerifier.create(loginModeResponse)
+                .assertNext(response -> assertThat(response.getLoginMode()).isEqualTo(LoginMode.OTP))
+                .verifyComplete();
+        verify(tokenService, times(1)).tokenForAdmin();
+        verify(identityServiceClient, times(1)).getUser(userName, token);
+        verify(identityServiceClient, times(1)).getCredentials(userRepresentation.getId(), token);
+    }
+
+    @Test
+    public void getLoginModeReturnsErrorForNonExistentUser() {
+        String userName = "user@ncg";
+        Session tokenForAdmin = session().build();
+        String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
+        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder().build();
+
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.empty());
+
+        Mono<LoginModeResponse> loginModeResponse = userService.getLoginMode(userName);
+
+        StepVerifier.create(loginModeResponse)
+                .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().value() == 404);
+        verify(tokenService, times(1)).tokenForAdmin();
+        verify(identityServiceClient, times(1)).getUser(userName, token);
+        verify(identityServiceClient, times(0)).getCredentials(any(), any());
     }
 }

@@ -5,11 +5,13 @@ import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.CreatePinRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
 import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpMediumType;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.Profile;
@@ -19,6 +21,7 @@ import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.ValidatePinRequest;
+import in.projecteka.consentmanager.user.model.ChangePinRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -28,6 +31,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -50,6 +54,7 @@ public class PatientsController {
     private final TransactionPinService transactionPinService;
     private final SignUpService signupService;
     private final UserService userService;
+    private final CacheAdapter<String, String> usedTokens;
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/pin")
@@ -66,6 +71,11 @@ public class PatientsController {
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
                 .flatMap(profileService::profileFor);
+    }
+
+    @GetMapping("/profile/loginmode")
+    public Mono<LoginModeResponse> fetchLoginMode(@RequestParam String userName) {
+        return userService.getLoginMode(userName);
     }
 
     @PostMapping("/verify-pin")
@@ -105,7 +115,7 @@ public class PatientsController {
 
     @PostMapping("/verifyotp")
     public Mono<Token> verifyOtp(@RequestBody OtpVerification request) {
-        return userService.verifyOtp(request);
+        return userService.verifyOtpForForgetPassword(request);
     }
 
     private Mono<GenerateOtpResponse> getGenerateOtpResponse(UserSignUpEnquiry userSignUpEnquiry, String userName) {
@@ -184,4 +194,14 @@ public class PatientsController {
                 : Mono.error(invalidRequester(updatePasswordRequest.getError()));
     }
 
+
+    @PostMapping("/change-pin")
+    public Mono<Void> changeTransactionPin(@RequestBody ChangePinRequest request) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .flatMap(caller ->
+                        transactionPinService.changeTransactionPinFor(caller.getUsername(),
+                                request.getPin())
+                                .switchIfEmpty(Mono.defer(() -> usedTokens.put(caller.getSessionId(), ""))));
+    }
 }

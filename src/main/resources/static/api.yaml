@@ -1203,6 +1203,62 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /patients/change-pin:
+    post:
+      tags:
+        - account
+      summary: Change PIN
+      description: to change the transaction PIN.
+      parameters:
+        - name: Authorization
+          description: Token received after successful verification of PIN
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePinRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/ChangePinRequest'
+      responses:
+        '200':
+          description: PIN updated successfully.
+        '400':
+          description: Bad request (Invalid PIN)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description:  >
+            **Causes:**
+              * Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /patients/profile:
     post:
       tags:
@@ -1334,6 +1390,54 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /patients/profile/loginmode:
+    get:
+      tags:
+        - account
+      summary: Get login type of the given user
+      description: Fetch a login type associated with the user-name
+      operationId: fetchLoginMode
+      parameters:
+        - name: userName
+          in: query
+          required: true
+          schema:
+            type: string
+            format: string
+            example: raj.sharma@ncg
+      responses:
+        '200':
+          description: Login mode of the user. If the mode is CREDENTIAL, it signifies that the consent-manager id of the user has the password set. Otherwise, user logs in via OTP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginModeResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/LoginModeResponse'
+        '404':
+          description: User doesn't exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 
   /patients/profile/update-password:
     put:
@@ -2475,6 +2579,13 @@ components:
             {type: "PAN", value: "EEE****00J"},
             {type: "ABPMJAYID", value: "P1234ABCD"}
             ]
+    LoginModeResponse:
+      type: object
+      properties:
+        loginType:
+          type: string
+          enum: [CREDENTIAL, OTP]
+          example: CREDENTIAL | OTP
     IdentifierReference:
       type: object
       properties:
@@ -2516,11 +2627,21 @@ components:
           description: '4 digit number'
         scope:
           type: string
-          enum : [consentrequest.approve, consent.revoke]
+          enum: [consentrequest.approve, consent.revoke, profile.changepin]
           description: 'Scope the supplied token will be valid for'
       required:
         - pin
         - scope
+    ChangePinRequest:
+      type: object
+      properties:
+        pin:
+          type: string
+          maximum: 9999
+          example: "1234"
+          description: '4 digit number'
+      required:
+        - pin
     CreatePatientRequest:
       type: object
       properties:

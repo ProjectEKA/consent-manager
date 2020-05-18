@@ -21,6 +21,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SESSI
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TOKEN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TRANSACTION_PIN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.NETWORK_SERVICE_ERROR;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.NO_PATIENT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.NO_RESULT_FROM_GATEWAY;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_EXPIRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_INVALID;
@@ -290,4 +291,10 @@ public class ClientError extends Throwable {
     public static ClientError unknownUnauthroziedError(String message) {
         return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(UNKNOWN_ERROR_OCCURRED, message)));
     }
+
+    public static ClientError patientNotFound() {
+        return new ClientError(NOT_FOUND,
+                new ErrorRepresentation(new Error(NO_PATIENT_FOUND, "Could not find patient information")));
+    }
+
 }

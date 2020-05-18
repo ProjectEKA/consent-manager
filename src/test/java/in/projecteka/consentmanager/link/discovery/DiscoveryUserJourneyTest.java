@@ -293,10 +293,10 @@ public class DiscoveryUserJourneyTest {
         when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
-        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.empty());
+        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         var errorResponse = new ErrorRepresentation(
-                new Error(ErrorCode.NETWORK_SERVICE_ERROR,"Cannot process the request at the moment, please try later."));
+                new Error(ErrorCode.NO_PATIENT_FOUND,"Could not find patient information"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
                 .uri("/patients/care-contexts/discover")
@@ -305,8 +305,46 @@ public class DiscoveryUserJourneyTest {
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .bodyValue(patientDiscoveryRequest)
                 .exchange()
-                .expectStatus().is5xxServerError()
+                .expectStatus().isNotFound()
                 .expectBody()
                 .json(errorResponseJson);
     }
+
+    @Test
+    public void shouldFailDiscoverCareContextForZeroPatientResponse() throws Exception {
+        var token = string();
+        String requestId = "cecd3ed2-a7ea-406e-90f2-b51aa78741b9";
+        String patientDiscoveryRequest = "{\n" +
+                "  \"requestId\": \""+ requestId + "\",\n" +
+                "  \"hip\": {\n" +
+                "    \"id\": \"12345\"\n" +
+                "  }\n" +
+                "}";
+        String patientResponse = "{\n" +
+                "  \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n" +
+                "  \"transactionId\": \"2b7778a0-9eb7-4ed4-8693-ed8be2eac9d2\",\n" +
+                "  \"patient\": null\n" +
+                "}";
+        String userId = "test-user-id";
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userId, false)));
+        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
+        when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
+        when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
+        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
+        when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
+        var errorResponse = new ErrorRepresentation(
+                new Error(ErrorCode.NO_PATIENT_FOUND,"Could not find patient information"));
+        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
+        webTestClient.post()
+                .uri("/patients/care-contexts/discover")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientDiscoveryRequest)
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody()
+                .json(errorResponseJson);
+    }
+
 }

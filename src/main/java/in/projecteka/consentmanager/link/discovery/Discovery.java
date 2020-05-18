@@ -100,7 +100,10 @@ public class Discovery {
                     if (discoveryResult.getError() != null) {
                         //Should we get the error and throw client error with the errors
                         logger.error("[Discovery] Patient care-contexts discovery resulted in error {}", discoveryResult.getError().getMessage());
-                        return Mono.error(ClientError.networkServiceCallFailed());
+                        return Mono.error(ClientError.patientNotFound());
+                    }
+                    if (discoveryResult.getPatient() == null){
+                        return Mono.error(ClientError.patientNotFound());
                     }
                     return Mono.just(DiscoveryResponse.builder()
                             .patient(discoveryResult.getPatient())

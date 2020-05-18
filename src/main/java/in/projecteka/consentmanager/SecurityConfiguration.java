@@ -77,6 +77,7 @@ public class SecurityConfiguration {
                                           "/ValueSet/**.json",
                                           "/patients/generateotp",
                                           "/patients/verifyotp",
+                                          "/patients/profile/loginmode",
                                           "/users/verify",
                                           "/users/permit",
                                           "/otpsession/verify",
@@ -146,8 +147,8 @@ public class SecurityConfiguration {
                 return checkSignUp(token);
             }
             if (isGrantOrRevokeConsentRequest(requestPath, requestMethod)) {
-                Optional<String> validScope = getScope(requestPath,requestMethod);
-                if(validScope.isEmpty()) {
+                Optional<String> validScope = getScope(requestPath, requestMethod);
+                if (validScope.isEmpty()) {
                     return Mono.empty();//TODO handle better?
                 }
                 return validateGrantOrRevokeConsentRequest(token, validScope.get());
@@ -227,7 +228,8 @@ public class SecurityConfiguration {
         }
 
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
-            boolean isSignUp = (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) || (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod));
+            boolean isSignUp = (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
+                    (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod));
             return isSignUp;
         }
     }

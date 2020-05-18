@@ -62,8 +62,26 @@ public class ClientRegistryClient {
                 .bodyToMono(Session.class);
     }
 
+    public Mono<Session> getTokenWithRefreshToken(String clientId, String clientSecret, String refreshToken) {
+        return webClientBuilder.build()
+                .post()
+                .uri("/api/1.0/sessionsRefresh")
+                .contentType(APPLICATION_JSON)
+                .accept(APPLICATION_JSON)
+                .body(BodyInserters.fromValue(requestWithRefreshToken(clientId, clientSecret, refreshToken)))
+                .retrieve()
+                .onStatus(HttpStatus::isError, clientResponse -> clientResponse.bodyToMono(Properties.class)
+                        .doOnNext(properties -> logger.error(properties.toString()))
+                        .thenReturn(ClientError.unAuthorized()))
+                .bodyToMono(Session.class);
+    }
+
     private SessionRequest requestWith(String clientId, String clientSecret) {
         return new SessionRequest(clientId, clientSecret, "password");
+    }
+
+    private SessionRequestWithRefreshToken requestWithRefreshToken(String clientId, String clientSecret, String refreshToken) {
+        return new SessionRequestWithRefreshToken(clientId, clientSecret, "refresh_token", refreshToken);
     }
 
     @AllArgsConstructor
@@ -72,5 +90,14 @@ public class ClientRegistryClient {
         private String clientId;
         private String clientSecret;
         private String grantType;
+    }
+
+    @AllArgsConstructor
+    @Data
+    private static class SessionRequestWithRefreshToken {
+        private String clientId;
+        private String clientSecret;
+        private String grantType;
+        private String refreshToken;
     }
 }

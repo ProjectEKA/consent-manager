@@ -28,6 +28,7 @@ consentmanager:
     otpAttemptsBlockPeriodInMin: 2
     otpInvalidAttemptsBlockPeriodInMin: 2
     otpMaxInvalidAttempts: 5
+    maxIncorrectPinAttempts: 5
   lockeduserservice:
     maximumInvalidAttempts: 5
     coolOfPeriod: 8

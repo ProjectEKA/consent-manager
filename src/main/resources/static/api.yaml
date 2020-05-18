@@ -2519,16 +2519,12 @@ components:
     ChangePinRequest:
       type: object
       properties:
-        requestId:
-          type: string
-          format: uuid
         pin:
           type: string
           maximum: 9999
           example: "1234"
           description: '4 digit number'
       required:
-        - requestId
         - pin
     CreatePatientRequest:
       type: object

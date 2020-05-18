@@ -162,10 +162,14 @@ public class PatientsController {
 
     @PutMapping("/profile/update-password")
     public Mono<Session> updatePassword(@RequestBody UpdatePasswordRequest request) {
-        return ReactiveSecurityContextHolder.getContext()
+        var updatePasswordRequest = SignUpRequestValidator.validatePassword(request.getNewPassword());
+        return updatePasswordRequest.isValid()
+                ? ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
-                .flatMap(userName -> userService.updatePasswordFor(request, userName));
+                .flatMap(userName -> userService.updatePasswordFor(request, userName))
+                : Mono.error(invalidRequester(updatePasswordRequest.getError()));
+
     }
 
 }

@@ -4,23 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.common.Authenticator;
+import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
-import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
-import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
-import in.projecteka.consentmanager.user.model.Identifier;
-import in.projecteka.consentmanager.user.model.IdentifierType;
-import in.projecteka.consentmanager.user.model.OtpMediumType;
-import in.projecteka.consentmanager.user.model.OtpVerification;
-import in.projecteka.consentmanager.user.model.Profile;
-import in.projecteka.consentmanager.user.model.SignUpSession;
-import in.projecteka.consentmanager.user.model.Token;
-import in.projecteka.consentmanager.user.model.UpdateUserRequest;
-import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.consentmanager.user.model.*;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,6 +81,9 @@ public class PatientControllerTest {
     @SuppressWarnings("unused")
     @MockBean(name = "identityServiceJWKSet")
     private JWKSet identityServiceJWKSet;
+
+    @MockBean
+    private Authenticator authenticator;
 
     @Test
     public void createUser() {
@@ -273,5 +268,106 @@ public class PatientControllerTest {
         verify(userService, times(0)).update(request, "oldSession");
         verify(signupService, times(0)).sessionFrom(token);
         verify(signupService, times(0)).removeOf(any());
+    }
+
+    @Test
+    public void shouldUpdatePasswordSuccessfully() {
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword("Test@1234")
+                .newPassword("Test@2020")
+                .build();
+        String userName = "user@ncg";
+        Session expectedSession = Session.builder()
+                .accessToken("New access token")
+                .tokenType("bearer")
+                .build();
+        var token = string();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
+        when(userService.updatePasswordFor(request, userName)).thenReturn(Mono.just(expectedSession));
+
+        webClient.put()
+                .uri("/patients/profile/update-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        verify(userService, times(1)).updatePasswordFor(request, userName);
+    }
+
+    @Test
+    public void shouldReturnErrorForInvalidPasswordUpdateRequest() {
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword("Test@1234")
+                .newPassword("Test")
+                .build();
+        String userName = "user@ncg";
+        Session expectedSession = Session.builder()
+                .accessToken("New access token")
+                .tokenType("bearer")
+                .build();
+        var token = string();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
+
+        webClient.put()
+                .uri("/patients/profile/update-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+    }
+
+    @Test
+    public void shouldReturnErrorOnUpdatePasswordFails() {
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword("Test@1234")
+                .newPassword("TestPassword@2020")
+                .build();
+        String userName = "user@ncg";
+        var token = string();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
+        when(userService.updatePasswordFor(request, userName)).thenReturn(Mono.error(ClientError.failedToUpdatePassword()));
+
+        webClient.put()
+                .uri("/patients/profile/update-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .is5xxServerError();
+    }
+
+    @Test
+    public void shouldReturnErrorIfOldPasswordValidationFails() {
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword("Test@1234")
+                .newPassword("TestPassword@2020")
+                .build();
+        String userName = "user@ncg";
+        var token = string();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
+        when(userService.updatePasswordFor(request, userName)).thenReturn(Mono.error(ClientError.unAuthorizedRequest("Invalid old password")));
+
+        webClient.put()
+                .uri("/patients/profile/update-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .isUnauthorized();
     }
 }

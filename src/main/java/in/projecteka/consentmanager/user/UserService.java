@@ -124,7 +124,7 @@ public class UserService {
     public Mono<Session> updatePasswordFor(UpdatePasswordRequest request, String userName) {
         return tokenService.tokenForUser( userName, request.getOldPassword())
                 .onErrorResume(error -> Mono.error(ClientError.unAuthorizedRequest("Invalid old password")))
-                .then(getSession(request.getNewPassword(), userName, failedToUpdatePassword()));
+                .flatMap(session -> getSession(request.getNewPassword(), userName, failedToUpdatePassword()));
     }
 
     private Mono<Session> getSession(String password, String userName, ClientError clientError) {

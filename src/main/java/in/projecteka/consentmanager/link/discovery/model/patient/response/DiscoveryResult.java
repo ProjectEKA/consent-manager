@@ -14,7 +14,9 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DiscoveryResult {
     private UUID requestId;
+    private String timestamp;
     private UUID transactionId;
     private Patient patient;
     private Error error;
+    private GatewayResponse resp;
 }

@@ -351,7 +351,8 @@ public class DiscoveryUserJourneyTest {
     public void onDiscoverPatientCareContexts() {
         var token = string();
         String patientDiscoveryResult = "{\n" +
-                "  \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n" +
+                "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
+                "  \"timestamp\": \"2020-05-19T11:14:36.318Z\",\n" +
                 "  \"transactionId\": \"2b7778a0-9eb7-4ed4-8693-ed8be2eac9d2\",\n" +
                 "  \"patient\": {\n" +
                 "    \"referenceNumber\": \"XYZPatientUuid\",\n" +
@@ -362,6 +363,9 @@ public class DiscoveryUserJourneyTest {
                 "        \"display\": \"string\"\n" +
                 "      }\n" +
                 "    ]\n" +
+                "  },\n" +
+                "  \"resp\": {\n" +
+                "    \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n" +
                 "  }\n" +
                 "}";
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));

@@ -19,6 +19,7 @@ import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
@@ -350,24 +351,7 @@ public class DiscoveryUserJourneyTest {
     @Test
     public void onDiscoverPatientCareContexts() {
         var token = string();
-        String patientDiscoveryResult = "{\n" +
-                "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
-                "  \"timestamp\": \"2020-05-19T11:14:36.318Z\",\n" +
-                "  \"transactionId\": \"2b7778a0-9eb7-4ed4-8693-ed8be2eac9d2\",\n" +
-                "  \"patient\": {\n" +
-                "    \"referenceNumber\": \"XYZPatientUuid\",\n" +
-                "    \"display\": \"string\",\n" +
-                "    \"careContexts\": [\n" +
-                "      {\n" +
-                "        \"referenceNumber\": \"string\",\n" +
-                "        \"display\": \"string\"\n" +
-                "      }\n" +
-                "    ]\n" +
-                "  },\n" +
-                "  \"resp\": {\n" +
-                "    \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n" +
-                "  }\n" +
-                "}";
+        var patientDiscoveryResult = TestBuilders.discoveryResult().build();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
         webTestClient.post()
                 .uri("/patients/care-contexts/on-discover")
@@ -382,13 +366,14 @@ public class DiscoveryUserJourneyTest {
     @Test
     public void shouldFailWhenTransactionIdIsNotGiven() throws Exception {
         var token = string();
-        String patientDiscoveryResult = "{\n" +
-                "  \"patient\": null,\n" +
-                "  \"error\": {\n" +
-                "    \"code\": 1000,\n" +
-                "    \"message\": \"Could not identify a unique patient. Need more information\"\n" +
-                "  }\n" +
-                "}";
+        var error = Error.builder()
+                .code(ErrorCode.NO_PATIENT_FOUND)
+                .message("Could not identify a unique patient. Need more information.")
+                .build();
+        var patientDiscoveryResult = DiscoveryResult.builder()
+                .patient(null)
+                .error(error)
+                .build();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
         webTestClient.post()
                 .uri("/patients/care-contexts/on-discover")

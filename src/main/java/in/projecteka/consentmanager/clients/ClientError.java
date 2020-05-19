@@ -159,6 +159,10 @@ public class ClientError extends Throwable {
         return internalServerError("Failed to update request_id in transaction pin");
     }
 
+    public static ClientError failedToEditTransactionPin() {
+        return internalServerError("Failed to update transaction pin");
+    }
+
     public static ClientError failedToFetchTransactionPin() {
         return internalServerError("Failed to fetch transaction pin");
     }
@@ -170,6 +174,10 @@ public class ClientError extends Throwable {
 
     public static ClientError failedToUpdateUser() {
         return internalServerError("Failed to update user");
+    }
+
+    public static ClientError failedToFetchUserCredentials() {
+        return internalServerError("Failed to get user credentials");
     }
 
     public static ClientError queueNotFound() {

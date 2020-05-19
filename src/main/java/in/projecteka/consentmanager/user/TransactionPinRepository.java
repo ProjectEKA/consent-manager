@@ -19,6 +19,7 @@ public class TransactionPinRepository {
     private static final String SELECT_TRANSACTION_PIN_BY_PATIENT;
     private static final String SELECT_TRANSACTION_PIN_BY_REQUEST;
     private static final String UPDATE_REQUEST_ID = "UPDATE transaction_pin SET request_id=$1 WHERE patient_id=$2";
+    private static final String UPDATE_TRANSACTION_PIN = "UPDATE transaction_pin SET pin=$2 WHERE patient_id=$1";
     private final PgPool dbClient;
 
     static {
@@ -77,6 +78,18 @@ public class TransactionPinRepository {
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(ClientError.failedToUpdateTransactionPin());
+                                return;
+                            }
+                            monoSink.success();
+                        }));
+    }
+
+    public Mono<Void> changeTransactionPin(String patientId, String pin) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(UPDATE_TRANSACTION_PIN)
+                .execute(Tuple.of(patientId,pin),
+                        handler -> {
+                            if (handler.failed()) {
+                                monoSink.error(ClientError.failedToEditTransactionPin());
                                 return;
                             }
                             monoSink.success();

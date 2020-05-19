@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.clients;
 
+import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequest;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
@@ -15,6 +16,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static in.projecteka.consentmanager.clients.ClientError.invalidOtp;
+import static in.projecteka.consentmanager.clients.ClientError.networkServiceCallFailed;
+import static in.projecteka.consentmanager.clients.ClientError.otpExpired;
+import static in.projecteka.consentmanager.clients.ClientError.unknownUnauthroziedError;
+import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
 import static java.lang.String.format;
 
 public class IdentityServiceClient {
@@ -38,7 +44,7 @@ public class IdentityServiceClient {
                 .accept(MediaType.APPLICATION_JSON)
                 .body(Mono.just(request), KeycloakUser.class)
                 .retrieve()
-                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(networkServiceCallFailed()))
                 .toBodilessEntity()
                 .then();
     }
@@ -57,11 +63,11 @@ public class IdentityServiceClient {
                             String keyCloakErrorValue = keyCloakError.getError();
                             switch (keyCloakErrorValue) {
                                 case "1002":
-                                    return Mono.error(ClientError.invalidOtp());
+                                    return Mono.error(invalidOtp());
                                 case "1003":
-                                    return Mono.error(ClientError.otpExpired());
+                                    return Mono.error(otpExpired());
                                 default:
-                                    return Mono.error(ClientError.unknownUnauthroziedError(keyCloakError.getErrorDescription()));
+                                    return Mono.error(unknownUnauthroziedError(keyCloakError.getErrorDescription()));
                             }
                         }))
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
@@ -76,10 +82,22 @@ public class IdentityServiceClient {
                 .header(HttpHeaders.AUTHORIZATION, accessToken)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .onStatus(HttpStatus::isError, clientResponse -> {
-                    return Mono.error(ClientError.userNotFound());
-                })
+                .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(userNotFound()))
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(networkServiceCallFailed()))
                 .bodyToFlux(KeyCloakUserRepresentation.class);
+    }
+
+    public Flux<KeyCloakUserCredentialRepresentation> getCredentials(String userId, String accessToken) {
+        String uri = format("/admin/realms/consent-manager/users/%s/credentials", userId);
+        return webClientBuilder.build()
+                .get()
+                .uri(uri)
+                .header(HttpHeaders.AUTHORIZATION, accessToken)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(userNotFound()))
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(networkServiceCallFailed()))
+                .bodyToFlux(KeyCloakUserCredentialRepresentation.class);
     }
 
     public Mono<Void> logout(MultiValueMap<String, String> formData) {
@@ -90,7 +108,7 @@ public class IdentityServiceClient {
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData(formData))
                 .retrieve()
-                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(networkServiceCallFailed()))
                 .bodyToMono(Void.class);
     }
 
@@ -110,8 +128,8 @@ public class IdentityServiceClient {
                 .header(HttpHeaders.AUTHORIZATION, accessToken)
                 .body(Mono.just(keyCloakUserPasswordChangeRequest), KeyCloakUserPasswordChangeRequest.class)
                 .retrieve()
-                .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(ClientError.userNotFound()))
-                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(userNotFound()))
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(networkServiceCallFailed()))
                 .toBodilessEntity()
                 .then();
     }

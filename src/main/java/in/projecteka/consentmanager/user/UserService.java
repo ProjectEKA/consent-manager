@@ -10,9 +10,12 @@ import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.LoginMode;
+import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
@@ -28,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.clients.ClientError.failedToFetchUserCredentials;
 import static in.projecteka.consentmanager.clients.ClientError.failedToUpdateUser;
 import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
 import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
@@ -151,18 +155,42 @@ public class UserService {
     public Mono<Session> update(UpdateUserRequest updateUserRequest, String sessionId) {
         return signupService.getUserName(sessionId)
                 .switchIfEmpty(Mono.error(new InvalidRequestException("user not verified")))
-                .flatMap(userName -> updatedSessionFor(updateUserRequest, userName));
+                .flatMap(userName -> updatedSessionFor(updateUserRequest.getPassword(), userName));
     }
 
-    private Mono<Session> updatedSessionFor(UpdateUserRequest updateUserRequest, String userName) {
+    public Mono<Session> updatePassword(UpdatePasswordRequest request, String userName) {
+        return tokenService.tokenForUser( userName, request.getOldPassword())
+                .onErrorResume(error -> Mono.error(ClientError.unAuthorizedRequest("Invalid old password")))
+                .flatMap(session -> updatedSessionFor(request.getNewPassword(), userName));
+    }
+
+    private Mono<Session> updatedSessionFor(String password, String userName) {
         return tokenService.tokenForAdmin()
                 .flatMap(adminSession -> {
                     return identityServiceClient.getUser(userName, String.format("Bearer %s", adminSession.getAccessToken()))
                             .flatMap(cloakUsers -> identityServiceClient.updateUser(adminSession, cloakUsers.getId(),
-                                    updateUserRequest.getPassword())).then();
+                                    password)).then();
                 })
-                .doOnError(error -> Mono.error(failedToUpdateUser()))
-                .then(tokenService.tokenForUser(userName, updateUserRequest.getPassword()));
+                .doOnError(error -> Mono.error(ClientError.failedToUpdateUser()))
+                .then(tokenService.tokenForUser(userName, password));
+    }
+
+    public Mono<LoginModeResponse> getLoginMode(String userName) {
+        return tokenService.tokenForAdmin()
+                .flatMap(adminSession -> {
+                    String accessToken = format("Bearer %s", adminSession.getAccessToken());
+                    return identityServiceClient.getUser(userName, accessToken)
+                            .switchIfEmpty(Mono.error(userNotFound()))
+                            .flatMap(cloakUsers -> identityServiceClient.getCredentials(cloakUsers.getId(), accessToken))
+                            .doOnError(error -> Mono.error(failedToFetchUserCredentials()))
+                            .collectList()
+                            .flatMap(userCreds -> {
+                                if (userCreds.isEmpty())
+                                    return Mono.just(LoginModeResponse.builder().loginMode(LoginMode.OTP).build());
+                                else
+                                    return Mono.just(LoginModeResponse.builder().loginMode(LoginMode.CREDENTIAL).build());
+                            });
+                });
     }
 
     private Mono<Object> userExistsWith(String username) {

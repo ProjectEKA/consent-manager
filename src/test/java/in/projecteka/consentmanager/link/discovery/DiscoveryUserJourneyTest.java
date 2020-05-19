@@ -5,21 +5,30 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
+import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.model.Error;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -38,13 +47,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient
+@AutoConfigureWebTestClient(timeout = "6000000")
 @ContextConfiguration(initializers = DiscoveryUserJourneyTest.ContextInitializer.class)
 public class DiscoveryUserJourneyTest {
 
@@ -82,6 +95,19 @@ public class DiscoveryUserJourneyTest {
 
     @MockBean
     private Authenticator authenticator;
+
+    @MockBean
+    private UserServiceClient userServiceClient;
+
+    @MockBean
+    private DiscoveryRepository discoveryRepository;
+
+    @MockBean
+    private DiscoveryServiceClient discoveryServiceClient;
+
+    @MockBean
+    @Qualifier("discoveryResults")
+    CacheAdapter<String,String> discoveryResults;
 
     @SuppressWarnings("unused")
     @MockBean
@@ -169,4 +195,156 @@ public class DiscoveryUserJourneyTest {
             values.applyTo(applicationContext);
         }
     }
+
+    @Test
+    public void shouldGetGatewayTimeoutForDiscoverCareContext() throws Exception {
+        var token = string();
+        String requestId = "cecd3ed2-a7ea-406e-90f2-b51aa78741b9";
+        String patientDiscoveryRequest = "{\n" +
+                "  \"requestId\": \""+ requestId + "\",\n" +
+                "  \"hip\": {\n" +
+                "    \"id\": \"12345\"\n" +
+                "  }\n" +
+                "}";
+        String userId = "test-user-id";
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userId, false)));
+        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
+        when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
+        when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
+        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
+        when(discoveryResults.get(any())).thenReturn(Mono.empty());
+        var errorResponse = new ErrorRepresentation(
+                new Error(ErrorCode.NO_RESULT_FROM_GATEWAY,"Didn't receive any result from Gateway"));
+        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
+        webTestClient.post()
+                .uri("/patients/care-contexts/discover")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientDiscoveryRequest)
+                .exchange()
+                .expectStatus().is5xxServerError()
+                .expectBody()
+                .json(errorResponseJson);
+    }
+
+    @Test
+    public void shouldDiscoverCareContext() throws Exception {
+        var token = string();
+        String requestId = "cecd3ed2-a7ea-406e-90f2-b51aa78741b9";
+        String patientDiscoveryRequest = "{\n" +
+                "  \"requestId\": \""+ requestId + "\",\n" +
+                "  \"hip\": {\n" +
+                "    \"id\": \"12345\"\n" +
+                "  }\n" +
+                "}";
+        String patientResponse = "{\n" +
+                "  \"patient\": {\n" +
+                "    \"referenceNumber\": \"XYZPatientUuid\",\n" +
+                "    \"display\": \"string\",\n" +
+                "    \"careContexts\": [\n" +
+                "      {\n" +
+                "        \"referenceNumber\": \"string\",\n" +
+                "        \"display\": \"string\"\n" +
+                "      }\n" +
+                "    ]\n" +
+                "  }\n" +
+                "}";
+        String userId = "test-user-id";
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userId, false)));
+        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
+        when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
+        when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
+        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
+        when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
+        webTestClient.post()
+                .uri("/patients/care-contexts/discover")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientDiscoveryRequest)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(DiscoveryResponse.class)
+                .value(DiscoveryResponse::getPatient, Matchers.notNullValue());
+    }
+
+    @Test
+    public void shouldFailDiscoverCareContext() throws Exception {
+        var token = string();
+        String requestId = "cecd3ed2-a7ea-406e-90f2-b51aa78741b9";
+        String patientDiscoveryRequest = "{\n" +
+                "  \"requestId\": \""+ requestId + "\",\n" +
+                "  \"hip\": {\n" +
+                "    \"id\": \"12345\"\n" +
+                "  }\n" +
+                "}";
+        String patientResponse = "{\n" +
+                "  \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n" +
+                "  \"transactionId\": \"2b7778a0-9eb7-4ed4-8693-ed8be2eac9d2\",\n" +
+                "  \"patient\": null,\n" +
+                "  \"error\": {\n" +
+                "    \"code\": 1000,\n" +
+                "    \"message\": \"Could not identify a unique patient. Need more information\"\n" +
+                "  }\n" +
+                "}";
+        String userId = "test-user-id";
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userId, false)));
+        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
+        when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
+        when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
+        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
+        when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
+        var errorResponse = new ErrorRepresentation(
+                new Error(ErrorCode.NO_PATIENT_FOUND,"Could not find patient information"));
+        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
+        webTestClient.post()
+                .uri("/patients/care-contexts/discover")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientDiscoveryRequest)
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody()
+                .json(errorResponseJson);
+    }
+
+    @Test
+    public void shouldFailDiscoverCareContextForZeroPatientResponse() throws Exception {
+        var token = string();
+        String requestId = "cecd3ed2-a7ea-406e-90f2-b51aa78741b9";
+        String patientDiscoveryRequest = "{\n" +
+                "  \"requestId\": \""+ requestId + "\",\n" +
+                "  \"hip\": {\n" +
+                "    \"id\": \"12345\"\n" +
+                "  }\n" +
+                "}";
+        String patientResponse = "{\n" +
+                "  \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n" +
+                "  \"transactionId\": \"2b7778a0-9eb7-4ed4-8693-ed8be2eac9d2\",\n" +
+                "  \"patient\": null\n" +
+                "}";
+        String userId = "test-user-id";
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userId, false)));
+        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
+        when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
+        when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
+        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
+        when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
+        var errorResponse = new ErrorRepresentation(
+                new Error(ErrorCode.NO_PATIENT_FOUND,"Could not find patient information"));
+        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
+        webTestClient.post()
+                .uri("/patients/care-contexts/discover")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientDiscoveryRequest)
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody()
+                .json(errorResponseJson);
+    }
+
 }

@@ -16,6 +16,7 @@ import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
@@ -420,6 +421,92 @@ class UserServiceTest {
         verifyNoInteractions(identityServiceClient);
     }
 
+    @Test
+    public void shouldUpdatePasswordSuccessfully() {
+        String userName = "testUser@ncg";
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .newPassword("TestPassword@123")
+                .oldPassword("password@09")
+                .build();
+        Session oldSession = session().build();
+        Session newSession = session().build();
+        Session tokenForAdmin = session().build();
+        String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
+        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder()
+                .id("keycloakuserid")
+                .build();
+        when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(Mono.just(oldSession));
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
+        when(identityServiceClient.updateUser(tokenForAdmin, userRepresentation.getId(), request.getNewPassword())).thenReturn(Mono.empty());
+        when(tokenService.tokenForUser(userName, request.getNewPassword())).thenReturn(Mono.just(newSession));
+
+        Mono<Session> updatedPasswordSession = userService.updatePassword(request, userName);
+
+        StepVerifier.create(updatedPasswordSession)
+                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(newSession.getAccessToken()))
+                        .verifyComplete();
+
+        verify(tokenService, times(1)).tokenForAdmin();
+        verify(tokenService, times(1)).tokenForUser(userName, request.getOldPassword());
+        verify(identityServiceClient, times(1)).getUser(userName, token);
+        verify(identityServiceClient, times(1)).updateUser(tokenForAdmin, userRepresentation.getId(), request.getNewPassword());
+        verify(tokenService, times(1)).tokenForUser(userName, request.getNewPassword());
+    }
+
+    @Test
+    public void shouldReturnUnauthorizedErrorForInvalidOldPassword() {
+        String userName = "TestUser@ncg";
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword("Test@123")
+                .newPassword("TestPW@1234")
+                .build();
+
+        when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(Mono.error(ClientError.unAuthorizedRequest("Invalid Old Password")));
+
+        Mono<Session> updatedPasswordSession = userService.updatePassword(request, userName);
+
+        StepVerifier.create(updatedPasswordSession)
+                .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().value() == 401);
+
+        verify(tokenService, times(1)).tokenForUser(userName, request.getOldPassword());
+        verifyNoInteractions(identityServiceClient);
+    }
+
+    @Test
+    public void shouldReturnErrorWhenUpdateUserWithNewPasswordFails() {
+        String userName = "user@ncg";
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword("Test@3142")
+                .newPassword("Test@1234")
+                .build();
+        var oldSession = session().build();
+        var newSession = session().build();
+        Session tokenForAdmin = session().build();
+        String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
+        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder()
+                .id("keycloakuserid")
+                .build();
+
+        when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(Mono.just(oldSession));
+        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
+        when(identityServiceClient.updateUser(tokenForAdmin, userRepresentation.getId(), request.getNewPassword())).thenReturn(Mono.error(ClientError.failedToUpdateUser()));
+        when(tokenService.tokenForUser(userName, request.getNewPassword())).thenReturn(Mono.just(newSession));
+
+        Mono<Session> updatedPasswordSession = userService.updatePassword(request, userName);
+
+        StepVerifier.create(updatedPasswordSession)
+                .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().value() == 500);
+
+        verify(tokenService, times(1)).tokenForAdmin();
+        verify(tokenService, times(1)).tokenForUser(userName, request.getOldPassword());
+        verify(identityServiceClient, times(1)).getUser(userName, token);
+        verify(identityServiceClient, times(1)).updateUser(tokenForAdmin, userRepresentation.getId(), request.getNewPassword());
+        verify(tokenService, times(1)).tokenForUser(userName, request.getNewPassword());
+    }
     @Test
     public void getLoginMode() {
         String userName = "user@ncg";

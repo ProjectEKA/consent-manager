@@ -17,6 +17,7 @@ import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.Profile;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.ValidatePinRequest;
@@ -181,6 +182,18 @@ public class PatientsController {
                         .flatMap(tuple -> signupService.removeOf(tuple.getT2()).thenReturn(tuple.getT1())))
                 : Mono.error(invalidRequester(updateUserRequests.getError()));
     }
+
+    @PutMapping("/profile/update-password")
+    public Mono<Session> updatePassword(@RequestBody UpdatePasswordRequest request) {
+        var updatePasswordRequest = SignUpRequestValidator.validatePassword(request.getNewPassword());
+        return updatePasswordRequest.isValid()
+                ? ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .map(Caller::getUsername)
+                .flatMap(userName -> userService.updatePassword(request, userName))
+                : Mono.error(invalidRequester(updatePasswordRequest.getError()));
+    }
+
 
     @PostMapping("/change-pin")
     public Mono<Void> changeTransactionPin(@RequestBody ChangePinRequest request) {

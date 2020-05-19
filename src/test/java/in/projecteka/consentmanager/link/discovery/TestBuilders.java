@@ -75,4 +75,9 @@ public class TestBuilders {
     public static String string() {
         return easyRandom.nextObject(String.class);
     }
+
+    public static in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult.DiscoveryResultBuilder discoveryResult() {
+        return easyRandom.nextObject(in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult.DiscoveryResultBuilder.class);
+    }
+
 }

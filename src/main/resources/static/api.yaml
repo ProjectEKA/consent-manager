@@ -2670,17 +2670,29 @@ components:
           example: Raj Sharma
         gender:
           $ref: '#/components/schemas/Gender'
-        phoneNumber:
-          type: string
         yearOfBirth:
           type: integer
           example: 2000
-        pmjayId:
-          type: string
+        verifiedIdentifiers:
+          description: verified identifiers are passed
+          type: array
+          items:
+            $ref: '#/components/schemas/VerifiedIdentifiers'
+          xml:
+            name: verifiedIdentifiers
+            wrapped: true
+        unverifiedIdentifiers:
+          description: additional unverified identifiers may be passed
+          type: array
+          items:
+            $ref: '#/components/schemas/UnverifiedIdentifiers'
+          xml:
+            name: unverifiedIdentifiers
+            wrapped: true
       required:
         - name
         - gender
-        - phoneNumber
+        - verifiedIdentifiers
     RecoverCmIdResponse:
       type: object
       properties:
@@ -2779,6 +2791,31 @@ components:
     PatientIdentifierType:
       type: string
       enum: [MOBILE, MR]
+    VerifiedIdentifiers:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/VerifiedIdentifierType'
+        value:
+          type: string
+          example: "+919800083232"
+      xml:
+        name: Identifier
+    VerifiedIdentifierType:
+      type: string
+      enum: [MOBILE]
+    UnverifiedIdentifiers:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/UnverifiedIdentifierType'
+        value:
+          type: string
+      xml:
+        name: Identifier
+    UnverifiedIdentifierType:
+      type: string
+      enum: [PMJAY ID]
     ConsentDenyRequest:
       type: object
       properties:

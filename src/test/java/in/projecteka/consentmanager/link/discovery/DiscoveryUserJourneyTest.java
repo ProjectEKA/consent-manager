@@ -347,4 +347,66 @@ public class DiscoveryUserJourneyTest {
                 .json(errorResponseJson);
     }
 
+    @Test
+    public void onDiscoverPatientCareContexts() {
+        var token = string();
+        String patientDiscoveryResult = "{\n" +
+                "  \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n" +
+                "  \"transactionId\": \"2b7778a0-9eb7-4ed4-8693-ed8be2eac9d2\",\n" +
+                "  \"patient\": {\n" +
+                "    \"referenceNumber\": \"XYZPatientUuid\",\n" +
+                "    \"display\": \"string\",\n" +
+                "    \"careContexts\": [\n" +
+                "      {\n" +
+                "        \"referenceNumber\": \"string\",\n" +
+                "        \"display\": \"string\"\n" +
+                "      }\n" +
+                "    ]\n" +
+                "  }\n" +
+                "}";
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
+        webTestClient.post()
+                .uri("/patients/care-contexts/on-discover")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientDiscoveryResult)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
+    public void shouldFailWhenTransactionIdIsNotGiven() throws Exception {
+        var token = string();
+        String patientDiscoveryResult = "{\n" +
+                "  \"patient\": null,\n" +
+                "  \"error\": {\n" +
+                "    \"code\": 1000,\n" +
+                "    \"message\": \"Could not identify a unique patient. Need more information\"\n" +
+                "  }\n" +
+                "}";
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
+        webTestClient.post()
+                .uri("/patients/care-contexts/on-discover")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientDiscoveryResult)
+                .exchange()
+                .expectStatus().is5xxServerError();
+    }
+
+    @Test
+    public void shouldFailOnDiscoverPatientCareContexts() throws Exception {
+        var token = string();
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
+        webTestClient.post()
+                .uri("/patients/care-contexts/on-discover")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .exchange()
+                .expectStatus().is5xxServerError();
+    }
+
 }

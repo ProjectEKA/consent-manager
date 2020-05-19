@@ -114,6 +114,20 @@ public class Discovery {
 
     }
 
+    public Mono<Void> onDiscoverPatientCareContexts(DiscoveryResult discoveryResult) {
+        return discoveryResults.put(discoveryResult.getTransactionId().toString(), serializeResultFromHIP(discoveryResult));
+    }
+
+    private String serializeResultFromHIP(DiscoveryResult responseBody) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(responseBody);
+        } catch (JsonProcessingException e) {
+            logger.error("[Discovery] Can not serialize response from HIP", e);
+        }
+        return null;
+    }
+
     private Mono<DiscoveryResult> resultFromHIP(String responseBody) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {

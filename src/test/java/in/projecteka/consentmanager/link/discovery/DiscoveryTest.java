@@ -250,8 +250,4 @@ public class DiscoveryTest {
                 .verifyComplete();
     }
 
-    @Test
-    public void doSomething() {
-        System.out.println(Instant.now().toString());
-    }
 }

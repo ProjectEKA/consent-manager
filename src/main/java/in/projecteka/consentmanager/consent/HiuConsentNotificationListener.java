@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_CONSENT_NOTIFICATION_QUEUE;
-import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class HiuConsentNotificationListener {
@@ -35,10 +34,6 @@ public class HiuConsentNotificationListener {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig
                 .getQueues()
                 .get(HIU_CONSENT_NOTIFICATION_QUEUE);
-        if (destinationInfo == null) {
-            logger.error(HIU_CONSENT_NOTIFICATION_QUEUE + " not found");
-            throw queueNotFound();
-        }
 
         MessageListenerContainer mlc = messageListenerContainerFactory
                 .createMessageListenerContainer(destinationInfo.getRoutingKey());

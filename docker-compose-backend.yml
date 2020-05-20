@@ -1,12 +1,5 @@
 version: '3'
 services:
-  rabbitmq:
-    image: "rabbitmq:3"
-    container_name: rabbitmq
-    hostname: rabbitmq
-    ports:
-      - "5672:5672"
-
   keycloak:
     image: "jboss/keycloak"
     container_name: keycloak

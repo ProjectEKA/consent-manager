@@ -1,0 +1,20 @@
+version: '3'
+services:
+  rabbitmq:
+    #      build: ./rabbitmq/configuration
+    image: rabbitmq:3.8.3-management
+    container_name: rabbitmq_local
+    restart: always
+    hostname: "rabbitmq_local"
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "HJKLSDFGHJKLMBZSFXFZD"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    labels:
+      NAME: "rabbitmq_local"
+    volumes:
+      - "./rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins"
+      - "./rabbitmq/rabbitmq.config:/etc/rabbitmq/rabbitmq.config:rw"
+      - "./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:rw"
+      - "./volumes/rabbitmq/rabbit1/data:/var/lib/rabbitmq:rw"

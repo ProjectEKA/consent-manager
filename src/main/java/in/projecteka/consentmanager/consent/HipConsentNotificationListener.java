@@ -9,7 +9,6 @@ import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentati
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
@@ -19,7 +18,6 @@ import reactor.core.publisher.Mono;
 import javax.annotation.PostConstruct;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSENT_NOTIFICATION_QUEUE;
-import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class HipConsentNotificationListener {
@@ -35,10 +33,6 @@ public class HipConsentNotificationListener {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig
                 .getQueues()
                 .get(HIP_CONSENT_NOTIFICATION_QUEUE);
-        if (destinationInfo == null) {
-            logger.error(HIP_CONSENT_NOTIFICATION_QUEUE + " not found");
-            throw queueNotFound();
-        }
 
         MessageListenerContainer mlc = messageListenerContainerFactory
                 .createMessageListenerContainer(destinationInfo.getRoutingKey());

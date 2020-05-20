@@ -17,11 +17,12 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @AllArgsConstructor
 public class DiscoveryServiceClient {
 
-    private static final String PATIENTS_CARE_CONTEXTS_DISCOVERY_URL_PATH = "/patients/care-contexts/discover";
+    private static final String PATIENTS_CARE_CONTEXTS_DISCOVERY_URL_PATH = "/care-contexts/discover";
     private final WebClient.Builder webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
 
+    @Deprecated
     public Mono<PatientResponse> patientFor(PatientRequest request, String url, String hipId) {
         return tokenGenerator.get()
                 .map(token ->

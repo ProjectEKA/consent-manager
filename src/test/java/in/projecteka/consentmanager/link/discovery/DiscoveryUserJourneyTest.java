@@ -219,7 +219,7 @@ public class DiscoveryUserJourneyTest {
                 new Error(ErrorCode.NO_RESULT_FROM_GATEWAY,"Didn't receive any result from Gateway"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
-                .uri("/patients/care-contexts/discover")
+                .uri("/care-contexts/discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -260,7 +260,7 @@ public class DiscoveryUserJourneyTest {
         when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         webTestClient.post()
-                .uri("/patients/care-contexts/discover")
+                .uri("/care-contexts/discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -301,7 +301,7 @@ public class DiscoveryUserJourneyTest {
                 new Error(ErrorCode.NO_PATIENT_FOUND,"Could not find patient information"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
-                .uri("/patients/care-contexts/discover")
+                .uri("/care-contexts/discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -338,7 +338,7 @@ public class DiscoveryUserJourneyTest {
                 new Error(ErrorCode.NO_PATIENT_FOUND,"Could not find patient information"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
-                .uri("/patients/care-contexts/discover")
+                .uri("/care-contexts/discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -355,7 +355,7 @@ public class DiscoveryUserJourneyTest {
         var patientDiscoveryResult = TestBuilders.discoveryResult().build();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
         webTestClient.post()
-                .uri("/patients/care-contexts/on-discover")
+                .uri("/care-contexts/on-discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -381,7 +381,7 @@ public class DiscoveryUserJourneyTest {
                 .build();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
         webTestClient.post()
-                .uri("/patients/care-contexts/on-discover")
+                .uri("/care-contexts/on-discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -395,7 +395,7 @@ public class DiscoveryUserJourneyTest {
         var token = string();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
         webTestClient.post()
-                .uri("/patients/care-contexts/on-discover")
+                .uri("/care-contexts/on-discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)

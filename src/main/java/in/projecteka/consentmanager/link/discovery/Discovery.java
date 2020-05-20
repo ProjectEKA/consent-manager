@@ -56,6 +56,7 @@ public class Discovery {
                 .map(Transformer::to);
     }
 
+    @Deprecated
     public Mono<DiscoveryResponse> patientFor(String userName,
                                               List<PatientIdentifier> unverifiedIdentifiers,
                                               String providerId,

@@ -213,7 +213,7 @@ public class DiscoveryUserJourneyTest {
         when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
-        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
+        when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.empty());
         var errorResponse = new ErrorRepresentation(
                 new Error(ErrorCode.NO_RESULT_FROM_GATEWAY,"Didn't receive any result from Gateway"));
@@ -257,7 +257,7 @@ public class DiscoveryUserJourneyTest {
         when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
-        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
+        when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         webTestClient.post()
                 .uri("/patients/care-contexts/discover")
@@ -295,7 +295,7 @@ public class DiscoveryUserJourneyTest {
         when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
-        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
+        when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         var errorResponse = new ErrorRepresentation(
                 new Error(ErrorCode.NO_PATIENT_FOUND,"Could not find patient information"));
@@ -332,7 +332,7 @@ public class DiscoveryUserJourneyTest {
         when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
-        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
+        when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         var errorResponse = new ErrorRepresentation(
                 new Error(ErrorCode.NO_PATIENT_FOUND,"Could not find patient information"));

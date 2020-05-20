@@ -11,4 +11,5 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConstructorBinding
 public class LinkServiceProperties {
     private final String url;
+    private final int txnTimeout;
 }

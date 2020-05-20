@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
@@ -38,7 +39,7 @@ public class Discovery {
     private final DiscoveryServiceClient discoveryServiceClient;
     private final DiscoveryRepository discoveryRepository;
     private final CentralRegistry centralRegistry;
-    private final GatewayServiceProperties gatewayServiceProperties;
+    private final LinkServiceProperties serviceProperties;
     private final CacheAdapter<String,String> discoveryResults;
 
     private static final Logger logger = LoggerFactory.getLogger(Discovery.class);
@@ -86,10 +87,9 @@ public class Discovery {
                 .flatMap(val ->
                         userWith(userName)
                                 .flatMap(user -> discoveryServiceClient.requestPatientFor(
-                                        requestFor(user, transactionId, unverifiedIdentifiers, requestId),
-                                        gatewaySystemUrl(),
-                                        providerId)
-                                        .zipWith(Mono.delay(Duration.ofSeconds(getExpectedFlowResponseDuration())))
+                                                    requestFor(user, transactionId, unverifiedIdentifiers, requestId),
+                                                    providerId)
+                                        .zipWith(Mono.delay(Duration.ofMillis(getExpectedFlowResponseDuration())))
                                         .flatMap(tuple ->
                                                 discoveryResults.get(requestId.toString())
                                                         .switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
@@ -143,13 +143,8 @@ public class Discovery {
     }
 
     private long getExpectedFlowResponseDuration() {
-        return gatewayServiceProperties.getResponseTimeout();
+        return serviceProperties.getTxnTimeout();
     }
-
-    private String gatewaySystemUrl() {
-        return gatewayServiceProperties.getBaseUrl();
-    }
-
 
     private Mono<Boolean> validateRequest(UUID requestId) {
         return discoveryRepository.getIfPresent(requestId)

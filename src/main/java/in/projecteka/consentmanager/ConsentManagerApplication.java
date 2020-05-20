@@ -7,7 +7,7 @@ import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.RedisOptions;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.dataflow.DataFlowConsentManagerProperties;
-import in.projecteka.consentmanager.link.discovery.GatewayServiceProperties;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.user.JWTProperties;
 import in.projecteka.consentmanager.user.LockedServiceProperties;
 import in.projecteka.consentmanager.user.UserServiceProperties;

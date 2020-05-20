@@ -110,7 +110,7 @@ public class DiscoveryUserJourneyTest {
 
     @MockBean
     @Qualifier("discoveryResults")
-    CacheAdapter<String,String> discoveryResults
+    CacheAdapter<String,String> discoveryResults;
 
     @SuppressWarnings("unused")
     @MockBean

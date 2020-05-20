@@ -87,7 +87,6 @@ public class ConsentManagerConfiguration {
                 });
     }
 
-
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"accessToken"})
     public CacheAdapter<String, String> createRedisCacheAdapter(RedisOptions redisOptions) {
@@ -115,8 +114,7 @@ public class ConsentManagerConfiguration {
     public CentralRegistry centralRegistry(ClientRegistryClient clientRegistryClient,
                                            ClientRegistryProperties clientRegistryProperties,
                                            CacheAdapter<String, String> accessToken,
-                                           CacheAdapter<String, String> refreshToken
-    ) {
+                                           CacheAdapter<String, String> refreshToken) {
         return new CentralRegistry(clientRegistryClient, clientRegistryProperties, accessToken, refreshToken);
     }
 

@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifierType;
@@ -55,6 +56,12 @@ public class DiscoveryTest {
     @Mock
     DiscoveryRepository discoveryRepository;
 
+    @Mock
+    GatewayServiceProperties gatewayServiceProperties;
+
+    @Mock
+    CacheAdapter<String,String> discoveryResults;
+
     @BeforeEach
     public void setUp() {
         initMocks(this);
@@ -66,7 +73,9 @@ public class DiscoveryTest {
                 userServiceClient,
                 discoveryServiceClient,
                 discoveryRepository,
-                centralRegistry);
+                centralRegistry,
+                gatewayServiceProperties,
+                discoveryResults);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var identifier = identifier().use(
@@ -90,7 +99,12 @@ public class DiscoveryTest {
         var transactionId = UUID.randomUUID();
         var requestId = UUID.randomUUID();
         var patientId = string();
-        var discovery = new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry);
+        var discovery = new Discovery(userServiceClient,
+                                    discoveryServiceClient,
+                                    discoveryRepository,
+                                    centralRegistry,
+                                    gatewayServiceProperties,
+                                    discoveryResults);
         var address = address().use("work").build();
         var telecom = telecom().use("work").build();
         var patientInResponse = patientInResponse()
@@ -132,7 +146,7 @@ public class DiscoveryTest {
 
         when(centralRegistry.providerWith(eq(providerId))).thenReturn(Mono.just(provider));
         when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
-        when(discoveryServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl)))
+        when(discoveryServiceClient.patientFor(eq(patientRequest), eq(hipClientUrl), eq(providerId)))
                 .thenReturn(Mono.just(patientResponse));
         when(discoveryRepository.insert(providerId, patientId, transactionId, requestId)).thenReturn(Mono.empty());
         when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.empty());
@@ -154,7 +168,9 @@ public class DiscoveryTest {
                 userServiceClient,
                 discoveryServiceClient,
                 discoveryRepository,
-                centralRegistry);
+                centralRegistry,
+                gatewayServiceProperties,
+                discoveryResults);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
         User user = user().identifier("1").name("first name").build();
@@ -192,7 +208,9 @@ public class DiscoveryTest {
                 userServiceClient,
                 discoveryServiceClient,
                 discoveryRepository,
-                centralRegistry);
+                centralRegistry,
+                gatewayServiceProperties,
+                discoveryResults);
 
         when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.just(transactionId.toString()));
 
@@ -213,7 +231,9 @@ public class DiscoveryTest {
                 userServiceClient,
                 discoveryServiceClient,
                 discoveryRepository,
-                centralRegistry);
+                centralRegistry,
+                gatewayServiceProperties,
+                discoveryResults);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var identifier = identifier().build();

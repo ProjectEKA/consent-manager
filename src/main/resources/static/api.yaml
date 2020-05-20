@@ -1325,6 +1325,66 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /patients/recover-cmid:
+    post:
+      tags:
+        - account
+      summary: Recover CM Id
+      description: Patient can recover CM Id if forgotten.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoverCmIdRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/RecoverCmIdRequest'
+      responses:
+        '200':
+          description: Found a patient
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoverCmIdResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/RecoverCmIdResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: >
+            **Causes:**
+              * No Patients found
+              * Multiple patients found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /patients/profile/reset-password:
     put:
       tags:
@@ -2663,6 +2723,42 @@ components:
         - username
         - password
         - gender
+    RecoverCmIdRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Raj Sharma
+        gender:
+          $ref: '#/components/schemas/Gender'
+        yearOfBirth:
+          type: integer
+          example: 2000
+        verifiedIdentifiers:
+          description: verified identifiers are passed
+          type: array
+          items:
+            $ref: '#/components/schemas/VerifiedIdentifiers'
+          xml:
+            name: verifiedIdentifiers
+            wrapped: true
+        unverifiedIdentifiers:
+          description: additional unverified identifiers may be passed
+          type: array
+          items:
+            $ref: '#/components/schemas/UnverifiedIdentifiers'
+          xml:
+            name: unverifiedIdentifiers
+            wrapped: true
+      required:
+        - name
+        - gender
+        - verifiedIdentifiers
+    RecoverCmIdResponse:
+      type: object
+      properties:
+        cmId:
+          type: string
     UpdatePatientRequest:
       type: object
       properties:
@@ -2766,6 +2862,31 @@ components:
     PatientIdentifierType:
       type: string
       enum: [MOBILE, MR]
+    VerifiedIdentifiers:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/VerifiedIdentifierType'
+        value:
+          type: string
+          example: "+919800083232"
+      xml:
+        name: Identifier
+    VerifiedIdentifierType:
+      type: string
+      enum: [MOBILE]
+    UnverifiedIdentifiers:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/UnverifiedIdentifierType'
+        value:
+          type: string
+      xml:
+        name: Identifier
+    UnverifiedIdentifierType:
+      type: string
+      enum: [PMJAY ID]
     ConsentDenyRequest:
       type: object
       properties:

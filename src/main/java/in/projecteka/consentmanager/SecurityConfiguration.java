@@ -86,6 +86,8 @@ public class SecurityConfiguration {
                                           "/otpsession/verify",
                                           "/otpsession/permit",
                                           "/sessions",
+                                          "/patients/care-contexts/discover",
+                                          "/patients/care-contexts/on-discover",
                                           "/**.html",
                                           "/**.js",
                                           "/**.yaml",

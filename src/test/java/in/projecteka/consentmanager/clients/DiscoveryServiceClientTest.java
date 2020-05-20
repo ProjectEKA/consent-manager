@@ -60,7 +60,7 @@ public class DiscoveryServiceClientTest {
                 .requestId(UUID.randomUUID())
                 .build();
 
-        StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/"))
+        StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/", "hipId"))
                 .assertNext(response -> {
                     assertThat(response.getPatient().getDisplay()).isEqualTo(expectedPatient.getDisplay());
                     assertThat(response.getPatient().getReferenceNumber())

@@ -17,6 +17,9 @@ consentmanager:
     clientId: ${CENTRAL_REGISTRY_ID}
     url: ${Client_Registry_Url}
     jwkUrl: ${CENTRAL_REGISTRY_JWK_URL}
+  gatewayservice:
+    baseUrl: ${GATEWAY_BASE_URL}
+    responseTimeout: ${GATEWAY_RESPONSE_TIMEOUT}
   userservice:
     url: ${User_Service_Url}
     transactionPinDigitSize: ${TRANSACTION_PIN_DIGIT_SIZE}

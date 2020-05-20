@@ -17,6 +17,9 @@ consentmanager:
     clientId: consent-manager
     url: http://localhost:8080
     jwkUrl: http://localhost:8080/certs
+  gatewayservice:
+    baseUrl: http://host.docker.internal:8081
+    responseTimeout: 3
   userservice:
     url: http://localhost:9000
     transactionPinDigitSize: 4
@@ -26,6 +29,9 @@ consentmanager:
     maxOtpAttempts: 5
     maxOtpAttemptsPeriodInMin: 10
     otpAttemptsBlockPeriodInMin: 2
+    otpInvalidAttemptsBlockPeriodInMin: 2
+    otpMaxInvalidAttempts: 5
+    maxIncorrectPinAttempts: 5
   lockeduserservice:
     maximumInvalidAttempts: 5
     coolOfPeriod: 8

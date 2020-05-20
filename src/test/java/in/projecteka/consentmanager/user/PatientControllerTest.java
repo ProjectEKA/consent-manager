@@ -4,8 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.common.Authenticator;
+import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
@@ -15,11 +18,14 @@ import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
 import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.LoginMode;
+import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpMediumType;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.Profile;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import org.junit.jupiter.api.Test;
@@ -40,7 +46,9 @@ import java.util.List;
 import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static java.lang.String.format;
 import static java.time.LocalDate.now;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -53,8 +61,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
-public class
-PatientControllerTest {
+public class PatientControllerTest {
 
     @MockBean
     private UserService userService;
@@ -91,6 +98,9 @@ PatientControllerTest {
     @SuppressWarnings("unused")
     @MockBean(name = "identityServiceJWKSet")
     private JWKSet identityServiceJWKSet;
+
+    @MockBean
+    private Authenticator authenticator;
 
     @SuppressWarnings("unused")
     @MockBean
@@ -206,7 +216,7 @@ PatientControllerTest {
     }
 
     @Test
-    public void verifyOtp(){
+    public void verifyOtp() {
         var otpVerification = new OtpVerification(string(), string());
         Token token = new Token(string());
 
@@ -279,5 +289,134 @@ PatientControllerTest {
         verify(userService, times(0)).update(request, "oldSession");
         verify(signupService, times(0)).sessionFrom(token);
         verify(signupService, times(0)).removeOf(any());
+    }
+
+    @Test
+    public void shouldUpdatePasswordSuccessfully() {
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword("Test@1234")
+                .newPassword("Test@2020")
+                .build();
+        String userName = "user@ncg";
+        Session expectedSession = Session.builder()
+                .accessToken("New access token")
+                .tokenType("bearer")
+                .build();
+        var token = string();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
+        when(userService.updatePassword(request, userName)).thenReturn(Mono.just(expectedSession));
+
+        webClient.put()
+                .uri("/patients/profile/update-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        verify(userService, times(1)).updatePassword(request, userName);
+        verify(authenticator, times(1)).verify(token);
+    }
+
+    @Test
+    public void shouldReturnErrorForInvalidPasswordUpdateRequest() {
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword("Test@1234")
+                .newPassword("Test")
+                .build();
+        String userName = "user@ncg";
+        var token = string();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
+
+        webClient.put()
+                .uri("/patients/profile/update-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+
+        verify(authenticator, times(1)).verify(token);
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    public void shouldReturnErrorOnUpdatePasswordFails() {
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword("Test@1234")
+                .newPassword("TestPassword@2020")
+                .build();
+        String userName = "user@ncg";
+        var token = string();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
+        when(userService.updatePassword(request, userName)).thenReturn(Mono.error(ClientError.failedToUpdateUser()));
+
+        webClient.put()
+                .uri("/patients/profile/update-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .is5xxServerError();
+
+        verify(userService, times(1)).updatePassword(request, userName);
+        verify(authenticator, times(1)).verify(token);
+    }
+
+    @Test
+    public void shouldReturnErrorIfIncorrectOldPasswordGiven() {
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword("Test@1234")
+                .newPassword("TestPassword@2020")
+                .build();
+        String userName = "user@ncg";
+        var token = string();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
+        when(userService.updatePassword(request, userName)).thenReturn(Mono.error(ClientError.unAuthorizedRequest("Invalid old password")));
+
+        webClient.put()
+                .uri("/patients/profile/update-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .isUnauthorized();
+
+        verify(userService, times(1)).updatePassword(request, userName);
+        verify(authenticator, times(1)).verify(token);
+    }
+
+    @Test
+    public void fetchLoginMode() {
+        LoginModeResponse loginModeResponse = LoginModeResponse.builder()
+                .loginMode(LoginMode.CREDENTIAL)
+                .build();
+        String userName = "user@ncg";
+
+        when(userService.getLoginMode(userName)).thenReturn(Mono.just(loginModeResponse));
+
+        webClient
+                .get()
+                .uri(format("/patients/profile/loginmode?userName=%s", userName))
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(LoginModeResponse.class)
+                .value(LoginModeResponse::getLoginMode, is(LoginMode.CREDENTIAL));
+
+        verify(userService, times(1)).getLoginMode(userName);
     }
 }

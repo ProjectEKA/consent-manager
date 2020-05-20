@@ -115,7 +115,11 @@ public class Discovery {
     }
 
     public Mono<Void> onDiscoverPatientCareContexts(DiscoveryResult discoveryResult) {
-        return discoveryResults.put(discoveryResult.getTransactionId().toString(), serializeResultFromHIP(discoveryResult));
+        if(discoveryResult.hasResponseId()) {
+            return discoveryResults.put(discoveryResult.getResp().getRequestId(), serializeResultFromHIP(discoveryResult));
+        }
+        logger.error("[Discovery] Received a discovery response from Gateway without original request Id mentioned.{}", discoveryResult.getRequestId());
+        return Mono.error(ClientError.unprocessableEntity());
     }
 
     private String serializeResultFromHIP(DiscoveryResult responseBody) {

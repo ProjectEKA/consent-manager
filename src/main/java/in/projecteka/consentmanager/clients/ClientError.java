@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.ToString;
 import org.springframework.http.HttpStatus;
 
+import static in.projecteka.consentmanager.clients.model.ErrorCode.BAD_REQUEST_FROM_GATEWAY;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_EXPIRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_FORBIDDEN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_NOT_FOUND;
@@ -299,6 +300,12 @@ public class ClientError extends Throwable {
     public static ClientError patientNotFound() {
         return new ClientError(NOT_FOUND,
                 new ErrorRepresentation(new Error(NO_PATIENT_FOUND, "Could not find patient information")));
+    }
+
+    public static ClientError unprocessableEntity() {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(BAD_REQUEST_FROM_GATEWAY, "Bad Request")));
+
     }
 
 }

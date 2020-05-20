@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import in.projecteka.consentmanager.clients.model.Error;
 import lombok.Builder;
 import lombok.Value;
+
+import javax.validation.constraints.NotNull;
 import java.util.UUID;
 
 @Value
@@ -18,5 +20,16 @@ public class DiscoveryResult {
     private UUID transactionId;
     private Patient patient;
     private Error error;
+    @NotNull
     private GatewayResponse resp;
+
+    public boolean hasResponseId(){
+        if (resp == null) {
+            return false;
+        }
+        if (resp.getRequestId() == null || "".equals(resp.getRequestId())) {
+            return false;
+        }
+        return true;
+    }
 }

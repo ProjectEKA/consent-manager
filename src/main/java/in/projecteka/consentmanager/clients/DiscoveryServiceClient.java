@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.function.Supplier;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -38,19 +39,24 @@ public class DiscoveryServiceClient {
 
     public Mono<Boolean> requestPatientFor(PatientRequest request, String url, String hipId) {
         return tokenGenerator.get()
-                .map(token ->
+                .flatMap(token ->
                         webClientBuilder.build()
                                 .post()
                                 .uri(url + PATIENTS_CARE_CONTEXTS_DISCOVERY_URL_PATH)
                                 .header(AUTHORIZATION, token)
                                 .header("X-HIP-ID", hipId)
                                 .bodyValue(request)
-                                .retrieve())
-                .map(responseSpec -> responseSpec
-                        .onStatus(httpStatus -> httpStatus.value() == 404,
-                                clientResponse -> Mono.error(ClientError.userNotFound()))
-                        .onStatus(HttpStatus::is5xxServerError,
-                                clientResponse -> Mono.error(ClientError.networkServiceCallFailed())))
-                .thenReturn(Boolean.TRUE);
+                                .retrieve()
+                                .onStatus(httpStatus -> httpStatus.value() == 401,
+                                        // Error msg should be logged
+                                        clientResponse -> Mono.error(ClientError.unknownErrorOccurred()))
+                                .onStatus(httpStatus -> httpStatus.value() == 404,
+                                        clientResponse -> Mono.error(ClientError.userNotFound()))
+                                .onStatus(HttpStatus::is5xxServerError,
+                                        clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                                .toBodilessEntity()
+                                //Make the timeout configurable
+                                .timeout(Duration.ofSeconds(2))
+                ).thenReturn(Boolean.TRUE);
     }
 }

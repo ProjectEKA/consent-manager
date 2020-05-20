@@ -20,6 +20,7 @@ import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
@@ -364,8 +365,11 @@ public class DiscoveryUserJourneyTest {
     }
 
     @Test
-    public void shouldFailWhenTransactionIdIsNotGiven() throws Exception {
+    public void shouldFailWhenRequestIdIsNotGiven() throws Exception {
         var token = string();
+        var gatewayResponse = GatewayResponse.builder()
+                .requestId(null)
+                .build();
         var error = Error.builder()
                 .code(ErrorCode.NO_PATIENT_FOUND)
                 .message("Could not identify a unique patient. Need more information.")
@@ -373,6 +377,7 @@ public class DiscoveryUserJourneyTest {
         var patientDiscoveryResult = DiscoveryResult.builder()
                 .patient(null)
                 .error(error)
+                .resp(gatewayResponse)
                 .build();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
         webTestClient.post()
@@ -382,7 +387,7 @@ public class DiscoveryUserJourneyTest {
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .bodyValue(patientDiscoveryResult)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isBadRequest();
     }
 
     @Test

@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifierType;
+import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -93,7 +95,6 @@ public class DiscoveryTest {
                 .verifyComplete();
     }
 
-    @Test
     public void patientForGivenProviderIdAndPatientId() {
         var providerId = string();
         var transactionId = UUID.randomUUID();
@@ -247,5 +248,10 @@ public class DiscoveryTest {
 
         StepVerifier.create(discovery.providersFrom("Max"))
                 .verifyComplete();
+    }
+
+    @Test
+    public void doSomething() {
+        System.out.println(Instant.now().toString());
     }
 }

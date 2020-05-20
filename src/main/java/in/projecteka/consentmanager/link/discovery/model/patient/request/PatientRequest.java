@@ -10,4 +10,6 @@ import java.util.UUID;
 public class PatientRequest {
     Patient patient;
     UUID requestId;
+    String timestamp;
+    UUID transactionId;
 }

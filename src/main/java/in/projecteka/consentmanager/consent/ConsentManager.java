@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
+import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.CMReference;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
@@ -211,6 +212,14 @@ public class ConsentManager {
                                                 .thenReturn(consentApprovalResponse(consents)))));
     }
 
+    private Mono<ConsentArtefactRepresentation> updateHipName(ConsentArtefactRepresentation consentArtefactRepresentation) {
+        return centralRegistry.providerWith(consentArtefactRepresentation.getConsentDetail().getHip().getId())
+                .flatMap(provider -> {
+                    consentArtefactRepresentation.getConsentDetail().getHip().setName(provider.getName());
+                    return Mono.just(consentArtefactRepresentation);
+                });
+    }
+
     private Mono<Void> validateGrantedConsentHITypes(List<GrantedConsent> grantedConsents) {
         List<String> hiTypeCodes = new ArrayList<>();
         for (GrantedConsent grantedConsent : grantedConsents) {
@@ -347,6 +356,7 @@ public class ConsentManager {
     public Mono<ConsentArtefactRepresentation> getConsent(String consentId, String requesterId) {
         return getConsentArtefact(consentId)
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactNotFound()))
+                .flatMap(this::updateHipName)
                 .flatMap(r -> {
                     if (isNotSameRequester(r.getConsentDetail(), requesterId)) {
                         return Mono.error(ClientError.consentArtefactForbidden());

@@ -260,21 +260,8 @@ public class DiscoveryTest {
         var requestId = UUID.randomUUID();
         var patientId = string();
         var user = user().identifier("1").name("first name").phone("+91-9999999999").build();
-        var identifier = patientIdentifier().type("MOBILE").value("+91-9999999999").build();
         PatientIdentifier ncp1008 = patientIdentifierBuilder().type(PatientIdentifierType.MR).value("NCP1008").build();
         var unverifiedIdentifiers = Collections.singletonList(ncp1008);
-        var unverifiedIds = unverifiedIdentifiers.stream().map(patientIdentifier ->
-                in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
-                        .type(patientIdentifier.getType().toString())
-                        .value(patientIdentifier.getValue())
-                        .build()).collect(Collectors.toList());
-                .id(user.getIdentifier())
-                .name(user.getName())
-                .gender(user.getGender())
-                .yearOfBirth(user.getYearOfBirth())
-                .verifiedIdentifiers(of(identifier))
-                .unverifiedIdentifiers(unverifiedIds)
-                .build();
         UUID gatewayOnDiscoverRequestId = UUID.randomUUID();
         var gatewayResponse = GatewayResponse.builder().requestId(requestId.toString()).build();
         var patientInResponse = patientInResponse()

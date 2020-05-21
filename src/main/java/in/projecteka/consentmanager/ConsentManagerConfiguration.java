@@ -81,20 +81,21 @@ public class ConsentManagerConfiguration {
                 });
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
-    @Bean({"accessToken"})
-    public CacheAdapter<String, String> createRedisCacheAdapter(RedisOptions redisOptions) {
-        RedisClient redisClient = getRedisClient(redisOptions);
-        return new RedisCacheAdapter(redisClient, 5);
-    }
 
-    private RedisClient getRedisClient(RedisOptions redisOptions) {
+    @Bean
+    public RedisClient getRedisClient(RedisOptions redisOptions) {
         RedisURI redisUri = RedisURI.Builder.
                 redis(redisOptions.getHost())
                 .withPort(redisOptions.getPort())
                 .withPassword(redisOptions.getPassword())
                 .build();
         return RedisClient.create(redisUri);
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"accessToken"})
+    public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
+        return new RedisCacheAdapter(redisClient, 5);
     }
 
     @Bean

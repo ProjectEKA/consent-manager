@@ -25,14 +25,14 @@ public class CentralRegistry {
     }
 
     public Mono<String> authenticate() {
-        return accessTokenCache.getIfPresent("accessToken")
+        return accessTokenCache.getIfPresent("consentManager:clientRegistry:accessToken")
                 .switchIfEmpty(Mono.defer(this::tokenUsingSecret))
                 .map(token -> String.format("%s %s", "Bearer", token));
     }
 
     private Mono<String> tokenUsingSecret() {
         return clientRegistryClient.getTokenFor(properties.getClientId(), properties.getXAuthToken())
-                .flatMap(session -> accessTokenCache.put("accessToken", session.getAccessToken())
+                .flatMap(session -> accessTokenCache.put("consentManager:clientRegistry:accessToken", session.getAccessToken())
                         .thenReturn(session.getAccessToken()));
     }
 }

@@ -70,12 +70,6 @@ public class ConsentManagerConfiguration {
         return new LoadingCacheAdapter(createSessionCache(5));
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    @Bean({"refreshToken"})
-    public CacheAdapter<String, String> createLoadingCacheAdapterForRefreshToken() {
-        return new LoadingCacheAdapter(createSessionCache(30));
-    }
-
     public LoadingCache<String, String> createSessionCache(int duration) {
         return CacheBuilder
                 .newBuilder()
@@ -94,13 +88,6 @@ public class ConsentManagerConfiguration {
         return new RedisCacheAdapter(redisClient, 5);
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
-    @Bean({"refreshToken"})
-    public CacheAdapter<String, String> createDayRedisCacheAdapter(RedisOptions redisOptions) {
-        RedisClient redisClient = getRedisClient(redisOptions);
-        return new RedisCacheAdapter(redisClient, 30);
-    }
-
     private RedisClient getRedisClient(RedisOptions redisOptions) {
         RedisURI redisUri = RedisURI.Builder.
                 redis(redisOptions.getHost())
@@ -113,9 +100,8 @@ public class ConsentManagerConfiguration {
     @Bean
     public CentralRegistry centralRegistry(ClientRegistryClient clientRegistryClient,
                                            ClientRegistryProperties clientRegistryProperties,
-                                           CacheAdapter<String, String> accessToken,
-                                           CacheAdapter<String, String> refreshToken) {
-        return new CentralRegistry(clientRegistryClient, clientRegistryProperties, accessToken, refreshToken);
+                                           CacheAdapter<String, String> accessToken) {
+        return new CentralRegistry(clientRegistryClient, clientRegistryProperties, accessToken);
     }
 
     @Bean

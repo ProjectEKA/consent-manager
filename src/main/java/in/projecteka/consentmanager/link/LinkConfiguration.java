@@ -6,6 +6,7 @@ import com.google.common.cache.LoadingCache;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
@@ -14,7 +15,6 @@ import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.DiscoveryRepository;
-import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.link.link.LinkRepository;
 import in.projecteka.consentmanager.user.UserServiceProperties;
@@ -64,10 +64,9 @@ public class LinkConfiguration {
                                CentralRegistry centralRegistry,
                                DiscoveryServiceClient discoveryServiceClient,
                                UserServiceClient userServiceClient,
-                               GatewayServiceProperties gatewayServiceProperties,
                                LinkServiceProperties linkServiceProperties,
-                               CacheAdapter<String,String> discoveryResults) {
-        return new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry, gatewayServiceProperties, linkServiceProperties, discoveryResults);
+                               CacheAdapter<String, String> discoveryResults) {
+        return new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry, linkServiceProperties, discoveryResults);
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)

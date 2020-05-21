@@ -81,7 +81,7 @@ public class ConsentManagerConfiguration {
                 });
     }
 
-
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean
     public RedisClient getRedisClient(RedisOptions redisOptions) {
         RedisURI redisUri = RedisURI.Builder.

@@ -9,7 +9,6 @@ import in.projecteka.consentmanager.clients.model.Address;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.User;
-import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -269,7 +268,6 @@ public class DiscoveryTest {
                         .type(patientIdentifier.getType().toString())
                         .value(patientIdentifier.getValue())
                         .build()).collect(Collectors.toList());
-        var patient = Patient.builder()
                 .id(user.getIdentifier())
                 .name(user.getName())
                 .gender(user.getGender())

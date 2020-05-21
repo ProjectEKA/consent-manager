@@ -6,21 +6,19 @@ import com.google.common.cache.LoadingCache;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
-import in.projecteka.consentmanager.common.cache.RedisOptions;
 import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.DiscoveryRepository;
-import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.link.link.LinkRepository;
 import in.projecteka.consentmanager.user.UserServiceProperties;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import io.vertx.pgclient.PgPool;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -67,7 +65,7 @@ public class LinkConfiguration {
                                DiscoveryServiceClient discoveryServiceClient,
                                UserServiceClient userServiceClient,
                                LinkServiceProperties linkServiceProperties,
-                               CacheAdapter<String,String> discoveryResults) {
+                               CacheAdapter<String, String> discoveryResults) {
         return new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry, linkServiceProperties, discoveryResults);
     }
 
@@ -90,17 +88,8 @@ public class LinkConfiguration {
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"discoveryResults"})
-    public CacheAdapter<String, String> createRedisCacheAdapter(RedisOptions redisOptions) {
-        RedisClient redisClient = getRedisClient(redisOptions);
+    public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
         return new RedisCacheAdapter(redisClient, 5);
     }
 
-    private RedisClient getRedisClient(RedisOptions redisOptions) {
-        RedisURI redisUri = RedisURI.Builder.
-                redis(redisOptions.getHost())
-                .withPort(redisOptions.getPort())
-                .withPassword(redisOptions.getPassword())
-                .build();
-        return RedisClient.create(redisUri);
-    }
 }

@@ -1,5 +1,8 @@
 package in.projecteka.consentmanager;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
@@ -8,10 +11,16 @@ import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisOptions;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
 import in.projecteka.consentmanager.user.UserRepository;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
@@ -24,6 +33,7 @@ import org.springframework.amqp.core.ExchangeBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.context.ApplicationContext;
@@ -42,6 +52,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class ConsentManagerConfiguration {
@@ -53,10 +64,45 @@ public class ConsentManagerConfiguration {
     private static final String CM_DEAD_LETTER_EXCHANGE = "cm-dead-letter-exchange";
     private static final String CM_DEAD_LETTER_ROUTING_KEY = "cm-dead-letter";
 
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @Bean({"accessToken"})
+    public CacheAdapter<String, String> createLoadingCacheAdapterForAccessToken() {
+        return new LoadingCacheAdapter(createSessionCache(5));
+    }
+
+    public LoadingCache<String, String> createSessionCache(int duration) {
+        return CacheBuilder
+                .newBuilder()
+                .expireAfterWrite(duration, TimeUnit.MINUTES)
+                .build(new CacheLoader<String, String>() {
+                    public String load(String key) {
+                        return "";
+                    }
+                });
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean
+    public RedisClient getRedisClient(RedisOptions redisOptions) {
+        RedisURI redisUri = RedisURI.Builder.
+                redis(redisOptions.getHost())
+                .withPort(redisOptions.getPort())
+                .withPassword(redisOptions.getPassword())
+                .build();
+        return RedisClient.create(redisUri);
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"accessToken"})
+    public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
+        return new RedisCacheAdapter(redisClient, 5);
+    }
+
     @Bean
     public CentralRegistry centralRegistry(ClientRegistryClient clientRegistryClient,
-                                           ClientRegistryProperties clientRegistryProperties) {
-        return new CentralRegistry(clientRegistryClient, clientRegistryProperties);
+                                           ClientRegistryProperties clientRegistryProperties,
+                                           CacheAdapter<String, String> accessToken) {
+        return new CentralRegistry(clientRegistryClient, clientRegistryProperties, accessToken);
     }
 
     @Bean

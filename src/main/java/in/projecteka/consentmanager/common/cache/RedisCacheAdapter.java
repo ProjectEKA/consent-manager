@@ -65,7 +65,7 @@ public class RedisCacheAdapter implements CacheAdapter<String, String> {
     public Mono<Long> increment(String key) {
         RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
         return redisCommands.incr(key)
-                .filter(count -> count!=1)
-                .switchIfEmpty(Mono.defer(() -> redisCommands.expire(key,expirationInMinutes * 60L).thenReturn(1L)));
+                .filter(count -> count != 1)
+                .switchIfEmpty(Mono.defer(() -> redisCommands.expire(key, expirationInMinutes * 60L).thenReturn(1L)));
     }
 }

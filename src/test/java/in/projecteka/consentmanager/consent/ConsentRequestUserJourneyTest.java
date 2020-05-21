@@ -202,6 +202,7 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldAcceptConsentRequest() {
         var authToken = string();
+        var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         when(centralRegistryTokenVerifier.verify(authToken))
                 .thenReturn(Mono.just(new Caller("MAX-ID", true)));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
@@ -210,11 +211,12 @@ public class ConsentRequestUserJourneyTest {
         when(conceptValidator.validatePurpose("CAREMGT")).thenReturn(Mono.just(true));
         when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
         when(repository.requestOf(anyString())).thenReturn(Mono.empty());
+
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
         load(identityServer, "{}");
         load(userServer, "{}");
 
@@ -389,14 +391,15 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldNotApproveConsentGrantForInvalidCareContext() throws JsonProcessingException {
         var token = string();
+        var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
         load(userServer, "{}");
         load(identityServer, "{}");
         load(identityServer, "{}");

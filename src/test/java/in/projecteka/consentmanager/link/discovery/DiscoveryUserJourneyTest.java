@@ -62,6 +62,7 @@ import static org.mockito.Mockito.when;
 @AutoConfigureWebTestClient(timeout = "6000000")
 @ContextConfiguration(initializers = DiscoveryUserJourneyTest.ContextInitializer.class)
 public class DiscoveryUserJourneyTest {
+    private static final MockWebServer clientRegistryServer = new MockWebServer();
 
     @SuppressWarnings("unused")
     @MockBean
@@ -123,6 +124,7 @@ public class DiscoveryUserJourneyTest {
     @AfterAll
     public static void tearDown() throws IOException {
         providerServer.shutdown();
+        clientRegistryServer.shutdown();
     }
 
     @Test
@@ -132,10 +134,11 @@ public class DiscoveryUserJourneyTest {
                 new TypeReference<List<JsonNode>>() {
                 });
         var token = string();
-        var session = "{\"accessToken\": \"eyJhbGc\"}";
+        var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"refresh\"}";
+
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(
                 "consent-manager-service", true)));
-        providerServer.enqueue(new MockResponse()
+        clientRegistryServer.enqueue(new MockResponse()
                 .setHeader("Content-Type", "application/json")
                 .setBody(session));
         providerServer.enqueue(new MockResponse()
@@ -163,11 +166,16 @@ public class DiscoveryUserJourneyTest {
                 new TypeReference<JsonNode>() {
                 });
         var token = string();
-        var session = "{\"accessToken\": \"eyJhbGc\"}";
+
+        var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"ff\"}";
         String providerId = "12345";
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(
                 "consent-manager-service", true)));
+        clientRegistryServer.enqueue(new MockResponse()
+                .setHeader("Content-Type", "application/json")
+                .setBody(session));
+
         providerServer.enqueue(new MockResponse()
                 .setHeader("Content-Type", "application/json")
                 .setBody(session));

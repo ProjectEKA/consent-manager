@@ -1,6 +1,7 @@
 server:
   port: 8000
 consentmanager:
+  cacheMethod: guava
   scheduler:
     consentExpiryCronExpr: "0 */1 * ? * *"
     consentRequestExpiryCronExpr: '0 0 0/12 ? * *'
@@ -30,4 +31,3 @@ consentmanager:
   linkservice:
     url: http://localhost:9000
     txnTimeout: 5000
-  cacheMethod: guava

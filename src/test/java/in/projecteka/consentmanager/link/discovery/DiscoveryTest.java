@@ -93,7 +93,6 @@ public class DiscoveryTest {
                 .verifyComplete();
     }
 
-    @Test
     public void patientForGivenProviderIdAndPatientId() {
         var providerId = string();
         var transactionId = UUID.randomUUID();

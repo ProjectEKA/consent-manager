@@ -4,6 +4,7 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -43,6 +44,7 @@ public class DiscoveryServiceClient {
                         webClientBuilder.build()
                                 .post()
                                 .uri(url + PATIENTS_CARE_CONTEXTS_DISCOVERY_URL_PATH)
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .header(AUTHORIZATION, token)
                                 .header("X-HIP-ID", hipId)
                                 .bodyValue(request)

@@ -66,7 +66,7 @@ public class Discovery {
                 .flatMap(val -> userWith(userName)
                         .zipWith(providerUrl(providerId))
                         .switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
-                        .flatMap(tuple -> patientIn(providerId, tuple.getT2(), tuple.getT1(), transactionId, unverifiedIdentifiers))
+                        .flatMap(tuple -> patientIn(providerId, tuple.getT2(), tuple.getT1(), transactionId, unverifiedIdentifiers, requestId))
                         .flatMap(patientResponse ->
                                 insertDiscoveryRequest(patientResponse,
                                         providerId,
@@ -86,12 +86,12 @@ public class Discovery {
                 .flatMap(val ->
                         userWith(userName)
                                 .flatMap(user -> discoveryServiceClient.requestPatientFor(
-                                        requestFor(user, transactionId, unverifiedIdentifiers),
+                                        requestFor(user, transactionId, unverifiedIdentifiers, requestId),
                                         gatewaySystemUrl(),
                                         providerId)
                                         .zipWith(Mono.delay(Duration.ofSeconds(getExpectedFlowResponseDuration())))
                                         .flatMap(tuple ->
-                                                discoveryResults.get(transactionId.toString())
+                                                discoveryResults.get(requestId.toString())
                                                         .switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
                                                         .flatMap(dr -> resultFromHIP(dr))
                                         )))
@@ -171,12 +171,12 @@ public class Discovery {
                         .orElse(Mono.empty()));
     }
 
-    private Mono<PatientResponse> patientIn(String hipId, String hipSystemUrl, User user, UUID transactionId, List<PatientIdentifier> unverifiedIdentifiers) {
-        var patientRequest = requestFor(user, transactionId, unverifiedIdentifiers);
+    private Mono<PatientResponse> patientIn(String hipId, String hipSystemUrl, User user, UUID transactionId, List<PatientIdentifier> unverifiedIdentifiers, UUID requestId) {
+        var patientRequest = requestFor(user, transactionId, unverifiedIdentifiers, requestId);
         return discoveryServiceClient.patientFor(patientRequest, hipSystemUrl, hipId);
     }
 
-    private PatientRequest requestFor(User user, UUID transactionId, List<PatientIdentifier> unverifiedIdentifiers) {
+    private PatientRequest requestFor(User user, UUID transactionId, List<PatientIdentifier> unverifiedIdentifiers, UUID requestId) {
         var phoneNumber = in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
                 .type(MOBILE)
                 .value(user.getPhone())
@@ -197,8 +197,12 @@ public class Discovery {
                 .verifiedIdentifiers(List.of(phoneNumber))
                 .unverifiedIdentifiers(unverifiedIds)
                 .build();
-
-        return  PatientRequest.builder().patient(patient).requestId(transactionId).build();
+        return  PatientRequest.builder()
+                .patient(patient)
+                .requestId(requestId)
+                .transactionId(transactionId)
+                .timestamp(java.time.Instant.now().toString())
+                .build();
     }
 
     private Mono<DiscoveryResponse> insertDiscoveryRequest(PatientResponse patientResponse,

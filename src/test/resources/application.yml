@@ -26,5 +26,8 @@ consentmanager:
       url: http://localhost:8000
   gatewayservice:
     baseUrl: http://tmc.gov.in/ncg-gateway
-    responseTimeout: 3
+    requestTimeout: 1000
+  linkservice:
+    url: http://localhost:9000
+    txnTimeout: 5000
   cacheMethod: guava

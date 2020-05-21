@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.clients;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -39,7 +40,8 @@ public class DiscoveryServiceClientTest {
     public void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder, () -> Mono.just(string()));
+        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000);
+        discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder, () -> Mono.just(string()), serviceProperties);
     }
 
     @Test

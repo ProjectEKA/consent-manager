@@ -1573,56 +1573,6 @@
 					"response": []
 				},
 				{
-					"name": "SessionRefresh",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "b514cd0a-5ec3-4814-a989-e002aa4f36ff",
-								"exec": [
-									"pm.test(\"Update central registry token\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.environment.set(\"CENTRAL_REGISTRY_AUTH_TOKEN\", \"bearer \" + jsonData.accessToken);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"name": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"clientId\": \"consent-manager\",\n\t\"clientSecret\": \"{{CONSENT_MANAGER_CLIENT_SECRET}}\",\n\t\"grantType\": \"refresh_token\",\n\t\"refreshToken\": \"{{CONSENT_MANAGER_REFRESH_TOKEN}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{CENTRAL_REGISTRY_HOST}}/api/1.0/sessionsRefresh",
-							"host": [
-								"{{CENTRAL_REGISTRY_HOST}}"
-							],
-							"path": [
-								"api",
-								"1.0",
-								"sessionsRefresh"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "OpenID Configuration",
 					"request": {
 						"method": "GET",

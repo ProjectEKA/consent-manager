@@ -18,12 +18,11 @@ import in.projecteka.consentmanager.user.model.LoginMode;
 import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.RecoverCmIdRequest;
-import in.projecteka.consentmanager.user.model.RecoverCmIdRow;
+import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
-import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
 import io.vertx.core.json.JsonArray;
@@ -599,14 +598,14 @@ class UserServiceTest {
         String cmId = "abc@ncg";
         RecoverCmIdRequest request = new RecoverCmIdRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
-        ArrayList<RecoverCmIdRow> recoverCmIdRows = new ArrayList<>(Collections.singletonList(RecoverCmIdRow.builder().cmId(cmId).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build()));
+        ArrayList<User> recoverCmIdRows = new ArrayList<>(Collections.singletonList(User.builder().identifier(cmId).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build()));
 
-        when(userRepository.getCmIdBy(name, gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
+        when(userRepository.getCmIdBy(gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
 
         StepVerifier.create(userService.recoverCmId(request))
                 .assertNext(response -> assertThat(response.getCmId()).isEqualTo(cmId))
                 .verifyComplete();
-        verify(userRepository,times(1)).getCmIdBy(name, gender,verifiedIdentifierValue);
+        verify(userRepository,times(1)).getCmIdBy(gender,verifiedIdentifierValue);
     }
 
     @Test
@@ -621,15 +620,15 @@ class UserServiceTest {
         String cmId = "abc@ncg";
         RecoverCmIdRequest request = new RecoverCmIdRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
-        RecoverCmIdRow recoverCmIdRow = RecoverCmIdRow.builder().cmId(cmId).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
-        ArrayList<RecoverCmIdRow> recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow, recoverCmIdRow));
+        User recoverCmIdRow = User.builder().identifier(cmId).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        ArrayList<User> recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow, recoverCmIdRow));
 
-        when(userRepository.getCmIdBy(name, gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
+        when(userRepository.getCmIdBy(gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
 
         StepVerifier.create(userService.recoverCmId(request))
                 .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().value() == 404);
-        verify(userRepository,times(1)).getCmIdBy(name, gender,verifiedIdentifierValue);
+        verify(userRepository,times(1)).getCmIdBy(gender,verifiedIdentifierValue);
     }
 
     @Test
@@ -642,14 +641,14 @@ class UserServiceTest {
         ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
         ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         RecoverCmIdRequest request = new RecoverCmIdRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
-        ArrayList<RecoverCmIdRow> recoverCmIdRows = new ArrayList<>();
+        ArrayList<User> recoverCmIdRows = new ArrayList<>();
 
-        when(userRepository.getCmIdBy(name, gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
+        when(userRepository.getCmIdBy(gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
 
         StepVerifier.create(userService.recoverCmId(request))
                 .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().value() == 404);
-        verify(userRepository,times(1)).getCmIdBy(name, gender,verifiedIdentifierValue);
+        verify(userRepository,times(1)).getCmIdBy(gender,verifiedIdentifierValue);
     }
 
     @Test
@@ -666,7 +665,7 @@ class UserServiceTest {
         StepVerifier.create(userService.recoverCmId(request))
                 .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().value() == 400);
-        verify(userRepository,times(0)).getCmIdBy(name, gender,verifiedIdentifierValue);
+        verify(userRepository,times(0)).getCmIdBy(gender,verifiedIdentifierValue);
     }
 
     @Test
@@ -683,7 +682,6 @@ class UserServiceTest {
         StepVerifier.create(userService.recoverCmId(request))
                 .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().value() == 400);
-        verify(userRepository,times(0)).getCmIdBy(name, gender,verifiedIdentifierValue);
+        verify(userRepository,times(0)).getCmIdBy(gender,verifiedIdentifierValue);
     }
-
 }

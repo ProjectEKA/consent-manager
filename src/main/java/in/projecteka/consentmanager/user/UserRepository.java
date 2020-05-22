@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.model.Gender;
-import in.projecteka.consentmanager.user.model.RecoverCmIdRow;
 import in.projecteka.consentmanager.user.model.User;
 import io.vertx.core.json.JsonArray;
 import io.vertx.pgclient.PgPool;
@@ -26,8 +25,8 @@ public class UserRepository {
     private static final String SELECT_PATIENT = "select id, name, gender, year_of_birth, phone_number, unverified_identifiers " +
             "from patient where id = $1";
 
-    private static final String SELECT_PATIENT_BY_DETAILS = "select id, year_of_birth, unverified_identifiers from patient" +
-            " where name = $1 and gender = $2 and phone_number = $3";
+    private static final String SELECT_PATIENT_BY_DETAILS = "select id, year_of_birth, unverified_identifiers, name from patient" +
+            " where gender = $1 and phone_number = $2";
 
     private final static String DELETE_PATIENT = "DELETE FROM patient WHERE id=$1";
 
@@ -86,16 +85,17 @@ public class UserRepository {
                 }));
     }
 
-    public Mono<List<RecoverCmIdRow>> getCmIdBy(String name, Gender gender, String phoneNumber) {
+    public Mono<List<User>> getCmIdBy(Gender gender, String phoneNumber) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT_BY_DETAILS)
-                .execute(Tuple.of(name, gender.toString(), phoneNumber),
+                .execute(Tuple.of(gender.toString(), phoneNumber),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError("Failed to select from patient"));
                             } else {
                                 monoSink.success(StreamSupport.stream(handler.result().spliterator(), false)
-                                        .map(row -> RecoverCmIdRow.builder()
-                                                .cmId(row.getString("id"))
+                                        .map(row -> User.builder() //return list of users
+                                                .identifier(row.getString("id"))
+                                                .name(row.getString("name"))
                                                 .yearOfBirth(row.getInteger("year_of_birth"))
                                                 .unverifiedIdentifiers((JsonArray) row.getValue("unverified_identifiers"))
                                                 .build())

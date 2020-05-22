@@ -39,6 +39,8 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_OTP_ATTEMPTS_EXCEEDED;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_RECOVERY_REQUEST;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.MULTIPLE_PATIENTS_FOUND;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -307,5 +309,21 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(BAD_REQUEST_FROM_GATEWAY, "Bad Request")));
 
     }
+
+    public static ClientError invalidRecoveryRequest() {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(INVALID_RECOVERY_REQUEST, "Invalid CM Id recovery request")));
+    }
+
+    public static ClientError noPatientFound() {
+        return new ClientError(NOT_FOUND,
+                new ErrorRepresentation(new Error(NO_PATIENT_FOUND, "No patient matching the records")));
+    }
+
+    public static ClientError multiplePatientsFound() {
+        return new ClientError(NOT_FOUND,
+                new ErrorRepresentation(new Error(MULTIPLE_PATIENTS_FOUND, "Multiple patients matching the records")));
+    }
+
 
 }

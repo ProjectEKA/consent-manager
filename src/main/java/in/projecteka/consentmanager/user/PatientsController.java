@@ -15,6 +15,8 @@ import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpMediumType;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.Profile;
+import in.projecteka.consentmanager.user.model.RecoverCmIdRequest;
+import in.projecteka.consentmanager.user.model.RecoverCmIdResponse;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
@@ -203,5 +205,10 @@ public class PatientsController {
                         transactionPinService.changeTransactionPinFor(caller.getUsername(),
                                 request.getPin())
                                 .switchIfEmpty(Mono.defer(() -> usedTokens.put(caller.getSessionId(), ""))));
+    }
+
+    @PostMapping("/recover-cmid")
+    public Mono<RecoverCmIdResponse> recoverCmId(@RequestBody RecoverCmIdRequest request) {
+        return userService.recoverCmId(request);
     }
 }

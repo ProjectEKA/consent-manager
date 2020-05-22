@@ -27,7 +27,7 @@ public class UserRepository {
 
     public Mono<User> userWith(String userName) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT)
-                .execute(Tuple.of(userName),
+                .execute(Tuple.of(userName.toLowerCase()),
                         handler -> {
                             if (handler.failed()) {
                                 logger.error(handler.cause().getMessage(), handler.cause());

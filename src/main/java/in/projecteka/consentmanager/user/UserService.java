@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.ClientError.failedToFetchUserCredentials;
+import static in.projecteka.consentmanager.clients.ClientError.failedToUpdateUser;
 import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
 import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
 import static java.lang.String.format;

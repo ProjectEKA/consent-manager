@@ -1,5 +1,7 @@
 package in.projecteka.consentmanager.user.model;
 
+import java.util.HashMap;
+
 public enum IdentifierType {
     MOBILE {
         @Override
@@ -16,4 +18,15 @@ public enum IdentifierType {
     };
 
     public abstract boolean isValid(String value);
+
+    public static final HashMap<IdentifierType, BroaderIdentifierType> identifierTypes = new HashMap<>() {
+        {
+            put(IdentifierType.MOBILE, BroaderIdentifierType.VERIFIED_IDENTIFIER);
+            put(IdentifierType.ABPMJAYID, BroaderIdentifierType.UNVERIFIED_IDENTIFIER);
+        }
+    };
+
+    public BroaderIdentifierType getBroaderIdentifierType() {
+        return identifierTypes.get(this);
+    }
 }

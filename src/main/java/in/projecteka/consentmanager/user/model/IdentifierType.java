@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.user.model;
 
-import java.util.HashMap;
+import in.projecteka.consentmanager.user.IdentifierUtils;
 
 public enum IdentifierType {
     MOBILE {
@@ -19,14 +19,7 @@ public enum IdentifierType {
 
     public abstract boolean isValid(String value);
 
-    public static final HashMap<IdentifierType, IdentifierGroup> identifierTypeGroupMap = new HashMap<>() {
-        {
-            put(IdentifierType.MOBILE, IdentifierGroup.VERIFIED_IDENTIFIER);
-            put(IdentifierType.ABPMJAYID, IdentifierGroup.UNVERIFIED_IDENTIFIER);
-        }
-    };
-
     public IdentifierGroup getIdentifierGroup() {
-        return identifierTypeGroupMap.get(this);
+        return IdentifierUtils.identifierTypeGroupMap.get(this);
     }
 }

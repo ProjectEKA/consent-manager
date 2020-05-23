@@ -250,7 +250,7 @@ public class UserService {
                 .flatMap(users -> new YOBFilter().filter(users, request.getYearOfBirth()))
                 .flatMap(users -> new ABPMJAYIdFilter().filter(users, request.getUnverifiedIdentifiers()))
                 .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.noPatientFound())))
-                .flatMap(this::validateNonZeroRows)
+                .flatMap(this::getDistinctUser)
                 .flatMap(user -> Mono.just(RecoverCmIdResponse.builder().cmId(user.getIdentifier()).build()))
                 .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.multiplePatientsFound())));
     }
@@ -266,7 +266,7 @@ public class UserService {
         return areMandatoryFieldsNull || isInvalidVerifiedIdentifierMapped || isInvalidUnverifiedIdentifierMapped ? Mono.empty() : Mono.just(request);
     }
 
-    private Mono<User> validateNonZeroRows(List<User> rows) {
+    private Mono<User> getDistinctUser(List<User> rows) {
         return rows.size() == 1 ? Mono.just(rows.get(0)) : Mono.empty();
     }
 }

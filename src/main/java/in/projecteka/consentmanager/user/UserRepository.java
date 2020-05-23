@@ -25,7 +25,7 @@ public class UserRepository {
     private static final String SELECT_PATIENT = "select id, name, gender, year_of_birth, phone_number, unverified_identifiers " +
             "from patient where id = $1";
 
-    private static final String SELECT_PATIENT_BY_DETAILS = "select id, year_of_birth, unverified_identifiers, name from patient" +
+    private static final String SELECT_PATIENT_BY_GENDER_MOB = "select id, year_of_birth, unverified_identifiers, name from patient" +
             " where gender = $1 and phone_number = $2";
 
     private final static String DELETE_PATIENT = "DELETE FROM patient WHERE id=$1";
@@ -86,7 +86,7 @@ public class UserRepository {
     }
 
     public Mono<List<User>> getCmIdBy(Gender gender, String phoneNumber) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT_BY_DETAILS)
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT_BY_GENDER_MOB)
                 .execute(Tuple.of(gender.toString(), phoneNumber),
                         handler -> {
                             if (handler.failed()) {

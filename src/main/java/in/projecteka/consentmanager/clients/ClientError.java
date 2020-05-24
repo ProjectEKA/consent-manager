@@ -40,7 +40,6 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUN
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_OTP_ATTEMPTS_EXCEEDED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_RECOVERY_REQUEST;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.MULTIPLE_PATIENTS_FOUND;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;

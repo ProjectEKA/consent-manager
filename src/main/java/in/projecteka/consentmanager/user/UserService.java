@@ -252,7 +252,7 @@ public class UserService {
                 .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.noPatientFound())))
                 .flatMap(this::getDistinctUser)
                 .flatMap(user -> Mono.just(RecoverCmIdResponse.builder().cmId(user.getIdentifier()).build()))
-                .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.multiplePatientsFound())));
+                .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.noPatientFound())));
     }
 
     private boolean isInvalidIdentifierMapped(List<Identifier> identifiers, IdentifierGroup identifierGroup) {

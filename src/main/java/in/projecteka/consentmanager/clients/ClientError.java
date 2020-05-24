@@ -319,11 +319,4 @@ public class ClientError extends Throwable {
         return new ClientError(NOT_FOUND,
                 new ErrorRepresentation(new Error(NO_PATIENT_FOUND, "No patient matching the records")));
     }
-
-    public static ClientError multiplePatientsFound() {
-        return new ClientError(NOT_FOUND,
-                new ErrorRepresentation(new Error(MULTIPLE_PATIENTS_FOUND, "Multiple patients matching the records")));
-    }
-
-
 }

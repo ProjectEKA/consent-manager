@@ -6,8 +6,10 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
+import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.ListResult;
@@ -90,6 +92,9 @@ public class ConsentArtefactUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
+
+    @MockBean
+    private CentralRegistry centralRegistry;
 
     @MockBean
     private ConsentArtefactRepository consentArtefactRepository;
@@ -224,6 +229,7 @@ public class ConsentArtefactUserJourneyTest {
         when(consentArtefactRepository.updateStatus(consentId, consentRequestId, ConsentStatus.REVOKED))
                 .thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
+        when(centralRegistry.providerWith(any())).thenReturn(Mono.just(Provider.builder().build()));
 
         webTestClient.post()
                 .uri("/consents/revoke")

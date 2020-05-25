@@ -9,10 +9,19 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
+import in.projecteka.consentmanager.user.filters.ABPMJAYIdFilter;
+import in.projecteka.consentmanager.user.filters.NameFilter;
+import in.projecteka.consentmanager.user.filters.YOBFilter;
 import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.Identifier;
+import in.projecteka.consentmanager.user.model.IdentifierGroup;
+import in.projecteka.consentmanager.user.model.IdentifierType;
 import in.projecteka.consentmanager.user.model.LoginMode;
 import in.projecteka.consentmanager.user.model.LoginModeResponse;
+import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.RecoverCmIdRequest;
+import in.projecteka.consentmanager.user.model.RecoverCmIdResponse;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
@@ -20,8 +29,6 @@ import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
-import in.projecteka.consentmanager.user.model.OtpAttempt;
-import in.projecteka.consentmanager.user.model.IdentifierType;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +36,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.ClientError.failedToFetchUserCredentials;
@@ -228,5 +236,37 @@ public class UserService {
 
     public int getExpiryInMinutes() {
         return otpServiceProperties.getExpiryInMinutes();
+    }
+
+    public Mono<RecoverCmIdResponse> recoverCmId(RecoverCmIdRequest request) {
+        return isInvalidRecoveryRequest(request)
+                .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.invalidRecoveryRequest())))
+                .flatMap(validRequest ->
+                        userRepository.getCmIdBy(validRequest.getGender(),
+                                IdentifierUtils.getIdentifierValue(
+                                        validRequest.getVerifiedIdentifiers(),
+                                        IdentifierType.MOBILE)))
+                .flatMap(users -> new NameFilter().filter(users, request.getName()))
+                .flatMap(users -> new YOBFilter().filter(users, request.getYearOfBirth()))
+                .flatMap(users -> new ABPMJAYIdFilter().filter(users, request.getUnverifiedIdentifiers()))
+                .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.noPatientFound())))
+                .flatMap(this::getDistinctUser)
+                .flatMap(user -> Mono.just(RecoverCmIdResponse.builder().cmId(user.getIdentifier()).build()))
+                .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.noPatientFound())));
+    }
+
+    private boolean isInvalidIdentifierMapped(List<Identifier> identifiers, IdentifierGroup identifierGroup) {
+        return identifiers.stream().anyMatch(identifier -> !identifier.getType().getIdentifierGroup().equals(identifierGroup) || !identifier.getType().isValid(identifier.getValue()));
+    }
+
+    private Mono<RecoverCmIdRequest> isInvalidRecoveryRequest(RecoverCmIdRequest request) { //breakdown
+        boolean areMandatoryFieldsNull = request.getName() == null || request.getGender() == null || !IdentifierUtils.isIdentifierTypePresent(request.getVerifiedIdentifiers(), IdentifierType.MOBILE);
+        boolean isInvalidVerifiedIdentifierMapped = isInvalidIdentifierMapped(request.getVerifiedIdentifiers(), IdentifierGroup.VERIFIED_IDENTIFIER);
+        boolean isInvalidUnverifiedIdentifierMapped = isInvalidIdentifierMapped(request.getUnverifiedIdentifiers(), IdentifierGroup.UNVERIFIED_IDENTIFIER);
+        return areMandatoryFieldsNull || isInvalidVerifiedIdentifierMapped || isInvalidUnverifiedIdentifierMapped ? Mono.empty() : Mono.just(request);
+    }
+
+    private Mono<User> getDistinctUser(List<User> rows) {
+        return rows.size() == 1 ? Mono.just(rows.get(0)) : Mono.empty();
     }
 }

@@ -86,9 +86,6 @@ public class LinkServiceClient {
                                 clientResponse -> Mono.error(ClientError.userNotFound()))
                         .onStatus(HttpStatus::is5xxServerError,
                                 clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
-//                        .onStatus(not(HttpStatus::is2xxSuccessful), clientResponse ->
-//                                clientResponse.bodyToMono(ErrorRepresentation.class)
-//                                        .flatMap(e -> Mono.error(new ClientError(clientResponse.statusCode(), e))))
                         .toBodilessEntity()
                         .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout()))
                 ).thenReturn(Boolean.TRUE);

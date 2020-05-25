@@ -99,7 +99,7 @@ public class Discovery {
 				.switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
 				.flatMap(val -> userWith(userName)
 						.flatMap(user -> scheduleThis(discoveryFor.apply(user))
-								.over(Duration.ofMillis(getExpectedFlowResponseDuration()))
+								.timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
 								.responseFrom(discard -> discoveryResults.get(requestId.toString()))))
 				.switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
 				.flatMap(response -> tryTo(response, DiscoveryResult.class).map(Mono::just).orElse(Mono.empty()))

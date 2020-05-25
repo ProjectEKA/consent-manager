@@ -327,6 +327,39 @@ public class LinkUserJourneyTest {
                 .json(errorResponseJson);
     }
 
+    //@Test
+    public void shouldConfirmLinkCareContexts() throws IOException {
+        var token = string();
+        var linkRes = patientLinkResponse().build();
+        var linkResJson = new ObjectMapper().writeValueAsString(linkRes);
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
+        clientRegistryServer.setDispatcher(dispatcher);
+        hipServer.enqueue(
+                new MockResponse()
+                        .setHeader("Content-Type", "application/json")
+                        .setBody(linkResJson));
+        PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
+        String transactionId = "transactionId";
+        String hipId = "10000005";
+        when(linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())).thenReturn(Mono.just(transactionId));
+        when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
+        when(linkRepository.insertToLink(hipId, "123@ncg", patientLinkRequest.getLinkRefNumber(), linkRes.getPatient()))
+                .thenReturn(Mono.empty());
+
+        webTestClient
+                .post()
+                .uri("/v1/links/link/confirm")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(patientLinkRequest)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .json(linkResJson);
+    }
+
     public static class ContextInitializer
             implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override

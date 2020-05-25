@@ -41,8 +41,18 @@ public class LinkConfiguration {
     }
 
     @Bean
-    public Link link(WebClient.Builder builder, LinkRepository linkRepository, CentralRegistry centralRegistry) {
-        return new Link(new LinkServiceClient(builder), linkRepository, centralRegistry);
+    public Link link(WebClient.Builder builder,
+                     LinkRepository linkRepository,
+                     CentralRegistry centralRegistry,
+                     GatewayServiceProperties gatewayServiceProperties,
+                     LinkServiceProperties serviceProperties,
+                     CacheAdapter<String, String> discoveryResults) {
+        return new Link(
+                new LinkServiceClient(builder, centralRegistry, gatewayServiceProperties),
+                linkRepository,
+                centralRegistry,
+                serviceProperties,
+                discoveryResults);
     }
 
     @Bean

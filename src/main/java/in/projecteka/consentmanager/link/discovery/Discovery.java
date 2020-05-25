@@ -4,9 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
+import in.projecteka.consentmanager.clients.ErrorMap;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.model.Error;
+import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Provider;
+import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
@@ -20,6 +24,7 @@ import in.projecteka.consentmanager.link.discovery.model.patient.response.Patien
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -100,11 +105,14 @@ public class Discovery {
                 .flatMap(discoveryResult -> {
                     if (discoveryResult.getError() != null) {
                         //Should we get the error and throw client error with the errors
-                        logger.error("[Discovery] Patient care-contexts discovery resulted in error {}", discoveryResult.getError().getMessage());
-                        return Mono.error(ClientError.patientNotFound());
+                        logger.error("[Discovery] Patient care-contexts discovery resulted in error {}", discoveryResult.getError());
+                        return Mono.error(new ClientError(HttpStatus.NOT_FOUND, cmErrorRepresentation(discoveryResult.getError())));
                     }
-                    if (discoveryResult.getPatient() == null){
-                        return Mono.error(ClientError.patientNotFound());
+                    if (discoveryResult.getPatient() == null) {
+                        logger.error("[Discovery] Patient care-contexts discovery should have returned in " +
+                                "Patient reference with care context details or error caused." +
+                                "Gateway requestId {}", discoveryResult.getRequestId());
+                        return Mono.error(ClientError.invalidResponseFromHIP());
                     }
                     return Mono.just(DiscoveryResponse.builder()
                             .patient(discoveryResult.getPatient())
@@ -113,6 +121,11 @@ public class Discovery {
                 })
                 .doOnSuccess(r -> discoveryRepository.insert(providerId, userName, transactionId, requestId));
 
+    }
+
+    private ErrorRepresentation cmErrorRepresentation(RespError respError) {
+        Error error = Error.builder().code(ErrorMap.hipToCmError(respError.getCode())).message(respError.getMessage()).build();
+        return ErrorRepresentation.builder().error(error).build();
     }
 
     public Mono<Void> onDiscoverPatientCareContexts(DiscoveryResult discoveryResult) {

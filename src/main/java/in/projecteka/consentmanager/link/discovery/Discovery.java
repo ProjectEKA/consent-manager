@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.DelayTimeoutException;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
@@ -101,7 +102,7 @@ public class Discovery {
 						.flatMap(user -> scheduleThis(discoveryFor.apply(user))
 								.timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
 								.responseFrom(discard -> discoveryResults.get(requestId.toString()))))
-				.switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
+				.onErrorResume(DelayTimeoutException.class, discard -> Mono.error(ClientError.gatewayTimeOut()))
 				.flatMap(response -> tryTo(response, DiscoveryResult.class).map(Mono::just).orElse(Mono.empty()))
 				.flatMap(discoveryResult -> {
 					if (discoveryResult.getError() != null) {

@@ -22,6 +22,9 @@ public class ABPMJAYIdFilter implements FilterStrategy<List<Identifier>> {
     }
 
     private boolean isMatchingABPMJAYId(JsonArray unverifiedIdentifiers, String ABPMJAYId) {
+        if (unverifiedIdentifiers == null || unverifiedIdentifiers.isEmpty()) {
+            return false;
+        }
         return IntStream.range(0, unverifiedIdentifiers.size())
                 .mapToObj(unverifiedIdentifiers::getJsonObject)
                 .anyMatch(identifier ->

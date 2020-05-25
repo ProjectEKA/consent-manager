@@ -149,11 +149,13 @@ class ConsentManagerTest {
         String consentRequestId = consentRepresentation.getConsentRequestId();
         String patientId = consentRepresentation.getConsentDetail().getPatient().getId();
         consentRepresentation.getConsentDetail().getHiu().setId(patientId);
+        consentRepresentation.getConsentDetail().getHip().setId("hip");
         ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
         consentArtefactRepresentation.setConsentDetail(consentRepresentation.getConsentDetail());
         consentArtefactRepresentation.getConsentDetail().getPermission().setDataEraseAt(toDateWithMilliSeconds("253379772420000"));
 
         when(centralRegistry.providerWith(eq("hiu1"))).thenReturn(Mono.just(new Provider()));
+        when(centralRegistry.providerWith(eq("hip"))).thenReturn(Mono.just(new Provider()));
         when(consentArtefactRepository.getConsentArtefact(consentRequestId)).thenReturn(Mono.just(consentArtefactRepresentation));
 
         StepVerifier.create(consentManager.getConsent(consentRequestId, patientId)
@@ -267,6 +269,7 @@ class ConsentManagerTest {
         consentRepresentation.setStatus(GRANTED);
         ConsentRequestDetail consentRequestDetail = consentRequestDetail().build();
         consentRequestDetail.setStatus(GRANTED);
+        consentRepresentation.getConsentDetail().getHip().setId("hip1");
         String consentRequestId = consentRepresentation.getConsentRequestId();
         consentRequestDetail.setRequestId(consentRequestId);
         List<String> consentIds = new ArrayList<>();

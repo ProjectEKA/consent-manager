@@ -50,15 +50,15 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     implementation 'org.jeasy:easy-random-core:4.2.0'
-    testImplementation "com.squareup.okhttp3:okhttp:4.6.0"
-    testImplementation "com.squareup.okhttp3:mockwebserver:4.6.0"
+    testImplementation "com.squareup.okhttp3:okhttp:4.7.2"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.7.2"
     implementation 'com.google.guava:guava:29.0-jre'
     implementation 'io.jsonwebtoken:jjwt:0.9.1'
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     implementation 'io.vertx:vertx-pg-client:3.9.1'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'com.nimbusds:nimbus-jose-jwt:8.17'
-    implementation 'io.vavr:vavr:0.10.2'
+    implementation 'io.vavr:vavr:0.10.3'
     implementation 'org.passay:passay:1.6.0'
     implementation 'io.lettuce:lettuce-core:5.3.0.RELEASE'
     compile 'net.logstash.logback:logstash-logback-encoder:6.3'

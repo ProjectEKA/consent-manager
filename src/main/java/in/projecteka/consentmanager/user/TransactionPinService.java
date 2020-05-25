@@ -102,4 +102,12 @@ public class TransactionPinService {
                 .setExpiration(new Date(System.currentTimeMillis() + minutes))
                 .signWith(SignatureAlgorithm.RS512, privateKey).compact());
     }
+
+    public Mono<Void> changeTransactionPinFor(String username, String pin) {
+        if (!isPinValid(pin)) {
+            return Mono.error(ClientError.invalidTransactionPin());
+        }
+        String encodedPin = encoder.encode(pin);
+        return transactionPinRepository.changeTransactionPin(username, encodedPin);
+    }
 }

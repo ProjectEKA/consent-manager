@@ -1,6 +1,7 @@
 server:
   port: 8000
 consentmanager:
+  cacheMethod: guava
   scheduler:
     consentExpiryCronExpr: "0 */1 * ? * *"
     consentRequestExpiryCronExpr: '0 0 0/12 ? * *'
@@ -24,3 +25,9 @@ consentmanager:
       url: http://localhost:9001
     consentmanager:
       url: http://localhost:8000
+  gatewayservice:
+    baseUrl: http://tmc.gov.in/ncg-gateway
+    requestTimeout: 1000
+  linkservice:
+    url: http://localhost:9000
+    txnTimeout: 5000

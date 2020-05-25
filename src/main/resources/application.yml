@@ -17,6 +17,9 @@ consentmanager:
     clientId: ${CENTRAL_REGISTRY_ID}
     url: ${Client_Registry_Url}
     jwkUrl: ${CENTRAL_REGISTRY_JWK_URL}
+  gatewayservice:
+    baseUrl: ${GATEWAY_BASE_URL}
+    requestTimeout: ${GATEWAY_REQUEST_TIMEOUT}
   userservice:
     url: ${User_Service_Url}
     transactionPinDigitSize: ${TRANSACTION_PIN_DIGIT_SIZE}
@@ -27,6 +30,8 @@ consentmanager:
     maxOtpAttemptsPeriodInMin: ${MAX_OTP_ATTEMPTS_PERIOD_IN_MIN}
     otpAttemptsBlockPeriodInMin: ${OTP_ATTEMPTS_BLOCK_PERIOD_IN_MIN}
     maxIncorrectPinAttempts: 5
+    otpInvalidAttemptsBlockPeriodInMin: ${OTP_INVALID_ATTEMPT_BLOCK_PERIOD_IN_MIN}
+    otpMaxInvalidAttempts: ${MAX_INVALID_OTP_ATTEMPTS}
   lockeduserservice:
     maximumInvalidAttempts: ${MAXIMUM_INVALID_ATTEMPTS}
     coolOfPeriod: ${COOL_OF_PERIOD}
@@ -57,6 +62,7 @@ consentmanager:
       url: ${CONSENT_MANAGER_URL}
   linkservice:
     url: ${LINK_SERVICE_URL}
+    txnTimeout: ${LINK_TRANSACTION_TIMEOUT}
   #Valid values are guava(for local), redis
   cacheMethod: ${CACHE_METHOD:guava}
   redis:

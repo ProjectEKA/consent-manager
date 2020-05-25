@@ -159,4 +159,31 @@ class TransactionPinServiceTest {
                 .assertNext(token -> assertThat(token.getTemporaryToken()).isEqualTo(expectedToken))
                 .verifyComplete();
     }
+
+    @Test
+    void shouldThrowErrorForChangingInvalidTransactionPin() {
+        String patientId = "testPatient";
+        String pin = "666";
+
+        when(userServiceProperties.getTransactionPinDigitSize()).thenReturn(4);
+        Mono<Void> changePinMono = transactionPinService.changeTransactionPinFor(patientId, pin);
+
+        StepVerifier.create(changePinMono)
+                .expectErrorSatisfies(throwable ->
+                        assertThat(((ClientError)throwable).getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST))
+                .verify();
+    }
+
+    @Test
+    void shouldReturnAcceptedForChangingValidTransactionPin() {
+        String patientId = "testPatient";
+        String pin = "6666";
+        String encodedPin = encoder.encode(pin);
+
+        when(userServiceProperties.getTransactionPinDigitSize()).thenReturn(4);
+        when(transactionPinRepository.changeTransactionPin(eq(patientId), eq(encodedPin))).thenReturn(Mono.empty());
+        Mono<Void> changePinMono = transactionPinService.changeTransactionPinFor(patientId, pin);
+
+        StepVerifier.create(changePinMono).verifyComplete();
+    }
 }

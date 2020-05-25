@@ -17,6 +17,9 @@ consentmanager:
     clientId: consent-manager
     url: http://host.docker.internal:8080
     jwkUrl: http://host.docker.internal:8080/certs
+  gatewayservice:
+    baseUrl: http://host.docker.internal:8081
+    requestTimeout: 1000
   userservice:
     url: http://localhost:9000
     transactionPinDigitSize: 4
@@ -26,6 +29,9 @@ consentmanager:
     maxOtpAttempts: 5
     maxOtpAttemptsPeriodInMin: 10
     otpAttemptsBlockPeriodInMin: 2
+    otpInvalidAttemptsBlockPeriodInMin: 2
+    otpMaxInvalidAttempts: 5
+    maxIncorrectPinAttempts: 5
   lockeduserservice:
     maximumInvalidAttempts: 5
     coolOfPeriod: 8
@@ -60,6 +66,7 @@ consentmanager:
       url: http://localhost:9000
   linkservice:
     url: http://localhost:9000
+    txnTimeout: 5000
 spring:
   rabbitmq:
     host: localhost

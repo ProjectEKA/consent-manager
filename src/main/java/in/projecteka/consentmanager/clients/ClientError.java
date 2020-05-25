@@ -1,11 +1,13 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.Error;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.http.HttpStatus;
 
+import static in.projecteka.consentmanager.clients.model.ErrorCode.BAD_REQUEST_FROM_GATEWAY;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_EXPIRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_FORBIDDEN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_NOT_FOUND;
@@ -20,8 +22,11 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SESSI
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TOKEN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TRANSACTION_PIN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.NETWORK_SERVICE_ERROR;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.NO_PATIENT_FOUND;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.NO_RESULT_FROM_GATEWAY;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_EXPIRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_INVALID;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_REQUEST_LIMIT_EXCEEDED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.PROVIDER_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.QUEUE_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.REQUEST_ALREADY_EXISTS;
@@ -32,13 +37,14 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.UNKNOWN_ERROR
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USERNAME_OR_PASSWORD_INCORRECT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_REQUEST_LIMIT_EXCEEDED;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.REQUEST_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_OTP_ATTEMPTS_EXCEEDED;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_RECOVERY_REQUEST;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.GATEWAY_TIMEOUT;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -57,6 +63,10 @@ public class ClientError extends Throwable {
     public ClientError(HttpStatus httpStatus, ErrorRepresentation errorRepresentation) {
         this.httpStatus = httpStatus;
         error = errorRepresentation;
+    }
+
+    public ErrorCode getErrorCode(){
+        return this.error.getError().getCode();
     }
 
     public static ClientError unableToConnectToProvider() {
@@ -154,6 +164,10 @@ public class ClientError extends Throwable {
         return internalServerError("Failed to update request_id in transaction pin");
     }
 
+    public static ClientError failedToEditTransactionPin() {
+        return internalServerError("Failed to update transaction pin");
+    }
+
     public static ClientError failedToFetchTransactionPin() {
         return internalServerError("Failed to fetch transaction pin");
     }
@@ -162,9 +176,13 @@ public class ClientError extends Throwable {
     public static ClientError failedToFetchLockedUser() {
         return internalServerError("Failed to fetch Locked User");
     }
-  
+
     public static ClientError failedToUpdateUser() {
         return internalServerError("Failed to update user");
+    }
+
+    public static ClientError failedToFetchUserCredentials() {
+        return internalServerError("Failed to get user credentials");
     }
 
     public static ClientError queueNotFound() {
@@ -265,5 +283,39 @@ public class ClientError extends Throwable {
     public static ClientError invalidSession(String session) {
         return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_SESSION, String.format("The sessionId: %s is invalid",session))));
+    }
+
+    public static ClientError gatewayTimeOut() {
+        return new ClientError(GATEWAY_TIMEOUT, new ErrorRepresentation(new Error(NO_RESULT_FROM_GATEWAY, "Didn't receive any result from Gateway")));
+    }
+
+    public static ClientError tooManyInvalidOtpAttempts() {
+        return new ClientError(TOO_MANY_REQUESTS,
+                new ErrorRepresentation(new Error(INVALID_OTP_ATTEMPTS_EXCEEDED, "Invalid OTP attempts limit exceeded")));
+    }
+
+    public static ClientError unknownUnauthroziedError(String message) {
+        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(UNKNOWN_ERROR_OCCURRED, message)));
+    }
+
+    public static ClientError patientNotFound() {
+        return new ClientError(NOT_FOUND,
+                new ErrorRepresentation(new Error(NO_PATIENT_FOUND, "Could not find patient information")));
+    }
+
+    public static ClientError unprocessableEntity() {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(BAD_REQUEST_FROM_GATEWAY, "Bad Request")));
+
+    }
+
+    public static ClientError invalidRecoveryRequest() {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(INVALID_RECOVERY_REQUEST, "Invalid CM Id recovery request")));
+    }
+
+    public static ClientError noPatientFound() {
+        return new ClientError(NOT_FOUND,
+                new ErrorRepresentation(new Error(NO_PATIENT_FOUND, "No patient matching the records")));
     }
 }

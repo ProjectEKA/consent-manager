@@ -1,5 +1,7 @@
 package in.projecteka.consentmanager.link.discovery;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
@@ -7,11 +9,14 @@ import in.projecteka.consentmanager.clients.model.Address;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Telecom;
 import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifierType;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -37,6 +42,7 @@ import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.telecom;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.user;
 import static java.util.List.of;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -56,8 +62,7 @@ public class DiscoveryTest {
     @Mock
     DiscoveryRepository discoveryRepository;
 
-    @Mock
-    GatewayServiceProperties gatewayServiceProperties;
+    LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
 
     @Mock
     CacheAdapter<String,String> discoveryResults;
@@ -74,7 +79,7 @@ public class DiscoveryTest {
                 discoveryServiceClient,
                 discoveryRepository,
                 centralRegistry,
-                gatewayServiceProperties,
+                linkServiceProperties,
                 discoveryResults);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
@@ -102,7 +107,7 @@ public class DiscoveryTest {
                                     discoveryServiceClient,
                                     discoveryRepository,
                                     centralRegistry,
-                                    gatewayServiceProperties,
+                                    linkServiceProperties,
                                     discoveryResults);
         var address = address().use("work").build();
         var telecom = telecom().use("work").build();
@@ -168,7 +173,7 @@ public class DiscoveryTest {
                 discoveryServiceClient,
                 discoveryRepository,
                 centralRegistry,
-                gatewayServiceProperties,
+                linkServiceProperties,
                 discoveryResults);
         Address address = address().use("work").build();
         Telecom telecom = telecom().use("work").build();
@@ -208,7 +213,7 @@ public class DiscoveryTest {
                 discoveryServiceClient,
                 discoveryRepository,
                 centralRegistry,
-                gatewayServiceProperties,
+                linkServiceProperties,
                 discoveryResults);
 
         when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.just(transactionId.toString()));
@@ -231,7 +236,7 @@ public class DiscoveryTest {
                 discoveryServiceClient,
                 discoveryRepository,
                 centralRegistry,
-                gatewayServiceProperties,
+                linkServiceProperties,
                 discoveryResults);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
@@ -247,4 +252,54 @@ public class DiscoveryTest {
         StepVerifier.create(discovery.providersFrom("Max"))
                 .verifyComplete();
     }
+
+    @Test
+    public void patientForGivenHIPIdAndPatientId() throws JsonProcessingException {
+        var hipId = string();
+        var transactionId = UUID.randomUUID();
+        var requestId = UUID.randomUUID();
+        var patientId = string();
+        var user = user().identifier("1").name("first name").phone("+91-9999999999").build();
+        PatientIdentifier ncp1008 = patientIdentifierBuilder().type(PatientIdentifierType.MR).value("NCP1008").build();
+        var unverifiedIdentifiers = Collections.singletonList(ncp1008);
+        UUID gatewayOnDiscoverRequestId = UUID.randomUUID();
+        var gatewayResponse = GatewayResponse.builder().requestId(requestId.toString()).build();
+        var patientInResponse = patientInResponse()
+                .display("John Doe")
+                .referenceNumber("123")
+                .matchedBy(of())
+                .careContexts(of())
+                .build();
+
+        DiscoveryResult discoveryResult = DiscoveryResult.builder()
+                .patient(patientInResponse)
+                .requestId(gatewayOnDiscoverRequestId)
+                .transactionId(transactionId)
+                .resp(gatewayResponse)
+                .build();
+        String discoveryResultInCache = new ObjectMapper().writeValueAsString(discoveryResult);
+        when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.empty());
+        when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
+        when(discoveryServiceClient.requestPatientFor(any(), eq(hipId)))
+                .thenReturn(Mono.just(true));
+        when(discoveryResults.get(requestId.toString())).thenReturn(Mono.just(discoveryResultInCache));
+        when(discoveryRepository.insert(hipId, patientId, transactionId, requestId)).thenReturn(Mono.empty());
+        var discoveryResponse = discoveryResponse()
+                .patient(patientInResponse)
+                .transactionId(transactionId)
+                .build();
+        var discovery = new Discovery(userServiceClient,
+                discoveryServiceClient,
+                discoveryRepository,
+                centralRegistry,
+                linkServiceProperties,
+                discoveryResults);
+        StepVerifier.create(
+                discovery.patientInHIP(patientId, unverifiedIdentifiers, hipId, transactionId, requestId)
+                        .subscriberContext(cxt -> cxt.put(AUTHORIZATION, string())))
+                .expectNext(discoveryResponse)
+                .verifyComplete();
+    }
+
+
 }

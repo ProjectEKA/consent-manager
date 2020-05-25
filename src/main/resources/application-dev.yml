@@ -19,7 +19,7 @@ consentmanager:
     jwkUrl: http://host.docker.internal:8080/certs
   gatewayservice:
     baseUrl: http://host.docker.internal:8081
-    responseTimeout: 3
+    requestTimeout: 1000
   userservice:
     url: http://localhost:9000
     transactionPinDigitSize: 4
@@ -66,6 +66,7 @@ consentmanager:
       url: http://localhost:9000
   linkservice:
     url: http://localhost:9000
+    txnTimeout: 5000
 spring:
   rabbitmq:
     host: localhost

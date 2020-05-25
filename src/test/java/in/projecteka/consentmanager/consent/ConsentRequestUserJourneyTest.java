@@ -3,8 +3,10 @@ package in.projecteka.consentmanager.consent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
@@ -22,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -53,6 +56,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -94,6 +98,9 @@ public class ConsentRequestUserJourneyTest {
 
     @MockBean
     private PinVerificationTokenService pinVerificationTokenService;
+
+    @Mock
+    private CentralRegistry centralRegistry;
 
     @SuppressWarnings("unused")
     @MockBean(name = "centralRegistryJWKSet")
@@ -202,6 +209,7 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldAcceptConsentRequest() {
         var authToken = string();
+        var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         when(centralRegistryTokenVerifier.verify(authToken))
                 .thenReturn(Mono.just(new Caller("MAX-ID", true)));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
@@ -210,11 +218,12 @@ public class ConsentRequestUserJourneyTest {
         when(conceptValidator.validatePurpose("CAREMGT")).thenReturn(Mono.just(true));
         when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
         when(repository.requestOf(anyString())).thenReturn(Mono.empty());
+
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
         load(identityServer, "{}");
         load(userServer, "{}");
 
@@ -373,6 +382,7 @@ public class ConsentRequestUserJourneyTest {
         when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
         when(conceptValidator.validateHITypes(anyList())).thenReturn(Mono.just(true));
+        when(centralRegistry.providerWith(eq("10000005"))).thenReturn(Mono.just(Provider.builder().build()));
 
         webTestClient.post()
                 .uri("/consent-requests/30d02f6d-de17-405e-b4ab-d31b2bb799d7/approve")
@@ -389,14 +399,15 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldNotApproveConsentGrantForInvalidCareContext() throws JsonProcessingException {
         var token = string();
+        var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
-        load(clientRegistryServer, "{}");
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
         load(userServer, "{}");
         load(identityServer, "{}");
         load(identityServer, "{}");

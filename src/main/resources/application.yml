@@ -19,7 +19,7 @@ consentmanager:
     jwkUrl: ${CENTRAL_REGISTRY_JWK_URL}
   gatewayservice:
     baseUrl: ${GATEWAY_BASE_URL}
-    responseTimeout: ${GATEWAY_RESPONSE_TIMEOUT}
+    requestTimeout: ${GATEWAY_REQUEST_TIMEOUT}
   userservice:
     url: ${User_Service_Url}
     transactionPinDigitSize: ${TRANSACTION_PIN_DIGIT_SIZE}
@@ -62,6 +62,7 @@ consentmanager:
       url: ${CONSENT_MANAGER_URL}
   linkservice:
     url: ${LINK_SERVICE_URL}
+    txnTimeout: ${LINK_TRANSACTION_TIMEOUT}
   #Valid values are guava(for local), redis
   cacheMethod: ${CACHE_METHOD:guava}
   redis:

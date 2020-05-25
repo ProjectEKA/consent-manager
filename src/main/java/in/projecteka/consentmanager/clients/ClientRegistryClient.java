@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.clients;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.Session;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -67,10 +67,10 @@ public class ClientRegistryClient {
     }
 
     @AllArgsConstructor
-    @Data
+    @Value
     private static class SessionRequest {
-        private String clientId;
-        private String clientSecret;
-        private String grantType;
+        String clientId;
+        String clientSecret;
+        String grantType;
     }
 }

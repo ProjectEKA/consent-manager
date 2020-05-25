@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.link.discovery;
+package in.projecteka.consentmanager.clients.properties;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,5 +11,5 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConstructorBinding
 public class GatewayServiceProperties {
     private final String baseUrl;
-    private final int responseTimeout;
+    private final int requestTimeout;
 }

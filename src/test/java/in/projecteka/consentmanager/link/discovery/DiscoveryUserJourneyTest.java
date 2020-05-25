@@ -62,6 +62,7 @@ import static org.mockito.Mockito.when;
 @AutoConfigureWebTestClient(timeout = "6000000")
 @ContextConfiguration(initializers = DiscoveryUserJourneyTest.ContextInitializer.class)
 public class DiscoveryUserJourneyTest {
+    private static final MockWebServer clientRegistryServer = new MockWebServer();
 
     @SuppressWarnings("unused")
     @MockBean
@@ -123,6 +124,7 @@ public class DiscoveryUserJourneyTest {
     @AfterAll
     public static void tearDown() throws IOException {
         providerServer.shutdown();
+        clientRegistryServer.shutdown();
     }
 
     @Test
@@ -132,10 +134,11 @@ public class DiscoveryUserJourneyTest {
                 new TypeReference<List<JsonNode>>() {
                 });
         var token = string();
-        var session = "{\"accessToken\": \"eyJhbGc\"}";
+        var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"refresh\"}";
+
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(
                 "consent-manager-service", true)));
-        providerServer.enqueue(new MockResponse()
+        clientRegistryServer.enqueue(new MockResponse()
                 .setHeader("Content-Type", "application/json")
                 .setBody(session));
         providerServer.enqueue(new MockResponse()
@@ -163,11 +166,16 @@ public class DiscoveryUserJourneyTest {
                 new TypeReference<JsonNode>() {
                 });
         var token = string();
-        var session = "{\"accessToken\": \"eyJhbGc\"}";
+
+        var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"ff\"}";
         String providerId = "12345";
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(
                 "consent-manager-service", true)));
+        clientRegistryServer.enqueue(new MockResponse()
+                .setHeader("Content-Type", "application/json")
+                .setBody(session));
+
         providerServer.enqueue(new MockResponse()
                 .setHeader("Content-Type", "application/json")
                 .setBody(session));
@@ -213,13 +221,13 @@ public class DiscoveryUserJourneyTest {
         when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
-        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
+        when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.empty());
         var errorResponse = new ErrorRepresentation(
                 new Error(ErrorCode.NO_RESULT_FROM_GATEWAY,"Didn't receive any result from Gateway"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
-                .uri("/patients/care-contexts/discover")
+                .uri("/v1/care-contexts/discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -257,10 +265,10 @@ public class DiscoveryUserJourneyTest {
         when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
-        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
+        when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         webTestClient.post()
-                .uri("/patients/care-contexts/discover")
+                .uri("/v1/care-contexts/discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -295,13 +303,13 @@ public class DiscoveryUserJourneyTest {
         when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
-        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
+        when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         var errorResponse = new ErrorRepresentation(
                 new Error(ErrorCode.NO_PATIENT_FOUND,"Could not find patient information"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
-                .uri("/patients/care-contexts/discover")
+                .uri("/v1/care-contexts/discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -332,13 +340,13 @@ public class DiscoveryUserJourneyTest {
         when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
-        when(discoveryServiceClient.requestPatientFor(any(), eq("http://tmc.gov.in/ncg-gateway"), eq("12345"))).thenReturn(Mono.just(true));
+        when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         var errorResponse = new ErrorRepresentation(
                 new Error(ErrorCode.NO_PATIENT_FOUND,"Could not find patient information"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
-                .uri("/patients/care-contexts/discover")
+                .uri("/v1/care-contexts/discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -355,7 +363,7 @@ public class DiscoveryUserJourneyTest {
         var patientDiscoveryResult = TestBuilders.discoveryResult().build();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
         webTestClient.post()
-                .uri("/patients/care-contexts/on-discover")
+                .uri("/v1/care-contexts/on-discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -381,7 +389,7 @@ public class DiscoveryUserJourneyTest {
                 .build();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
         webTestClient.post()
-                .uri("/patients/care-contexts/on-discover")
+                .uri("/v1/care-contexts/on-discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -395,7 +403,7 @@ public class DiscoveryUserJourneyTest {
         var token = string();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
         webTestClient.post()
-                .uri("/patients/care-contexts/on-discover")
+                .uri("/v1/care-contexts/on-discover")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)

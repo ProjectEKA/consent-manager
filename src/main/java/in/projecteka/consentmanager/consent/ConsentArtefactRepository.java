@@ -59,7 +59,7 @@ public class ConsentArtefactRepository {
     static {
         String s = "SELECT status, consent_artefact, signature, date_modified FROM ";
         SELECT_CONSENT_QUERY = s + "consent_artefact where consent_artefact_id = $1";
-        SELECT_HIP_CONSENT_QUERY = s + "hip_consent_artefact WHERE consent_artefact_id = $1";
+        SELECT_HIP_CONSENT_QUERY = "SELECT status, consent_artefact, signature FROM hip_consent_artefact WHERE consent_artefact_id = $1";
         SELECT_ALL_CONSENT_ARTEFACTS = s + "consent_artefact WHERE patient_id=$1 and (status=$4 OR $4 IS NULL) " +
                 "ORDER BY date_modified DESC" +
                 " LIMIT $2 OFFSET $3";

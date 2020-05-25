@@ -59,6 +59,9 @@ class LinkTest {
     @Mock
     private CacheAdapter<String, String> linkResults;
 
+    @Mock
+    private CacheAdapter<String,String> patientLinkReferenceResults;
+
     @BeforeEach
     public void setUp() {
         initMocks(this);
@@ -67,7 +70,7 @@ class LinkTest {
     @Test
     public void createsLinkReference() {
         LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
-        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults, patientLinkReferenceResults);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         String providerUrl = "http://localhost:8001";
@@ -109,7 +112,7 @@ class LinkTest {
     public void shouldGetSystemUrlForOfficialIdentifier() {
         var token = string();
         LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
-        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults, patientLinkReferenceResults)
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         String providerUrl = "http://localhost:8001";
@@ -156,7 +159,7 @@ class LinkTest {
     @Test
     public void shouldGetErrorWhenProviderUrlIsEmpty() {
         LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
-        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults, patientLinkReferenceResults);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var provider =
@@ -188,7 +191,7 @@ class LinkTest {
     @Test
     public void linksPatientsCareContexts() {
         LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
-        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults, patientLinkReferenceResults);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         String providerUrl = "http://localhost:8001";
@@ -259,7 +262,7 @@ class LinkTest {
         when(linkRepository.getLinkedCareContextsForAllHip(patientId)).thenReturn(Mono.just(patientLinks));
         when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
         LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
-        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults, patientLinkReferenceResults);
 
         StepVerifier.create(link.getLinkedCareContexts(patientId))
                 .expectNext(patientLinksResponse)
@@ -269,7 +272,7 @@ class LinkTest {
     @Test
     public void confirmLinkCareContexts() {
         LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
-        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults, patientLinkReferenceResults);
         PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
         String patientId = "patient";
         String hipId = "10000005";

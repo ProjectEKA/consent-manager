@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
 import in.projecteka.consentmanager.clients.model.Patient;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
@@ -41,6 +42,7 @@ public class Link {
     private final CentralRegistry centralRegistry;
     private final LinkServiceProperties serviceProperties;
     private final CacheAdapter<String, String> linkResults;
+    private final CacheAdapter<String,String> patientLinkReferenceResults;
 
     private static final Logger logger = LoggerFactory.getLogger(Link.class);
 
@@ -137,6 +139,24 @@ public class Link {
     public Mono<PatientLinksResponse> getLinkedCareContexts(String patientId) {
         return linkRepository.getLinkedCareContextsForAllHip(patientId).map(patientLinks ->
                 PatientLinksResponse.builder().patient(patientLinks).build());
+    }
+
+    public Mono<Void> onLinkCareContexts(PatientLinkReferenceResult patientLinkReferenceResult) {
+        if(patientLinkReferenceResult.hasResponseId()) {
+            return patientLinkReferenceResults.put(patientLinkReferenceResult.getResp().getRequestId(), serializeLinkReferenceResultFromHIP(patientLinkReferenceResult));
+        }
+        logger.error("[Link] Received a patient link reference response from Gateway without original request Id mentioned.{}", patientLinkReferenceResult.getRequestId());
+        return Mono.error(ClientError.unprocessableEntity());
+    }
+
+    private String serializeLinkReferenceResultFromHIP(PatientLinkReferenceResult responseBody) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(responseBody);
+        } catch (JsonProcessingException e) {
+            logger.error("[Link] Can not serialize patient link reference response from HIP", e);
+        }
+        return null;
     }
 
     public Mono<PatientLinkResponse> verifyLinkToken(String username, PatientLinkRequest patientLinkRequest) {

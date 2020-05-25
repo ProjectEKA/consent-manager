@@ -46,14 +46,16 @@ public class LinkConfiguration {
                      CentralRegistry centralRegistry,
                      GatewayServiceProperties gatewayServiceProperties,
                      LinkServiceProperties serviceProperties,
-                     CacheAdapter<String, String> linkResults) {
+                     CacheAdapter<String, String> linkResults,
+                     CacheAdapter<String, String> patientLinkReferenceResults) {
         return new Link(
                 new LinkServiceClient(builder, centralRegistry, gatewayServiceProperties),
                 linkRepository,
                 centralRegistry,
                 serviceProperties,
-                linkResults);
-    }
+                linkResults,
+                patientLinkReferenceResults);
+     }
 
     @Bean
     public DiscoveryServiceClient discoveryServiceClient(WebClient.Builder builder,
@@ -80,7 +82,7 @@ public class LinkConfiguration {
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    @Bean({"discoveryResults", "linkResults"})
+    @Bean({"discoveryResults", "linkResults", "patientLinkReferenceResults"})
     public CacheAdapter<String, String> createLoadingCacheAdapter() {
         return new LoadingCacheAdapter(createSessionCache(5));
     }
@@ -97,7 +99,7 @@ public class LinkConfiguration {
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
-    @Bean({"discoveryResults", "linkResults"})
+    @Bean({"discoveryResults", "linkResults", "patientLinkReferenceResults"})
     public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
         return new RedisCacheAdapter(redisClient, 5);
     }

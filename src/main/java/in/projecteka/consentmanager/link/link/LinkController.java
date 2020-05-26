@@ -77,4 +77,13 @@ public class LinkController {
     public Mono<Void> onConfirmLink(@RequestBody @Valid LinkConfirmationResult confirmationResult) {
         return link.onConfirmLink(confirmationResult);
     }
+
+    @PostMapping("v1/links/link/init")
+    public Mono<PatientLinkReferenceResponse> linkPatientCareContexts(
+            @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest
+    ) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .flatMap(caller -> link.patientCareContexts(caller.getUsername(), patientLinkReferenceRequest));
+    }
 }

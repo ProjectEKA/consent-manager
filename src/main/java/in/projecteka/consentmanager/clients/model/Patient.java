@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 public class Patient {
-    private String consentManagerUserID;
+    private String id;
     private String referenceNumber;
     private List<CareContext> careContexts;
 }

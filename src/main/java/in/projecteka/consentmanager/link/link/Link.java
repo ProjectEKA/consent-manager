@@ -36,13 +36,12 @@ import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 
 @AllArgsConstructor
 public class Link {
+    private static final Logger logger = LoggerFactory.getLogger(Link.class);
     private final LinkServiceClient linkServiceClient;
     private final LinkRepository linkRepository;
     private final CentralRegistry centralRegistry;
     private final LinkServiceProperties serviceProperties;
     private final CacheAdapter<String, String> linkResults;
-
-    private static final Logger logger = LoggerFactory.getLogger(Link.class);
 
     public Mono<PatientLinkReferenceResponse> patientWith(String patientId,
                                                           PatientLinkReferenceRequest patientLinkReferenceRequest) {
@@ -62,6 +61,28 @@ public class Link {
                                         hipId,
                                         url))));
     }
+
+//    public Mono<PatientLinkReferenceResponse> patientCareContexts(String patientId,
+//                                                                  PatientLinkReferenceRequest patientLinkReferenceRequest) {
+//        UUID requestId = UUID.randomUUID();
+//        Patient patient = toHIPPatient(patientId, patientLinkReferenceRequest.getPatient());
+//        var linkReferenceRequest = new in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest(
+//                patientLinkReferenceRequest.getRequestId().toString(),
+//                patientLinkReferenceRequest.getTransactionId(),
+//                patient);
+//
+//        return Mono.just(patientLinkReferenceRequest.getRequestId())
+//                .filterWhen(this::validateRequest)
+//                .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
+//                .flatMap(id -> linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId())
+//                        .flatMap(hipId -> getHIPPatientLinkReferenceResponse(patientLinkReferenceRequest,
+//                                linkReferenceRequest,
+//                                hipId,
+//                                requestId
+//                        ))
+//                );
+//    }
+
 
     private Mono<Boolean> validateRequest(UUID requestId) {
         return linkRepository.selectLinkReference(requestId)
@@ -87,6 +108,41 @@ public class Link {
                                     .link(linkReferenceResponse.getLink()).build());
                 });
     }
+
+//    private Mono<PatientLinkReferenceResponse> getHIPPatientLinkReferenceResponse(
+//            PatientLinkReferenceRequest patientLinkReferenceRequest,
+//            in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest linkReferenceRequest,
+//            String hipId,
+//            String requestId
+//    ) {
+//        return centralRegistry
+//                .authenticate()
+//                .flatMap(token -> linkServiceClient.linkPatientEnquiryRequest(linkReferenceRequest, token))
+//                .zipWith(Mono.delay(Duration.ofMillis(getExpectedFlowResponseDuration())))
+//                .flatMap(tuple ->
+//                        linkResults.get(requestId.toString())
+//                                .switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
+//                                .flatMap(lir -> deserializeLinkReferenceResponseFromHIP(lir)))
+//                                .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
+//                .flatMap(linkReferenceResult -> {
+//                    if (linkReferenceResult.getError() != null) {
+//                        logger.error("[Link] Link initiation resulted in error {}", linkReferenceResult.getError());
+//                        return Mono.error(new ClientError(HttpStatus.BAD_REQUEST, cmErrorRepresentation(linkReferenceResult.getError())));
+//                    }
+//                    if (linkReferenceResult.getLink() == null) {
+//                        logger.error("[Link] Link initiation should have returned linked care context details or error caused." +
+//                                "Gateway requestId {}", linkReferenceResult.getRequestId());
+//                        return Mono.error(ClientError.invalidResponseFromHIP());
+//                    }
+//                    return linkRepository.insertToLink(hipId, patientId, patientLinkRequest.getLinkRefNumber(), linkReferenceResult.getPatient())
+//                            .thenReturn(PatientLinkResponse.builder()
+//                                    .patient(linkReferenceResult.getPatient())
+//                                    .build());
+//                });
+//
+//
+//    }
+
 
     public Mono<PatientLinkResponse> verifyToken(String linkRefNumber,
                                                  PatientLinkRequest patientLinkRequest,
@@ -217,6 +273,16 @@ public class Link {
     }
 
     private Mono<LinkConfirmationResult> deserializeConfirmationFromHIP(String responseBody) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return Mono.just(objectMapper.readValue(responseBody, LinkConfirmationResult.class));
+        } catch (JsonProcessingException e) {
+            logger.error("[Link] Can not deserialize response from HIP", e);
+        }
+        return Mono.empty();
+    }
+
+    private Mono<LinkConfirmationResult> deserializeLinkReferenceResponseFromHIP(String responseBody) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             return Mono.just(objectMapper.readValue(responseBody, LinkConfirmationResult.class));

@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -25,6 +26,7 @@ public class LinkServiceClient {
 
     private static final String HDR_HIP_ID = "X-HIP-ID";
     private static final String PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH = "%s/links/link/confirm";
+    private static final String PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH = "%s/links/link/init";
 
     public LinkServiceClient(WebClient.Builder webClientBuilder, CentralRegistry centralRegistry, GatewayServiceProperties gatewayServiceProperties) {
         this.webClientBuilder = webClientBuilder;
@@ -46,6 +48,23 @@ public class LinkServiceClient {
                         clientResponse.bodyToMono(ErrorRepresentation.class)
                                 .flatMap(e -> Mono.error(new ClientError(clientResponse.statusCode(), e))))
                 .bodyToMono(PatientLinkReferenceResponse.class);
+    }
+
+    public Mono<Boolean> linkPatientEnquiryRequest(PatientLinkReferenceRequest patientLinkReferenceRequest, String authorization) {
+        return webClientBuilder.build()
+                .post()
+                .uri(getLinkEnquiryUrl())
+                .header(AUTHORIZATION, authorization)
+                .body(Mono.just(patientLinkReferenceRequest), PatientLinkReferenceRequest.class)
+                .retrieve()
+                .onStatus(httpStatus -> httpStatus.value() == 401,
+                        // Error msg should be logged
+                        clientResponse -> Mono.error(ClientError.unknownErrorOccurred()))
+                .onStatus(HttpStatus::is5xxServerError,
+                        clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .toBodilessEntity()
+                .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout()))
+                .thenReturn(Boolean.TRUE);
     }
 
     public Mono<PatientLinkResponse> linkPatientConfirmation(
@@ -94,4 +113,9 @@ public class LinkServiceClient {
     private String getLinkConfirmationUrl() {
         return String.format(PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH, gatewayServiceProperties.getBaseUrl());
     }
+
+    private String getLinkEnquiryUrl() {
+        return String.format(PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH, gatewayServiceProperties.getBaseUrl());
+    }
+
 }

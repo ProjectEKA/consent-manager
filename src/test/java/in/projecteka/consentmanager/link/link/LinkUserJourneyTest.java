@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
@@ -16,6 +17,7 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
@@ -37,6 +39,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -47,6 +50,7 @@ import reactor.core.publisher.MonoSink;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,6 +59,7 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.errorRepresent
 import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResponse;
+import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResult;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkResponse;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientRepresentation;
@@ -512,4 +517,58 @@ public class LinkUserJourneyTest {
             return new MockResponse().setResponseCode(404);
         }
     };
+
+    @Test
+    public void onLinkCareContexts() {
+        var token = string();
+        var patientLinkReferenceResult = patientLinkReferenceResult().build();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", false)));
+
+        webTestClient.post()
+                .uri("/v1/links/link/on-init")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientLinkReferenceResult)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
+    public void shouldFailOnLinkCareContextsWhenRequestIdIsNotGiven() throws Exception {
+        var token = string();
+        var gatewayResponse = GatewayResponse.builder()
+                .requestId(null)
+                .build();
+        var patientLinkReferenceResult = PatientLinkReferenceResult.builder()
+                .requestId(UUID.randomUUID())
+                .resp(gatewayResponse)
+                .build();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", false)));
+
+        webTestClient.post()
+                .uri("/v1/links/link/on-init")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientLinkReferenceResult)
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test
+    public void shouldFailOnLinkCareContexts() throws Exception {
+        var token = string();
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", false)));
+        webTestClient.post()
+                .uri("/v1/links/link/on-init")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .exchange()
+                .expectStatus().is5xxServerError();
+    }
+
 }

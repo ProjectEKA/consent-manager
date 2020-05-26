@@ -53,7 +53,7 @@ public class LinkConfiguration {
                 centralRegistry,
                 serviceProperties,
                 linkResults);
-    }
+     }
 
     @Bean
     public DiscoveryServiceClient discoveryServiceClient(WebClient.Builder builder,

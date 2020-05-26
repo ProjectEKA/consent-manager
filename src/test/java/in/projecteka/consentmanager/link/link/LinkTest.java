@@ -2,11 +2,15 @@ package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
+import in.projecteka.consentmanager.clients.model.CareContextRepresentation;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
+import in.projecteka.consentmanager.clients.model.PatientRepresentation;
+import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
@@ -18,6 +22,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static in.projecteka.consentmanager.link.link.TestBuilders.address;
@@ -34,6 +39,7 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.telecom;
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,6 +56,9 @@ class LinkTest {
     @Mock
     private LinkRepository linkRepository;
 
+    @Mock
+    private CacheAdapter<String, String> linkResults;
+
     @BeforeEach
     public void setUp() {
         initMocks(this);
@@ -57,7 +66,8 @@ class LinkTest {
 
     @Test
     public void createsLinkReference() {
-        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient);
+        LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         String providerUrl = "http://localhost:8001";
@@ -98,7 +108,8 @@ class LinkTest {
     @Test
     public void shouldGetSystemUrlForOfficialIdentifier() {
         var token = string();
-        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient);
+        LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         String providerUrl = "http://localhost:8001";
@@ -144,7 +155,8 @@ class LinkTest {
 
     @Test
     public void shouldGetErrorWhenProviderUrlIsEmpty() {
-        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient);
+        LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var provider =
@@ -175,7 +187,8 @@ class LinkTest {
 
     @Test
     public void linksPatientsCareContexts() {
-        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient);
+        LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         String providerUrl = "http://localhost:8001";
@@ -245,10 +258,51 @@ class LinkTest {
 
         when(linkRepository.getLinkedCareContextsForAllHip(patientId)).thenReturn(Mono.just(patientLinks));
         when(clientRegistryClient.providerWith(eq(hipId))).thenReturn(Mono.just(provider));
-        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient);
+        LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults);
 
         StepVerifier.create(link.getLinkedCareContexts(patientId))
                 .expectNext(patientLinksResponse)
+                .verifyComplete();
+    }
+
+    @Test
+    public void confirmLinkCareContexts() {
+        LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults);
+        PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
+        String patientId = "patient";
+        String hipId = "10000005";
+        String linkConfirmationResult = "{\n" +
+                "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
+                "  \"timestamp\": \"2020-05-25T15:03:44.557Z\",\n" +
+                "  \"patient\": {\n" +
+                "    \"referenceNumber\": \"HID-001\",\n" +
+                "    \"display\": \"Patient with HID 001\",\n" +
+                "    \"careContexts\": [\n" +
+                "      {\n" +
+                "        \"referenceNumber\": \"CC001\",\n" +
+                "        \"display\": \"Episode 001\"\n" +
+                "      }\n" +
+                "    ]\n" +
+                "  },\n" +
+                "  \"resp\": {\n" +
+                "    \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n" +
+                "  }\n" +
+                "}";
+
+        String transactionId = "transactionId";
+        when(linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())).thenReturn(Mono.just(transactionId));
+        when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
+        when(linkServiceClient.confirmPatientLink(any(), eq(hipId))).thenReturn(Mono.just(Boolean.TRUE));
+        when(linkResults.get(any())).thenReturn(Mono.just(linkConfirmationResult));
+        when(linkRepository.insertToLink(eq(hipId), eq(patientId), eq(patientLinkRequest.getLinkRefNumber()), any())).thenReturn(Mono.empty());
+
+        CareContextRepresentation cc001 = CareContextRepresentation.builder().referenceNumber("CC001").display("Episode 001").build();
+        PatientRepresentation patient = PatientRepresentation.builder().referenceNumber("HID-001").display("Patient with HID 001").careContexts(Arrays.asList(cc001)).build();
+        PatientLinkResponse response = PatientLinkResponse.builder().patient(patient).build();
+        StepVerifier.create(link.verifyLinkToken(patientId, patientLinkRequest))
+                .expectNext(response)
                 .verifyComplete();
     }
 }

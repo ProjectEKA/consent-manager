@@ -220,10 +220,10 @@ public class ClientError extends Throwable {
                         errorMessage)));
     }
 
-    public static ClientError invalidUserName() {
+    public static ClientError invalidUserNameOrPassword() {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT,
-                        "Username incorrect")));
+                        "Invalid username or password")));
     }
 
     public static ClientError userBlocked() {

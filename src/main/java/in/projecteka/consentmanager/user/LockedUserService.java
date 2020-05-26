@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.user.model.LockedUser;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -17,7 +16,7 @@ public class LockedUserService {
         return lockedUsersRepository.getLockedUserFor(cmId)
                 .filter(lockedUser -> lockedUser.getInvalidAttempts() >= lockedServiceProperties.getMaximumInvalidAttempts())
                 .flatMap(lockedUser -> {
-                    var isBlocked = isWithinTimeLimit(lockedUser, lockedServiceProperties.getCoolOfPeriod());
+                    var isBlocked = isBeforeMinutes(lockedUser.getDateModified(), lockedServiceProperties.getCoolOfPeriod());
                     return isBlocked ? Mono.error(ClientError.userBlocked()) : removeLockedUser(cmId);
                 });
     }
@@ -29,14 +28,14 @@ public class LockedUserService {
     public Mono<Void> createOrUpdateLockedUser(String cmId) {
         return lockedUsersRepository.getLockedUserFor(cmId)
                 .flatMap(lockedUser ->
-                        isWithinTimeLimit(lockedUser, lockedServiceProperties.getCoolOfPeriod()) ? Mono.empty() : removeLockedUser(cmId))
+                        isBeforeMinutes(lockedUser.getDateCreated(), lockedServiceProperties.getCoolOfPeriod())
+                                ? Mono.empty() : removeLockedUser(cmId))
                 .then(lockedUsersRepository.upsert(cmId));
     }
 
-    private boolean isWithinTimeLimit(LockedUser user, int timeLimitInMin) {
-        return user
-                .getDateModified()
-                .plusMinutes(timeLimitInMin)
+    private boolean isBeforeMinutes(LocalDateTime timeToCheck, int minutesToCheckWith) {
+        return timeToCheck
+                .plusMinutes(minutesToCheckWith)
                 .isAfter(LocalDateTime.now(ZoneOffset.UTC));
     }
 }

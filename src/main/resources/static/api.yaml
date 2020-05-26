@@ -1325,7 +1325,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /patients/recover-cmid:
+  /patients/profile/recovery-init:
     post:
       tags:
         - account
@@ -1396,7 +1396,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /patients/recovery/verifyotp:
+  /patients/profile/recovery-confirm:
     post:
       tags:
         - account

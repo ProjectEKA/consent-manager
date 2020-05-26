@@ -25,6 +25,7 @@ public class LinkController {
 
     private final Link link;
 
+    @Deprecated
     @PostMapping("/patients/link")
     public Mono<PatientLinkReferenceResponse> linkCareContexts(
             @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
@@ -84,7 +85,7 @@ public class LinkController {
         return link.onConfirmLink(confirmationResult);
     }
 
-    @PostMapping("v1/links/link/init")
+    @PostMapping("/v1/links/link/init")
     public Mono<PatientLinkReferenceResponse> linkPatientCareContexts(
             @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest
     ) {

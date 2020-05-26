@@ -50,11 +50,12 @@ public class LinkServiceClient {
                 .bodyToMono(PatientLinkReferenceResponse.class);
     }
 
-    public Mono<Boolean> linkPatientEnquiryRequest(PatientLinkReferenceRequest patientLinkReferenceRequest, String authorization) {
+    public Mono<Boolean> linkPatientEnquiryRequest(PatientLinkReferenceRequest patientLinkReferenceRequest, String authorization, String hipId) {
         return webClientBuilder.build()
                 .post()
                 .uri(getLinkEnquiryUrl())
                 .header(AUTHORIZATION, authorization)
+                .header(HDR_HIP_ID, hipId)
                 .body(Mono.just(patientLinkReferenceRequest), PatientLinkReferenceRequest.class)
                 .retrieve()
                 .onStatus(httpStatus -> httpStatus.value() == 401,

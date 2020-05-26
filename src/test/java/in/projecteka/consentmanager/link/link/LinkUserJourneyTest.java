@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
@@ -11,6 +12,7 @@ import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
@@ -121,6 +123,12 @@ public class LinkUserJourneyTest {
     @MockBean
     @Qualifier("linkResults")
     CacheAdapter<String,String> linkResults;
+
+    @MockBean
+    private LinkServiceClient linkServiceClient;
+
+    @MockBean
+    private CentralRegistry centralRegistry;
 
     @AfterAll
     public static void tearDown() throws IOException {
@@ -496,6 +504,74 @@ public class LinkUserJourneyTest {
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .exchange()
                 .expectStatus().is5xxServerError();
+    }
+
+    @Test
+    public void shouldGetPatientLinkReference() throws IOException {
+        var token = string();
+        var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
+        var linkReferenceRequest = TestBuilders.linkReferenceRequest().build();
+        var hipId = "10000005";
+        var linkReference = patientLinkReferenceResponse().build();
+        //linkReference.setTransactionId(patientLinkReferenceRequest.getTransactionId());
+        var patientLinkReferenceResult = patientLinkReferenceResult().build();
+        var linkReferenceResult = "{\n" +
+                "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
+                "  \"timestamp\": \"2020-05-25T15:03:44.557Z\",\n" +
+                "  \"transactionId\": \"7f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
+                "  \"link\": {\n" +
+                "    \"referenceNumber\": \"ref-no\",\n" +
+                "    \"authenticationType\": \"DIRECT\",\n" +
+                "    \"meta\": \n" +
+                "      {\n" +
+                "        \"communicationMedium\": \"M0BILE\",\n" +
+                "        \"communicationHint\": \"test-hint\", \n" +
+                "        \"communicationExpiry\": \"2020-12-30T12:01:55Z\"\n" +
+                "      }\n" +
+                "  },\n" +
+                "  \"resp\": {\n" +
+                "    \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n" +
+                "  }\n" +
+                "}";
+        var linkReferenceJson = "{\n" +
+                "  \"transactionId\": \"7f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
+                "  \"link\": {\n" +
+                "    \"referenceNumber\": \"ref-no\",\n" +
+                "    \"authenticationType\": \"DIRECT\",\n" +
+                "    \"meta\": \n" +
+                "      {\n" +
+                "        \"communicationMedium\": \"M0BILE\",\n" +
+                "        \"communicationHint\": \"test-hint\", \n" +
+                "        \"communicationExpiry\": \"2020-12-30T12:01:55Z\"\n" +
+                "      }\n" +
+                "  }\n" +
+                "}";
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
+        gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+        clientRegistryServer.setDispatcher(dispatcher);
+        when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
+                .thenReturn(Mono.just(hipId));
+        when(linkRepository.insert(patientLinkReferenceResult, hipId, patientLinkReferenceRequest.getRequestId()))
+                .thenReturn(Mono.create(MonoSink::success));
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
+                .thenReturn(Mono.empty());
+        when(centralRegistry.authenticate()).thenReturn(Mono.just(token));
+        when(linkServiceClient.linkPatientEnquiryRequest(linkReferenceRequest, token, hipId)).thenReturn(Mono.just(true));
+        when(linkResults.get(any())).thenReturn(Mono.just(linkReferenceResult));
+
+
+        webTestClient
+                .post()
+                .uri("/v1/links/link/init")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(patientLinkReferenceRequest)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .json(linkReferenceJson);
     }
 
 }

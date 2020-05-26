@@ -22,6 +22,7 @@ import java.util.UUID;
 public class PatientLinkReferenceResult {
     private UUID requestId;
     private String timestamp;
+    private UUID transactionId;
     private Link link;
     private RespError error;
     @NotNull

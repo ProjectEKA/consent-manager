@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.common.Caller;
@@ -52,6 +53,11 @@ public class LinkController {
     @GetMapping("internal/patients/{username}/links")
     public Mono<PatientLinksResponse> getLinkedCareContextInternal(@PathVariable String username) {
         return link.getLinkedCareContexts(username);
+    }
+
+    @PostMapping("/v1/links/link/on-init")
+    public Mono<Void> onLinkCareContexts(@RequestBody PatientLinkReferenceResult patientLinkReferenceResult) {
+        return link.onLinkCareContexts(patientLinkReferenceResult);
     }
 
     /**

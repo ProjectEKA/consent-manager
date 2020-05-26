@@ -14,8 +14,10 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEF
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_NOT_GRANTED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_RANGE;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_OTP_ATTEMPTS_EXCEEDED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PIN_ATTEMPTS_EXCEEDED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_RECOVERY_REQUEST;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SCOPE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SESSION;
@@ -34,12 +36,11 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_I
 import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_PIN_IS_ALREADY_CREATED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.UNABLE_TO_CONNECT_TO_PROVIDER;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.UNKNOWN_ERROR_OCCURRED;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.UNPROCESSABLE_RESPONSE_FROM_GATEWAY;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USERNAME_OR_PASSWORD_INCORRECT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_OTP_ATTEMPTS_EXCEEDED;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_RECOVERY_REQUEST;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -49,7 +50,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
-
+import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 
 @Getter
@@ -317,5 +318,9 @@ public class ClientError extends Throwable {
     public static ClientError noPatientFound() {
         return new ClientError(NOT_FOUND,
                 new ErrorRepresentation(new Error(NO_PATIENT_FOUND, "No patient matching the records")));
+    }
+
+    public static ClientError invalidResponseFromHIP() {
+        return new ClientError(UNPROCESSABLE_ENTITY, new ErrorRepresentation(new Error(UNPROCESSABLE_RESPONSE_FROM_GATEWAY, "Could not process response from HIP")));
     }
 }

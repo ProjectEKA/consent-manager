@@ -42,7 +42,6 @@ public class Link {
     private final CentralRegistry centralRegistry;
     private final LinkServiceProperties serviceProperties;
     private final CacheAdapter<String, String> linkResults;
-    private final CacheAdapter<String,String> patientLinkReferenceResults;
 
     private static final Logger logger = LoggerFactory.getLogger(Link.class);
 
@@ -143,7 +142,7 @@ public class Link {
 
     public Mono<Void> onLinkCareContexts(PatientLinkReferenceResult patientLinkReferenceResult) {
         if(patientLinkReferenceResult.hasResponseId()) {
-            return patientLinkReferenceResults.put(patientLinkReferenceResult.getResp().getRequestId(), serializeLinkReferenceResultFromHIP(patientLinkReferenceResult));
+            return linkResults.put(patientLinkReferenceResult.getResp().getRequestId(), serializeLinkReferenceResultFromHIP(patientLinkReferenceResult));
         }
         logger.error("[Link] Received a patient link reference response from Gateway without original request Id mentioned.{}", patientLinkReferenceResult.getRequestId());
         return Mono.error(ClientError.unprocessableEntity());

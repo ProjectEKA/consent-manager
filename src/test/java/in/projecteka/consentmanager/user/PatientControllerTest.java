@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
@@ -19,13 +19,15 @@ import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
 import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.InitiateCmIdRecoveryRequest;
 import in.projecteka.consentmanager.user.model.LoginMode;
 import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpMediumType;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.Profile;
-import in.projecteka.consentmanager.user.model.RecoverCmIdRequest;
+import in.projecteka.consentmanager.user.model.RecoverCmIdResponse;
+import in.projecteka.consentmanager.user.model.SendOtpAction;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
@@ -188,7 +190,7 @@ public class PatientControllerTest {
         var expectedResponseJson = new ObjectMapper().writeValueAsString(expectedResponse);
 
         when(profileService.profileFor(otpRequest.getUsername())).thenReturn(Mono.just(profile));
-        when(userService.sendOtpFor(userSignUpEnquiry, otpRequest.getUsername(), OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD)).thenReturn(Mono.just(signUpSession));
+        when(userService.sendOtpFor(userSignUpEnquiry, otpRequest.getUsername(), OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD, SendOtpAction.RECOVER_PASSWORD)).thenReturn(Mono.just(signUpSession));
 
         webClient.post()
                 .uri("/patients/generateotp")
@@ -200,7 +202,7 @@ public class PatientControllerTest {
                 .expectBody()
                 .json(expectedResponseJson);
 
-        verify(userService, times(1)).sendOtpFor(userSignUpEnquiry, otpRequest.getUsername(),OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD);
+        verify(userService, times(1)).sendOtpFor(userSignUpEnquiry, otpRequest.getUsername(),OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD, SendOtpAction.RECOVER_PASSWORD);
         verify(profileService, times(1)).profileFor(otpRequest.getUsername());
     }
 
@@ -429,7 +431,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void generateOtpForRecoverCmId() throws JsonProcessingException {
+    public void generateOtpOnGettingSinglePatientRecordForInitiateRecoverCmId() throws JsonProcessingException {
         String name = "abc";
         Gender gender = Gender.F;
         Integer yearOfBirth = 1999;
@@ -438,9 +440,9 @@ public class PatientControllerTest {
         ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
         ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        RecoverCmIdRequest request = new RecoverCmIdRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
-        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).gender(gender).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
 
         UserSignUpEnquiry userSignUpEnquiry = UserSignUpEnquiry.builder()
                 .identifierType(IdentifierType.MOBILE.toString())
@@ -454,11 +456,11 @@ public class PatientControllerTest {
                 .build();
         var expectedResponseJson = new ObjectMapper().writeValueAsString(expectedResponse);
 
-        when(userService.recoverCmId(any())).thenReturn(Mono.just(user));
-        when(userService.sendOtpFor(any(),any(),any())).thenReturn(Mono.just(signUpSession));
+        when(userService.getPatientByDetails(any())).thenReturn(Mono.just(user));
+        when(userService.sendOtpFor(any(),any(),any(),any())).thenReturn(Mono.just(signUpSession));
 
         webClient.post()
-                .uri("/patients/recover-cmid")
+                .uri("/patients/profile/recovery-init")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(request))
                 .exchange()
@@ -467,7 +469,126 @@ public class PatientControllerTest {
                 .expectBody(GenerateOtpResponse.class)
         .value(GenerateOtpResponse::getOtpMedium,is(OtpMediumType.MOBILE.toString()));
 
-        verify(userService, times(1)).sendOtpFor(userSignUpEnquiry, user.getIdentifier(),OtpAttempt.Action.OTP_REQUEST_RECOVER_CM_ID);
+        verify(userService, times(1)).sendOtpFor(userSignUpEnquiry, user.getIdentifier(),OtpAttempt.Action.OTP_REQUEST_RECOVER_CM_ID, SendOtpAction.RECOVER_CM_ID);
     }
 
+    @Test
+    public void shouldThrowAnErrorWhenNoOrMultipleMatchingPatientRecordFoundForInitiateRecoverCmId() throws JsonProcessingException {
+        String name = "abc";
+        Gender gender = Gender.F;
+        Integer yearOfBirth = 1999;
+        String verifiedIdentifierValue = "+91-9999999999";
+        String unverifiedIdentifierValue = "P1234ABCD";
+        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
+        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
+        String cmId = "abc@ncg";
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+
+        when(userService.getPatientByDetails(any())).thenReturn(Mono.empty());
+
+        webClient.post()
+                .uri("/patients/profile/recovery-init")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(request))
+                .exchange()
+                .expectStatus()
+                .isNotFound();
+    }
+
+    @Test
+    void shouldThrowAnErrorWhenMendatoryFieldsAreNotProvidedInRequestBodyForInitiateRecoverCMId() {
+        String name = "abc";
+        Gender gender = null;
+        Integer yearOfBirth = 1999;
+        String verifiedIdentifierValue = "+91-9999999999";
+        String unverifiedIdentifierValue = "P1234ABCD";
+        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
+        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
+        String cmId = "abc@ncg";
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+
+        webClient.post()
+                .uri("/patients/profile/recovery-init")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(request))
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+    }
+
+    @Test
+    void shouldThrowAnErrorWhenIdentifiersAreMappedIncorrectlyInRequestBodyForInitiateRecoverCMId() {
+        String name = "abc";
+        Gender gender = Gender.F;
+        Integer yearOfBirth = 1999;
+        String verifiedIdentifierValue = "+91-9999999999";
+        String unverifiedIdentifierValue = "P1234ABCD";
+        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(List.of(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue),new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
+        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
+        String cmId = "abc@ncg";
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+
+        webClient.post()
+                .uri("/patients/profile/recovery-init")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(request))
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+    }
+
+    @Test
+    public void shouldThrowAnErrorIfSignUpSessionIsNullForInitiateRecoverCmId() throws JsonProcessingException {
+        String name = "abc";
+        Gender gender = Gender.F;
+        Integer yearOfBirth = 1999;
+        String verifiedIdentifierValue = "+91-9999999999";
+        String unverifiedIdentifierValue = "P1234ABCD";
+        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
+        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
+        String cmId = "abc@ncg";
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+        JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
+        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+
+        UserSignUpEnquiry userSignUpEnquiry = UserSignUpEnquiry.builder()
+                .identifierType(IdentifierType.MOBILE.toString())
+                .identifier(verifiedIdentifierValue)
+                .build();
+        SignUpSession signUpSession = new SignUpSession(null);
+        GenerateOtpResponse expectedResponse = GenerateOtpResponse.builder()
+                .otpMedium(OtpMediumType.MOBILE.toString())
+                .otpMediumValue("******9999")
+                .sessionId(signUpSession.getSessionId())
+                .build();
+        var expectedResponseJson = new ObjectMapper().writeValueAsString(expectedResponse);
+
+        when(userService.getPatientByDetails(any())).thenReturn(Mono.just(user));
+
+        webClient.post()
+                .uri("/patients/profile/recovery-init")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(request))
+                .exchange()
+                .expectStatus()
+                .is5xxServerError();
+
+        verify(userService, times(1)).sendOtpFor(userSignUpEnquiry, user.getIdentifier(),OtpAttempt.Action.OTP_REQUEST_RECOVER_CM_ID, SendOtpAction.RECOVER_CM_ID);
+    }
+
+    @Test
+    public void verifyOtpForRecoveringCmId() {
+        var otpVerification = new OtpVerification(string(), string());
+        String cmId = "testUser@ncg";
+
+        when(userService.verifyOtpForRecoverCmId(any())).thenReturn(Mono.just(RecoverCmIdResponse.builder().cmId(cmId).build()));
+
+        webClient.post()
+                .uri("/patients/profile/recovery-confirm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(otpVerification))
+                .exchange().expectStatus().isOk();
+
+        verify(userService, times(1)).verifyOtpForRecoverCmId(otpVerification);
+    }
 }

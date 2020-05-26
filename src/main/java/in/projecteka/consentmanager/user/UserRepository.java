@@ -85,7 +85,7 @@ public class UserRepository {
                 }));
     }
 
-    public Mono<List<User>> getCmIdBy(Gender gender, String phoneNumber) {
+    public Mono<List<User>> getUserBy(Gender gender, String phoneNumber) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT_BY_GENDER_MOB)
                 .execute(Tuple.of(gender.toString(), phoneNumber),
                         handler -> {

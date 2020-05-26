@@ -112,7 +112,7 @@ class LinkTest {
     public void shouldGetSystemUrlForOfficialIdentifier() {
         var token = string();
         LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
-        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults, patientLinkReferenceResults)
+        var link = new Link(linkServiceClient, linkRepository, clientRegistryClient, linkServiceProperties, linkResults, patientLinkReferenceResults);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         String providerUrl = "http://localhost:8001";

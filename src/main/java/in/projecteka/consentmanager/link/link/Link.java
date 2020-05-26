@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.RespError;
+import in.projecteka.consentmanager.common.DelayTimeoutException;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
 import in.projecteka.consentmanager.clients.model.Patient;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
@@ -32,6 +33,8 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.common.CustomScheduler.scheduleThis;
+import static in.projecteka.consentmanager.common.Serializer.tryTo;
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 
 @AllArgsConstructor
@@ -156,13 +159,11 @@ public class Link {
             String patientId,
             String hipId,
             UUID requestId) {
-        return linkServiceClient.confirmPatientLink(toLinkConfirmationRequest(patientLinkRequest, requestId), hipId)
-                .zipWith(Mono.delay(Duration.ofMillis(getExpectedFlowResponseDuration())))
-                .flatMap(tuple ->
-                        linkResults.get(requestId.toString())
-                                .switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
-                                .flatMap(lcr -> deserializeConfirmationFromHIP(lcr)))
-                .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
+        return scheduleThis(linkServiceClient.confirmPatientLink(toLinkConfirmationRequest(patientLinkRequest, requestId), hipId))
+                .timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
+                .responseFrom(discard -> Mono.defer(() -> linkResults.get(requestId.toString())))
+                .onErrorResume(DelayTimeoutException.class, discard -> Mono.error(ClientError.gatewayTimeOut()))
+                .flatMap(response -> tryTo(response, LinkConfirmationResult.class).map(Mono::just).orElse(Mono.empty()))
                 .flatMap(confirmationResult -> {
                     if (confirmationResult.getError() != null) {
                         logger.error("[Link] Link confirmation resulted in error {}", confirmationResult.getError());

@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
+import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -59,7 +60,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient(timeout = "6000000")
+@AutoConfigureWebTestClient(timeout = "6000")
 @ContextConfiguration(initializers = DiscoveryUserJourneyTest.ContextInitializer.class)
 public class DiscoveryUserJourneyTest {
     private static final MockWebServer clientRegistryServer = new MockWebServer();
@@ -295,7 +296,7 @@ public class DiscoveryUserJourneyTest {
                 "  \"patient\": null,\n" +
                 "  \"error\": {\n" +
                 "    \"code\": 1000,\n" +
-                "    \"message\": \"Could not identify a unique patient. Need more information\"\n" +
+                "    \"message\": \"Could not find patient information\"\n" +
                 "  }\n" +
                 "}";
         String userId = "test-user-id";
@@ -343,7 +344,7 @@ public class DiscoveryUserJourneyTest {
         when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         var errorResponse = new ErrorRepresentation(
-                new Error(ErrorCode.NO_PATIENT_FOUND,"Could not find patient information"));
+                new Error(ErrorCode.UNPROCESSABLE_RESPONSE_FROM_GATEWAY,"Could not process response from HIP"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
                 .uri("/v1/care-contexts/discover")
@@ -352,7 +353,7 @@ public class DiscoveryUserJourneyTest {
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .bodyValue(patientDiscoveryRequest)
                 .exchange()
-                .expectStatus().isNotFound()
+                .expectStatus().is4xxClientError()
                 .expectBody()
                 .json(errorResponseJson);
     }
@@ -378,8 +379,8 @@ public class DiscoveryUserJourneyTest {
         var gatewayResponse = GatewayResponse.builder()
                 .requestId(null)
                 .build();
-        var error = Error.builder()
-                .code(ErrorCode.NO_PATIENT_FOUND)
+        var error = RespError.builder()
+                .code(1000)
                 .message("Could not identify a unique patient. Need more information.")
                 .build();
         var patientDiscoveryResult = DiscoveryResult.builder()

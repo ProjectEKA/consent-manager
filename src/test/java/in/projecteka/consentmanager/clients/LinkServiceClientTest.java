@@ -3,11 +3,14 @@ package in.projecteka.consentmanager.clients;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.test.StepVerifier;
 
@@ -21,18 +24,24 @@ import static in.projecteka.consentmanager.clients.TestBuilders.patientLinkReque
 import static in.projecteka.consentmanager.clients.TestBuilders.patientLinkResponse;
 import static in.projecteka.consentmanager.clients.TestBuilders.string;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class LinkServiceClientTest {
     private LinkServiceClient linkServiceClient;
     private MockWebServer mockWebServer;
     private String baseUrl;
+    @Mock
+    CentralRegistry centralRegistry;
+
 
     @BeforeEach
     public void init() {
+        initMocks(this);
         mockWebServer = new MockWebServer();
         baseUrl = mockWebServer.url("/").toString();
+        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000);
         WebClient.Builder webClientBuilder = WebClient.builder().baseUrl(baseUrl);
-        linkServiceClient = new LinkServiceClient(webClientBuilder);
+        linkServiceClient = new LinkServiceClient(webClientBuilder, centralRegistry, serviceProperties);
     }
 
     @Test

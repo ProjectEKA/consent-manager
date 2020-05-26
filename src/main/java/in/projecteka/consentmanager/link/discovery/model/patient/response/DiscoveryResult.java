@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import in.projecteka.consentmanager.clients.model.RespError;
 import lombok.Builder;
 import lombok.Value;
+import org.springframework.util.StringUtils;
 
 import javax.validation.constraints.NotNull;
 import java.util.UUID;
@@ -24,12 +25,6 @@ public class DiscoveryResult {
     private GatewayResponse resp;
 
     public boolean hasResponseId(){
-        if (resp == null) {
-            return false;
-        }
-        if (resp.getRequestId() == null || "".equals(resp.getRequestId())) {
-            return false;
-        }
-        return true;
+        return (resp != null) && !StringUtils.isEmpty(resp.getRequestId());
     }
 }

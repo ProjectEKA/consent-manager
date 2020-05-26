@@ -42,7 +42,6 @@ public class Link {
     private final LinkServiceProperties serviceProperties;
     private final CacheAdapter<String, String> linkResults;
 
-
     private static final Logger logger = LoggerFactory.getLogger(Link.class);
 
     public Mono<PatientLinkReferenceResponse> patientWith(String patientId,
@@ -63,7 +62,6 @@ public class Link {
                                         hipId,
                                         url))));
     }
-
 
     private Mono<Boolean> validateRequest(UUID requestId) {
         return linkRepository.selectLinkReference(requestId)

@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.link.link.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Value;
 
 @AllArgsConstructor
-@Data
+@Value
 public class TokenConfirmation {
     private String linkRefNumber;
     private String token;

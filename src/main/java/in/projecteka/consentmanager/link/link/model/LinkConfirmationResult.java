@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import lombok.Builder;
 import lombok.Value;
+import org.springframework.util.StringUtils;
 
 import javax.validation.constraints.NotNull;
 import java.util.UUID;
@@ -23,14 +24,7 @@ public class LinkConfirmationResult {
     @NotNull
     private GatewayResponse resp;
 
-
-    public boolean hasResponseId(){
-        if (resp == null) {
-            return false;
-        }
-        if (resp.getRequestId() == null || "".equals(resp.getRequestId())) {
-            return false;
-        }
-        return true;
+    public boolean hasResponseId() {
+        return (resp != null) && !StringUtils.isEmpty(resp.getRequestId());
     }
 }

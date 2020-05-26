@@ -101,7 +101,7 @@ public class Discovery {
 				.flatMap(val -> userWith(userName)
 						.flatMap(user -> scheduleThis(discoveryFor.apply(user))
 								.timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
-								.responseFrom(discard -> discoveryResults.get(requestId.toString()))))
+								.responseFrom(discard -> Mono.defer(() -> discoveryResults.get(requestId.toString())))))
 				.onErrorResume(DelayTimeoutException.class, discard -> Mono.error(ClientError.gatewayTimeOut()))
 				.flatMap(response -> tryTo(response, DiscoveryResult.class).map(Mono::just).orElse(Mono.empty()))
 				.flatMap(discoveryResult -> {

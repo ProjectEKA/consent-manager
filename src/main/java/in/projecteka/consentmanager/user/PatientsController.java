@@ -10,8 +10,10 @@ import in.projecteka.consentmanager.user.model.CreatePinRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
 import in.projecteka.consentmanager.user.model.Identifier;
+import in.projecteka.consentmanager.user.model.IdentifierGroup;
 import in.projecteka.consentmanager.user.model.IdentifierType;
 import in.projecteka.consentmanager.user.model.LoginModeResponse;
+import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpMediumType;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.Profile;
@@ -111,7 +113,7 @@ public class PatientsController {
                 .switchIfEmpty(Mono.error(ClientError.userNotFound()))
                 .flatMap(this::getVerfiedIdentifier)
                 .switchIfEmpty(Mono.error(ClientError.unAuthorized()))
-                .flatMap(verifiedIdentifier -> getGenerateOtpResponse(verifiedIdentifier, request.getUsername()))
+                .flatMap(verifiedIdentifier -> getGenerateOtpResponseFor(verifiedIdentifier, request.getUsername(), OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD))
                 .switchIfEmpty(Mono.error(ClientError.failedToGenerateOtp()));
     }
 
@@ -120,8 +122,8 @@ public class PatientsController {
         return userService.verifyOtpForForgetPassword(request);
     }
 
-    private Mono<GenerateOtpResponse> getGenerateOtpResponse(UserSignUpEnquiry userSignUpEnquiry, String userName) {
-        return userService.sendOtpForPasswordChange(userSignUpEnquiry, userName)
+    private Mono<GenerateOtpResponse> getGenerateOtpResponseFor(UserSignUpEnquiry userSignUpEnquiry, String userName, OtpAttempt.Action action) {
+        return userService.sendOtpFor(userSignUpEnquiry, userName, action)
                 .flatMap(signUpSession -> {
                     OtpMediumType otpMediumType = getOtpMedium(userSignUpEnquiry);
                     String maskedIdentifier = maskedIdentifier(userSignUpEnquiry);
@@ -208,7 +210,27 @@ public class PatientsController {
     }
 
     @PostMapping("/recover-cmid")
-    public Mono<RecoverCmIdResponse> recoverCmId(@RequestBody RecoverCmIdRequest request) {
-        return userService.recoverCmId(request);
+    public Mono<GenerateOtpResponse> recoverCmId(@RequestBody RecoverCmIdRequest request) {
+        return isInvalidRecoveryRequest(request)
+                .switchIfEmpty(Mono.error(ClientError.invalidRecoveryRequest()))
+                .flatMap(userService::recoverCmId)
+                .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.noPatientFound())))
+                .flatMap(user -> getGenerateOtpResponseFor(UserSignUpEnquiry.builder().identifierType(IdentifierType.MOBILE.toString()).identifier(user.getPhone()).build(),user.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_RECOVER_CM_ID));
+    }
+
+    private boolean isInvalidIdentifierMapped(List<Identifier> identifiers, IdentifierGroup identifierGroup) {
+        return identifiers.stream().anyMatch(identifier -> !identifier.getType().getIdentifierGroup().equals(identifierGroup) || !identifier.getType().isValid(identifier.getValue()));
+    }
+
+    private Mono<RecoverCmIdRequest> isInvalidRecoveryRequest(RecoverCmIdRequest request) { //breakdown
+        boolean areMandatoryFieldsNull = request.getName() == null || request.getGender() == null || !IdentifierUtils.isIdentifierTypePresent(request.getVerifiedIdentifiers(), IdentifierType.MOBILE);
+        boolean isInvalidVerifiedIdentifierMapped = isInvalidIdentifierMapped(request.getVerifiedIdentifiers(), IdentifierGroup.VERIFIED_IDENTIFIER);
+        boolean isInvalidUnverifiedIdentifierMapped = isInvalidIdentifierMapped(request.getUnverifiedIdentifiers(), IdentifierGroup.UNVERIFIED_IDENTIFIER);
+        return areMandatoryFieldsNull || isInvalidVerifiedIdentifierMapped || isInvalidUnverifiedIdentifierMapped ? Mono.empty() : Mono.just(request);
+    }
+
+    @PostMapping("/recovery/verify-otp")
+    public Mono<RecoverCmIdResponse> verifyOtpAndRecoverCmId(@RequestBody OtpVerification request) {
+        return userService.verifyOtpForRecoverCmId(request);
     }
 }

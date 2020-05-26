@@ -25,7 +25,7 @@ public class UserRepository {
     private static final String SELECT_PATIENT = "select id, name, gender, year_of_birth, phone_number, unverified_identifiers " +
             "from patient where id = $1";
 
-    private static final String SELECT_PATIENT_BY_GENDER_MOB = "select id, year_of_birth, unverified_identifiers, name from patient" +
+    private static final String SELECT_PATIENT_BY_GENDER_MOB = "select id, year_of_birth, unverified_identifiers, name, phone_number from patient" +
             " where gender = $1 and phone_number = $2";
 
     private final static String DELETE_PATIENT = "DELETE FROM patient WHERE id=$1";
@@ -98,6 +98,7 @@ public class UserRepository {
                                                 .name(row.getString("name"))
                                                 .yearOfBirth(row.getInteger("year_of_birth"))
                                                 .unverifiedIdentifiers((JsonArray) row.getValue("unverified_identifiers"))
+                                                .phone(row.getString("phone_number"))
                                                 .build())
                                         .collect(Collectors.toList()));
                             }

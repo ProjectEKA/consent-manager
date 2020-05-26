@@ -598,18 +598,24 @@ class UserServiceTest {
         String cmId = "abc@ncg";
         RecoverCmIdRequest request = new RecoverCmIdRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
-        ArrayList<User> recoverCmIdRows = new ArrayList<>(Collections.singletonList(User.builder().identifier(cmId).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build()));
+        ArrayList<User> recoverCmIdRows = new ArrayList<>(Collections.singletonList(User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build()));
 
         when(userRepository.getCmIdBy(gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
 
         StepVerifier.create(userService.recoverCmId(request))
-                .assertNext(response -> assertThat(response.getCmId()).isEqualTo(cmId))
+                .assertNext(response -> {
+                    assertThat(response.getIdentifier()).isEqualTo(cmId);
+                            assertThat(response.getName()).isEqualTo(name);
+                            assertThat(response.getPhone()).isEqualTo(verifiedIdentifierValue);
+                            assertThat(response.getYearOfBirth()).isEqualTo(yearOfBirth);
+                }
+                )
                 .verifyComplete();
         verify(userRepository,times(1)).getCmIdBy(gender,verifiedIdentifierValue);
     }
 
     @Test
-    void shouldThrowAnErrorForMultipleMatchingRecordsForRecoverCMId() {
+    void shouldReturnEmptyMonoForMultipleMatchingRecordsForRecoverCMId() {
         String name = "abc";
         Gender gender = Gender.F;
         Integer yearOfBirth = 1999;
@@ -626,85 +632,7 @@ class UserServiceTest {
         when(userRepository.getCmIdBy(gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
 
         StepVerifier.create(userService.recoverCmId(request))
-                .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
-                        ((ClientError) throwable).getHttpStatus().value() == 404);
-        verify(userRepository,times(1)).getCmIdBy(gender,verifiedIdentifierValue);
-    }
-
-    @Test
-    void shouldThrowAnErrorWhenNoMatchingRecordFoundForRecoverCMId() {
-        String name = "abc";
-        Gender gender = Gender.F;
-        Integer yearOfBirth = 1999;
-        String verifiedIdentifierValue = "+91-8888888888";
-        String unverifiedIdentifierValue = "P1234ABCD";
-        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
-        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
-        RecoverCmIdRequest request = new RecoverCmIdRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
-        ArrayList<User> recoverCmIdRows = new ArrayList<>();
-
-        when(userRepository.getCmIdBy(gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
-
-        StepVerifier.create(userService.recoverCmId(request))
-                .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
-                        ((ClientError) throwable).getHttpStatus().value() == 404);
-        verify(userRepository,times(1)).getCmIdBy(gender,verifiedIdentifierValue);
-    }
-
-    @Test
-    void shouldThrowAnErrorWhenMendatoryFieldsAreNotProvidedInRequestBodyForRecoverCMId() {
-        String name = "abc";
-        Gender gender = null;
-        Integer yearOfBirth = 1999;
-        String verifiedIdentifierValue = "+91-8888888888";
-        String unverifiedIdentifierValue = "P1234ABCD";
-        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
-        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
-        RecoverCmIdRequest request = new RecoverCmIdRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
-
-        StepVerifier.create(userService.recoverCmId(request))
-                .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
-                        ((ClientError) throwable).getHttpStatus().value() == 400);
-        verify(userRepository,times(0)).getCmIdBy(gender,verifiedIdentifierValue);
-    }
-
-    @Test
-    void shouldThrowAnErrorWhenIdentifiersAreMappedIncorrectlyInRequestBodyForRecoverCMId() {
-        String name = "abc";
-        Gender gender = Gender.F;
-        Integer yearOfBirth = 1999;
-        String verifiedIdentifierValue = "+91-8888888888";
-        String unverifiedIdentifierValue = "P1234ABCD";
-        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(List.of(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue), new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
-        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
-        RecoverCmIdRequest request = new RecoverCmIdRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
-
-        StepVerifier.create(userService.recoverCmId(request))
-                .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
-                        ((ClientError) throwable).getHttpStatus().value() == 400);
-        verify(userRepository,times(0)).getCmIdBy(gender,verifiedIdentifierValue);
-    }
-
-    @Test
-    void shouldThrowAnErrorWhenNoMatchingRecordFoundAndPMJAYIdIsNullInRecordsForRecoverCMId() {
-        String name = "abc";
-        String cmId = "temp@ncg";
-        Gender gender = Gender.F;
-        Integer yearOfBirth = 1999;
-        String verifiedIdentifierValue = "+91-8888888888";
-        String unverifiedIdentifierValue = "P1234ABCD";
-        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
-        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
-        RecoverCmIdRequest request = new RecoverCmIdRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
-        JsonArray unverifiedIdentifiersResponse = null;
-        User recoverCmIdRow = User.builder().identifier(cmId).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
-        ArrayList<User> recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow));
-
-        when(userRepository.getCmIdBy(gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
-
-        StepVerifier.create(userService.recoverCmId(request))
-                .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
-                        ((ClientError) throwable).getHttpStatus().value() == 404);
+                .verifyComplete();
         verify(userRepository,times(1)).getCmIdBy(gender,verifiedIdentifierValue);
     }
 }

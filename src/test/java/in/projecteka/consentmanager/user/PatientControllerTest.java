@@ -14,20 +14,26 @@ import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
 import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
 import in.projecteka.consentmanager.user.model.LoginMode;
 import in.projecteka.consentmanager.user.model.LoginModeResponse;
+import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpMediumType;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.Profile;
+import in.projecteka.consentmanager.user.model.RecoverCmIdRequest;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
+import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,8 +45,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
@@ -180,7 +188,7 @@ public class PatientControllerTest {
         var expectedResponseJson = new ObjectMapper().writeValueAsString(expectedResponse);
 
         when(profileService.profileFor(otpRequest.getUsername())).thenReturn(Mono.just(profile));
-        when(userService.sendOtpForPasswordChange(userSignUpEnquiry, otpRequest.getUsername())).thenReturn(Mono.just(signUpSession));
+        when(userService.sendOtpFor(userSignUpEnquiry, otpRequest.getUsername(), OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD)).thenReturn(Mono.just(signUpSession));
 
         webClient.post()
                 .uri("/patients/generateotp")
@@ -192,7 +200,7 @@ public class PatientControllerTest {
                 .expectBody()
                 .json(expectedResponseJson);
 
-        verify(userService, times(1)).sendOtpForPasswordChange(userSignUpEnquiry, otpRequest.getUsername());
+        verify(userService, times(1)).sendOtpFor(userSignUpEnquiry, otpRequest.getUsername(),OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD);
         verify(profileService, times(1)).profileFor(otpRequest.getUsername());
     }
 
@@ -419,4 +427,47 @@ public class PatientControllerTest {
 
         verify(userService, times(1)).getLoginMode(userName);
     }
+
+    @Test
+    public void generateOtpForRecoverCmId() throws JsonProcessingException {
+        String name = "abc";
+        Gender gender = Gender.F;
+        Integer yearOfBirth = 1999;
+        String verifiedIdentifierValue = "+91-9999999999";
+        String unverifiedIdentifierValue = "P1234ABCD";
+        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
+        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
+        String cmId = "abc@ncg";
+        RecoverCmIdRequest request = new RecoverCmIdRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+        JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
+        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).gender(gender).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+
+        UserSignUpEnquiry userSignUpEnquiry = UserSignUpEnquiry.builder()
+                .identifierType(IdentifierType.MOBILE.toString())
+                .identifier(verifiedIdentifierValue)
+                .build();
+        SignUpSession signUpSession = new SignUpSession("sessionId");
+        GenerateOtpResponse expectedResponse = GenerateOtpResponse.builder()
+                .otpMedium(OtpMediumType.MOBILE.toString())
+                .otpMediumValue("******9999")
+                .sessionId(signUpSession.getSessionId())
+                .build();
+        var expectedResponseJson = new ObjectMapper().writeValueAsString(expectedResponse);
+
+        when(userService.recoverCmId(any())).thenReturn(Mono.just(user));
+        when(userService.sendOtpFor(any(),any(),any())).thenReturn(Mono.just(signUpSession));
+
+        webClient.post()
+                .uri("/patients/recover-cmid")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(request))
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(GenerateOtpResponse.class)
+        .value(GenerateOtpResponse::getOtpMedium,is(OtpMediumType.MOBILE.toString()));
+
+        verify(userService, times(1)).sendOtpFor(userSignUpEnquiry, user.getIdentifier(),OtpAttempt.Action.OTP_REQUEST_RECOVER_CM_ID);
+    }
+
 }

@@ -82,6 +82,7 @@ public class SecurityConfiguration {
                                           "/patients/verifyotp",
                                           "/patients/profile/loginmode",
                                           "/patients/recover-cmid",
+                                          "/patients/recovery/verify-otp",
                                           "/users/verify",
                                           "/users/permit",
                                           "/otpsession/verify",

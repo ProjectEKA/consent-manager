@@ -5,18 +5,18 @@ import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.Meta;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.user.exception.InvalidPasswordException;
 import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
-import in.projecteka.consentmanager.user.model.LockedUser;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
-import in.projecteka.consentmanager.user.model.IdentifierType;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.common.Constants.BLACKLIST;
@@ -49,22 +48,20 @@ public class SessionService {
 
     public Mono<Session> forNew(SessionRequest request) {
         if (StringUtils.isEmpty(request.getUsername()) || StringUtils.isEmpty(request.getPassword()))
-            return Mono.error(ClientError.unAuthorizedRequest("Username or password is incorrect"));
+            return Mono.error(ClientError.invalidUserNameOrPassword());
 
-        var newLockedUser = new LockedUser(0, request.getUsername(), false, "", new Date().toString());
-
-        return lockedUserService.userFor(request.getUsername())
-                .switchIfEmpty(Mono.just(newLockedUser))
-                .flatMap(user -> {
-                    if (lockedUserService.isUserBlocked(user)) {
-                        return lockedUserService.validateAndUpdate(user).then(Mono.error(ClientError.userBlocked()));
-                    } else {
-                        return tokenService.tokenForUser(request.getUsername(), request.getPassword())
-                                .doOnError(error -> logger.error(error.getMessage(), error))
-                                .onErrorResume(InvalidUserNameException.class, error -> Mono.error(ClientError.invalidUserName()))
-                                .onErrorResume(error -> lockedUserService.validateAndUpdate(user).flatMap(Mono::error));
-                    }
-                });
+        return lockedUserService.validateLogin(request.getUsername())
+                .then(tokenService.tokenForUser(request.getUsername(), request.getPassword())
+                        .flatMap(session -> lockedUserService.removeLockedUser(request.getUsername()).thenReturn(session))
+                        .doOnError(error -> logger.error(error.getMessage(), error))
+                        .onErrorResume(error ->
+                        {
+                            if (error instanceof InvalidUserNameException || error instanceof InvalidPasswordException) {
+                                return lockedUserService.createOrUpdateLockedUser(request.getUsername())
+                                        .then(Mono.error(ClientError.invalidUserNameOrPassword()));
+                            }
+                            return Mono.error(error);
+                        }));
     }
 
     public Mono<Void> logout(String accessToken, LogoutRequest logoutRequest) {
@@ -101,19 +98,15 @@ public class SessionService {
         return unverifiedSessions.get(otpPermitRequest.getSessionId())
                 .filter(username -> otpPermitRequest.getUsername().equals(username))
                 .switchIfEmpty(Mono.error(ClientError.invalidSession(otpPermitRequest.getSessionId())))
-                .flatMap(userRepository::userWith)
-                .flatMap(user -> {
-                    OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
-                            .action(OtpAttempt.Action.OTP_SUBMIT_LOGIN)
-                            .cmId(otpPermitRequest.getUsername())
-                            .sessionId(otpPermitRequest.getSessionId())
-                            .identifierType(IdentifierType.MOBILE.name())
-                            .identifierValue(user.getPhone());
-                    return otpAttemptService.validateOTPSubmission(builder.build())
-                            .then(tokenService
-                                    .tokenForOtpUser(otpPermitRequest.getUsername(), otpPermitRequest.getSessionId(), otpPermitRequest.getOtp()))
-                            .onErrorResume(ClientError.class, error -> otpAttemptService.handleInvalidOTPError(error, builder.build()))
-                            .flatMap(session -> otpAttemptService.removeMatchingAttempts(builder.build()).then(Mono.just(session)));
-                });
+                .flatMap(username -> lockedUserService.validateLogin(username)
+                        .then(tokenService
+                                .tokenForOtpUser(otpPermitRequest.getUsername(), otpPermitRequest.getSessionId(), otpPermitRequest.getOtp()))
+                        .onErrorResume(ClientError.class, error -> {
+                            if (error.getErrorCode() == ErrorCode.OTP_INVALID) {
+                                return lockedUserService.createOrUpdateLockedUser(username).then(Mono.error(error));
+                            }
+                            return Mono.error(error);
+                        })
+                        .flatMap(session -> lockedUserService.removeLockedUser(username).thenReturn(session)));
     }
 }

@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
@@ -16,6 +17,7 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
@@ -37,6 +39,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -47,13 +50,16 @@ import reactor.core.publisher.MonoSink;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.link.TestBuilders.errorRepresentation;
 import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResponse;
+import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResult;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkResponse;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientRepresentation;
@@ -395,6 +401,78 @@ public class LinkUserJourneyTest {
                 .json(linkResJson);
     }
 
+    @Test
+    public void shouldReturnInvalidResponseForConfirmLinkCareContexts() throws IOException {
+        var token = string();
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
+        clientRegistryServer.setDispatcher(dispatcher);
+        gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+        PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
+        String transactionId = "transactionId";
+        String hipId = "10000005";
+        when(linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())).thenReturn(Mono.just(transactionId));
+        when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId)); //linkRes.getPatient()
+        when(linkRepository.insertToLink(eq(hipId), eq("123@ncg"), eq(patientLinkRequest.getLinkRefNumber()), any()))
+                .thenReturn(Mono.empty());
+        String linkConfirmationResult = "{\n" +
+                "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
+                "  \"timestamp\": \"2020-05-25T15:03:44.557Z\",\n" +
+                "  \"error\": {\n" +
+                "    \"code\": 1006,\n" +
+                "    \"message\": \"Invalid Link reference\"\n" +
+                "  }," +
+                "  \"resp\": {\n" +
+                "    \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n" +
+                "  }\n" +
+                "}";
+        String errorResponseJson = "{\"error\":{\"code\":1039,\"message\":\"Invalid Link reference\"}}";
+        when(linkResults.get(any())).thenReturn(Mono.just(linkConfirmationResult));
+
+        webTestClient
+                .post()
+                .uri("/v1/links/link/confirm")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(patientLinkRequest)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                .expectBody()
+                .json(errorResponseJson);
+    }
+
+    @Test
+    public void shouldReturnGatewayTimeOutForConfirmLinkCareContexts() throws IOException {
+        var token = string();
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
+        clientRegistryServer.setDispatcher(dispatcher);
+        gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+        PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
+        String transactionId = "transactionId";
+        String hipId = "10000005";
+        when(linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())).thenReturn(Mono.just(transactionId));
+        when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId)); //linkRes.getPatient()
+
+        when(linkResults.get(any())).thenReturn(Mono.empty());
+        var errorResponse = new ErrorRepresentation(
+                new Error(ErrorCode.NO_RESULT_FROM_GATEWAY,"Didn't receive any result from Gateway"));
+        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
+
+        webTestClient
+                .post()
+                .uri("/v1/links/link/confirm")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(patientLinkRequest)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .is5xxServerError()
+                .expectBody()
+                .json(errorResponseJson);
+    }
+
     public static class ContextInitializer
             implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
@@ -439,4 +517,58 @@ public class LinkUserJourneyTest {
             return new MockResponse().setResponseCode(404);
         }
     };
+
+    @Test
+    public void onLinkCareContexts() {
+        var token = string();
+        var patientLinkReferenceResult = patientLinkReferenceResult().build();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", false)));
+
+        webTestClient.post()
+                .uri("/v1/links/link/on-init")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientLinkReferenceResult)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
+    public void shouldFailOnLinkCareContextsWhenRequestIdIsNotGiven() throws Exception {
+        var token = string();
+        var gatewayResponse = GatewayResponse.builder()
+                .requestId(null)
+                .build();
+        var patientLinkReferenceResult = PatientLinkReferenceResult.builder()
+                .requestId(UUID.randomUUID())
+                .resp(gatewayResponse)
+                .build();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", false)));
+
+        webTestClient.post()
+                .uri("/v1/links/link/on-init")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientLinkReferenceResult)
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test
+    public void shouldFailOnLinkCareContexts() throws Exception {
+        var token = string();
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", false)));
+        webTestClient.post()
+                .uri("/v1/links/link/on-init")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .exchange()
+                .expectStatus().is5xxServerError();
+    }
+
 }

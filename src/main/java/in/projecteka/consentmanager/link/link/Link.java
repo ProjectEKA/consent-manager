@@ -9,9 +9,11 @@ import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.RespError;
+import in.projecteka.consentmanager.common.DelayTimeoutException;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
 import in.projecteka.consentmanager.clients.model.Patient;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
@@ -32,6 +34,8 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.common.CustomScheduler.scheduleThis;
+import static in.projecteka.consentmanager.common.Serializer.tryTo;
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 
 @AllArgsConstructor
@@ -139,6 +143,24 @@ public class Link {
                 PatientLinksResponse.builder().patient(patientLinks).build());
     }
 
+    public Mono<Void> onLinkCareContexts(PatientLinkReferenceResult patientLinkReferenceResult) {
+        if(patientLinkReferenceResult.hasResponseId()) {
+            return linkResults.put(patientLinkReferenceResult.getResp().getRequestId(), serializeLinkReferenceResultFromHIP(patientLinkReferenceResult));
+        }
+        logger.error("[Link] Received a patient link reference response from Gateway without original request Id mentioned.{}", patientLinkReferenceResult.getRequestId());
+        return Mono.error(ClientError.unprocessableEntity());
+    }
+
+    private String serializeLinkReferenceResultFromHIP(PatientLinkReferenceResult responseBody) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(responseBody);
+        } catch (JsonProcessingException e) {
+            logger.error("[Link] Can not serialize patient link reference response from HIP", e);
+        }
+        return null;
+    }
+
     public Mono<PatientLinkResponse> verifyLinkToken(String username, PatientLinkRequest patientLinkRequest) {
         UUID requestId = UUID.randomUUID();
         return linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())
@@ -156,13 +178,11 @@ public class Link {
             String patientId,
             String hipId,
             UUID requestId) {
-        return linkServiceClient.confirmPatientLink(toLinkConfirmationRequest(patientLinkRequest, requestId), hipId)
-                .zipWith(Mono.delay(Duration.ofMillis(getExpectedFlowResponseDuration())))
-                .flatMap(tuple ->
-                        linkResults.get(requestId.toString())
-                                .switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
-                                .flatMap(lcr -> deserializeConfirmationFromHIP(lcr)))
-                .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
+        return scheduleThis(linkServiceClient.confirmPatientLink(toLinkConfirmationRequest(patientLinkRequest, requestId), hipId))
+                .timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
+                .responseFrom(discard -> Mono.defer(() -> linkResults.get(requestId.toString())))
+                .onErrorResume(DelayTimeoutException.class, discard -> Mono.error(ClientError.gatewayTimeOut()))
+                .flatMap(response -> tryTo(response, LinkConfirmationResult.class).map(Mono::just).orElse(Mono.empty()))
                 .flatMap(confirmationResult -> {
                     if (confirmationResult.getError() != null) {
                         logger.error("[Link] Link confirmation resulted in error {}", confirmationResult.getError());

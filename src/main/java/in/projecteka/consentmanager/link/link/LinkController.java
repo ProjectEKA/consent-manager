@@ -25,6 +25,10 @@ public class LinkController {
 
     private final Link link;
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
     @PostMapping("/patients/link")
     public Mono<PatientLinkReferenceResponse> linkCareContexts(
             @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
@@ -85,5 +89,14 @@ public class LinkController {
     @PostMapping("/v1/links/link/on-confirm")
     public Mono<Void> onConfirmLink(@RequestBody @Valid LinkConfirmationResult confirmationResult) {
         return link.onConfirmLink(confirmationResult);
+    }
+
+    @PostMapping("/v1/links/link/init")
+    public Mono<PatientLinkReferenceResponse> linkPatientCareContexts(
+            @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest
+    ) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .flatMap(caller -> link.patientCareContexts(caller.getUsername(), patientLinkReferenceRequest));
     }
 }

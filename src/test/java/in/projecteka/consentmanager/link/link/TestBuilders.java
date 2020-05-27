@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
@@ -80,5 +81,9 @@ public class TestBuilders {
 
     public static PatientLinkReferenceResult.PatientLinkReferenceResultBuilder patientLinkReferenceResult() {
         return easyRandom.nextObject(PatientLinkReferenceResult.PatientLinkReferenceResultBuilder.class);
+    }
+
+    public static PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder linkReferenceRequest() {
+        return easyRandom.nextObject(PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder.class);
     }
 }

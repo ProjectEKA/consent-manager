@@ -75,7 +75,7 @@ public class Link {
                 .filterWhen(this::validateRequest)
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
                 .flatMap(id -> linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId())
-                        .flatMap(hipId -> getHIPPatientLinkReferenceResponse(patientLinkReferenceRequest,
+                        .flatMap(hipId -> getHIPPatientLinkReferenceResponse(
                                 linkReferenceRequest,
                                 hipId,
                                 patientLinkReferenceRequest.getRequestId()
@@ -110,7 +110,6 @@ public class Link {
     }
 
     private Mono<PatientLinkReferenceResponse> getHIPPatientLinkReferenceResponse(
-            PatientLinkReferenceRequest patientLinkReferenceRequest,
             in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest linkReferenceRequest,
             String hipId,
             UUID requestId
@@ -125,7 +124,6 @@ public class Link {
                                 .flatMap(this::deserializeLinkReferenceResponseFromHIP))
                 .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
                 .flatMap(linkReferenceResult -> {
-                  //  linkReferenceResult.setTransactionId(patientLinkReferenceRequest.getTransactionId());
                     if (linkReferenceResult.getError() != null) {
                         logger.error("[Link] Link initiation resulted in error {}", linkReferenceResult.getError());
                         return Mono.error(new ClientError(HttpStatus.BAD_REQUEST, cmErrorRepresentation(linkReferenceResult.getError())));

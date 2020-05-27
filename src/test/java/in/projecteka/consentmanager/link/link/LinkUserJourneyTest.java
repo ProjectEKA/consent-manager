@@ -56,6 +56,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.link.TestBuilders.errorRepresentation;
 import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
@@ -512,9 +513,6 @@ public class LinkUserJourneyTest {
         var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
         var linkReferenceRequest = TestBuilders.linkReferenceRequest().build();
         var hipId = "10000005";
-        var linkReference = patientLinkReferenceResponse().build();
-        //linkReference.setTransactionId(patientLinkReferenceRequest.getTransactionId());
-        var patientLinkReferenceResult = patientLinkReferenceResult().build();
         var linkReferenceResult = "{\n" +
                 "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
                 "  \"timestamp\": \"2020-05-25T15:03:44.557Z\",\n" +
@@ -551,15 +549,13 @@ public class LinkUserJourneyTest {
         clientRegistryServer.setDispatcher(dispatcher);
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
-        when(linkRepository.insert(patientLinkReferenceResult, hipId, patientLinkReferenceRequest.getRequestId()))
+        when(linkRepository.insert(OBJECT_MAPPER.readValue(linkReferenceResult, PatientLinkReferenceResult.class), hipId, patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.create(MonoSink::success));
         when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.empty());
         when(centralRegistry.authenticate()).thenReturn(Mono.just(token));
         when(linkServiceClient.linkPatientEnquiryRequest(linkReferenceRequest, token, hipId)).thenReturn(Mono.just(true));
         when(linkResults.get(any())).thenReturn(Mono.just(linkReferenceResult));
-
-
         webTestClient
                 .post()
                 .uri("/v1/links/link/init")

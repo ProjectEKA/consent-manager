@@ -215,7 +215,7 @@ class UserServiceTest {
         var sessionIdWithAction = SendOtpAction.RECOVER_PASSWORD.toString()+sessionId;
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
-        when(signupService.generateToken(new HashMap<>(),sessionId))
+        when(signupService.generateToken(new HashMap<>(), sessionIdWithAction))
                 .thenReturn(Mono.just(new Token(token)));
         when(signupService.getUserName(eq(sessionIdWithAction))).thenReturn(Mono.just(user.getIdentifier()));
         when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));

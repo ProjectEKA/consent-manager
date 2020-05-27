@@ -144,7 +144,7 @@ public class UserService {
                             return Mono.error(error);
                         })
                         .then(lockedUserService.removeLockedUser(userName))
-                        .then(signupService.generateToken(new HashMap<>(), otpVerification.getSessionId())));
+                        .then(signupService.generateToken(new HashMap<>(), sessionIdWithAction)));
     }
 
     public Mono<RecoverCmIdResponse> verifyOtpForRecoverCmId(OtpVerification otpVerification) {

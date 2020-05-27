@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -59,17 +61,20 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static java.util.List.of;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient
+@AutoConfigureWebTestClient(timeout = "6000")
 @ContextConfiguration(initializers = LinkUserJourneyTest.ContextInitializer.class)
 public class LinkUserJourneyTest {
     private static final MockWebServer clientRegistryServer = new MockWebServer();
     private static final MockWebServer hipServer = new MockWebServer();
     private static final MockWebServer userServer = new MockWebServer();
     private static final MockWebServer identityServer = new MockWebServer();
+    private static final MockWebServer gatewayServer = new MockWebServer();
 
     @MockBean
     private DestinationsConfig destinationsConfig;
@@ -108,12 +113,17 @@ public class LinkUserJourneyTest {
     @MockBean
     private ConceptValidator conceptValidator;
 
+    @MockBean
+    @Qualifier("linkResults")
+    CacheAdapter<String,String> linkResults;
+
     @AfterAll
     public static void tearDown() throws IOException {
         clientRegistryServer.shutdown();
         hipServer.shutdown();
         userServer.shutdown();
         identityServer.shutdown();
+        gatewayServer.shutdown();
     }
 
     @BeforeEach
@@ -327,6 +337,64 @@ public class LinkUserJourneyTest {
                 .json(errorResponseJson);
     }
 
+    @Test
+    public void shouldConfirmLinkCareContexts() throws IOException {
+        var token = string();
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
+        clientRegistryServer.setDispatcher(dispatcher);
+        gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+        PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
+        String transactionId = "transactionId";
+        String hipId = "10000005";
+        when(linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())).thenReturn(Mono.just(transactionId));
+        when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId)); //linkRes.getPatient()
+        when(linkRepository.insertToLink(eq(hipId), eq("123@ncg"), eq(patientLinkRequest.getLinkRefNumber()), any()))
+                .thenReturn(Mono.empty());
+        String linkConfirmationResult = "{\n" +
+                "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
+                "  \"timestamp\": \"2020-05-25T15:03:44.557Z\",\n" +
+                "  \"patient\": {\n" +
+                "    \"referenceNumber\": \"HID-001\",\n" +
+                "    \"display\": \"Patient with HID 001\",\n" +
+                "    \"careContexts\": [\n" +
+                "      {\n" +
+                "        \"referenceNumber\": \"CC001\",\n" +
+                "        \"display\": \"Episode 001\"\n" +
+                "      }\n" +
+                "    ]\n" +
+                "  },\n" +
+                "  \"resp\": {\n" +
+                "    \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n" +
+                "  }\n" +
+                "}";
+        when(linkResults.get(any())).thenReturn(Mono.just(linkConfirmationResult));
+
+        String linkResJson = "{\n" +
+                "  \"patient\": {\n" +
+                "    \"referenceNumber\": \"HID-001\",\n" +
+                "    \"display\": \"Patient with HID 001\",\n" +
+                "    \"careContexts\": [\n" +
+                "      {\n" +
+                "        \"referenceNumber\": \"CC001\",\n" +
+                "        \"display\": \"Episode 001\"\n" +
+                "      }\n" +
+                "    ]\n" +
+                "  }\n" +
+                "}";
+        webTestClient
+                .post()
+                .uri("/v1/links/link/confirm")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(patientLinkRequest)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .json(linkResJson);
+    }
+
     public static class ContextInitializer
             implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
@@ -335,7 +403,8 @@ public class LinkUserJourneyTest {
                     TestPropertyValues.of(
                             Stream.of("consentmanager.clientregistry.url=" + clientRegistryServer.url(""),
                                     "consentmanager.userservice.url=" + userServer.url(""),
-                                    "consentmanager.keycloak.baseUrl=" + identityServer.url("")));
+                                    "consentmanager.keycloak.baseUrl=" + identityServer.url(""),
+                                    "consentmanager.gatewayservice.baseUrl=" + gatewayServer.url("")));
             values.applyTo(applicationContext);
         }
     }

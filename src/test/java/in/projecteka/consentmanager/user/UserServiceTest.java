@@ -87,6 +87,9 @@ class UserServiceTest {
     private OtpAttemptService otpAttemptService;
 
     @Mock
+    private LockedUserService lockedUserService;
+
+    @Mock
     private IdentityServiceClient identityServiceClient;
 
     @Mock
@@ -118,7 +121,8 @@ class UserServiceTest {
                 identityServiceClient,
                 tokenService,
                 properties,
-                otpAttemptService);
+                otpAttemptService,
+                lockedUserService);
     }
 
     @Test
@@ -207,33 +211,17 @@ class UserServiceTest {
         var otp = string();
         var token = string();
         var user = new EasyRandom().nextObject(User.class);
-        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
         when(signupService.generateToken(new HashMap<>(),sessionId))
                 .thenReturn(Mono.just(new Token(token)));
         when(signupService.getUserName(eq(sessionId))).thenReturn(Mono.just(user.getIdentifier()));
         when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));
-        when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
-        when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
+        when(lockedUserService.validateLogin(eq(user.getIdentifier()))).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(eq(user.getIdentifier()))).thenReturn(Mono.empty());
         StepVerifier.create(userService.verifyOtpForForgetPassword(otpVerification))
                 .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
                 .verifyComplete();
-
-        var capturedAttempts = argument.getAllValues();
-        var validateOTPSubmissionArgument = capturedAttempts.get(0);
-        assertEquals(sessionId, validateOTPSubmissionArgument.getSessionId());
-        assertEquals("MOBILE", validateOTPSubmissionArgument.getIdentifierType());
-        assertEquals(user.getPhone(), validateOTPSubmissionArgument.getIdentifierValue());
-        assertEquals(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD, validateOTPSubmissionArgument.getAction());
-        assertEquals(user.getIdentifier(), validateOTPSubmissionArgument.getCmId());
-
-        var removeMatchingAttemptsArgument = capturedAttempts.get(1);
-        assertEquals(sessionId, removeMatchingAttemptsArgument.getSessionId());
-        assertEquals("MOBILE", removeMatchingAttemptsArgument.getIdentifierType());
-        assertEquals(user.getPhone(), removeMatchingAttemptsArgument.getIdentifierValue());
-        assertEquals(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD, removeMatchingAttemptsArgument.getAction());
-        assertEquals(user.getIdentifier(), removeMatchingAttemptsArgument.getCmId());
     }
 
     @ParameterizedTest(name = "Invalid values")

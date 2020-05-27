@@ -71,8 +71,11 @@ public class LinkController {
      * @param patientLinkRequest
      * @return
      */
-    @PostMapping("/v1/links/link/confirm")
-    public Mono<PatientLinkResponse> confirmLink(@RequestBody PatientLinkRequest patientLinkRequest) {
+    @PostMapping("/v1/links/link/confirm/{linkRefNumber}")
+    public Mono<PatientLinkResponse> confirmLink(
+            @PathVariable("linkRefNumber") String linkRefNumber,
+            @RequestBody PatientLinkRequest patientLinkRequest) {
+        patientLinkRequest.setLinkRefNumber(linkRefNumber);
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .flatMap(caller -> link.verifyLinkToken(caller.getUsername(), patientLinkRequest));

@@ -394,7 +394,7 @@ public class LinkUserJourneyTest {
                 "}";
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm")
+                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -435,7 +435,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm")
+                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -466,7 +466,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm")
+                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)

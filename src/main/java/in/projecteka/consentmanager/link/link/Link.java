@@ -119,27 +119,23 @@ public class Link {
     ) {
         return centralRegistry
                 .authenticate()
-                .flatMap(token -> linkServiceClient.linkPatientEnquiryRequest(linkReferenceRequest, token, hipId))
-                .zipWith(Mono.delay(Duration.ofMillis(getExpectedFlowResponseDuration())))
-                .flatMap(tuple ->
-                        linkResults.get(requestId.toString())
-                                .switchIfEmpty(Mono.error(ClientError.gatewayTimeOut()))
-                                .flatMap(this::deserializeLinkReferenceResponseFromHIP))
-                .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
-                .flatMap(linkReferenceResult -> {
-                    if (linkReferenceResult.getError() != null) {
-                        logger.error("[Link] Link initiation resulted in error {}", linkReferenceResult.getError());
-                        return Mono.error(new ClientError(HttpStatus.BAD_REQUEST, cmErrorRepresentation(linkReferenceResult.getError())));
-                    }
-                    return linkRepository.insert(linkReferenceResult, hipId, requestId)
-                            .thenReturn(((PatientLinkReferenceResponse.builder()
-                                    .transactionId(linkReferenceResult.getTransactionId().toString())
-                                    .link(linkReferenceResult.getLink())
-                                    .build())));
-                });
-
-
-
+                .flatMap(token ->
+                        scheduleThis(linkServiceClient.linkPatientEnquiryRequest(linkReferenceRequest, token, hipId))
+                                .timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
+                                .responseFrom(discard -> Mono.defer(() -> linkResults.get(requestId.toString())))
+                                .onErrorResume(DelayTimeoutException.class, discard -> Mono.error(ClientError.gatewayTimeOut()))
+                                .flatMap(response -> tryTo(response, PatientLinkReferenceResult.class).map(Mono::just).orElse(Mono.empty()))
+                                .flatMap(linkReferenceResult -> {
+                                    if (linkReferenceResult.getError() != null) {
+                                        logger.error("[Link] Link initiation resulted in error {}", linkReferenceResult.getError());
+                                        return Mono.error(new ClientError(HttpStatus.BAD_REQUEST, cmErrorRepresentation(linkReferenceResult.getError())));
+                                    }
+                                    return linkRepository.insert(linkReferenceResult, hipId, requestId)
+                                            .thenReturn(PatientLinkReferenceResponse.builder()
+                                                    .transactionId(linkReferenceResult.getTransactionId().toString())
+                                                    .link(linkReferenceResult.getLink())
+                                                    .build());
+                                }));
     }
 
 

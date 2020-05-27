@@ -25,6 +25,9 @@ public class LinkController {
 
     private final Link link;
 
+    /**
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("/patients/link")
     public Mono<PatientLinkReferenceResponse> linkCareContexts(

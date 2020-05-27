@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
+import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -581,48 +582,26 @@ public class LinkUserJourneyTest {
         var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
         var linkReferenceRequest = TestBuilders.linkReferenceRequest().build();
         var hipId = "10000005";
-        var linkReferenceResult = "{\n" +
-                "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
-                "  \"timestamp\": \"2020-05-25T15:03:44.557Z\",\n" +
-                "  \"transactionId\": \"7f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
-                "  \"link\": {\n" +
-                "    \"referenceNumber\": \"ref-no\",\n" +
-                "    \"authenticationType\": \"DIRECT\",\n" +
-                "    \"meta\": \n" +
-                "      {\n" +
-                "        \"communicationMedium\": \"M0BILE\",\n" +
-                "        \"communicationHint\": \"test-hint\", \n" +
-                "        \"communicationExpiry\": \"2020-12-30T12:01:55Z\"\n" +
-                "      }\n" +
-                "  },\n" +
-                "  \"resp\": {\n" +
-                "    \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n" +
-                "  }\n" +
-                "}";
-        var linkReferenceJson = "{\n" +
-                "  \"transactionId\": \"7f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
-                "  \"link\": {\n" +
-                "    \"referenceNumber\": \"ref-no\",\n" +
-                "    \"authenticationType\": \"DIRECT\",\n" +
-                "    \"meta\": \n" +
-                "      {\n" +
-                "        \"communicationMedium\": \"M0BILE\",\n" +
-                "        \"communicationHint\": \"test-hint\", \n" +
-                "        \"communicationExpiry\": \"2020-12-30T12:01:55Z\"\n" +
-                "      }\n" +
-                "  }\n" +
-                "}";
+        var patientLinkReferenceResult = patientLinkReferenceResult().error(null).build();
+        String patientLinkReferenceResultJson = OBJECT_MAPPER.writeValueAsString(patientLinkReferenceResult);
+        var linkReferenceResponse = patientLinkReferenceResponse()
+                .transactionId(patientLinkReferenceResult.getTransactionId().toString())
+                .link(patientLinkReferenceResult.getLink())
+                .build();
+        String linkReferenceResponseJson = OBJECT_MAPPER.writeValueAsString(linkReferenceResponse);
+
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
         gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         clientRegistryServer.setDispatcher(dispatcher);
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
-        when(linkRepository.insert(OBJECT_MAPPER.readValue(linkReferenceResult, PatientLinkReferenceResult.class), hipId, patientLinkReferenceRequest.getRequestId()))
+        when(linkRepository.insert(patientLinkReferenceResult, hipId, patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.create(MonoSink::success));
         when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.empty());
         when(linkServiceClient.linkPatientEnquiryRequest(linkReferenceRequest, token, hipId)).thenReturn(Mono.just(true));
-        when(linkResults.get(any())).thenReturn(Mono.just(linkReferenceResult));
+        when(linkResults.get(any())).thenReturn(Mono.just(patientLinkReferenceResultJson));
+
         webTestClient
                 .post()
                 .uri("/v1/links/link/init")
@@ -634,7 +613,7 @@ public class LinkUserJourneyTest {
                 .expectStatus()
                 .isOk()
                 .expectBody()
-                .json(linkReferenceJson);
+                .json(linkReferenceResponseJson);
     }
 
     @Test
@@ -643,29 +622,9 @@ public class LinkUserJourneyTest {
         var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
         var linkReferenceRequest = TestBuilders.linkReferenceRequest().build();
         var hipId = "10000005";
-        var linkReferenceResult = "{\n" +
-                "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
-                "  \"timestamp\": \"2020-05-25T15:03:44.557Z\",\n" +
-                "  \"transactionId\": \"7f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
-                "  \"link\": {\n" +
-                "    \"referenceNumber\": \"ref-no\",\n" +
-                "    \"authenticationType\": \"DIRECT\",\n" +
-                "    \"meta\": \n" +
-                "      {\n" +
-                "        \"communicationMedium\": \"M0BILE\",\n" +
-                "        \"communicationHint\": \"test-hint\", \n" +
-                "        \"communicationExpiry\": \"2020-12-30T12:01:55Z\"\n" +
-                "      }\n" +
-                "  },\n" +
-                "  \"error\": \n" +
-                "    {\n" +
-                "      \"code\": \"1006\",\n" +
-                "      \"message\": \"Invalid link reference response\"\n" +
-                "    }, \n" +
-                "  \"resp\": {\n" +
-                "    \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n" +
-                "  }\n" +
-                "}";
+        var patientLinkReferenceResult = patientLinkReferenceResult().error(RespError.builder().build()).build();
+        String patientLinkReferenceResultJson = OBJECT_MAPPER.writeValueAsString(patientLinkReferenceResult);
+
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
         gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         clientRegistryServer.setDispatcher(dispatcher);
@@ -674,7 +633,7 @@ public class LinkUserJourneyTest {
         when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.empty());
         when(linkServiceClient.linkPatientEnquiryRequest(linkReferenceRequest, token, hipId)).thenReturn(Mono.just(true));
-        when(linkResults.get(any())).thenReturn(Mono.just(linkReferenceResult));
+        when(linkResults.get(any())).thenReturn(Mono.just(patientLinkReferenceResultJson));
         webTestClient
                 .post()
                 .uri("/v1/links/link/init")
@@ -686,6 +645,4 @@ public class LinkUserJourneyTest {
                 .expectStatus()
                 .isBadRequest();
     }
-
-
 }

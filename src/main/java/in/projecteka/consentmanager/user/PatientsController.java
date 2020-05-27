@@ -212,11 +212,18 @@ public class PatientsController {
 
     @PostMapping("/profile/recovery-init")
     public Mono<GenerateOtpResponse> initiateCmIdRecovery(@RequestBody InitiateCmIdRecoveryRequest request) {
-        return isInvalidRecoveryRequest(request)
+        return isValidRecoveryRequest(request)
                 .switchIfEmpty(Mono.error(ClientError.invalidRecoveryRequest()))
                 .flatMap(userService::getPatientByDetails)
                 .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.noPatientFound())))
-                .flatMap(user -> getGenerateOtpResponseFor(UserSignUpEnquiry.builder().identifierType(IdentifierType.MOBILE.toString()).identifier(user.getPhone()).build(),user.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_RECOVER_CM_ID,SendOtpAction.RECOVER_CM_ID))
+                .flatMap(user -> getGenerateOtpResponseFor(
+                        UserSignUpEnquiry.builder()
+                                .identifierType(IdentifierType.MOBILE.toString())
+                                .identifier(user.getPhone())
+                                .build()
+                        ,user.getIdentifier()
+                        , OtpAttempt.Action.OTP_REQUEST_RECOVER_CM_ID
+                        ,SendOtpAction.RECOVER_CM_ID))
                 .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.failedToGenerateOtp())));
     }
 
@@ -224,7 +231,7 @@ public class PatientsController {
         return identifiers.stream().anyMatch(identifier -> !identifier.getType().getIdentifierGroup().equals(identifierGroup) || !identifier.getType().isValid(identifier.getValue()));
     }
 
-    private Mono<InitiateCmIdRecoveryRequest> isInvalidRecoveryRequest(InitiateCmIdRecoveryRequest request) { //breakdown
+    private Mono<InitiateCmIdRecoveryRequest> isValidRecoveryRequest(InitiateCmIdRecoveryRequest request) { //breakdown
         boolean areMandatoryFieldsNull = request.getName() == null || request.getGender() == null || !IdentifierUtils.isIdentifierTypePresent(request.getVerifiedIdentifiers(), IdentifierType.MOBILE);
         boolean isInvalidVerifiedIdentifierMapped = isInvalidIdentifierMapped(request.getVerifiedIdentifiers(), IdentifierGroup.VERIFIED_IDENTIFIER);
         boolean isInvalidUnverifiedIdentifierMapped = isInvalidIdentifierMapped(request.getUnverifiedIdentifiers(), IdentifierGroup.UNVERIFIED_IDENTIFIER);

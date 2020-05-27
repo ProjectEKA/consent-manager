@@ -1,19 +1,20 @@
-package in.projecteka.consentmanager.clients.model;
+package in.projecteka.consentmanager.link.link.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @AllArgsConstructor
 @Builder
 @NoArgsConstructor
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class PatientLinkRequest {
-    private String token;
-    private String linkRefNumber;
+public class LinkConfirmationRequest {
+    UUID requestId;
+    String timestamp;
+    TokenConfirmation confirmation;
 }

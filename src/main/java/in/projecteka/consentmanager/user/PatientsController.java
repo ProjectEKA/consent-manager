@@ -93,8 +93,9 @@ public class PatientsController {
                         request.getScope()));
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/profile")
-    public Mono<Session> create(@RequestBody SignUpRequest request,
+    public Mono<Void> create(@RequestBody SignUpRequest request,
                                 @RequestHeader(name = "Authorization") String token) {
         var signUpRequests = SignUpRequestValidator.validate(request, userService.getUserIdSuffix());
         return signUpRequests.isValid()

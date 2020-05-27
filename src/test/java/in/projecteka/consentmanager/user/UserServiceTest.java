@@ -265,7 +265,6 @@ class UserServiceTest {
     @Test
     public void shouldCreateUser() {
         var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.now().getYear()).build();
-        var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
@@ -273,10 +272,8 @@ class UserServiceTest {
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 
         StepVerifier.create(userService.create(signUpRequest, sessionId))
-                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
                 .verifyComplete();
     }
 
@@ -289,7 +286,7 @@ class UserServiceTest {
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.just(user));
         when(userRepository.save(any())).thenReturn(Mono.empty());
 
-        Mono<Session> publisher = userService.create(signUpRequest, sessionId);
+        Mono<Void> publisher = userService.create(signUpRequest, sessionId);
         StepVerifier.create(publisher)
                 .verifyErrorSatisfies(error -> assertThat(error)
                         .asInstanceOf(InstanceOfAssertFactories.type(ClientError.class))
@@ -299,7 +296,6 @@ class UserServiceTest {
     @Test
     public void shouldCreateUserWhenYOBIsNull() {
         var signUpRequest = coreSignUpRequest().name("apoorva g a").yearOfBirth(null).build();
-        var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
@@ -307,10 +303,8 @@ class UserServiceTest {
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 
         StepVerifier.create(userService.create(signUpRequest, sessionId))
-                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
                 .verifyComplete();
     }
 
@@ -328,12 +322,11 @@ class UserServiceTest {
         when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.empty());
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
         when(userRepository.delete(identifier)).thenReturn(Mono.empty());
 
-        Mono<Session> publisher = userService.create(signUpRequest, sessionId);
+        Mono<Void> publisher = userService.create(signUpRequest, sessionId);
 
         StepVerifier.create(publisher).verifyComplete();
         verify(userRepository, times(1)).delete(identifier);
@@ -353,12 +346,11 @@ class UserServiceTest {
         when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.error(new DbOperationError()));
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.empty());
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.delete(identifier)).thenReturn(Mono.empty());
 
-        Mono<Session> publisher = userService.create(signUpRequest, sessionId);
+        Mono<Void> publisher = userService.create(signUpRequest, sessionId);
 
         StepVerifier.create(publisher)
                 .verifyErrorSatisfies(error -> assertThat(error)

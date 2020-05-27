@@ -166,7 +166,7 @@ public class UserService {
                 });
     }
 
-    public Mono<Session> create(CoreSignUpRequest coreSignUpRequest, String sessionId) {
+    public Mono<Void> create(CoreSignUpRequest coreSignUpRequest, String sessionId) {
         UserCredential credential = new UserCredential(coreSignUpRequest.getPassword());
         KeycloakUser keycloakUser = new KeycloakUser(
                 coreSignUpRequest.getName(),
@@ -178,7 +178,7 @@ public class UserService {
                 .switchIfEmpty(Mono.error(new InvalidRequestException("mobile number not verified")))
                 .flatMap(mobileNumber -> userExistsWith(coreSignUpRequest.getUsername())
                         .switchIfEmpty(Mono.defer(() -> createUserWith(mobileNumber, coreSignUpRequest, keycloakUser)))
-                        .cast(Session.class));
+                        .then());
     }
 
     public Mono<Session> update(UpdateUserRequest updateUserRequest, String sessionId) {
@@ -231,7 +231,7 @@ public class UserService {
     }
 
 
-    private Mono<Session> createUserWith(String mobileNumber, CoreSignUpRequest coreSignUpRequest, KeycloakUser keycloakUser) {
+    private Mono<Void> createUserWith(String mobileNumber, CoreSignUpRequest coreSignUpRequest, KeycloakUser keycloakUser) {
         User user = User.from(coreSignUpRequest, mobileNumber);
         return userRepository.save(user)
                 .then(tokenService.tokenForAdmin()
@@ -241,7 +241,7 @@ public class UserService {
                     logger.error(error.getMessage(), error);
                     return userRepository.delete(user.getIdentifier()).then();
                 })
-                .then(tokenService.tokenForUser(coreSignUpRequest.getUsername(), coreSignUpRequest.getPassword()));
+                .then();
     }
 
     private boolean validateOtpVerification(OtpVerification otpVerification) {

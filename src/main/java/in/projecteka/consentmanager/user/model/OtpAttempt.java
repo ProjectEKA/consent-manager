@@ -27,9 +27,11 @@ public class OtpAttempt {
         OTP_REQUEST_REGISTRATION,
         OTP_REQUEST_LOGIN,
         OTP_REQUEST_RECOVER_PASSWORD,
+        OTP_REQUEST_RECOVER_CM_ID,
         OTP_SUBMIT_REGISTRATION,
         OTP_SUBMIT_RECOVER_PASSWORD,
-        OTP_SUBMIT_LOGIN;
+        OTP_SUBMIT_LOGIN,
+        OTP_SUBMIT_RECOVER_CM_ID;
     }
 
     public enum AttemptStatus {

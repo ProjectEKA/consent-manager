@@ -8,7 +8,7 @@ import java.util.List;
 
 @AllArgsConstructor
 @Getter
-public class RecoverCmIdRequest {
+public class InitiateCmIdRecoveryRequest {
     private final String name;
     private final Gender gender;
     private final Integer yearOfBirth;

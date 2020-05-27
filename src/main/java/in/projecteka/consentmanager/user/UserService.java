@@ -13,15 +13,14 @@ import in.projecteka.consentmanager.user.filters.ABPMJAYIdFilter;
 import in.projecteka.consentmanager.user.filters.NameFilter;
 import in.projecteka.consentmanager.user.filters.YOBFilter;
 import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
-import in.projecteka.consentmanager.user.model.Identifier;
-import in.projecteka.consentmanager.user.model.IdentifierGroup;
 import in.projecteka.consentmanager.user.model.IdentifierType;
 import in.projecteka.consentmanager.user.model.LoginMode;
 import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerification;
-import in.projecteka.consentmanager.user.model.RecoverCmIdRequest;
+import in.projecteka.consentmanager.user.model.InitiateCmIdRecoveryRequest;
 import in.projecteka.consentmanager.user.model.RecoverCmIdResponse;
+import in.projecteka.consentmanager.user.model.SendOtpAction;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
@@ -81,7 +80,7 @@ public class UserService {
                                 otpRequest.getCommunication().getValue())));
     }
 
-    public Mono<SignUpSession> sendOtpForPasswordChange(UserSignUpEnquiry userSignupEnquiry, String userName) {
+    public Mono<SignUpSession> sendOtpFor(UserSignUpEnquiry userSignupEnquiry, String userName, OtpAttempt.Action otpAttemtpAction, SendOtpAction sendOtpAction) {
         String identifierType = userSignupEnquiry.getIdentifierType().toUpperCase();
 
         if (!otpServiceProperties.getIdentifiers().contains(identifierType)) {
@@ -93,12 +92,13 @@ public class UserService {
                 sessionId,
                 new OtpCommunicationData(userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
 
-        return otpAttemptService.validateOTPRequest(identifierType, userSignupEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD, userName)
+        return otpAttemptService.validateOTPRequest(identifierType, userSignupEnquiry.getIdentifier(), otpAttemtpAction, userName)
                 .then(otpServiceClient
                         .send(otpRequest)
                         .then(signupService.updatedVerfiedSession(
                                 otpRequest.getSessionId(),
-                                userName)));
+                                userName,
+                                sendOtpAction)));
     }
 
     private Mono<Void> validateAndVerifyOtp(OtpVerification otpVerification, OtpAttempt attempt){
@@ -130,7 +130,8 @@ public class UserService {
         if (!validateOtpVerification(otpVerification)) {
             throw new InvalidRequestException("invalid.request.body");
         }
-        return signupService.getUserName(otpVerification.getSessionId())
+        String sessionIdWithAction = SendOtpAction.RECOVER_PASSWORD.toString() + otpVerification.getSessionId();
+        return signupService.getUserName(sessionIdWithAction)
                 .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
                 .flatMap(userRepository::userWith)
                 .flatMap(user -> {
@@ -142,6 +143,26 @@ public class UserService {
                             .cmId(user.getIdentifier());
                     return validateAndVerifyOtp(otpVerification, builder.build())
                             .then(signupService.generateToken(new HashMap<>(), otpVerification.getSessionId()));
+                });
+    }
+
+    public Mono<RecoverCmIdResponse> verifyOtpForRecoverCmId(OtpVerification otpVerification) {
+        if (!validateOtpVerification(otpVerification)) {
+            throw new InvalidRequestException("invalid.request.body");
+        }
+        String sessionIdWithAction = SendOtpAction.RECOVER_CM_ID.toString() + otpVerification.getSessionId();
+        return signupService.getUserName(sessionIdWithAction)
+                .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
+                .flatMap(userRepository::userWith)
+                .flatMap(user -> {
+                    OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
+                            .sessionId(otpVerification.getSessionId())
+                            .identifierType(IdentifierType.MOBILE.name())
+                            .identifierValue(user.getPhone())
+                            .action(OtpAttempt.Action.OTP_SUBMIT_RECOVER_CM_ID)
+                            .cmId(user.getIdentifier());
+                    return validateAndVerifyOtp(otpVerification, builder.build())
+                            .then(Mono.just(RecoverCmIdResponse.builder().cmId(user.getIdentifier()).build()));
                 });
     }
 
@@ -238,32 +259,15 @@ public class UserService {
         return otpServiceProperties.getExpiryInMinutes();
     }
 
-    public Mono<RecoverCmIdResponse> recoverCmId(RecoverCmIdRequest request) {
-        return isInvalidRecoveryRequest(request)
-                .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.invalidRecoveryRequest())))
-                .flatMap(validRequest ->
-                        userRepository.getCmIdBy(validRequest.getGender(),
+    public Mono<User> getPatientByDetails(InitiateCmIdRecoveryRequest request) {
+        return userRepository.getUserBy(request.getGender(),
                                 IdentifierUtils.getIdentifierValue(
-                                        validRequest.getVerifiedIdentifiers(),
-                                        IdentifierType.MOBILE)))
+                                        request.getVerifiedIdentifiers(),
+                                        IdentifierType.MOBILE))
                 .flatMap(users -> new NameFilter().filter(users, request.getName()))
                 .flatMap(users -> new YOBFilter().filter(users, request.getYearOfBirth()))
                 .flatMap(users -> new ABPMJAYIdFilter().filter(users, request.getUnverifiedIdentifiers()))
-                .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.noPatientFound())))
-                .flatMap(this::getDistinctUser)
-                .flatMap(user -> Mono.just(RecoverCmIdResponse.builder().cmId(user.getIdentifier()).build()))
-                .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.noPatientFound())));
-    }
-
-    private boolean isInvalidIdentifierMapped(List<Identifier> identifiers, IdentifierGroup identifierGroup) {
-        return identifiers.stream().anyMatch(identifier -> !identifier.getType().getIdentifierGroup().equals(identifierGroup) || !identifier.getType().isValid(identifier.getValue()));
-    }
-
-    private Mono<RecoverCmIdRequest> isInvalidRecoveryRequest(RecoverCmIdRequest request) { //breakdown
-        boolean areMandatoryFieldsNull = request.getName() == null || request.getGender() == null || !IdentifierUtils.isIdentifierTypePresent(request.getVerifiedIdentifiers(), IdentifierType.MOBILE);
-        boolean isInvalidVerifiedIdentifierMapped = isInvalidIdentifierMapped(request.getVerifiedIdentifiers(), IdentifierGroup.VERIFIED_IDENTIFIER);
-        boolean isInvalidUnverifiedIdentifierMapped = isInvalidIdentifierMapped(request.getUnverifiedIdentifiers(), IdentifierGroup.UNVERIFIED_IDENTIFIER);
-        return areMandatoryFieldsNull || isInvalidVerifiedIdentifierMapped || isInvalidUnverifiedIdentifierMapped ? Mono.empty() : Mono.just(request);
+                .flatMap(this::getDistinctUser);
     }
 
     private Mono<User> getDistinctUser(List<User> rows) {

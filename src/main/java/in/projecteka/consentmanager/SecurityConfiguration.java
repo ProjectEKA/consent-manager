@@ -89,6 +89,7 @@ public class SecurityConfiguration {
                                           "/otpsession/permit",
                                           "/sessions",
                                           "/v1/care-contexts/on-discover",
+                                          "/v1/links/link/on-init",
                                           "/v1/links/link/on-confirm",
                                           "/**.html",
                                           "/**.js",

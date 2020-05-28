@@ -60,6 +60,7 @@ public class PatientsController {
     private final SignUpService signupService;
     private final UserService userService;
     private final CacheAdapter<String, String> usedTokens;
+    private final LockedUserService lockedUserService;
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/pin")
@@ -195,7 +196,10 @@ public class PatientsController {
                 ? ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
-                .flatMap(userName -> userService.updatePassword(request, userName))
+                .flatMap(userName ->
+                                lockedUserService.validateLogin(userName)
+                                .then(Mono.defer(() -> userService.updatePassword(request, userName)))
+                        )
                 : Mono.error(invalidRequester(updatePasswordRequest.getError()));
     }
 

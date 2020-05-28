@@ -438,6 +438,8 @@ class UserServiceTest {
         when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
         when(identityServiceClient.updateUser(tokenForAdmin, userRepresentation.getId(), request.getNewPassword())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(userName, request.getNewPassword())).thenReturn(Mono.just(newSession));
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
         Mono<Session> updatedPasswordSession = userService.updatePassword(request, userName);
 
@@ -461,6 +463,9 @@ class UserServiceTest {
                 .build();
 
         when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(Mono.error(ClientError.unAuthorizedRequest("Invalid Old Password")));
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
+        when(lockedUserService.createOrUpdateLockedUser(userName)).thenReturn(Mono.empty());
 
         Mono<Session> updatedPasswordSession = userService.updatePassword(request, userName);
 
@@ -492,6 +497,8 @@ class UserServiceTest {
         when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
         when(identityServiceClient.updateUser(tokenForAdmin, userRepresentation.getId(), request.getNewPassword())).thenReturn(Mono.error(ClientError.failedToUpdateUser()));
         when(tokenService.tokenForUser(userName, request.getNewPassword())).thenReturn(Mono.just(newSession));
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
         Mono<Session> updatedPasswordSession = userService.updatePassword(request, userName);
 

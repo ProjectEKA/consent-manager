@@ -323,4 +323,8 @@ public class ClientError extends Throwable {
     public static ClientError invalidResponseFromHIP() {
         return new ClientError(UNPROCESSABLE_ENTITY, new ErrorRepresentation(new Error(UNPROCESSABLE_RESPONSE_FROM_GATEWAY, "Could not process response from HIP")));
     }
+
+    public static ClientError invalidOldPassword(int remainingAttempts) {
+        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT,"Invalid old password. Tries remaining:" + remainingAttempts)));
+    }
 }

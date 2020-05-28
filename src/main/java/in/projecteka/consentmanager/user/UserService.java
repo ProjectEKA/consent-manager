@@ -190,8 +190,10 @@ public class UserService {
 
     public Mono<Session> updatePassword(UpdatePasswordRequest request, String userName) {
         return tokenService.tokenForUser(userName, request.getOldPassword())
-                .onErrorResume(error -> Mono.error(ClientError.unAuthorizedRequest("Invalid old password")))
-                .flatMap(session -> updatedSessionFor(request.getNewPassword(), userName));
+                .onErrorResume( error -> lockedUserService.createOrUpdateLockedUser(userName)
+                        .then(Mono.error(ClientError.unAuthorizedRequest("Invalid old password"))))
+                .flatMap(session -> lockedUserService.removeLockedUser(userName)
+                .then(updatedSessionFor(request.getNewPassword(), userName)));
     }
 
     private Mono<Session> updatedSessionFor(String password, String userName) {

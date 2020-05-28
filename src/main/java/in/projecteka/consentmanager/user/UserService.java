@@ -9,7 +9,6 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
-import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.filters.ABPMJAYIdFilter;
 import in.projecteka.consentmanager.user.filters.NameFilter;
@@ -172,13 +171,13 @@ public class UserService {
                 });
     }
 
-    private Mono<Notification> createNotificationMessage(User user, String sessionId) {
-     return Mono.just(Notification.builder()
+    private Mono<CMNotification> createNotificationMessage(User user, String sessionId) {
+     return Mono.just(CMNotification.builder()
                      .communication(Communication.builder()
                              .communicationType(CommunicationType.MOBILE)
                              .value(user.getPhone())
                              .build())
-                     .id(UUID.fromString(sessionId))
+                     .id(sessionId)
                      .action(Action.CM_ID_RECOVERED)
                      .content(CMidContent.builder()
                              .cmId(user.getIdentifier())
@@ -186,7 +185,7 @@ public class UserService {
                      .build());
     }
 
-    public Mono<Void> notifyUserWith(Notification notification) {
+    public Mono<Void> notifyUserWith(CMNotification notification) {
      return otpServiceClient.send(notification);
     }
 

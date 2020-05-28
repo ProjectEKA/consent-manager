@@ -463,9 +463,7 @@ class UserServiceTest {
                 .build();
 
         when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(Mono.error(ClientError.unAuthorizedRequest("Invalid Old Password")));
-        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
-        when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
-        when(lockedUserService.createOrUpdateLockedUser(userName)).thenReturn(Mono.empty());
+        when(lockedUserService.createOrUpdateLockedUser(userName)).thenReturn(Mono.just(2));
 
         Mono<Session> updatedPasswordSession = userService.updatePassword(request, userName);
 

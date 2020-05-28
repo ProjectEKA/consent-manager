@@ -25,24 +25,16 @@ public class LockedUserService {
         return lockedUsersRepository.deleteUser(cmId);
     }
 
-    public Mono<Void> createOrUpdateLockedUser(String cmId) {
-        return lockedUsersRepository.getLockedUserFor(cmId)
-                .flatMap(lockedUser ->
-                        isBeforeMinutes(lockedUser.getDateCreated(), lockedServiceProperties.getCoolOfPeriod())
-                                ? Mono.empty() : removeLockedUser(cmId))
-                .then(lockedUsersRepository.upsert(cmId));
-    }
-
-    public Mono<Integer> tempreateOrUpdateLockedUser(String cmId) {
+    public Mono<Integer> createOrUpdateLockedUser(String cmId) {
         return lockedUsersRepository.getLockedUserFor(cmId)
                 .flatMap(lockedUser -> {
-                    System.out.println("inside ------");
                     var remainingTries = lockedServiceProperties.getMaximumInvalidAttempts() - lockedUser.getInvalidAttempts();
                     return isBeforeMinutes(lockedUser.getDateCreated(), lockedServiceProperties.getCoolOfPeriod())
-                            ? Mono.just(remainingTries)
-                            : removeLockedUser(cmId).thenReturn(lockedServiceProperties.getMaximumInvalidAttempts() -1);
+                            ? Mono.just(remainingTries - 1)
+                            : removeLockedUser(cmId).then(Mono.just(lockedServiceProperties.getMaximumInvalidAttempts() - 1));
                 })
-                .flatMap(remainingTries -> lockedUsersRepository.upsert(cmId).thenReturn(remainingTries));
+                .flatMap(remainingTries -> lockedUsersRepository.upsert(cmId).thenReturn(remainingTries))
+                .switchIfEmpty(Mono.defer(() -> lockedUsersRepository.upsert(cmId).then(Mono.just(lockedServiceProperties.getMaximumInvalidAttempts() - 1))));
     }
 
     private boolean isBeforeMinutes(LocalDateTime timeToCheck, int minutesToCheckWith) {

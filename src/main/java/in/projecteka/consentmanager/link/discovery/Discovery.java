@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.common.CustomScheduler.scheduleThis;
@@ -95,17 +94,15 @@ public class Discovery {
 	                                            UUID transactionId,
 	                                            UUID requestId) {
 
-		Function<User, Mono<Boolean>> discoveryFor = user -> discoveryServiceClient.requestPatientFor(
-				requestFor(user, transactionId, unverifiedIdentifiers, requestId),
-				providerId);
-
 		return Mono.just(requestId)
 				.filterWhen(this::validateRequest)
 				.switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
-				.flatMap(val -> userWith(userName)
-						.flatMap(user -> scheduleThis(discoveryFor.apply(user))
-								.timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
-								.responseFrom(discard -> Mono.defer(() -> discoveryResults.get(requestId.toString())))))
+				.flatMap(val -> userWith(userName))
+				.flatMap(user -> scheduleThis(discoveryServiceClient.requestPatientFor(
+						requestFor(user, transactionId, unverifiedIdentifiers, requestId),
+						providerId))
+						.timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
+						.responseFrom(discard -> Mono.defer(() -> discoveryResults.get(requestId.toString()))))
 				.onErrorResume(DelayTimeoutException.class, discard -> Mono.error(ClientError.gatewayTimeOut()))
 				.flatMap(response -> tryTo(response, DiscoveryResult.class).map(Mono::just).orElse(Mono.empty()))
 				.flatMap(discoveryResult -> {
@@ -167,7 +164,12 @@ public class Discovery {
 						.orElse(Mono.empty()));
 	}
 
-	private Mono<PatientResponse> patientIn(String hipId, String hipSystemUrl, User user, UUID transactionId, List<PatientIdentifier> unverifiedIdentifiers, UUID requestId) {
+	private Mono<PatientResponse> patientIn(String hipId,
+	                                        String hipSystemUrl,
+	                                        User user,
+	                                        UUID transactionId,
+	                                        List<PatientIdentifier> unverifiedIdentifiers,
+	                                        UUID requestId) {
 		var patientRequest = requestFor(user, transactionId, unverifiedIdentifiers, requestId);
 		return discoveryServiceClient.patientFor(patientRequest, hipSystemUrl, hipId);
 	}

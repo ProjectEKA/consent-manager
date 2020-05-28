@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.filters.ABPMJAYIdFilter;
 import in.projecteka.consentmanager.user.filters.NameFilter;
@@ -29,6 +30,9 @@ import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.consentmanager.consent.model.Communication;
+import in.projecteka.consentmanager.consent.model.CommunicationType;
+import in.projecteka.consentmanager.consent.model.Action;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -163,8 +167,27 @@ public class UserService {
                             .action(OtpAttempt.Action.OTP_SUBMIT_RECOVER_CM_ID)
                             .cmId(user.getIdentifier());
                     return validateAndVerifyOtp(otpVerification, builder.build())
+                            .then(Mono.just(createNotificationMessage(user, otpVerification.getSessionId()).flatMap(this::notifyUserWith)))
                             .then(Mono.just(RecoverCmIdResponse.builder().cmId(user.getIdentifier()).build()));
                 });
+    }
+
+    private Mono<Notification> createNotificationMessage(User user, String sessionId) {
+     return Mono.just(Notification.builder()
+                     .communication(Communication.builder()
+                             .communicationType(CommunicationType.MOBILE)
+                             .value(user.getPhone())
+                             .build())
+                     .id(UUID.fromString(sessionId))
+                     .action(Action.CM_ID_RECOVERED)
+                     .content(CMidContent.builder()
+                             .cmId(user.getIdentifier())
+                             .build())
+                     .build());
+    }
+
+    public Mono<Void> notifyUserWith(Notification notification) {
+     return otpServiceClient.send(notification);
     }
 
     public Mono<Session> create(CoreSignUpRequest coreSignUpRequest, String sessionId) {

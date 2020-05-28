@@ -3,7 +3,8 @@ package in.projecteka.consentmanager.consent.model;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum Action {
-    CONSENT_REQUEST_CREATED("ConsentRequestCreated");
+    CONSENT_REQUEST_CREATED("ConsentRequestCreated"),
+    CM_ID_RECOVERED ("CmidRecovered");
 
     private final String resourceType;
 

@@ -14,6 +14,6 @@ import java.util.UUID;
 public class Notification {
     private UUID id;
     private Communication communication;
-    private Content content;
+    private Object content;
     private Action action;
 }

@@ -325,6 +325,6 @@ public class ClientError extends Throwable {
     }
 
     public static ClientError invalidOldPassword(int remainingAttempts) {
-        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT,"You have " + remainingAttempts + " tries available after that your account will be locked")));
+        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT, "You have " + remainingAttempts + " tries available after that your account will be locked")));
     }
 }

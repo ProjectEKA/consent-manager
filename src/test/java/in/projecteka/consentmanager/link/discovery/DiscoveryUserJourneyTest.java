@@ -13,6 +13,7 @@ import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
@@ -116,6 +117,9 @@ public class DiscoveryUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConceptValidator conceptValidator;
+
+    @MockBean
+    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
     @BeforeEach
     public void setUp() {
@@ -362,7 +366,7 @@ public class DiscoveryUserJourneyTest {
     public void onDiscoverPatientCareContexts() {
         var token = string();
         var patientDiscoveryResult = TestBuilders.discoveryResult().build();
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", true)));
         webTestClient.post()
                 .uri("/v1/care-contexts/on-discover")
                 .accept(MediaType.APPLICATION_JSON)
@@ -388,7 +392,7 @@ public class DiscoveryUserJourneyTest {
                 .error(error)
                 .resp(gatewayResponse)
                 .build();
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", true)));
         webTestClient.post()
                 .uri("/v1/care-contexts/on-discover")
                 .accept(MediaType.APPLICATION_JSON)
@@ -402,7 +406,7 @@ public class DiscoveryUserJourneyTest {
     @Test
     public void shouldFailOnDiscoverPatientCareContexts() throws Exception {
         var token = string();
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", false)));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", true)));
         webTestClient.post()
                 .uri("/v1/care-contexts/on-discover")
                 .accept(MediaType.APPLICATION_JSON)

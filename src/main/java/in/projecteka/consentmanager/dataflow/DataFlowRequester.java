@@ -80,8 +80,12 @@ public class DataFlowRequester {
 
     private boolean isValidHIDateRange(DataFlowRequest dataFlowRequest,
                                        ConsentArtefactRepresentation consentArtefactRepresentation) {
-        boolean equalOrAfter = isEqualOrAfter(dataFlowRequest.getDateRange().getFrom(), consentArtefactRepresentation.fromDate());
-        boolean equalOrBefore = isEqualOrBefore(dataFlowRequest.getDateRange().getTo(), consentArtefactRepresentation.toDate());
+        boolean equalOrAfter = isEqualOrAfter(
+                dataFlowRequest.getDateRange().getFrom(),
+                consentArtefactRepresentation.fromDate());
+        boolean equalOrBefore = isEqualOrBefore(
+                dataFlowRequest.getDateRange().getTo(),
+                consentArtefactRepresentation.toDate());
         boolean before = dataFlowRequest.getDateRange().getFrom().isBefore(dataFlowRequest.getDateRange().getTo());
         return equalOrAfter && equalOrBefore && before;
     }

@@ -12,13 +12,13 @@ public class LockedUserService {
     private final LockedUsersRepository lockedUsersRepository;
     private final LockedServiceProperties lockedServiceProperties;
 
-    public Mono<Void> validateLogin(String cmId) {
+    public Mono<String> validateLogin(String cmId) {
         return lockedUsersRepository.getLockedUserFor(cmId)
                 .filter(lockedUser -> lockedUser.getInvalidAttempts() >= lockedServiceProperties.getMaximumInvalidAttempts())
                 .flatMap(lockedUser -> {
                     var isBlocked = isBeforeMinutes(lockedUser.getDateModified(), lockedServiceProperties.getCoolOfPeriod());
                     return isBlocked ? Mono.error(ClientError.userBlocked()) : removeLockedUser(cmId);
-                });
+                }).thenReturn(cmId);
     }
 
     public Mono<Void> removeLockedUser(String cmId) {

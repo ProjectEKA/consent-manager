@@ -319,7 +319,7 @@ public class PatientControllerTest {
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
         when(userService.updatePassword(request, userName)).thenReturn(Mono.just(expectedSession));
-        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.just(userName));
         when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
         webClient.put()
@@ -403,7 +403,7 @@ public class PatientControllerTest {
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
         when(userService.updatePassword(request, userName)).thenReturn(Mono.error(ClientError.failedToUpdateUser()));
-        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.just(userName));
         when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
         webClient.put()
@@ -431,7 +431,7 @@ public class PatientControllerTest {
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
         when(userService.updatePassword(request, userName)).thenReturn(Mono.error(ClientError.unAuthorizedRequest("Invalid old password")));
-        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.just(userName));
         when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
         webClient.put()

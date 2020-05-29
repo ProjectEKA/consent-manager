@@ -196,13 +196,10 @@ public class PatientsController {
                 ? ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
-                .flatMap(userName ->
-                                lockedUserService.validateLogin(userName)
-                                .then(Mono.defer(() -> userService.updatePassword(request, userName)))
-                        )
+                .flatMap(lockedUserService::validateLogin)
+                .flatMap(userName -> Mono.defer(() -> userService.updatePassword(request, userName)))
                 : Mono.error(invalidRequester(updatePasswordRequest.getError()));
     }
-
 
     @PostMapping("/change-pin")
     public Mono<Void> changeTransactionPin(@RequestBody ChangePinRequest request) {

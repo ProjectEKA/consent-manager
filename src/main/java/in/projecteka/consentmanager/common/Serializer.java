@@ -13,6 +13,10 @@ import java.util.Optional;
 public final class Serializer {
     private static final Logger logger = LoggerFactory.getLogger(Serializer.class);
 
+    private Serializer() {
+
+    }
+
     private static final ObjectMapper mapper =
             new ObjectMapper()
                     .registerModule(new JavaTimeModule())

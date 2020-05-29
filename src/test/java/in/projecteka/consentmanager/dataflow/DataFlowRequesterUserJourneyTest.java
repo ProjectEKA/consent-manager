@@ -123,7 +123,7 @@ public class DataFlowRequesterUserJourneyTest {
     }
 
     @Test
-    public void shouldAcknowledgeDataFlowRequest() throws IOException {
+    void shouldAcknowledgeDataFlowRequest() throws IOException {
         String token = string();
         var hiuId = "10000005";
         var dataFlowRequest = dataFlowRequest().dateRange(DateRange.builder()
@@ -167,7 +167,7 @@ public class DataFlowRequesterUserJourneyTest {
     }
 
     @Test
-    public void shouldThrowConsentArtefactExpired() throws IOException {
+    void shouldThrowConsentArtefactExpired() throws IOException {
         String token = string();
         var hiuId = "10000005";
         var dataFlowRequest = dataFlowRequest()
@@ -212,7 +212,7 @@ public class DataFlowRequesterUserJourneyTest {
     }
 
     @Test
-    public void shouldThrowInvalidRequester() throws IOException {
+    void shouldThrowInvalidRequester() throws IOException {
         String token = string();
         var dataFlowRequest = dataFlowRequest().build();
         var consentArtefactRepresentation = consentArtefactRepresentation().build();
@@ -246,7 +246,7 @@ public class DataFlowRequesterUserJourneyTest {
     }
 
     @Test
-    public void shouldThrowInvalidDateRange() throws IOException {
+    void shouldThrowInvalidDateRange() throws IOException {
         String token = string();
         var hiuId = "10000005";
         var dataFlowRequest = dataFlowRequest()
@@ -294,7 +294,7 @@ public class DataFlowRequesterUserJourneyTest {
     }
 
     @Test
-    public void shouldThrowConsentNotGranted() throws IOException {
+    void shouldThrowConsentNotGranted() throws IOException {
         String token = string();
         var hiuId = "10000005";
         var dataFlowRequest = dataFlowRequest()

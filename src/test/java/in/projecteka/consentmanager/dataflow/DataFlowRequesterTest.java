@@ -41,7 +41,7 @@ public class DataFlowRequesterTest {
     }
 
     @Test
-    public void shouldAcceptDataFlowRequest() {
+    void shouldAcceptDataFlowRequest() {
         String hiuId = "10000005";
         var request = dataFlowRequest()
                 .dateRange(DateRange.builder()

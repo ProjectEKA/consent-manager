@@ -2,11 +2,7 @@ package in.projecteka.consentmanager.dataflow;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
-import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
-import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
-import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
-import in.projecteka.consentmanager.dataflow.model.DateRange;
-import in.projecteka.consentmanager.dataflow.model.HIUReference;
+import in.projecteka.consentmanager.dataflow.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -14,7 +10,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 import reactor.test.StepVerifier;
 
-import java.text.ParseException;
 import java.util.Objects;
 
 import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
@@ -46,12 +41,12 @@ public class DataFlowRequesterTest {
     }
 
     @Test
-    public void shouldAcceptDataFlowRequest() throws ParseException {
+    public void shouldAcceptDataFlowRequest() {
         String hiuId = "10000005";
         var request = dataFlowRequest()
                 .dateRange(DateRange.builder()
-                        .from(toDate("2020-01-16T08:47:48Z"))
-                        .to(toDate("2020-01-20T08:47:48Z")).build())
+                        .from(toDate("2020-01-15T08:47:48"))
+                        .to(toDate("2020-01-20T08:47:48")).build())
                 .build();
         var consentArtefactRepresentation = consentArtefactRepresentation().build();
         consentArtefactRepresentation.setStatus(ConsentStatus.GRANTED);
@@ -59,8 +54,8 @@ public class DataFlowRequesterTest {
         consentArtefactRepresentation.getConsentDetail().getPermission().setDataEraseAt(toDateWithMilliSeconds("253379772420000"));
         consentArtefactRepresentation.getConsentDetail().getPermission().
                 setDateRange(AccessPeriod.builder()
-                        .fromDate(toDate("2020-01-15T08:47:48Z"))
-                        .toDate(toDate("2020-01-29T08:47:48Z"))
+                        .fromDate(toDate("2020-01-15T08:47:48"))
+                        .toDate(toDate("2020-01-20T08:47:48"))
                         .build());
 
         when(consentManagerClient.getConsentArtefact(request.getConsent().getId()))

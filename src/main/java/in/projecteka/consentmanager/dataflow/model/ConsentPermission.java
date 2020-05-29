@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Builder
@@ -16,6 +16,6 @@ import java.util.Date;
 public class ConsentPermission {
     private AccessMode accessMode;
     private AccessPeriod dateRange;
-    private Date dataEraseAt;
+    private LocalDateTime dataEraseAt;
     private DataFrequency frequency;
 }

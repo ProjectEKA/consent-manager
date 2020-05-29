@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
@@ -29,6 +30,9 @@ import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLight;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentReference;
+import in.projecteka.consentmanager.consent.model.response.ConsentRequestId;
+import in.projecteka.consentmanager.consent.model.response.ConsentRequestResult;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
@@ -40,6 +44,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignedObject;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
@@ -80,6 +85,7 @@ public class ConsentManager {
 	private final CMProperties cmProperties;
 	private final ConceptValidator conceptValidator;
 	private final ConsentArtefactQueryGenerator consentArtefactQueryGenerator;
+    private final ConsentManagerClient consentManagerClient;
 
 	private static boolean isSameRequester(ConsentArtefact consentDetail, String requesterId) {
 		return consentDetail.getHiu().getId().equals(requesterId) ||
@@ -102,11 +108,38 @@ public class ConsentManager {
 						.thenReturn(requestId.toString()));
 	}
 
-	private Mono<Boolean> validateRequest(UUID requestId) {
-		return consentRequestRepository.requestOf(requestId.toString())
-				.map(Objects::isNull)
-				.switchIfEmpty(Mono.just(true));
-	}
+    public Mono<Void> requestConsent(RequestedDetail requestedDetail, UUID requestId) {
+        return Mono.just(requestId)
+                .filterWhen(this::validateRequest)
+                .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
+                .flatMap(val -> validatePatient(requestedDetail.getPatient().getId())
+                        .then(validatePurpose(requestedDetail.getPurpose()))
+                        .then(validateHiTypes(requestedDetail.getHiTypes()))
+                        .then(validateHIPAndHIU(requestedDetail)))
+                .flatMap(r -> saveConsentRequest(requestedDetail, requestId));
+    }
+
+
+    private Mono<Void> saveConsentRequest(RequestedDetail requestedDetail, UUID requestId) {
+        ConsentRequestId request = ConsentRequestId.builder()
+                        .id(requestId)
+                        .build();
+        ConsentRequestResult consentRequestResult = ConsentRequestResult.builder()
+                .requestId(requestId)
+                .timestamp(Instant.now().toString())
+                .consentRequest(request)
+                .resp(GatewayResponse.builder().requestId(UUID.randomUUID().toString()).build())
+                .build();
+
+        return consentRequestRepository.insert(requestedDetail, requestId)
+                .then(consentManagerClient.sendInitResponseToGateway(consentRequestResult, requestedDetail.getHiu().getId()));
+    }
+
+    private Mono<Boolean> validateRequest(UUID requestId) {
+        return consentRequestRepository.requestOf(requestId.toString())
+                .map(Objects::isNull)
+                .switchIfEmpty(Mono.just(true));
+    }
 
 	private Mono<Void> validatePurpose(ConsentPurpose purpose) {
 		return conceptValidator.validatePurpose(purpose.getCode())

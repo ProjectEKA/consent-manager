@@ -8,6 +8,8 @@ import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentati
 import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.response.ConsentRequestResult;
+import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
@@ -40,6 +42,14 @@ public class TestBuilders {
 
     public static Notification.NotificationBuilder notificationMessage() {
         return easyRandom.nextObject(Notification.NotificationBuilder.class);
+    }
+
+    public static ConsentRequestResult.ConsentRequestResultBuilder consentRequestResult() {
+        return easyRandom.nextObject(ConsentRequestResult.ConsentRequestResultBuilder.class);
+    }
+
+    public static ConsentRequest.ConsentRequestBuilder consentRequest() {
+        return easyRandom.nextObject(ConsentRequest.ConsentRequestBuilder.class);
     }
 
 

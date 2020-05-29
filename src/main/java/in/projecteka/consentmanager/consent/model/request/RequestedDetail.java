@@ -16,6 +16,7 @@ import lombok.Setter;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
@@ -24,32 +25,40 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 @Builder
 public class RequestedDetail {
-    @Valid
-    @NotNull(message = "Purpose is not specified.")
-    private ConsentPurpose purpose;
+	@Valid
+	@NotNull(message = "Purpose is not specified.")
+	private ConsentPurpose purpose;
 
-    @Valid
-    @NotNull(message = "Patient is not specified.")
-    private PatientReference patient;
+	@Valid
+	@NotNull(message = "Patient is not specified.")
+	private PatientReference patient;
 
-    @Valid
-    private HIPReference hip;
+	@Valid
+	private HIPReference hip;
 
-    @Valid
-    @NotNull(message = "HIU is not specified.")
-    private HIUReference hiu;
+	@Valid
+	@NotNull(message = "HIU is not specified.")
+	private HIUReference hiu;
 
-    @Valid
-    @NotNull(message = "Requester is not specified.")
-    private Requester requester;
+	@Valid
+	@NotNull(message = "Requester is not specified.")
+	private Requester requester;
 
-    @NotNull(message = "HI Types are not specified.")
-    private HIType[] hiTypes;
+	@NotNull(message = "HI Types are not specified.")
+	private HIType[] hiTypes;
 
-    @Valid
-    @NotNull(message = "Permission is not specified.")
-    private ConsentPermission permission;
+	@Valid
+	@NotNull(message = "Permission is not specified.")
+	private ConsentPermission permission;
 
-    @NotNull(message = "Call back url not specified.")
-    private String consentNotificationUrl;
+	@NotNull(message = "Call back url not specified.")
+	private String consentNotificationUrl;
+
+	public Optional<String> getHIPId() {
+		return Optional.ofNullable(hip).map(HIPReference::getId);
+	}
+
+	public String getHIUId() {
+		return hiu.getId();
+	}
 }

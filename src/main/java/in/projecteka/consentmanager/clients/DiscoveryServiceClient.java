@@ -1,9 +1,11 @@
 package in.projecteka.consentmanager.clients;
 
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -15,10 +17,12 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @AllArgsConstructor
 public class DiscoveryServiceClient {
 
-    private static final String PATIENTS_CARE_CONTEXTS_DISCOVERY_URL_PATH = "/patients/care-contexts/discover";
+    private static final String PATIENTS_CARE_CONTEXTS_DISCOVERY_URL_PATH = "/care-contexts/discover";
     private final WebClient.Builder webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
+    private final GatewayServiceProperties gatewayServiceProperties;
 
+    @Deprecated
     public Mono<PatientResponse> patientFor(PatientRequest request, String url, String hipId) {
         return tokenGenerator.get()
                 .map(token ->
@@ -37,12 +41,13 @@ public class DiscoveryServiceClient {
                 .flatMap(responseSpec -> responseSpec.bodyToMono(PatientResponse.class));
     }
 
-    public Mono<Boolean> requestPatientFor(PatientRequest request, String url, String hipId) {
+    public Mono<Boolean> requestPatientFor(PatientRequest request, String hipId) {
         return tokenGenerator.get()
                 .flatMap(token ->
                         webClientBuilder.build()
                                 .post()
-                                .uri(url + PATIENTS_CARE_CONTEXTS_DISCOVERY_URL_PATH)
+                                .uri(gatewayServiceProperties.getBaseUrl() + PATIENTS_CARE_CONTEXTS_DISCOVERY_URL_PATH)
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .header(AUTHORIZATION, token)
                                 .header("X-HIP-ID", hipId)
                                 .bodyValue(request)
@@ -55,8 +60,7 @@ public class DiscoveryServiceClient {
                                 .onStatus(HttpStatus::is5xxServerError,
                                         clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                                 .toBodilessEntity()
-                                //Make the timeout configurable
-                                .timeout(Duration.ofSeconds(2))
+                                .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout()))
                 ).thenReturn(Boolean.TRUE);
     }
 }

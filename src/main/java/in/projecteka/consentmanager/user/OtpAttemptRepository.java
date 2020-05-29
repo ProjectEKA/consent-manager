@@ -3,14 +3,14 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
 import io.vertx.pgclient.PgPool;
+import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Repository
 @AllArgsConstructor
@@ -52,17 +52,11 @@ public class OtpAttemptRepository {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError("Failed to select from otp attempt"));
                             } else {
-                                monoSink.success(StreamSupport.stream(handler.result().spliterator(), false)
-                                        .map(row -> OtpAttempt.builder()
-                                                .action(OtpAttempt.Action.valueOf(row.getString("action")))
-                                                .attemptAt(row.getLocalDateTime("attempt_at"))
-                                                .attemptStatus(OtpAttempt.AttemptStatus.valueOf(row.getString("status")))
-                                                .cmId(row.getString("cm_id"))
-                                                .identifierType(row.getString("identifier_type"))
-                                                .identifierValue(row.getString("identifier_value"))
-                                                .sessionId(row.getString("session_id"))
-                                                .build())
-                                        .collect(Collectors.toList()));
+                                List<OtpAttempt> attempts = new ArrayList<>();
+                                handler.result().forEach(row -> {
+                                    attempts.add(otpAttemptFromRow(row));
+                                });
+                                monoSink.success(attempts);
                             }
                         }));
     }
@@ -77,5 +71,17 @@ public class OtpAttemptRepository {
                                 monoSink.success();
                             }
                         }));
+    }
+
+    private OtpAttempt otpAttemptFromRow(Row row){
+        return OtpAttempt.builder()
+                .action(OtpAttempt.Action.valueOf(row.getString("action")))
+                .attemptAt(row.getLocalDateTime("attempt_at"))
+                .attemptStatus(OtpAttempt.AttemptStatus.valueOf(row.getString("status")))
+                .cmId(row.getString("cm_id"))
+                .identifierType(row.getString("identifier_type"))
+                .identifierValue(row.getString("identifier_value"))
+                .sessionId(row.getString("session_id"))
+                .build();
     }
 }

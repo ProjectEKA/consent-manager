@@ -11,16 +11,23 @@ import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
+import in.projecteka.consentmanager.user.model.Gender;
+import in.projecteka.consentmanager.user.model.Identifier;
+import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.InitiateCmIdRecoveryRequest;
 import in.projecteka.consentmanager.user.model.LoginMode;
 import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.SendOtpAction;
+import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
-import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.Assertions;
@@ -41,8 +48,10 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
@@ -79,6 +88,9 @@ class UserServiceTest {
     private OtpAttemptService otpAttemptService;
 
     @Mock
+    private LockedUserService lockedUserService;
+
+    @Mock
     private IdentityServiceClient identityServiceClient;
 
     @Mock
@@ -110,7 +122,8 @@ class UserServiceTest {
                 identityServiceClient,
                 tokenService,
                 properties,
-                otpAttemptService);
+                otpAttemptService,
+                lockedUserService);
     }
 
     @Test
@@ -199,33 +212,18 @@ class UserServiceTest {
         var otp = string();
         var token = string();
         var user = new EasyRandom().nextObject(User.class);
-        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
+        var sessionIdWithAction = SendOtpAction.RECOVER_PASSWORD.toString()+sessionId;
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
-        when(signupService.generateToken(new HashMap<>(),sessionId))
+        when(signupService.generateToken(new HashMap<>(), sessionIdWithAction))
                 .thenReturn(Mono.just(new Token(token)));
-        when(signupService.getUserName(eq(sessionId))).thenReturn(Mono.just(user.getIdentifier()));
+        when(signupService.getUserName(eq(sessionIdWithAction))).thenReturn(Mono.just(user.getIdentifier()));
         when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));
-        when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
-        when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
+        when(lockedUserService.validateLogin(eq(user.getIdentifier()))).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(eq(user.getIdentifier()))).thenReturn(Mono.empty());
         StepVerifier.create(userService.verifyOtpForForgetPassword(otpVerification))
                 .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
                 .verifyComplete();
-
-        var capturedAttempts = argument.getAllValues();
-        var validateOTPSubmissionArgument = capturedAttempts.get(0);
-        assertEquals(sessionId, validateOTPSubmissionArgument.getSessionId());
-        assertEquals("MOBILE", validateOTPSubmissionArgument.getIdentifierType());
-        assertEquals(user.getPhone(), validateOTPSubmissionArgument.getIdentifierValue());
-        assertEquals(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD, validateOTPSubmissionArgument.getAction());
-        assertEquals(user.getIdentifier(), validateOTPSubmissionArgument.getCmId());
-
-        var removeMatchingAttemptsArgument = capturedAttempts.get(1);
-        assertEquals(sessionId, removeMatchingAttemptsArgument.getSessionId());
-        assertEquals("MOBILE", removeMatchingAttemptsArgument.getIdentifierType());
-        assertEquals(user.getPhone(), removeMatchingAttemptsArgument.getIdentifierValue());
-        assertEquals(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD, removeMatchingAttemptsArgument.getAction());
-        assertEquals(user.getIdentifier(), removeMatchingAttemptsArgument.getCmId());
     }
 
     @ParameterizedTest(name = "Invalid values")
@@ -576,5 +574,109 @@ class UserServiceTest {
         verify(tokenService, times(1)).tokenForAdmin();
         verify(identityServiceClient, times(1)).getUser(userName, token);
         verify(identityServiceClient, times(0)).getCredentials(any(), any());
+    }
+
+    @Test
+    void shouldReturnCMIdForSingleMatchingRecordForInitiateRecoverCMId() {
+        String name = "abc";
+        Gender gender = Gender.F;
+        Integer yearOfBirth = 1999;
+        String verifiedIdentifierValue = "+91-8888888888";
+        String unverifiedIdentifierValue = "P1234ABCD";
+        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
+        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
+        String cmId = "abc@ncg";
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+        JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
+        ArrayList<User> recoverCmIdRows = new ArrayList<>(Collections.singletonList(User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build()));
+
+        when(userRepository.getUserBy(gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
+
+        StepVerifier.create(userService.getPatientByDetails(request))
+                .assertNext(response -> {
+                    assertThat(response.getIdentifier()).isEqualTo(cmId);
+                            assertThat(response.getName()).isEqualTo(name);
+                            assertThat(response.getPhone()).isEqualTo(verifiedIdentifierValue);
+                            assertThat(response.getYearOfBirth()).isEqualTo(yearOfBirth);
+                })
+                .verifyComplete();
+        verify(userRepository,times(1)).getUserBy(gender,verifiedIdentifierValue);
+    }
+
+    @Test
+    void shouldReturnEmptyMonoForMultipleMatchingRecordsForInitiateRecoverCMId() {
+        String name = "abc";
+        Gender gender = Gender.F;
+        Integer yearOfBirth = 1999;
+        String verifiedIdentifierValue = "+91-8888888888";
+        String unverifiedIdentifierValue = "P1234ABCD";
+        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
+        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
+        String cmId = "abc@ncg";
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+        JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
+        User recoverCmIdRow = User.builder().identifier(cmId).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        ArrayList<User> recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow, recoverCmIdRow));
+
+        when(userRepository.getUserBy(gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
+
+        StepVerifier.create(userService.getPatientByDetails(request))
+                .verifyComplete();
+        verify(userRepository,times(1)).getUserBy(gender,verifiedIdentifierValue);
+    }
+
+    @Test
+    void shouldThrowAnErrorWhenNoMatchingRecordFoundAndPMJAYIdIsNullInRecordsForInitiateRecoverCMId() {
+        String name = "abc";
+        Gender gender = Gender.F;
+        Integer yearOfBirth = 1999;
+        String verifiedIdentifierValue = "+91-8888888888";
+        String unverifiedIdentifierValue = "P1234ABCD";
+        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
+        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
+        String cmId = "abc@ncg";
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+        JsonArray unverifiedIdentifiersResponse = null;
+        User recoverCmIdRow = User.builder().identifier(cmId).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        ArrayList<User> recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow));
+
+        when(userRepository.getUserBy(gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
+
+        StepVerifier.create(userService.getPatientByDetails(request))
+                .verifyComplete();
+        verify(userRepository,times(1)).getUserBy(gender,verifiedIdentifierValue);
+    }
+
+    @Test
+    public void verifyOtpForRecoveringCmId() {
+        var sessionId = string();
+        var otp = string();
+        var token = string();
+        var user = new EasyRandom().nextObject(User.class);
+        var sessionIdWithAction = SendOtpAction.RECOVER_CM_ID.toString()+sessionId;
+        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
+        OtpVerification otpVerification = new OtpVerification(sessionId, otp);
+        when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
+        when(signupService.generateToken(new HashMap<>(),sessionId))
+                .thenReturn(Mono.just(new Token(token)));
+        when(signupService.getUserName(eq(sessionIdWithAction))).thenReturn(Mono.just(user.getIdentifier()));
+        when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));
+        when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
+        when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
+        StepVerifier.create(userService.verifyOtpForRecoverCmId(otpVerification))
+                .assertNext(response -> assertThat(response.getCmId()).isEqualTo(user.getIdentifier()))
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldThrowErrorForInvalidOtpValueForRecoverCmId() {
+        OtpVerification otpVerification = new OtpVerification(string(), null);
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForRecoverCmId(otpVerification));
+    }
+
+    @Test
+    void shouldThrowErrorForInvalidOtpSessionIdForRecoverCmId() {
+        OtpVerification otpVerification = new OtpVerification(null, string());
+        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForRecoverCmId(otpVerification));
     }
 }

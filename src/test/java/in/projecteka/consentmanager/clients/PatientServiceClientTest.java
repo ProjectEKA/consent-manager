@@ -35,7 +35,7 @@ class PatientServiceClientTest {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder()
                 .exchangeFunction(exchangeFunction);
-        LinkServiceProperties serviceProperties = new LinkServiceProperties("http://user-service/");
+        LinkServiceProperties serviceProperties = new LinkServiceProperties("http://user-service/", 1000);
         patientServiceClient = new PatientServiceClient(webClientBuilder, () -> Mono.just(string()), serviceProperties.getUrl());
     }
 

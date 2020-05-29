@@ -13,6 +13,7 @@ import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
@@ -127,6 +128,9 @@ public class LinkUserJourneyTest {
 
     @MockBean
     private LinkServiceClient linkServiceClient;
+
+    @MockBean
+    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
     @AfterAll
     public static void tearDown() throws IOException {
@@ -528,8 +532,7 @@ public class LinkUserJourneyTest {
         var token = string();
         var patientLinkReferenceResult = patientLinkReferenceResult().build();
 
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", false)));
-
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", true)));
         webTestClient.post()
                 .uri("/v1/links/link/on-init")
                 .accept(MediaType.APPLICATION_JSON)
@@ -551,8 +554,7 @@ public class LinkUserJourneyTest {
                 .resp(gatewayResponse)
                 .build();
 
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", false)));
-
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", true)));
         webTestClient.post()
                 .uri("/v1/links/link/on-init")
                 .accept(MediaType.APPLICATION_JSON)
@@ -566,7 +568,7 @@ public class LinkUserJourneyTest {
     @Test
     public void shouldFailOnLinkCareContexts() throws Exception {
         var token = string();
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", false)));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", true)));
         webTestClient.post()
                 .uri("/v1/links/link/on-init")
                 .accept(MediaType.APPLICATION_JSON)

@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CMNotification {
+public class ConsentManagerIdNotification {
     private String id;
     private Communication communication;
-    private Object content;
+    private ConsentManagerIdContent content;
     private Action action;
 }

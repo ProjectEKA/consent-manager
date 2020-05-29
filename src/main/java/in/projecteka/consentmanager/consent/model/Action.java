@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum Action {
     CONSENT_REQUEST_CREATED("ConsentRequestCreated"),
-    CM_ID_RECOVERED ("CmidRecovered");
+    CONSENT_MANAGER_ID_RECOVERED ("ConsentManagerIdRecovered");
 
     private final String resourceType;
 

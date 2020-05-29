@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CMidContent {
-    private String cmId;
+public class ConsentManagerIdContent {
+    private String consentManagerId;
 }

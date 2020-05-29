@@ -171,22 +171,22 @@ public class UserService {
                 });
     }
 
-    private Mono<CMNotification> createNotificationMessage(User user, String sessionId) {
-     return Mono.just(CMNotification.builder()
+    private Mono<ConsentManagerIdNotification> createNotificationMessage(User user, String sessionId) {
+     return Mono.just(ConsentManagerIdNotification.builder()
                      .communication(Communication.builder()
                              .communicationType(CommunicationType.MOBILE)
                              .value(user.getPhone())
                              .build())
                      .id(sessionId)
-                     .action(Action.CM_ID_RECOVERED)
-                     .content(CMidContent.builder()
-                             .cmId(user.getIdentifier())
+                     .action(Action.CONSENT_MANAGER_ID_RECOVERED)
+                     .content(ConsentManagerIdContent.builder()
+                             .consentManagerId(user.getIdentifier())
                              .build())
                      .build());
     }
 
-    public Mono<Void> notifyUserWith(CMNotification notification) {
-     return otpServiceClient.send(notification);
+    public Mono<Void> notifyUserWith(ConsentManagerIdNotification consentManagerIdNotification) {
+     return otpServiceClient.send(consentManagerIdNotification);
     }
 
     public Mono<Session> create(CoreSignUpRequest coreSignUpRequest, String sessionId) {

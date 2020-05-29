@@ -76,8 +76,10 @@ public class ConsentRequestRepository {
                                 }));
     }
 
-    public Mono<ListResult<List<ConsentRequestDetail>>> requestsForPatient(String patientId, int limit,
-                                                                           int offset, String status) {
+    public Mono<ListResult<List<ConsentRequestDetail>>> requestsForPatient(String patientId,
+																		   int limit,
+                                                                           int offset,
+																		   String status) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_DETAILS_FOR_PATIENT)
                 .execute(Tuple.of(patientId, limit, offset, status, GRANTED.toString()),
                         handler -> {

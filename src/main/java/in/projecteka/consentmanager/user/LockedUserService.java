@@ -31,10 +31,10 @@ public class LockedUserService {
                     var remainingTries = lockedServiceProperties.getMaximumInvalidAttempts() - lockedUser.getInvalidAttempts();
                     return isBeforeMinutes(lockedUser.getDateCreated(), lockedServiceProperties.getCoolOfPeriod())
                             ? Mono.just(remainingTries - 1)
-                            : removeLockedUser(cmId).then(Mono.just(lockedServiceProperties.getMaximumInvalidAttempts() - 1));
+                            : removeLockedUser(cmId).thenReturn(lockedServiceProperties.getMaximumInvalidAttempts() - 1);
                 })
                 .flatMap(remainingTries -> lockedUsersRepository.upsert(cmId).thenReturn(remainingTries))
-                .switchIfEmpty(Mono.defer(() -> lockedUsersRepository.upsert(cmId).then(Mono.just(lockedServiceProperties.getMaximumInvalidAttempts() - 1))));
+                .switchIfEmpty(Mono.defer(() -> lockedUsersRepository.upsert(cmId).thenReturn(lockedServiceProperties.getMaximumInvalidAttempts() - 1)));
     }
 
     private boolean isBeforeMinutes(LocalDateTime timeToCheck, int minutesToCheckWith) {

@@ -12,6 +12,8 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
@@ -28,6 +30,7 @@ import static in.projecteka.consentmanager.common.Serializer.to;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 
 public class ConsentRequestRepository {
+    private static final Logger logger = LoggerFactory.getLogger(ConsentRequestRepository.class);
     private static final String SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS;
     private static final String SELECT_CONSENT_REQUEST_BY_ID;
     private static final String SELECT_CONSENT_REQUEST_BY_STATUS;
@@ -125,6 +128,7 @@ public class ConsentRequestRepository {
     private Handler<AsyncResult<RowSet<Row>>> consentRequestHandler(MonoSink<ConsentRequestDetail> monoSink) {
         return handler -> {
             if (handler.failed()) {
+                logger.error(handler.cause().getMessage());
                 monoSink.error(new RuntimeException(UNKNOWN_ERROR_OCCURRED));
                 return;
             }

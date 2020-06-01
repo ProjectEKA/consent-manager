@@ -116,7 +116,7 @@ public class ConsentManager {
                         .then(validatePurpose(requestedDetail.getPurpose()))
                         .then(validateHiTypes(requestedDetail.getHiTypes()))
                         .then(validateHIPAndHIU(requestedDetail)))
-                .flatMap(r -> saveConsentRequest(requestedDetail, requestId));
+                .flatMap(r -> Mono.defer(() -> saveConsentRequest(requestedDetail, requestId)));
     }
 
 

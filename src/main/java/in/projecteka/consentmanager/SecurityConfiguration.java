@@ -61,6 +61,7 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/notification", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/request", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/consent-requests", HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry("/v1/consent-requests/init", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/v1/care-contexts/on-discover", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/v1/links/link/on-init", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/v1/links/link/on-confirm", HttpMethod.POST));

@@ -4,13 +4,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
+import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
@@ -122,6 +125,12 @@ public class LinkUserJourneyTest {
     @MockBean
     @Qualifier("linkResults")
     CacheAdapter<String,String> linkResults;
+
+    @MockBean
+    private LinkServiceClient linkServiceClient;
+
+    @MockBean
+    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
     @AfterAll
     public static void tearDown() throws IOException {
@@ -389,7 +398,7 @@ public class LinkUserJourneyTest {
                 "}";
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm")
+                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -430,7 +439,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm")
+                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -461,7 +470,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm")
+                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -523,8 +532,7 @@ public class LinkUserJourneyTest {
         var token = string();
         var patientLinkReferenceResult = patientLinkReferenceResult().build();
 
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", false)));
-
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", true)));
         webTestClient.post()
                 .uri("/v1/links/link/on-init")
                 .accept(MediaType.APPLICATION_JSON)
@@ -546,8 +554,7 @@ public class LinkUserJourneyTest {
                 .resp(gatewayResponse)
                 .build();
 
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", false)));
-
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", true)));
         webTestClient.post()
                 .uri("/v1/links/link/on-init")
                 .accept(MediaType.APPLICATION_JSON)
@@ -561,7 +568,7 @@ public class LinkUserJourneyTest {
     @Test
     public void shouldFailOnLinkCareContexts() throws Exception {
         var token = string();
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", false)));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", true)));
         webTestClient.post()
                 .uri("/v1/links/link/on-init")
                 .accept(MediaType.APPLICATION_JSON)
@@ -571,4 +578,73 @@ public class LinkUserJourneyTest {
                 .expectStatus().is5xxServerError();
     }
 
+    @Test
+    public void shouldGetPatientLinkReference() throws IOException {
+        var token = string();
+        var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
+        var linkReferenceRequest = TestBuilders.linkReferenceRequest().build();
+        var hipId = "10000005";
+        var patientLinkReferenceResult = patientLinkReferenceResult().error(null).build();
+        String patientLinkReferenceResultJson = OBJECT_MAPPER.writeValueAsString(patientLinkReferenceResult);
+        var linkReferenceResponse = patientLinkReferenceResponse()
+                .transactionId(patientLinkReferenceResult.getTransactionId().toString())
+                .link(patientLinkReferenceResult.getLink())
+                .build();
+        String linkReferenceResponseJson = OBJECT_MAPPER.writeValueAsString(linkReferenceResponse);
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
+        gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+        clientRegistryServer.setDispatcher(dispatcher);
+        when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
+                .thenReturn(Mono.just(hipId));
+        when(linkRepository.insert(patientLinkReferenceResult, hipId, patientLinkReferenceRequest.getRequestId()))
+                .thenReturn(Mono.create(MonoSink::success));
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
+                .thenReturn(Mono.empty());
+        when(linkServiceClient.linkPatientEnquiryRequest(linkReferenceRequest, token, hipId)).thenReturn(Mono.just(true));
+        when(linkResults.get(any())).thenReturn(Mono.just(patientLinkReferenceResultJson));
+
+        webTestClient
+                .post()
+                .uri("/v1/links/link/init")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(patientLinkReferenceRequest)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .json(linkReferenceResponseJson);
+    }
+
+    @Test
+    public void shouldFailPatientLinkReference() throws IOException {
+        var token = string();
+        var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
+        var linkReferenceRequest = TestBuilders.linkReferenceRequest().build();
+        var hipId = "10000005";
+        var patientLinkReferenceResult = patientLinkReferenceResult().error(RespError.builder().build()).build();
+        String patientLinkReferenceResultJson = OBJECT_MAPPER.writeValueAsString(patientLinkReferenceResult);
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
+        gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+        clientRegistryServer.setDispatcher(dispatcher);
+        when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
+                .thenReturn(Mono.just(hipId));
+        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
+                .thenReturn(Mono.empty());
+        when(linkServiceClient.linkPatientEnquiryRequest(linkReferenceRequest, token, hipId)).thenReturn(Mono.just(true));
+        when(linkResults.get(any())).thenReturn(Mono.just(patientLinkReferenceResultJson));
+        webTestClient
+                .post()
+                .uri("/v1/links/link/init")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(patientLinkReferenceRequest)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+    }
 }

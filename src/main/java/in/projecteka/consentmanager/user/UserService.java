@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.filters.ABPMJAYIdFilter;
@@ -39,7 +40,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.ClientError.failedToFetchUserCredentials;
-import static in.projecteka.consentmanager.clients.ClientError.failedToUpdateUser;
 import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
 import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
 import static java.lang.String.format;
@@ -55,6 +55,7 @@ public class UserService {
     private final TokenService tokenService;
     private final UserServiceProperties userServiceProperties;
     private final OtpAttemptService otpAttemptService;
+    private final LockedUserService lockedUserService;
 
     public Mono<User> userWith(String userName) {
         return userRepository.userWith(userName.toLowerCase()).switchIfEmpty(Mono.error(userNotFound()));
@@ -101,7 +102,7 @@ public class UserService {
                                 sendOtpAction)));
     }
 
-    private Mono<Void> validateAndVerifyOtp(OtpVerification otpVerification, OtpAttempt attempt){
+    private Mono<Void> validateAndVerifyOtp(OtpVerification otpVerification, OtpAttempt attempt) {
         return otpAttemptService.validateOTPSubmission(attempt)
                 .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue()))
                 .onErrorResume(ClientError.class, (error) -> otpAttemptService.handleInvalidOTPError(error, attempt))
@@ -133,17 +134,17 @@ public class UserService {
         String sessionIdWithAction = SendOtpAction.RECOVER_PASSWORD.toString() + otpVerification.getSessionId();
         return signupService.getUserName(sessionIdWithAction)
                 .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
-                .flatMap(userRepository::userWith)
-                .flatMap(user -> {
-                    OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
-                            .sessionId(otpVerification.getSessionId())
-                            .identifierType(IdentifierType.MOBILE.name())
-                            .identifierValue(user.getPhone())
-                            .action(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD)
-                            .cmId(user.getIdentifier());
-                    return validateAndVerifyOtp(otpVerification, builder.build())
-                            .then(signupService.generateToken(new HashMap<>(), otpVerification.getSessionId()));
-                });
+                .flatMap(userName -> lockedUserService.validateLogin(userName)
+                        .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue()))
+                        .onErrorResume(ClientError.class, (error) ->
+                        {
+                            if (error.getErrorCode() == ErrorCode.OTP_INVALID) {
+                                return lockedUserService.createOrUpdateLockedUser(userName).then(Mono.error(error));
+                            }
+                            return Mono.error(error);
+                        })
+                        .then(lockedUserService.removeLockedUser(userName))
+                        .then(signupService.generateToken(new HashMap<>(), sessionIdWithAction)));
     }
 
     public Mono<RecoverCmIdResponse> verifyOtpForRecoverCmId(OtpVerification otpVerification) {
@@ -188,9 +189,11 @@ public class UserService {
     }
 
     public Mono<Session> updatePassword(UpdatePasswordRequest request, String userName) {
-        return tokenService.tokenForUser( userName, request.getOldPassword())
-                .onErrorResume(error -> Mono.error(ClientError.unAuthorizedRequest("Invalid old password")))
-                .flatMap(session -> updatedSessionFor(request.getNewPassword(), userName));
+        return tokenService.tokenForUser(userName, request.getOldPassword())
+                .onErrorResume( error -> lockedUserService.createOrUpdateLockedUser(userName)
+                        .flatMap(attempts -> Mono.error(ClientError.invalidOldPassword(attempts))))
+                .flatMap(session -> lockedUserService.removeLockedUser(userName)
+                        .then(updatedSessionFor(request.getNewPassword(), userName)));
     }
 
     private Mono<Session> updatedSessionFor(String password, String userName) {

@@ -80,7 +80,8 @@ class SessionServiceTest {
     void returnSession() {
         var sessionRequest = sessionRequest().build();
         var expectedSession = session().build();
-        when(lockedUserService.userFor(sessionRequest.getUsername())).thenReturn(Mono.just(lockedUser().build()));
+        when(lockedUserService.validateLogin(sessionRequest.getUsername())).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(sessionRequest.getUsername())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(sessionRequest.getUsername(), sessionRequest.getPassword()))
                 .thenReturn(Mono.just(expectedSession));
         SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties, otpAttemptService);
@@ -90,7 +91,7 @@ class SessionServiceTest {
         StepVerifier.create(sessionPublisher)
                 .assertNext(session -> assertThat(session).isEqualTo(expectedSession))
                 .verifyComplete();
-        verify(lockedUserService, times(1)).userFor(sessionRequest.getUsername());
+        verify(lockedUserService, times(1)).validateLogin(sessionRequest.getUsername());
     }
 
     @ParameterizedTest
@@ -241,35 +242,17 @@ class SessionServiceTest {
         String testOtp = "666666";
         User user = new EasyRandom().nextObject(User.class);
         String username = user.getIdentifier();
-        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpPermitRequest otpPermitRequest = new OtpPermitRequest(username, testSession, testOtp);
         when(unverifiedSessions.get(testSession)).thenReturn(Mono.just(username));
         Session expectedSession = in.projecteka.consentmanager.clients.TestBuilders.session().build();
         when(tokenService.tokenForOtpUser(eq(username), eq(testSession), eq(testOtp))).thenReturn(Mono.just(expectedSession));
-        when(userRepository.userWith(username)).thenReturn(Mono.just(user));
-        when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
-        when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
+        when(lockedUserService.validateLogin(eq(username))).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(eq(username))).thenReturn(Mono.empty());
         SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties, otpAttemptService);
-
         StepVerifier.create(sessionService.validateOtp(otpPermitRequest))
                 .assertNext(session -> assertThat(session).isEqualTo(expectedSession))
                 .verifyComplete();
         verify(unverifiedSessions).get(testSession);
         verify(tokenService).tokenForOtpUser(eq(username), eq(testSession), eq(testOtp));
-
-        var capturedAttempts = argument.getAllValues();
-        var validateOTPSubmissionArgument = capturedAttempts.get(0);
-        assertEquals(testSession, validateOTPSubmissionArgument.getSessionId());
-        assertEquals("MOBILE", validateOTPSubmissionArgument.getIdentifierType());
-        assertEquals(user.getPhone(), validateOTPSubmissionArgument.getIdentifierValue());
-        assertEquals(OtpAttempt.Action.OTP_SUBMIT_LOGIN, validateOTPSubmissionArgument.getAction());
-        assertEquals(user.getIdentifier(), validateOTPSubmissionArgument.getCmId());
-
-        var removeMatchingAttemptsArgument = capturedAttempts.get(1);
-        assertEquals(testSession, removeMatchingAttemptsArgument.getSessionId());
-        assertEquals("MOBILE", removeMatchingAttemptsArgument.getIdentifierType());
-        assertEquals(user.getPhone(), removeMatchingAttemptsArgument.getIdentifierValue());
-        assertEquals(OtpAttempt.Action.OTP_SUBMIT_LOGIN, removeMatchingAttemptsArgument.getAction());
-        assertEquals(user.getIdentifier(), removeMatchingAttemptsArgument.getCmId());
     }
 }

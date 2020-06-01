@@ -76,6 +76,9 @@ public class PatientControllerTest {
     private UserService userService;
 
     @MockBean
+    private LockedUserService lockedUserService;
+
+    @MockBean
     private ProfileService profileService;
 
     @MockBean
@@ -313,6 +316,8 @@ public class PatientControllerTest {
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
         when(userService.updatePassword(request, userName)).thenReturn(Mono.just(expectedSession));
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.just(userName));
+        when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
         webClient.put()
                 .uri("/patients/profile/update-password")
@@ -329,6 +334,35 @@ public class PatientControllerTest {
     }
 
     @Test
+    public void shouldThrowAnErrorIfUserIsBlockedInUpdatePassword() {
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword("Test@1234")
+                .newPassword("Test@2020")
+                .build();
+        String userName = "user@ncg";
+        Session expectedSession = Session.builder()
+                .accessToken("New access token")
+                .tokenType("bearer")
+                .build();
+        var token = string();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.error(ClientError.userBlocked()));
+
+        webClient.put()
+                .uri("/patients/profile/update-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .isUnauthorized();
+
+        verify(authenticator, times(1)).verify(token);
+    }
+
+    @Test
     public void shouldReturnErrorForInvalidPasswordUpdateRequest() {
         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                 .oldPassword("Test@1234")
@@ -338,6 +372,8 @@ public class PatientControllerTest {
         var token = string();
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
         webClient.put()
                 .uri("/patients/profile/update-password")
@@ -364,6 +400,8 @@ public class PatientControllerTest {
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
         when(userService.updatePassword(request, userName)).thenReturn(Mono.error(ClientError.failedToUpdateUser()));
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.just(userName));
+        when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
         webClient.put()
                 .uri("/patients/profile/update-password")
@@ -390,6 +428,8 @@ public class PatientControllerTest {
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, true)));
         when(userService.updatePassword(request, userName)).thenReturn(Mono.error(ClientError.unAuthorizedRequest("Invalid old password")));
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.just(userName));
+        when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
         webClient.put()
                 .uri("/patients/profile/update-password")

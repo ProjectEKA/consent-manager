@@ -88,6 +88,9 @@ class UserServiceTest {
     private OtpAttemptService otpAttemptService;
 
     @Mock
+    private LockedUserService lockedUserService;
+
+    @Mock
     private IdentityServiceClient identityServiceClient;
 
     @Mock
@@ -119,7 +122,8 @@ class UserServiceTest {
                 identityServiceClient,
                 tokenService,
                 properties,
-                otpAttemptService);
+                otpAttemptService,
+                lockedUserService);
     }
 
     @Test
@@ -209,33 +213,17 @@ class UserServiceTest {
         var token = string();
         var user = new EasyRandom().nextObject(User.class);
         var sessionIdWithAction = SendOtpAction.RECOVER_PASSWORD.toString()+sessionId;
-        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
-        when(signupService.generateToken(new HashMap<>(),sessionId))
+        when(signupService.generateToken(new HashMap<>(), sessionIdWithAction))
                 .thenReturn(Mono.just(new Token(token)));
         when(signupService.getUserName(eq(sessionIdWithAction))).thenReturn(Mono.just(user.getIdentifier()));
         when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));
-        when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
-        when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
+        when(lockedUserService.validateLogin(eq(user.getIdentifier()))).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(eq(user.getIdentifier()))).thenReturn(Mono.empty());
         StepVerifier.create(userService.verifyOtpForForgetPassword(otpVerification))
                 .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
                 .verifyComplete();
-
-        var capturedAttempts = argument.getAllValues();
-        var validateOTPSubmissionArgument = capturedAttempts.get(0);
-        assertEquals(sessionId, validateOTPSubmissionArgument.getSessionId());
-        assertEquals("MOBILE", validateOTPSubmissionArgument.getIdentifierType());
-        assertEquals(user.getPhone(), validateOTPSubmissionArgument.getIdentifierValue());
-        assertEquals(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD, validateOTPSubmissionArgument.getAction());
-        assertEquals(user.getIdentifier(), validateOTPSubmissionArgument.getCmId());
-
-        var removeMatchingAttemptsArgument = capturedAttempts.get(1);
-        assertEquals(sessionId, removeMatchingAttemptsArgument.getSessionId());
-        assertEquals("MOBILE", removeMatchingAttemptsArgument.getIdentifierType());
-        assertEquals(user.getPhone(), removeMatchingAttemptsArgument.getIdentifierValue());
-        assertEquals(OtpAttempt.Action.OTP_SUBMIT_RECOVER_PASSWORD, removeMatchingAttemptsArgument.getAction());
-        assertEquals(user.getIdentifier(), removeMatchingAttemptsArgument.getCmId());
     }
 
     @ParameterizedTest(name = "Invalid values")
@@ -442,6 +430,8 @@ class UserServiceTest {
         when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
         when(identityServiceClient.updateUser(tokenForAdmin, userRepresentation.getId(), request.getNewPassword())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(userName, request.getNewPassword())).thenReturn(Mono.just(newSession));
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
         Mono<Session> updatedPasswordSession = userService.updatePassword(request, userName);
 
@@ -465,6 +455,7 @@ class UserServiceTest {
                 .build();
 
         when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(Mono.error(ClientError.unAuthorizedRequest("Invalid Old Password")));
+        when(lockedUserService.createOrUpdateLockedUser(userName)).thenReturn(Mono.just(2));
 
         Mono<Session> updatedPasswordSession = userService.updatePassword(request, userName);
 
@@ -496,6 +487,8 @@ class UserServiceTest {
         when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
         when(identityServiceClient.updateUser(tokenForAdmin, userRepresentation.getId(), request.getNewPassword())).thenReturn(Mono.error(ClientError.failedToUpdateUser()));
         when(tokenService.tokenForUser(userName, request.getNewPassword())).thenReturn(Mono.just(newSession));
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
         Mono<Session> updatedPasswordSession = userService.updatePassword(request, userName);
 

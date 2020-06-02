@@ -122,8 +122,8 @@ public class ConsentManager {
 
     private Mono<Void> saveConsentRequest(RequestedDetail requestedDetail, UUID requestId) {
         ConsentRequestId request = ConsentRequestId.builder()
-                        .id(requestId)
-                        .build();
+                .id(requestId)
+                .build();
         ConsentRequestResult consentRequestResult = ConsentRequestResult.builder()
                 .requestId(requestId)
                 .timestamp(Instant.now().toString())
@@ -132,7 +132,8 @@ public class ConsentManager {
                 .build();
 
         return consentRequestRepository.insert(requestedDetail, requestId)
-                .then(consentManagerClient.sendInitResponseToGateway(consentRequestResult, requestedDetail.getHiu().getId()));
+                .doOnSuccess(s -> Mono.defer(() -> consentManagerClient
+                        .sendInitResponseToGateway(consentRequestResult, requestedDetail.getHiu().getId())).subscribe());
     }
 
     private Mono<Boolean> validateRequest(UUID requestId) {

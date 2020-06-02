@@ -54,7 +54,6 @@ public class ConsentRequestController {
         return consentManager.requestConsent(request.getConsent(), request.getRequestId());
     }
 
-
 	@GetMapping(value = "/consent-requests")
 	public Mono<ConsentRequestsRepresentation> allConsents(
 			@RequestParam(defaultValue = "-1") int limit,

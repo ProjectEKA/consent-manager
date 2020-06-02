@@ -49,6 +49,7 @@ import java.util.stream.Stream;
 import static com.google.common.net.HttpHeaders.AUTHORIZATION;
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentRequest;
 import static in.projecteka.consentmanager.consent.TestBuilders.notificationMessage;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;

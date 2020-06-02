@@ -12,25 +12,29 @@ public class LockedUserService {
     private final LockedUsersRepository lockedUsersRepository;
     private final LockedServiceProperties lockedServiceProperties;
 
-    public Mono<Void> validateLogin(String cmId) {
+    public Mono<String> validateLogin(String cmId) {
         return lockedUsersRepository.getLockedUserFor(cmId)
                 .filter(lockedUser -> lockedUser.getInvalidAttempts() >= lockedServiceProperties.getMaximumInvalidAttempts())
                 .flatMap(lockedUser -> {
                     var isBlocked = isBeforeMinutes(lockedUser.getDateModified(), lockedServiceProperties.getCoolOfPeriod());
                     return isBlocked ? Mono.error(ClientError.userBlocked()) : removeLockedUser(cmId);
-                });
+                }).thenReturn(cmId);
     }
 
     public Mono<Void> removeLockedUser(String cmId) {
         return lockedUsersRepository.deleteUser(cmId);
     }
 
-    public Mono<Void> createOrUpdateLockedUser(String cmId) {
+    public Mono<Integer> createOrUpdateLockedUser(String cmId) {
         return lockedUsersRepository.getLockedUserFor(cmId)
-                .flatMap(lockedUser ->
-                        isBeforeMinutes(lockedUser.getDateCreated(), lockedServiceProperties.getCoolOfPeriod())
-                                ? Mono.empty() : removeLockedUser(cmId))
-                .then(lockedUsersRepository.upsert(cmId));
+                .flatMap(lockedUser -> {
+                    var remainingTries = lockedServiceProperties.getMaximumInvalidAttempts() - lockedUser.getInvalidAttempts();
+                    return isBeforeMinutes(lockedUser.getDateCreated(), lockedServiceProperties.getCoolOfPeriod())
+                            ? Mono.just(remainingTries - 1)
+                            : removeLockedUser(cmId).thenReturn(lockedServiceProperties.getMaximumInvalidAttempts() - 1);
+                })
+                .flatMap(remainingTries -> lockedUsersRepository.upsert(cmId).thenReturn(remainingTries))
+                .switchIfEmpty(Mono.defer(() -> lockedUsersRepository.upsert(cmId).thenReturn(lockedServiceProperties.getMaximumInvalidAttempts() - 1)));
     }
 
     private boolean isBeforeMinutes(LocalDateTime timeToCheck, int minutesToCheckWith) {

@@ -12,8 +12,6 @@ import in.projecteka.consentmanager.consent.model.HIPReference;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import reactor.core.publisher.Mono;
 
 import java.util.Date;
@@ -29,8 +27,8 @@ public class ConsentScheduler {
     private final ConsentArtefactRepository consentArtefactRepository;
     private final ConsentNotificationPublisher consentNotificationPublisher;
 
-    @Scheduled(cron = "${consentmanager.scheduler.consentExpiryCronExpr}")
-    @Async
+//    @Scheduled(cron = "${consentmanager.scheduler.consentExpiryCronExpr}")
+//    @Async
     public void processExpiredConsents() {
         List<ConsentExpiry> consentExpiries = consentArtefactRepository.getConsentArtefacts(GRANTED).
                 collectList().block();

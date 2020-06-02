@@ -3,9 +3,11 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
+import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
@@ -62,7 +64,8 @@ public class ConsentConfiguration {
                                                 PostConsentRequest postConsentRequest,
                                                 LinkServiceProperties linkServiceProperties,
                                                 IdentityService identityService,
-                                                ConceptValidator conceptValidator) {
+                                                ConceptValidator conceptValidator,
+                                                GatewayServiceProperties gatewayServiceProperties) {
         return new ConsentManager(
                 new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate),
                 repository,
@@ -74,7 +77,8 @@ public class ConsentConfiguration {
                 new PatientServiceClient(builder, identityService::authenticate, linkServiceProperties.getUrl()),
                 new CMProperties(identityService.getConsentManagerId()),
                 conceptValidator,
-                new ConsentArtefactQueryGenerator());
+                new ConsentArtefactQueryGenerator(),
+                new ConsentManagerClient(builder, gatewayServiceProperties.getBaseUrl(), identityService::authenticate, gatewayServiceProperties));
     }
 
     @Bean

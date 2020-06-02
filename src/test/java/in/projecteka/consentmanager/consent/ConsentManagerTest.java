@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.consent;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Provider;
@@ -80,6 +81,8 @@ class ConsentManagerTest {
     private PostConsentRequest postConsentRequestNotification;
     @Mock
     private PatientServiceClient patientServiceClient;
+    @Mock
+    private ConsentManagerClient consentManagerClient;
 
     @SuppressWarnings("unused")
     @MockBean
@@ -112,7 +115,8 @@ class ConsentManagerTest {
                 patientServiceClient,
                 cmProperties,
                 conceptValidator,
-                queryGenerator);
+                queryGenerator,
+                consentManagerClient);
     }
 
     @Test

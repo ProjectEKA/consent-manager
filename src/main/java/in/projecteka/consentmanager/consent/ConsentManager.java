@@ -45,6 +45,7 @@ import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignedObject;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
@@ -253,7 +254,7 @@ public class ConsentManager {
 	                                             String hiuConsentNotificationUrl,
 	                                             String requestId,
 	                                             ConsentStatus status,
-	                                             Date lastUpdated) {
+	                                             LocalDateTime lastUpdated) {
 		ConsentArtefactsMessage message = ConsentArtefactsMessage
 				.builder()
 				.status(status)
@@ -347,7 +348,7 @@ public class ConsentManager {
 		//TODO: need to save also the CC
 		return ConsentArtefact.builder()
 				.consentId(consentArtefactId)
-				.createdAt(new Date())
+				.createdAt(LocalDateTime.now())
 				.purpose(requestDetail.getPurpose())
 				.careContexts(granted.getCareContexts())
 				.patient(patientReference)
@@ -395,7 +396,7 @@ public class ConsentManager {
 	}
 
 	private ConsentArtefactLightRepresentation from(HIPConsentArtefactRepresentation hipConsentArtefact,
-	                                                ConsentArtefactRepresentation consentArtefact) {
+													ConsentArtefactRepresentation consentArtefact) {
 		ConsentArtefactLight consentArtefactLight = ConsentArtefactLight.builder()
 				.hiu(consentArtefact.getConsentDetail().getHiu())
 				.permission(consentArtefact.getConsentDetail().getPermission())
@@ -437,7 +438,7 @@ public class ConsentManager {
 	}
 
 	public Mono<List<HIPConsentArtefactRepresentation>> getHIPConsentArtefacts(RevokeRequest revokeRequest,
-	                                                                           String requesterId) {
+																			   String requesterId) {
 		return Flux.fromIterable(revokeRequest.getConsents())
 				.flatMap(consentId -> getConsentRepresentation(consentId, requesterId)
 						.map(consentRepresentation ->
@@ -457,10 +458,10 @@ public class ConsentManager {
 	}
 
 	private Mono<Void> updateStatusAndBroadcast(RevokeRequest revokeRequest,
-	                                            String requesterId,
-	                                            String consentId,
-	                                            ConsentRepresentation consentRepresentation,
-	                                            ConsentRequestDetail consentRequestDetail) {
+												String requesterId,
+												String consentId,
+												ConsentRepresentation consentRepresentation,
+												ConsentRequestDetail consentRequestDetail) {
 		return consentArtefactRepository.updateStatus(
 				consentId,
 				consentRepresentation.getConsentRequestId(),
@@ -497,11 +498,11 @@ public class ConsentManager {
 	}
 
 	public Mono<ListResult<List<ConsentArtefactRepresentation>>> getAllConsentArtefacts(String username,
-	                                                                                    int limit,
-	                                                                                    int offset,
-	                                                                                    String status) {
+																						int limit,
+																						int offset,
+																						String status) {
 		return status.equals(ALL_CONSENT_ARTEFACTS)
-		       ? consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, null)
-		       : consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, status);
+				? consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, null)
+				: consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, status);
 	}
 }

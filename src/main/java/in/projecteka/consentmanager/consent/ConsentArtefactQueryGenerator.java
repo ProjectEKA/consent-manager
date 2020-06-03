@@ -13,6 +13,8 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static in.projecteka.consentmanager.common.Serializer.from;
+
 @AllArgsConstructor
 public class ConsentArtefactQueryGenerator {
     private static final String INSERT_CONSENT_ARTEFACT_QUERY = "INSERT INTO consent_artefact" +
@@ -33,14 +35,14 @@ public class ConsentArtefactQueryGenerator {
                 Tuple.of(requestId,
                         consentArtefact.getConsentId(),
                         patientId,
-                        JsonObject.mapFrom(consentArtefact),
+                        new JsonObject(from(consentArtefact)),
                         consentArtefactSignature,
                         ConsentStatus.GRANTED.toString()));
         Query insertHIPCA = new Query(INSERT_HIP_CONSENT_ARTEFACT_QUERY,
                 Tuple.of(requestId,
                         hipConsentArtefact.getConsentDetail().getConsentId(),
                         patientId,
-                        JsonObject.mapFrom(hipConsentArtefact.getConsentDetail()),
+                        new JsonObject(from(hipConsentArtefact.getConsentDetail())),
                         consentArtefactSignature,
                         ConsentStatus.GRANTED.toString()));
         Query updateConsentReqStatus = new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,

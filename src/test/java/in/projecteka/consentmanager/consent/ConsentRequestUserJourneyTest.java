@@ -155,10 +155,10 @@ public class ConsentRequestUserJourneyTest {
             "            \"permission\": {\n" +
             "                \"accessMode\": \"VIEW\",\n" +
             "                \"dateRange\": {\n" +
-            "                    \"from\": \"2020-01-16T08:47:48.000+0000\",\n" +
-            "                    \"to\": \"2020-04-29T08:47:48.000+0000\"\n" +
+            "                    \"from\": \"2020-01-16T08:47:48.000\",\n" +
+            "                    \"to\": \"2020-04-29T08:47:48.000\"\n" +
             "                },\n" +
-            "                \"dataEraseAt\": \"2020-05-29T08:47:48.000+0000\",\n" +
+            "                \"dataEraseAt\": \"2020-05-29T08:47:48.000\",\n" +
             "                \"frequency\": {\n" +
             "                    \"unit\": \"HOUR\",\n" +
             "                    \"value\": 1,\n" +
@@ -180,7 +180,7 @@ public class ConsentRequestUserJourneyTest {
 
     private final String requestedConsentJson = "{\n" +
             "            \"status\": \"REQUESTED\",\n" +
-            "            \"createdAt\": \"2020-03-14T10:51:05.466+0000\",\n" +
+            "            \"createdAt\": \"2020-03-14T10:51:05.466\",\n" +
             "            \"purpose\": {\n" +
             "                \"text\": \"EPISODE_OF_CARE\",\n" +
             "                \"code\": \"EpisodeOfCare\",\n" +
@@ -203,10 +203,10 @@ public class ConsentRequestUserJourneyTest {
             "            \"permission\": {\n" +
             "                \"accessMode\": \"VIEW\",\n" +
             "                \"dateRange\": {\n" +
-            "                    \"from\": \"2020-03-14T10:50:45.032+0000\",\n" +
-            "                    \"to\": \"2020-03-14T10:50:45.032+0000\"\n" +
+            "                    \"from\": \"2020-03-14T10:50:45.032\",\n" +
+            "                    \"to\": \"2020-03-14T10:50:45.032\"\n" +
             "                },\n" +
-            "                \"dataEraseAt\": \"2020-03-18T10:50:00.000+0000\",\n" +
+            "                \"dataEraseAt\": \"2020-03-18T10:50:00.000\",\n" +
             "                \"frequency\": {\n" +
             "                    \"unit\": \"HOUR\",\n" +
             "                    \"value\": 1,\n" +
@@ -214,7 +214,7 @@ public class ConsentRequestUserJourneyTest {
             "                }\n" +
             "            },\n" +
             "            \"consentNotificationUrl\": \"http://hiu:8003\",\n" +
-            "            \"lastUpdated\": \"2020-03-14T12:00:52.091+0000\",\n" +
+            "            \"lastUpdated\": \"2020-03-14T12:00:52.091\",\n" +
             "            \"id\": \"30d02f6d-de17-405e-b4ab-d31b2bb799d7\"\n" +
             "        }";
 

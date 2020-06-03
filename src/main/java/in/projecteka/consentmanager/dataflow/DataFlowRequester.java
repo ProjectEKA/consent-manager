@@ -2,16 +2,11 @@ package in.projecteka.consentmanager.dataflow;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
-import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
-import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
-import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
-import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
-import in.projecteka.consentmanager.dataflow.model.DateRange;
-import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
+import in.projecteka.consentmanager.dataflow.model.*;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -85,22 +80,27 @@ public class DataFlowRequester {
 
     private boolean isValidHIDateRange(DataFlowRequest dataFlowRequest,
                                        ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return isEqualOrAfter(dataFlowRequest.getDateRange().getFrom(), consentArtefactRepresentation.fromDate()) &&
-                isEqualOrBefore(dataFlowRequest.getDateRange().getTo(), consentArtefactRepresentation.toDate()) &&
-                dataFlowRequest.getDateRange().getFrom().before(dataFlowRequest.getDateRange().getTo());
+        boolean equalOrAfter = isEqualOrAfter(
+                dataFlowRequest.getDateRange().getFrom(),
+                consentArtefactRepresentation.fromDate());
+        boolean equalOrBefore = isEqualOrBefore(
+                dataFlowRequest.getDateRange().getTo(),
+                consentArtefactRepresentation.toDate());
+        boolean before = dataFlowRequest.getDateRange().getFrom().isBefore(dataFlowRequest.getDateRange().getTo());
+        return equalOrAfter && equalOrBefore && before;
     }
 
-    private boolean isEqualOrBefore(Date requestDate,
-                                    Date permissionDate) {
-        return requestDate.equals(permissionDate) || requestDate.before(permissionDate);
+    private boolean isEqualOrBefore(LocalDateTime requestDate,
+                                    LocalDateTime permissionDate) {
+        return requestDate.equals(permissionDate) || requestDate.isBefore(permissionDate);
     }
 
-    private boolean isEqualOrAfter(Date requestDate, Date permissionDate) {
-        return requestDate.equals(permissionDate) || requestDate.after(permissionDate);
+    private boolean isEqualOrAfter(LocalDateTime requestDate, LocalDateTime permissionDate) {
+        return requestDate.equals(permissionDate) || requestDate.isAfter(permissionDate);
     }
 
     private boolean isConsentExpired(ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return consentArtefactRepresentation.getConsentDetail().getPermission().getDataEraseAt().before(new Date());
+        return consentArtefactRepresentation.getConsentDetail().getPermission().getDataEraseAt().isBefore(LocalDateTime.now());
     }
 
     private boolean isValidHIU(String hiuId, ConsentArtefactRepresentation consentArtefactRepresentation) {

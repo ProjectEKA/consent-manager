@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
+import static in.projecteka.consentmanager.common.Serializer.from;
 
 public class DataFlowRequestRepository {
     private static final String INSERT_TO_DATA_FLOW_REQUEST = "INSERT INTO data_flow_request (transaction_id, " +
@@ -32,7 +33,7 @@ public class DataFlowRequestRepository {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_TO_DATA_FLOW_REQUEST)
                 .execute(Tuple.of(transactionId,
                         dataFlowRequest.getConsent().getId(),
-                        JsonObject.mapFrom(dataFlowRequest)),
+                        new JsonObject(from(dataFlowRequest))),
                         handler -> {
                             if (handler.failed()) {
                                 monoSink.error(new DbOperationError());
@@ -66,7 +67,7 @@ public class DataFlowRequestRepository {
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(INSERT_TO_HEALTH_INFO_NOTIFICATION)
                         .execute(Tuple.of(notificationRequest.getTransactionId(),
-                                JsonObject.mapFrom(notificationRequest), notificationRequest.getRequestId().toString()),
+                                new JsonObject(from(notificationRequest)), notificationRequest.getRequestId().toString()),
                                 handler -> {
                                     if (handler.failed()) {
                                         monoSink.error(new DbOperationError());

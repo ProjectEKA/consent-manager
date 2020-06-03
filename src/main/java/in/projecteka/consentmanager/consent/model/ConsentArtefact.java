@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static in.projecteka.consentmanager.common.Constants.API_VERSION;
@@ -19,7 +19,7 @@ public class ConsentArtefact implements Serializable {
     @Builder.Default
     private String schemaVersion = API_VERSION;
     private String consentId;
-    private Date createdAt;
+    private LocalDateTime createdAt;
     private ConsentPurpose purpose;
     private PatientReference patient;
     private CMReference consentManager;
@@ -29,5 +29,5 @@ public class ConsentArtefact implements Serializable {
     private HIType[] hiTypes;
     private ConsentPermission permission;
     private List<GrantedContext> careContexts;
-    private Date lastUpdated;
+    private LocalDateTime lastUpdated;
 }

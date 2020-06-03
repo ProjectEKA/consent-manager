@@ -2,22 +2,26 @@ package in.projecteka.consentmanager.consent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWKSet;
-import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
-import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.consent.model.AccessPeriod;
+import in.projecteka.consentmanager.consent.model.ConsentPermission;
+import in.projecteka.consentmanager.consent.model.ConsentPurpose;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.HIPReference;
+import in.projecteka.consentmanager.consent.model.HIType;
+import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
@@ -42,6 +46,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -66,7 +71,7 @@ import static org.mockito.Mockito.when;
 
 
 @ExtendWith(SpringExtension.class)
-@AutoConfigureWebTestClient(timeout = "7000")
+@AutoConfigureWebTestClient(timeout = "6000")
 @ContextConfiguration(initializers = ConsentRequestUserJourneyTest.PropertyInitializer.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ConsentRequestUserJourneyTest {
@@ -74,19 +79,7 @@ public class ConsentRequestUserJourneyTest {
     private WebTestClient webTestClient;
 
     @MockBean
-    private DestinationsConfig destinationsConfig;
-
-    @MockBean
     private ConsentRequestRepository repository;
-
-    @MockBean
-    private HiuConsentNotificationListener hiuConsentNotificationListener;
-
-    @MockBean
-    private HipConsentNotificationListener hipConsentNotificationListener;
-
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @MockBean
     private ConsentArtefactRepository consentArtefactRepository;
@@ -125,9 +118,6 @@ public class ConsentRequestUserJourneyTest {
 
     @MockBean
     private ConsentManagerClient consentManagerClient;
-
-    @MockBean
-    private UserServiceClient userServiceClient;
 
     @Captor
     private ArgumentCaptor<ConsentRequest> captor;
@@ -576,7 +566,20 @@ public class ConsentRequestUserJourneyTest {
         var authToken = string();
         var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         String HIUId = "MAX-ID";
+        LocalDateTime fromDate = LocalDateTime.now();
+        LocalDateTime toDate = LocalDateTime.now().plusMinutes(1);
+        AccessPeriod dateRange = AccessPeriod.builder().fromDate(fromDate).toDate(toDate).build();
+        ConsentPermission permission = ConsentPermission.builder().dateRange(dateRange).build();
+        RequestedDetail requestedDetail = RequestedDetail.builder()
+                .purpose(new ConsentPurpose())
+                .patient(PatientReference.builder().build())
+                .permission(permission)
+                .hiu(HIUReference.builder().build())
+                .hip(HIPReference.builder().build())
+                .hiTypes(HIType.values())
+                .build();
         in.projecteka.consentmanager.consent.model.request.ConsentRequest consentRequest = consentRequest()
+                .consent(requestedDetail)
                 .build();
 
         when(authenticator.verify(authToken)).thenReturn(Mono.just(new Caller("user-id", false)));

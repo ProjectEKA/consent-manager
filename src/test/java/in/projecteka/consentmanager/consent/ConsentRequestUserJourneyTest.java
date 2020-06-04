@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.consent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWKSet;
+import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.Authenticator;
@@ -22,6 +23,7 @@ import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
+import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
@@ -77,6 +79,18 @@ import static org.mockito.Mockito.when;
 public class ConsentRequestUserJourneyTest {
     @Autowired
     private WebTestClient webTestClient;
+
+    @MockBean
+    private DestinationsConfig destinationsConfig;
+
+    @MockBean
+    private HipConsentNotificationListener hipConsentNotificationListener;
+
+    @MockBean
+    private HiuConsentNotificationListener hiuConsentNotificationListener;
+
+    @MockBean
+    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @MockBean
     private ConsentRequestRepository repository;

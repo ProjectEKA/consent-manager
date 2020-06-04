@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.consent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
@@ -16,28 +17,37 @@ import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactResponse;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
+import static in.projecteka.consentmanager.consent.TestBuilders.fetchRequest;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
 import static java.lang.String.valueOf;
@@ -53,6 +63,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
 @AutoConfigureWebTestClient
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ContextConfiguration(initializers = ConsentRequestUserJourneyTest.PropertyInitializer.class)
 public class ConsentArtefactUserJourneyTest {
 
     @Autowired
@@ -95,6 +106,9 @@ public class ConsentArtefactUserJourneyTest {
     @MockBean
     private Authenticator authenticator;
 
+    @MockBean
+    private ConsentManagerClient consentManagerClient;
+
     @SuppressWarnings("unused")
     @MockBean(name = "centralRegistryJWKSet")
     private JWKSet centralRegistryJWKSet;
@@ -106,6 +120,14 @@ public class ConsentArtefactUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConceptValidator conceptValidator;
+
+    private static final MockWebServer identityServer = new MockWebServer();
+
+    @AfterAll
+    public static void tearDown() throws IOException {
+        identityServer.shutdown();
+    }
+
 
     @Test
     public void shouldListConsentArtifacts() throws ParseException {
@@ -310,5 +332,78 @@ public class ConsentArtefactUserJourneyTest {
                 .value(ConsentArtefactResponse::getLimit, Matchers.is(limit))
                 .value(ConsentArtefactResponse::getSize, Matchers.is(1))
                 .value(ConsentArtefactResponse::getOffset, Matchers.is(0));
+    }
+
+    public static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            TestPropertyValues values = TestPropertyValues.of(
+                    Stream.of("consentmanager.keycloak.baseUrl=" + identityServer.url("")));
+            values.applyTo(applicationContext);
+        }
+    }
+
+    @Test
+    void shouldfetchConsent() {
+        var token = string();
+        var consentArtefact = consentArtefactRepresentation().build();
+        var fetchRequest = fetchRequest().consentId(consentArtefact.getConsentDetail().getConsentId()).build();
+        consentArtefact.getConsentDetail().getPatient().setId("test-user@ncg");
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user@ncg", false)));
+        when(consentArtefactRepository.getConsentArtefact(fetchRequest.getConsentId()))
+                .thenReturn(Mono.just(consentArtefact));
+        when(centralRegistry.providerWith(any())).thenReturn(Mono.just(Provider.builder().name("test-hip").build()));
+        when(consentManagerClient.sendConsentArtefactResponseToGateway(any(), any())).thenReturn(Mono.empty());
+
+        webTestClient.post()
+                .uri("/v1/consents/fetch")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", token)
+                .bodyValue(fetchRequest)
+                .exchange()
+                .expectStatus()
+                .isOk();
+    }
+
+    @Test
+    void shouldReturnConsentArtefactNotFound() {
+        var token = string();
+        var consentArtefact = consentArtefactRepresentation().build();
+        var fetchRequest = fetchRequest().consentId(consentArtefact.getConsentDetail().getConsentId()).build();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user@ncg", false)));
+        when(consentArtefactRepository.getConsentArtefact(fetchRequest.getConsentId()))
+                .thenReturn(Mono.empty());
+
+        webTestClient.post()
+                .uri("/v1/consents/fetch")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", token)
+                .bodyValue(fetchRequest)
+                .exchange()
+                .expectStatus()
+                .isNotFound();
+    }
+
+    @Test
+    void shouldforbiddenWhenRequesterDoesntMatches() {
+        var token = string();
+        var consentArtefact = consentArtefactRepresentation().build();
+        var fetchRequest = fetchRequest().consentId(consentArtefact.getConsentDetail().getConsentId()).build();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user@ncg", false)));
+        when(consentArtefactRepository.getConsentArtefact(fetchRequest.getConsentId()))
+                .thenReturn(Mono.just(consentArtefact));
+        when(centralRegistry.providerWith(any())).thenReturn(Mono.just(Provider.builder().name("test-hip").build()));
+
+        webTestClient.post()
+                .uri("/v1/consents/fetch")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", token)
+                .bodyValue(fetchRequest)
+                .exchange()
+                .expectStatus()
+                .isForbidden();
     }
 }

@@ -63,7 +63,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
 @AutoConfigureWebTestClient
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ContextConfiguration(initializers = ConsentRequestUserJourneyTest.PropertyInitializer.class)
+@ContextConfiguration(initializers = ConsentArtefactUserJourneyTest.PropertyInitializer.class)
 public class ConsentArtefactUserJourneyTest {
 
     @Autowired

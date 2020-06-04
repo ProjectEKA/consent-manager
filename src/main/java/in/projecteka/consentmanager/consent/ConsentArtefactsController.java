@@ -84,7 +84,6 @@ public class ConsentArtefactsController {
                 .flatMap(requester -> consentManager.getConsent(fetchRequest.getConsentId(), fetchRequest.getRequestId(), requester.getUsername()));
     }
 
-
     private int getPageSize(int limit) {
         if (limit < 0) {
             return serviceProperties.getDefaultPageSize();

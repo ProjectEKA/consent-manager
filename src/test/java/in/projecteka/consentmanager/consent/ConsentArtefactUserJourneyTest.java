@@ -363,47 +363,6 @@ public class ConsentArtefactUserJourneyTest {
                 .bodyValue(fetchRequest)
                 .exchange()
                 .expectStatus()
-                .isOk();
-    }
-
-    @Test
-    void shouldReturnConsentArtefactNotFound() {
-        var token = string();
-        var consentArtefact = consentArtefactRepresentation().build();
-        var fetchRequest = fetchRequest().consentId(consentArtefact.getConsentDetail().getConsentId()).build();
-
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user@ncg", false)));
-        when(consentArtefactRepository.getConsentArtefact(fetchRequest.getConsentId()))
-                .thenReturn(Mono.empty());
-
-        webTestClient.post()
-                .uri("/v1/consents/fetch")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", token)
-                .bodyValue(fetchRequest)
-                .exchange()
-                .expectStatus()
-                .isNotFound();
-    }
-
-    @Test
-    void shouldforbiddenWhenRequesterDoesntMatches() {
-        var token = string();
-        var consentArtefact = consentArtefactRepresentation().build();
-        var fetchRequest = fetchRequest().consentId(consentArtefact.getConsentDetail().getConsentId()).build();
-
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user@ncg", false)));
-        when(consentArtefactRepository.getConsentArtefact(fetchRequest.getConsentId()))
-                .thenReturn(Mono.just(consentArtefact));
-        when(centralRegistry.providerWith(any())).thenReturn(Mono.just(Provider.builder().name("test-hip").build()));
-
-        webTestClient.post()
-                .uri("/v1/consents/fetch")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", token)
-                .bodyValue(fetchRequest)
-                .exchange()
-                .expectStatus()
-                .isForbidden();
+                .isAccepted();
     }
 }

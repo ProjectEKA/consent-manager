@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.consent.model.FetchRequest;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
@@ -74,6 +75,13 @@ public class ConsentArtefactsController {
                             return usedTokens.put(caller.getSessionId(), "");
                         }))
                 );
+    }
+
+    @PostMapping(value = "/v1/consents/fetch")
+    public Mono<Void> fetchConsent(@RequestBody FetchRequest fetchRequest) {
+      return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .flatMap(requester -> consentManager.getConsent(fetchRequest.getConsentId(), fetchRequest.getRequestId(), requester.getUsername()));
     }
 
     private int getPageSize(int limit) {

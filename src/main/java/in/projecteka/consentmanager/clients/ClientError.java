@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.clients;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
+import in.projecteka.consentmanager.clients.model.RespError;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.http.HttpStatus;
@@ -326,5 +327,9 @@ public class ClientError extends Throwable {
 
     public static ClientError invalidOldPassword(int remainingAttempts) {
         return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT, "You have " + remainingAttempts + " tries available after that your account will be locked")));
+    }
+
+    public static RespError from(ClientError exception) {
+        return RespError.builder().code(exception.getErrorCode().getValue()).message(exception.getMessage()).build();
     }
 }

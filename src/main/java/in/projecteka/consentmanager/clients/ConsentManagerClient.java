@@ -18,7 +18,7 @@ import static java.util.function.Predicate.not;
 
 @AllArgsConstructor
 public class ConsentManagerClient {
-    private static final String CONSENT_REQUEST_INIT_URL_PATH = "/v1/consent-requests/on-init";
+    private static final String CONSENT_REQUEST_INIT_URL_PATH = "/consent-requests/on-init";
     private final WebClient.Builder webClientBuilder;
     private final String url;
     private final Supplier<Mono<String>> tokenGenerator;

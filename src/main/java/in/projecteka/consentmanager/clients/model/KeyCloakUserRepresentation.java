@@ -8,5 +8,5 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class KeyCloakUserRepresentation {
-    private String id;
+    private final String id;
 }

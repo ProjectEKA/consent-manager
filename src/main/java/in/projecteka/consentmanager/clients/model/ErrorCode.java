@@ -49,6 +49,7 @@ public enum ErrorCode {
     INVALID_LINK_REFERENCE(1039),
     FAILED_TO_GET_LINKED_CARE_CONTEXTS(1040),
     DUPLICATE_DISCOVERY_REQUEST(1041),
+    INVALID_REQUEST(1042),
     UNPROCESSABLE_RESPONSE_FROM_GATEWAY(4220); /*please resume codes from the line above, we will put the codes in order later and in ranges*/
 
     private final int value;

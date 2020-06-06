@@ -575,7 +575,7 @@ public class LinkUserJourneyTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isBadRequest();
     }
 
     @Test

@@ -235,23 +235,23 @@ public class ConsentManager {
                 .toArray(HIType[]::new);
     }
 
-    private Mono<Void> broadcastConsentArtefacts(List<HIPConsentArtefactRepresentation> consents,
-                                                 String hiuConsentNotificationUrl,
-                                                 String requestId,
-                                                 ConsentStatus status,
-                                                 LocalDateTime lastUpdated,
-                                                 HIUReference hiuReference) {
-        ConsentArtefactsMessage message = ConsentArtefactsMessage
-                .builder()
-                .status(status)
-                .timestamp(lastUpdated)
-                .consentRequestId(requestId)
-                .consentArtefacts(consents)
-                .hiuConsentNotificationUrl(hiuConsentNotificationUrl)
-                .hiuId(hiuReference.getId())
-                .build();
-        return consentNotificationPublisher.publish(message);
-    }
+	private Mono<Void> broadcastConsentArtefacts(List<HIPConsentArtefactRepresentation> consents,
+												 String hiuConsentNotificationUrl,
+												 String requestId,
+												 ConsentStatus status,
+												 LocalDateTime lastUpdated,
+												 HIUReference consentRequest) {
+		ConsentArtefactsMessage message = ConsentArtefactsMessage
+				.builder()
+				.status(status)
+				.timestamp(lastUpdated)
+				.consentRequestId(requestId)
+				.consentArtefacts(consents)
+				.hiuConsentNotificationUrl(hiuConsentNotificationUrl)
+				.hiuId(consentRequest.getId())
+				.build();
+		return consentNotificationPublisher.publish(message);
+	}
 
     private ConsentApprovalResponse consentApprovalResponse(
             List<HIPConsentArtefactRepresentation> consentArtefacts) {

@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -14,6 +15,6 @@ import java.time.LocalDateTime;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class HIUNotificationRequest {
     private LocalDateTime timestamp;
-    private String consentRequestId;
+    private UUID consentId;
     ConsentNotifier notification;
 }

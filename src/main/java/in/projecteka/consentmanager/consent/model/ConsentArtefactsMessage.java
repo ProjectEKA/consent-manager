@@ -17,6 +17,7 @@ public class ConsentArtefactsMessage {
     private LocalDateTime timestamp;
     private String consentRequestId;
     private List<HIPConsentArtefactRepresentation> consentArtefacts;
+    @Deprecated
     private String hiuConsentNotificationUrl;
     private String hiuId;
 }

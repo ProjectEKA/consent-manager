@@ -28,10 +28,14 @@ public class ConsentArtefactNotifier {
     private static final String HIP_CONSENT_NOTIFICATION_URL_PATH = "/v1/consents/hip/notify";
     private static final String HIU_CONSENT_NOTIFICATION_URL_PATH = "/v1/consents/hiu/notify";
 
-    public Mono<Void> notifyHiu(HIUNotificationRequest request, String hiuId) {
-        return postConsentArtifactToHiu(request, hiuId);
+    public Mono<Void> sendConsentArtifactToHIU(HIUNotificationRequest request, String hiuId) {
+        return postConsentArtifactToHiu(request,hiuId);
     }
 
+    /**
+     * deprecated (We are not directly notifying the HIP, instead using new gateway API v1/consents/hip/notify )
+     * **/
+    @Deprecated
     public Mono<Void> sendConsentArtefactTo(HIPConsentArtefactRepresentation consentArtefact, String providerUrl) {
         String hipNotificationUrl = String.format("%s/%s", providerUrl, "consent/notification/");
         return post(consentArtefact, hipNotificationUrl);
@@ -72,8 +76,8 @@ public class ConsentArtefactNotifier {
                                 .onStatus(HttpStatus::is5xxServerError,
                                         clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                                 .toBodilessEntity())
-                .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout()))
-                .then();
+                                .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout()))
+                                .then();
     }
 
     private Mono<Void> postConsentArtefactToHip(Object body, String hipId) {

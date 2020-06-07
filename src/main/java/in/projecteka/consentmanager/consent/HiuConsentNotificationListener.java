@@ -21,6 +21,7 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -87,23 +88,21 @@ public class HiuConsentNotificationListener {
     private void notifyHiu(ConsentArtefactsMessage consentArtefactsMessage) {
         HIUNotificationRequest hiuNotificationRequest = hiuNotificationRequest(consentArtefactsMessage);
         String hiuId = consentArtefactsMessage.getHiuId();
-        consentArtefactNotifier.notifyHiu(hiuNotificationRequest, hiuId).block();
+        consentArtefactNotifier.sendConsentArtifactToHIU(hiuNotificationRequest, hiuId).block();
     }
 
     private HIUNotificationRequest hiuNotificationRequest(ConsentArtefactsMessage consentArtefactsMessage) {
         List<ConsentArtefactReference> consentArtefactReferences = consentArtefactReferences(consentArtefactsMessage);
-
-        ConsentNotifier notification = ConsentNotifier.builder()
-                .consentRequestId(consentArtefactsMessage.getConsentRequestId())
-                .status(consentArtefactsMessage.getStatus())
-                .consentArtefacts(consentArtefactReferences)
-                .build();
-
         return HIUNotificationRequest
                 .builder()
                 .timestamp(consentArtefactsMessage.getTimestamp())
-                .consentRequestId(consentArtefactsMessage.getConsentRequestId())
-                .notification(notification)
+                .consentId(UUID.randomUUID())
+                .notification(ConsentNotifier
+                        .builder()
+                        .consentRequestId(consentArtefactsMessage.getConsentRequestId())
+                        .status(consentArtefactsMessage.getStatus())
+                        .consentArtefacts(consentArtefactReferences)
+                        .build())
                 .build();
     }
 

@@ -9,11 +9,8 @@ import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @AllArgsConstructor
 public class UserRepository {
@@ -85,22 +82,24 @@ public class UserRepository {
                 }));
     }
 
-    public Mono<List<User>> getUserBy(Gender gender, String phoneNumber) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT_BY_GENDER_MOB)
+    public Flux<User> getUserBy(Gender gender, String phoneNumber) {
+        return Flux.create(userFluxSink -> dbClient.preparedQuery(SELECT_PATIENT_BY_GENDER_MOB)
                 .execute(Tuple.of(gender.toString(), phoneNumber),
                         handler -> {
                             if (handler.failed()) {
-                                monoSink.error(new DbOperationError("Failed to select from patient"));
+                                userFluxSink.error(new DbOperationError("Failed to select from patient"));
                             } else {
-                                monoSink.success(StreamSupport.stream(handler.result().spliterator(), false)
-                                        .map(row -> User.builder() //return list of users
-                                                .identifier(row.getString("id"))
-                                                .name(row.getString("name"))
-                                                .yearOfBirth(row.getInteger("year_of_birth"))
-                                                .unverifiedIdentifiers((JsonArray) row.getValue("unverified_identifiers"))
-                                                .phone(row.getString("phone_number"))
-                                                .build())
-                                        .collect(Collectors.toList()));
+                                handler.result().forEach(row -> {
+                                    var user = User.builder()
+                                            .identifier(row.getString("id"))
+                                            .name(row.getString("name"))
+                                            .yearOfBirth(row.getInteger("year_of_birth"))
+                                            .unverifiedIdentifiers((JsonArray) row.getValue("unverified_identifiers"))
+                                            .phone(row.getString("phone_number"))
+                                            .build();
+                                    userFluxSink.next(user);
+                                });
+                                userFluxSink.complete();
                             }
                         }));
     }

@@ -15,6 +15,7 @@ import java.time.Duration;
 import java.util.function.Supplier;
 
 import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
+import static in.projecteka.consentmanager.clients.HeaderConstants.HDR_HIP_ID;
 
 @AllArgsConstructor
 public class ConsentArtefactNotifier {
@@ -22,7 +23,6 @@ public class ConsentArtefactNotifier {
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
 
-    private static final String HDR_HIP_ID = "X-HIP-ID";
     private static final String HIP_CONSENT_NOTIFICATION_URL_PATH = "/v1/consents/hip/notify";
 
     public Mono<Void> notifyHiu(HIUNotificationRequest request, String consentNotificationUrl) {
@@ -65,7 +65,6 @@ public class ConsentArtefactNotifier {
                                 .bodyValue(body)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,
-                                        // Error msg should be logged
                                         clientResponse -> Mono.error(ClientError.unAuthorized()))
                                 .onStatus(HttpStatus::is5xxServerError,
                                         clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))

@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.user;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
@@ -11,6 +12,7 @@ import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.RequesterDetail;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
@@ -27,10 +29,12 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
+import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -84,6 +88,15 @@ class UserControllerTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConceptValidator conceptValidator;
+
+    @MockBean
+    private RequesterDetail requester;
+
+    @MockBean
+    private UserRepository userRepository;
+
+    @MockBean
+    private UserServiceClient userServiceClient;
 
     @Test
     public void shouldReturnTemporarySessionIfOtpRequestIsSuccessful() {
@@ -148,4 +161,29 @@ class UserControllerTest {
                 .expectStatus()
                 .isOk();
     }
+
+    @Test
+    public void returnPatientResponseWhenUserFound() {
+        var token = string();
+        var patientRequest = patientRequest().build();
+        var userName = patientRequest.getQuery().getRequester().getId();
+        var user = user().identifier(userName).build();
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, false)));
+        when(requester.getType()).thenReturn("HIU");
+        when(userRepository.userWith(any())).thenReturn(Mono.just(user));
+        when(userServiceClient.sendPatientResponseToGateWay(any(),
+                eq("X-HIU-ID"),
+                eq(patientRequest.getQuery().getRequester().getId())))
+                .thenReturn(Mono.empty());
+
+        webClient.post()
+                .uri("/v1/patients/find")
+                .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .body(BodyInserters.fromValue(patientRequest))
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+    }
 }
+

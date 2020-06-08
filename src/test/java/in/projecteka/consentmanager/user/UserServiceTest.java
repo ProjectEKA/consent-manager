@@ -4,6 +4,8 @@ import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
@@ -18,6 +20,7 @@ import in.projecteka.consentmanager.user.model.InitiateCmIdRecoveryRequest;
 import in.projecteka.consentmanager.user.model.LoginMode;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.PatientResponse;
 import in.projecteka.consentmanager.user.model.SendOtpAction;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
@@ -49,13 +52,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
+import static in.projecteka.consentmanager.user.TestBuilders.requester;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.updatePasswordRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
+import static in.projecteka.consentmanager.user.model.Requester.HIU;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -64,6 +70,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 class UserServiceTest {
 
@@ -106,6 +113,12 @@ class UserServiceTest {
     @Mock
     private Logger logger;
 
+    @Mock
+    private UserServiceClient userServiceClient;
+
+    @Captor
+    private ArgumentCaptor<PatientResponse> patientResponse;
+
     private UserService userService;
 
     @BeforeEach
@@ -121,7 +134,8 @@ class UserServiceTest {
                 tokenService,
                 properties,
                 otpAttemptService,
-                lockedUserService);
+                lockedUserService,
+                userServiceClient);
     }
 
     @Test
@@ -669,5 +683,70 @@ class UserServiceTest {
         var producer = userService.verifyOtpForRecoverCmId(otpVerification);
 
         StepVerifier.create(producer).verifyError(InvalidRequestException.class);
+    }
+
+    @Test
+    void throwInvalidRequesterErrorWhenRequesterTypeIsInvalid() {
+        var userName = string();
+        var requester = requester().build();
+        var requestId = UUID.randomUUID();
+        var user = user().build();
+        when(userRepository.userWith(any())).thenReturn(Mono.just(user));
+        when(userServiceClient.sendPatientResponseToGateWay(any(), any(), any()))
+                .thenReturn(Mono.empty());
+
+        var patientProducer = userService.user(userName, requester, requestId);
+
+        StepVerifier.create(patientProducer)
+                .expectErrorMatches(exp -> (exp instanceof ClientError) &&
+                        ((ClientError) exp).getHttpStatus() == BAD_REQUEST &&
+                        ((ClientError) exp).getErrorCode() == ErrorCode.INVALID_REQUESTER)
+                .verify();
+        verify(userRepository, times(0)).userWith(any());
+        verify(userServiceClient, times(0)).sendPatientResponseToGateWay(any(), any(), any());
+    }
+
+    @Test
+    void callGateWayWhenUserNotFound() {
+        var userName = string();
+        var requester = requester().type(HIU.getValue()).build();
+        var requestId = UUID.randomUUID();
+        when(userRepository.userWith(any())).thenReturn(Mono.empty());
+        when(userServiceClient.sendPatientResponseToGateWay(patientResponse.capture(),
+                eq("X-HIU-ID"),
+                eq(requester.getId())))
+                .thenReturn(Mono.empty());
+
+        var patientProducer = userService.user(userName, requester, requestId);
+
+        StepVerifier.create(patientProducer)
+                .verifyComplete();
+        verify(userRepository, times(1)).userWith(any());
+        verify(userServiceClient, times(1)).sendPatientResponseToGateWay(any(), any(), any());
+        assertThat(patientResponse.getValue().getError()).isNotNull();
+        assertThat(patientResponse.getValue().getError().getCode().equals(ErrorCode.USER_NOT_FOUND));
+        assertThat(patientResponse.getValue().getPatient()).isNull();
+    }
+
+    @Test
+    void callGateWayWhenUserFound() {
+        var userName = string();
+        var requester = requester().type(HIU.getValue()).build();
+        var requestId = UUID.randomUUID();
+        var user = user().build();
+        when(userRepository.userWith(any())).thenReturn(Mono.just(user));
+        when(userServiceClient.sendPatientResponseToGateWay(patientResponse.capture(),
+                eq("X-HIU-ID"),
+                eq(requester.getId())))
+                .thenReturn(Mono.empty());
+
+        var patientProducer = userService.user(userName, requester, requestId);
+
+        StepVerifier.create(patientProducer)
+                .verifyComplete();
+        verify(userRepository, times(1)).userWith(any());
+        verify(userServiceClient, times(1)).sendPatientResponseToGateWay(any(), any(), any());
+        assertThat(patientResponse.getValue().getError()).isNull();
+        assertThat(patientResponse.getValue().getPatient()).isNotNull();
     }
 }

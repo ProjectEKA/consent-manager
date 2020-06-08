@@ -6,6 +6,6 @@ import lombok.Value;
 @Value
 @Builder
 public class Patient {
-    private String id;
-    private String name;
+    String id;
+    String name;
 }

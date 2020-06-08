@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -51,13 +51,10 @@ import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.ClientError.failedToFetchUserCredentials;
 import static in.projecteka.consentmanager.clients.ClientError.from;
-import static in.projecteka.consentmanager.clients.ClientError.invalidRequester;
 import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
 import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
 import static in.projecteka.consentmanager.user.IdentifierUtils.getIdentifierValue;
 import static in.projecteka.consentmanager.user.model.IdentifierType.MOBILE;
-import static in.projecteka.consentmanager.user.model.Requester.HIP;
-import static in.projecteka.consentmanager.user.model.Requester.HIU;
 import static java.lang.String.format;
 
 @AllArgsConstructor
@@ -80,43 +77,42 @@ public class UserService {
     }
 
     public Mono<Void> user(String userName, RequesterDetail requester, UUID requestId) {
-        return requesterId(requester.getType())
-                .switchIfEmpty(Mono.error(invalidRequester("Requester Type is invalid")))
-                .flatMap(x_requesterId -> Mono.defer(() -> findUser(userName, x_requesterId, requester.getId(), requestId)))
-                .then();
+        return Mono.defer(() -> {
+            findUser(userName, requester.getType().getRoutingKey(), requester.getId(), requestId);
+            return Mono.empty();
+        });
     }
 
-    private Mono<Void> findUser(String userName, String x_requesterId, String requesterId, UUID requestId) {
-        (userWith(userName)
+    private void findUser(String userName, String routingKey, String requesterId, UUID requestId) {
+        userWith(userName)
                 .map(user -> {
                     Patient patient = Patient.builder()
                             .id(user.getIdentifier())
                             .name(user.getName())
                             .build();
-                    return PatientResponse.builder()
+                    var patientResponse = PatientResponse.builder()
                             .requestId(UUID.randomUUID())
-                            .timestamp(Instant.now().toString())
+                            .timestamp(LocalDateTime.now())
                             .patient(patient)
                             .resp(GatewayResponse.builder().requestId(requestId.toString()).build())
                             .build();
+                    logger.info(format("patient Response %s", patientResponse.toString()));
+                    return patientResponse;
                 })
                 .onErrorResume(ClientError.class, exception -> {
                     var patientResponse = PatientResponse.builder()
                             .requestId(UUID.randomUUID())
-                            .timestamp(Instant.now().toString())
+                            .timestamp(LocalDateTime.now())
                             .error(from(exception))
                             .resp(GatewayResponse.builder().requestId(requestId.toString()).build())
                             .build();
+                    logger.error(exception.getMessage(), exception);
                     return Mono.just(patientResponse);
                 })
-                .flatMap(patientResponse -> userServiceClient.sendPatientResponseToGateWay(patientResponse, x_requesterId, requesterId))).subscribe();
-        return Mono.empty();
-    }
-
-    private Mono<String> requesterId(String requesterType) {
-        return requesterType.equals(HIP.getValue()) ? Mono.just("X-HIP-ID")
-                : requesterType.equals(HIU.getValue()) ? Mono.just("X-HIU-ID")
-                : Mono.empty();
+                .flatMap(patientResponse -> userServiceClient.sendPatientResponseToGateWay(patientResponse,
+                        routingKey,
+                        requesterId))
+                .subscribe();
     }
 
     public Mono<SignUpSession> sendOtp(UserSignUpEnquiry userSignupEnquiry) {

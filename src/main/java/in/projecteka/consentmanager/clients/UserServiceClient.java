@@ -18,10 +18,10 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @AllArgsConstructor
 public class UserServiceClient {
 
+    private static final String PATIENT_FIND_URL_PATH = "/patients/on-find";
     private final WebClient.Builder webClientBuilder;
     private final String url;
     private final Supplier<Mono<String>> tokenGenerator;
-    private static final String PATIENT_FIND_URL_PATH = "/patients/on-find";
     private final GatewayServiceProperties gatewayServiceProperties;
 
     public Mono<User> userOf(String userId) {
@@ -36,7 +36,7 @@ public class UserServiceClient {
                         .bodyToMono(User.class));
     }
 
-    public Mono<Void> sendPatientResponseToGateWay(PatientResponse patientResponse, String x_requesterId, String requesterId) {
+    public Mono<Void> sendPatientResponseToGateWay(PatientResponse patientResponse, String routingKey, String requesterId) {
         return tokenGenerator.get()
                 .flatMap(token ->
                         webClientBuilder.build()
@@ -44,7 +44,7 @@ public class UserServiceClient {
                                 .uri(gatewayServiceProperties.getBaseUrl() + PATIENT_FIND_URL_PATH)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header(HttpHeaders.AUTHORIZATION, token)
-                                .header(x_requesterId, requesterId)
+                                .header(routingKey, requesterId)
                                 .bodyValue(patientResponse)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,
@@ -52,7 +52,7 @@ public class UserServiceClient {
                                 .onStatus(HttpStatus::is5xxServerError,
                                         clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                                 .toBodilessEntity()
-                                .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout()))
-                ).then();
+                                .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout())))
+                .then();
     }
 }

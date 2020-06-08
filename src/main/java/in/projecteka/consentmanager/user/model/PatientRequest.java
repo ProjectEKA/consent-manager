@@ -1,18 +1,15 @@
 package in.projecteka.consentmanager.user.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Value;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Data
+@Value
 @Builder
 public class PatientRequest {
     private UUID requestId;
-    private String timestamp;
-    private patientQuery query;
+    private LocalDateTime timestamp;
+    private PatientQuery query;
 }

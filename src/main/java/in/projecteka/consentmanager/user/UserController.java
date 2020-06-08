@@ -33,9 +33,10 @@ public class UserController {
 
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PostMapping("/v1/patients/find")
-    public Mono<Void> userWith(@Valid @RequestBody PatientRequest patientRequest){
-         return userService.user(patientRequest.getQuery().getPatient().getId(),
-                patientRequest.getQuery().getRequester(), patientRequest.getRequestId());
+    public Mono<Void> userWith(@Valid @RequestBody PatientRequest patientRequest) {
+        return userService.user(patientRequest.getQuery().getPatient().getId(),
+                patientRequest.getQuery().getRequester(),
+                patientRequest.getRequestId());
     }
 
     @PostMapping("/users/verify")

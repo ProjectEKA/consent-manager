@@ -70,7 +70,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 class UserServiceTest {
 
@@ -686,30 +685,9 @@ class UserServiceTest {
     }
 
     @Test
-    void throwInvalidRequesterErrorWhenRequesterTypeIsInvalid() {
-        var userName = string();
-        var requester = requester().build();
-        var requestId = UUID.randomUUID();
-        var user = user().build();
-        when(userRepository.userWith(any())).thenReturn(Mono.just(user));
-        when(userServiceClient.sendPatientResponseToGateWay(any(), any(), any()))
-                .thenReturn(Mono.empty());
-
-        var patientProducer = userService.user(userName, requester, requestId);
-
-        StepVerifier.create(patientProducer)
-                .expectErrorMatches(exp -> (exp instanceof ClientError) &&
-                        ((ClientError) exp).getHttpStatus() == BAD_REQUEST &&
-                        ((ClientError) exp).getErrorCode() == ErrorCode.INVALID_REQUESTER)
-                .verify();
-        verify(userRepository, times(0)).userWith(any());
-        verify(userServiceClient, times(0)).sendPatientResponseToGateWay(any(), any(), any());
-    }
-
-    @Test
     void callGateWayWhenUserNotFound() {
         var userName = string();
-        var requester = requester().type(HIU.getValue()).build();
+        var requester = requester().type(HIU).build();
         var requestId = UUID.randomUUID();
         when(userRepository.userWith(any())).thenReturn(Mono.empty());
         when(userServiceClient.sendPatientResponseToGateWay(patientResponse.capture(),
@@ -724,14 +702,14 @@ class UserServiceTest {
         verify(userRepository, times(1)).userWith(any());
         verify(userServiceClient, times(1)).sendPatientResponseToGateWay(any(), any(), any());
         assertThat(patientResponse.getValue().getError()).isNotNull();
-        assertThat(patientResponse.getValue().getError().getCode().equals(ErrorCode.USER_NOT_FOUND));
+        assertThat(patientResponse.getValue().getError().getCode()).isEqualTo(ErrorCode.USER_NOT_FOUND.getValue());
         assertThat(patientResponse.getValue().getPatient()).isNull();
     }
 
     @Test
     void callGateWayWhenUserFound() {
         var userName = string();
-        var requester = requester().type(HIU.getValue()).build();
+        var requester = requester().type(HIU).build();
         var requestId = UUID.randomUUID();
         var user = user().build();
         when(userRepository.userWith(any())).thenReturn(Mono.just(user));

@@ -27,23 +27,23 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
-import reactor.core.publisher.Mono;
 
 import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static reactor.core.publisher.Mono.empty;
+import static reactor.core.publisher.Mono.just;
 
 @SuppressWarnings("ALL")
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@AutoConfigureWebTestClient
+@AutoConfigureWebTestClient(timeout = "100000")
 class UserControllerTest {
 
     @MockBean
@@ -101,7 +101,7 @@ class UserControllerTest {
     @Test
     public void shouldReturnTemporarySessionIfOtpRequestIsSuccessful() {
         var userSignupEnquiry = new UserSignUpEnquiry("MOBILE", string());
-        when(userService.sendOtp(any())).thenReturn(Mono.just(new SignUpSession(string())));
+        when(userService.sendOtp(any())).thenReturn(just(new SignUpSession(string())));
 
         webClient.post()
                 .uri("/users/verify")
@@ -117,7 +117,7 @@ class UserControllerTest {
         var otpVerification = new OtpVerification(string(), string());
         Token token = new Token(string());
 
-        when(userService.verifyOtpForRegistration(any())).thenReturn(Mono.just(token));
+        when(userService.verifyOtpForRegistration(any())).thenReturn(just(token));
 
         webClient.post()
                 .uri("/users/permit")
@@ -133,8 +133,8 @@ class UserControllerTest {
         var username = string();
         var token = string();
         var sessionId = string();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller(username, false)));
-        when(userService.userWith(username)).thenReturn(Mono.just(user().build()));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(new Caller(username, false)));
+        when(userService.userWith(username)).thenReturn(just(user().build()));
 
         webClient.get()
                 .uri(format("/users/%s", username))
@@ -150,8 +150,8 @@ class UserControllerTest {
         var username = string();
         var token = string();
         var sessionId = string();
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(username, true)));
-        when(userService.userWith(username)).thenReturn(Mono.just(user().build()));
+        when(authenticator.verify(token)).thenReturn(just(new Caller(username, true)));
+        when(userService.userWith(username)).thenReturn(just(user().build()));
 
         webClient.get()
                 .uri(format("/internal/users/%s", username))
@@ -166,15 +166,12 @@ class UserControllerTest {
     public void returnPatientResponseWhenUserFound() {
         var token = string();
         var patientRequest = patientRequest().build();
-        var userName = patientRequest.getQuery().getRequester().getId();
-        var user = user().identifier(userName).build();
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userName, false)));
-        when(requester.getType()).thenReturn("HIU");
-        when(userRepository.userWith(any())).thenReturn(Mono.just(user));
-        when(userServiceClient.sendPatientResponseToGateWay(any(),
-                eq("X-HIU-ID"),
-                eq(patientRequest.getQuery().getRequester().getId())))
-                .thenReturn(Mono.empty());
+        var caller = new Caller(string(), false);
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
+        when(userService.user(patientRequest.getQuery().getPatient().getId(),
+                patientRequest.getQuery().getRequester(),
+                patientRequest.getRequestId()))
+                .thenReturn(empty());
 
         webClient.post()
                 .uri("/v1/patients/find")

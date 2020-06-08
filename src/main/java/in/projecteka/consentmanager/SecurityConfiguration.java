@@ -66,6 +66,7 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry("/v1/links/link/on-init", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/v1/links/link/on-confirm", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/v1/patients/find", HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry("/v1/consents/fetch", HttpMethod.POST));
         RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve", HttpMethod.POST, SCOPE_CONSENT_APPROVE);
         RequestMatcher revokeMatcher = new RequestMatcher("/consents/revoke", HttpMethod.POST, SCOPE_CONSENT_REVOKE);
         RequestMatcher changePinMatcher = new RequestMatcher("/patients/change-pin", HttpMethod.POST, SCOPE_CHANGE_PIN);

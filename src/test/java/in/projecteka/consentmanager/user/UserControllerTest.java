@@ -43,7 +43,7 @@ import static reactor.core.publisher.Mono.just;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@AutoConfigureWebTestClient(timeout = "100000")
+@AutoConfigureWebTestClient
 class UserControllerTest {
 
     @MockBean

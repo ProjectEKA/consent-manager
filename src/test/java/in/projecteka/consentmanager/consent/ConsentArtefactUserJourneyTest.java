@@ -11,6 +11,7 @@ import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
@@ -120,6 +121,9 @@ public class ConsentArtefactUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConceptValidator conceptValidator;
+
+    @MockBean
+    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
     private static final MockWebServer identityServer = new MockWebServer();
 
@@ -350,7 +354,8 @@ public class ConsentArtefactUserJourneyTest {
         var fetchRequest = fetchRequest().consentId(consentArtefact.getConsentDetail().getConsentId()).build();
         consentArtefact.getConsentDetail().getPatient().setId("test-user@ncg");
 
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("test-user@ncg", false)));
+        when(centralRegistryTokenVerifier.verify(token)).
+                thenReturn(Mono.just(new Caller("test-user@ncg", false)));
         when(consentArtefactRepository.getConsentArtefact(fetchRequest.getConsentId()))
                 .thenReturn(Mono.just(consentArtefact));
         when(centralRegistry.providerWith(any())).thenReturn(Mono.just(Provider.builder().name("test-hip").build()));

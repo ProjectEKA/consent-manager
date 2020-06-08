@@ -65,7 +65,7 @@ public class HipConsentNotificationListener {
     }
 
     /**
-     * deprecated (We are not directly notifying the HIP, instead using new gateway API v1/consents/hip/notify )
+     * @deprecated (We are not directly notifying the HIP, instead using new gateway API v1/consents/hip/notify )
      * **/
     @Deprecated
     private void sendConsentArtefact(HIPConsentArtefactRepresentation consentArtefact) {

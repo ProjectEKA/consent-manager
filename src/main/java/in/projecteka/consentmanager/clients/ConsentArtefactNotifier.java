@@ -23,7 +23,7 @@ public class ConsentArtefactNotifier {
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
 
-    private static final String HIP_CONSENT_NOTIFICATION_URL_PATH = "/v1/consents/hip/notify";
+    private static final String HIP_CONSENT_NOTIFICATION_URL_PATH = "/consents/hip/notify";
 
     public Mono<Void> notifyHiu(HIUNotificationRequest request, String consentNotificationUrl) {
         return post(request, consentNotificationUrl);

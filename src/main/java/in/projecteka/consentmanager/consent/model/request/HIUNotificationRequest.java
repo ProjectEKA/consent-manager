@@ -15,6 +15,6 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class HIUNotificationRequest {
     private LocalDateTime timestamp;
-    private UUID consentId;
+    private UUID requestId;
     ConsentNotifier notification;
 }

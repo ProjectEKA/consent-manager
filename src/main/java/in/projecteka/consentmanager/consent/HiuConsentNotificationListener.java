@@ -96,7 +96,7 @@ public class HiuConsentNotificationListener {
         return HIUNotificationRequest
                 .builder()
                 .timestamp(consentArtefactsMessage.getTimestamp())
-                .consentId(UUID.randomUUID())
+                .requestId(UUID.randomUUID())
                 .notification(ConsentNotifier
                         .builder()
                         .consentRequestId(consentArtefactsMessage.getConsentRequestId())

@@ -25,8 +25,10 @@ public class ConsentArtefactNotifier {
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
 
+    private static final String HDR_HIP_ID = "X-HIP-ID";
     private static final String HIP_CONSENT_NOTIFICATION_URL_PATH = "/v1/consents/hip/notify";
-    private static final String HIU_CONSENT_NOTIFICATION_URL_PATH = "/v1/consents/hiu/notify";
+    private static final String HDR_HIU_ID = "X-HIU-ID";
+    private static final String HIU_CONSENT_NOTIFICATION_URL_PATH = "/consents/hiu/notify";
 
     public Mono<Void> sendConsentArtifactToHIU(HIUNotificationRequest request, String hiuId) {
         return postConsentArtifactToHiu(request,hiuId);
@@ -45,6 +47,10 @@ public class ConsentArtefactNotifier {
         return postConsentArtefactToHip(notificationRequest, hipId);
     }
 
+    /**
+     * deprecated (We are not directly notifying the HIP, instead using new gateway API v1/consents/hip/notify )
+     * **/
+    @Deprecated
     private Mono<Void> post(Object body, String uri) {
         return tokenGenerator.get()
                 .flatMap(token ->

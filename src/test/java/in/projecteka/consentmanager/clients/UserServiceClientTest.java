@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.clients;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -30,22 +31,26 @@ public class UserServiceClientTest {
     @Mock
     private ExchangeFunction exchangeFunction;
 
+    private UserServiceClient userServiceClient;
+    private String token;
+
     @BeforeEach
     public void init() {
         MockitoAnnotations.initMocks(this);
+        WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
+        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000);
+        token = string();
+        userServiceClient = new UserServiceClient(webClientBuilder, "http://user-service/", () -> Mono.just(token), serviceProperties);
     }
 
     @Test
     public void shouldGetUser() throws IOException {
         User user = user().name("first name").build();
-        var token = string();
         String patientResponseBody = new ObjectMapper().writeValueAsString(user);
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
                         .header("Content-Type", "application/json")
                         .body(patientResponseBody).build()));
-        var webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        var userServiceClient = new UserServiceClient(webClientBuilder, "http://user-service/", () -> Mono.just(token));
 
         StepVerifier.create(userServiceClient.userOf("1"))
                 .assertNext(response -> assertThat(response.getName()).isEqualTo(user.getName()))

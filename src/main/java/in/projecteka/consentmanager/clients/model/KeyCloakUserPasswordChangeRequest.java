@@ -8,5 +8,5 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class KeyCloakUserPasswordChangeRequest {
-    private String value;
+    private final String value;
 }

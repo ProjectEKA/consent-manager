@@ -29,6 +29,9 @@ import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.consentmanager.consent.model.Communication;
+import in.projecteka.consentmanager.consent.model.CommunicationType;
+import in.projecteka.consentmanager.consent.model.Action;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -163,8 +166,27 @@ public class UserService {
                             .action(OtpAttempt.Action.OTP_SUBMIT_RECOVER_CM_ID)
                             .cmId(user.getIdentifier());
                     return validateAndVerifyOtp(otpVerification, builder.build())
+                            .then(Mono.just(createNotificationMessage(user, otpVerification.getSessionId()).flatMap(this::notifyUserWith)))
                             .then(Mono.just(RecoverCmIdResponse.builder().cmId(user.getIdentifier()).build()));
                 });
+    }
+
+    private Mono<ConsentManagerIdNotification> createNotificationMessage(User user, String sessionId) {
+     return Mono.just(ConsentManagerIdNotification.builder()
+                     .communication(Communication.builder()
+                             .communicationType(CommunicationType.MOBILE)
+                             .value(user.getPhone())
+                             .build())
+                     .id(sessionId)
+                     .action(Action.CONSENT_MANAGER_ID_RECOVERED)
+                     .content(ConsentManagerIdContent.builder()
+                             .consentManagerId(user.getIdentifier())
+                             .build())
+                     .build());
+    }
+
+    public Mono<Void> notifyUserWith(ConsentManagerIdNotification consentManagerIdNotification) {
+     return otpServiceClient.send(consentManagerIdNotification);
     }
 
     public Mono<Session> create(CoreSignUpRequest coreSignUpRequest, String sessionId) {

@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
@@ -12,6 +13,7 @@ import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.consent.model.Action;
 import in.projecteka.consentmanager.consent.model.Communication;
 import in.projecteka.consentmanager.consent.model.CommunicationType;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.filters.ABPMJAYIdFilter;
 import in.projecteka.consentmanager.user.filters.NameFilter;
@@ -22,7 +24,10 @@ import in.projecteka.consentmanager.user.model.LoginMode;
 import in.projecteka.consentmanager.user.model.LoginModeResponse;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.Patient;
+import in.projecteka.consentmanager.user.model.PatientResponse;
 import in.projecteka.consentmanager.user.model.RecoverCmIdResponse;
+import in.projecteka.consentmanager.user.model.RequesterDetail;
 import in.projecteka.consentmanager.user.model.SendOtpAction;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
@@ -37,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +50,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.ClientError.failedToFetchUserCredentials;
+import static in.projecteka.consentmanager.clients.ClientError.from;
 import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
 import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
 import static in.projecteka.consentmanager.user.IdentifierUtils.getIdentifierValue;
@@ -63,9 +70,49 @@ public class UserService {
     private final UserServiceProperties userServiceProperties;
     private final OtpAttemptService otpAttemptService;
     private final LockedUserService lockedUserService;
+    private final UserServiceClient userServiceClient;
 
     public Mono<User> userWith(String userName) {
         return userRepository.userWith(userName.toLowerCase()).switchIfEmpty(Mono.error(userNotFound()));
+    }
+
+    public Mono<Void> user(String userName, RequesterDetail requester, UUID requestId) {
+        return Mono.defer(() -> {
+            findUser(userName, requester.getType().getRoutingKey(), requester.getId(), requestId);
+            return Mono.empty();
+        });
+    }
+
+    private void findUser(String userName, String routingKey, String requesterId, UUID requestId) {
+        userWith(userName)
+                .map(user -> {
+                    Patient patient = Patient.builder()
+                            .id(user.getIdentifier())
+                            .name(user.getName())
+                            .build();
+                    var patientResponse = PatientResponse.builder()
+                            .requestId(UUID.randomUUID())
+                            .timestamp(LocalDateTime.now())
+                            .patient(patient)
+                            .resp(GatewayResponse.builder().requestId(requestId.toString()).build())
+                            .build();
+                    logger.info(format("patient Response %s", patientResponse.toString()));
+                    return patientResponse;
+                })
+                .onErrorResume(ClientError.class, exception -> {
+                    var patientResponse = PatientResponse.builder()
+                            .requestId(UUID.randomUUID())
+                            .timestamp(LocalDateTime.now())
+                            .error(from(exception))
+                            .resp(GatewayResponse.builder().requestId(requestId.toString()).build())
+                            .build();
+                    logger.error(exception.getMessage(), exception);
+                    return Mono.just(patientResponse);
+                })
+                .flatMap(patientResponse -> userServiceClient.sendPatientResponseToGateWay(patientResponse,
+                        routingKey,
+                        requesterId))
+                .subscribe();
     }
 
     public Mono<SignUpSession> sendOtp(UserSignUpEnquiry userSignupEnquiry) {

@@ -20,13 +20,11 @@ import org.springframework.web.reactive.function.client.ExchangeFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
 import static in.projecteka.consentmanager.clients.HeaderConstants.HDR_HIP_ID;
 import static in.projecteka.consentmanager.clients.TestBuilders.string;
 import static org.mockito.Mockito.when;
 import java.time.LocalDateTime;
 import java.util.UUID;
-
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequestBuilder;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -46,7 +44,7 @@ public class ConsentArtefactNotifierTest {
         var token = string();
         GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000);
 
-        consentArtefactNotifier = new ConsentArtefactNotifier(webClientBuilder,() -> Mono.just(token), serviceProperties);
+        consentArtefactNotifier = new ConsentArtefactNotifier(webClientBuilder, () -> Mono.just(token), serviceProperties);
     }
 
     @Test
@@ -60,7 +58,7 @@ public class ConsentArtefactNotifierTest {
                 .header(HDR_HIP_ID, hipId)
                 .build()));
 
-        StepVerifier.create(consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest,hipId))
+        StepVerifier.create(consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId))
                 .verifyComplete();
     }
 
@@ -100,21 +98,21 @@ public class ConsentArtefactNotifierTest {
 
     @Test
     void sendConsentArtifactToHIU() {
-            var token = string();
-            when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
-                    .header("Content-Type", "application/json")
-                    .build()));
-            WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-            DataFlowRequest dataFlowRequest = dataFlowRequestBuilder().build();
-            GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 2000);
-            ConsentArtefactNotifier dataRequestNotifier = new ConsentArtefactNotifier(webClientBuilder, () -> Mono.just(token),serviceProperties);
+        var token = string();
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
+                .header("Content-Type", "application/json")
+                .build()));
+        WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
+        DataFlowRequest dataFlowRequest = dataFlowRequestBuilder().build();
+        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 2000);
+        ConsentArtefactNotifier dataRequestNotifier = new ConsentArtefactNotifier(webClientBuilder, () -> Mono.just(token), serviceProperties);
 
-        HIUNotificationRequest request = new HIUNotificationRequest(LocalDateTime.now(), UUID.randomUUID(),new ConsentNotifier());
-            StepVerifier.create(dataRequestNotifier.sendConsentArtifactToHIU(request, "1000005"))
-                    .verifyComplete();
+        HIUNotificationRequest request = new HIUNotificationRequest(LocalDateTime.now(), UUID.randomUUID(), new ConsentNotifier());
+        StepVerifier.create(dataRequestNotifier.sendConsentArtifactToHIU(request, "1000005"))
+                .verifyComplete();
 
-            assertThat(captor.getValue().url().toString()).isEqualTo("http://example.com/consents/hiu/notify");
-            assertThat(captor.getValue().headers().getFirst(AUTHORIZATION)).isEqualTo(token);
+        assertThat(captor.getValue().url().toString()).isEqualTo("http://example.com/consents/hiu/notify");
+        assertThat(captor.getValue().headers().getFirst(AUTHORIZATION)).isEqualTo(token);
 
     }
 
@@ -127,9 +125,9 @@ public class ConsentArtefactNotifierTest {
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         DataFlowRequest dataFlowRequest = dataFlowRequestBuilder().build();
         GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 2000);
-        ConsentArtefactNotifier dataRequestNotifier = new ConsentArtefactNotifier(webClientBuilder, () -> Mono.just(token),serviceProperties);
+        ConsentArtefactNotifier dataRequestNotifier = new ConsentArtefactNotifier(webClientBuilder, () -> Mono.just(token), serviceProperties);
 
-        HIUNotificationRequest request = new HIUNotificationRequest(LocalDateTime.now(), UUID.randomUUID(),new ConsentNotifier());
+        HIUNotificationRequest request = new HIUNotificationRequest(LocalDateTime.now(), UUID.randomUUID(), new ConsentNotifier());
         StepVerifier.create(dataRequestNotifier.sendConsentArtifactToHIU(request, "1000005"))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().is4xxClientError())
@@ -149,9 +147,9 @@ public class ConsentArtefactNotifierTest {
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         DataFlowRequest dataFlowRequest = dataFlowRequestBuilder().build();
         GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 2000);
-        ConsentArtefactNotifier dataRequestNotifier = new ConsentArtefactNotifier(webClientBuilder, () -> Mono.just(token),serviceProperties);
+        ConsentArtefactNotifier dataRequestNotifier = new ConsentArtefactNotifier(webClientBuilder, () -> Mono.just(token), serviceProperties);
 
-        HIUNotificationRequest request = new HIUNotificationRequest(LocalDateTime.now(), UUID.randomUUID(),new ConsentNotifier());
+        HIUNotificationRequest request = new HIUNotificationRequest(LocalDateTime.now(), UUID.randomUUID(), new ConsentNotifier());
         StepVerifier.create(dataRequestNotifier.sendConsentArtifactToHIU(request, "1000005"))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().is5xxServerError())

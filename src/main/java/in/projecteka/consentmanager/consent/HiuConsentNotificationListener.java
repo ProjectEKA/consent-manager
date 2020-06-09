@@ -57,7 +57,7 @@ public class HiuConsentNotificationListener {
                 //This is NOT a generic solution. Based on the context, it either needs to retry, or it might also need to propagate the error to the upstream systems.
                 //TODO be revisited during Gateway development
                 if (hasExceededRetryCount(message)) {
-                    amqpTemplate.convertAndSend(PARKING_EXCHANGE,message.getMessageProperties().getReceivedRoutingKey(),message);
+                    amqpTemplate.convertAndSend(PARKING_EXCHANGE, message.getMessageProperties().getReceivedRoutingKey(), message);
                     return;
                 }
                 ConsentArtefactsMessage consentArtefactsMessage =
@@ -79,7 +79,7 @@ public class HiuConsentNotificationListener {
         List<Map<String, ?>> xDeathHeader = in.getMessageProperties().getXDeathHeader();
         if (xDeathHeader != null && !xDeathHeader.isEmpty()) {
             Long count = (Long) xDeathHeader.get(0).get("count");
-            logger.info("[HIU] Number of attempts {}",count);
+            logger.info("[HIU] Number of attempts {}", count);
             return count >= listenerProperties.getMaximumRetries();
         }
         return false;

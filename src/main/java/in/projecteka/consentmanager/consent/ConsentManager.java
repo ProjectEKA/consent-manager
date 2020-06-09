@@ -7,7 +7,26 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.consent.model.*;
+import in.projecteka.consentmanager.consent.model.CMReference;
+import in.projecteka.consentmanager.consent.model.HIUReference;
+import in.projecteka.consentmanager.consent.model.Consent;
+import in.projecteka.consentmanager.consent.model.ConsentArtefact;
+import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
+import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
+import in.projecteka.consentmanager.consent.model.ConsentDetail;
+import in.projecteka.consentmanager.consent.model.ConsentPurpose;
+import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
+import in.projecteka.consentmanager.consent.model.ConsentRequest;
+import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.GrantedContext;
+import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
+import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.HIType;
+import in.projecteka.consentmanager.consent.model.ListResult;
+import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.QueryRepresentation;
+import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
@@ -235,23 +254,23 @@ public class ConsentManager {
                 .toArray(HIType[]::new);
     }
 
-	private Mono<Void> broadcastConsentArtefacts(List<HIPConsentArtefactRepresentation> consents,
-												 String hiuConsentNotificationUrl,
-												 String requestId,
-												 ConsentStatus status,
-												 LocalDateTime lastUpdated,
-												 HIUReference consentRequest) {
-		ConsentArtefactsMessage message = ConsentArtefactsMessage
-				.builder()
-				.status(status)
-				.timestamp(lastUpdated)
-				.consentRequestId(requestId)
-				.consentArtefacts(consents)
-				.hiuConsentNotificationUrl(hiuConsentNotificationUrl)
-				.hiuId(consentRequest.getId())
-				.build();
-		return consentNotificationPublisher.publish(message);
-	}
+    private Mono<Void> broadcastConsentArtefacts(List<HIPConsentArtefactRepresentation> consents,
+                                                 String hiuConsentNotificationUrl,
+                                                 String requestId,
+                                                 ConsentStatus status,
+                                                 LocalDateTime lastUpdated,
+                                                 HIUReference consentRequest) {
+        ConsentArtefactsMessage message = ConsentArtefactsMessage
+                .builder()
+                .status(status)
+                .timestamp(lastUpdated)
+                .consentRequestId(requestId)
+                .consentArtefacts(consents)
+                .hiuConsentNotificationUrl(hiuConsentNotificationUrl)
+                .hiuId(consentRequest.getId())
+                .build();
+        return consentNotificationPublisher.publish(message);
+    }
 
     private ConsentApprovalResponse consentApprovalResponse(
             List<HIPConsentArtefactRepresentation> consentArtefacts) {

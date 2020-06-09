@@ -7,7 +7,26 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.consent.model.*;
+import in.projecteka.consentmanager.consent.model.CMReference;
+import in.projecteka.consentmanager.consent.model.Consent;
+import in.projecteka.consentmanager.consent.model.ConsentArtefact;
+import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
+import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
+import in.projecteka.consentmanager.consent.model.ConsentDetail;
+import in.projecteka.consentmanager.consent.model.ConsentPurpose;
+import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
+import in.projecteka.consentmanager.consent.model.ConsentRequest;
+import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.GrantedContext;
+import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
+import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.HIType;
+import in.projecteka.consentmanager.consent.model.HIUReference;
+import in.projecteka.consentmanager.consent.model.ListResult;
+import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.QueryRepresentation;
+import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
@@ -58,7 +77,6 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @AllArgsConstructor
 public class ConsentManager {
-
     public static final String SHA_1_WITH_RSA = "SHA1withRSA";
     public static final String ALL_CONSENT_ARTEFACTS = "ALL";
     private static final Logger logger = LoggerFactory.getLogger(ConsentManager.class);
@@ -179,8 +197,8 @@ public class ConsentManager {
                                                                                int offset,
                                                                                String status) {
         return ALL_CONSENT_ARTEFACTS.equals(status)
-                ? consentRequestRepository.requestsForPatient(patientId, limit, offset, null)
-                : consentRequestRepository.requestsForPatient(patientId, limit, offset, status);
+               ? consentRequestRepository.requestsForPatient(patientId, limit, offset, null)
+               : consentRequestRepository.requestsForPatient(patientId, limit, offset, status);
     }
 
     private Mono<Void> validateLinkedHips(String username, List<GrantedConsent> grantedConsents) {
@@ -367,9 +385,8 @@ public class ConsentManager {
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactForbidden()));
     }
 
-    public Mono<Void> getConsent(String consentId, UUID requestId, String hiuId) {
+    public Mono<Void> getConsent(String consentId, UUID requestId) {
         return getConsentArtefact(consentId)
-//                .filter(artefact -> isSameRequester(artefact.getConsentDetail(), hiuId))
                 .switchIfEmpty(Mono.error(ClientError.consentArtefactForbidden()))
                 .flatMap(this::updateHipName)
                 .map(artefact -> {
@@ -400,7 +417,7 @@ public class ConsentManager {
                             .build();
                 })
                 .onErrorResume(ClientError.class, exception -> {
-                    logger.error("Error Occured");
+                    logger.error(exception.getMessage(), exception);
                     var consentArtefactResult = ConsentArtefactResult.builder()
                             .requestId(UUID.randomUUID())
                             .timestamp(Instant.now().toString())
@@ -410,11 +427,14 @@ public class ConsentManager {
                     return Mono.just(consentArtefactResult);
                 })
                 .flatMap(consentArtefact -> {
-                    logger.info("====================");
-                    logger.info(consentArtefact.toString());
-                    logger.info("====================");
-                    return consentArtefactResponse(consentArtefact,
-                            consentArtefact.getConsent().getConsentDetail().getHiu().getId());
+                    String hiuId = "";
+                    if (consentArtefact.getConsent() == null) {
+                        // TODO: we need to figure out what best we can do.
+                        logger.error("[ALERT] Invalid request came from gateway");
+                    } else {
+                        hiuId = consentArtefact.getConsent().getConsentDetail().getHiu().getId();
+                    }
+                    return consentArtefactResponse(consentArtefact, hiuId);
                 });
     }
 
@@ -548,7 +568,7 @@ public class ConsentManager {
                                                                                         int offset,
                                                                                         String status) {
         return status.equals(ALL_CONSENT_ARTEFACTS)
-                ? consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, null)
-                : consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, status);
+               ? consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, null)
+               : consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, status);
     }
 }

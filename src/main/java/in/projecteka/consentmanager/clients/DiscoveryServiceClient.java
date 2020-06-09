@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.function.Supplier;
 
+import static in.projecteka.consentmanager.clients.HeaderConstants.HDR_HIP_ID;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
@@ -30,7 +31,7 @@ public class DiscoveryServiceClient {
                                 .post()
                                 .uri(url + "/patients/discover/carecontexts")
                                 .header(AUTHORIZATION, token)
-                                .header("X-HIP-ID", hipId)
+                                .header(HDR_HIP_ID, hipId)
                                 .bodyValue(request)
                                 .retrieve())
                 .map(responseSpec -> responseSpec
@@ -49,7 +50,7 @@ public class DiscoveryServiceClient {
                                 .uri(gatewayServiceProperties.getBaseUrl() + PATIENTS_CARE_CONTEXTS_DISCOVERY_URL_PATH)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header(AUTHORIZATION, token)
-                                .header("X-HIP-ID", hipId)
+                                .header(HDR_HIP_ID, hipId)
                                 .bodyValue(request)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,

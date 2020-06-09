@@ -354,6 +354,7 @@ public class ConsentArtefactUserJourneyTest {
         var fetchRequest = fetchRequest().consentId(consentArtefact.getConsentDetail().getConsentId()).build();
         consentArtefact.getConsentDetail().getPatient().setId("test-user@ncg");
 
+        when(centralRegistry.authenticate()).thenReturn(Mono.empty());
         when(centralRegistryTokenVerifier.verify(token)).
                 thenReturn(Mono.just(new Caller("test-user@ncg", false)));
         when(consentArtefactRepository.getConsentArtefact(fetchRequest.getConsentId()))

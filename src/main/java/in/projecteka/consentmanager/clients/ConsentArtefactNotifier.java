@@ -17,6 +17,7 @@ import java.util.function.Supplier;
 
 import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
 import static in.projecteka.consentmanager.clients.HeaderConstants.HDR_HIP_ID;
+import static in.projecteka.consentmanager.clients.HeaderConstants.HDR_HIU_ID;
 
 @AllArgsConstructor
 public class ConsentArtefactNotifier {
@@ -24,9 +25,7 @@ public class ConsentArtefactNotifier {
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
 
-    private static final String HDR_HIP_ID = "X-HIP-ID";
     private static final String HIP_CONSENT_NOTIFICATION_URL_PATH = "/v1/consents/hip/notify";
-    private static final String HDR_HIU_ID = "X-HIU-ID";
     private static final String HIU_CONSENT_NOTIFICATION_URL_PATH = "/v1/consents/hiu/notify";
 
     public Mono<Void> notifyHiu(HIUNotificationRequest request, String hiuId) {

@@ -26,7 +26,7 @@ public class ConsentArtefactNotifier {
     private final GatewayServiceProperties gatewayServiceProperties;
 
     private static final String HDR_HIP_ID = "X-HIP-ID";
-    private static final String HIP_CONSENT_NOTIFICATION_URL_PATH = "/v1/consents/hip/notify";
+    private static final String HIP_CONSENT_NOTIFICATION_URL_PATH = "/consents/hip/notify";
     private static final String HDR_HIU_ID = "X-HIU-ID";
     private static final String HIU_CONSENT_NOTIFICATION_URL_PATH = "/consents/hiu/notify";
 

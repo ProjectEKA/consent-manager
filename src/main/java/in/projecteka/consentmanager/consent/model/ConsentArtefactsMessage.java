@@ -18,4 +18,5 @@ public class ConsentArtefactsMessage {
     private String consentRequestId;
     private List<HIPConsentArtefactRepresentation> consentArtefacts;
     private String hiuConsentNotificationUrl;
+    private String hiuId;
 }

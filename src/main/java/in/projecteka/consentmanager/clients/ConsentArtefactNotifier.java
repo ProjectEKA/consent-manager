@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.request.ConsentArtefactReference;
 import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
 import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
 import lombok.AllArgsConstructor;
@@ -23,10 +24,13 @@ public class ConsentArtefactNotifier {
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
 
-    private static final String HIP_CONSENT_NOTIFICATION_URL_PATH = "/consents/hip/notify";
+    private static final String HDR_HIP_ID = "X-HIP-ID";
+    private static final String HIP_CONSENT_NOTIFICATION_URL_PATH = "/v1/consents/hip/notify";
+    private static final String HDR_HIU_ID = "X-HIU-ID";
+    private static final String HIU_CONSENT_NOTIFICATION_URL_PATH = "/v1/consents/hiu/notify";
 
-    public Mono<Void> notifyHiu(HIUNotificationRequest request, String consentNotificationUrl) {
-        return post(request, consentNotificationUrl);
+    public Mono<Void> notifyHiu(HIUNotificationRequest request, String hiuId) {
+        return postConsentArtifactToHiu(request, hiuId);
     }
 
     public Mono<Void> sendConsentArtefactTo(HIPConsentArtefactRepresentation consentArtefact, String providerUrl) {
@@ -53,6 +57,26 @@ public class ConsentArtefactNotifier {
                 .then();
     }
 
+    private Mono<Void> postConsentArtifactToHiu(Object body, String hiuId) {
+        return tokenGenerator.get()
+                .flatMap(token ->
+                        webClientBuilder.build()
+                                .post()
+                                .uri(gatewayServiceProperties.getBaseUrl() + HIU_CONSENT_NOTIFICATION_URL_PATH)
+                                .header(HttpHeaders.AUTHORIZATION, token)
+                                .header(HDR_HIU_ID,hiuId)
+                                .bodyValue(body)
+                                .retrieve()
+                                .onStatus(httpStatus -> httpStatus.value() == 401,
+                                        // Error msg should be logged
+                                        clientResponse -> Mono.error(ClientError.unAuthorized()))
+                                .onStatus(HttpStatus::is5xxServerError,
+                                        clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                                .toBodilessEntity())
+                .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout()))
+                .then();
+    }
+
     private Mono<Void> postConsentArtefactToHip(Object body, String hipId) {
         return tokenGenerator.get()
                 .flatMap(token ->
@@ -65,6 +89,7 @@ public class ConsentArtefactNotifier {
                                 .bodyValue(body)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,
+                                        // Error msg should be logged
                                         clientResponse -> Mono.error(ClientError.unAuthorized()))
                                 .onStatus(HttpStatus::is5xxServerError,
                                         clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))

@@ -71,7 +71,7 @@ public class ConsentConfiguration {
                                                 ConceptValidator conceptValidator,
                                                 GatewayServiceProperties gatewayServiceProperties) {
         return new ConsentManager(
-                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate, gatewayServiceProperties),
+                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate, gatewayServiceProperties, centralRegistry),
                 repository,
                 consentArtefactRepository,
                 keyPair,
@@ -166,13 +166,14 @@ public class ConsentConfiguration {
             UserServiceProperties userServiceProperties,
             ConsentServiceProperties consentServiceProperties,
             IdentityService identityService,
-            GatewayServiceProperties gatewayServiceProperties) {
+            GatewayServiceProperties gatewayServiceProperties,
+            CentralRegistry centralRegistry) {
         return new ConsentRequestNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 new OtpServiceClient(builder, otpServiceProperties.getUrl()),
-                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate, gatewayServiceProperties),
+                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate, gatewayServiceProperties, centralRegistry),
                 consentServiceProperties);
     }
 

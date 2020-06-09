@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.clients;
 import com.google.common.net.HttpHeaders;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
+import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.user.model.PatientResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ public class UserServiceClient {
     private final String url;
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
+    private final CentralRegistry centralRegistry;
 
     public Mono<User> userOf(String userId) {
         return tokenGenerator.get().flatMap(token ->
@@ -37,13 +39,13 @@ public class UserServiceClient {
     }
 
     public Mono<Void> sendPatientResponseToGateWay(PatientResponse patientResponse, String routingKey, String requesterId) {
-        return tokenGenerator.get()
-                .flatMap(token ->
+        return centralRegistry.authenticate()
+                .flatMap(authToken ->
                         webClientBuilder.build()
                                 .post()
                                 .uri(gatewayServiceProperties.getBaseUrl() + PATIENT_FIND_URL_PATH)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header(HttpHeaders.AUTHORIZATION, token)
+                                .header(HttpHeaders.AUTHORIZATION, authToken)
                                 .header(routingKey, requesterId)
                                 .bodyValue(patientResponse)
                                 .retrieve()

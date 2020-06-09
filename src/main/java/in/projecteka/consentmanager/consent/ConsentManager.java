@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.CMReference;
+import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.Consent;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
@@ -232,7 +233,8 @@ public class ConsentManager {
                                                 consentRequest.getConsentNotificationUrl(),
                                                 requestId,
                                                 GRANTED,
-                                                consentRequest.getLastUpdated())
+                                                consentRequest.getLastUpdated(),
+                                                consentRequest.getHiu())
                                                 .thenReturn(consentApprovalResponse(consents)))));
     }
 
@@ -256,7 +258,8 @@ public class ConsentManager {
                                                  String hiuConsentNotificationUrl,
                                                  String requestId,
                                                  ConsentStatus status,
-                                                 LocalDateTime lastUpdated) {
+                                                 LocalDateTime lastUpdated,
+                                                 HIUReference consentRequest) {
         ConsentArtefactsMessage message = ConsentArtefactsMessage
                 .builder()
                 .status(status)
@@ -264,6 +267,7 @@ public class ConsentManager {
                 .consentRequestId(requestId)
                 .consentArtefacts(consents)
                 .hiuConsentNotificationUrl(hiuConsentNotificationUrl)
+                .hiuId(consentRequest.getId())
                 .build();
         return consentNotificationPublisher.publish(message);
     }
@@ -522,7 +526,8 @@ public class ConsentManager {
                         consentRequestDetail.getConsentNotificationUrl(),
                         "",
                         REVOKED,
-                        consentRepresentation.getDateModified()));
+                        consentRepresentation.getDateModified(),
+                        consentRequestDetail.getHiu()));
     }
 
     public Mono<Void> deny(String id, String patientId) {
@@ -544,7 +549,8 @@ public class ConsentManager {
                         consentRequest.getConsentNotificationUrl(),
                         consentRequest.getRequestId(),
                         consentRequest.getStatus(),
-                        consentRequest.getLastUpdated()));
+                        consentRequest.getLastUpdated(),
+                        consentRequest.getHiu()));
     }
 
     public Mono<ListResult<List<ConsentArtefactRepresentation>>> getAllConsentArtefacts(String username,

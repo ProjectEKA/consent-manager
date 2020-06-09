@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.common.ListenerProperties;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import in.projecteka.consentmanager.consent.model.request.ConsentArtefactReference;
+import in.projecteka.consentmanager.consent.model.request.ConsentNotifier;
 import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -55,7 +57,7 @@ public class HiuConsentNotificationListener {
                 //This is NOT a generic solution. Based on the context, it either needs to retry, or it might also need to propagate the error to the upstream systems.
                 //TODO be revisited during Gateway development
                 if (hasExceededRetryCount(message)) {
-                    amqpTemplate.convertAndSend(PARKING_EXCHANGE,message.getMessageProperties().getReceivedRoutingKey(),message);
+                    amqpTemplate.convertAndSend(PARKING_EXCHANGE, message.getMessageProperties().getReceivedRoutingKey(), message);
                     return;
                 }
                 ConsentArtefactsMessage consentArtefactsMessage =
@@ -77,7 +79,7 @@ public class HiuConsentNotificationListener {
         List<Map<String, ?>> xDeathHeader = in.getMessageProperties().getXDeathHeader();
         if (xDeathHeader != null && !xDeathHeader.isEmpty()) {
             Long count = (Long) xDeathHeader.get(0).get("count");
-            logger.info("[HIU] Number of attempts {}",count);
+            logger.info("[HIU] Number of attempts {}", count);
             return count >= listenerProperties.getMaximumRetries();
         }
         return false;
@@ -85,18 +87,22 @@ public class HiuConsentNotificationListener {
 
     private void notifyHiu(ConsentArtefactsMessage consentArtefactsMessage) {
         HIUNotificationRequest hiuNotificationRequest = hiuNotificationRequest(consentArtefactsMessage);
-        String hiuConsentNotificationUrl = consentArtefactsMessage.getHiuConsentNotificationUrl();
-        consentArtefactNotifier.notifyHiu(hiuNotificationRequest, hiuConsentNotificationUrl).block();
+        String hiuId = consentArtefactsMessage.getHiuId();
+        consentArtefactNotifier.sendConsentArtifactToHIU(hiuNotificationRequest, hiuId).block();
     }
 
     private HIUNotificationRequest hiuNotificationRequest(ConsentArtefactsMessage consentArtefactsMessage) {
         List<ConsentArtefactReference> consentArtefactReferences = consentArtefactReferences(consentArtefactsMessage);
         return HIUNotificationRequest
                 .builder()
-                .status(consentArtefactsMessage.getStatus())
                 .timestamp(consentArtefactsMessage.getTimestamp())
-                .consentArtefacts(consentArtefactReferences)
-                .consentRequestId(consentArtefactsMessage.getConsentRequestId())
+                .requestId(UUID.randomUUID())
+                .notification(ConsentNotifier
+                        .builder()
+                        .consentRequestId(consentArtefactsMessage.getConsentRequestId())
+                        .status(consentArtefactsMessage.getStatus())
+                        .consentArtefacts(consentArtefactReferences)
+                        .build())
                 .build();
     }
 

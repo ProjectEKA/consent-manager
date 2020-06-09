@@ -1,5 +1,8 @@
 package in.projecteka.consentmanager.consent;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
@@ -67,7 +70,7 @@ public class ConsentConfiguration {
                                                 ConceptValidator conceptValidator,
                                                 GatewayServiceProperties gatewayServiceProperties) {
         return new ConsentManager(
-                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate),
+                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate, gatewayServiceProperties),
                 repository,
                 consentArtefactRepository,
                 keyPair,
@@ -78,7 +81,10 @@ public class ConsentConfiguration {
                 new CMProperties(identityService.getConsentManagerId()),
                 conceptValidator,
                 new ConsentArtefactQueryGenerator(),
-                new ConsentManagerClient(builder, gatewayServiceProperties.getBaseUrl(), identityService::authenticate, gatewayServiceProperties));
+                new ConsentManagerClient(builder,
+                        gatewayServiceProperties.getBaseUrl(),
+                        identityService::authenticate,
+                        gatewayServiceProperties));
     }
 
     @Bean
@@ -86,10 +92,7 @@ public class ConsentConfiguration {
             ConsentRequestRepository repository,
             ConsentArtefactRepository consentArtefactRepository,
             ConsentNotificationPublisher consentNotificationPublisher) {
-        return new ConsentScheduler(
-                repository,
-                consentArtefactRepository,
-                consentNotificationPublisher);
+        return new ConsentScheduler(repository, consentArtefactRepository, consentNotificationPublisher);
     }
 
     @Bean
@@ -101,7 +104,10 @@ public class ConsentConfiguration {
 
     @Bean
     public Jackson2JsonMessageConverter converter() {
-        return new Jackson2JsonMessageConverter();
+        var objectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return new Jackson2JsonMessageConverter(objectMapper);
     }
 
     @Bean
@@ -155,13 +161,14 @@ public class ConsentConfiguration {
             OtpServiceProperties otpServiceProperties,
             UserServiceProperties userServiceProperties,
             ConsentServiceProperties consentServiceProperties,
-            IdentityService identityService) {
+            IdentityService identityService,
+            GatewayServiceProperties gatewayServiceProperties) {
         return new ConsentRequestNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 new OtpServiceClient(builder, otpServiceProperties.getUrl()),
-                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate),
+                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate, gatewayServiceProperties),
                 consentServiceProperties);
     }
 
@@ -175,7 +182,7 @@ public class ConsentConfiguration {
 
     @Bean
     public PinVerificationTokenService pinVerificationTokenService(@Qualifier("keySigningPublicKey") PublicKey key,
-                                                                   CacheAdapter<String,String> usedTokens) {
+                                                                   CacheAdapter<String, String> usedTokens) {
         return new PinVerificationTokenService(key, usedTokens);
     }
 }

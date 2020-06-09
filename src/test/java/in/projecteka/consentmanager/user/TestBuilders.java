@@ -3,6 +3,9 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
 import in.projecteka.consentmanager.user.model.LockedUser;
+import in.projecteka.consentmanager.user.model.PatientRequest;
+import in.projecteka.consentmanager.user.model.PatientResponse;
+import in.projecteka.consentmanager.user.model.RequesterDetail;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
@@ -56,5 +59,17 @@ public class TestBuilders {
 
     public static UpdatePasswordRequest.UpdatePasswordRequestBuilder updatePasswordRequest() {
         return easyRandom.nextObject(UpdatePasswordRequest.UpdatePasswordRequestBuilder.class);
+    }
+
+    public static RequesterDetail.RequesterDetailBuilder requester() {
+        return easyRandom.nextObject(RequesterDetail.RequesterDetailBuilder.class);
+    }
+
+    public static PatientResponse.PatientResponseBuilder patient() {
+        return easyRandom.nextObject(PatientResponse.PatientResponseBuilder.class);
+    }
+
+    public static PatientRequest.PatientRequestBuilder patientRequest() {
+        return easyRandom.nextObject(PatientRequest.PatientRequestBuilder.class);
     }
 }

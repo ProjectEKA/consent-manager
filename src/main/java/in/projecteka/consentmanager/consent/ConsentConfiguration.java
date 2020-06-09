@@ -85,7 +85,8 @@ public class ConsentConfiguration {
                 new ConsentManagerClient(builder,
                         gatewayServiceProperties.getBaseUrl(),
                         identityService::authenticate,
-                        gatewayServiceProperties));
+                        gatewayServiceProperties,
+                        centralRegistry));
     }
 
     @Bean

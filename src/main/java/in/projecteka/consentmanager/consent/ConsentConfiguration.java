@@ -121,8 +121,9 @@ public class ConsentConfiguration {
 
     @Bean
     public ConsentArtefactNotifier consentArtefactClient(WebClient.Builder builder,
-                                                         CentralRegistry centralRegistry) {
-        return new ConsentArtefactNotifier(builder, centralRegistry::authenticate);
+                                                         CentralRegistry centralRegistry,
+                                                         GatewayServiceProperties gatewayServiceProperties) {
+        return new ConsentArtefactNotifier(builder, centralRegistry::authenticate, gatewayServiceProperties);
     }
 
     @Bean

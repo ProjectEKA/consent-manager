@@ -69,8 +69,7 @@ public class ConsentArtefactNotifier {
                                 .onStatus(HttpStatus::is5xxServerError,
                                         clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                                 .toBodilessEntity()
-                                .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout()))
-                                .then()
-                );
+                                .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout())))
+                .then();
     }
 }

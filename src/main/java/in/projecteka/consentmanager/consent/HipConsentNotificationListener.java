@@ -54,7 +54,7 @@ public class HipConsentNotificationListener {
                 logger.info("Received notify consent to hip for consent artefact: {}",
                         consentArtefact.getConsentId());
 
-                sendConsentArtefactToHIP(consentArtefact);
+                sendConsentArtefactToHIP(consentArtefact).block();
             } catch (Exception e) {
                 throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
             }
@@ -83,7 +83,7 @@ public class HipConsentNotificationListener {
         return centralRegistry.providerWith(hipId).flatMap(provider -> Mono.just(provider.getProviderUrl()));
     }
 
-    private void sendConsentArtefactToHIP(HIPConsentArtefactRepresentation consentArtefact) {
+    private Mono<Void> sendConsentArtefactToHIP(HIPConsentArtefactRepresentation consentArtefact) {
         String hipId = consentArtefact.getConsentDetail().getHip().getId();
         HIPNotificationRequest notificationRequest = HIPNotificationRequest.builder()
                 .notification(consentArtefact)
@@ -91,6 +91,6 @@ public class HipConsentNotificationListener {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId);
+        return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId);
     }
 }

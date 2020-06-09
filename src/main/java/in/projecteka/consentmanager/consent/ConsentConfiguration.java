@@ -15,6 +15,7 @@ import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.ListenerProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.UserServiceProperties;
 import io.vertx.pgclient.PgPool;
@@ -128,12 +129,16 @@ public class ConsentConfiguration {
             MessageListenerContainerFactory messageListenerContainerFactory,
             DestinationsConfig destinationsConfig,
             Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-            ConsentArtefactNotifier consentArtefactNotifier) {
+            ConsentArtefactNotifier consentArtefactNotifier,
+            AmqpTemplate amqpTemplate,
+            ListenerProperties listenerProperties) {
         return new HiuConsentNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
-                consentArtefactNotifier);
+                consentArtefactNotifier,
+                amqpTemplate,
+                listenerProperties);
     }
 
     @Bean

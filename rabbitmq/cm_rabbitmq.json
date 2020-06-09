@@ -7,6 +7,16 @@
     },
     {
       "name": "cm-dead-letter-exchange",
+      "type": "direct",
+      "arguments": {}
+    },
+    {
+      "name": "gw.exchange",
+      "type": "direct",
+      "arguments": {}
+    },
+    {
+      "name": "gw.dead-letter-exchange",
       "type": "topic",
       "arguments": {}
     },
@@ -22,7 +32,6 @@
       "routing_key": "#",
       "exchange":"cm-dead-letter-exchange",
       "arguments": {
-        "x-dead-letter-exchange": "exchange",
         "x-message-ttl": 10000
       }
     },
@@ -31,7 +40,8 @@
       "routing_key": "hip-data-flow-request-queue",
       "exchange":"exchange",
       "arguments": {
-        "x-dead-letter-exchange": "cm-dead-letter-exchange"
+        "x-dead-letter-exchange": "cm-dead-letter-exchange",
+        "x-dead-letter-routing-key": "cm-dead-letter"
       }
     },
     {
@@ -39,7 +49,8 @@
       "routing_key": "hip-consent-notification-queue",
       "exchange":"exchange",
       "arguments": {
-        "x-dead-letter-exchange": "cm-dead-letter-exchange"
+        "x-dead-letter-exchange": "cm-dead-letter-exchange",
+        "x-dead-letter-routing-key": "cm-dead-letter"
       }
     },
     {
@@ -47,7 +58,8 @@
       "routing_key": "hiu-consent-notification-queue",
       "exchange":"exchange",
       "arguments": {
-        "x-dead-letter-exchange": "cm-dead-letter-exchange"
+        "x-dead-letter-exchange": "cm-dead-letter-exchange",
+        "x-dead-letter-routing-key": "cm-dead-letter"
       }
     },
     {
@@ -55,7 +67,8 @@
       "routing_key": "consent-request-queue",
       "exchange":"exchange",
       "arguments": {
-        "x-dead-letter-exchange": "cm-dead-letter-exchange"
+        "x-dead-letter-exchange": "cm-dead-letter-exchange",
+        "x-dead-letter-routing-key": "cm-dead-letter"
       }
     }
   ]

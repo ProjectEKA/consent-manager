@@ -25,13 +25,6 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import org.springframework.amqp.core.AmqpAdmin;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Exchange;
-import org.springframework.amqp.core.ExchangeBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
@@ -45,11 +38,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
 import java.net.URL;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -155,36 +144,7 @@ public class ConsentManagerConfiguration {
                 new DestinationsConfig.DestinationInfo("exchange", HIP_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_DATA_FLOW_REQUEST_QUEUE,
                 new DestinationsConfig.DestinationInfo("exchange", HIP_DATA_FLOW_REQUEST_QUEUE));
-
-        Queue deadLetterQueue = QueueBuilder.durable(DEAD_LETTER_QUEUE).build();
-        Binding with = BindingBuilder
-                .bind(deadLetterQueue)
-                .to(new DirectExchange(CM_DEAD_LETTER_EXCHANGE))
-                .with(CM_DEAD_LETTER_ROUTING_KEY);
-        amqpAdmin.declareQueue(deadLetterQueue);
-        amqpAdmin.declareExchange(new DirectExchange(CM_DEAD_LETTER_EXCHANGE));
-        amqpAdmin.declareBinding(with);
-
         DestinationsConfig destinationsConfig = new DestinationsConfig(queues, null);
-        destinationsConfig.getQueues()
-                .forEach((key, destination) -> {
-                    Exchange ex = ExchangeBuilder.directExchange(
-                            destination.getExchange())
-                            .durable(true)
-                            .build();
-                    amqpAdmin.declareExchange(ex);
-                    Queue q = QueueBuilder.durable(
-                            destination.getRoutingKey())
-                            .deadLetterExchange(CM_DEAD_LETTER_EXCHANGE)
-                            .deadLetterRoutingKey(CM_DEAD_LETTER_ROUTING_KEY)
-                            .build();
-                    amqpAdmin.declareQueue(q);
-                    Binding b = BindingBuilder.bind(q)
-                            .to(ex)
-                            .with(destination.getRoutingKey())
-                            .noargs();
-                    amqpAdmin.declareBinding(b);
-                });
         return destinationsConfig;
     }
 

@@ -16,7 +16,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
@@ -55,9 +55,8 @@ public class ConsentScheduler {
         }
     }
 
-    private boolean isConsentExpired(Date dateExpiryAt) {
-        Date now = new Date();
-        return dateExpiryAt.before(now);
+    private boolean isConsentExpired(LocalDateTime dateExpiryAt) {
+        return dateExpiryAt.isBefore(LocalDateTime.now());
     }
 
     private Mono<ConsentRepresentation> getConsentRepresentation(String consentId, String requesterId) {
@@ -98,7 +97,7 @@ public class ConsentScheduler {
 
     private Mono<Void> broadcastConsentArtefacts(String hiuConsentNotificationUrl,
                                                  String requestId,
-                                                 Date lastUpdated, String consentId, HIPReference hip, Date createdAt) {
+                                                 LocalDateTime lastUpdated, String consentId, HIPReference hip, LocalDateTime createdAt) {
         HIPConsentArtefactRepresentation hipConsentArtefactRepresentation = HIPConsentArtefactRepresentation
                 .builder()
                 .status(EXPIRED)

@@ -12,30 +12,30 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.to;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 
 public class ConsentRequestRepository {
+    private static final Logger logger = LoggerFactory.getLogger(ConsentRequestRepository.class);
     private static final String SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS;
     private static final String SELECT_CONSENT_REQUEST_BY_ID;
-    private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT;
     private static final String SELECT_CONSENT_REQUEST_BY_STATUS;
-    private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT_BY_STATUS;
-    private static final String SELECT_CONSENT_REQUEST_COUNT_FOR_STATUS = "SELECT COUNT(*) FROM consent_request " +
-            "WHERE patient_id=$1 AND status=$2";
+
+    private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT;
     private static final String SELECT_CONSENT_REQUEST_COUNT = "SELECT COUNT(*) FROM consent_request " +
-            "WHERE patient_id=$1";
+            "WHERE patient_id=$1  and status!=$3 and (status=$2 OR $2 IS NULL)";
     private static final String INSERT_CONSENT_REQUEST_QUERY = "INSERT INTO consent_request " +
             "(request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
@@ -49,8 +49,9 @@ public class ConsentRequestRepository {
     static {
         String s = "SELECT request_id, status, details, date_created, date_modified FROM consent_request " +
                 "where ";
-        SELECT_CONSENT_DETAILS_FOR_PATIENT_BY_STATUS = s + "patient_id=$1 and status=$4 LIMIT $2 OFFSET $3";
-        SELECT_CONSENT_DETAILS_FOR_PATIENT = s + "patient_id=$1 LIMIT $2 OFFSET $3";
+        SELECT_CONSENT_DETAILS_FOR_PATIENT = s + "patient_id=$1 and status!=$5 and (status=$4 OR $4 IS NULL) " +
+                "ORDER BY date_modified DESC" +
+                " LIMIT $2 OFFSET $3";
         SELECT_CONSENT_REQUEST_BY_ID = s + "request_id=$1";
         SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS = s + "request_id=$1 and status=$2 and patient_id=$3";
         SELECT_CONSENT_REQUEST_BY_STATUS = s + "status=$1";
@@ -76,36 +77,16 @@ public class ConsentRequestRepository {
                                 }));
     }
 
-    public Mono<ListResult<List<ConsentRequestDetail>>> requestsForPatientByStatus(String patientId,
-                                                                                   int limit,
-                                                                                   int offset,
-                                                                                   String status) {
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_DETAILS_FOR_PATIENT_BY_STATUS)
-                .execute(Tuple.of(patientId, limit, offset, status),
-                        handler -> {
-                            List<ConsentRequestDetail> requestList = getConsentRequestDetails(handler);
-                            dbClient.preparedQuery(SELECT_CONSENT_REQUEST_COUNT_FOR_STATUS)
-                                    .execute(Tuple.of(patientId, status), counter -> {
-                                                if (handler.failed()) {
-                                                    monoSink.error(new DbOperationError());
-                                                }
-                                                Integer count = counter.result().iterator()
-                                                        .next().getInteger("count");
-                                                monoSink.success(new ListResult<>(requestList, count));
-                                            }
-                                    );
-                        }));
-    }
-
     public Mono<ListResult<List<ConsentRequestDetail>>> requestsForPatient(String patientId,
                                                                            int limit,
-                                                                           int offset) {
+                                                                           int offset,
+                                                                           String status) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_DETAILS_FOR_PATIENT)
-                .execute(Tuple.of(patientId, limit, offset),
+                .execute(Tuple.of(patientId, limit, offset, status, GRANTED.toString()),
                         handler -> {
                             List<ConsentRequestDetail> requestList = getConsentRequestDetails(handler);
                             dbClient.preparedQuery(SELECT_CONSENT_REQUEST_COUNT)
-                                    .execute(Tuple.of(patientId), counter -> {
+                                    .execute(Tuple.of(patientId, status, GRANTED.toString()), counter -> {
                                                 if (handler.failed()) {
                                                     monoSink.error(new DbOperationError());
                                                 }
@@ -145,6 +126,7 @@ public class ConsentRequestRepository {
     private Handler<AsyncResult<RowSet<Row>>> consentRequestHandler(MonoSink<ConsentRequestDetail> monoSink) {
         return handler -> {
             if (handler.failed()) {
+                logger.error(handler.cause().getMessage());
                 monoSink.error(new RuntimeException(UNKNOWN_ERROR_OCCURRED));
                 return;
             }
@@ -163,7 +145,7 @@ public class ConsentRequestRepository {
                 .builder()
                 .requestId(result.getString("request_id"))
                 .status(getConsentStatus(result.getString("status")))
-                .createdAt(convertToDate(result.getLocalDateTime("date_created")))
+                .createdAt(result.getLocalDateTime("date_created"))
                 .hip(details.getHip())
                 .hiu(details.getHiu())
                 .hiTypes(details.getHiTypes())
@@ -172,7 +154,7 @@ public class ConsentRequestRepository {
                 .purpose(details.getPurpose())
                 .requester(details.getRequester())
                 .consentNotificationUrl(details.getConsentNotificationUrl())
-                .lastUpdated(convertToDate(result.getLocalDateTime("date_modified")))
+                .lastUpdated(result.getLocalDateTime("date_modified"))
                 .build();
     }
 
@@ -189,13 +171,6 @@ public class ConsentRequestRepository {
 
     private ConsentStatus getConsentStatus(String status) {
         return ConsentStatus.valueOf(status);
-    }
-
-    private Date convertToDate(LocalDateTime timestamp) {
-        if (timestamp != null) {
-            return Date.from(timestamp.atZone(ZoneId.systemDefault()).toInstant());
-        }
-        return null;
     }
 
     public Flux<ConsentRequestDetail> getConsentsByStatus(ConsentStatus status) {

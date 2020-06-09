@@ -8,5 +8,5 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class GenerateOtpRequest {
-    private String username;
+    private final String username;
 }

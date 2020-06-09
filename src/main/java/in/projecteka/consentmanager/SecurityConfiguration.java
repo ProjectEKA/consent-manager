@@ -37,6 +37,7 @@ import java.util.Optional;
 
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
+import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -60,10 +61,18 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/notification", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/request", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/consent-requests", HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry("/v1/consent-requests/init", HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry("/v1/care-contexts/on-discover", HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry("/v1/links/link/on-init", HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry("/v1/links/link/on-confirm", HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry("/v1/patients/find", HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry("/v1/consents/fetch", HttpMethod.POST));
         RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve", HttpMethod.POST, SCOPE_CONSENT_APPROVE);
         RequestMatcher revokeMatcher = new RequestMatcher("/consents/revoke", HttpMethod.POST, SCOPE_CONSENT_REVOKE);
+        RequestMatcher changePinMatcher = new RequestMatcher("/patients/change-pin", HttpMethod.POST, SCOPE_CHANGE_PIN);
         PIN_VERIFICATION_MATCHERS.add(approveMatcher);
         PIN_VERIFICATION_MATCHERS.add(revokeMatcher);
+        PIN_VERIFICATION_MATCHERS.add(changePinMatcher);
     }
 
 
@@ -77,6 +86,9 @@ public class SecurityConfiguration {
                                           "/ValueSet/**.json",
                                           "/patients/generateotp",
                                           "/patients/verifyotp",
+                                          "/patients/profile/loginmode",
+                                          "/patients/profile/recovery-init",
+                                          "/patients/profile/recovery-confirm",
                                           "/users/verify",
                                           "/users/permit",
                                           "/otpsession/verify",
@@ -145,12 +157,12 @@ public class SecurityConfiguration {
             if (isSignUpRequest(requestPath, requestMethod)) {
                 return checkSignUp(token);
             }
-            if (isGrantOrRevokeConsentRequest(requestPath, requestMethod)) {
+            if (isPinVerificationRequest(requestPath, requestMethod)) {
                 Optional<String> validScope = getScope(requestPath,requestMethod);
                 if(validScope.isEmpty()) {
                     return Mono.empty();//TODO handle better?
                 }
-                return validateGrantOrRevokeConsentRequest(token, validScope.get());
+                return validatePinVerificationRequest(token, validScope.get());
             }
             if (isCentralRegistryAuthenticatedOnlyRequest(
                     requestPath,
@@ -171,7 +183,7 @@ public class SecurityConfiguration {
                     .map(SecurityContextImpl::new);
         }
 
-        private Mono<SecurityContext> validateGrantOrRevokeConsentRequest(String token, String validScope) {
+        private Mono<SecurityContext> validatePinVerificationRequest(String token, String validScope) {
             return pinVerificationTokenService.validateToken(token, validScope)
                     .map(caller -> new UsernamePasswordAuthenticationToken(
                             caller,
@@ -187,7 +199,7 @@ public class SecurityConfiguration {
                             antPathMatcher.match(pattern.getKey(), url) && pattern.getValue().equals(method));
         }
 
-        private boolean isGrantOrRevokeConsentRequest(String url, HttpMethod method) {
+        private boolean isPinVerificationRequest(String url, HttpMethod method) {
             AntPathMatcher antPathMatcher = new AntPathMatcher();
             return PIN_VERIFICATION_MATCHERS.stream()
                     .anyMatch(matcher ->
@@ -227,7 +239,8 @@ public class SecurityConfiguration {
         }
 
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
-            boolean isSignUp = (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) || (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod));
+            boolean isSignUp = (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
+                    (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod));
             return isSignUp;
         }
     }

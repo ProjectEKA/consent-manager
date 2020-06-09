@@ -30,72 +30,80 @@ import javax.validation.Valid;
 @RestController
 @AllArgsConstructor
 public class ConsentRequestController {
-    private final ConsentManager consentManager;
-    private final ConsentServiceProperties serviceProperties;
-    private final CacheAdapter<String, String> usedTokens;
-    private static final Logger logger = LoggerFactory.getLogger(ConsentRequestController.class);
+	private final ConsentManager consentManager;
+	private final ConsentServiceProperties serviceProperties;
+	private final CacheAdapter<String, String> usedTokens;
+	private static final Logger logger = LoggerFactory.getLogger(ConsentRequestController.class);
 
-    @InitBinder("consentRequest")
-    protected void initBinder(WebDataBinder binder) {
-        binder.addValidators(new ConsentRequestValidator());
-    }
+	@InitBinder("consentRequest")
+	protected void initBinder(WebDataBinder binder) {
+		binder.addValidators(new ConsentRequestValidator());
+	}
 
-    @PostMapping(value = "/consent-requests")
-    public Mono<RequestCreatedRepresentation> requestConsent(
+	@PostMapping(value = "/consent-requests")
+	public Mono<RequestCreatedRepresentation> requestConsent(
+			@RequestBody @Valid @ModelAttribute("consentRequest") ConsentRequest request) {
+		return consentManager.askForConsent(request.getConsent(), request.getRequestId())
+				.map(ConsentRequestController::buildResponse);
+	}
+
+    @PostMapping(value = "/v1/consent-requests/init")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public Mono<Void> initConsentRequest(
             @RequestBody @Valid @ModelAttribute("consentRequest") ConsentRequest request) {
-        return consentManager.askForConsent(request.getConsent(), request.getRequestId())
-                .map(ConsentRequestController::buildResponse);
+        return consentManager.requestConsent(request.getConsent(), request.getRequestId());
     }
 
-    @GetMapping(value = "/consent-requests")
-    public Mono<ConsentRequestsRepresentation> allConsents(
-            @RequestParam(defaultValue = "-1") int limit,
-            @RequestParam(defaultValue = "0") int offset,
-            @RequestParam(defaultValue = "ALL") String status) {
-        int pageSize = getPageSize(limit);
-        return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller -> consentManager.findRequestsForPatient(caller.getUsername(), pageSize, offset, status))
-                .map(requests -> ConsentRequestsRepresentation.builder()
-                        .size(requests.getTotal())
-                        .requests(requests.getResult())
-                        .limit(pageSize)
-                        .offset(offset)
-                        .build());
-    }
+	@GetMapping(value = "/consent-requests")
+	public Mono<ConsentRequestsRepresentation> allConsents(
+			@RequestParam(defaultValue = "-1") int limit,
+			@RequestParam(defaultValue = "0") int offset,
+			@RequestParam(defaultValue = "ALL") String status) {
+		int pageSize = getPageSize(limit);
+		return ReactiveSecurityContextHolder.getContext()
+				.map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+				.flatMap(caller -> consentManager
+						.findRequestsForPatient(caller.getUsername(), pageSize, offset, status))
+				.map(requests -> ConsentRequestsRepresentation.builder()
+						.size(requests.getTotal())
+						.requests(requests.getResult())
+						.limit(pageSize)
+						.offset(offset)
+						.build());
+	}
 
-    private int getPageSize(int limit) {
-        if (limit < 0) {
-            return serviceProperties.getDefaultPageSize();
-        }
-        return Math.min(limit, serviceProperties.getMaxPageSize());
-    }
+	private int getPageSize(int limit) {
+		if (limit < 0) {
+			return serviceProperties.getDefaultPageSize();
+		}
+		return Math.min(limit, serviceProperties.getMaxPageSize());
+	}
 
-    private static RequestCreatedRepresentation buildResponse(String requestId) {
-        return RequestCreatedRepresentation.builder().consentRequestId(requestId).build();
-    }
+	private static RequestCreatedRepresentation buildResponse(String requestId) {
+		return RequestCreatedRepresentation.builder().consentRequestId(requestId).build();
+	}
 
-    @PostMapping(value = "/consent-requests/{request-id}/approve")
-    public Mono<ConsentApprovalResponse> approveConsent(
-            @PathVariable(value = "request-id") String requestId,
-            @Valid @RequestBody ConsentApprovalRequest consentApprovalRequest) {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller ->
-                        consentManager.
-                                approveConsent(caller.getUsername(), requestId, consentApprovalRequest.getConsents())
-                                .flatMap(response -> {
-                                    logger.debug("[approve] putting {} in used tokens",caller.getSessionId());
-                                    return usedTokens.put(caller.getSessionId(),"").thenReturn(response);
-                                }));
-    }
+	@PostMapping(value = "/consent-requests/{request-id}/approve")
+	public Mono<ConsentApprovalResponse> approveConsent(
+			@PathVariable(value = "request-id") String requestId,
+			@Valid @RequestBody ConsentApprovalRequest consentApprovalRequest) {
+		return ReactiveSecurityContextHolder.getContext()
+				.map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+				.flatMap(caller ->
+						consentManager
+								.approveConsent(caller.getUsername(), requestId, consentApprovalRequest.getConsents())
+								.doOnSuccess(discard -> {
+									logger.debug("[approve] putting {} in used tokens", caller.getSessionId());
+									usedTokens.put(caller.getSessionId(), "").subscribe();
+								}));
+	}
 
-    @PostMapping(value = "/consent-requests/{id}/deny")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> deny(@PathVariable(value = "id") String id) {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUsername)
-                .flatMap(username -> consentManager.deny(id, username));
-    }
+	@PostMapping(value = "/consent-requests/{id}/deny")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public Mono<Void> deny(@PathVariable(value = "id") String id) {
+		return ReactiveSecurityContextHolder.getContext()
+				.map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+				.map(Caller::getUsername)
+				.flatMap(username -> consentManager.deny(id, username));
+	}
 }

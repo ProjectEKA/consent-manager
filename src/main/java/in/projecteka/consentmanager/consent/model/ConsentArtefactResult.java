@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 import java.util.UUID;
@@ -14,6 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Data
 @Builder
+@ToString
 public class ConsentArtefactResult {
     private UUID requestId;
     private String timestamp;

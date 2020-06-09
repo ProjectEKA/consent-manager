@@ -407,36 +407,15 @@ class ConsentManagerTest {
     @Test
     void CallGatewayWhenConsentArtefactNotFound() {
         var consentId = string();
-        var requestId = UUID.randomUUID();
-        var requesterId = string();
+        // It will be empty because CM does not know which HIU id made this request
+        String requesterId = "";
         when(consentArtefactRepository.getConsentArtefact(consentId)).thenReturn(Mono.empty());
         when(consentManagerClient.sendConsentArtefactResponseToGateway(consentArtefactResponsecaptor.capture(),
                 eq(requesterId))).thenReturn(Mono.empty());
 
-        var consentProducer = consentManager.getConsent(consentId, requestId, requesterId);
+        var consentProducer = consentManager.getConsent(consentId, UUID.randomUUID());
 
-        StepVerifier.create(consentProducer)
-                .verifyComplete();
-        assertThat(consentArtefactResponsecaptor.getValue().getConsent()).isNull();
-        assertThat(consentArtefactResponsecaptor.getValue().getError()).isNotNull();
-    }
-
-    @Test
-    void callGatewayWithForbiddenErrorMessageWhenConsentRequesterIdDoesntMatch() {
-        var consentId = string();
-        var requestId = UUID.randomUUID();
-        var callerHIUId = string();
-        var actualHIUId = string();
-        var consentArtefact = consentArtefactRepresentation().consentDetail(
-                consentArtefact().hiu(new HIUReference(actualHIUId)).build()).build();
-        when(consentArtefactRepository.getConsentArtefact(consentId)).thenReturn(Mono.just(consentArtefact));
-        when(consentManagerClient.sendConsentArtefactResponseToGateway(consentArtefactResponsecaptor.capture(),
-                eq(callerHIUId))).thenReturn(Mono.empty());
-
-        var consentProducer = consentManager.getConsent(consentId, requestId, callerHIUId);
-
-        StepVerifier.create(consentProducer)
-                .verifyComplete();
+        StepVerifier.create(consentProducer).verifyComplete();
         assertThat(consentArtefactResponsecaptor.getValue().getConsent()).isNull();
         assertThat(consentArtefactResponsecaptor.getValue().getError()).isNotNull();
     }
@@ -454,7 +433,7 @@ class ConsentManagerTest {
         when(consentManagerClient.sendConsentArtefactResponseToGateway(consentArtefactResponsecaptor.capture(),
                 eq(callerHIUId))).thenReturn(Mono.empty());
 
-        var consentProducer = consentManager.getConsent(consentId, requestId, callerHIUId);
+        var consentProducer = consentManager.getConsent(consentId, requestId);
 
         StepVerifier.create(consentProducer)
                 .verifyComplete();

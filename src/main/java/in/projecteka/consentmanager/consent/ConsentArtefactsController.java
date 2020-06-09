@@ -85,7 +85,7 @@ public class ConsentArtefactsController {
       return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .doOnSuccess(requester -> {
-                    Mono.defer(() -> consentManager.getConsent(fetchRequest.getConsentId(), fetchRequest.getRequestId(), requester.getUsername())).subscribe();
+                    Mono.defer(() -> consentManager.getConsent(fetchRequest.getConsentId(), fetchRequest.getRequestId())).subscribe();
                 })
                 .then();
     }

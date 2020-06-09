@@ -43,7 +43,7 @@ public class ConsentManagerClient {
     }
 
     public Mono<Void> sendInitResponseToGateway(ConsentRequestResult consentRequestResult, String hiuId) {
-        return tokenGenerator.get()
+        return centralRegistry.authenticate()
                 .flatMap(token ->
                         webClientBuilder.build()
                                 .post().uri(gatewayServiceProperties.getBaseUrl() + CONSENT_REQUEST_INIT_URL_PATH)

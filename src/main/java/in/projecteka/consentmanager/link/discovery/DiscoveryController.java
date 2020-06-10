@@ -34,17 +34,6 @@ public class DiscoveryController {
         return discovery.providerBy(providerId);
     }
 
-    @PostMapping("/patients/discover/carecontexts")
-    public Mono<DiscoveryResponse> findPatient(@RequestBody @Valid DiscoveryRequest discoveryRequest) {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUsername)
-                .flatMap(user -> discovery.patientFor(user,
-                        discoveryRequest.getUnverifiedIdentifiers(),
-                        discoveryRequest.getHip().getId(),
-                        newRequest(),
-                        discoveryRequest.getRequestId()));
-    }
 
     @PostMapping("/v1/care-contexts/discover")
     public Mono<DiscoveryResponse> discoverPatientCareContexts(@RequestBody @Valid DiscoveryRequest discoveryRequest) {

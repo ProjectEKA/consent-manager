@@ -13,7 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static in.projecteka.consentmanager.clients.ClientError.invalidOtp;
@@ -58,23 +57,24 @@ public class IdentityServiceClient {
                 .accept(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromFormData(formData))
                 .retrieve()
-                .onStatus(httpStatus -> httpStatus.value() == 401, clientResponse -> clientResponse.bodyToMono(KeyCloakError.class)
-                        .flatMap(keyCloakError -> {
-                            String keyCloakErrorValue = keyCloakError.getError();
-                            switch (keyCloakErrorValue) {
-                                case "1002":
-                                    return Mono.error(invalidOtp());
-                                case "1003":
-                                    return Mono.error(otpExpired());
-                                default:
-                                    return Mono.error(unknownUnauthroziedError(keyCloakError.getErrorDescription()));
-                            }
-                        }))
+                .onStatus(httpStatus -> httpStatus.value() == 401,
+                        clientResponse -> clientResponse.bodyToMono(KeyCloakError.class)
+                                .flatMap(keyCloakError -> {
+                                    String keyCloakErrorValue = keyCloakError.getError();
+                                    switch (keyCloakErrorValue) {
+                                        case "1002":
+                                            return Mono.error(invalidOtp());
+                                        case "1003":
+                                            return Mono.error(otpExpired());
+                                        default:
+                                            return Mono.error(unknownUnauthroziedError(keyCloakError.getErrorDescription()));
+                                    }
+                                }))
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(Session.class);
     }
 
-    public Flux<KeyCloakUserRepresentation> getUser(String userName, String accessToken) {
+    public Mono<KeyCloakUserRepresentation> getUser(String userName, String accessToken) {
         String uri = format("/admin/realms/consent-manager/users?username=%s", userName);
         return webClientBuilder.build()
                 .get()
@@ -84,10 +84,11 @@ public class IdentityServiceClient {
                 .retrieve()
                 .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(userNotFound()))
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(networkServiceCallFailed()))
-                .bodyToFlux(KeyCloakUserRepresentation.class);
+                .bodyToFlux(KeyCloakUserRepresentation.class)
+                .singleOrEmpty();
     }
 
-    public Flux<KeyCloakUserCredentialRepresentation> getCredentials(String userId, String accessToken) {
+    public Mono<KeyCloakUserCredentialRepresentation> getCredentials(String userId, String accessToken) {
         String uri = format("/admin/realms/consent-manager/users/%s/credentials", userId);
         return webClientBuilder.build()
                 .get()
@@ -97,7 +98,8 @@ public class IdentityServiceClient {
                 .retrieve()
                 .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(userNotFound()))
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(networkServiceCallFailed()))
-                .bodyToFlux(KeyCloakUserCredentialRepresentation.class);
+                .bodyToFlux(KeyCloakUserCredentialRepresentation.class)
+                .singleOrEmpty();
     }
 
     public Mono<Void> logout(MultiValueMap<String, String> formData) {
@@ -112,14 +114,12 @@ public class IdentityServiceClient {
                 .bodyToMono(Void.class);
     }
 
-    public Mono<Void> updateUser(Session session, String keyCloakUserId, String userPassword) {
-        String accessToken = format("Bearer %s", session.getAccessToken());
+    public Mono<Void> updateUser(String accessToken, String keyCloakUserId, String userPassword) {
         String uri = format("/admin/realms/consent-manager/users/%s/reset-password", keyCloakUserId);
         KeyCloakUserPasswordChangeRequest keyCloakUserPasswordChangeRequest = KeyCloakUserPasswordChangeRequest
                 .builder()
                 .value(userPassword)
                 .build();
-
         return webClientBuilder.build()
                 .put()
                 .uri(uriBuilder ->

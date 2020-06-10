@@ -68,7 +68,9 @@ consentmanager:
     url: http://localhost:9000
     txnTimeout: 5000
   cacheMethod: guava
-
+  listeners:
+    maximumRetries: 3
+    retryInterval: 10000
 spring:
   rabbitmq:
     host: localhost

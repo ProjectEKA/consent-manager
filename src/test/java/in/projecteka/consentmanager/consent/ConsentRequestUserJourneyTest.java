@@ -3,15 +3,23 @@ package in.projecteka.consentmanager.consent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.consent.model.AccessPeriod;
+import in.projecteka.consentmanager.consent.model.ConsentPermission;
+import in.projecteka.consentmanager.consent.model.ConsentPurpose;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
+import in.projecteka.consentmanager.consent.model.HIPReference;
+import in.projecteka.consentmanager.consent.model.HIType;
+import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
@@ -40,12 +48,15 @@ import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static com.google.common.net.HttpHeaders.AUTHORIZATION;
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentRequest;
 import static in.projecteka.consentmanager.consent.TestBuilders.notificationMessage;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
@@ -62,7 +73,7 @@ import static org.mockito.Mockito.when;
 
 
 @ExtendWith(SpringExtension.class)
-@AutoConfigureWebTestClient
+@AutoConfigureWebTestClient(timeout = "6000")
 @ContextConfiguration(initializers = ConsentRequestUserJourneyTest.PropertyInitializer.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ConsentRequestUserJourneyTest {
@@ -73,16 +84,16 @@ public class ConsentRequestUserJourneyTest {
     private DestinationsConfig destinationsConfig;
 
     @MockBean
-    private ConsentRequestRepository repository;
+    private HipConsentNotificationListener hipConsentNotificationListener;
 
     @MockBean
     private HiuConsentNotificationListener hiuConsentNotificationListener;
 
     @MockBean
-    private HipConsentNotificationListener hipConsentNotificationListener;
+    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
+    private ConsentRequestRepository repository;
 
     @MockBean
     private ConsentArtefactRepository consentArtefactRepository;
@@ -119,6 +130,9 @@ public class ConsentRequestUserJourneyTest {
     @MockBean
     private ConceptValidator conceptValidator;
 
+    @MockBean
+    private ConsentManagerClient consentManagerClient;
+
     @Captor
     private ArgumentCaptor<ConsentRequest> captor;
 
@@ -126,6 +140,7 @@ public class ConsentRequestUserJourneyTest {
     private static final MockWebServer userServer = new MockWebServer();
     private static final MockWebServer identityServer = new MockWebServer();
     private static final MockWebServer patientLinkServer = new MockWebServer();
+    private static final MockWebServer gatewayServer = new MockWebServer();
     private static final String CONSENT_GRANT_JSON = "{\n" +
             "    \"consents\": [\n" +
             "        {\n" +
@@ -144,10 +159,10 @@ public class ConsentRequestUserJourneyTest {
             "            \"permission\": {\n" +
             "                \"accessMode\": \"VIEW\",\n" +
             "                \"dateRange\": {\n" +
-            "                    \"from\": \"2020-01-16T08:47:48.000+0000\",\n" +
-            "                    \"to\": \"2020-04-29T08:47:48.000+0000\"\n" +
+            "                    \"from\": \"2020-01-16T08:47:48.000\",\n" +
+            "                    \"to\": \"2020-04-29T08:47:48.000\"\n" +
             "                },\n" +
-            "                \"dataEraseAt\": \"2020-05-29T08:47:48.000+0000\",\n" +
+            "                \"dataEraseAt\": \"2020-05-29T08:47:48.000\",\n" +
             "                \"frequency\": {\n" +
             "                    \"unit\": \"HOUR\",\n" +
             "                    \"value\": 1,\n" +
@@ -164,11 +179,12 @@ public class ConsentRequestUserJourneyTest {
         userServer.shutdown();
         identityServer.shutdown();
         patientLinkServer.shutdown();
+        gatewayServer.shutdown();
     }
 
     private final String requestedConsentJson = "{\n" +
             "            \"status\": \"REQUESTED\",\n" +
-            "            \"createdAt\": \"2020-03-14T10:51:05.466+0000\",\n" +
+            "            \"createdAt\": \"2020-03-14T10:51:05.466\",\n" +
             "            \"purpose\": {\n" +
             "                \"text\": \"EPISODE_OF_CARE\",\n" +
             "                \"code\": \"EpisodeOfCare\",\n" +
@@ -191,10 +207,10 @@ public class ConsentRequestUserJourneyTest {
             "            \"permission\": {\n" +
             "                \"accessMode\": \"VIEW\",\n" +
             "                \"dateRange\": {\n" +
-            "                    \"from\": \"2020-03-14T10:50:45.032+0000\",\n" +
-            "                    \"to\": \"2020-03-14T10:50:45.032+0000\"\n" +
+            "                    \"from\": \"2020-03-14T10:50:45.032\",\n" +
+            "                    \"to\": \"2020-03-14T10:50:45.032\"\n" +
             "                },\n" +
-            "                \"dataEraseAt\": \"2020-03-18T10:50:00.000+0000\",\n" +
+            "                \"dataEraseAt\": \"2020-03-18T10:50:00.000\",\n" +
             "                \"frequency\": {\n" +
             "                    \"unit\": \"HOUR\",\n" +
             "                    \"value\": 1,\n" +
@@ -202,7 +218,7 @@ public class ConsentRequestUserJourneyTest {
             "                }\n" +
             "            },\n" +
             "            \"consentNotificationUrl\": \"http://hiu:8003\",\n" +
-            "            \"lastUpdated\": \"2020-03-14T12:00:52.091+0000\",\n" +
+            "            \"lastUpdated\": \"2020-03-14T12:00:52.091\",\n" +
             "            \"id\": \"30d02f6d-de17-405e-b4ab-d31b2bb799d7\"\n" +
             "        }";
 
@@ -559,6 +575,59 @@ public class ConsentRequestUserJourneyTest {
                 .expectBody(in.projecteka.consentmanager.clients.model.Error.class);
     }
 
+    @Test
+    public void shouldAcceptInitConsentRequest() {
+        var authToken = string();
+        var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
+        String HIUId = "MAX-ID";
+        LocalDateTime fromDate = LocalDateTime.now();
+        LocalDateTime toDate = LocalDateTime.now().plusMinutes(1);
+        AccessPeriod dateRange = AccessPeriod.builder().fromDate(fromDate).toDate(toDate).build();
+        ConsentPermission permission = ConsentPermission.builder().dateRange(dateRange).build();
+        RequestedDetail requestedDetail = RequestedDetail.builder()
+                .purpose(new ConsentPurpose())
+                .patient(PatientReference.builder().build())
+                .permission(permission)
+                .hiu(HIUReference.builder().build())
+                .hip(HIPReference.builder().build())
+                .hiTypes(HIType.values())
+                .build();
+        in.projecteka.consentmanager.consent.model.request.ConsentRequest consentRequest = consentRequest()
+                .consent(requestedDetail)
+                .build();
+
+        when(authenticator.verify(authToken)).thenReturn(Mono.just(new Caller("user-id", false)));
+        when(centralRegistryTokenVerifier.verify(authToken))
+                .thenReturn(Mono.just(new Caller("TEST_USERNAME", true)));
+        when(repository.insert(any(), any())).thenReturn(Mono.empty());
+        when(repository.requestOf(anyString())).thenReturn(Mono.empty());
+        when(conceptValidator.validatePurpose(any())).thenReturn(Mono.just(true));
+        when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
+        when(consentManagerClient.sendInitResponseToGateway(any(), eq(HIUId)))
+                .thenReturn(Mono.empty());
+
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
+        load(clientRegistryServer, session);
+        load(identityServer, "{}");
+        load(identityServer, "{}");
+        load(userServer, "{}");
+        load(gatewayServer, "{}");
+        gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+
+        webTestClient.post()
+                .uri("/v1/consent-requests/init")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, authToken)
+                .body(BodyInserters.fromValue(consentRequest))
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+    }
+
     public static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(ConfigurableApplicationContext applicationContext) {
@@ -567,7 +636,8 @@ public class ConsentRequestUserJourneyTest {
                             "consentmanager.userservice.url=" + userServer.url(""),
                             "consentmanager.consentservice.maxPageSize=50",
                             "consentmanager.keycloak.baseUrl=" + identityServer.url(""),
-                            "consentmanager.linkservice.url=" + patientLinkServer.url("")));
+                            "consentmanager.linkservice.url=" + patientLinkServer.url(""),
+                            "consentmanager.gatewayservice.baseUrl=" + gatewayServer.url("")));
             values.applyTo(applicationContext);
         }
     }

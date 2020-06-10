@@ -13,13 +13,14 @@ import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
+import in.projecteka.consentmanager.dataflow.model.DateRange;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
-import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
-import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
-import in.projecteka.consentmanager.dataflow.model.DateRange;
+import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
 import in.projecteka.consentmanager.dataflow.model.HIUReference;
+import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
+import in.projecteka.consentmanager.dataflow.model.ConsentPermission;
+import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
@@ -41,11 +42,16 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
-import static in.projecteka.consentmanager.dataflow.TestBuilders.*;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.string;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequestMessage;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.provider;
+
 import static in.projecteka.consentmanager.dataflow.Utils.toDate;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -117,23 +123,22 @@ public class DataFlowRequesterUserJourneyTest {
     }
 
     @Test
-    public void shouldAcknowledgeDataFlowRequest() throws IOException, ParseException {
+    void shouldAcknowledgeDataFlowRequest() throws IOException {
         String token = string();
         var hiuId = "10000005";
         var dataFlowRequest = dataFlowRequest().dateRange(DateRange.builder()
-                .from(toDate("2020-01-16T08:47:48Z"))
-                .to(toDate("2020-01-20T08:47:48Z"))
+                .from(toDate("2020-01-16T08:47:48"))
+                .to(toDate("2020-01-20T08:47:48"))
                 .build()).build();
         ConsentArtefactRepresentation consentArtefactRepresentation =
                 consentArtefactRepresentation().status(ConsentStatus.GRANTED).build();
         consentArtefactRepresentation.getConsentDetail().getPermission().
                 setDateRange(AccessPeriod.builder()
-                        .fromDate(toDate("2020-01-15T08:47:48Z"))
-                        .toDate(toDate("2020-01-29T08:47:48Z"))
+                        .fromDate(toDate("2020-01-15T08:47:48"))
+                        .toDate(toDate("2020-01-29T08:47:48"))
                         .build());
         consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
-        var consentExpiryDate = new Date();
-        consentExpiryDate.setTime(consentExpiryDate.getTime() + 9000000);
+        LocalDateTime consentExpiryDate = LocalDateTime.now().plusSeconds(9000000);
         consentArtefactRepresentation.getConsentDetail().getPermission().setDataEraseAt(consentExpiryDate);
         var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
         consentManagerServer.enqueue(
@@ -162,16 +167,23 @@ public class DataFlowRequesterUserJourneyTest {
     }
 
     @Test
-    public void shouldThrowConsentArtefactExpired() throws IOException, ParseException {
+    void shouldThrowConsentArtefactExpired() throws IOException {
         String token = string();
         var hiuId = "10000005";
-        var dataFlowRequest = dataFlowRequest().build();
+        var dataFlowRequest = dataFlowRequest()
+                .dateRange(DateRange.builder()
+                        .from(toDate("2020-01-14T08:47:48"))
+                        .to(toDate("2020-01-20T08:47:48")).build())
+                .build();
+
         var consentArtefactRepresentation = consentArtefactRepresentation().build();
         consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
-        consentArtefactRepresentation
+        ConsentPermission permission = consentArtefactRepresentation
                 .getConsentDetail()
-                .getPermission()
-                .setDataEraseAt(toDate("2020-01-15T08:47:48Z"));
+                .getPermission();
+        permission.setDateRange(AccessPeriod.builder().fromDate(toDate("2020-01-14T08:47:48")).toDate(toDate("2020" +
+                "-01-20T08:47:48")).build());
+        permission.setDataEraseAt(toDate("2020-01-15T08:47:48"));
         var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_EXPIRED,
                 "Consent artefact expired"));
@@ -200,7 +212,7 @@ public class DataFlowRequesterUserJourneyTest {
     }
 
     @Test
-    public void shouldThrowInvalidRequester() throws IOException {
+    void shouldThrowInvalidRequester() throws IOException {
         String token = string();
         var dataFlowRequest = dataFlowRequest().build();
         var consentArtefactRepresentation = consentArtefactRepresentation().build();
@@ -234,24 +246,24 @@ public class DataFlowRequesterUserJourneyTest {
     }
 
     @Test
-    public void shouldThrowInvalidDateRange() throws IOException, ParseException {
+    void shouldThrowInvalidDateRange() throws IOException {
         String token = string();
         var hiuId = "10000005";
         var dataFlowRequest = dataFlowRequest()
                 .dateRange(DateRange.builder()
-                        .from(toDate("2020-01-14T08:47:48Z"))
-                        .to(toDate("2020-01-20T08:47:48Z")).build())
+                        .from(toDate("2020-01-14T08:47:48"))
+                        .to(toDate("2020-01-20T08:47:48")).build())
                 .build();
+
         var consentArtefactRepresentation = consentArtefactRepresentation().build();
         consentArtefactRepresentation.getConsentDetail().getPermission().
                 setDateRange(AccessPeriod.builder()
-                        .fromDate(toDate("2020-01-15T08:47:48Z"))
-                        .toDate(toDate("2020-01-29T08:47:48Z"))
+                        .fromDate(toDate("2020-01-15T08:47:48"))
+                        .toDate(toDate("2020-01-29T08:47:48"))
                         .build());
         consentArtefactRepresentation.setStatus(ConsentStatus.GRANTED);
         consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
-        var consentExpiryDate = new Date();
-        consentExpiryDate.setTime(consentExpiryDate.getTime() + 9000000);
+        LocalDateTime consentExpiryDate = LocalDateTime.now().plusMinutes(1);
         consentArtefactRepresentation.getConsentDetail().getPermission().setDataEraseAt(consentExpiryDate);
         var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.INVALID_DATE_RANGE, "Date Range given is " +
@@ -282,18 +294,17 @@ public class DataFlowRequesterUserJourneyTest {
     }
 
     @Test
-    public void shouldThrowConsentNotGranted() throws IOException, ParseException {
+    void shouldThrowConsentNotGranted() throws IOException {
         String token = string();
         var hiuId = "10000005";
         var dataFlowRequest = dataFlowRequest()
                 .dateRange(DateRange.builder()
-                        .from(toDate("2020-01-14T08:47:48Z"))
-                        .to(toDate("2020-01-20T08:47:48Z")).build())
+                        .from(toDate("2020-01-14T08:47:48"))
+                        .to(toDate("2020-01-20T08:47:48")).build())
                 .build();
         var consentArtefactRepresentation = consentArtefactRepresentation().status(ConsentStatus.REVOKED).build();
         consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
-        var consentExpiryDate = new Date();
-        consentExpiryDate.setTime(consentExpiryDate.getTime() + 9000000);
+        LocalDateTime consentExpiryDate = LocalDateTime.now().plusSeconds(9000000);
         consentArtefactRepresentation.getConsentDetail().getPermission().setDataEraseAt(consentExpiryDate);
         var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
         var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_NOT_GRANTED, "Not a granted consent."));

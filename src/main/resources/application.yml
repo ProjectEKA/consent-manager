@@ -70,6 +70,10 @@ consentmanager:
     host: ${REDIS_HOST}
     port: 6379
     password: ${REDIS_PASSWORD}
+  listeners:
+    maximumRetries: ${LISTENERS_MAXIMUM_RETRIES}
+    # In milliseconds
+    retryInterval: ${LISTENERS_RETRY_INTERVAL}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}

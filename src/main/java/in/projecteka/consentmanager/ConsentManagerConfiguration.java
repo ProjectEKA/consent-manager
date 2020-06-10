@@ -11,6 +11,7 @@ import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.ListenerProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
@@ -25,6 +26,13 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import org.springframework.amqp.core.AmqpAdmin;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Exchange;
+import org.springframework.amqp.core.ExchangeBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
@@ -51,7 +59,8 @@ public class ConsentManagerConfiguration {
     public static final String CONSENT_REQUEST_QUEUE = "consent-request-queue";
     public static final String DEAD_LETTER_QUEUE = "cm-dead-letter-queue";
     private static final String CM_DEAD_LETTER_EXCHANGE = "cm-dead-letter-exchange";
-    private static final String CM_DEAD_LETTER_ROUTING_KEY = "cm-dead-letter";
+    public static final String PARKING_EXCHANGE = "parking.exchange";
+    public static final String PARKING_QUEUE = "parking.queue";
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"accessToken"})
@@ -135,7 +144,7 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public DestinationsConfig destinationsConfig(AmqpAdmin amqpAdmin) {
+    public DestinationsConfig destinationsConfig(AmqpAdmin amqpAdmin, ListenerProperties listenerProperties) {
         HashMap<String, DestinationsConfig.DestinationInfo> queues = new HashMap<>();
         queues.put(CONSENT_REQUEST_QUEUE, new DestinationsConfig.DestinationInfo("exchange", CONSENT_REQUEST_QUEUE));
         queues.put(HIU_CONSENT_NOTIFICATION_QUEUE,

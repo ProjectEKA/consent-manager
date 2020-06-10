@@ -1,23 +1,16 @@
 package in.projecteka.consentmanager.dataflow;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Utils {
-    public static Date toDate(String date) throws ParseException {
-        TimeZone tz = TimeZone.getTimeZone("UTC");
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        df.setTimeZone(tz);
-        return df.parse(date);
+    public static LocalDateTime toDate(String date) {
+        String pattern = "yyyy-MM-dd['T'HH[:mm][:ss][.SSS][+0000]]";
+        return LocalDateTime.parse(date, DateTimeFormatter.ofPattern(pattern));
     }
 
-    public static Date toDateWithMilliSeconds(String dateExpiryAt) throws ParseException {
-        long timeInMillis = Long.parseLong(dateExpiryAt);
-        Date date = new Date(timeInMillis);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+0000'");
-        return sdf.parse(sdf.format(date));
+    public static LocalDateTime toDateWithMilliSeconds(String dateExpiryAt) {
+        return new Timestamp(Long.parseLong(dateExpiryAt)).toLocalDateTime();
     }
 }

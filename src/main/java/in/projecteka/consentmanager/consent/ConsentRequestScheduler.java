@@ -12,9 +12,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,17 +47,16 @@ public class ConsentRequestScheduler {
                 });
     }
 
-    private boolean isConsentRequestExpired(Date createdAt) {
-        Instant requestExpiry =
-                createdAt.toInstant().plus(Duration.ofMinutes(consentServiceProperties.getConsentRequestExpiry()));
-        return requestExpiry.isBefore(new Date().toInstant());
+    private boolean isConsentRequestExpired(LocalDateTime createdAt) {
+        LocalDateTime requestExpiry = createdAt.plus(Duration.ofMinutes(consentServiceProperties.getConsentRequestExpiry()));
+        return requestExpiry.isBefore(LocalDateTime.now());
     }
 
     private Mono<Void> broadcastConsentArtefacts(List<HIPConsentArtefactRepresentation> consents,
                                                  String hiuConsentNotificationUrl,
                                                  String requestId,
                                                  ConsentStatus status,
-                                                 Date lastUpdated) {
+                                                 LocalDateTime lastUpdated) {
         ConsentArtefactsMessage message = ConsentArtefactsMessage
                 .builder()
                 .status(status)

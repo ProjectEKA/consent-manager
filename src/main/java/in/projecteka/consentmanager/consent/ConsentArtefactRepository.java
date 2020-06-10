@@ -21,9 +21,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
@@ -185,8 +183,7 @@ public class ConsentArtefactRepository {
                                     fluxSink.next(ConsentExpiry.builder()
                                             .consentId(row.getString("consent_artefact_id"))
                                             .patientId(row.getString("patient_id"))
-                                            .consentExpiryDate(new Date(Long.parseLong(
-                                                    row.getString("consent_expiry_date"))))
+                                            .consentExpiryDate(row.getLocalDateTime("consent_expiry_date"))
                                             .build());
                                 });
                             }
@@ -241,17 +238,10 @@ public class ConsentArtefactRepository {
                                     .status(ConsentStatus.valueOf(row.getString(STATUS)))
                                     .consentDetail(consentArtefact)
                                     .consentRequestId(row.getString(CONSENT_REQUEST_ID))
-                                    .dateModified(convertToDate(row.getLocalDateTime(DATE_MODIFIED)))
+                                    .dateModified(row.getLocalDateTime(DATE_MODIFIED))
                                     .build();
                             monoSink.success(representation);
                         }));
-    }
-
-    private Date convertToDate(LocalDateTime timestamp) {
-        if (timestamp != null) {
-            return Date.from(timestamp.atZone(ZoneId.systemDefault()).toInstant());
-        }
-        return null;
     }
 
     private List<Query> getUpdateQueries(String consentId, String consentRequestId, ConsentStatus status) {
@@ -269,7 +259,7 @@ public class ConsentArtefactRepository {
     private ConsentArtefactRepresentation getConsentArtefactRepresentation(Row row) {
         ConsentArtefact consentArtefact = to(row.getValue(CONSENT_ARTEFACT).toString(),
                 ConsentArtefact.class);
-        consentArtefact.setLastUpdated(convertToDate(row.getLocalDateTime(DATE_MODIFIED)));
+        consentArtefact.setLastUpdated(row.getLocalDateTime(DATE_MODIFIED));
         return ConsentArtefactRepresentation
                 .builder()
                 .status(ConsentStatus.valueOf(row.getString(STATUS)))

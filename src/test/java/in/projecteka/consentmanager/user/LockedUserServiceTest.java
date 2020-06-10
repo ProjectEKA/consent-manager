@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -35,6 +36,7 @@ class LockedUserServiceTest {
         patientId = "someone@ncg";
         currentTime = LocalDateTime.now(ZoneOffset.UTC);
         when(lockedServiceProperties.getCoolOfPeriod()).thenReturn(2);
+        when(lockedServiceProperties.getMaximumInvalidAttempts()).thenReturn(5);
         lockedUserService = new LockedUserService(lockedUsersRepository, lockedServiceProperties);
     }
 
@@ -49,10 +51,11 @@ class LockedUserServiceTest {
 
     @Test
     void shouldUpdateLockedUserWithoutRemovingOldAttemptsWhenFirstAttemptWasInTimeLimit() {
-        var lockedUser = new LockedUser(5, patientId, false, currentTime, currentTime.minusMinutes(1));
+        var lockedUser = new LockedUser(4, patientId, false, currentTime, currentTime.minusMinutes(1));
         when(lockedUsersRepository.getLockedUserFor(eq(patientId))).thenReturn(Mono.just(lockedUser));
         when(lockedUsersRepository.upsert(eq(patientId))).thenReturn(Mono.empty());
         StepVerifier.create(lockedUserService.createOrUpdateLockedUser(patientId))
+                .assertNext(remainingTries -> assertEquals(Integer.valueOf(0), remainingTries))
                 .verifyComplete();
 
         verify(lockedUsersRepository, times(0)).deleteUser(patientId);
@@ -66,6 +69,7 @@ class LockedUserServiceTest {
         when(lockedUsersRepository.upsert(eq(patientId))).thenReturn(Mono.empty());
         when(lockedUsersRepository.deleteUser(eq(patientId))).thenReturn(Mono.empty());
         StepVerifier.create(lockedUserService.createOrUpdateLockedUser(patientId))
+                .assertNext(remainingTries -> assertEquals(Integer.valueOf(4), remainingTries))
                 .verifyComplete();
 
         verify(lockedUsersRepository, times(1)).deleteUser(patientId);

@@ -3,11 +3,13 @@ package in.projecteka.consentmanager.consent;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
 import in.projecteka.consentmanager.consent.model.ConsentPurpose;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
@@ -42,6 +44,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.consent.TestBuilders.artefactLightRepresentation;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefact;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
@@ -53,6 +56,7 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
 import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -67,6 +71,8 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 class ConsentManagerTest {
 
     @Mock
+    ConceptValidator conceptValidator;
+    @Mock
     private ConsentRequestRepository repository;
     @Mock
     private ConsentArtefactRepository consentArtefactRepository;
@@ -80,20 +86,19 @@ class ConsentManagerTest {
     private PostConsentRequest postConsentRequestNotification;
     @Mock
     private PatientServiceClient patientServiceClient;
-
+    @Mock
+    private ConsentManagerClient consentManagerClient;
     @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
-
     @MockBean
     private KeyPair keyPair;
     private ConsentManager consentManager;
-
-    @Mock
-    ConceptValidator conceptValidator;
-
     @Captor
     private ArgumentCaptor<ConsentRequest> captor;
+
+    @Captor
+    private ArgumentCaptor<ConsentArtefactResult> consentArtefactResponsecaptor;
 
     @BeforeEach
     public void setUp() throws JOSEException {
@@ -112,7 +117,8 @@ class ConsentManagerTest {
                 patientServiceClient,
                 cmProperties,
                 conceptValidator,
-                queryGenerator);
+                queryGenerator,
+                consentManagerClient);
     }
 
     @Test
@@ -212,7 +218,7 @@ class ConsentManagerTest {
                 .hiu(hiu1)
                 .patient(patient)
                 .purpose(purpose)
-                .hiTypes( new HIType[] { HIType.CONDITION } )
+                .hiTypes(new HIType[]{HIType.CONDITION})
                 .build();
 
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
@@ -244,7 +250,7 @@ class ConsentManagerTest {
                 .hiu(hiu1)
                 .patient(patient)
                 .purpose(purpose)
-                .hiTypes(new HIType[] { HIType.CONDITION })
+                .hiTypes(new HIType[]{HIType.CONDITION})
                 .build();
 
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
@@ -396,5 +402,42 @@ class ConsentManagerTest {
                 .subscriberContext(context -> context.put(HttpHeaders.AUTHORIZATION, string())))
                 .expectComplete()
                 .verify();
+    }
+
+    @Test
+    void CallGatewayWhenConsentArtefactNotFound() {
+        var consentId = string();
+        // It will be empty because CM does not know which HIU id made this request
+        String requesterId = "";
+        when(consentArtefactRepository.getConsentArtefact(consentId)).thenReturn(Mono.empty());
+        when(consentManagerClient.sendConsentArtefactResponseToGateway(consentArtefactResponsecaptor.capture(),
+                eq(requesterId))).thenReturn(Mono.empty());
+
+        var consentProducer = consentManager.getConsent(consentId, UUID.randomUUID());
+
+        StepVerifier.create(consentProducer).verifyComplete();
+        assertThat(consentArtefactResponsecaptor.getValue().getConsent()).isNull();
+        assertThat(consentArtefactResponsecaptor.getValue().getError()).isNotNull();
+    }
+
+    @Test
+    void callGatewayWithConsentArtefactResponse() {
+        var consentId = string();
+        var requestId = UUID.randomUUID();
+        var callerHIUId = string();
+        var hipId = string();
+        var consentArtefact = consentArtefactRepresentation().consentDetail(
+                consentArtefact().hiu(new HIUReference(callerHIUId)).build()).build();
+        when(consentArtefactRepository.getConsentArtefact(consentId)).thenReturn(Mono.just(consentArtefact));
+        when(centralRegistry.providerWith(any())).thenReturn(Mono.just(Provider.builder().name(hipId).build()));
+        when(consentManagerClient.sendConsentArtefactResponseToGateway(consentArtefactResponsecaptor.capture(),
+                eq(callerHIUId))).thenReturn(Mono.empty());
+
+        var consentProducer = consentManager.getConsent(consentId, requestId);
+
+        StepVerifier.create(consentProducer)
+                .verifyComplete();
+        assertThat(consentArtefactResponsecaptor.getValue().getConsent()).isNotNull();
+        assertThat(consentArtefactResponsecaptor.getValue().getError()).isNull();
     }
 }

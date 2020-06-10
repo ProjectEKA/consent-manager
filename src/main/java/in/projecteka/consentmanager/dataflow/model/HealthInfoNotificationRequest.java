@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -16,7 +16,7 @@ public class HealthInfoNotificationRequest {
     private UUID requestId;
     private String transactionId;
     private String consentId;
-    private Date doneAt;
+    private LocalDateTime doneAt;
     private Notifier notifier;
     private StatusNotification statusNotification;
 }

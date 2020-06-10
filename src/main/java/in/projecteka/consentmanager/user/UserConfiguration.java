@@ -5,6 +5,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -34,7 +35,8 @@ public class UserConfiguration {
                                    TokenService tokenService,
                                    UserServiceProperties userServiceProperties,
                                    OtpAttemptService otpAttemptService,
-                                   LockedUserService lockedUserService) {
+                                   LockedUserService lockedUserService,
+                                   UserServiceClient userServiceClient) {
         return new UserService(userRepository,
                 otpServiceProperties,
                 otpServiceClient,
@@ -43,7 +45,8 @@ public class UserConfiguration {
                 tokenService,
                 userServiceProperties,
                 otpAttemptService,
-                lockedUserService);
+                lockedUserService,
+                userServiceClient);
     }
 
     @Bean

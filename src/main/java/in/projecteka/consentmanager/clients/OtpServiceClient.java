@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.clients;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.VerificationRequest;
 import in.projecteka.consentmanager.consent.model.Notification;
+import in.projecteka.consentmanager.user.ConsentManagerIdNotification;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -60,6 +61,18 @@ public class OtpServiceClient {
                 .uri(uriBuilder -> uriBuilder.path("/notification").build())
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .bodyValue(notification)
+                .retrieve()
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(unknownErrorOccurred()))
+                .toBodilessEntity()
+                .then();
+    }
+
+    public Mono<Void> send(ConsentManagerIdNotification consentManagerIdNotification) {
+        return webClientBuilder.build()
+                .post()
+                .uri(uriBuilder -> uriBuilder.path("/notification").build())
+                .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                .bodyValue(consentManagerIdNotification)
                 .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(unknownErrorOccurred()))
                 .toBodilessEntity()

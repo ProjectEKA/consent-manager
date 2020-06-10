@@ -4,6 +4,8 @@ import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
@@ -16,21 +18,19 @@ import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
 import in.projecteka.consentmanager.user.model.InitiateCmIdRecoveryRequest;
 import in.projecteka.consentmanager.user.model.LoginMode;
-import in.projecteka.consentmanager.user.model.LoginModeResponse;
+import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.PatientResponse;
 import in.projecteka.consentmanager.user.model.SendOtpAction;
-import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
-import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
+import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
-import in.projecteka.consentmanager.user.model.OtpAttempt;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.jeasy.random.EasyRandom;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -52,12 +52,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
+import static in.projecteka.consentmanager.user.TestBuilders.requester;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static in.projecteka.consentmanager.user.TestBuilders.updatePasswordRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
+import static in.projecteka.consentmanager.user.model.Requester.HIU;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -108,6 +112,12 @@ class UserServiceTest {
     @Mock
     private Logger logger;
 
+    @Mock
+    private UserServiceClient userServiceClient;
+
+    @Captor
+    private ArgumentCaptor<PatientResponse> patientResponse;
+
     private UserService userService;
 
     @BeforeEach
@@ -123,7 +133,8 @@ class UserServiceTest {
                 tokenService,
                 properties,
                 otpAttemptService,
-                lockedUserService);
+                lockedUserService,
+                userServiceClient);
     }
 
     @Test
@@ -146,7 +157,9 @@ class UserServiceTest {
 
     @Test
     public void shouldThrowInvalidRequestExceptionForInvalidDeviceType() {
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.sendOtp(userSignUpEnquiry().build()));
+        var producer = userService.sendOtp(userSignUpEnquiry().build());
+
+        StepVerifier.create(producer).verifyError(InvalidRequestException.class);
     }
 
     @Test
@@ -191,7 +204,10 @@ class UserServiceTest {
     public void shouldThrowInvalidRequestExceptionForInvalidOtpValue(
             @ConvertWith(NullableConverter.class) String value) {
         OtpVerification otpVerification = new OtpVerification(string(), value);
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForRegistration(otpVerification));
+
+        var producer = userService.verifyOtpForRegistration(otpVerification);
+
+        StepVerifier.create(producer).verifyError(InvalidRequestException.class);
     }
 
     @ParameterizedTest(name = "Invalid session id")
@@ -203,7 +219,10 @@ class UserServiceTest {
     public void shouldThrowInvalidRequestExceptionForInvalidOtpSessionId(
             @ConvertWith(NullableConverter.class) String sessionId) {
         OtpVerification otpVerification = new OtpVerification(sessionId, string());
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForRegistration(otpVerification));
+
+        var producer = userService.verifyOtpForRegistration(otpVerification);
+
+        StepVerifier.create(producer).verifyError(InvalidRequestException.class);
     }
 
     @Test
@@ -212,11 +231,10 @@ class UserServiceTest {
         var otp = string();
         var token = string();
         var user = new EasyRandom().nextObject(User.class);
-        var sessionIdWithAction = SendOtpAction.RECOVER_PASSWORD.toString()+sessionId;
+        var sessionIdWithAction = SendOtpAction.RECOVER_PASSWORD.toString() + sessionId;
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
-        when(signupService.generateToken(new HashMap<>(), sessionIdWithAction))
-                .thenReturn(Mono.just(new Token(token)));
+        when(signupService.generateToken(new HashMap<>(), sessionIdWithAction)).thenReturn(Mono.just(new Token(token)));
         when(signupService.getUserName(eq(sessionIdWithAction))).thenReturn(Mono.just(user.getIdentifier()));
         when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));
         when(lockedUserService.validateLogin(eq(user.getIdentifier()))).thenReturn(Mono.empty());
@@ -235,7 +253,10 @@ class UserServiceTest {
     public void shouldThrowErrorForInvalidOtpValue(
             @ConvertWith(NullableConverter.class) String value) {
         OtpVerification otpVerification = new OtpVerification(string(), value);
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForForgetPassword(otpVerification));
+
+        var producer = userService.verifyOtpForForgetPassword(otpVerification);
+
+        StepVerifier.create(producer).verifyError(InvalidRequestException.class);
     }
 
     @ParameterizedTest(name = "Invalid session id")
@@ -247,7 +268,10 @@ class UserServiceTest {
     public void shouldThrowErrorForInvalidOtpSessionId(
             @ConvertWith(NullableConverter.class) String sessionId) {
         OtpVerification otpVerification = new OtpVerification(sessionId, string());
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForForgetPassword(otpVerification));
+
+        var producer = userService.verifyOtpForForgetPassword(otpVerification);
+
+        StepVerifier.create(producer).verifyError(InvalidRequestException.class);
     }
 
     @Test
@@ -277,7 +301,8 @@ class UserServiceTest {
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.just(user));
         when(userRepository.save(any())).thenReturn(Mono.empty());
 
-        Mono<Session> publisher = userService.create(signUpRequest, sessionId);
+        var publisher = userService.create(signUpRequest, sessionId);
+
         StepVerifier.create(publisher)
                 .verifyErrorSatisfies(error -> assertThat(error)
                         .asInstanceOf(InstanceOfAssertFactories.type(ClientError.class))
@@ -304,9 +329,7 @@ class UserServiceTest {
 
     @Test
     public void shouldNotCreateUserWhenIDPClientFails() {
-        var signUpRequest = coreSignUpRequest()
-                .yearOfBirth(LocalDate.MIN.getYear())
-                .build();
+        var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
         var mobileNumber = string();
         var user = User.from(signUpRequest, mobileNumber);
         var identifier = user.getIdentifier();
@@ -318,10 +341,11 @@ class UserServiceTest {
         when(userRepository.save(any())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.empty());
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
-        when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
+        when(identityServiceClient.createUser(any(), any()))
+                .thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
         when(userRepository.delete(identifier)).thenReturn(Mono.empty());
 
-        Mono<Session> publisher = userService.create(signUpRequest, sessionId);
+        var publisher = userService.create(signUpRequest, sessionId);
 
         StepVerifier.create(publisher).verifyComplete();
         verify(userRepository, times(1)).delete(identifier);
@@ -329,9 +353,7 @@ class UserServiceTest {
 
     @Test
     void shouldNotCreateUserWhenPersistingToDbFails() {
-        var signUpRequest = coreSignUpRequest()
-                .yearOfBirth(LocalDate.MIN.getYear())
-                .build();
+        var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
         var mobileNumber = string();
         var user = User.from(signUpRequest, mobileNumber);
         var identifier = user.getIdentifier();
@@ -346,7 +368,7 @@ class UserServiceTest {
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.delete(identifier)).thenReturn(Mono.empty());
 
-        Mono<Session> publisher = userService.create(signUpRequest, sessionId);
+        var publisher = userService.create(signUpRequest, sessionId);
 
         StepVerifier.create(publisher)
                 .verifyErrorSatisfies(error -> assertThat(error)
@@ -357,24 +379,21 @@ class UserServiceTest {
     @Test
     public void updateUserDetails() {
         String userName = "user@ncg";
-        UpdateUserRequest request = UpdateUserRequest.builder()
-                .password("Test@3142")
-                .build();
+        var request = UpdateUserRequest.builder().password("Test@3142").build();
         var sessionId = string();
-        Session tokenForAdmin = session().build();
-        String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
-        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder()
-                .id("keycloakuserid")
-                .build();
+        var tokenForAdmin = session().build();
+        var token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
+        var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
         var newSession = session().build();
 
         when(signupService.getUserName(sessionId)).thenReturn(Mono.just(userName));
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
-        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
-        when(identityServiceClient.updateUser(tokenForAdmin, userRepresentation.getId(), request.getPassword())).thenReturn(Mono.empty());
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Mono.just(userRepresentation));
+        when(identityServiceClient.updateUser(token, userRepresentation.getId(), request.getPassword()))
+                .thenReturn(Mono.empty());
         when(tokenService.tokenForUser(userName, request.getPassword())).thenReturn(Mono.just(newSession));
 
-        Mono<Session> updatedSession = userService.update(request, sessionId);
+        var updatedSession = userService.update(request, sessionId);
 
         StepVerifier.create(updatedSession)
                 .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(newSession.getAccessToken()))
@@ -383,34 +402,28 @@ class UserServiceTest {
 
     @Test
     public void updateUserDetailsFailsForInvalidUserName() {
-        UpdateUserRequest request = UpdateUserRequest.builder()
-                .password("Test@3142")
-                .build();
+        var request = UpdateUserRequest.builder().password("Test@3142").build();
         var sessionId = string();
-
         when(signupService.getUserName(sessionId)).thenReturn(Mono.empty());
 
-        Mono<Session> updatedSession = userService.update(request, sessionId);
+        var updatedSession = userService.update(request, sessionId);
 
         StepVerifier.create(updatedSession)
                 .verifyErrorMatches(throwable -> throwable instanceof InvalidRequestException &&
-                        ((InvalidRequestException) throwable).getMessage().equals("user not verified"));
+                        throwable.getMessage().equals("user not verified"));
     }
 
     @Test
     public void updateUserDetailsFailsWhenTokenForAdminFails() {
-        String userName = "user@ncg";
-        UpdateUserRequest request = UpdateUserRequest.builder()
-                .password("Test@3142")
-                .build();
+        var userName = "user@ncg";
+        var request = UpdateUserRequest.builder().password("Test@3142").build();
         var sessionId = string();
         var newSession = session().build();
-
         when(signupService.getUserName(sessionId)).thenReturn(Mono.just(userName));
         when(tokenService.tokenForAdmin()).thenReturn(Mono.error(ClientError.failedToUpdateUser()));
         when(tokenService.tokenForUser(userName, request.getPassword())).thenReturn(Mono.just(newSession));
 
-        Mono<Session> updatedSession = userService.update(request, sessionId);
+        var updatedSession = userService.update(request, sessionId);
 
         StepVerifier.create(updatedSession)
                 .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
@@ -422,76 +435,68 @@ class UserServiceTest {
     @Test
     public void shouldUpdatePasswordSuccessfully() {
         String userName = "testUser@ncg";
-        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
-                .newPassword("TestPassword@123")
-                .oldPassword("password@09")
-                .build();
+        var request = updatePasswordRequest().build();
         Session oldSession = session().build();
         Session newSession = session().build();
         Session tokenForAdmin = session().build();
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
-        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder()
-                .id("keycloakuserid")
-                .build();
+        var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
         when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(Mono.just(oldSession));
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
-        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
-        when(identityServiceClient.updateUser(tokenForAdmin, userRepresentation.getId(), request.getNewPassword())).thenReturn(Mono.empty());
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Mono.just(userRepresentation));
+        when(identityServiceClient.updateUser(token, userRepresentation.getId(), request.getNewPassword()))
+                .thenReturn(Mono.empty());
         when(tokenService.tokenForUser(userName, request.getNewPassword())).thenReturn(Mono.just(newSession));
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
-        Mono<Session> updatedPasswordSession = userService.updatePassword(request, userName);
+        var updatedPasswordSession = userService.updatePassword(request, userName);
 
         StepVerifier.create(updatedPasswordSession)
                 .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(newSession.getAccessToken()))
-                        .verifyComplete();
+                .verifyComplete();
 
         verify(tokenService, times(1)).tokenForAdmin();
         verify(tokenService, times(1)).tokenForUser(userName, request.getOldPassword());
         verify(identityServiceClient, times(1)).getUser(userName, token);
-        verify(identityServiceClient, times(1)).updateUser(tokenForAdmin, userRepresentation.getId(), request.getNewPassword());
+        verify(identityServiceClient, times(1)).updateUser(token, userRepresentation.getId(), request.getNewPassword());
         verify(tokenService, times(1)).tokenForUser(userName, request.getNewPassword());
     }
 
     @Test
     public void shouldReturnUnauthorizedErrorForInvalidOldPassword() {
-        String userName = "TestUser@ncg";
-        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
-                .oldPassword("Test@123")
-                .newPassword("TestPW@1234")
-                .build();
+        var userName = "TestUser@ncg";
+        var request = updatePasswordRequest().build();
+        when(tokenService.tokenForUser(userName, request.getOldPassword()))
+                .thenReturn(Mono.error(ClientError.unAuthorizedRequest("Invalid Old Password")));
+        when(lockedUserService.createOrUpdateLockedUser(userName)).thenReturn(Mono.just(2));
 
-        when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(Mono.error(ClientError.unAuthorizedRequest("Invalid Old Password")));
-
-        Mono<Session> updatedPasswordSession = userService.updatePassword(request, userName);
+        var updatedPasswordSession = userService.updatePassword(request, userName);
 
         StepVerifier.create(updatedPasswordSession)
                 .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().value() == 401);
-
         verify(tokenService, times(1)).tokenForUser(userName, request.getOldPassword());
         verifyNoInteractions(identityServiceClient);
     }
 
     @Test
     public void shouldReturnErrorWhenUpdateUserWithNewPasswordFails() {
-        String userName = "user@ncg";
-        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
-                .oldPassword("Test@3142")
-                .newPassword("Test@1234")
-                .build();
+        var userName = "user@ncg";
+        var request = updatePasswordRequest().build();
         var oldSession = session().build();
         var newSession = session().build();
-        Session tokenForAdmin = session().build();
-        String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
-        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder()
-                .id("keycloakuserid")
-                .build();
-
+        var tokenForAdmin = session().build();
+        var token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
+        var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
         when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(Mono.just(oldSession));
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
-        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
-        when(identityServiceClient.updateUser(tokenForAdmin, userRepresentation.getId(), request.getNewPassword())).thenReturn(Mono.error(ClientError.failedToUpdateUser()));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Mono.just(userRepresentation));
+        when(identityServiceClient.updateUser(token, userRepresentation.getId(), request.getNewPassword()))
+                .thenReturn(Mono.error(ClientError.failedToUpdateUser()));
         when(tokenService.tokenForUser(userName, request.getNewPassword())).thenReturn(Mono.just(newSession));
+        when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
         Mono<Session> updatedPasswordSession = userService.updatePassword(request, userName);
 
@@ -502,28 +507,26 @@ class UserServiceTest {
         verify(tokenService, times(1)).tokenForAdmin();
         verify(tokenService, times(1)).tokenForUser(userName, request.getOldPassword());
         verify(identityServiceClient, times(1)).getUser(userName, token);
-        verify(identityServiceClient, times(1)).updateUser(tokenForAdmin, userRepresentation.getId(), request.getNewPassword());
+        verify(identityServiceClient, times(1)).updateUser(token, userRepresentation.getId(), request.getNewPassword());
         verify(tokenService, times(1)).tokenForUser(userName, request.getNewPassword());
     }
+
     @Test
     public void getLoginMode() {
         String userName = "user@ncg";
         Session tokenForAdmin = session().build();
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
-        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder()
-                .id("keycloakuserid")
-                .build();
-        Flux<KeyCloakUserCredentialRepresentation> userCreds = Flux.just(KeyCloakUserCredentialRepresentation
+        var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
+        var userCreds = Mono.just(KeyCloakUserCredentialRepresentation
                 .builder()
                 .id("credid")
                 .type("password")
                 .build());
-
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
-        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Mono.just(userRepresentation));
         when(identityServiceClient.getCredentials(userRepresentation.getId(), token)).thenReturn(userCreds);
 
-        Mono<LoginModeResponse> loginModeResponse = userService.getLoginMode(userName);
+        var loginModeResponse = userService.getLoginMode(userName);
 
         StepVerifier.create(loginModeResponse)
                 .assertNext(response -> assertThat(response.getLoginMode()).isEqualTo(LoginMode.CREDENTIAL))
@@ -538,15 +541,12 @@ class UserServiceTest {
         String userName = "user@ncg";
         Session tokenForAdmin = session().build();
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
-        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder()
-                .id("keycloakuserid")
-                .build();
-
+        var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
-        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.just(userRepresentation));
-        when(identityServiceClient.getCredentials(userRepresentation.getId(), token)).thenReturn(Flux.empty());
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Mono.just(userRepresentation));
+        when(identityServiceClient.getCredentials(userRepresentation.getId(), token)).thenReturn(Mono.empty());
 
-        Mono<LoginModeResponse> loginModeResponse = userService.getLoginMode(userName);
+        var loginModeResponse = userService.getLoginMode(userName);
 
         StepVerifier.create(loginModeResponse)
                 .assertNext(response -> assertThat(response.getLoginMode()).isEqualTo(LoginMode.OTP))
@@ -561,12 +561,10 @@ class UserServiceTest {
         String userName = "user@ncg";
         Session tokenForAdmin = session().build();
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
-        KeyCloakUserRepresentation userRepresentation = KeyCloakUserRepresentation.builder().build();
-
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
-        when(identityServiceClient.getUser(userName, token)).thenReturn(Flux.empty());
+        when(identityServiceClient.getUser(userName, token)).thenReturn(Mono.empty());
 
-        Mono<LoginModeResponse> loginModeResponse = userService.getLoginMode(userName);
+        var loginModeResponse = userService.getLoginMode(userName);
 
         StepVerifier.create(loginModeResponse)
                 .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
@@ -583,24 +581,24 @@ class UserServiceTest {
         Integer yearOfBirth = 1999;
         String verifiedIdentifierValue = "+91-8888888888";
         String unverifiedIdentifierValue = "P1234ABCD";
-        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
-        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
+        var verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
+        var unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
-        JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
-        ArrayList<User> recoverCmIdRows = new ArrayList<>(Collections.singletonList(User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build()));
+        var request = new InitiateCmIdRecoveryRequest(name, gender, yearOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
+        var unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type", "ABPMJAYID").put("value", unverifiedIdentifierValue));
+        var recoverCmIdRows = new ArrayList<>(Collections.singletonList(User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build()));
 
-        when(userRepository.getUserBy(gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
+        when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(Flux.fromIterable(recoverCmIdRows));
 
         StepVerifier.create(userService.getPatientByDetails(request))
                 .assertNext(response -> {
                     assertThat(response.getIdentifier()).isEqualTo(cmId);
-                            assertThat(response.getName()).isEqualTo(name);
-                            assertThat(response.getPhone()).isEqualTo(verifiedIdentifierValue);
-                            assertThat(response.getYearOfBirth()).isEqualTo(yearOfBirth);
+                    assertThat(response.getName()).isEqualTo(name);
+                    assertThat(response.getPhone()).isEqualTo(verifiedIdentifierValue);
+                    assertThat(response.getYearOfBirth()).isEqualTo(yearOfBirth);
                 })
                 .verifyComplete();
-        verify(userRepository,times(1)).getUserBy(gender,verifiedIdentifierValue);
+        verify(userRepository, times(1)).getUserBy(gender, verifiedIdentifierValue);
     }
 
     @Test
@@ -610,19 +608,19 @@ class UserServiceTest {
         Integer yearOfBirth = 1999;
         String verifiedIdentifierValue = "+91-8888888888";
         String unverifiedIdentifierValue = "P1234ABCD";
-        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
-        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
+        var verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
+        var unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
-        JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
+        var request = new InitiateCmIdRecoveryRequest(name, gender, yearOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
+        JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type", "ABPMJAYID").put("value", unverifiedIdentifierValue));
         User recoverCmIdRow = User.builder().identifier(cmId).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
-        ArrayList<User> recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow, recoverCmIdRow));
+        var recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow, recoverCmIdRow));
 
-        when(userRepository.getUserBy(gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
+        when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(Flux.fromIterable(recoverCmIdRows));
 
         StepVerifier.create(userService.getPatientByDetails(request))
                 .verifyComplete();
-        verify(userRepository,times(1)).getUserBy(gender,verifiedIdentifierValue);
+        verify(userRepository, times(1)).getUserBy(gender, verifiedIdentifierValue);
     }
 
     @Test
@@ -635,16 +633,16 @@ class UserServiceTest {
         ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
         ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, yearOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = null;
         User recoverCmIdRow = User.builder().identifier(cmId).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
         ArrayList<User> recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow));
 
-        when(userRepository.getUserBy(gender,verifiedIdentifierValue)).thenReturn(Mono.just(recoverCmIdRows));
+        when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(Flux.fromIterable(recoverCmIdRows));
 
         StepVerifier.create(userService.getPatientByDetails(request))
                 .verifyComplete();
-        verify(userRepository,times(1)).getUserBy(gender,verifiedIdentifierValue);
+        verify(userRepository, times(1)).getUserBy(gender, verifiedIdentifierValue);
     }
 
     @Test
@@ -653,11 +651,11 @@ class UserServiceTest {
         var otp = string();
         var token = string();
         var user = new EasyRandom().nextObject(User.class);
-        var sessionIdWithAction = SendOtpAction.RECOVER_CM_ID.toString()+sessionId;
+        var sessionIdWithAction = SendOtpAction.RECOVER_CM_ID.toString() + sessionId;
         ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
-        when(signupService.generateToken(new HashMap<>(),sessionId))
+        when(signupService.generateToken(new HashMap<>(), sessionId))
                 .thenReturn(Mono.just(new Token(token)));
         when(signupService.getUserName(eq(sessionIdWithAction))).thenReturn(Mono.just(user.getIdentifier()));
         when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));
@@ -671,12 +669,62 @@ class UserServiceTest {
     @Test
     void shouldThrowErrorForInvalidOtpValueForRecoverCmId() {
         OtpVerification otpVerification = new OtpVerification(string(), null);
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForRecoverCmId(otpVerification));
+
+        var producer = userService.verifyOtpForRecoverCmId(otpVerification);
+
+        StepVerifier.create(producer).verifyError(InvalidRequestException.class);
     }
 
     @Test
     void shouldThrowErrorForInvalidOtpSessionIdForRecoverCmId() {
         OtpVerification otpVerification = new OtpVerification(null, string());
-        Assertions.assertThrows(InvalidRequestException.class, () -> userService.verifyOtpForRecoverCmId(otpVerification));
+
+        var producer = userService.verifyOtpForRecoverCmId(otpVerification);
+
+        StepVerifier.create(producer).verifyError(InvalidRequestException.class);
+    }
+
+    @Test
+    void callGateWayWhenUserNotFound() {
+        var userName = string();
+        var requester = requester().type(HIU).build();
+        var requestId = UUID.randomUUID();
+        when(userRepository.userWith(any())).thenReturn(Mono.empty());
+        when(userServiceClient.sendPatientResponseToGateWay(patientResponse.capture(),
+                eq("X-HIU-ID"),
+                eq(requester.getId())))
+                .thenReturn(Mono.empty());
+
+        var patientProducer = userService.user(userName, requester, requestId);
+
+        StepVerifier.create(patientProducer)
+                .verifyComplete();
+        verify(userRepository, times(1)).userWith(any());
+        verify(userServiceClient, times(1)).sendPatientResponseToGateWay(any(), any(), any());
+        assertThat(patientResponse.getValue().getError()).isNotNull();
+        assertThat(patientResponse.getValue().getError().getCode()).isEqualTo(ErrorCode.USER_NOT_FOUND.getValue());
+        assertThat(patientResponse.getValue().getPatient()).isNull();
+    }
+
+    @Test
+    void callGateWayWhenUserFound() {
+        var userName = string();
+        var requester = requester().type(HIU).build();
+        var requestId = UUID.randomUUID();
+        var user = user().build();
+        when(userRepository.userWith(any())).thenReturn(Mono.just(user));
+        when(userServiceClient.sendPatientResponseToGateWay(patientResponse.capture(),
+                eq("X-HIU-ID"),
+                eq(requester.getId())))
+                .thenReturn(Mono.empty());
+
+        var patientProducer = userService.user(userName, requester, requestId);
+
+        StepVerifier.create(patientProducer)
+                .verifyComplete();
+        verify(userRepository, times(1)).userWith(any());
+        verify(userServiceClient, times(1)).sendPatientResponseToGateWay(any(), any(), any());
+        assertThat(patientResponse.getValue().getError()).isNull();
+        assertThat(patientResponse.getValue().getPatient()).isNotNull();
     }
 }

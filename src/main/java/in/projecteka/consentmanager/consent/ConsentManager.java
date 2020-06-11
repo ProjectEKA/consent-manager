@@ -387,7 +387,6 @@ public class ConsentManager {
 
     public Mono<Void> getConsent(String consentId, UUID requestId) {
         return getConsentArtefact(consentId)
-                .switchIfEmpty(Mono.error(ClientError.consentArtefactForbidden()))
                 .flatMap(this::updateHipName)
                 .map(artefact -> {
                     ConsentArtefact consentArtefact = artefact.getConsentDetail();

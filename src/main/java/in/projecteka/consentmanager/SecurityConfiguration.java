@@ -5,6 +5,7 @@ import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.user.SignUpService;
@@ -35,15 +36,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
-import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
 
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfiguration {
 
     private static final List<Map.Entry<String, HttpMethod>> SERVICE_ONLY_URLS = new ArrayList<>();
+    private static final List<Map.Entry<String, HttpMethod>> GATEWAY_ONLY_URLS = new ArrayList<>();
     private static final List<RequestMatcher> PIN_VERIFICATION_MATCHERS = new ArrayList<>();
 
     @RequiredArgsConstructor
@@ -61,13 +63,13 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/notification", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/request", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/consent-requests", HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry("/v1/consent-requests/init", HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry("/v1/care-contexts/on-discover", HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry("/v1/links/link/on-init", HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry("/v1/links/link/on-confirm", HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry("/v1/patients/find", HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry("/v1/consents/fetch", HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry("/v1/health-information/request", HttpMethod.POST));
+        GATEWAY_ONLY_URLS.add(Map.entry("/v1/consent-requests/init", HttpMethod.POST));
+        GATEWAY_ONLY_URLS.add(Map.entry("/v1/care-contexts/on-discover", HttpMethod.POST));
+        GATEWAY_ONLY_URLS.add(Map.entry("/v1/links/link/on-init", HttpMethod.POST));
+        GATEWAY_ONLY_URLS.add(Map.entry("/v1/links/link/on-confirm", HttpMethod.POST));
+        GATEWAY_ONLY_URLS.add(Map.entry("/v1/patients/find", HttpMethod.POST));
+        GATEWAY_ONLY_URLS.add(Map.entry("/v1/consents/fetch", HttpMethod.POST));
+        GATEWAY_ONLY_URLS.add(Map.entry("/v1/health-information/request", HttpMethod.POST));
         RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve", HttpMethod.POST, SCOPE_CONSENT_APPROVE);
         RequestMatcher revokeMatcher = new RequestMatcher("/consents/revoke", HttpMethod.POST, SCOPE_CONSENT_REVOKE);
         RequestMatcher changePinMatcher = new RequestMatcher("/patients/change-pin", HttpMethod.POST, SCOPE_CHANGE_PIN);
@@ -128,11 +130,13 @@ public class SecurityConfiguration {
     public SecurityContextRepository contextRepository(SignUpService signupService,
                                                        Authenticator authenticator,
                                                        PinVerificationTokenService pinVerificationTokenService,
-                                                       CentralRegistryTokenVerifier centralRegistryTokenVerifier) {
+                                                       CentralRegistryTokenVerifier centralRegistryTokenVerifier,
+                                                       CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway) {
         return new SecurityContextRepository(signupService,
                 authenticator,
                 pinVerificationTokenService,
-                centralRegistryTokenVerifier);
+                centralRegistryTokenVerifier,
+                centralRegistryTokenVerifierForGateway);
     }
 
     @AllArgsConstructor
@@ -141,6 +145,7 @@ public class SecurityConfiguration {
         private final Authenticator identityServiceClient;
         private final PinVerificationTokenService pinVerificationTokenService;
         private final CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+        private final CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway;
 
         @Override
         public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {
@@ -170,8 +175,31 @@ public class SecurityConfiguration {
                     requestMethod)) {
                 return checkCentralRegistry(token);
             }
+            if (isCentralRegistryAuthenticatedOnlyRequestFromGateway(
+                    requestPath,
+                    requestMethod)) {
+                return checkCentralRegistryForGateway(token);
+            }
 
             return check(token);
+        }
+
+        private boolean isCentralRegistryAuthenticatedOnlyRequestFromGateway(String url, HttpMethod method) {
+            AntPathMatcher antPathMatcher = new AntPathMatcher();
+            return GATEWAY_ONLY_URLS.stream()
+                    .anyMatch(pattern ->
+                            antPathMatcher.match(pattern.getKey(), url) && pattern.getValue().equals(method));
+        }
+
+        private Mono<SecurityContext> checkCentralRegistryForGateway(String token) {
+            return centralRegistryTokenVerifierForGateway.verify(token)
+                    .map(caller -> {
+                            var authorities = new ArrayList<SimpleGrantedAuthority>();
+                          //  var authority = new SimpleGrantedAuthority("ROLE_" + caller.getRole().name().toUpperCase());
+                          //  authorities.add(authority);
+                            return new UsernamePasswordAuthenticationToken(caller, token, authorities);
+                    })
+                    .map(SecurityContextImpl::new);
         }
 
         private Mono<SecurityContext> checkCentralRegistry(String token) {

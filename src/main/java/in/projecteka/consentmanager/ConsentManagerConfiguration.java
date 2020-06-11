@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
 import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.common.ListenerProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -241,5 +242,10 @@ public class ConsentManagerConfiguration {
     @Bean
     public CentralRegistryTokenVerifier centralRegistryTokenVerifier(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
         return new CentralRegistryTokenVerifier(jwkSet);
+    }
+
+    @Bean
+    public CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
+        return new CentralRegistryTokenVerifierForGateway(jwkSet);
     }
 }

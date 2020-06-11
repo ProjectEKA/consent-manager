@@ -23,25 +23,6 @@ public class DiscoveryServiceClient {
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
 
-    @Deprecated
-    public Mono<PatientResponse> patientFor(PatientRequest request, String url, String hipId) {
-        return tokenGenerator.get()
-                .map(token ->
-                        webClientBuilder.build()
-                                .post()
-                                .uri(url + "/patients/discover/carecontexts")
-                                .header(AUTHORIZATION, token)
-                                .header(HDR_HIP_ID, hipId)
-                                .bodyValue(request)
-                                .retrieve())
-                .map(responseSpec -> responseSpec
-                        .onStatus(httpStatus -> httpStatus.value() == 404,
-                                clientResponse -> Mono.error(ClientError.userNotFound()))
-                        .onStatus(HttpStatus::is5xxServerError,
-                                clientResponse -> Mono.error(ClientError.networkServiceCallFailed())))
-                .flatMap(responseSpec -> responseSpec.bodyToMono(PatientResponse.class));
-    }
-
     public Mono<Boolean> requestPatientFor(PatientRequest request, String hipId) {
         return tokenGenerator.get()
                 .flatMap(token ->

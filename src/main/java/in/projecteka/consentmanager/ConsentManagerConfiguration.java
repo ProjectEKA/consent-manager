@@ -11,6 +11,7 @@ import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.ListenerProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
@@ -27,11 +28,11 @@ import io.vertx.sqlclient.PoolOptions;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Exchange;
 import org.springframework.amqp.core.ExchangeBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
@@ -62,7 +63,8 @@ public class ConsentManagerConfiguration {
     public static final String CONSENT_REQUEST_QUEUE = "consent-request-queue";
     public static final String DEAD_LETTER_QUEUE = "cm-dead-letter-queue";
     private static final String CM_DEAD_LETTER_EXCHANGE = "cm-dead-letter-exchange";
-    private static final String CM_DEAD_LETTER_ROUTING_KEY = "cm-dead-letter";
+    public static final String PARKING_EXCHANGE = "parking.exchange";
+    public static final String PARKING_QUEUE = "parking.queue";
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"accessToken"})
@@ -146,7 +148,7 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public DestinationsConfig destinationsConfig(AmqpAdmin amqpAdmin) {
+    public DestinationsConfig destinationsConfig(AmqpAdmin amqpAdmin, ListenerProperties listenerProperties) {
         HashMap<String, DestinationsConfig.DestinationInfo> queues = new HashMap<>();
         queues.put(CONSENT_REQUEST_QUEUE, new DestinationsConfig.DestinationInfo("exchange", CONSENT_REQUEST_QUEUE));
         queues.put(HIU_CONSENT_NOTIFICATION_QUEUE,
@@ -156,13 +158,22 @@ public class ConsentManagerConfiguration {
         queues.put(HIP_DATA_FLOW_REQUEST_QUEUE,
                 new DestinationsConfig.DestinationInfo("exchange", HIP_DATA_FLOW_REQUEST_QUEUE));
 
-        Queue deadLetterQueue = QueueBuilder.durable(DEAD_LETTER_QUEUE).build();
+        Queue parkingLotQueue = QueueBuilder.durable(PARKING_QUEUE).build();
+        Binding parkingBinding = BindingBuilder
+                .bind(parkingLotQueue)
+                .to(new TopicExchange(PARKING_EXCHANGE))
+                .with("#");
+        amqpAdmin.declareQueue(parkingLotQueue);
+        amqpAdmin.declareExchange(new TopicExchange(PARKING_EXCHANGE));
+        amqpAdmin.declareBinding(parkingBinding);
+
+        Queue deadLetterQueue = QueueBuilder.durable(DEAD_LETTER_QUEUE).deadLetterExchange("exchange").ttl(listenerProperties.getRetryInterval()).build();
         Binding with = BindingBuilder
                 .bind(deadLetterQueue)
-                .to(new DirectExchange(CM_DEAD_LETTER_EXCHANGE))
-                .with(CM_DEAD_LETTER_ROUTING_KEY);
+                .to(new TopicExchange(CM_DEAD_LETTER_EXCHANGE))
+                .with("#");
         amqpAdmin.declareQueue(deadLetterQueue);
-        amqpAdmin.declareExchange(new DirectExchange(CM_DEAD_LETTER_EXCHANGE));
+        amqpAdmin.declareExchange(new TopicExchange(CM_DEAD_LETTER_EXCHANGE));
         amqpAdmin.declareBinding(with);
 
         DestinationsConfig destinationsConfig = new DestinationsConfig(queues, null);
@@ -176,7 +187,6 @@ public class ConsentManagerConfiguration {
                     Queue q = QueueBuilder.durable(
                             destination.getRoutingKey())
                             .deadLetterExchange(CM_DEAD_LETTER_EXCHANGE)
-                            .deadLetterRoutingKey(CM_DEAD_LETTER_ROUTING_KEY)
                             .build();
                     amqpAdmin.declareQueue(q);
                     Binding b = BindingBuilder.bind(q)

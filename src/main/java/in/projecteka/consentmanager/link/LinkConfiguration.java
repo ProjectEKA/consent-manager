@@ -65,8 +65,14 @@ public class LinkConfiguration {
     @Bean
     public UserServiceClient userServiceClient(WebClient.Builder builder,
                                                UserServiceProperties userServiceProperties,
-                                               IdentityService identityService) {
-        return new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate);
+                                               IdentityService identityService,
+                                               GatewayServiceProperties gatewayServiceProperties,
+                                               CentralRegistry centralRegistry) {
+        return new UserServiceClient(builder,
+                userServiceProperties.getUrl(),
+                identityService::authenticate,
+                gatewayServiceProperties,
+                centralRegistry);
     }
 
     @Bean
@@ -76,7 +82,12 @@ public class LinkConfiguration {
                                UserServiceClient userServiceClient,
                                LinkServiceProperties linkServiceProperties,
                                CacheAdapter<String, String> linkResults) {
-        return new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry, linkServiceProperties, linkResults);
+        return new Discovery(userServiceClient,
+                discoveryServiceClient,
+                discoveryRepository,
+                centralRegistry,
+                linkServiceProperties,
+                linkResults);
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)

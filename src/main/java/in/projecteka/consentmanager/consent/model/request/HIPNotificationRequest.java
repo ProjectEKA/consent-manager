@@ -1,20 +1,20 @@
 package in.projecteka.consentmanager.consent.model.request;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 @Builder
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class HIUNotificationRequest {
-    private LocalDateTime timestamp;
+public class HIPNotificationRequest {
+    private HIPConsentArtefactRepresentation notification;
     private UUID requestId;
-    ConsentNotifier notification;
+    private LocalDateTime timestamp;
 }

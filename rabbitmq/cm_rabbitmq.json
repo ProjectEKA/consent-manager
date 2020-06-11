@@ -1,27 +1,22 @@
 {
   "exchanges" : [
     {
+      "name": "",
+      "type": "direct",
+      "arguments": {}
+    },
+    {
       "name": "exchange",
       "type": "direct",
       "arguments": {}
     },
     {
       "name": "cm-dead-letter-exchange",
-      "type": "direct",
-      "arguments": {}
-    },
-    {
-      "name": "gw.exchange",
-      "type": "direct",
-      "arguments": {}
-    },
-    {
-      "name": "gw.dead-letter-exchange",
       "type": "topic",
       "arguments": {}
     },
     {
-      "name": "hiservice.exchange.dataflowrequest",
+      "name": "parking.exchange",
       "type": "topic",
       "arguments": {}
     }
@@ -32,16 +27,22 @@
       "routing_key": "#",
       "exchange":"cm-dead-letter-exchange",
       "arguments": {
-        "x-message-ttl": 10000
+        "x-dead-letter-exchange": "exchange",
+        "x-message-ttl": 1000
       }
+    },
+    {
+      "name": "parking.queue",
+      "routing_key": "#",
+      "exchange":"parking.exchange",
+      "arguments": {}
     },
     {
       "name": "hip-data-flow-request-queue",
       "routing_key": "hip-data-flow-request-queue",
       "exchange":"exchange",
       "arguments": {
-        "x-dead-letter-exchange": "cm-dead-letter-exchange",
-        "x-dead-letter-routing-key": "cm-dead-letter"
+        "x-dead-letter-exchange": "cm-dead-letter-exchange"
       }
     },
     {
@@ -49,8 +50,7 @@
       "routing_key": "hip-consent-notification-queue",
       "exchange":"exchange",
       "arguments": {
-        "x-dead-letter-exchange": "cm-dead-letter-exchange",
-        "x-dead-letter-routing-key": "cm-dead-letter"
+        "x-dead-letter-exchange": "cm-dead-letter-exchange"
       }
     },
     {
@@ -58,8 +58,7 @@
       "routing_key": "hiu-consent-notification-queue",
       "exchange":"exchange",
       "arguments": {
-        "x-dead-letter-exchange": "cm-dead-letter-exchange",
-        "x-dead-letter-routing-key": "cm-dead-letter"
+        "x-dead-letter-exchange": "cm-dead-letter-exchange"
       }
     },
     {
@@ -67,8 +66,7 @@
       "routing_key": "consent-request-queue",
       "exchange":"exchange",
       "arguments": {
-        "x-dead-letter-exchange": "cm-dead-letter-exchange",
-        "x-dead-letter-routing-key": "cm-dead-letter"
+        "x-dead-letter-exchange": "cm-dead-letter-exchange"
       }
     }
   ]

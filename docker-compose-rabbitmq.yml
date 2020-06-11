@@ -1,12 +1,10 @@
 version: '3'
 services:
   rabbitmq:
-    image: rabbitmq:3
+    image: rabbitmq:3.8.2-alpine
     container_name: rabbitmq
     restart: always
     hostname: rabbitmq
-    environment:
-      RABBITMQ_ERLANG_COOKIE: "HJKLSDFGHJKLMBZSFXFZD"
     ports:
       - "5672:5672"
     volumes:

@@ -42,7 +42,8 @@ public class ConsentRequestScheduler {
                             consentRequestDetail.getConsentNotificationUrl(),
                             consentRequestDetail.getRequestId(),
                             EXPIRED,
-                            consentRequestDetail.getLastUpdated()).block();
+                            consentRequestDetail.getLastUpdated(),
+                            consentRequestDetail.getHiu().getId()).block();
                     logger.info("Consent request with id {} is expired", consentRequestDetail.getRequestId());
                 });
     }
@@ -56,13 +57,15 @@ public class ConsentRequestScheduler {
                                                  String hiuConsentNotificationUrl,
                                                  String requestId,
                                                  ConsentStatus status,
-                                                 LocalDateTime lastUpdated) {
+                                                 LocalDateTime lastUpdated,
+                                                 String hiuId) {
         ConsentArtefactsMessage message = ConsentArtefactsMessage
                 .builder()
                 .status(status)
                 .timestamp(lastUpdated)
                 .consentRequestId(requestId)
                 .consentArtefacts(consents)
+                .hiuId(hiuId)
                 .build();
         return consentNotificationPublisher.publish(message);
     }

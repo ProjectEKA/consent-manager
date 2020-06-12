@@ -89,6 +89,7 @@ public class ConsentRequestRepository {
                                     .execute(Tuple.of(patientId, status, GRANTED.toString()), counter -> {
                                                 if (handler.failed()) {
                                                     monoSink.error(new DbOperationError());
+                                                    return;
                                                 }
                                                 Integer count = counter.result().iterator()
                                                         .next().getInteger("count");
@@ -164,6 +165,7 @@ public class ConsentRequestRepository {
                         updateHandler -> {
                             if (updateHandler.failed()) {
                                 monoSink.error(new Exception("Failed to update status"));
+                                return;
                             }
                             monoSink.success();
                         }));

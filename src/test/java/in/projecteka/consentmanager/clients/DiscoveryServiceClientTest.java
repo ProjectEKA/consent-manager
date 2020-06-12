@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,12 +41,12 @@ public class DiscoveryServiceClientTest {
     public void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000);
+        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://ncg-gateway.com/v1", 1000);
         discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder, () -> Mono.just(string()), serviceProperties);
     }
 
     @Test
-    public void shouldDiscoverPatients() throws IOException {
+    public void shouldPostDiscoverPatientRequestToGateway() throws IOException {
         var expectedPatient = patientInResponse()
                 .display("Patient Name")
                 .careContexts(List.of(careContext().display("Care context 1").build()))
@@ -53,25 +54,21 @@ public class DiscoveryServiceClientTest {
         var patientResponse = patientResponse().patient(expectedPatient).build();
         var patientResponseBody = new ObjectMapper().writeValueAsString(patientResponse);
         when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(
-                ClientResponse.create(HttpStatus.OK)
+                ClientResponse.create(HttpStatus.ACCEPTED)
                         .header("Content-Type", "application/json")
-                        .body(patientResponseBody)
                         .build()));
         var patientRequest = patientRequest()
                 .patient(patientInRequest().build())
                 .requestId(UUID.randomUUID())
+                .timestamp(LocalDateTime.now().toString())
                 .build();
 
-        StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/", "hipId"))
+        StepVerifier.create(
+                discoveryServiceClient.requestPatientFor(patientRequest, "hipId"))
                 .assertNext(response -> {
-                    assertThat(response.getPatient().getDisplay()).isEqualTo(expectedPatient.getDisplay());
-                    assertThat(response.getPatient().getReferenceNumber())
-                            .isEqualTo(expectedPatient.getReferenceNumber());
-                    assertThat(response.getPatient().getMatchedBy()).isEqualTo(expectedPatient.getMatchedBy());
-                    assertThat(response.getPatient().getCareContexts().get(0).getDisplay())
-                            .isEqualTo(expectedPatient.getCareContexts().get(0).getDisplay());
+                    assertThat(response).isEqualTo(true);
                 })
                 .verifyComplete();
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://hip-url/patients/discover/carecontexts");
+        assertThat(captor.getValue().url().toString()).isEqualTo("http://ncg-gateway.com/v1/care-contexts/discover");
     }
 }

@@ -3,11 +3,14 @@ package in.projecteka.consentmanager.dataflow;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
+import in.projecteka.consentmanager.dataflow.model.GatewayDataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -29,5 +32,11 @@ public class DataFlowRequestController {
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .flatMap(requester ->
                         dataFlowRequester.notifyHealthInfoStatus(requester.getUsername(), notificationRequest));
+    }
+
+    @PostMapping("/v1/health-information/request")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public Mono<Void> requestHealthInformationV1(@RequestBody GatewayDataFlowRequest dataFlowRequest) {
+        return Mono.empty();
     }
 }

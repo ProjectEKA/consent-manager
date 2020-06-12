@@ -116,7 +116,6 @@ public class ConsentScheduler {
                 .timestamp(lastUpdated)
                 .consentRequestId(requestId)
                 .consentArtefacts(List.of(hipConsentArtefactRepresentation))
-                .hiuConsentNotificationUrl(hiuConsentNotificationUrl)
                 .build();
         return consentNotificationPublisher.publish(message);
     }

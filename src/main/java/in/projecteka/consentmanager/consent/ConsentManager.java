@@ -267,7 +267,6 @@ public class ConsentManager {
                 .timestamp(lastUpdated)
                 .consentRequestId(requestId)
                 .consentArtefacts(consents)
-                .hiuConsentNotificationUrl(hiuConsentNotificationUrl)
                 .hiuId(consentRequest.getId())
                 .build();
         return consentNotificationPublisher.publish(message);

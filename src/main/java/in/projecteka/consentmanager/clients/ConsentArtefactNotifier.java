@@ -14,7 +14,6 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.function.Supplier;
 
-import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
 import static in.projecteka.consentmanager.clients.HeaderConstants.HDR_HIP_ID;
 import static in.projecteka.consentmanager.clients.HeaderConstants.HDR_HIU_ID;
 
@@ -31,28 +30,8 @@ public class ConsentArtefactNotifier {
         return postConsentArtifactToHiu(request, hiuId);
     }
 
-    public Mono<Void> sendConsentArtefactTo(HIPConsentArtefactRepresentation consentArtefact, String providerUrl) {
-        String hipNotificationUrl = String.format("%s/%s", providerUrl, "consent/notification/");
-        return post(consentArtefact, hipNotificationUrl);
-    }
-
     public Mono<Void> sendConsentArtefactToHIP(HIPNotificationRequest notificationRequest, String hipId) {
         return postConsentArtefactToHip(notificationRequest, hipId);
-    }
-
-    private Mono<Void> post(Object body, String uri) {
-        return tokenGenerator.get()
-                .flatMap(token ->
-                        webClientBuilder.build()
-                                .post()
-                                .uri(uri)
-                                .header(HttpHeaders.AUTHORIZATION, token)
-                                .bodyValue(body)
-                                .retrieve()
-                                .onStatus(HttpStatus::is5xxServerError,
-                                        clientResponse -> Mono.error(unknownErrorOccurred()))
-                                .toBodilessEntity())
-                .then();
     }
 
     private Mono<Void> postConsentArtifactToHiu(Object body, String hiuId) {

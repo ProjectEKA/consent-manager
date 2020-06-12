@@ -44,7 +44,7 @@ public class CentralRegistryTokenVerifierForGateway {
                 new HashSet<>(Arrays.asList("sub", "iat", "exp", "scope", "clientId", "resource_access"))));
     }
 
-    public Mono<Caller> verify(String token) {
+    public Mono<ServiceCaller> verify(String token) {
         try {
             var parts = token.split(" ");
             if (parts.length == 2) {
@@ -53,9 +53,9 @@ public class CentralRegistryTokenVerifierForGateway {
                         .flatMap(jwtClaimsSet -> {
                             try {
                                 var clientId = jwtClaimsSet.getStringClaim("clientId");
-                                var caller = new Caller(clientId, true);
-                                return just(caller);
-                            } catch (ParseException e) {
+                                var serviceCaller = new ServiceCaller(clientId, getRole(jwtClaimsSet, clientId));
+                                return just(serviceCaller);
+                            } catch (Exception e) {
                                 logger.error(e.getMessage(),e);
                                 return Mono.empty();
                             }

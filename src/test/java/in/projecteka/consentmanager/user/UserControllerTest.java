@@ -6,6 +6,9 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
+import in.projecteka.consentmanager.common.Role;
+import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
@@ -28,6 +31,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
@@ -81,6 +85,9 @@ class UserControllerTest {
 
     @MockBean
     private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+
+    @MockBean
+    private CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway;
 
     @MockBean
     private Authenticator authenticator;
@@ -166,8 +173,9 @@ class UserControllerTest {
     public void returnPatientResponseWhenUserFound() {
         var token = string();
         var patientRequest = patientRequest().build();
-        var caller = new Caller(string(), false);
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
+        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+
+        when(centralRegistryTokenVerifierForGateway.verify(token)).thenReturn(just(caller));
         when(userService.user(patientRequest.getQuery().getPatient().getId(),
                 patientRequest.getQuery().getRequester(),
                 patientRequest.getRequestId()))

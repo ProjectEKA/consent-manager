@@ -13,7 +13,8 @@ import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
+import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
@@ -51,6 +52,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
@@ -119,7 +121,7 @@ public class DiscoveryUserJourneyTest {
     private ConceptValidator conceptValidator;
 
     @MockBean
-    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+    private CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway;
 
     @BeforeEach
     public void setUp() {
@@ -366,7 +368,10 @@ public class DiscoveryUserJourneyTest {
     public void onDiscoverPatientCareContexts() {
         var token = string();
         var patientDiscoveryResult = TestBuilders.discoveryResult().build();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", true)));
+        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+
+        when(centralRegistryTokenVerifierForGateway.verify(token)).thenReturn(Mono.just(caller));
+
         webTestClient.post()
                 .uri("/v1/care-contexts/on-discover")
                 .accept(MediaType.APPLICATION_JSON)
@@ -392,7 +397,10 @@ public class DiscoveryUserJourneyTest {
                 .error(error)
                 .resp(gatewayResponse)
                 .build();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", true)));
+        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+
+        when(centralRegistryTokenVerifierForGateway.verify(token)).thenReturn(Mono.just(caller));
+
         webTestClient.post()
                 .uri("/v1/care-contexts/on-discover")
                 .accept(MediaType.APPLICATION_JSON)
@@ -406,7 +414,11 @@ public class DiscoveryUserJourneyTest {
     @Test
     public void shouldFailOnDiscoverPatientCareContexts() throws Exception {
         var token = string();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", true)));
+        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+
+        when(centralRegistryTokenVerifierForGateway.verify(token))
+                .thenReturn(Mono.just(caller));
+
         webTestClient.post()
                 .uri("/v1/care-contexts/on-discover")
                 .accept(MediaType.APPLICATION_JSON)

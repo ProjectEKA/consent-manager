@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.model.FetchRequest;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import static in.projecteka.consentmanager.common.Constants.V_1_CONSENTS_FETCH;
 
 @RestController
 @AllArgsConstructor
@@ -80,10 +83,10 @@ public class ConsentArtefactsController {
     }
 
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @PostMapping(value = "/v1/consents/fetch")
+    @PostMapping(value = V_1_CONSENTS_FETCH)
     public Mono<Void> fetchConsent(@RequestBody FetchRequest fetchRequest) {
       return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
                 .doOnSuccess(requester -> {
                     Mono.defer(() -> consentManager.getConsent(fetchRequest.getConsentId(), fetchRequest.getRequestId())).subscribe();
                 })

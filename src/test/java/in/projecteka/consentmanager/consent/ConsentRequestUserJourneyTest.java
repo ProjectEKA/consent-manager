@@ -9,6 +9,8 @@ import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
+import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.model.AccessPeriod;
 import in.projecteka.consentmanager.consent.model.ConsentPermission;
 import in.projecteka.consentmanager.consent.model.ConsentPurpose;
@@ -54,6 +56,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static com.google.common.net.HttpHeaders.AUTHORIZATION;
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequest;
@@ -126,6 +129,9 @@ public class ConsentRequestUserJourneyTest {
 
     @MockBean
     private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+
+    @MockBean
+    private CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway;
 
     @MockBean
     private ConceptValidator conceptValidator;
@@ -595,10 +601,11 @@ public class ConsentRequestUserJourneyTest {
         in.projecteka.consentmanager.consent.model.request.ConsentRequest consentRequest = consentRequest()
                 .consent(requestedDetail)
                 .build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
 
         when(authenticator.verify(authToken)).thenReturn(Mono.just(new Caller("user-id", false)));
-        when(centralRegistryTokenVerifier.verify(authToken))
-                .thenReturn(Mono.just(new Caller("TEST_USERNAME", true)));
+        when(centralRegistryTokenVerifierForGateway.verify(authToken))
+                .thenReturn(Mono.just(caller));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(repository.requestOf(anyString())).thenReturn(Mono.empty());
         when(conceptValidator.validatePurpose(any())).thenReturn(Mono.just(true));

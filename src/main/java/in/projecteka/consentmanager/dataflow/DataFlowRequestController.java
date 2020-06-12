@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_REQUEST;
+
 @RestController
 @AllArgsConstructor
 public class DataFlowRequestController {
@@ -34,7 +36,7 @@ public class DataFlowRequestController {
                         dataFlowRequester.notifyHealthInfoStatus(requester.getUsername(), notificationRequest));
     }
 
-    @PostMapping("/v1/health-information/request")
+    @PostMapping(V_1_HEALTH_INFORMATION_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> requestHealthInformationV1(@RequestBody GatewayDataFlowRequest dataFlowRequest) {
         return Mono.empty();

@@ -39,13 +39,21 @@ import java.util.Optional;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
+import static in.projecteka.consentmanager.common.Constants.V_1_CARE_CONTEXTS_ON_DISCOVER;
+import static in.projecteka.consentmanager.common.Constants.V_1_CONSENT_REQUESTS_INIT;
+import static in.projecteka.consentmanager.common.Constants.V_1_CONSENTS_FETCH;
+import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_REQUEST;
+import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_CONFIRM;
+import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_INIT;
+import static in.projecteka.consentmanager.common.Constants.V_1_PATIENTS_FIND;
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfiguration {
 
     private static final List<Map.Entry<String, HttpMethod>> SERVICE_ONLY_URLS = new ArrayList<>();
-    private static final List<Map.Entry<String, HttpMethod>> GATEWAY_ONLY_URLS = new ArrayList<>();
+    private static final List<Map.Entry<String, HttpMethod>> GATEWAY_URLS = new ArrayList<>();
     private static final List<RequestMatcher> PIN_VERIFICATION_MATCHERS = new ArrayList<>();
 
     @RequiredArgsConstructor
@@ -57,22 +65,34 @@ public class SecurityConfiguration {
         private String scope;
     }
 
+    public static final String[] GATEWAY_APIS = new String[]{
+            V_1_CARE_CONTEXTS_ON_DISCOVER,
+            V_1_CONSENT_REQUESTS_INIT,
+            V_1_CONSENTS_FETCH,
+            V_1_PATIENTS_FIND,
+            V_1_LINKS_LINK_ON_INIT,
+            V_1_LINKS_LINK_ON_CONFIRM
+    };
+
     static {
         SERVICE_ONLY_URLS.add(Map.entry("/users/**", HttpMethod.GET));
         SERVICE_ONLY_URLS.add(Map.entry("/consents/**", HttpMethod.GET));
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/notification", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/request", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/consent-requests", HttpMethod.POST));
-        GATEWAY_ONLY_URLS.add(Map.entry("/v1/consent-requests/init", HttpMethod.POST));
-        GATEWAY_ONLY_URLS.add(Map.entry("/v1/care-contexts/on-discover", HttpMethod.POST));
-        GATEWAY_ONLY_URLS.add(Map.entry("/v1/links/link/on-init", HttpMethod.POST));
-        GATEWAY_ONLY_URLS.add(Map.entry("/v1/links/link/on-confirm", HttpMethod.POST));
-        GATEWAY_ONLY_URLS.add(Map.entry("/v1/patients/find", HttpMethod.POST));
-        GATEWAY_ONLY_URLS.add(Map.entry("/v1/consents/fetch", HttpMethod.POST));
-        GATEWAY_ONLY_URLS.add(Map.entry("/v1/health-information/request", HttpMethod.POST));
+
+        GATEWAY_URLS.add(Map.entry(V_1_CONSENT_REQUESTS_INIT, HttpMethod.POST));
+        GATEWAY_URLS.add(Map.entry(V_1_CARE_CONTEXTS_ON_DISCOVER, HttpMethod.POST));
+        GATEWAY_URLS.add(Map.entry(V_1_LINKS_LINK_ON_INIT, HttpMethod.POST));
+        GATEWAY_URLS.add(Map.entry(V_1_LINKS_LINK_ON_CONFIRM, HttpMethod.POST));
+        GATEWAY_URLS.add(Map.entry(V_1_PATIENTS_FIND, HttpMethod.POST));
+        GATEWAY_URLS.add(Map.entry(V_1_CONSENTS_FETCH, HttpMethod.POST));
+        GATEWAY_URLS.add(Map.entry(V_1_HEALTH_INFORMATION_REQUEST, HttpMethod.POST));
+
         RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve", HttpMethod.POST, SCOPE_CONSENT_APPROVE);
         RequestMatcher revokeMatcher = new RequestMatcher("/consents/revoke", HttpMethod.POST, SCOPE_CONSENT_REVOKE);
         RequestMatcher changePinMatcher = new RequestMatcher("/patients/change-pin", HttpMethod.POST, SCOPE_CHANGE_PIN);
+
         PIN_VERIFICATION_MATCHERS.add(approveMatcher);
         PIN_VERIFICATION_MATCHERS.add(revokeMatcher);
         PIN_VERIFICATION_MATCHERS.add(changePinMatcher);
@@ -104,7 +124,11 @@ public class SecurityConfiguration {
                                           "/**.png"};
         httpSecurity.authorizeExchange().pathMatchers(whitelistedUrls).permitAll();
         httpSecurity.httpBasic().disable().formLogin().disable().csrf().disable().logout().disable();
-        httpSecurity.authorizeExchange().pathMatchers("/**").authenticated();
+        httpSecurity
+                .authorizeExchange()
+                .pathMatchers(GATEWAY_APIS).hasAnyRole(GATEWAY.name())
+                .pathMatchers("/**")
+                .authenticated();
         return httpSecurity
                 .authenticationManager(authenticationManager)
                 .securityContextRepository(securityContextRepository)
@@ -186,18 +210,18 @@ public class SecurityConfiguration {
 
         private boolean isCentralRegistryAuthenticatedOnlyRequestFromGateway(String url, HttpMethod method) {
             AntPathMatcher antPathMatcher = new AntPathMatcher();
-            return GATEWAY_ONLY_URLS.stream()
+            return GATEWAY_URLS.stream()
                     .anyMatch(pattern ->
                             antPathMatcher.match(pattern.getKey(), url) && pattern.getValue().equals(method));
         }
 
         private Mono<SecurityContext> checkCentralRegistryForGateway(String token) {
             return centralRegistryTokenVerifierForGateway.verify(token)
-                    .map(caller -> {
+                    .map(serviceCaller -> {
                             var authorities = new ArrayList<SimpleGrantedAuthority>();
-                          //  var authority = new SimpleGrantedAuthority("ROLE_" + caller.getRole().name().toUpperCase());
-                          //  authorities.add(authority);
-                            return new UsernamePasswordAuthenticationToken(caller, token, authorities);
+                            var authority = new SimpleGrantedAuthority("ROLE_" + serviceCaller.getRole().name().toUpperCase());
+                            authorities.add(authority);
+                            return new UsernamePasswordAuthenticationToken(serviceCaller, token, authorities);
                     })
                     .map(SecurityContextImpl::new);
         }

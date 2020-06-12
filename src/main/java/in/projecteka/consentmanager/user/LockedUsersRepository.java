@@ -63,6 +63,7 @@ public class LockedUsersRepository {
                             var lockedUserIterator = handler.result().iterator();
                             if (!lockedUserIterator.hasNext()) {
                                 monoSink.success();
+                                return;
                             }
                             monoSink.success(lockedUserFrom(lockedUserIterator.next()));
                         }));

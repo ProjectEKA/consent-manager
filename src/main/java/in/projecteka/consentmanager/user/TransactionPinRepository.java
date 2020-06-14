@@ -59,6 +59,7 @@ public class TransactionPinRepository {
                             var transactionPinIterator = handler.result().iterator();
                             if (!transactionPinIterator.hasNext()) {
                                 monoSink.success(Optional.empty());
+                                return;
                             }
                             monoSink.success(transactionPinFrom(transactionPinIterator.next()));
                         }));

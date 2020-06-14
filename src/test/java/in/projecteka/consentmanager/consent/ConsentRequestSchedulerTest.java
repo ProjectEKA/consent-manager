@@ -10,7 +10,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
@@ -52,7 +52,7 @@ class ConsentRequestSchedulerTest {
     @Test
     public void processConsentRequestsWhenRequestIsNotExpired() {
         ConsentRequestDetail consentRequestDetail =
-                consentRequestDetail().status(ConsentStatus.REQUESTED).createdAt(new Date()).build();
+                consentRequestDetail().status(ConsentStatus.REQUESTED).createdAt(LocalDateTime.now()).build();
         when(consentRequestRepository.getConsentsByStatus(ConsentStatus.REQUESTED)).thenReturn(Flux.just(consentRequestDetail));
         when(consentServiceProperties.getConsentRequestExpiry()).thenReturn(10);
 
@@ -64,7 +64,7 @@ class ConsentRequestSchedulerTest {
 
     @Test
     public void processConsentRequestsWhenRequestIsExpired() {
-        Date createdAt = Date.from(new Date().toInstant().minus(Duration.ofMinutes(20)));
+        LocalDateTime createdAt = LocalDateTime.now().minus(Duration.ofMinutes(20));
         var consentRequestDetail =
                 consentRequestDetail().status(ConsentStatus.REQUESTED).createdAt(createdAt).build();
         var consentArtefactsMessage = ConsentArtefactsMessage.builder()
@@ -73,6 +73,7 @@ class ConsentRequestSchedulerTest {
                 .consentRequestId(consentRequestDetail.getRequestId())
                 .consentArtefacts(List.of())
                 .hiuConsentNotificationUrl(consentRequestDetail.getConsentNotificationUrl())
+                .hiuId(consentRequestDetail.getHiu().getId())
                 .build();
         when(consentRequestRepository.getConsentsByStatus(ConsentStatus.REQUESTED))
                 .thenReturn(Flux.just(consentRequestDetail));

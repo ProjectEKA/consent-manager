@@ -12,14 +12,14 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +28,7 @@ import static in.projecteka.consentmanager.common.Serializer.to;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 
 public class ConsentRequestRepository {
+    private static final Logger logger = LoggerFactory.getLogger(ConsentRequestRepository.class);
     private static final String SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS;
     private static final String SELECT_CONSENT_REQUEST_BY_ID;
     private static final String SELECT_CONSENT_REQUEST_BY_STATUS;
@@ -77,9 +78,9 @@ public class ConsentRequestRepository {
     }
 
     public Mono<ListResult<List<ConsentRequestDetail>>> requestsForPatient(String patientId,
-																		   int limit,
+                                                                           int limit,
                                                                            int offset,
-																		   String status) {
+                                                                           String status) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_DETAILS_FOR_PATIENT)
                 .execute(Tuple.of(patientId, limit, offset, status, GRANTED.toString()),
                         handler -> {
@@ -88,6 +89,7 @@ public class ConsentRequestRepository {
                                     .execute(Tuple.of(patientId, status, GRANTED.toString()), counter -> {
                                                 if (handler.failed()) {
                                                     monoSink.error(new DbOperationError());
+                                                    return;
                                                 }
                                                 Integer count = counter.result().iterator()
                                                         .next().getInteger("count");
@@ -125,6 +127,7 @@ public class ConsentRequestRepository {
     private Handler<AsyncResult<RowSet<Row>>> consentRequestHandler(MonoSink<ConsentRequestDetail> monoSink) {
         return handler -> {
             if (handler.failed()) {
+                logger.error(handler.cause().getMessage());
                 monoSink.error(new RuntimeException(UNKNOWN_ERROR_OCCURRED));
                 return;
             }
@@ -143,7 +146,7 @@ public class ConsentRequestRepository {
                 .builder()
                 .requestId(result.getString("request_id"))
                 .status(getConsentStatus(result.getString("status")))
-                .createdAt(convertToDate(result.getLocalDateTime("date_created")))
+                .createdAt(result.getLocalDateTime("date_created"))
                 .hip(details.getHip())
                 .hiu(details.getHiu())
                 .hiTypes(details.getHiTypes())
@@ -152,7 +155,7 @@ public class ConsentRequestRepository {
                 .purpose(details.getPurpose())
                 .requester(details.getRequester())
                 .consentNotificationUrl(details.getConsentNotificationUrl())
-                .lastUpdated(convertToDate(result.getLocalDateTime("date_modified")))
+                .lastUpdated(result.getLocalDateTime("date_modified"))
                 .build();
     }
 
@@ -162,6 +165,7 @@ public class ConsentRequestRepository {
                         updateHandler -> {
                             if (updateHandler.failed()) {
                                 monoSink.error(new Exception("Failed to update status"));
+                                return;
                             }
                             monoSink.success();
                         }));
@@ -169,13 +173,6 @@ public class ConsentRequestRepository {
 
     private ConsentStatus getConsentStatus(String status) {
         return ConsentStatus.valueOf(status);
-    }
-
-    private Date convertToDate(LocalDateTime timestamp) {
-        if (timestamp != null) {
-            return Date.from(timestamp.atZone(ZoneId.systemDefault()).toInstant());
-        }
-        return null;
     }
 
     public Flux<ConsentRequestDetail> getConsentsByStatus(ConsentStatus status) {

@@ -47,6 +47,13 @@ public class ConsentRequestController {
 				.map(ConsentRequestController::buildResponse);
 	}
 
+    @PostMapping(value = "/v1/consent-requests/init")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public Mono<Void> initConsentRequest(
+            @RequestBody @Valid @ModelAttribute("consentRequest") ConsentRequest request) {
+        return consentManager.requestConsent(request.getConsent(), request.getRequestId());
+    }
+
 	@GetMapping(value = "/consent-requests")
 	public Mono<ConsentRequestsRepresentation> allConsents(
 			@RequestParam(defaultValue = "-1") int limit,

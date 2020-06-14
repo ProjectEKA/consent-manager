@@ -4,6 +4,7 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
 import io.vertx.pgclient.PgPool;
@@ -42,9 +43,15 @@ public class DataFlowConfiguration {
                                          DataFlowRequestRepository dataFlowRequestRepository,
                                          PostDataFlowRequestApproval postDataFlowRequestApproval,
                                          DataFlowConsentManagerProperties dataFlowConsentManagerProperties,
-                                         IdentityService identityService) {
+                                         IdentityService identityService,
+                                         GatewayServiceProperties gatewayServiceProperties,
+                                         CentralRegistry centralRegistry) {
         return new DataFlowRequester(
-                new ConsentManagerClient(builder, dataFlowConsentManagerProperties.getUrl(), identityService::authenticate),
+                new ConsentManagerClient(builder,
+                        dataFlowConsentManagerProperties.getUrl(),
+                        identityService::authenticate,
+                        gatewayServiceProperties,
+                        centralRegistry),
                 dataFlowRequestRepository,
                 postDataFlowRequestApproval);
     }

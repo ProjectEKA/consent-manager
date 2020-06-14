@@ -1,15 +1,21 @@
 package in.projecteka.consentmanager.consent;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
+import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.ListenerProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.UserServiceProperties;
 import io.vertx.pgclient.PgPool;
@@ -62,9 +68,10 @@ public class ConsentConfiguration {
                                                 PostConsentRequest postConsentRequest,
                                                 LinkServiceProperties linkServiceProperties,
                                                 IdentityService identityService,
-                                                ConceptValidator conceptValidator) {
+                                                ConceptValidator conceptValidator,
+                                                GatewayServiceProperties gatewayServiceProperties) {
         return new ConsentManager(
-                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate),
+                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate, gatewayServiceProperties, centralRegistry),
                 repository,
                 consentArtefactRepository,
                 keyPair,
@@ -74,7 +81,12 @@ public class ConsentConfiguration {
                 new PatientServiceClient(builder, identityService::authenticate, linkServiceProperties.getUrl()),
                 new CMProperties(identityService.getConsentManagerId()),
                 conceptValidator,
-                new ConsentArtefactQueryGenerator());
+                new ConsentArtefactQueryGenerator(),
+                new ConsentManagerClient(builder,
+                        gatewayServiceProperties.getBaseUrl(),
+                        identityService::authenticate,
+                        gatewayServiceProperties,
+                        centralRegistry));
     }
 
     @Bean
@@ -82,10 +94,7 @@ public class ConsentConfiguration {
             ConsentRequestRepository repository,
             ConsentArtefactRepository consentArtefactRepository,
             ConsentNotificationPublisher consentNotificationPublisher) {
-        return new ConsentScheduler(
-                repository,
-                consentArtefactRepository,
-                consentNotificationPublisher);
+        return new ConsentScheduler(repository, consentArtefactRepository, consentNotificationPublisher);
     }
 
     @Bean
@@ -97,7 +106,10 @@ public class ConsentConfiguration {
 
     @Bean
     public Jackson2JsonMessageConverter converter() {
-        return new Jackson2JsonMessageConverter();
+        var objectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return new Jackson2JsonMessageConverter(objectMapper);
     }
 
     @Bean
@@ -108,8 +120,10 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    public ConsentArtefactNotifier consentArtefactClient(WebClient.Builder builder, CentralRegistry centralRegistry) {
-        return new ConsentArtefactNotifier(builder, centralRegistry::authenticate);
+    public ConsentArtefactNotifier consentArtefactClient(WebClient.Builder builder,
+                                                         CentralRegistry centralRegistry,
+                                                         GatewayServiceProperties gatewayServiceProperties) {
+        return new ConsentArtefactNotifier(builder, centralRegistry::authenticate, gatewayServiceProperties);
     }
 
     @Bean
@@ -117,12 +131,16 @@ public class ConsentConfiguration {
             MessageListenerContainerFactory messageListenerContainerFactory,
             DestinationsConfig destinationsConfig,
             Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-            ConsentArtefactNotifier consentArtefactNotifier) {
+            ConsentArtefactNotifier consentArtefactNotifier,
+            AmqpTemplate amqpTemplate,
+            ListenerProperties listenerProperties) {
         return new HiuConsentNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
-                consentArtefactNotifier);
+                consentArtefactNotifier,
+                amqpTemplate,
+                listenerProperties);
     }
 
     @Bean
@@ -149,13 +167,15 @@ public class ConsentConfiguration {
             OtpServiceProperties otpServiceProperties,
             UserServiceProperties userServiceProperties,
             ConsentServiceProperties consentServiceProperties,
-            IdentityService identityService) {
+            IdentityService identityService,
+            GatewayServiceProperties gatewayServiceProperties,
+            CentralRegistry centralRegistry) {
         return new ConsentRequestNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 new OtpServiceClient(builder, otpServiceProperties.getUrl()),
-                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate),
+                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate, gatewayServiceProperties, centralRegistry),
                 consentServiceProperties);
     }
 
@@ -169,7 +189,7 @@ public class ConsentConfiguration {
 
     @Bean
     public PinVerificationTokenService pinVerificationTokenService(@Qualifier("keySigningPublicKey") PublicKey key,
-                                                                   CacheAdapter<String,String> usedTokens) {
+                                                                   CacheAdapter<String, String> usedTokens) {
         return new PinVerificationTokenService(key, usedTokens);
     }
 }

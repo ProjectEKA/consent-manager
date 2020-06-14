@@ -62,32 +62,6 @@ public class Discovery {
 				.map(Transformer::to);
 	}
 
-	@Deprecated
-	public Mono<DiscoveryResponse> patientFor(String userName,
-	                                          List<PatientIdentifier> unverifiedIdentifiers,
-	                                          String providerId,
-	                                          UUID transactionId,
-	                                          UUID requestId) {
-		return Mono.just(requestId)
-				.filterWhen(this::validateRequest)
-				.switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
-				.flatMap(val -> userWith(userName)
-						.zipWith(providerUrl(providerId))
-						.switchIfEmpty(Mono.error(ClientError.unableToConnectToProvider()))
-						.flatMap(tuple -> patientIn(providerId,
-								tuple.getT2(),
-								tuple.getT1(),
-								transactionId,
-								unverifiedIdentifiers,
-								requestId))
-						.flatMap(patientResponse ->
-								insertDiscoveryRequest(patientResponse,
-										providerId,
-										userName,
-										transactionId,
-										requestId)));
-	}
-
 	public Mono<DiscoveryResponse> patientInHIP(String userName,
 	                                            List<PatientIdentifier> unverifiedIdentifiers,
 	                                            String providerId,
@@ -162,16 +136,6 @@ public class Discovery {
 						.findFirst()
 						.map(identifier -> Mono.just(identifier.getSystem()))
 						.orElse(Mono.empty()));
-	}
-
-	private Mono<PatientResponse> patientIn(String hipId,
-	                                        String hipSystemUrl,
-	                                        User user,
-	                                        UUID transactionId,
-	                                        List<PatientIdentifier> unverifiedIdentifiers,
-	                                        UUID requestId) {
-		var patientRequest = requestFor(user, transactionId, unverifiedIdentifiers, requestId);
-		return discoveryServiceClient.patientFor(patientRequest, hipSystemUrl, hipId);
 	}
 
 	private PatientRequest requestFor(User user, UUID transactionId, List<PatientIdentifier> unverifiedIdentifiers, UUID requestId) {

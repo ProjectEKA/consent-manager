@@ -2,8 +2,8 @@ package in.projecteka.consentmanager.dataflow;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.common.Caller;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
+import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
@@ -19,6 +19,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static org.mockito.Mockito.when;
@@ -62,7 +63,7 @@ class DataFlowRequestControllerTest {
     private JWKSet identityServiceJWKSet;
 
     @MockBean
-    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+    private CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway;
 
     @SuppressWarnings("unused")
     @MockBean
@@ -70,10 +71,11 @@ class DataFlowRequestControllerTest {
 
     @Test
     void shouldReturnAcceptedForDataFlowRequest() {
-        var username = string();
         var token = string();
         var dataFlowRequestBody = gatewayDataFlowRequest().build();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(new Caller(username, true)));
+        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+        when(centralRegistryTokenVerifierForGateway.verify(token)).thenReturn(just(caller));
+
         webClient.post()
                 .uri("/v1/health-information/request")
                 .accept(MediaType.APPLICATION_JSON)
@@ -83,7 +85,5 @@ class DataFlowRequestControllerTest {
                 .exchange()
                 .expectStatus()
                 .isAccepted();
-
-
     }
 }

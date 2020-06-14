@@ -4,6 +4,8 @@ import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
+import in.projecteka.consentmanager.common.Role;
+import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConsentArtefactsController;
 import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.ConsentNotificationPublisher;
@@ -20,8 +22,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
 
-
+import static in.projecteka.consentmanager.common.TestBuilders.string;
+import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
+import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
@@ -86,4 +92,38 @@ class SecurityConfigurationTest {
                 .isEqualTo(UNAUTHORIZED);
     }
 
+    @Test
+    void return5xxServerError() {
+        var token = string();
+        var caller = ServiceCaller.builder().role(Role.valueOfIgnoreCase("CM")).build();
+        when(centralRegistryTokenVerifierForGateway.verify(token)).thenReturn(Mono.just(caller));
+
+        webTestClient
+                .post()
+                .uri("/v1/patients/find")
+                .contentType(APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .bodyValue("{}")
+                .exchange()
+                .expectStatus()
+                .is5xxServerError();
+    }
+
+    @Test
+    void return202Accepted() {
+        var token = string();
+        var caller = ServiceCaller.builder().role(Role.valueOfIgnoreCase("Gateway")).build();
+        var patientRequest = patientRequest().build();
+        when(centralRegistryTokenVerifierForGateway.verify(token)).thenReturn(Mono.just(caller));
+
+        webTestClient
+                .post()
+                .uri("/v1/patients/find")
+                .contentType(APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .bodyValue(patientRequest)
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+    }
 }

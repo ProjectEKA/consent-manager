@@ -3,17 +3,15 @@ package in.projecteka.consentmanager;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
-import in.projecteka.consentmanager.common.Role;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConsentArtefactsController;
-import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.ConsentNotificationPublisher;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.dataflow.DataFlowRequester;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +22,13 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.common.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -42,9 +45,6 @@ class SecurityConfigurationTest {
     JWKSet identityServiceJWKSet;
 
     @MockBean
-    CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway;
-
-    @MockBean
     CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
     @MockBean
@@ -55,9 +55,6 @@ class SecurityConfigurationTest {
 
     @MockBean
     private ConsentNotificationPublisher postConsentApproval;
-
-    @MockBean
-    private ConsentManager consentRequestService;
 
     @MockBean
     private HipConsentNotificationListener hipConsentNotificationListener;
@@ -77,6 +74,9 @@ class SecurityConfigurationTest {
     @MockBean
     private PinVerificationTokenService pinVerificationTokenService;
 
+    @MockBean
+    private DataFlowRequester dataFlowRequester;
+
     @Autowired
     WebTestClient webTestClient;
 
@@ -93,10 +93,10 @@ class SecurityConfigurationTest {
     }
 
     @Test
-    void return5xxServerError() {
+    void returnForbiddenError() {
         var token = string();
-        var caller = ServiceCaller.builder().role(Role.valueOfIgnoreCase("CM")).build();
-        when(centralRegistryTokenVerifierForGateway.verify(token)).thenReturn(Mono.just(caller));
+        var caller = ServiceCaller.builder().roles(List.of()).build();
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient
                 .post()
@@ -106,15 +106,15 @@ class SecurityConfigurationTest {
                 .bodyValue("{}")
                 .exchange()
                 .expectStatus()
-                .is5xxServerError();
+                .isForbidden();
     }
 
     @Test
     void return202Accepted() {
         var token = string();
-        var caller = ServiceCaller.builder().role(Role.valueOfIgnoreCase("Gateway")).build();
+        var caller = ServiceCaller.builder().roles(List.of(GATEWAY)).build();
         var patientRequest = patientRequest().build();
-        when(centralRegistryTokenVerifierForGateway.verify(token)).thenReturn(Mono.just(caller));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient
                 .post()
@@ -125,5 +125,24 @@ class SecurityConfigurationTest {
                 .exchange()
                 .expectStatus()
                 .isAccepted();
+    }
+
+    @Test
+    void return200OK() {
+        var token = string();
+        var username = string();
+        var caller = ServiceCaller.builder().clientId(username).roles(List.of()).build();
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+        when(dataFlowRequester.notifyHealthInfoStatus(eq(username), any())).thenReturn(Mono.empty());
+
+        webTestClient
+                .post()
+                .uri("/health-information/notification")
+                .contentType(APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .bodyValue("{}")
+                .exchange()
+                .expectStatus()
+                .isOk();
     }
 }

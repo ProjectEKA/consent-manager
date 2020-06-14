@@ -37,8 +37,8 @@ public class ConsentArtefactsController {
     @GetMapping(value = "/consents/{consentId}")
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(@PathVariable(value = "consentId") String consentId) {
         return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(requester -> consentManager.getConsent(consentId, requester.getUsername()));
+                .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
+                .flatMap(requester -> consentManager.getConsent(consentId, requester.getClientId()));
     }
 
     @GetMapping(value = "/internal/consents/{consentId}")

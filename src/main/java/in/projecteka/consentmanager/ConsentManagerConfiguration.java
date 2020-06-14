@@ -10,7 +10,6 @@ import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
 import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.common.ListenerProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -151,7 +150,8 @@ public class ConsentManagerConfiguration {
     @Bean
     public DestinationsConfig destinationsConfig(AmqpAdmin amqpAdmin, ListenerProperties listenerProperties) {
         HashMap<String, DestinationsConfig.DestinationInfo> queues = new HashMap<>();
-        queues.put(CONSENT_REQUEST_QUEUE, new DestinationsConfig.DestinationInfo("exchange", CONSENT_REQUEST_QUEUE));
+        queues.put(CONSENT_REQUEST_QUEUE,
+                new DestinationsConfig.DestinationInfo("exchange", CONSENT_REQUEST_QUEUE));
         queues.put(HIU_CONSENT_NOTIFICATION_QUEUE,
                 new DestinationsConfig.DestinationInfo("exchange", HIU_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_CONSENT_NOTIFICATION_QUEUE,
@@ -168,7 +168,10 @@ public class ConsentManagerConfiguration {
         amqpAdmin.declareExchange(new TopicExchange(PARKING_EXCHANGE));
         amqpAdmin.declareBinding(parkingBinding);
 
-        Queue deadLetterQueue = QueueBuilder.durable(DEAD_LETTER_QUEUE).deadLetterExchange("exchange").ttl(listenerProperties.getRetryInterval()).build();
+        Queue deadLetterQueue = QueueBuilder.durable(DEAD_LETTER_QUEUE)
+                .deadLetterExchange("exchange")
+                .ttl(listenerProperties.getRetryInterval())
+                .build();
         Binding with = BindingBuilder
                 .bind(deadLetterQueue)
                 .to(new TopicExchange(CM_DEAD_LETTER_EXCHANGE))
@@ -240,12 +243,8 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public CentralRegistryTokenVerifier centralRegistryTokenVerifier(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
+    public CentralRegistryTokenVerifier centralRegistryTokenVerifier(
+            @Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
         return new CentralRegistryTokenVerifier(jwkSet);
-    }
-
-    @Bean
-    public CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
-        return new CentralRegistryTokenVerifierForGateway(jwkSet);
     }
 }

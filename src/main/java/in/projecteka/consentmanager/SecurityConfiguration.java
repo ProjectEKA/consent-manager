@@ -5,7 +5,6 @@ import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.user.SignUpService;
@@ -47,25 +46,15 @@ import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_CO
 import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_INIT;
 import static in.projecteka.consentmanager.common.Constants.V_1_PATIENTS_FIND;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
+import static java.util.stream.Collectors.toList;
 
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfiguration {
 
     private static final List<Map.Entry<String, HttpMethod>> SERVICE_ONLY_URLS = new ArrayList<>();
-    private static final List<Map.Entry<String, HttpMethod>> GATEWAY_URLS = new ArrayList<>();
     private static final List<RequestMatcher> PIN_VERIFICATION_MATCHERS = new ArrayList<>();
-
-    @RequiredArgsConstructor
-    @AllArgsConstructor
-    @Getter
-    private static class RequestMatcher {
-        private final String pattern;
-        private final HttpMethod httpMethod;
-        private String scope;
-    }
-
-    public static final String[] GATEWAY_APIS = new String[]{
+    private static final String[] GATEWAY_APIS = new String[]{
             V_1_CARE_CONTEXTS_ON_DISCOVER,
             V_1_CONSENT_REQUESTS_INIT,
             V_1_CONSENTS_FETCH,
@@ -81,23 +70,28 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/request", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/consent-requests", HttpMethod.POST));
 
-        GATEWAY_URLS.add(Map.entry(V_1_CONSENT_REQUESTS_INIT, HttpMethod.POST));
-        GATEWAY_URLS.add(Map.entry(V_1_CARE_CONTEXTS_ON_DISCOVER, HttpMethod.POST));
-        GATEWAY_URLS.add(Map.entry(V_1_LINKS_LINK_ON_INIT, HttpMethod.POST));
-        GATEWAY_URLS.add(Map.entry(V_1_LINKS_LINK_ON_CONFIRM, HttpMethod.POST));
-        GATEWAY_URLS.add(Map.entry(V_1_PATIENTS_FIND, HttpMethod.POST));
-        GATEWAY_URLS.add(Map.entry(V_1_CONSENTS_FETCH, HttpMethod.POST));
-        GATEWAY_URLS.add(Map.entry(V_1_HEALTH_INFORMATION_REQUEST, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(V_1_CONSENT_REQUESTS_INIT, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(V_1_CARE_CONTEXTS_ON_DISCOVER, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(V_1_LINKS_LINK_ON_INIT, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(V_1_LINKS_LINK_ON_CONFIRM, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(V_1_PATIENTS_FIND, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(V_1_CONSENTS_FETCH, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(V_1_HEALTH_INFORMATION_REQUEST, HttpMethod.POST));
 
-        RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve", HttpMethod.POST, SCOPE_CONSENT_APPROVE);
-        RequestMatcher revokeMatcher = new RequestMatcher("/consents/revoke", HttpMethod.POST, SCOPE_CONSENT_REVOKE);
-        RequestMatcher changePinMatcher = new RequestMatcher("/patients/change-pin", HttpMethod.POST, SCOPE_CHANGE_PIN);
+        RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve",
+                HttpMethod.POST,
+                SCOPE_CONSENT_APPROVE);
+        RequestMatcher revokeMatcher = new RequestMatcher("/consents/revoke",
+                HttpMethod.POST,
+                SCOPE_CONSENT_REVOKE);
+        RequestMatcher changePinMatcher = new RequestMatcher("/patients/change-pin",
+                HttpMethod.POST,
+                SCOPE_CHANGE_PIN);
 
         PIN_VERIFICATION_MATCHERS.add(approveMatcher);
         PIN_VERIFICATION_MATCHERS.add(revokeMatcher);
         PIN_VERIFICATION_MATCHERS.add(changePinMatcher);
     }
-
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(
@@ -106,22 +100,22 @@ public class SecurityConfiguration {
             ServerSecurityContextRepository securityContextRepository) {
 
         final String[] whitelistedUrls = {"/**.json",
-                                          "/ValueSet/**.json",
-                                          "/patients/generateotp",
-                                          "/patients/verifyotp",
-                                          "/patients/profile/loginmode",
-                                          "/patients/profile/recovery-init",
-                                          "/patients/profile/recovery-confirm",
-                                          "/users/verify",
-                                          "/users/permit",
-                                          "/otpsession/verify",
-                                          "/otpsession/permit",
-                                          "/sessions",
-                                          "/**.html",
-                                          "/**.js",
-                                          "/**.yaml",
-                                          "/**.css",
-                                          "/**.png"};
+                "/ValueSet/**.json",
+                "/patients/generateotp",
+                "/patients/verifyotp",
+                "/patients/profile/loginmode",
+                "/patients/profile/recovery-init",
+                "/patients/profile/recovery-confirm",
+                "/users/verify",
+                "/users/permit",
+                "/otpsession/verify",
+                "/otpsession/permit",
+                "/sessions",
+                "/**.html",
+                "/**.js",
+                "/**.yaml",
+                "/**.css",
+                "/**.png"};
         httpSecurity.authorizeExchange().pathMatchers(whitelistedUrls).permitAll();
         httpSecurity.httpBasic().disable().formLogin().disable().csrf().disable().logout().disable();
         httpSecurity
@@ -141,7 +135,9 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet, CacheAdapter<String, String> blacklistedTokens, ConfigurableJWTProcessor<com.nimbusds.jose.proc.SecurityContext> jwtProcessor) {
+    public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet,
+                                       CacheAdapter<String, String> blacklistedTokens,
+                                       ConfigurableJWTProcessor<com.nimbusds.jose.proc.SecurityContext> jwtProcessor) {
         return new Authenticator(jwkSet, blacklistedTokens, jwtProcessor);
     }
 
@@ -154,13 +150,20 @@ public class SecurityConfiguration {
     public SecurityContextRepository contextRepository(SignUpService signupService,
                                                        Authenticator authenticator,
                                                        PinVerificationTokenService pinVerificationTokenService,
-                                                       CentralRegistryTokenVerifier centralRegistryTokenVerifier,
-                                                       CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway) {
+                                                       CentralRegistryTokenVerifier centralRegistryTokenVerifier) {
         return new SecurityContextRepository(signupService,
                 authenticator,
                 pinVerificationTokenService,
-                centralRegistryTokenVerifier,
-                centralRegistryTokenVerifierForGateway);
+                centralRegistryTokenVerifier);
+    }
+
+    @RequiredArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    private static class RequestMatcher {
+        private final String pattern;
+        private final HttpMethod httpMethod;
+        private String scope;
     }
 
     @AllArgsConstructor
@@ -169,7 +172,6 @@ public class SecurityConfiguration {
         private final Authenticator identityServiceClient;
         private final PinVerificationTokenService pinVerificationTokenService;
         private final CentralRegistryTokenVerifier centralRegistryTokenVerifier;
-        private final CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway;
 
         @Override
         public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {
@@ -188,8 +190,8 @@ public class SecurityConfiguration {
                 return checkSignUp(token);
             }
             if (isPinVerificationRequest(requestPath, requestMethod)) {
-                Optional<String> validScope = getScope(requestPath,requestMethod);
-                if(validScope.isEmpty()) {
+                Optional<String> validScope = getScope(requestPath, requestMethod);
+                if (validScope.isEmpty()) {
                     return Mono.empty();//TODO handle better?
                 }
                 return validatePinVerificationRequest(token, validScope.get());
@@ -199,40 +201,18 @@ public class SecurityConfiguration {
                     requestMethod)) {
                 return checkCentralRegistry(token);
             }
-            if (isCentralRegistryAuthenticatedOnlyRequestFromGateway(
-                    requestPath,
-                    requestMethod)) {
-                return checkCentralRegistryForGateway(token);
-            }
-
             return check(token);
-        }
-
-        private boolean isCentralRegistryAuthenticatedOnlyRequestFromGateway(String url, HttpMethod method) {
-            AntPathMatcher antPathMatcher = new AntPathMatcher();
-            return GATEWAY_URLS.stream()
-                    .anyMatch(pattern ->
-                            antPathMatcher.match(pattern.getKey(), url) && pattern.getValue().equals(method));
-        }
-
-        private Mono<SecurityContext> checkCentralRegistryForGateway(String token) {
-            return centralRegistryTokenVerifierForGateway.verify(token)
-                    .map(serviceCaller -> {
-                            var authorities = new ArrayList<SimpleGrantedAuthority>();
-                            var authority = new SimpleGrantedAuthority("ROLE_" + serviceCaller.getRole().name().toUpperCase());
-                            authorities.add(authority);
-                            return new UsernamePasswordAuthenticationToken(serviceCaller, token, authorities);
-                    })
-                    .map(SecurityContextImpl::new);
         }
 
         private Mono<SecurityContext> checkCentralRegistry(String token) {
             return centralRegistryTokenVerifier.verify(token)
-                    .map(caller ->
-                            new UsernamePasswordAuthenticationToken(
-                                    caller,
-                                    token,
-                                    new ArrayList<SimpleGrantedAuthority>()))
+                    .map(serviceCaller -> {
+                        var authorities = serviceCaller.getRoles()
+                                .stream()
+                                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name().toUpperCase()))
+                                .collect(toList());
+                        return new UsernamePasswordAuthenticationToken(serviceCaller, token, authorities);
+                    })
                     .map(SecurityContextImpl::new);
         }
 

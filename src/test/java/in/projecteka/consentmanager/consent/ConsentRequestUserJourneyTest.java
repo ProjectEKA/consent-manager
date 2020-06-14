@@ -9,7 +9,6 @@ import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.model.AccessPeriod;
 import in.projecteka.consentmanager.consent.model.ConsentPermission;
@@ -131,9 +130,6 @@ public class ConsentRequestUserJourneyTest {
     private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
     @MockBean
-    private CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway;
-
-    @MockBean
     private ConceptValidator conceptValidator;
 
     @MockBean
@@ -233,7 +229,7 @@ public class ConsentRequestUserJourneyTest {
         var authToken = string();
         var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         when(centralRegistryTokenVerifier.verify(authToken))
-                .thenReturn(Mono.just(new Caller("MAX-ID", true)));
+                .thenReturn(Mono.just(new ServiceCaller("MAX-ID", List.of())));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
@@ -509,7 +505,7 @@ public class ConsentRequestUserJourneyTest {
     @Test
     public void shouldThrowErrorForInvalidPurposeInConsentRequest() {
         var authToken = string();
-        when(centralRegistryTokenVerifier.verify(authToken)).thenReturn(Mono.just(new Caller("MAX-ID", true)));
+        when(centralRegistryTokenVerifier.verify(authToken)).thenReturn(Mono.just(new ServiceCaller("MAX-ID", List.of())));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
@@ -601,10 +597,10 @@ public class ConsentRequestUserJourneyTest {
         in.projecteka.consentmanager.consent.model.request.ConsentRequest consentRequest = consentRequest()
                 .consent(requestedDetail)
                 .build();
-        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
         when(authenticator.verify(authToken)).thenReturn(Mono.just(new Caller("user-id", false)));
-        when(centralRegistryTokenVerifierForGateway.verify(authToken))
+        when(centralRegistryTokenVerifier.verify(authToken))
                 .thenReturn(Mono.just(caller));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(repository.requestOf(anyString())).thenReturn(Mono.empty());

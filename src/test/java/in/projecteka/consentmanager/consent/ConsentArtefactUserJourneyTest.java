@@ -12,7 +12,6 @@ import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.ListResult;
@@ -126,7 +125,7 @@ public class ConsentArtefactUserJourneyTest {
     private ConceptValidator conceptValidator;
 
     @MockBean
-    private CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway;
+    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
     private static final MockWebServer identityServer = new MockWebServer();
 
@@ -356,10 +355,10 @@ public class ConsentArtefactUserJourneyTest {
         var consentArtefact = consentArtefactRepresentation().build();
         var fetchRequest = fetchRequest().consentId(consentArtefact.getConsentDetail().getConsentId()).build();
         consentArtefact.getConsentDetail().getPatient().setId("test-user@ncg");
-        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
         when(centralRegistry.authenticate()).thenReturn(Mono.empty());
-        when(centralRegistryTokenVerifierForGateway.verify(token))
+        when(centralRegistryTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
 
         when(consentArtefactRepository.getConsentArtefact(fetchRequest.getConsentId()))

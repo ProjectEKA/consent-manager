@@ -1,9 +1,13 @@
 package in.projecteka.consentmanager.common;
 
+import java.util.Optional;
+
 public enum Role {
     GATEWAY;
 
-    public static Role valueOfIgnoreCase(String mayBeRole) {
-         return  mayBeRole.equalsIgnoreCase(GATEWAY.name()) ? GATEWAY : null;
+    public static Optional<Role> valueOfIgnoreCase(String mayBeRole) {
+         return  mayBeRole == null
+                 ? Optional.empty()
+                 : mayBeRole.equalsIgnoreCase(GATEWAY.name()) ? Optional.of(GATEWAY) : Optional.empty();
     }
 }

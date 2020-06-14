@@ -6,8 +6,6 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
-import in.projecteka.consentmanager.common.Role;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
@@ -30,6 +28,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
+
+import java.util.List;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
@@ -87,9 +87,6 @@ class UserControllerTest {
     private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
     @MockBean
-    private CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway;
-
-    @MockBean
     private Authenticator authenticator;
 
     @SuppressWarnings("unused")
@@ -140,7 +137,7 @@ class UserControllerTest {
         var username = string();
         var token = string();
         var sessionId = string();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(new Caller(username, false)));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(new ServiceCaller(username, List.of())));
         when(userService.userWith(username)).thenReturn(just(user().build()));
 
         webClient.get()
@@ -173,9 +170,9 @@ class UserControllerTest {
     public void returnPatientResponseWhenUserFound() {
         var token = string();
         var patientRequest = patientRequest().build();
-        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifierForGateway.verify(token)).thenReturn(just(caller));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
         when(userService.user(patientRequest.getQuery().getPatient().getId(),
                 patientRequest.getQuery().getRequester(),
                 patientRequest.getRequestId()))

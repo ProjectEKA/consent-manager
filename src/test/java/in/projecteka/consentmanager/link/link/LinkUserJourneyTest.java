@@ -14,7 +14,6 @@ import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
@@ -133,7 +132,7 @@ public class LinkUserJourneyTest {
     private LinkServiceClient linkServiceClient;
 
     @MockBean
-    private CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway;
+    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
     @AfterAll
     public static void tearDown() throws IOException {
@@ -534,9 +533,9 @@ public class LinkUserJourneyTest {
     public void onLinkCareContexts() {
         var token = string();
         var patientLinkReferenceResult = patientLinkReferenceResult().build();
-        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifierForGateway.verify(token))
+        when(centralRegistryTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
@@ -559,9 +558,9 @@ public class LinkUserJourneyTest {
                 .requestId(UUID.randomUUID())
                 .resp(gatewayResponse)
                 .build();
-        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifierForGateway.verify(token))
+        when(centralRegistryTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
@@ -577,9 +576,9 @@ public class LinkUserJourneyTest {
     @Test
     public void shouldFailOnLinkCareContexts() throws Exception {
         var token = string();
-        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifierForGateway.verify(token))
+        when(centralRegistryTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()

@@ -13,7 +13,7 @@ import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
@@ -121,7 +121,7 @@ public class DiscoveryUserJourneyTest {
     private ConceptValidator conceptValidator;
 
     @MockBean
-    private CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway;
+    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
     @BeforeEach
     public void setUp() {
@@ -368,9 +368,9 @@ public class DiscoveryUserJourneyTest {
     public void onDiscoverPatientCareContexts() {
         var token = string();
         var patientDiscoveryResult = TestBuilders.discoveryResult().build();
-        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifierForGateway.verify(token)).thenReturn(Mono.just(caller));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient.post()
                 .uri("/v1/care-contexts/on-discover")
@@ -397,9 +397,9 @@ public class DiscoveryUserJourneyTest {
                 .error(error)
                 .resp(gatewayResponse)
                 .build();
-        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifierForGateway.verify(token)).thenReturn(Mono.just(caller));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient.post()
                 .uri("/v1/care-contexts/on-discover")
@@ -414,9 +414,9 @@ public class DiscoveryUserJourneyTest {
     @Test
     public void shouldFailOnDiscoverPatientCareContexts() throws Exception {
         var token = string();
-        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifierForGateway.verify(token))
+        when(centralRegistryTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()

@@ -15,6 +15,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
@@ -22,22 +23,22 @@ import static in.projecteka.consentmanager.common.TestBuilders.string;
 import static java.lang.String.format;
 import static reactor.test.StepVerifier.create;
 
-class CentralRegistryTokenVerifierForGatewayTest {
+class CentralRegistryTokenVerifierTest {
 
     @Test
     void returnCallerWithGatewayRoleWhenTokenHasRoles() throws JOSEException {
         var clientId = string();
         JSONArray roleValues = new JSONArray();
-        var role = GATEWAY;
+        var roles = List.of(GATEWAY);
         var randomRole1 = string();
         var randomRole2 = string();
         roleValues.add(randomRole1);
         roleValues.add(randomRole2);
-        roleValues.add(role.name().toUpperCase());
+        roleValues.addAll(roles);
         Map<String, Object> clientObj = new HashMap<>();
         clientObj.put("roles", roleValues);
-        Map<String, Object> resourseAccess = new HashMap<>();
-        resourseAccess.put(clientId, clientObj);
+        Map<String, Object> resourceAccess = new HashMap<>();
+        resourceAccess.put(clientId, clientObj);
         var rsaKey = new RSAKeyGenerator(2048).keyID(string()).generate();
         var signer = new RSASSASigner(rsaKey);
         var claimsSet = new JWTClaimsSet.Builder()
@@ -47,16 +48,16 @@ class CentralRegistryTokenVerifierForGatewayTest {
                 .issueTime(new Date())
                 .claim("clientId", clientId)
                 .expirationTime(new Date(new Date().getTime() + 60 * 1000))
-                .claim("resource_access", resourseAccess)
+                .claim("resource_access", resourceAccess)
                 .build();
         var signedJWT = new SignedJWT(
                 new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).keyID(rsaKey.getKeyID()).build(),
                 claimsSet);
         signedJWT.sign(signer);
         String token = signedJWT.serialize();
-        ServiceCaller caller = new ServiceCaller(clientId, role);
+        ServiceCaller caller = new ServiceCaller(clientId, roles);
 
-        var centralRegistryTokenVerifierForGateway = new CentralRegistryTokenVerifierForGateway(new JWKSet(rsaKey.toPublicJWK()));
+        var centralRegistryTokenVerifierForGateway = new CentralRegistryTokenVerifier(new JWKSet(rsaKey.toPublicJWK()));
 
         Mono<ServiceCaller> verify = centralRegistryTokenVerifierForGateway.verify(format("bearer %s", token));
 
@@ -91,11 +92,11 @@ class CentralRegistryTokenVerifierForGatewayTest {
                 claimsSet);
         signedJWT.sign(signer);
         String token = signedJWT.serialize();
-        var centralRegistryTokenVerifierForGateway = new CentralRegistryTokenVerifierForGateway(new JWKSet(rsaKey.toPublicJWK()));
+        var centralRegistryTokenVerifierForGateway = new CentralRegistryTokenVerifier(new JWKSet(rsaKey.toPublicJWK()));
 
         Mono<ServiceCaller> verify = centralRegistryTokenVerifierForGateway.verify(format("bearer %s", token));
 
-        create(verify).expectNext(new ServiceCaller(clientId,  null)).verifyComplete();
+        create(verify).expectNext(new ServiceCaller(clientId,  List.of())).verifyComplete();
     }
 
 
@@ -117,7 +118,7 @@ class CentralRegistryTokenVerifierForGatewayTest {
                 claimsSet);
         signedJWT.sign(signer);
         String token = signedJWT.serialize();
-        var centralRegistryTokenVerifierForGateway = new CentralRegistryTokenVerifierForGateway(new JWKSet(rsaKey.toPublicJWK()));
+        var centralRegistryTokenVerifierForGateway = new CentralRegistryTokenVerifier(new JWKSet(rsaKey.toPublicJWK()));
 
         Mono<ServiceCaller> verify = centralRegistryTokenVerifierForGateway.verify(format("bearer %s", token));
 
@@ -144,7 +145,7 @@ class CentralRegistryTokenVerifierForGatewayTest {
                 claimsSet);
         signedJWT.sign(signer);
         String token = signedJWT.serialize();
-        var centralRegistryTokenVerifierForGateway = new CentralRegistryTokenVerifierForGateway(new JWKSet(rsaKey.toPublicJWK()));
+        var centralRegistryTokenVerifierForGateway = new CentralRegistryTokenVerifier(new JWKSet(rsaKey.toPublicJWK()));
 
         Mono<ServiceCaller> verify = centralRegistryTokenVerifierForGateway.verify(format("bearer %s", token));
 

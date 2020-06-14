@@ -2,7 +2,7 @@ package in.projecteka.consentmanager.dataflow;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifierForGateway;
+import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
@@ -18,6 +18,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
+
+import java.util.List;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
@@ -63,7 +65,7 @@ class DataFlowRequestControllerTest {
     private JWKSet identityServiceJWKSet;
 
     @MockBean
-    private CentralRegistryTokenVerifierForGateway centralRegistryTokenVerifierForGateway;
+    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
     @SuppressWarnings("unused")
     @MockBean
@@ -73,8 +75,8 @@ class DataFlowRequestControllerTest {
     void shouldReturnAcceptedForDataFlowRequest() {
         var token = string();
         var dataFlowRequestBody = gatewayDataFlowRequest().build();
-        var caller = ServiceCaller.builder().clientId("Client_ID").role(GATEWAY).build();
-        when(centralRegistryTokenVerifierForGateway.verify(token)).thenReturn(just(caller));
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
 
         webClient.post()
                 .uri("/v1/health-information/request")

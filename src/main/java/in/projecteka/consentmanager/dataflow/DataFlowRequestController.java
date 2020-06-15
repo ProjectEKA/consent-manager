@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.dataflow;
 
-import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import in.projecteka.consentmanager.dataflow.model.GatewayDataFlowRequest;
@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_REQUEST;
+
 @RestController
 @AllArgsConstructor
 public class DataFlowRequestController {
@@ -22,19 +24,19 @@ public class DataFlowRequestController {
     @PostMapping("/health-information/request")
     public Mono<DataFlowRequestResponse> requestHealthInformation(@RequestBody DataFlowRequest dataFlowRequest) {
         return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(requester -> dataFlowRequester.requestHealthData(requester.getUsername(), dataFlowRequest));
+                .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
+                .flatMap(requester -> dataFlowRequester.requestHealthData(requester.getClientId(), dataFlowRequest));
     }
 
     @PostMapping("/health-information/notification")
     public Mono<Void> notify(@RequestBody HealthInfoNotificationRequest notificationRequest) {
         return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
                 .flatMap(requester ->
-                        dataFlowRequester.notifyHealthInfoStatus(requester.getUsername(), notificationRequest));
+                        dataFlowRequester.notifyHealthInfoStatus(requester.getClientId(), notificationRequest));
     }
 
-    @PostMapping("/v1/health-information/request")
+    @PostMapping(V_1_HEALTH_INFORMATION_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> requestHealthInformationV1(@RequestBody GatewayDataFlowRequest dataFlowRequest) {
         return Mono.empty();

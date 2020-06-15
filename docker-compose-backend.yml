@@ -35,6 +35,11 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
+    healthcheck:
+      test: "pg_isready -h localhost -p 5432 -q -U postgres"
+      interval: 2s
+      timeout: 5s
+      retries: 10
     ports:
       - "5432:5432"
 
@@ -67,6 +72,14 @@ services:
       - "5601:5601"
     depends_on:
       - elasticsearch
+
+  cm-db-setup:
+    image: projecteka/cm-db-initializer
+    container_name: cm-db-setup
+    environment:
+      - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/consent_manager -Djdbc.username=postgres -Djdbc.password=password'
+    depends_on:
+      - postgres
 
 volumes:
   postgres_data:

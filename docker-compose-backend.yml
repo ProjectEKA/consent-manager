@@ -81,6 +81,14 @@ services:
     depends_on:
       - postgres
 
+  hiu-db-setup:
+    image: projecteka/hiu-db-initializer
+    container_name: hiu-db-setup
+    environment:
+      - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/health_information_user -Djdbc.username=postgres -Djdbc.password=password'
+    depends_on:
+      - postgres
+
 volumes:
   postgres_data:
     driver: local

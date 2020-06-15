@@ -2,8 +2,8 @@ package in.projecteka.consentmanager.dataflow;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
@@ -19,6 +19,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 
+import java.util.List;
+
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static org.mockito.Mockito.when;
@@ -70,10 +73,11 @@ class DataFlowRequestControllerTest {
 
     @Test
     void shouldReturnAcceptedForDataFlowRequest() {
-        var username = string();
         var token = string();
         var dataFlowRequestBody = gatewayDataFlowRequest().build();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(new Caller(username, true)));
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
+
         webClient.post()
                 .uri("/v1/health-information/request")
                 .accept(MediaType.APPLICATION_JSON)
@@ -83,7 +87,5 @@ class DataFlowRequestControllerTest {
                 .exchange()
                 .expectStatus()
                 .isAccepted();
-
-
     }
 }

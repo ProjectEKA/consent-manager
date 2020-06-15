@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
+import static in.projecteka.consentmanager.common.Constants.V_1_PATIENTS_FIND;
 import static org.springframework.http.HttpStatus.CREATED;
 
 @RestController
@@ -32,7 +33,7 @@ public class UserController {
     }
 
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @PostMapping("/v1/patients/find")
+    @PostMapping(V_1_PATIENTS_FIND)
     public Mono<Void> userWith(@Valid @RequestBody PatientRequest patientRequest) {
         return userService.user(patientRequest.getQuery().getPatient().getId(),
                 patientRequest.getQuery().getRequester(),

@@ -18,6 +18,8 @@ import reactor.core.publisher.Mono;
 import javax.validation.Valid;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.common.Constants.V_1_CARE_CONTEXTS_ON_DISCOVER;
+
 @RestController
 @AllArgsConstructor
 public class DiscoveryController {
@@ -47,7 +49,7 @@ public class DiscoveryController {
                         discoveryRequest.getRequestId()));
     }
 
-    @PostMapping("/v1/care-contexts/on-discover")
+    @PostMapping(V_1_CARE_CONTEXTS_ON_DISCOVER)
     public Mono<Void> onDiscoverPatientCareContexts(@RequestBody @Valid DiscoveryResult discoveryResult){
         return discovery.onDiscoverPatientCareContexts(discoveryResult);
     }

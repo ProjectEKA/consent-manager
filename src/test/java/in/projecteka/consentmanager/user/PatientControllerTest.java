@@ -54,7 +54,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
-import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static java.lang.String.format;
 import static java.time.LocalDate.now;
@@ -129,9 +128,8 @@ public class PatientControllerTest {
                 .build();
         var token = string();
         var sessionId = string();
-        var session = session().build();
         when(signupService.sessionFrom(token)).thenReturn(sessionId);
-        when(userService.create(any(CoreSignUpRequest.class), eq(sessionId))).thenReturn(Mono.just(session));
+        when(userService.create(any(CoreSignUpRequest.class), eq(sessionId))).thenReturn(Mono.empty());
         when(userService.getUserIdSuffix()).thenReturn("@ncg");
         when(signupService.validateToken(token)).thenReturn(Mono.just(true));
         when(signupService.removeOf(sessionId)).thenReturn(Mono.empty());
@@ -141,7 +139,7 @@ public class PatientControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .body(BodyInserters.fromValue(signUpRequest))
-                .exchange().expectStatus().isOk();
+                .exchange().expectStatus().isCreated();
     }
 
     @Test
@@ -152,9 +150,8 @@ public class PatientControllerTest {
                 .build();
         var token = string();
         var sessionId = string();
-        var session = session().build();
         when(signupService.sessionFrom(token)).thenReturn(sessionId);
-        when(userService.create(signUpRequest, sessionId)).thenReturn(Mono.just(session));
+        when(userService.create(signUpRequest, sessionId)).thenReturn(Mono.empty());
         when(userService.getUserIdSuffix()).thenReturn("@ncg");
         when(signupService.validateToken(token)).thenReturn(Mono.just(true));
 

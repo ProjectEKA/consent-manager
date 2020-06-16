@@ -277,7 +277,6 @@ class UserServiceTest {
     @Test
     public void shouldCreateUser() {
         var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.now().getYear()).build();
-        var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
@@ -285,10 +284,8 @@ class UserServiceTest {
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 
         StepVerifier.create(userService.create(signUpRequest, sessionId))
-                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
                 .verifyComplete();
     }
 
@@ -312,7 +309,6 @@ class UserServiceTest {
     @Test
     public void shouldCreateUserWhenYOBIsNull() {
         var signUpRequest = coreSignUpRequest().name("apoorva g a").yearOfBirth(null).build();
-        var userToken = session().build();
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
@@ -320,10 +316,8 @@ class UserServiceTest {
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 
         StepVerifier.create(userService.create(signUpRequest, sessionId))
-                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
                 .verifyComplete();
     }
 
@@ -339,7 +333,6 @@ class UserServiceTest {
         when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.empty());
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
         when(identityServiceClient.createUser(any(), any()))
                 .thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
@@ -363,11 +356,10 @@ class UserServiceTest {
         when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.error(new DbOperationError()));
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.empty());
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.delete(identifier)).thenReturn(Mono.empty());
-
+      
         var publisher = userService.create(signUpRequest, sessionId);
 
         StepVerifier.create(publisher)

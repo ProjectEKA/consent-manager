@@ -116,9 +116,7 @@
 								"id": "51c7be74-e15f-4ee1-8a73-10d001796a21",
 								"exec": [
 									"pm.test(\"Update auth creation token\", function () {",
-									"    var jsonData = pm.response.json();",
 									"    var request = JSON.parse(pm.request.body.raw);",
-									"    pm.environment.set(\"AUTHORIZATION\", \"bearer \" + jsonData.accessToken);",
 									"    pm.environment.set(\"USERNAME\", request.username);",
 									"    pm.environment.set(\"PASSWORD\", request.password);",
 									"});"

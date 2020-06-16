@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
@@ -57,6 +58,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.link.TestBuilders.errorRepresentation;
 import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
@@ -531,8 +533,11 @@ public class LinkUserJourneyTest {
     public void onLinkCareContexts() {
         var token = string();
         var patientLinkReferenceResult = patientLinkReferenceResult().build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", true)));
+        when(centralRegistryTokenVerifier.verify(token))
+                .thenReturn(Mono.just(caller));
+
         webTestClient.post()
                 .uri("/v1/links/link/on-init")
                 .accept(MediaType.APPLICATION_JSON)
@@ -553,8 +558,11 @@ public class LinkUserJourneyTest {
                 .requestId(UUID.randomUUID())
                 .resp(gatewayResponse)
                 .build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", true)));
+        when(centralRegistryTokenVerifier.verify(token))
+                .thenReturn(Mono.just(caller));
+
         webTestClient.post()
                 .uri("/v1/links/link/on-init")
                 .accept(MediaType.APPLICATION_JSON)
@@ -568,7 +576,11 @@ public class LinkUserJourneyTest {
     @Test
     public void shouldFailOnLinkCareContexts() throws Exception {
         var token = string();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id@ncg", true)));
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+
+        when(centralRegistryTokenVerifier.verify(token))
+                .thenReturn(Mono.just(caller));
+
         webTestClient.post()
                 .uri("/v1/links/link/on-init")
                 .accept(MediaType.APPLICATION_JSON)

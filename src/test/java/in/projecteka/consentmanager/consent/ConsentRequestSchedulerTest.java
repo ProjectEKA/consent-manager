@@ -73,6 +73,7 @@ class ConsentRequestSchedulerTest {
                 .consentRequestId(consentRequestDetail.getRequestId())
                 .consentArtefacts(List.of())
                 .hiuConsentNotificationUrl(consentRequestDetail.getConsentNotificationUrl())
+                .hiuId(consentRequestDetail.getHiu().getId())
                 .build();
         when(consentRequestRepository.getConsentsByStatus(ConsentStatus.REQUESTED))
                 .thenReturn(Flux.just(consentRequestDetail));

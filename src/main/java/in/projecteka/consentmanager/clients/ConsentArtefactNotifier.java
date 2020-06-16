@@ -15,8 +15,8 @@ import java.time.Duration;
 import java.util.function.Supplier;
 
 import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
-import static in.projecteka.consentmanager.clients.HeaderConstants.HDR_HIP_ID;
-import static in.projecteka.consentmanager.clients.HeaderConstants.HDR_HIU_ID;
+import static in.projecteka.consentmanager.common.Constants.HDR_HIP_ID;
+import static in.projecteka.consentmanager.common.Constants.HDR_HIU_ID;
 
 @AllArgsConstructor
 public class ConsentArtefactNotifier {

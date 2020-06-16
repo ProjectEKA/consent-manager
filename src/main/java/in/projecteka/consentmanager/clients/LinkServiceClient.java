@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
-import static in.projecteka.consentmanager.clients.HeaderConstants.HDR_HIP_ID;
+import static in.projecteka.consentmanager.common.Constants.HDR_HIP_ID;
 import static java.util.function.Predicate.not;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 

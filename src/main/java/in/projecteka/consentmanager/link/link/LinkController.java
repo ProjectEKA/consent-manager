@@ -19,6 +19,9 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
+import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_CONFIRM;
+import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_INIT;
+
 @RestController
 @AllArgsConstructor
 public class LinkController {
@@ -59,7 +62,7 @@ public class LinkController {
         return link.getLinkedCareContexts(username);
     }
 
-    @PostMapping("/v1/links/link/on-init")
+    @PostMapping(V_1_LINKS_LINK_ON_INIT)
     public Mono<Void> onLinkCareContexts(@RequestBody PatientLinkReferenceResult patientLinkReferenceResult) {
         return link.onLinkCareContexts(patientLinkReferenceResult);
     }
@@ -86,7 +89,7 @@ public class LinkController {
      * @param confirmationResult
      * @return
      */
-    @PostMapping("/v1/links/link/on-confirm")
+    @PostMapping(V_1_LINKS_LINK_ON_CONFIRM)
     public Mono<Void> onConfirmLink(@RequestBody @Valid LinkConfirmationResult confirmationResult) {
         return link.onConfirmLink(confirmationResult);
     }

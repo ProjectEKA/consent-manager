@@ -1282,15 +1282,8 @@ paths:
             schema:
               $ref: '#/components/schemas/CreatePatientRequest'
       responses:
-        '200':
+        '201':
           description: Profile created successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
         '400':
           description: >
             **Causes:**

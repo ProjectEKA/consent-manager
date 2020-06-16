@@ -46,5 +46,5 @@ consentmanager:
 
 spring:
   rabbitmq:
-   host: localhost
+   host: rabbitmq
    port: 5672

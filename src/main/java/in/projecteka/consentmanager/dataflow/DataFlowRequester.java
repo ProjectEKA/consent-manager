@@ -13,6 +13,7 @@ import in.projecteka.consentmanager.dataflow.model.GatewayDataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.HIRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInformationResponse;
+import in.projecteka.consentmanager.dataflow.model.HealthInformationResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;

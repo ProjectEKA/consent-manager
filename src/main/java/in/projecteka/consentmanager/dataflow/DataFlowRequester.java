@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.dataflow.model.DateRange;
 import in.projecteka.consentmanager.dataflow.model.GatewayDataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.HIRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
+import in.projecteka.consentmanager.dataflow.model.HealthInformationResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -28,12 +29,11 @@ import static in.projecteka.consentmanager.dataflow.model.RequestStatus.REQUESTE
 
 @AllArgsConstructor
 public class DataFlowRequester {
+    private static final Logger logger = LoggerFactory.getLogger(DataFlowRequester.class);
     private final ConsentManagerClient consentManagerClient;
     private final DataFlowRequestRepository dataFlowRequestRepository;
     private final PostDataFlowRequestApproval postDataFlowrequestApproval;
     private final DataFlowRequestClient dataFlowRequestClient;
-
-    private final Logger logger = LoggerFactory.getLogger(DataFlowRequester.class);
 
     public Mono<DataFlowRequestResponse> requestHealthData(DataFlowRequest dataFlowRequest) {
         final String transactionId = UUID.randomUUID().toString();
@@ -43,6 +43,19 @@ public class DataFlowRequester {
                         .thenReturn(flowRequest))
                 .flatMap(flowRequest -> notifyHIP(transactionId, flowRequest))
                 .thenReturn(DataFlowRequestResponse.builder().transactionId(transactionId).build());
+    }
+
+    public Mono<Void> updateDataflowRequestStatus(HealthInformationResponse healthInformationResponse) {
+        if (healthInformationResponse.getHiRequest() != null) {
+            logger.info("DataFlowRequest response came for transactionId {}", healthInformationResponse.getHiRequest().getTransactionId());
+            return dataFlowRequestRepository.updateDataFlowRequestStatus(
+                    healthInformationResponse.getHiRequest().getTransactionId(),
+                    healthInformationResponse.getHiRequest().getSessionStatus());
+        }
+
+        logger.error("DataFlowRequest failed for request id {}", healthInformationResponse.getResp().getRequestId());
+        return Mono.empty();
+
     }
 
     public Mono<Void> requestHealthDataInfo(GatewayDataFlowRequest dataFlowRequest) {

@@ -18,9 +18,6 @@ case $@ in
         ;;
     start)
         ./gradlew build -x test
-        docker-compose -f docker-compose-rabbitmq.yml down
-        python ../infrastructure/rabbitmq/rabbitmqsetup.py ./rabbitmq/cm_rabbitmq.json ./rabbitmq/definitions.json
-        docker-compose -f docker-compose-rabbitmq.yml up --build -d
         docker-compose -f docker-compose-backend.yml -p backend start
         sleep 5
         docker-compose -f docker-compose.yml -p apps up --build -d

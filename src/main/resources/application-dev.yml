@@ -13,10 +13,10 @@ consentmanager:
     consentExpiryCronExpr: '0 0 * ? * *'
     consentRequestExpiryCronExpr: '0 0 0/12 ? * *'
   clientregistry:
-    XAuthToken: e178fb45-2a2f-425c-bd45-996c60910d70
+    XAuthToken: f1a857f2-0a60-45bc-8ca2-f881dbb700c6
     clientId: consent-manager
-    url: http://host.docker.internal:8080
-    jwkUrl: http://host.docker.internal:8080/certs
+    url: http://localhost:8080
+    jwkUrl: http://localhost:8080/certs
   gatewayservice:
     baseUrl: http://host.docker.internal:8081/v1
     requestTimeout: 1000
@@ -41,13 +41,13 @@ consentmanager:
       - MOBILE
     expiryInMinutes: 5
   keycloak:
-    baseUrl: http://host.docker.internal:9001/auth
-    clientId: consent-service
-    clientSecret: e689921b-d20a-4bd1-ada8-044ba3e7814f
-    userName: consent-service-admin-user
-    password: welcome
-    jwkUrl: http://host.docker.internal:9001/auth/realms/consent-manager/protocol/openid-connect/certs
-    issuer: http://host.docker.internal:9001/auth/realms/consent-manager
+    baseUrl: http://localhost:9001/auth
+    clientId: consent-manager
+    clientSecret: b48e9f88-6fac-4588-9171-79242aa7bb0c
+    userName: consentmanageruser
+    password: user
+    jwkUrl: http://localhost:9001/auth/realms/consent-manager/protocol/openid-connect/certs
+    issuer: http://localhost:9001/auth/realms/consent-manager
   jwt:
     secret: secret_salt
   db:
@@ -67,6 +67,7 @@ consentmanager:
   linkservice:
     url: http://localhost:9000
     txnTimeout: 5000
+  cacheMethod: guava
   listeners:
     maximumRetries: 3
     retryInterval: 10000

@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
+import static in.projecteka.consentmanager.common.Constants.HDR_HIP_ID;
 import static java.util.function.Predicate.not;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
@@ -23,7 +24,6 @@ public class LinkServiceClient {
     private final CentralRegistry centralRegistry;
     private final GatewayServiceProperties gatewayServiceProperties;
 
-    private static final String HDR_HIP_ID = "X-HIP-ID";
     private static final String PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH = "%s/links/link/confirm";
     private static final String PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH = "%s/links/link/init";
 

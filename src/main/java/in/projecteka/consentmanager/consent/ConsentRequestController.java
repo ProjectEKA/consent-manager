@@ -27,6 +27,8 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
+import static in.projecteka.consentmanager.common.Constants.V_1_CONSENT_REQUESTS_INIT;
+
 @RestController
 @AllArgsConstructor
 public class ConsentRequestController {
@@ -47,7 +49,7 @@ public class ConsentRequestController {
 				.map(ConsentRequestController::buildResponse);
 	}
 
-    @PostMapping(value = "/v1/consent-requests/init")
+    @PostMapping(value = V_1_CONSENT_REQUESTS_INIT)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> initConsentRequest(
             @RequestBody @Valid @ModelAttribute("consentRequest") ConsentRequest request) {

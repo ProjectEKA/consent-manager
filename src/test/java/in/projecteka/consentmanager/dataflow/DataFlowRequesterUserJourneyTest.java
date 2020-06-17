@@ -6,21 +6,21 @@ import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
-import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.dataflow.model.DateRange;
-import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
-import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
 import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
-import in.projecteka.consentmanager.dataflow.model.HIUReference;
-import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
+import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.dataflow.model.ConsentPermission;
+import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
+import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
+import in.projecteka.consentmanager.dataflow.model.DateRange;
+import in.projecteka.consentmanager.dataflow.model.HIUReference;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
@@ -43,15 +43,15 @@ import reactor.core.publisher.MonoSink;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.stream.Stream;
 
-import static in.projecteka.consentmanager.dataflow.TestBuilders.string;
-import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
-import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequestMessage;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.provider;
-
+import static in.projecteka.consentmanager.dataflow.TestBuilders.string;
 import static in.projecteka.consentmanager.dataflow.Utils.toDate;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -146,7 +146,7 @@ public class DataFlowRequesterUserJourneyTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(consentArtefactRepresentationJson));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller(hiuId, true)));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
         when(dataFlowRequestRepository.addDataFlowRequest(anyString(), any(DataFlowRequest.class)))
@@ -193,7 +193,7 @@ public class DataFlowRequesterUserJourneyTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(consentArtefactRepresentationJson));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller(hiuId, true)));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
 
@@ -227,7 +227,7 @@ public class DataFlowRequesterUserJourneyTest {
         var loggedInHIU = "service-account-different-hiu";
         var user = "{\"preferred_username\": \"patient\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller(loggedInHIU, true)));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(loggedInHIU, List.of())));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
 
@@ -275,7 +275,7 @@ public class DataFlowRequesterUserJourneyTest {
                         .setBody(consentArtefactRepresentationJson));
         var user = "{\"preferred_username\": \"service-account-10000005\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller(hiuId, true)));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
 
@@ -315,7 +315,7 @@ public class DataFlowRequesterUserJourneyTest {
                         .setBody(consentArtefactRepresentationJson));
         var user = "{\"preferred_username\": \"service-account-10000005\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller(hiuId, true)));
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
 

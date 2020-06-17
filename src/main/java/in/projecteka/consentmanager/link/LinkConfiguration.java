@@ -66,11 +66,13 @@ public class LinkConfiguration {
     public UserServiceClient userServiceClient(WebClient.Builder builder,
                                                UserServiceProperties userServiceProperties,
                                                IdentityService identityService,
-                                               GatewayServiceProperties gatewayServiceProperties) {
+                                               GatewayServiceProperties gatewayServiceProperties,
+                                               CentralRegistry centralRegistry) {
         return new UserServiceClient(builder,
                 userServiceProperties.getUrl(),
                 identityService::authenticate,
-                gatewayServiceProperties);
+                gatewayServiceProperties,
+                centralRegistry);
     }
 
     @Bean

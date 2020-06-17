@@ -44,9 +44,14 @@ public class DataFlowConfiguration {
                                          PostDataFlowRequestApproval postDataFlowRequestApproval,
                                          DataFlowConsentManagerProperties dataFlowConsentManagerProperties,
                                          IdentityService identityService,
-                                         GatewayServiceProperties gatewayServiceProperties) {
+                                         GatewayServiceProperties gatewayServiceProperties,
+                                         CentralRegistry centralRegistry) {
         return new DataFlowRequester(
-                new ConsentManagerClient(builder, dataFlowConsentManagerProperties.getUrl(), identityService::authenticate, gatewayServiceProperties),
+                new ConsentManagerClient(builder,
+                        dataFlowConsentManagerProperties.getUrl(),
+                        identityService::authenticate,
+                        gatewayServiceProperties,
+                        centralRegistry),
                 dataFlowRequestRepository,
                 postDataFlowRequestApproval);
     }

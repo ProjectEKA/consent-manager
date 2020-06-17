@@ -6,10 +6,10 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
@@ -18,8 +18,10 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSENT_NOTIFICATION_QUEUE;
-import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class HipConsentNotificationListener {
@@ -35,10 +37,6 @@ public class HipConsentNotificationListener {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig
                 .getQueues()
                 .get(HIP_CONSENT_NOTIFICATION_QUEUE);
-        if (destinationInfo == null) {
-            logger.error(HIP_CONSENT_NOTIFICATION_QUEUE + " not found");
-            throw queueNotFound();
-        }
 
         MessageListenerContainer mlc = messageListenerContainerFactory
                 .createMessageListenerContainer(destinationInfo.getRoutingKey());
@@ -50,7 +48,7 @@ public class HipConsentNotificationListener {
                 logger.info("Received notify consent to hip for consent artefact: {}",
                         consentArtefact.getConsentId());
 
-                sendConsentArtefact(consentArtefact);
+                sendConsentArtefactToHIP(consentArtefact).block();
             } catch (Exception e) {
                 throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
             }
@@ -60,6 +58,10 @@ public class HipConsentNotificationListener {
         mlc.start();
     }
 
+    /**
+     * @deprecated (We are not directly notifying the HIP, instead using new gateway API v1/consents/hip/notify )
+     * **/
+    @Deprecated
     private void sendConsentArtefact(HIPConsentArtefactRepresentation consentArtefact) {
         String hipId = consentArtefact.getConsentDetail().getHip().getId();
         getProviderUrl(hipId)
@@ -73,5 +75,16 @@ public class HipConsentNotificationListener {
 
     private Mono<String> getProviderUrl(String hipId) {
         return centralRegistry.providerWith(hipId).flatMap(provider -> Mono.just(provider.getProviderUrl()));
+    }
+
+    private Mono<Void> sendConsentArtefactToHIP(HIPConsentArtefactRepresentation consentArtefact) {
+        String hipId = consentArtefact.getConsentDetail().getHip().getId();
+        HIPNotificationRequest notificationRequest = HIPNotificationRequest.builder()
+                .notification(consentArtefact)
+                .requestId(UUID.randomUUID())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId);
     }
 }

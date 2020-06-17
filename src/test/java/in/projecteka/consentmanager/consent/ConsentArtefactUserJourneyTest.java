@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
@@ -353,9 +355,12 @@ public class ConsentArtefactUserJourneyTest {
         var consentArtefact = consentArtefactRepresentation().build();
         var fetchRequest = fetchRequest().consentId(consentArtefact.getConsentDetail().getConsentId()).build();
         consentArtefact.getConsentDetail().getPatient().setId("test-user@ncg");
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifier.verify(token)).
-                thenReturn(Mono.just(new Caller("test-user@ncg", false)));
+        when(centralRegistry.authenticate()).thenReturn(Mono.empty());
+        when(centralRegistryTokenVerifier.verify(token))
+                .thenReturn(Mono.just(caller));
+
         when(consentArtefactRepository.getConsentArtefact(fetchRequest.getConsentId()))
                 .thenReturn(Mono.just(consentArtefact));
         when(centralRegistry.providerWith(any())).thenReturn(Mono.just(Provider.builder().name("test-hip").build()));

@@ -44,14 +44,20 @@ public class UserRepository {
                                 return;
                             }
                             var patientRow = patientIterator.next();
-                            monoSink.success(User.builder()
-                                    .identifier(patientRow.getString("id"))
-                                    .name(patientRow.getString("name"))
-                                    .yearOfBirth(patientRow.getInteger("year_of_birth"))
-                                    .gender(Gender.valueOf(patientRow.getString("gender")))
-                                    .phone(patientRow.getString("phone_number"))
-                                    .unverifiedIdentifiers((JsonArray) patientRow.getValue("unverified_identifiers"))
-                                    .build());
+                            try {
+                                var user = User.builder()
+                                        .identifier(patientRow.getString("id"))
+                                        .name(patientRow.getString("name"))
+                                        .yearOfBirth(patientRow.getInteger("year_of_birth"))
+                                        .gender(Gender.valueOf(patientRow.getString("gender")))
+                                        .phone(patientRow.getString("phone_number"))
+                                        .unverifiedIdentifiers((JsonArray) patientRow.getValue("unverified_identifiers"))
+                                        .build();
+                                monoSink.success(user);
+                            } catch (Exception exc) {
+                                logger.error(exc.getMessage(), exc);
+                                monoSink.success();
+                            }
                         }));
     }
 

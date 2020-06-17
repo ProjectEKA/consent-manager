@@ -1,14 +1,7 @@
 version: '3'
 services:
-  rabbitmq:
-    image: "rabbitmq:3"
-    container_name: rabbitmq
-    hostname: rabbitmq
-    ports:
-      - "5672:5672"
-
   keycloak:
-    image: "jboss/keycloak"
+    image: "jboss/keycloak:9.0.2"
     container_name: keycloak
     hostname: keycloak
     environment:
@@ -35,6 +28,11 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
+    healthcheck:
+      test: "pg_isready -h localhost -p 5432 -q -U postgres"
+      interval: 2s
+      timeout: 5s
+      retries: 10
     ports:
       - "5432:5432"
 
@@ -67,6 +65,22 @@ services:
       - "5601:5601"
     depends_on:
       - elasticsearch
+
+  cm-db-setup:
+    image: projecteka/cm-db-initializer
+    container_name: cm-db-setup
+    environment:
+      - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/consent_manager -Djdbc.username=postgres -Djdbc.password=password'
+    depends_on:
+      - postgres
+
+  hiu-db-setup:
+    image: projecteka/hiu-db-initializer
+    container_name: hiu-db-setup
+    environment:
+      - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/health_information_user -Djdbc.username=postgres -Djdbc.password=password'
+    depends_on:
+      - postgres
 
 volumes:
   postgres_data:

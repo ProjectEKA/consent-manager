@@ -245,15 +245,11 @@ public class ConsentArtefactRepository {
     }
 
     private List<Query> getUpdateQueries(String consentId, String consentRequestId, ConsentStatus status) {
-        Query consentRequestUpdate = new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
-                Tuple.of(status.toString(),
-                        LocalDateTime.now(),
-                        consentRequestId));
         Query consentArtefactUpdate = new Query(UPDATE_CONSENT_ARTEFACT_STATUS_QUERY,
                 Tuple.of(status.toString(),
                         LocalDateTime.now(),
                         consentId));
-        return List.of(consentRequestUpdate, consentArtefactUpdate);
+        return List.of(consentArtefactUpdate);
     }
 
     private ConsentArtefactRepresentation getConsentArtefactRepresentation(Row row) {

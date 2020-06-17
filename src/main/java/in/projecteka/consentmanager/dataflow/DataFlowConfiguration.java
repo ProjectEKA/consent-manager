@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.dataflow;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
+import in.projecteka.consentmanager.clients.DataFlowRequestClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
@@ -39,13 +40,21 @@ public class DataFlowConfiguration {
     }
 
     @Bean
+    public DataFlowRequestClient dataFlowRequestClient(WebClient.Builder builder,
+                                                       GatewayServiceProperties gatewayServiceProperties,
+                                                       CentralRegistry centralRegistry) {
+        return new DataFlowRequestClient(builder, gatewayServiceProperties, centralRegistry);
+    }
+
+    @Bean
     public DataFlowRequester dataRequest(WebClient.Builder builder,
                                          DataFlowRequestRepository dataFlowRequestRepository,
                                          PostDataFlowRequestApproval postDataFlowRequestApproval,
                                          DataFlowConsentManagerProperties dataFlowConsentManagerProperties,
                                          IdentityService identityService,
                                          GatewayServiceProperties gatewayServiceProperties,
-                                         CentralRegistry centralRegistry) {
+                                         CentralRegistry centralRegistry,
+                                         DataFlowRequestClient dataFlowRequestClient) {
         return new DataFlowRequester(
                 new ConsentManagerClient(builder,
                         dataFlowConsentManagerProperties.getUrl(),
@@ -53,7 +62,8 @@ public class DataFlowConfiguration {
                         gatewayServiceProperties,
                         centralRegistry),
                 dataFlowRequestRepository,
-                postDataFlowRequestApproval);
+                postDataFlowRequestApproval,
+                dataFlowRequestClient);
     }
 
     @Bean

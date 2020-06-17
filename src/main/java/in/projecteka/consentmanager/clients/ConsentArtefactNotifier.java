@@ -31,37 +31,10 @@ public class ConsentArtefactNotifier {
         return postConsentArtifactToHiu(request, hiuId);
     }
 
-    /**
-     * deprecated (We are not directly notifying the HIP, instead using new gateway API v1/consents/hip/notify )
-     **/
-    @Deprecated
-    public Mono<Void> sendConsentArtefactTo(HIPConsentArtefactRepresentation consentArtefact, String providerUrl) {
-        String hipNotificationUrl = String.format("%s/%s", providerUrl, "consent/notification/");
-        return post(consentArtefact, hipNotificationUrl);
-    }
-
     public Mono<Void> sendConsentArtefactToHIP(HIPNotificationRequest notificationRequest, String hipId) {
         return postConsentArtefactToHip(notificationRequest, hipId);
     }
 
-    /**
-     * deprecated (We are not directly notifying the HIP, instead using new gateway API v1/consents/hip/notify )
-     **/
-    @Deprecated
-    private Mono<Void> post(Object body, String uri) {
-        return tokenGenerator.get()
-                .flatMap(token ->
-                        webClientBuilder.build()
-                                .post()
-                                .uri(uri)
-                                .header(HttpHeaders.AUTHORIZATION, token)
-                                .bodyValue(body)
-                                .retrieve()
-                                .onStatus(HttpStatus::is5xxServerError,
-                                        clientResponse -> Mono.error(unknownErrorOccurred()))
-                                .toBodilessEntity())
-                .then();
-    }
 
     private Mono<Void> postConsentArtifactToHiu(Object body, String hiuId) {
         return tokenGenerator.get()

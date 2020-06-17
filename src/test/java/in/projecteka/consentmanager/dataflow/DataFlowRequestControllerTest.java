@@ -18,12 +18,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
-import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.string;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static reactor.core.publisher.Mono.just;
@@ -53,9 +55,6 @@ class DataFlowRequestControllerTest {
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 
-    @Autowired
-    private WebTestClient webClient;
-
     @SuppressWarnings("unused")
     @MockBean(name = "centralRegistryJWKSet")
     private JWKSet centralRegistryJWKSet;
@@ -67,16 +66,24 @@ class DataFlowRequestControllerTest {
     @MockBean
     private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
 
+    @MockBean
+    private DataFlowRequester dataFlowRequester;
+
     @SuppressWarnings("unused")
     @MockBean
     private ConceptValidator conceptValidator;
+
+    @Autowired
+    private WebTestClient webClient;
 
     @Test
     void shouldReturnAcceptedForDataFlowRequest() {
         var token = string();
         var dataFlowRequestBody = gatewayDataFlowRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+
         when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
+        when(dataFlowRequester.requestHealthDataInfo(any())).thenReturn(Mono.empty());
 
         webClient.post()
                 .uri("/v1/health-information/request")

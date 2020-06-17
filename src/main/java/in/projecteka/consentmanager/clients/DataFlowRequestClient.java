@@ -16,7 +16,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
 public class DataFlowRequestClient {
-    private static final String DATA_FLOW_REQUEST_URL_PATH = "/health-information/on-request";
+    private static final String DATA_FLOW_REQUEST_URL_PATH = "/health-information/cm/on-request";
     private final WebClient.Builder webClientBuilder;
     private final GatewayServiceProperties gatewayServiceProperties;
     private final CentralRegistry centralRegistry;
@@ -32,6 +32,8 @@ public class DataFlowRequestClient {
                                 .header(HDR_HIU_ID, hiuId)
                                 .bodyValue(dataFlowRequest)
                                 .retrieve()
+                                .onStatus(httpStatus -> httpStatus.value() == 400,
+                                        clientResponse -> Mono.error(ClientError.invalidResponseFromGateway()))
                                 .onStatus(httpStatus -> httpStatus.value() == 401,
                                         clientResponse -> Mono.error(ClientError.unAuthorized()))
                                 .onStatus(HttpStatus::is5xxServerError,

@@ -75,7 +75,7 @@ class DataFlowRequestControllerTest {
     void shouldReturnAcceptedForDataFlowRequest() {
         var token = string();
         var dataFlowRequestBody = gatewayDataFlowRequest().build();
-        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+        var caller = ServiceCaller.builder().clientId("Client_Id").roles(List.of(GATEWAY)).build();
         when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
 
         webClient.post()

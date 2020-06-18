@@ -42,7 +42,7 @@ public class ConsentArtefactNotifierTest {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         var token = string();
-        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000);
+        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000,false);
 
         consentArtefactNotifier = new ConsentArtefactNotifier(webClientBuilder, () -> Mono.just(token), serviceProperties);
     }
@@ -104,7 +104,7 @@ public class ConsentArtefactNotifierTest {
                 .build()));
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         DataFlowRequest dataFlowRequest = dataFlowRequestBuilder().build();
-        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 2000);
+        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 2000,false);
         ConsentArtefactNotifier dataRequestNotifier = new ConsentArtefactNotifier(webClientBuilder, () -> Mono.just(token), serviceProperties);
 
         HIUNotificationRequest request = new HIUNotificationRequest(LocalDateTime.now(), UUID.randomUUID(), new ConsentNotifier());
@@ -124,7 +124,7 @@ public class ConsentArtefactNotifierTest {
                 .build()));
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         DataFlowRequest dataFlowRequest = dataFlowRequestBuilder().build();
-        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 2000);
+        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 2000,false);
         ConsentArtefactNotifier dataRequestNotifier = new ConsentArtefactNotifier(webClientBuilder, () -> Mono.just(token), serviceProperties);
 
         HIUNotificationRequest request = new HIUNotificationRequest(LocalDateTime.now(), UUID.randomUUID(), new ConsentNotifier());
@@ -146,7 +146,7 @@ public class ConsentArtefactNotifierTest {
                 .build()));
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         DataFlowRequest dataFlowRequest = dataFlowRequestBuilder().build();
-        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 2000);
+        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 2000,false);
         ConsentArtefactNotifier dataRequestNotifier = new ConsentArtefactNotifier(webClientBuilder, () -> Mono.just(token), serviceProperties);
 
         HIUNotificationRequest request = new HIUNotificationRequest(LocalDateTime.now(), UUID.randomUUID(), new ConsentNotifier());

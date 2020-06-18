@@ -30,13 +30,15 @@ public class DataFlowConfiguration {
                                                                Jackson2JsonMessageConverter jackson2JsonMessageConverter,
                                                                DataRequestNotifier dataRequestNotifier,
                                                                DataFlowRequestRepository dataFlowRequestRepository,
-                                                               CentralRegistry centralRegistry) {
+                                                               CentralRegistry centralRegistry,
+                                                               GatewayServiceProperties gatewayServiceProperties) {
         return new DataFlowBroadcastListener(messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 dataRequestNotifier,
                 dataFlowRequestRepository,
-                centralRegistry);
+                centralRegistry,
+                gatewayServiceProperties);
     }
 
     @Bean
@@ -72,7 +74,9 @@ public class DataFlowConfiguration {
     }
 
     @Bean
-    public DataRequestNotifier dataFlowClient(WebClient.Builder builder, CentralRegistry centralRegistry) {
-        return new DataRequestNotifier(builder, centralRegistry::authenticate);
+    public DataRequestNotifier dataFlowClient(WebClient.Builder builder,
+                                              CentralRegistry centralRegistry,
+                                              GatewayServiceProperties gatewayServiceProperties) {
+        return new DataRequestNotifier(builder, centralRegistry::authenticate, gatewayServiceProperties);
     }
 }

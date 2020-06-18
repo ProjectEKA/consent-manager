@@ -35,16 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
-import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
-import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
-import static in.projecteka.consentmanager.common.Constants.V_1_CARE_CONTEXTS_ON_DISCOVER;
-import static in.projecteka.consentmanager.common.Constants.V_1_CONSENT_REQUESTS_INIT;
-import static in.projecteka.consentmanager.common.Constants.V_1_CONSENTS_FETCH;
-import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_REQUEST;
-import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_CONFIRM;
-import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_INIT;
-import static in.projecteka.consentmanager.common.Constants.V_1_PATIENTS_FIND;
+import static in.projecteka.consentmanager.common.Constants.*;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static java.util.stream.Collectors.toList;
 
@@ -60,7 +51,8 @@ public class SecurityConfiguration {
             V_1_CONSENTS_FETCH,
             V_1_PATIENTS_FIND,
             V_1_LINKS_LINK_ON_INIT,
-            V_1_LINKS_LINK_ON_CONFIRM
+            V_1_LINKS_LINK_ON_CONFIRM,
+            V_1_HEALTH_INFORMATION_REQUEST
     };
 
     static {

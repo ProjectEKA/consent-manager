@@ -62,6 +62,7 @@ public class DataFlowRequester {
                 })
                 .flatMap(flowRequest -> dataFlowRequestRepository.addDataFlowRequest(transactionId.toString(), flowRequest)
                         .thenReturn(flowRequest))
+                .flatMap(flowRequest -> notifyHIP(transactionId.toString(), flowRequest))
                 .map(result -> {
                     var hiRequest = HIRequest.builder()
                             .transactionId(transactionId)

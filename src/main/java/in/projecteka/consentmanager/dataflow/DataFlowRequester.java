@@ -2,7 +2,12 @@ package in.projecteka.consentmanager.dataflow;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
-import in.projecteka.consentmanager.dataflow.model.*;
+import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
+import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
+import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
+import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
+import in.projecteka.consentmanager.dataflow.model.DateRange;
+import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -16,10 +21,10 @@ public class DataFlowRequester {
     private final DataFlowRequestRepository dataFlowRequestRepository;
     private final PostDataFlowRequestApproval postDataFlowrequestApproval;
 
-    public Mono<DataFlowRequestResponse> requestHealthData(String hiuId, DataFlowRequest dataFlowRequest) {
+    public Mono<DataFlowRequestResponse> requestHealthData(DataFlowRequest dataFlowRequest) {
         final String transactionId = UUID.randomUUID().toString();
         return fetchConsentArtefact(dataFlowRequest.getConsent().getId())
-                .flatMap(caRep -> saveNotificationRequest(dataFlowRequest, caRep, hiuId))
+                .flatMap(caRep -> saveNotificationRequest(dataFlowRequest, caRep))
                 .flatMap(flowRequest -> dataFlowRequestRepository.addDataFlowRequest(transactionId, flowRequest)
                         .thenReturn(flowRequest))
                 .flatMap(flowRequest -> notifyHIP(transactionId, flowRequest))
@@ -32,11 +37,8 @@ public class DataFlowRequester {
 
     private Mono<DataFlowRequest> saveNotificationRequest(
             DataFlowRequest dataFlowRequest,
-            ConsentArtefactRepresentation consentArtefactRepresentation,
-            String hiuId) {
-        if (!isValidHIU(hiuId, consentArtefactRepresentation)) {
-            return Mono.error(ClientError.invalidRequester());
-        }
+            ConsentArtefactRepresentation consentArtefactRepresentation) {
+
         if (isConsentExpired(consentArtefactRepresentation)) {
             return Mono.error(ClientError.consentExpired());
         }

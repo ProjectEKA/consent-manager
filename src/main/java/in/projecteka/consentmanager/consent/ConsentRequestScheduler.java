@@ -39,7 +39,6 @@ public class ConsentRequestScheduler {
                 .forEach(consentRequestDetail -> {
                     consentRequestRepository.updateStatus(consentRequestDetail.getRequestId(), EXPIRED).block();
                     broadcastConsentArtefacts(List.of(),
-                            consentRequestDetail.getConsentNotificationUrl(),
                             consentRequestDetail.getRequestId(),
                             EXPIRED,
                             consentRequestDetail.getLastUpdated(),
@@ -54,7 +53,6 @@ public class ConsentRequestScheduler {
     }
 
     private Mono<Void> broadcastConsentArtefacts(List<HIPConsentArtefactRepresentation> consents,
-                                                 String hiuConsentNotificationUrl,
                                                  String requestId,
                                                  ConsentStatus status,
                                                  LocalDateTime lastUpdated,
@@ -65,7 +63,6 @@ public class ConsentRequestScheduler {
                 .timestamp(lastUpdated)
                 .consentRequestId(requestId)
                 .consentArtefacts(consents)
-                .hiuConsentNotificationUrl(hiuConsentNotificationUrl)
                 .hiuId(hiuId)
                 .build();
         return consentNotificationPublisher.publish(message);

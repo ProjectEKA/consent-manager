@@ -231,7 +231,6 @@ public class ConsentManager {
                         .then(generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)
                                 .flatMap(consents ->
                                         broadcastConsentArtefacts(consents,
-                                                consentRequest.getConsentNotificationUrl(),
                                                 requestId,
                                                 GRANTED,
                                                 consentRequest.getLastUpdated(),
@@ -256,7 +255,6 @@ public class ConsentManager {
     }
 
     private Mono<Void> broadcastConsentArtefacts(List<HIPConsentArtefactRepresentation> consents,
-                                                 String hiuConsentNotificationUrl,
                                                  String requestId,
                                                  ConsentStatus status,
                                                  LocalDateTime lastUpdated,
@@ -267,7 +265,6 @@ public class ConsentManager {
                 .timestamp(lastUpdated)
                 .consentRequestId(requestId)
                 .consentArtefacts(consents)
-                .hiuConsentNotificationUrl(hiuConsentNotificationUrl)
                 .hiuId(consentRequest.getId())
                 .build();
         return consentNotificationPublisher.publish(message);
@@ -532,7 +529,6 @@ public class ConsentManager {
                 .then(getHIPConsentArtefacts(revokeRequest, requesterId))
                 .flatMap(hipConsentArtefactRepresentations -> broadcastConsentArtefacts(
                         hipConsentArtefactRepresentations,
-                        consentRequestDetail.getConsentNotificationUrl(),
                         "",
                         REVOKED,
                         consentRepresentation.getDateModified(),
@@ -555,7 +551,6 @@ public class ConsentManager {
                 .flatMap(consentRequest -> consentRequestRepository.updateStatus(id, DENIED)
                         .then(consentRequestRepository.requestOf(id)))
                 .flatMap(consentRequest -> broadcastConsentArtefacts(List.of(),
-                        consentRequest.getConsentNotificationUrl(),
                         consentRequest.getRequestId(),
                         consentRequest.getStatus(),
                         consentRequest.getLastUpdated(),

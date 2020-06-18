@@ -58,24 +58,6 @@ public class HipConsentNotificationListener {
         mlc.start();
     }
 
-    /**
-     * @deprecated (We are not directly notifying the HIP, instead using new gateway API v1/consents/hip/notify )
-     * **/
-    @Deprecated
-    private void sendConsentArtefact(HIPConsentArtefactRepresentation consentArtefact) {
-        String hipId = consentArtefact.getConsentDetail().getHip().getId();
-        getProviderUrl(hipId)
-                .flatMap(providerUrl -> sendArtefactTo(consentArtefact, providerUrl))
-                .block();
-    }
-
-    private Mono<Void> sendArtefactTo(HIPConsentArtefactRepresentation consentArtefact, String providerUrl) {
-        return consentArtefactNotifier.sendConsentArtefactTo(consentArtefact, providerUrl);
-    }
-
-    private Mono<String> getProviderUrl(String hipId) {
-        return centralRegistry.providerWith(hipId).flatMap(provider -> Mono.just(provider.getProviderUrl()));
-    }
 
     private Mono<Void> sendConsentArtefactToHIP(HIPConsentArtefactRepresentation consentArtefact) {
         String hipId = consentArtefact.getConsentDetail().getHip().getId();

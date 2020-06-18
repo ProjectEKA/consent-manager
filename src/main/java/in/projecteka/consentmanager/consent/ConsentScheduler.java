@@ -86,7 +86,6 @@ public class ConsentScheduler {
                                                  ConsentRequestDetail consentRequestDetail) {
         consentArtefactRepository.updateConsentArtefactStatus(consentId, EXPIRED).block();
         broadcastConsentArtefacts(
-                consentRequestDetail.getConsentNotificationUrl(),
                 consentRepresentation.getConsentRequestId(),
                 consentRepresentation.getDateModified(),
                 consentId,
@@ -95,8 +94,7 @@ public class ConsentScheduler {
 
     }
 
-    private Mono<Void> broadcastConsentArtefacts(String hiuConsentNotificationUrl,
-                                                 String requestId,
+    private Mono<Void> broadcastConsentArtefacts(String requestId,
                                                  LocalDateTime lastUpdated, String consentId, HIPReference hip, LocalDateTime createdAt) {
         HIPConsentArtefactRepresentation hipConsentArtefactRepresentation = HIPConsentArtefactRepresentation
                 .builder()
@@ -116,7 +114,6 @@ public class ConsentScheduler {
                 .timestamp(lastUpdated)
                 .consentRequestId(requestId)
                 .consentArtefacts(List.of(hipConsentArtefactRepresentation))
-                .hiuConsentNotificationUrl(hiuConsentNotificationUrl)
                 .build();
         return consentNotificationPublisher.publish(message);
     }

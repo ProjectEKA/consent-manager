@@ -67,7 +67,7 @@ public class DataRequestNotifierTest {
         StepVerifier.create(dataRequestNotifier.notifyHip(dataRequest, "hipId"))
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("someUrl/v1/health-information/hip/request");
+        assertThat(captor.getValue().url().toString()).isEqualTo("someUrl/health-information/hip/request");
         assertThat(captor.getValue().headers().getFirst(AUTHORIZATION)).isEqualTo(token);
     }
 }

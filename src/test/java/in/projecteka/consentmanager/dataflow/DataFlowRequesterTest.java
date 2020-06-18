@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class DataFlowRequesterTest {
@@ -124,13 +124,15 @@ public class DataFlowRequesterTest {
                 .thenReturn(Mono.empty());
         when(dataFlowRequestClient.sendHealthInformationResponseToGateway(dataFlowRequestResultCaptor.capture(), eq(hiuId)))
                 .thenReturn(Mono.empty());
+        when(postDataFlowRequestApproval.broadcastDataFlowRequest(any(),any())).thenReturn(Mono.empty());
 
         var producer = dataFlowRequester.requestHealthDataInfo(dataFlowRequest);
 
         StepVerifier.create(producer)
                 .verifyComplete();
-        assertThat(dataFlowRequestResultCaptor.getValue().getHiRequest()).isNotNull();
-        assertThat(dataFlowRequestResultCaptor.getValue().getError()).isNull();
+        verify(postDataFlowRequestApproval,times(1)).broadcastDataFlowRequest(any(),any());
+        verify(consentManagerClient,times(1)).getConsentArtefact(eq(dataFlowRequest.getHiRequest().getConsent().getId()));
+        verify(dataFlowRequestRepository,times(1)).addDataFlowRequest(any(),any());
     }
 
     @Test

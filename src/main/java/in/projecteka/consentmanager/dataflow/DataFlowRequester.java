@@ -24,7 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static in.projecteka.consentmanager.clients.ClientError.from;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
+import static in.projecteka.consentmanager.dataflow.model.RequestStatus.REQUESTED;
 
 @AllArgsConstructor
 public class DataFlowRequester {

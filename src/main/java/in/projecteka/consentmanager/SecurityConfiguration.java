@@ -45,6 +45,7 @@ import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATI
 import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_INIT;
 import static in.projecteka.consentmanager.common.Constants.V_1_PATIENTS_FIND;
+import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static java.util.stream.Collectors.toList;
 
@@ -77,6 +78,7 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry(V_1_PATIENTS_FIND, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(V_1_CONSENTS_FETCH, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(V_1_HEALTH_INFORMATION_REQUEST, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(V_1_HEALTH_INFORMATION_NOTIFY, HttpMethod.POST));
 
         RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve",
                 HttpMethod.POST,

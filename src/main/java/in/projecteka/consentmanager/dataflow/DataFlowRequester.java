@@ -109,6 +109,7 @@ public class DataFlowRequester {
         return consentArtefactRepresentation.getConsentDetail().getHiu().getId().equals(hiuId);
     }
 
+    @Deprecated
     public Mono<Void> notifyHealthInfoStatus(String requesterId, HealthInfoNotificationRequest notificationRequest) {
         return Mono.just(notificationRequest.getRequestId())
                 .filterWhen(this::validateRequest)
@@ -126,5 +127,12 @@ public class DataFlowRequester {
 
     private boolean validateRequester(String requesterId, HealthInfoNotificationRequest notificationRequest) {
         return notificationRequest.getNotifier().getId().equals(requesterId);
+    }
+
+    public Mono<Void> notifyHealthInformationStatus(HealthInformationNotificationRequest notificationRequest) {
+        return Mono.just(notificationRequest.getRequestId())
+                .filterWhen(this::validateRequest)
+                .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
+                .flatMap(val -> dataFlowRequestRepository.saveHealthNotificationRequest(notificationRequest));
     }
 }

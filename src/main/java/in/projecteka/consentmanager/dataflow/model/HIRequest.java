@@ -10,5 +10,5 @@ import java.util.UUID;
 @Value
 public class HIRequest {
     UUID transactionId;
-    ConsentStatus sessionStatus;
+    RequestStatus sessionStatus;
 }

@@ -47,7 +47,4 @@ public class TestBuilders {
         return easyRandom.nextObject(GatewayDataFlowRequest.GatewayDataFlowRequestBuilder.class);
     }
 
-    public static DataFlowRequestResult.DataFlowRequestResultBuilder dataFlowRequestResult() {
-        return easyRandom.nextObject(DataFlowRequestResult.DataFlowRequestResultBuilder.class);
-    }
 }

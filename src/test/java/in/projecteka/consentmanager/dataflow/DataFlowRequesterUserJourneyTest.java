@@ -2,6 +2,9 @@ package in.projecteka.consentmanager.dataflow;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
+import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.ConsentManagerClient;
+import in.projecteka.consentmanager.clients.DataFlowRequestClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
@@ -46,15 +49,20 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static com.google.common.net.HttpHeaders.AUTHORIZATION;
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequestMessage;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.provider;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.string;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.Utils.toDate;
+import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -65,6 +73,7 @@ import static org.mockito.Mockito.when;
 public class DataFlowRequesterUserJourneyTest {
     private static final MockWebServer consentManagerServer = new MockWebServer();
     private static final MockWebServer identityServer = new MockWebServer();
+    private static final MockWebServer gatewayServer = new MockWebServer();
 
     @SuppressWarnings("unused")
     @MockBean
@@ -116,10 +125,18 @@ public class DataFlowRequesterUserJourneyTest {
     @MockBean
     private ConceptValidator conceptValidator;
 
+    @MockBean
+    private DataFlowRequestClient dataFlowRequestClient;
+
+    @MockBean
+    private ConsentManagerClient consentManagerClient;
+
+
     @AfterAll
     public static void tearDown() throws IOException {
         consentManagerServer.shutdown();
         identityServer.shutdown();
+        gatewayServer.shutdown();
     }
 
     @Test
@@ -352,6 +369,51 @@ public class DataFlowRequesterUserJourneyTest {
         verify(dataFlowBroadcastListener).configureAndSendDataRequestFor(dataFlowRequest);
     }
 
+    @Test
+    public void shouldSendDataRequestToGateway() throws IOException {
+        String token = string();
+        var hiuId = "10000005";
+        var dataFlowRequest = gatewayDataFlowRequest().build();
+        dataFlowRequest.getHiRequest().getDateRange().setFrom(toDate("2020-01-15T08:47:48"));
+        dataFlowRequest.getHiRequest().getDateRange().setTo(toDate("2020-01-20T08:47:48"));
+        var consentArtefact = consentArtefactRepresentation().build();
+        consentArtefact.setStatus(ConsentStatus.GRANTED);
+        consentArtefact.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
+        consentArtefact.getConsentDetail().getPermission().setDataEraseAt(toDateWithMilliSeconds("253379772420000"));
+        consentArtefact.getConsentDetail().getPermission().
+                setDateRange(AccessPeriod.builder()
+                        .fromDate(toDate("2020-01-15T08:47:48"))
+                        .toDate(toDate("2020-01-20T08:47:48"))
+                        .build());
+        var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefact);
+        consentManagerServer.enqueue(
+                new MockResponse()
+                        .setHeader("Content-Type", "application/json")
+                        .setBody(consentArtefactRepresentationJson));
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+        gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of(GATEWAY))));
+        when(consentManagerClient.getConsentArtefact(dataFlowRequest.getHiRequest().getConsent().getId()))
+                .thenReturn(Mono.just(consentArtefact));
+        when(dataFlowRequestRepository.addDataFlowRequest(anyString(),
+                any(in.projecteka.consentmanager.dataflow.model.DataFlowRequest.class)))
+                .thenReturn(Mono.empty());
+        when(dataFlowRequestClient.sendHealthInformationResponseToGateway(any(), eq(hiuId)))
+                .thenReturn(Mono.empty());
+
+        webTestClient
+                .post()
+                .uri("/v1/health-information/request")
+                .header(AUTHORIZATION, token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(dataFlowRequest)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+    }
+
     public static class ContextInitializer
             implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
@@ -362,7 +424,8 @@ public class DataFlowRequesterUserJourneyTest {
                                     "consentmanager.dataflow.authserver.clientId=1",
                                     "consentmanager.dataflow.authserver.clientSecret=NCG_CM",
                                     "consentmanager.dataflow.consentmanager.url=" + consentManagerServer.url(""),
-                                    "consentmanager.keycloak.baseUrl=" + identityServer.url("")));
+                                    "consentmanager.keycloak.baseUrl=" + identityServer.url(""),
+                                    "consenmanager.dataflow.gatewayserver.url=" + gatewayServer.url("")));
             values.applyTo(applicationContext);
         }
     }

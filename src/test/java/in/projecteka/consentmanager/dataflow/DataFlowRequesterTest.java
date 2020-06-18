@@ -2,7 +2,11 @@ package in.projecteka.consentmanager.dataflow;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
-import in.projecteka.consentmanager.dataflow.model.*;
+import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
+import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
+import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
+import in.projecteka.consentmanager.dataflow.model.DateRange;
+import in.projecteka.consentmanager.dataflow.model.HIUReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -66,7 +70,7 @@ public class DataFlowRequesterTest {
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(),
                 any(in.projecteka.consentmanager.dataflow.model.DataFlowRequest.class))).thenReturn(Mono.empty());
 
-        StepVerifier.create(dataFlowRequester.requestHealthData(hiuId, request))
+        StepVerifier.create(dataFlowRequester.requestHealthData(request))
                 .expectNextMatches(Objects::nonNull)
                 .verifyComplete();
     }
@@ -81,7 +85,7 @@ public class DataFlowRequesterTest {
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(),
                 any(in.projecteka.consentmanager.dataflow.model.DataFlowRequest.class))).thenReturn(Mono.empty());
 
-        StepVerifier.create(dataFlowRequester.requestHealthData("1", request))
+        StepVerifier.create(dataFlowRequester.requestHealthData(request))
                 .expectErrorMatches(e -> (e instanceof ClientError) && ((ClientError) e).getHttpStatus().is4xxClientError());
     }
 }

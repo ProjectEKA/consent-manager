@@ -35,10 +35,10 @@ public class DataFlowRequester {
 
     private final Logger logger = LoggerFactory.getLogger(DataFlowRequester.class);
 
-    public Mono<DataFlowRequestResponse> requestHealthData(String hiuId, DataFlowRequest dataFlowRequest) {
+    public Mono<DataFlowRequestResponse> requestHealthData(DataFlowRequest dataFlowRequest) {
         final String transactionId = UUID.randomUUID().toString();
         return fetchConsentArtefact(dataFlowRequest.getConsent().getId())
-                .flatMap(caRep -> saveNotificationRequest(dataFlowRequest, caRep, hiuId))
+                .flatMap(caRep -> saveNotificationRequest(dataFlowRequest, caRep))
                 .flatMap(flowRequest -> dataFlowRequestRepository.addDataFlowRequest(transactionId, flowRequest)
                         .thenReturn(flowRequest))
                 .flatMap(flowRequest -> notifyHIP(transactionId, flowRequest))
@@ -97,31 +97,6 @@ public class DataFlowRequester {
 
     private Mono<Void> notifyHIP(String transactionId, DataFlowRequest dataFlowRequest) {
         return postDataFlowrequestApproval.broadcastDataFlowRequest(transactionId, dataFlowRequest);
-    }
-
-    private Mono<DataFlowRequest> saveNotificationRequest(
-            DataFlowRequest dataFlowRequest,
-            ConsentArtefactRepresentation consentArtefactRepresentation,
-            String hiuId) {
-        if (!isValidHIU(hiuId, consentArtefactRepresentation)) {
-            return Mono.error(ClientError.invalidRequester());
-        }
-        if (isConsentExpired(consentArtefactRepresentation)) {
-            return Mono.error(ClientError.consentExpired());
-        }
-        if (!isConsentGranted(consentArtefactRepresentation)) {
-            return Mono.error(ClientError.consentNotGranted());
-        }
-        if (dataFlowRequest.getDateRange() != null &&
-                !isValidHIDateRange(dataFlowRequest, consentArtefactRepresentation)) {
-            return Mono.error(ClientError.invalidDateRange());
-        }
-        var flowRequestBuilder = dataFlowRequest.toBuilder();
-        if (dataFlowRequest.getDateRange() == null) {
-            flowRequestBuilder.dateRange(defaultDateRange(consentArtefactRepresentation));
-        }
-        var consent = dataFlowRequest.getConsent().toBuilder().build();
-        return Mono.just(flowRequestBuilder.consent(consent).build());
     }
 
     private Mono<DataFlowRequest> saveNotificationRequest(

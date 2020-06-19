@@ -26,7 +26,6 @@ import java.time.Instant;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_DATA_FLOW_REQUEST_QUEUE;
-import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class DataFlowBroadcastListener {
@@ -44,10 +43,6 @@ public class DataFlowBroadcastListener {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig
                 .getQueues()
                 .get(HIP_DATA_FLOW_REQUEST_QUEUE);
-        if (destinationInfo == null) {
-            logger.error(HIP_DATA_FLOW_REQUEST_QUEUE + " not found");
-            throw queueNotFound();
-        }
 
         MessageListenerContainer mlc = messageListenerContainerFactory
                 .createMessageListenerContainer(destinationInfo.getRoutingKey());

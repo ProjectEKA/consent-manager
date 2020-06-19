@@ -11,12 +11,13 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
+import static in.projecteka.consentmanager.common.Constants.DATA_FLOW_REQUEST_URL_PATH;
 import static in.projecteka.consentmanager.common.Constants.HDR_HIU_ID;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
 public class DataFlowRequestClient {
-    private static final String DATA_FLOW_REQUEST_URL_PATH = "/health-information/cm/on-request";
+
     private final WebClient.Builder webClientBuilder;
     private final GatewayServiceProperties gatewayServiceProperties;
     private final CentralRegistry centralRegistry;

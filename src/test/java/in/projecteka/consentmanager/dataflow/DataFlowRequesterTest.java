@@ -83,7 +83,7 @@ public class DataFlowRequesterTest {
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(),
                 any(in.projecteka.consentmanager.dataflow.model.DataFlowRequest.class))).thenReturn(Mono.empty());
 
-        StepVerifier.create(dataFlowRequester.requestHealthData(hiuId, request))
+        StepVerifier.create(dataFlowRequester.requestHealthData(request))
                 .expectNextMatches(Objects::nonNull)
                 .verifyComplete();
     }
@@ -98,7 +98,7 @@ public class DataFlowRequesterTest {
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(),
                 any(in.projecteka.consentmanager.dataflow.model.DataFlowRequest.class))).thenReturn(Mono.empty());
 
-        StepVerifier.create(dataFlowRequester.requestHealthData("1", request))
+        StepVerifier.create(dataFlowRequester.requestHealthData(request))
                 .expectErrorMatches(e -> (e instanceof ClientError) && ((ClientError) e).getHttpStatus().is4xxClientError());
     }
 
@@ -136,7 +136,7 @@ public class DataFlowRequesterTest {
     }
 
     @Test
-    public void shouldCallGatewayWhenConsentArtefactNotFound() {
+    void shouldCallGatewayWhenConsentArtefactNotFound() {
         var hiuId = "";
         var dataFlowRequest = gatewayDataFlowRequest().build();
         when(consentManagerClient.getConsentArtefact(dataFlowRequest.getHiRequest().getConsent().getId()))

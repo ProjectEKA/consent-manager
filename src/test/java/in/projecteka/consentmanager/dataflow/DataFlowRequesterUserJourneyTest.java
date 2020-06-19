@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.dataflow;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.DataFlowRequestClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
@@ -55,9 +54,9 @@ import static in.projecteka.consentmanager.dataflow.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequestMessage;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.provider;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.string;
-import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.Utils.toDate;
 import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
 import static org.mockito.ArgumentMatchers.any;
@@ -211,40 +210,6 @@ public class DataFlowRequesterUserJourneyTest {
                         .setBody(consentArtefactRepresentationJson));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
-        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
-                .thenReturn(Mono.empty());
-
-        webTestClient
-                .post()
-                .uri("/health-information/request")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(dataFlowRequest)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus()
-                .isUnauthorized()
-                .expectBody()
-                .json(errorResponseJson);
-    }
-
-    @Test
-    void shouldThrowInvalidRequester() throws IOException {
-        String token = string();
-        var dataFlowRequest = dataFlowRequest().build();
-        var consentArtefactRepresentation = consentArtefactRepresentation().build();
-        consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id("10000005").name("MAX").build());
-        var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
-        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.INVALID_REQUESTER, "Not a valid Requester"));
-        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
-        consentManagerServer.enqueue(
-                new MockResponse()
-                        .setHeader("Content-Type", "application/json")
-                        .setBody(consentArtefactRepresentationJson));
-        var loggedInHIU = "service-account-different-hiu";
-        var user = "{\"preferred_username\": \"patient\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(loggedInHIU, List.of())));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
 

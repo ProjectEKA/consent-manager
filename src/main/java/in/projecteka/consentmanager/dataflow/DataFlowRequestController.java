@@ -27,7 +27,7 @@ public class DataFlowRequestController {
     public Mono<DataFlowRequestResponse> requestHealthInformation(@RequestBody DataFlowRequest dataFlowRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(requester -> dataFlowRequester.requestHealthData(requester.getClientId(), dataFlowRequest));
+                .flatMap(requester -> dataFlowRequester.requestHealthData(dataFlowRequest));
     }
 
     @PostMapping("/health-information/notification")

@@ -335,7 +335,7 @@ public class DataFlowRequesterUserJourneyTest {
     }
 
     @Test
-    public void shouldSendDataRequestToGateway() throws IOException {
+    void shouldSendDataRequestToGateway() throws IOException {
         String token = string();
         var hiuId = "10000005";
         var dataFlowRequest = gatewayDataFlowRequest().build();

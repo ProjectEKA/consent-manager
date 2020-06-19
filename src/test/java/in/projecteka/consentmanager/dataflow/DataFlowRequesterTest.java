@@ -105,7 +105,7 @@ public class DataFlowRequesterTest {
     }
 
     @Test
-    public void shouldCallGatewayWithHiRequest() {
+    void shouldCallGatewayWithHiRequest() {
         var hiuId = "10000005";
         var dataFlowRequest = gatewayDataFlowRequest().build();
         dataFlowRequest.getHiRequest().getDateRange().setFrom(toDate("2020-01-15T08:47:48"));
@@ -126,15 +126,19 @@ public class DataFlowRequesterTest {
                 .thenReturn(Mono.empty());
         when(dataFlowRequestClient.sendHealthInformationResponseToGateway(dataFlowRequestResultCaptor.capture(), eq(hiuId)))
                 .thenReturn(Mono.empty());
-        when(postDataFlowRequestApproval.broadcastDataFlowRequest(any(),any())).thenReturn(Mono.empty());
+        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(),any())).thenReturn(Mono.empty());
 
         var producer = dataFlowRequester.requestHealthDataInfo(dataFlowRequest);
 
         StepVerifier.create(producer)
                 .verifyComplete();
+
         verify(postDataFlowRequestApproval,times(1)).broadcastDataFlowRequest(any(),any());
         verify(consentManagerClient,times(1)).getConsentArtefact(eq(dataFlowRequest.getHiRequest().getConsent().getId()));
         verify(dataFlowRequestRepository,times(1)).addDataFlowRequest(any(),any());
+        verify(dataFlowRequestClient,times(1)).sendHealthInformationResponseToGateway(any(),anyString());
+        assertThat(dataFlowRequestResultCaptor.getValue().getHiRequest()).isNotNull();
+        assertThat(dataFlowRequestResultCaptor.getValue().getError()).isNull();
     }
 
     @Test

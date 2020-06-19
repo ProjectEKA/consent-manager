@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -12,8 +13,8 @@ import java.util.UUID;
 @Builder
 @EqualsAndHashCode
 public class DataRequest {
-    private final String transactionId;
+    private final UUID transactionId;
     private final UUID requestId;
-    private final String timestamp;
+    private final LocalDateTime timestamp;
     private final HiRequest hiRequest;
 }

@@ -21,8 +21,7 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
-
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_DATA_FLOW_REQUEST_QUEUE;
@@ -56,9 +55,9 @@ public class DataFlowBroadcastListener {
                 var dataFlowRequest = dataFlowRequestMessage.getDataFlowRequest();
                 if(gatewayServiceProperties.getEnabled()) {
                     DataRequest dataRequest = DataRequest.builder()
-                            .transactionId(dataFlowRequestMessage.getTransactionId())
+                            .transactionId(UUID.fromString(dataFlowRequestMessage.getTransactionId()))
                             .requestId(UUID.randomUUID())
-                            .timestamp(Instant.now().toString())
+                            .timestamp(LocalDateTime.now())
                             .hiRequest(HiRequest.builder()
                                     .consent(dataFlowRequest.getConsent())
                                     .dataPushUrl(dataFlowRequest.getDataPushUrl())

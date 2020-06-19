@@ -18,7 +18,7 @@ consentmanager:
     url: http://localhost:8080
     jwkUrl: http://localhost:8080/certs
   gatewayservice:
-    baseUrl: http://localhost:8004/v1
+    baseUrl: http://host.docker.internal:8081/v1
     requestTimeout: 1000
     enabled: true
   userservice:

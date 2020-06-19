@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
+import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResult;
 import in.projecteka.consentmanager.dataflow.model.GatewayDataFlowRequest;
 import org.jeasy.random.EasyRandom;
 
@@ -45,4 +46,5 @@ public class TestBuilders {
     public static GatewayDataFlowRequest.GatewayDataFlowRequestBuilder gatewayDataFlowRequest() {
         return easyRandom.nextObject(GatewayDataFlowRequest.GatewayDataFlowRequestBuilder.class);
     }
+
 }

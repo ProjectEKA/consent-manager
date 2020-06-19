@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import javax.validation.Valid;
+
 import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_ON_REQUEST;
 import javax.validation.Valid;
 
@@ -51,7 +53,7 @@ public class DataFlowRequestController {
 
     @PostMapping(V_1_HEALTH_INFORMATION_ON_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public Mono<Void> onRequestHealthInformationV1(@RequestBody HealthInformationResponse healthInformationResponse) {
+    public Mono<Void> onRequestHealthInformationV1(@RequestBody @Valid HealthInformationResponse healthInformationResponse) {
         return dataFlowRequester.updateDataflowRequestStatus(healthInformationResponse);
     }
 }

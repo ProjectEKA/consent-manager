@@ -39,7 +39,7 @@ public class LinkServiceClientTest {
         initMocks(this);
         mockWebServer = new MockWebServer();
         baseUrl = mockWebServer.url("/").toString();
-        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000);
+        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000,false);
         WebClient.Builder webClientBuilder = WebClient.builder().baseUrl(baseUrl);
         linkServiceClient = new LinkServiceClient(webClientBuilder, centralRegistry, serviceProperties);
     }

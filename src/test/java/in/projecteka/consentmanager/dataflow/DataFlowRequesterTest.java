@@ -38,6 +38,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class DataFlowRequesterTest {
@@ -162,11 +164,17 @@ public class DataFlowRequesterTest {
                 .thenReturn(Mono.empty());
         when(dataFlowRequestClient.sendHealthInformationResponseToGateway(dataFlowRequestResultCaptor.capture(), eq(hiuId)))
                 .thenReturn(Mono.empty());
+        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(),any())).thenReturn(Mono.empty());
 
         var producer = dataFlowRequester.requestHealthDataInfo(dataFlowRequest);
 
         StepVerifier.create(producer)
                 .verifyComplete();
+
+        verify(postDataFlowRequestApproval,times(1)).broadcastDataFlowRequest(any(),any());
+        verify(consentManagerClient,times(1)).getConsentArtefact(eq(dataFlowRequest.getHiRequest().getConsent().getId()));
+        verify(dataFlowRequestRepository,times(1)).addDataFlowRequest(any(),any());
+        verify(dataFlowRequestClient,times(1)).sendHealthInformationResponseToGateway(any(),anyString());
         assertThat(dataFlowRequestResultCaptor.getValue().getHiRequest()).isNotNull();
         assertThat(dataFlowRequestResultCaptor.getValue().getError()).isNull();
     }

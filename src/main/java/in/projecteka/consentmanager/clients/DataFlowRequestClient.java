@@ -17,6 +17,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
 public class DataFlowRequestClient {
+
     private final WebClient.Builder webClientBuilder;
     private final GatewayServiceProperties gatewayServiceProperties;
     private final CentralRegistry centralRegistry;

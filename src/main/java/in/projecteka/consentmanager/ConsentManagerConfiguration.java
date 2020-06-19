@@ -151,6 +151,7 @@ public class ConsentManagerConfiguration {
                 new DestinationsConfig.DestinationInfo("exchange", HIP_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_DATA_FLOW_REQUEST_QUEUE,
                 new DestinationsConfig.DestinationInfo("exchange", HIP_DATA_FLOW_REQUEST_QUEUE));
+
         DestinationsConfig destinationsConfig = new DestinationsConfig(queues, null);
         return destinationsConfig;
     }

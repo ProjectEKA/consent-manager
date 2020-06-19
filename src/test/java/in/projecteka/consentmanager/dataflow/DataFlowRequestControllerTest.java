@@ -24,7 +24,8 @@ import java.util.List;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
-import static in.projecteka.consentmanager.dataflow.TestBuilders.string;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationResponseBuilder;
+import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -73,6 +74,9 @@ class DataFlowRequestControllerTest {
     @MockBean
     private ConceptValidator conceptValidator;
 
+    @MockBean
+    DataFlowRequestRepository dataFlowRequestRepository;
+
     @Autowired
     private WebTestClient webClient;
 
@@ -94,5 +98,25 @@ class DataFlowRequestControllerTest {
                 .exchange()
                 .expectStatus()
                 .isAccepted();
+    }
+
+    @Test
+    void shouldReturnAcceptedForDataFlowResponse() {
+        var token = string();
+        var healthInformationResponse = healthInformationResponseBuilder().build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
+        when(dataFlowRequestRepository.updateDataFlowRequestStatus(healthInformationResponse.getHiRequest().getTransactionId(),
+                healthInformationResponse.getHiRequest().getSessionStatus())).thenReturn(Mono.empty());
+
+        webClient.post()
+                .uri("/v1/health-information/on-request")
+                .header(AUTHORIZATION,token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(healthInformationResponse))
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+
     }
 }

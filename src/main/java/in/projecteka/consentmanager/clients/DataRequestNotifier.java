@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 
 import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
 import static in.projecteka.consentmanager.common.Constants.HDR_HIP_ID;
+import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_REQUEST_FORMAT;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
@@ -19,7 +20,6 @@ public class DataRequestNotifier {
     private final WebClient.Builder webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
-    private final String GATEWAY_DATAFLOW_URL = "%s/health-information/hip/request";
 
     public Mono<Void> notifyHip(DataFlowRequest dataFlowRequest, String hipUrl) {
         return tokenGenerator.get()
@@ -53,6 +53,6 @@ public class DataRequestNotifier {
     }
 
     private String getDataFlowRequestUrl() {
-        return String.format(GATEWAY_DATAFLOW_URL, gatewayServiceProperties.getBaseUrl());
+        return String.format(V_1_HEALTH_INFORMATION_REQUEST_FORMAT, gatewayServiceProperties.getBaseUrl());
     }
 }

@@ -103,7 +103,7 @@ public class DataFlowRequesterTest {
     }
 
     @Test
-    public void shouldCallGatewayWithHiRequest() {
+    void shouldCallGatewayWithHiRequest() {
         var hiuId = "10000005";
         var dataFlowRequest = gatewayDataFlowRequest().build();
         dataFlowRequest.getHiRequest().getDateRange().setFrom(toDate("2020-01-15T08:47:48"));
@@ -134,7 +134,7 @@ public class DataFlowRequesterTest {
     }
 
     @Test
-    public void shouldCallGatewayWhenConsentArtefactNotFound() {
+    void shouldCallGatewayWhenConsentArtefactNotFound() {
         var hiuId = "";
         var dataFlowRequest = gatewayDataFlowRequest().build();
         when(consentManagerClient.getConsentArtefact(dataFlowRequest.getHiRequest().getConsent().getId()))

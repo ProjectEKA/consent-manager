@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.dataflow;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.DataFlowRequestClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
@@ -55,9 +54,9 @@ import static in.projecteka.consentmanager.dataflow.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequestMessage;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.provider;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.string;
-import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.Utils.toDate;
 import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
 import static org.mockito.ArgumentMatchers.any;
@@ -336,7 +335,7 @@ public class DataFlowRequesterUserJourneyTest {
     }
 
     @Test
-    public void shouldSendDataRequestToGateway() throws IOException {
+    void shouldSendDataRequestToGateway() throws IOException {
         String token = string();
         var hiuId = "10000005";
         var dataFlowRequest = gatewayDataFlowRequest().build();

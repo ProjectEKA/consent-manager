@@ -26,7 +26,6 @@ import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationResponseBuilder;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
-import static in.projecteka.consentmanager.dataflow.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;

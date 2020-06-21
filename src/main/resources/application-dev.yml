@@ -20,6 +20,7 @@ consentmanager:
   gatewayservice:
     baseUrl: http://host.docker.internal:8081/v1
     requestTimeout: 1000
+    enabled: true
   userservice:
     url: http://localhost:9000
     transactionPinDigitSize: 4

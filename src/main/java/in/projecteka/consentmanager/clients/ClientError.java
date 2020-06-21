@@ -20,6 +20,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PIN_A
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_RECOVERY_REQUEST;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_RESP_REQUEST_ID;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SCOPE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SESSION;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TOKEN;
@@ -49,8 +50,8 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.GATEWAY_TIMEOUT;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
-import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 
@@ -331,5 +332,10 @@ public class ClientError extends Throwable {
 
     public static RespError from(ClientError exception) {
         return RespError.builder().code(exception.getErrorCode().getValue()).message(exception.getMessage()).build();
+    }
+
+    public static ClientError invalidResponseFromGateway() {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(INVALID_RESP_REQUEST_ID, "resp.requestId is null or empty")));
     }
 }

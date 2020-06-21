@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.dataflow;
 import in.projecteka.consentmanager.common.DbOperation;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
+import in.projecteka.consentmanager.dataflow.model.DataFlowRequestStatus;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInformationNotificationRequest;
 import io.vertx.core.json.JsonObject;
@@ -24,6 +25,9 @@ public class DataFlowRequestRepository {
             "(transaction_id, notification_request, request_id) VALUES ($1, $2, $3)";
     private static final String SELECT_TRANSACTION_ID = "SELECT transaction_id FROM health_info_notification WHERE " +
             "request_id=$1";
+    private static final String UPDATE_DATAFLOW_REQUEST_STATUS = "UPDATE data_flow_request SET status = $1 WHERE " +
+            "transaction_id = $2";
+
     private final PgPool dbClient;
 
     public DataFlowRequestRepository(PgPool pgPool) {
@@ -96,5 +100,18 @@ public class DataFlowRequestRepository {
 
     public Mono<String> getIfPresent(UUID requestId) {
         return DbOperation.select(requestId, dbClient, SELECT_TRANSACTION_ID, row -> row.getString(0));
+    }
+
+    public Mono<Void> updateDataFlowRequestStatus(String transactionId, DataFlowRequestStatus status) {
+        return Mono.create(monoSink ->
+                dbClient.preparedQuery(UPDATE_DATAFLOW_REQUEST_STATUS)
+                        .execute(Tuple.of(status.name(), transactionId),
+                                handler -> {
+                                    if (handler.failed()) {
+                                        monoSink.error(new DbOperationError());
+                                        return;
+                                    }
+                                    monoSink.success();
+                                }));
     }
 }

@@ -41,7 +41,7 @@ public class UserServiceClientTest {
     public void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000);
+        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000,false);
         token = string();
         userServiceClient = new UserServiceClient(webClientBuilder, "http://user-service/", () -> Mono.just(token), serviceProperties, centralRegistry);
     }

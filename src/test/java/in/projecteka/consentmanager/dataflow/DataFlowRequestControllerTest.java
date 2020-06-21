@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
+import in.projecteka.consentmanager.dataflow.model.HealthInformationNotificationRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +22,10 @@ import org.springframework.web.reactive.function.BodyInserters;
 
 import java.util.List;
 
+import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationNotificationRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -84,6 +87,24 @@ class DataFlowRequestControllerTest {
                 .header(AUTHORIZATION, token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(dataFlowRequestBody))
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+    }
+
+    @Test
+    void shouldReturnAcceptedForHealthInfoNotification() {
+        var token = string();
+        var healthInformationNotificationRequest = healthInformationNotificationRequest().build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
+
+        webClient.post()
+                .uri(V_1_HEALTH_INFORMATION_NOTIFY)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(healthInformationNotificationRequest))
                 .exchange()
                 .expectStatus()
                 .isAccepted();

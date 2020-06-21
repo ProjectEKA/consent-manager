@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import in.projecteka.consentmanager.dataflow.model.DateRange;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
+import in.projecteka.consentmanager.dataflow.model.HealthInformationNotificationRequest;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 

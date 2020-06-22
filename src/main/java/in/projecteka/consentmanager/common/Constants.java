@@ -20,12 +20,12 @@ public class Constants {
     public static final String V_1_LINKS_LINK_ON_INIT = "/v1/links/link/on-init";
     public static final String V_1_LINKS_LINK_ON_CONFIRM = "/v1/links/link/on-confirm";
     public static final String V_1_HEALTH_INFORMATION_REQUEST = "/v1/health-information/request";
+    public static final String V_1_HEALTH_INFORMATION_NOTIFY = "/v1/health-information/notify";
     public static final String V_1_HEALTH_INFORMATION_REQUEST_FORMAT = "%s/health-information/hip/request";
     public static final String V_1_HEALTH_INFORMATION_ON_REQUEST = "/v1/health-information/on-request";
 
     //GATEWAY URL PATHs
     public static final String DATA_FLOW_REQUEST_URL_PATH = "/health-information/cm/on-request";
-
 
     private Constants() {}
 }

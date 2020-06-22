@@ -28,6 +28,7 @@ import java.util.Objects;
 
 import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationNotificationRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationResponseBuilder;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.Utils.toDate;
@@ -36,10 +37,10 @@ import static org.junit.Assert.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class DataFlowRequesterTest {
@@ -110,6 +111,24 @@ public class DataFlowRequesterTest {
 
         StepVerifier.create(dataFlowRequester.requestHealthData(request))
                 .expectErrorMatches(e -> (e instanceof ClientError) && ((ClientError) e).getHttpStatus().is4xxClientError());
+    }
+
+    @Test
+    void shouldNotifyHealthInfoStatus() {
+        var healthInformationNotificationRequest = healthInformationNotificationRequest().build();
+
+        when(dataFlowRequestRepository.getIfPresent(healthInformationNotificationRequest.getRequestId()))
+                .thenReturn(Mono.empty());
+        when(dataFlowRequestRepository.saveHealthNotificationRequest(healthInformationNotificationRequest))
+                .thenReturn(Mono.create(MonoSink::success));
+
+        StepVerifier.create(dataFlowRequester.notifyHealthInformationStatus(healthInformationNotificationRequest))
+                .verifyComplete();
+
+        verify(dataFlowRequestRepository,
+                times(1)).saveHealthNotificationRequest(healthInformationNotificationRequest);
+        verify(dataFlowRequestRepository,
+                times(1)).getIfPresent(healthInformationNotificationRequest.getRequestId());
     }
 
     @Test

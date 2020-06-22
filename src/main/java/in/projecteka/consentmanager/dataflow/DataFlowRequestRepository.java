@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestStatus;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
+import in.projecteka.consentmanager.dataflow.model.HealthInformationNotificationRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
@@ -67,11 +68,27 @@ public class DataFlowRequestRepository {
                                 }));
     }
 
+    @Deprecated
     public Mono<Void> saveNotificationRequest(HealthInfoNotificationRequest notificationRequest) {
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(INSERT_TO_HEALTH_INFO_NOTIFICATION)
                         .execute(Tuple.of(notificationRequest.getTransactionId(),
                                 new JsonObject(from(notificationRequest)), notificationRequest.getRequestId().toString()),
+                                handler -> {
+                                    if (handler.failed()) {
+                                        monoSink.error(new DbOperationError());
+                                        return;
+                                    }
+                                    monoSink.success();
+                                }));
+    }
+
+    public Mono<Void> saveHealthNotificationRequest(HealthInformationNotificationRequest notificationRequest) {
+        return Mono.create(monoSink ->
+                dbClient.preparedQuery(INSERT_TO_HEALTH_INFO_NOTIFICATION)
+                        .execute(Tuple.of(notificationRequest.getNotification().getTransactionId(),
+                                new JsonObject(from(notificationRequest)),
+                                notificationRequest.getRequestId().toString()),
                                 handler -> {
                                     if (handler.failed()) {
                                         monoSink.error(new DbOperationError());

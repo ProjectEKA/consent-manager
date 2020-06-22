@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import in.projecteka.consentmanager.dataflow.model.GatewayDataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
+import in.projecteka.consentmanager.dataflow.model.HealthInformationNotificationRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInformationResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,11 +16,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_NOTIFY;
 import javax.validation.Valid;
 
 import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_ON_REQUEST;
-import javax.validation.Valid;
-
 import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_REQUEST;
 
 @RestController
@@ -34,6 +34,7 @@ public class DataFlowRequestController {
                 .flatMap(requester -> dataFlowRequester.requestHealthData(dataFlowRequest));
     }
 
+    @Deprecated
     @PostMapping("/health-information/notification")
     public Mono<Void> notify(@RequestBody HealthInfoNotificationRequest notificationRequest) {
         return ReactiveSecurityContextHolder.getContext()
@@ -55,5 +56,14 @@ public class DataFlowRequestController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> onRequestHealthInformationV1(@RequestBody @Valid HealthInformationResponse healthInformationResponse) {
         return dataFlowRequester.updateDataflowRequestStatus(healthInformationResponse);
+    }
+
+    @PostMapping(V_1_HEALTH_INFORMATION_NOTIFY)
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public Mono<Void> healthInformationNotify(@RequestBody HealthInformationNotificationRequest notificationRequest) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
+                .doOnSuccess(requester -> Mono.defer(() -> dataFlowRequester.notifyHealthInformationStatus(notificationRequest)).subscribe())
+                .then();
     }
 }

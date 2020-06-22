@@ -12,7 +12,7 @@ import in.projecteka.consentmanager.dataflow.model.DateRange;
 import in.projecteka.consentmanager.dataflow.model.GatewayDataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.HIRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
-import in.projecteka.consentmanager.dataflow.model.HealthInformationResponse;
+import in.projecteka.consentmanager.dataflow.model.HealthInformationNotificationRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInformationResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import lombok.AllArgsConstructor;
@@ -186,6 +186,7 @@ public class DataFlowRequester {
         return consentArtefactRepresentation.getConsentDetail().getHiu().getId().equals(hiuId);
     }
 
+    @Deprecated
     public Mono<Void> notifyHealthInfoStatus(String requesterId, HealthInfoNotificationRequest notificationRequest) {
         return Mono.just(notificationRequest.getRequestId())
                 .filterWhen(this::validateRequest)
@@ -203,5 +204,12 @@ public class DataFlowRequester {
 
     private boolean validateRequester(String requesterId, HealthInfoNotificationRequest notificationRequest) {
         return notificationRequest.getNotifier().getId().equals(requesterId);
+    }
+
+    public Mono<Void> notifyHealthInformationStatus(HealthInformationNotificationRequest notificationRequest) {
+        return Mono.just(notificationRequest.getRequestId())
+                .filterWhen(this::validateRequest)
+                .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
+                .flatMap(val -> dataFlowRequestRepository.saveHealthNotificationRequest(notificationRequest));
     }
 }

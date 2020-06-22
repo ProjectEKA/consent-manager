@@ -72,7 +72,7 @@ services:
     environment:
       - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/consent_manager -Djdbc.username=postgres -Djdbc.password=password'
     depends_on:
-      - postgres
+      - keycloak_setup
 
   hiu-db-setup:
     image: projecteka/hiu-db-initializer
@@ -80,7 +80,7 @@ services:
     environment:
       - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/health_information_user -Djdbc.username=postgres -Djdbc.password=password'
     depends_on:
-      - postgres
+      - cm-db-setup
 
 volumes:
   postgres_data:

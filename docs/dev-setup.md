@@ -157,7 +157,7 @@ cd consent-manager
 CLIENTREGISTRY_XAUTHTOKEN=${CLIENTREGISTRY_XAUTHTOKEN} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew bootRunLocal
 ```
 
-### **Hip-Service**
+### Hip-Service
 
 1. Clone [hip-service](https://github.com/ProjectEKA/hip-service)
 2. Run through command line
@@ -166,4 +166,15 @@ CLIENTREGISTRY_XAUTHTOKEN=${CLIENTREGISTRY_XAUTHTOKEN} KEYCLOAK_CLIENTSECRET=${K
 cd hip-service
 cp src/In.ProjectEKA.DefaultHip/Resources/*.json src/In.ProjectEKA.HipService/
 dotnet run --project src/In.ProjectEKA.HipService/In.ProjectEKA.HipService.csproj --environment="local"
+```
+
+### Gateway
+
+1. Clone [gateway](https://github.com/ProjectEKA/gateway)
+2. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `gateway` under `credentials` tab, and use it for a CLIENT_SECRET (client under *central-registry* realm)
+3. Run through command line
+
+```bash
+cd gateway
+CLIENT_SECRET=${CLIENT_SECRET} ./gradlew bootRunLocal
 ```

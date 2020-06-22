@@ -19,7 +19,6 @@
 
 * [Dev setup](docs/dev-setup.md)
 
-
 ## Consent Manager Architecture
 
 * [System Architecture](./docs/architecture.md)

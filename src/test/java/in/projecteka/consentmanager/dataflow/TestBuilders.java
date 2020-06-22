@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
 import in.projecteka.consentmanager.dataflow.model.GatewayDataFlowRequest;
+import in.projecteka.consentmanager.dataflow.model.HealthInformationNotificationRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInformationResponse;
 import org.jeasy.random.EasyRandom;
 
@@ -47,8 +48,11 @@ public class TestBuilders {
         return easyRandom.nextObject(GatewayDataFlowRequest.GatewayDataFlowRequestBuilder.class);
     }
 
+    public static HealthInformationNotificationRequest.HealthInformationNotificationRequestBuilder healthInformationNotificationRequest() {
+        return easyRandom.nextObject(HealthInformationNotificationRequest.HealthInformationNotificationRequestBuilder.class);
+    }
+
     public static HealthInformationResponse.HealthInformationResponseBuilder healthInformationResponseBuilder() {
         return easyRandom.nextObject(HealthInformationResponse.HealthInformationResponseBuilder.class);
     }
-
 }

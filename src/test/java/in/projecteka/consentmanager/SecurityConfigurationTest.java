@@ -24,6 +24,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.common.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
@@ -128,21 +129,21 @@ class SecurityConfigurationTest {
     }
 
     @Test
-    void return200OK() {
+    void return202AcceptedForHealthInfoNotify() {
         var token = string();
         var username = string();
         var caller = ServiceCaller.builder().clientId(username).roles(List.of()).build();
         when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
-        when(dataFlowRequester.notifyHealthInfoStatus(eq(username), any())).thenReturn(Mono.empty());
+        when(dataFlowRequester.notifyHealthInformationStatus(any())).thenReturn(Mono.empty());
 
         webTestClient
                 .post()
-                .uri("/health-information/notification")
+                .uri(V_1_HEALTH_INFORMATION_NOTIFY)
                 .contentType(APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .bodyValue("{}")
                 .exchange()
                 .expectStatus()
-                .isOk();
+                .isAccepted();
     }
 }

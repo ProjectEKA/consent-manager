@@ -22,8 +22,10 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationNotificationRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationResponseBuilder;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
@@ -101,6 +103,27 @@ class DataFlowRequestControllerTest {
     }
 
     @Test
+    void shouldReturnAcceptedForHealthInfoNotification() {
+        var token = string();
+        var healthInformationNotificationRequest = healthInformationNotificationRequest().build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+
+        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
+        when(dataFlowRequester.notifyHealthInformationStatus(healthInformationNotificationRequest))
+                .thenReturn(Mono.empty());
+
+        webClient.post()
+                .uri(V_1_HEALTH_INFORMATION_NOTIFY)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(healthInformationNotificationRequest))
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+    }
+
+    @Test
     void shouldReturnAcceptedForDataFlowResponse() {
         var token = string();
         var healthInformationResponse = healthInformationResponseBuilder().build();
@@ -117,6 +140,5 @@ class DataFlowRequestControllerTest {
                 .exchange()
                 .expectStatus()
                 .isAccepted();
-
     }
 }

@@ -15,6 +15,11 @@
 
 ![Architecture](docs/diagrams/architecture.png)
 
+## Dev setup for whole consent eco system
+
+* [Dev setup](docs/dev-setup.md)
+
+
 ## Consent Manager Architecture
 
 * [System Architecture](./docs/architecture.md)

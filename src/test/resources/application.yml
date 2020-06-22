@@ -1,6 +1,13 @@
 server:
   port: 8000
 consentmanager:
+  cacheMethod: guava
+  consentservice:
+    purposeOfUseDefUrl: classpath:/static/ValueSet/purpose-of-use.json
+    hiTypesDefUrl: classpath:/static/ValueSet/health-info-type.json
+  scheduler:
+    consentExpiryCronExpr: "0 */1 * ? * *"
+    consentRequestExpiryCronExpr: '0 0 0/12 ? * *'
   clientregistry:
     XAuthToken: dummy-auth-token
     clientId: dummy-client-id
@@ -21,3 +28,9 @@ consentmanager:
       url: http://localhost:9001
     consentmanager:
       url: http://localhost:8000
+  gatewayservice:
+    baseUrl: http://tmc.gov.in/ncg-gateway/v1
+    requestTimeout: 1000
+  linkservice:
+    url: http://localhost:9000
+    txnTimeout: 5000

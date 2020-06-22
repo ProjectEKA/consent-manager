@@ -166,7 +166,7 @@ public class SignUpRequestValidator {
                : Validation.invalid("Year of birth can't be in future or older than 120 years");
     }
 
-    private static Validation<String, String> validatePassword(String password) {
+    public static Validation<String, String> validatePassword(String password) {
         if (Strings.isNullOrEmpty(password)) {
             return Validation.invalid("password can't be empty");
         }

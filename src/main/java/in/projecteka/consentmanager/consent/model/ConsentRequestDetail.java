@@ -1,13 +1,9 @@
 package in.projecteka.consentmanager.consent.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,7 +14,7 @@ public class ConsentRequestDetail {
     @JsonProperty("id")
     private String requestId;
     private ConsentStatus status;
-    private Date createdAt;
+    private LocalDateTime createdAt;
     private ConsentPurpose purpose;
     private PatientReference patient;
     private HIPReference hip;
@@ -27,5 +23,5 @@ public class ConsentRequestDetail {
     private HIType[] hiTypes;
     private ConsentPermission permission;
     private String consentNotificationUrl;
-    private Date lastUpdated;
+    private LocalDateTime lastUpdated;
 }

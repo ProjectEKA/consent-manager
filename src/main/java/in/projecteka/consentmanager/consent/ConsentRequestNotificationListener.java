@@ -15,7 +15,6 @@ import in.projecteka.consentmanager.consent.model.Notification;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
@@ -27,7 +26,6 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.CONSENT_REQUEST_QUEUE;
-import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
 
 @AllArgsConstructor
 public class ConsentRequestNotificationListener {
@@ -44,10 +42,6 @@ public class ConsentRequestNotificationListener {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig
                 .getQueues()
                 .get(CONSENT_REQUEST_QUEUE);
-        if (destinationInfo == null) {
-            logger.error(CONSENT_REQUEST_QUEUE + " not found");
-            throw queueNotFound();
-        }
 
         MessageListenerContainer mlc = messageListenerContainerFactory
                 .createMessageListenerContainer(destinationInfo.getRoutingKey());

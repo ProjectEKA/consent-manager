@@ -3,7 +3,9 @@ package in.projecteka.consentmanager.dataflow;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
+import in.projecteka.consentmanager.clients.DataFlowRequestClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
 import io.vertx.pgclient.PgPool;
@@ -28,13 +30,22 @@ public class DataFlowConfiguration {
                                                                Jackson2JsonMessageConverter jackson2JsonMessageConverter,
                                                                DataRequestNotifier dataRequestNotifier,
                                                                DataFlowRequestRepository dataFlowRequestRepository,
-                                                               CentralRegistry centralRegistry) {
+                                                               CentralRegistry centralRegistry,
+                                                               GatewayServiceProperties gatewayServiceProperties) {
         return new DataFlowBroadcastListener(messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 dataRequestNotifier,
                 dataFlowRequestRepository,
-                centralRegistry);
+                centralRegistry,
+                gatewayServiceProperties);
+    }
+
+    @Bean
+    public DataFlowRequestClient dataFlowRequestClient(WebClient.Builder builder,
+                                                       GatewayServiceProperties gatewayServiceProperties,
+                                                       CentralRegistry centralRegistry) {
+        return new DataFlowRequestClient(builder, gatewayServiceProperties, centralRegistry);
     }
 
     @Bean
@@ -42,11 +53,19 @@ public class DataFlowConfiguration {
                                          DataFlowRequestRepository dataFlowRequestRepository,
                                          PostDataFlowRequestApproval postDataFlowRequestApproval,
                                          DataFlowConsentManagerProperties dataFlowConsentManagerProperties,
-                                         IdentityService identityService) {
+                                         IdentityService identityService,
+                                         GatewayServiceProperties gatewayServiceProperties,
+                                         CentralRegistry centralRegistry,
+                                         DataFlowRequestClient dataFlowRequestClient) {
         return new DataFlowRequester(
-                new ConsentManagerClient(builder, dataFlowConsentManagerProperties.getUrl(), identityService::authenticate),
+                new ConsentManagerClient(builder,
+                        dataFlowConsentManagerProperties.getUrl(),
+                        identityService::authenticate,
+                        gatewayServiceProperties,
+                        centralRegistry),
                 dataFlowRequestRepository,
-                postDataFlowRequestApproval);
+                postDataFlowRequestApproval,
+                dataFlowRequestClient);
     }
 
     @Bean
@@ -55,7 +74,9 @@ public class DataFlowConfiguration {
     }
 
     @Bean
-    public DataRequestNotifier dataFlowClient(WebClient.Builder builder, CentralRegistry centralRegistry) {
-        return new DataRequestNotifier(builder, centralRegistry::authenticate);
+    public DataRequestNotifier dataFlowClient(WebClient.Builder builder,
+                                              CentralRegistry centralRegistry,
+                                              GatewayServiceProperties gatewayServiceProperties) {
+        return new DataRequestNotifier(builder, centralRegistry::authenticate, gatewayServiceProperties);
     }
 }

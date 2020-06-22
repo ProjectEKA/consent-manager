@@ -116,9 +116,7 @@
 								"id": "51c7be74-e15f-4ee1-8a73-10d001796a21",
 								"exec": [
 									"pm.test(\"Update auth creation token\", function () {",
-									"    var jsonData = pm.response.json();",
 									"    var request = JSON.parse(pm.request.body.raw);",
-									"    pm.environment.set(\"AUTHORIZATION\", \"bearer \" + jsonData.accessToken);",
 									"    pm.environment.set(\"USERNAME\", request.username);",
 									"    pm.environment.set(\"PASSWORD\", request.password);",
 									"});"
@@ -291,7 +289,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"hip\": {\n\t\t\"id\": \"10000004\"\n\t}\n}"
+							"raw": "{\n    \"requestId\": \"{{$guid}}\",\n    \"hip\": {\n        \"id\": \"10000005\"\n    }\n}"
 						},
 						"url": {
 							"raw": "{{CM_HOST}}/patients/discover/carecontexts",
@@ -347,7 +345,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"transactionId\": \"{{DISCOVERY_REQUEST_ID}}\",\n\t\"patient\": {\n\t\t\"referenceNumber\": \"{{PATIENT_REF_NUMBER}}\",\n\t\t\"careContexts\": [\n            {\n                \"referenceNumber\": \"{{CARE_CONTEXT1_NUMBER}}\"\n            }\n        ]\n\t}\n}",
+							"raw": "{\n\t\"requestId\": \"{{$guid}}\",\n\t\"transactionId\": \"{{DISCOVERY_REQUEST_ID}}\",\n\t\"patient\": {\n\t\t\"referenceNumber\": \"{{PATIENT_REF_NUMBER}}\",\n\t\t\"careContexts\": [\n            {\n                \"referenceNumber\": \"{{CARE_CONTEXT1_NUMBER}}\"\n            }\n        ]\n\t}\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -444,12 +442,26 @@
 							}
 						],
 						"url": {
-							"raw": "{{CM_HOST}}/consent-requests",
+							"raw": "{{CM_HOST}}/consent-requests?status=REVOKED&limit=-1&offset=0",
 							"host": [
 								"{{CM_HOST}}"
 							],
 							"path": [
 								"consent-requests"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "REVOKED"
+								},
+								{
+									"key": "limit",
+									"value": "-1"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
 							]
 						}
 					},
@@ -516,7 +528,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"pin\": \"6666\",\n\t\"scope\" : \"consent.revoke\"\n}",
+							"raw": "{\n\t\"requestId\" : \"{{$guid}}\",\n\t\"pin\": \"6666\",\n\t\"scope\" : \"consent.revoke\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -678,6 +690,125 @@
 					"response": []
 				},
 				{
+					"name": "Create Session (Request OTP)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "c16669fe-76ce-4129-a364-3275df912310",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "de8e5e8b-341d-43a9-b696-a39266964c4a",
+								"exec": [
+									"pm.test(\"Update user creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"OTP_SESSION_ID\", jsonData.sessionId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"{{USERNAME}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/otpsession/verify",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"otpsession",
+								"verify"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Session (Verify OTP)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "9a3c24b0-2780-407b-b630-f402c4cadd02",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "aeca9bac-3e31-413c-9140-3cb434f0232c",
+								"exec": [
+									"pm.test(\"Update user creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"AUTHORIZATION\", \"bearer \" + jsonData.accessToken);",
+									"    pm.environment.set(\"REFRESH_TOKEN\", jsonData.refreshToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"{{USERNAME}}\",\n\t\"sessionId\": \"{{OTP_SESSION_ID}}\",\n\t\"otp\" : \"666666\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/otpsession/permit",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"otpsession",
+								"permit"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Consent Artefacts",
 					"request": {
 						"method": "GET",
@@ -730,7 +861,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"{{USERNAME}}\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\",\n      \"text\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"hiu\": {\n    \t\"id\": \"10000005\",\n    \t\"name\": \"something\"\n    },\n    \"requester\": {\n    \t\"name\": \"Dr Lakshmi\",\n    \t\"identifier\": {\n    \t\t\"value\": \"1\",\n    \t\t\"type\": \"identifier\",\n    \t\t\"system\": \"NCG\"\n    \t}\n    },\n    \"permission\": {\n    \t\"accessMode\": \"VIEW\",\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataEraseAt\": \"2020-05-23T11:06:32.760Z\"\n    },\n    \"consentNotificationUrl\": \"http://localhost:8003\"\n  }\n}",
+							"raw": "{\n \"requestId\": \"{{$guid}}\",\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"{{USERNAME}}\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\",\n      \"text\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"hiu\": {\n    \t\"id\": \"10000005\",\n    \t\"name\": \"something\"\n    },\n    \"requester\": {\n    \t\"name\": \"Dr Lakshmi\",\n    \t\"identifier\": {\n    \t\t\"value\": \"1\",\n    \t\t\"type\": \"identifier\",\n    \t\t\"system\": \"NCG\"\n    \t}\n    },\n    \"permission\": {\n    \t\"accessMode\": \"VIEW\",\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataEraseAt\": \"2020-05-23T11:06:32.760Z\"\n    },\n    \"consentNotificationUrl\": \"http://localhost:8003\"\n  }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -884,6 +1015,43 @@
 							],
 							"path": [
 								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User Consent Artefacts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{CM_HOST}}/consentArtefacts?status=GRANTED&limit=3&offset=1",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"consentArtefacts"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "GRANTED"
+								},
+								{
+									"key": "limit",
+									"value": "3"
+								},
+								{
+									"key": "offset",
+									"value": "1"
+								}
 							]
 						}
 					},

@@ -1,8 +1,10 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
+import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
+import in.projecteka.consentmanager.common.DbOperation;
+import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
@@ -18,6 +20,7 @@ import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.ClientError.transactionIdNotFound;
 import static in.projecteka.consentmanager.common.Serializer.from;
@@ -30,12 +33,14 @@ public class LinkRepository {
     private static final String INSERT_TO_LINK = "INSERT INTO link (hip_id, consent_manager_user_id, link_reference," +
             "patient) VALUES ($1, $2, $3, $4)";
     private static final String INSERT_TO_LINK_REFERENCE = "INSERT INTO link_reference (patient_link_reference, " +
-            "hip_id) VALUES ($1, $2)";
+            "hip_id, request_id) VALUES ($1, $2, $3)";
     private static final String SELECT_HIP_ID_FROM_DISCOVERY = "SELECT hip_id FROM discovery_request WHERE " +
-            "request_id=$1";
+            "transaction_id=$1";
     private static final String SELECT_TRANSACTION_ID_FROM_LINK_REFERENCE = "SELECT patient_link_reference ->> " +
             "'transactionId' as transactionId FROM link_reference WHERE patient_link_reference -> 'link' ->> " +
             "'referenceNumber' = $1";
+    private static final String SELECT_LINK_REFRENCE = "SELECT patient_link_reference FROM link_reference WHERE " +
+            "request_id=$1";
     private final PgPool dbClient;
 
     public LinkRepository(PgPool dbClient) {
@@ -43,10 +48,12 @@ public class LinkRepository {
     }
 
     @SneakyThrows
-    public Mono<Void> insertToLinkReference(PatientLinkReferenceResponse patientLinkReferenceResponse, String hipId) {
+    public Mono<Void> insertToLinkReference(PatientLinkReferenceResponse patientLinkReferenceResponse,
+                                            String hipId,
+                                            UUID requestId) {
         return Mono.create(monoSink ->
                 dbClient.preparedQuery(INSERT_TO_LINK_REFERENCE)
-                        .execute(Tuple.of(new JsonObject(from(patientLinkReferenceResponse)), hipId),
+                        .execute(Tuple.of(new JsonObject(from(patientLinkReferenceResponse)), hipId, requestId.toString()),
                                 handler -> {
                                     if (handler.failed()) {
                                         monoSink.error(new DbOperationError());
@@ -56,8 +63,28 @@ public class LinkRepository {
                                 }));
     }
 
-    public Mono<String> getHIPIdFromDiscovery(String requestId) {
-        return getStringFrom(SELECT_HIP_ID_FROM_DISCOVERY, Tuple.of(requestId));
+    @SneakyThrows
+    public Mono<Void> insert(PatientLinkReferenceResult linkReferenceResult,
+                             String hipId,
+                             UUID requestId) {
+        return Mono.create(monoSink ->
+                dbClient.preparedQuery(INSERT_TO_LINK_REFERENCE)
+                        .execute(Tuple.of(new JsonObject(from(linkReferenceResult)), hipId, requestId.toString()),
+                                handler -> {
+                                    if (handler.failed()) {
+                                        monoSink.error(new DbOperationError());
+                                        return;
+                                    }
+                                    monoSink.success();
+                                }));
+    }
+
+    public Mono<String> selectLinkReference(UUID requestId) {
+        return DbOperation.select(requestId, dbClient, SELECT_LINK_REFRENCE, row -> row.getString(0));
+    }
+
+    public Mono<String> getHIPIdFromDiscovery(String transactionId) {
+        return getStringFrom(SELECT_HIP_ID_FROM_DISCOVERY, Tuple.of(transactionId));
     }
 
     public Mono<String> getTransactionIdFromLinkReference(String linkRefNumber) {

@@ -26,12 +26,12 @@ public class SessionController {
 
     @PostMapping("/otpsession/verify")
     public Mono<OtpVerificationResponse> verify(@RequestBody OtpVerificationRequest otpVerificationRequest) {
-        return null;
+        return sessionService.sendOtp(otpVerificationRequest);
     }
 
     @PostMapping("/otpsession/permit")
     public Mono<Session> permit(@RequestBody OtpPermitRequest otpPermitRequest) {
-        return null;
+        return sessionService.validateOtp(otpPermitRequest);
     }
 
     @PostMapping("/logout")

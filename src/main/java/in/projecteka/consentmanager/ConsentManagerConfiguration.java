@@ -1,5 +1,8 @@
 package in.projecteka.consentmanager;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
@@ -8,20 +11,23 @@ import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.ListenerProperties;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisOptions;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
+import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
+import in.projecteka.consentmanager.user.UserRepository;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import org.springframework.amqp.core.AmqpAdmin;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Exchange;
-import org.springframework.amqp.core.ExchangeBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.context.ApplicationContext;
@@ -40,6 +46,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class ConsentManagerConfiguration {
@@ -49,18 +56,59 @@ public class ConsentManagerConfiguration {
     public static final String CONSENT_REQUEST_QUEUE = "consent-request-queue";
     public static final String DEAD_LETTER_QUEUE = "cm-dead-letter-queue";
     private static final String CM_DEAD_LETTER_EXCHANGE = "cm-dead-letter-exchange";
-    private static final String CM_DEAD_LETTER_ROUTING_KEY = "cm-dead-letter";
+    public static final String PARKING_EXCHANGE = "parking.exchange";
+    public static final String PARKING_QUEUE = "parking.queue";
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @Bean({"accessToken"})
+    public CacheAdapter<String, String> createLoadingCacheAdapterForAccessToken() {
+        return new LoadingCacheAdapter(createSessionCache(5));
+    }
+
+    public LoadingCache<String, String> createSessionCache(int duration) {
+        return CacheBuilder
+                .newBuilder()
+                .expireAfterWrite(duration, TimeUnit.MINUTES)
+                .build(new CacheLoader<String, String>() {
+                    public String load(String key) {
+                        return "";
+                    }
+                });
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean
+    public RedisClient getRedisClient(RedisOptions redisOptions) {
+        RedisURI redisUri = RedisURI.Builder.
+                redis(redisOptions.getHost())
+                .withPort(redisOptions.getPort())
+                .withPassword(redisOptions.getPassword())
+                .build();
+        return RedisClient.create(redisUri);
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"accessToken"})
+    public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
+        return new RedisCacheAdapter(redisClient, 5);
+    }
 
     @Bean
     public CentralRegistry centralRegistry(ClientRegistryClient clientRegistryClient,
-                                           ClientRegistryProperties clientRegistryProperties) {
-        return new CentralRegistry(clientRegistryClient, clientRegistryProperties);
+                                           ClientRegistryProperties clientRegistryProperties,
+                                           CacheAdapter<String, String> accessToken) {
+        return new CentralRegistry(clientRegistryClient, clientRegistryProperties, accessToken);
     }
 
     @Bean
     public ClientRegistryClient clientRegistryClient(WebClient.Builder builder,
                                                      ClientRegistryProperties clientRegistryProperties) {
         return new ClientRegistryClient(builder, clientRegistryProperties.getUrl());
+    }
+
+    @Bean
+    public LockedUsersRepository lockedUsersRepository(DbOptions dbOptions) {
+        return new LockedUsersRepository(pgPool(dbOptions));
     }
 
     @Bean
@@ -93,9 +141,10 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public DestinationsConfig destinationsConfig(AmqpAdmin amqpAdmin) {
+    public DestinationsConfig destinationsConfig(AmqpAdmin amqpAdmin, ListenerProperties listenerProperties) {
         HashMap<String, DestinationsConfig.DestinationInfo> queues = new HashMap<>();
-        queues.put(CONSENT_REQUEST_QUEUE, new DestinationsConfig.DestinationInfo("exchange", CONSENT_REQUEST_QUEUE));
+        queues.put(CONSENT_REQUEST_QUEUE,
+                new DestinationsConfig.DestinationInfo("exchange", CONSENT_REQUEST_QUEUE));
         queues.put(HIU_CONSENT_NOTIFICATION_QUEUE,
                 new DestinationsConfig.DestinationInfo("exchange", HIU_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_CONSENT_NOTIFICATION_QUEUE,
@@ -103,35 +152,7 @@ public class ConsentManagerConfiguration {
         queues.put(HIP_DATA_FLOW_REQUEST_QUEUE,
                 new DestinationsConfig.DestinationInfo("exchange", HIP_DATA_FLOW_REQUEST_QUEUE));
 
-        Queue deadLetterQueue = QueueBuilder.durable(DEAD_LETTER_QUEUE).build();
-        Binding with = BindingBuilder
-                .bind(deadLetterQueue)
-                .to(new DirectExchange(CM_DEAD_LETTER_EXCHANGE))
-                .with(CM_DEAD_LETTER_ROUTING_KEY);
-        amqpAdmin.declareQueue(deadLetterQueue);
-        amqpAdmin.declareExchange(new DirectExchange(CM_DEAD_LETTER_EXCHANGE));
-        amqpAdmin.declareBinding(with);
-
         DestinationsConfig destinationsConfig = new DestinationsConfig(queues, null);
-        destinationsConfig.getQueues()
-                .forEach((key, destination) -> {
-                    Exchange ex = ExchangeBuilder.directExchange(
-                            destination.getExchange())
-                            .durable(true)
-                            .build();
-                    amqpAdmin.declareExchange(ex);
-                    Queue q = QueueBuilder.durable(
-                            destination.getRoutingKey())
-                            .deadLetterExchange(CM_DEAD_LETTER_EXCHANGE)
-                            .deadLetterRoutingKey(CM_DEAD_LETTER_ROUTING_KEY)
-                            .build();
-                    amqpAdmin.declareQueue(q);
-                    Binding b = BindingBuilder.bind(q)
-                            .to(ex)
-                            .with(destination.getRoutingKey())
-                            .noargs();
-                    amqpAdmin.declareBinding(b);
-                });
         return destinationsConfig;
     }
 
@@ -143,8 +164,8 @@ public class ConsentManagerConfiguration {
 
     @Bean
     public TokenService tokenService(IdentityServiceProperties identityServiceProperties,
-                                     IdentityServiceClient identityServiceClient) {
-        return new TokenService(identityServiceProperties, identityServiceClient);
+                                     IdentityServiceClient identityServiceClient, UserRepository userRepository) {
+        return new TokenService(identityServiceProperties, identityServiceClient, userRepository);
     }
 
     @Bean("pinSigning")
@@ -176,7 +197,8 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public CentralRegistryTokenVerifier centralRegistryTokenVerifier(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
+    public CentralRegistryTokenVerifier centralRegistryTokenVerifier(
+            @Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
         return new CentralRegistryTokenVerifier(jwkSet);
     }
 }

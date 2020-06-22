@@ -2,15 +2,10 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.exception.InvalidSessionException;
+import in.projecteka.consentmanager.user.model.SendOtpAction;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -44,6 +39,13 @@ public class SignUpService {
                 .then(Mono.just(signupSession));
     }
 
+    public Mono<SignUpSession> updatedVerfiedSession(String sessionId, String userName, SendOtpAction action) {
+        SignUpSession signupSession = new SignUpSession(sessionId);
+        String sessionIdWithAction = action.toString() + signupSession.getSessionId();
+        return verifiedSessions.put(sessionIdWithAction, userName)
+                .then(Mono.just(signupSession));
+    }
+
     public Mono<Boolean> validateToken(String token) {
         try {
             var session = sessionFrom(token);
@@ -66,7 +68,7 @@ public class SignUpService {
                 }).flatMap(newSession -> generateToken(new HashMap<>(), newSession));
     }
 
-    private Mono<Token> generateToken(Map<String, Object> claims, String subject) {
+    public Mono<Token> generateToken(Map<String, Object> claims, String subject) {
         return Mono.just(new Token(Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
@@ -84,6 +86,10 @@ public class SignUpService {
     }
 
     public Mono<String> getMobileNumber(String sessionId) {
+        return verifiedSessions.getIfPresent(sessionId);
+    }
+
+    public Mono<String> getUserName(String sessionId) {
         return verifiedSessions.getIfPresent(sessionId);
     }
 

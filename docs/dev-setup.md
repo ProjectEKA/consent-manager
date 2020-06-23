@@ -1,33 +1,36 @@
 # 🚀 Dev Setup 2.0
 
-## 👋🏼 **Prerequisites:**
+## 👋🏼 Prerequisites for development
 
-- Java 11
-    - [https://docs.oracle.com/en/java/javase/11/install/installation-jdk-macos.html#GUID-F575EB4A-70D3-4AB4-A20E-DBE95171AB5F](https://docs.oracle.com/en/java/javase/11/install/installation-jdk-macos.html#GUID-F575EB4A-70D3-4AB4-A20E-DBE95171AB5F) (Official steps to install Java 11)
-    - [https://www.oracle.com/java/technologies/javase-jdk11-downloads.html](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html) (JDK can be downloaded here)
-- Docker
-    - [https://docs.docker.com/docker-for-mac/install/](https://docs.docker.com/docker-for-mac/install/) (Official docker install)
-- Postgres (optional)
-    - You can use postgres docker container if you would like to. And there will be instructions about how to do it.
-- MVN (optional)
+- MVN
     - [https://maven.apache.org/install.html](https://maven.apache.org/install.html) (official install, top download link will take you to the artefacts)
     - [https://github.com/rajivkanaujia/alphaworks/wiki/Installing-Maven](https://github.com/rajivkanaujia/alphaworks/wiki/Installing-Maven) (brew install)
-- .Net core (v3.1.100)
-    - [https://dotnet.microsoft.com/download/dotnet-core/3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1)
-- Postman (optional)
-    - [https://www.postman.com/downloads/](https://www.postman.com/downloads/)
-- Intellij (optional)
+- Postgres (optional)
+    - You can use postgres docker container if you would like to. There will be instructions about how to do it.
+- Intellij
     - [https://www.jetbrains.com/idea/download/#section=mac](https://www.jetbrains.com/idea/download/#section=mac)
     - If you are from thoughtworks, and don’t have license please sent email to [software-support@thoughtworks.com](mailto:software-support@thoughtworks.com) to get a license
-- Rider (for c#) (optional)
+- Rider (for c# - HIP)
     - [https://www.jetbrains.com/rider/download/#section=mac](https://www.jetbrains.com/rider/download/#section=mac)
     - If you are from thoughtworks, and don’t have license please sent email to [software-support@thoughtworks.com](mailto:software-support@thoughtworks.com) to get a license
 - VS Code
     - [https://code.visualstudio.com/download](https://code.visualstudio.com/download)
 - Android Studio (only for app development)
     - [https://developer.android.com/studio](https://developer.android.com/studio)
+    
+## 👋🏼 Prerequisites for just running the services
 
-## **Services:**
+- Java 11
+    - [https://docs.oracle.com/en/java/javase/11/install/installation-jdk-macos.html#GUID-F575EB4A-70D3-4AB4-A20E-DBE95171AB5F](https://docs.oracle.com/en/java/javase/11/install/installation-jdk-macos.html#GUID-F575EB4A-70D3-4AB4-A20E-DBE95171AB5F) (Official steps to install Java 11)
+    - [https://www.oracle.com/java/technologies/javase-jdk11-downloads.html](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html) (JDK can be downloaded here)
+- Docker
+    - [https://docs.docker.com/docker-for-mac/install/](https://docs.docker.com/docker-for-mac/install/) (Official docker install)
+- .Net core (v3.1.100)
+    - [https://dotnet.microsoft.com/download/dotnet-core/3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1)
+- Postman (optional)
+    - [https://www.postman.com/downloads/](https://www.postman.com/downloads/)
+    
+## Services:
 
 - [Gateway](https://github.com/ProjectEKA/gateway)
 - [Consent Manager](https://github.com/ProjectEKA/consent-manager)
@@ -52,14 +55,14 @@
 
 (*) - Optional for local setup
 
-## **Setup infra using docker before running services:**
+## Setup infra using docker before running services:
 
 1. Clone the consent-manager repository
-2. In the root directory, you should see the docker-compose-backend.yml
+2. In the root directory, you should see the docker-compose-infra-lite.yml
 3. In the command line, run the following
 
     ```bash
-    docker-compose -f docker-compose-backend.yml up -d
+    docker-compose -f docker-compose-infra-lite.yml up -d
     docker logs $(docker ps -aqf "name=^cm-db-setup$") 
              # if you see any errors, run the above command again
     docker exec -it $(docker ps -aqf "name=^postgres$") /bin/bash
@@ -69,12 +72,14 @@
     \d # should list all the tables
     exit # twice
     ```
+**Note:** In case, you want to run Kibana, elastic, use *docker-compose-backend.yml*
 
-4. Keycloak runs at [http://localhost:9001](http://localhost:9001)
-    1. Login with username: admin, password: welcome
+5. Keycloak runs at [http://localhost:9001](http://localhost:9001)
+
+    1. Login with user-name: admin, password: welcome
     2. There are two realms `Consent-Manager` and `Central-Registry`
     3. `Consent-Manager` is only for activities with consent-manager service (consent-manager internal service calls and user-management)
-    4. `Central-Registry` is for intra-service authentication and authorisation, and being used by **Central-Registry** service. ****For example if *consent-manager* wants to call to *gateway,* then consent-manager needs to get a token from **Central-Registry** using the client-id and client-secret of its own, and it should have a role of `CM` assigned.
+    4. `Central-Registry` is for intra-service authentication and authorisation, and being used by **Central-Registry** service. For example if *consent-manager* wants to call to *gateway,* then consent-manager needs to get a token from **Central-Registry** using the client-id and client-secret of its own, and it should have a role of `CM` assigned.
         1. Under `Central-Registry` create following clients
             - 10000002 with role `HIU` and `HIP`
             - 10000005 with role `HIU` and `HIP`
@@ -107,6 +112,7 @@
         2. Click on `Service Account Roles` tab
         3. On the `Available Roles` you should see the roles you just created, select the role you want to assign, and then click `Add Selected`
         4. Repeat the same steps for all the clients.
+        
 5. Setup RabbitMQ
     1. Clone [infrastructure](https://github.com/ProjectEKA/infrastructure) repo
     2. Run the following commands

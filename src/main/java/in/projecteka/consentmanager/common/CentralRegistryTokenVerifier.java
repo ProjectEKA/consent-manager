@@ -71,8 +71,8 @@ public class CentralRegistryTokenVerifier {
     }
 
     private List<Role> getRole(JWTClaimsSet jwtClaimsSet) {
-        var resourceAccess = (JSONObject) jwtClaimsSet.getClaim("realm_access");
-        return ((JSONArray) resourceAccess.get("roles"))
+        var realmAccess = (JSONObject) jwtClaimsSet.getClaim("realm_access");
+        return ((JSONArray) realmAccess.get("roles"))
                 .stream()
                 .map(Object::toString)
                 .map(mayBeRole -> Role.valueOfIgnoreCase(mayBeRole).orElse(null))

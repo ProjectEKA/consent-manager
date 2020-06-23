@@ -25,6 +25,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.*;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -74,12 +75,44 @@ class HiuConsentNotificationListenerTest {
     }
 
     @Test
-    void shouldSendNotificationToHIUWithoutConsentArtefactsOnExpiry() throws ClientError, JsonProcessingException {
+    void shouldSendNotificationToHIUWithoutConsentArtefactsOnExpiry() throws ClientError {
         var messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
         var mockMessage = Mockito.mock(Message.class);
         var mockMessageProperties = Mockito.mock(MessageProperties.class);
         ConsentArtefactsMessage consentArtefactMessage = ConsentArtefactsMessage.builder()
                 .status(EXPIRED)
+                .consentRequestId("CONSENT_ID")
+                .timestamp(LocalDateTime.now())
+                .hiuId("HIU_ID")
+                .build();
+
+        when(destinationsConfig.getQueues().get(HIU_CONSENT_NOTIFICATION_QUEUE)).thenReturn(destinationInfo);
+        when(messageListenerContainerFactory
+                .createMessageListenerContainer(destinationInfo.getRoutingKey())).thenReturn(messageListenerContainer);
+        doNothing().when(messageListenerContainer).setupMessageListener(messageListenerCaptor.capture());
+        when(converter.fromMessage(any())).thenReturn(consentArtefactMessage);
+        when(consentArtefactNotifier.sendConsentArtifactToHIU(any(), anyString())).thenReturn(Mono.empty());
+        when(mockMessage.getMessageProperties()).thenReturn(mockMessageProperties);
+        when(mockMessageProperties.getXDeathHeader()).thenReturn(null);
+
+        hiuConsentNotificationListener.subscribe();
+
+        MessageListener messageListener = messageListenerCaptor.getValue();
+        messageListener.onMessage(mockMessage);
+        verify(messageListenerContainer,times(1)).start();
+        verify(messageListenerContainer,times(1))
+                .setupMessageListener(messageListenerCaptor.capture());
+
+        verify(consentArtefactNotifier).sendConsentArtifactToHIU(any(), anyString());
+    }
+
+    @Test
+    void shouldSendNotificationToHIUWithoutConsentArtefactsOnDeny() throws ClientError {
+        var messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
+        var mockMessage = Mockito.mock(Message.class);
+        var mockMessageProperties = Mockito.mock(MessageProperties.class);
+        ConsentArtefactsMessage consentArtefactMessage = ConsentArtefactsMessage.builder()
+                .status(DENIED)
                 .consentRequestId("CONSENT_ID")
                 .timestamp(LocalDateTime.now())
                 .hiuId("HIU_ID")

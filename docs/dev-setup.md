@@ -114,6 +114,7 @@
         4. Repeat the same steps for all the clients.
         
 5. Setup RabbitMQ
+
     1. Clone [infrastructure](https://github.com/ProjectEKA/infrastructure) repo
     2. Run the following commands
 

@@ -34,3 +34,6 @@ consentmanager:
   linkservice:
     url: http://localhost:9000
     txnTimeout: 5000
+  listeners:
+    maximumRetries: 3
+    retryInterval: 10000

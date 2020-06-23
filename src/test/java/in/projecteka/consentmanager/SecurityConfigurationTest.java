@@ -29,7 +29,6 @@ import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.common.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -132,7 +131,7 @@ class SecurityConfigurationTest {
     void return202AcceptedForHealthInfoNotify() {
         var token = string();
         var username = string();
-        var caller = ServiceCaller.builder().clientId(username).roles(List.of()).build();
+        var caller = ServiceCaller.builder().clientId(username).roles(List.of(GATEWAY)).build();
         when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
         when(dataFlowRequester.notifyHealthInformationStatus(any())).thenReturn(Mono.empty());
 

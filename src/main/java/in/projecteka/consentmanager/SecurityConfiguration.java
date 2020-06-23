@@ -65,7 +65,8 @@ public class SecurityConfiguration {
             V_1_LINKS_LINK_ON_CONFIRM,
             V_1_HEALTH_INFORMATION_ON_REQUEST,
             V_1_LINKS_LINK_ON_CONFIRM,
-            V_1_HEALTH_INFORMATION_REQUEST
+            V_1_HEALTH_INFORMATION_REQUEST,
+            V_1_HEALTH_INFORMATION_NOTIFY
     };
 
     static {

@@ -109,9 +109,10 @@
         ### How to add a service role to a client
 
         1. Click on `Clients`
-        2. Click on `Service Account Roles` tab
-        3. On the `Available Roles` you should see the roles you just created, select the role you want to assign, and then click `Add Selected`
-        4. Repeat the same steps for all the clients.
+        2. Go to the client (for example: ncg) which you want to add role
+        3. Click on `Service Account Roles` tab
+        4. On the `Available Roles` you should see the roles you just created, select the role you want to assign, and then click `Add Selected`
+        5. Repeat the same steps for all the clients.
         
 5. Setup RabbitMQ
 

@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.Query;
+import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import io.vertx.core.AsyncResult;
 import io.vertx.pgclient.PgPool;
@@ -51,6 +52,11 @@ public class ConsentArtefactRepository {
             "date_modified=$2 WHERE consent_artefact_id=$3";
     private static final String SELECT_CONSENT_ARTEFACTS_COUNT = "SELECT COUNT(*) FROM consent_artefact " +
             "WHERE patient_id=$1 AND (status=$2 OR $2 IS NULL)";
+    private static final String SAVE_CONSENT_NOTIFICATION = "INSERT INTO consent_notification (consent_id, " +
+            "status, receiver) VALUES ($1, $2, $3)";
+    private static final String UPDATE_CONSENT_NOTIFICATION = "UPDATE consent_notification SET status = $1 " +
+            "WHERE consent_id = $2 AND receiver = $3";
+
     private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
     private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
 
@@ -241,6 +247,30 @@ public class ConsentArtefactRepository {
                                     .dateModified(row.getLocalDateTime(DATE_MODIFIED))
                                     .build();
                             monoSink.success(representation);
+                        }));
+    }
+
+    public Mono<Void> saveConsentNotification(String consentId, ConsentNotificationStatus status, ConsentNotificationReceiver receiver) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(SAVE_CONSENT_NOTIFICATION)
+                .execute(Tuple.of(consentId, status.name(), receiver.name()),
+                        updateHandler -> {
+                            if (updateHandler.failed()) {
+                                monoSink.error(new Exception("Failed to save consent notification"));
+                                return;
+                            }
+                            monoSink.success();
+                        }));
+    }
+
+    public Mono<Void> updateConsentNotification(String consentId, ConsentNotificationStatus status, ConsentNotificationReceiver receiver) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(UPDATE_CONSENT_NOTIFICATION)
+                .execute(Tuple.of(status.name(), consentId, receiver.name()),
+                        updateHandler -> {
+                            if (updateHandler.failed()) {
+                                monoSink.error(new Exception("Failed to update consent notification status"));
+                                return;
+                            }
+                            monoSink.success();
                         }));
     }
 

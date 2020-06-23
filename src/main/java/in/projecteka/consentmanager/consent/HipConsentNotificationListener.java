@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
 import lombok.AllArgsConstructor;
@@ -30,10 +31,10 @@ public class HipConsentNotificationListener {
     private final DestinationsConfig destinationsConfig;
     private final Jackson2JsonMessageConverter converter;
     private final ConsentArtefactNotifier consentArtefactNotifier;
-    private final CentralRegistry centralRegistry;
+    private final ConsentArtefactRepository consentArtefactRepository;
 
     @PostConstruct
-    public void subscribe() throws ClientError {
+    public void subscribe() {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig
                 .getQueues()
                 .get(HIP_CONSENT_NOTIFICATION_QUEUE);
@@ -50,7 +51,7 @@ public class HipConsentNotificationListener {
 
                 sendConsentArtefactToHIP(consentArtefact).block();
             } catch (Exception e) {
-                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
             }
         };
         mlc.setupMessageListener(messageListener);
@@ -67,6 +68,10 @@ public class HipConsentNotificationListener {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId);
+        return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId)
+                .then(consentArtefactRepository.saveConsentNotification(
+                        consentArtefact.getConsentId(),
+                        ConsentNotificationStatus.SENT,
+                        ConsentNotificationReceiver.HIP));
     }
 }

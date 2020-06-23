@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.PARKING_EXCHANGE;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 
 @AllArgsConstructor
 public class HiuConsentNotificationListener {
@@ -87,11 +88,23 @@ public class HiuConsentNotificationListener {
     }
 
     private HIUNotificationRequest hiuNotificationRequest(ConsentArtefactsMessage consentArtefactsMessage) {
+        var requestId = UUID.randomUUID();
+
+        if (consentArtefactsMessage.getStatus() == EXPIRED) {
+            return HIUNotificationRequest.builder()
+                    .requestId(requestId)
+                    .timestamp(consentArtefactsMessage.getTimestamp())
+                    .notification(ConsentNotifier.builder()
+                            .status(consentArtefactsMessage.getStatus())
+                            .consentRequestId(consentArtefactsMessage.getConsentRequestId())
+                            .build())
+                    .build();
+        }
         List<ConsentArtefactReference> consentArtefactReferences = consentArtefactReferences(consentArtefactsMessage);
         return HIUNotificationRequest
                 .builder()
                 .timestamp(consentArtefactsMessage.getTimestamp())
-                .requestId(UUID.randomUUID())
+                .requestId(requestId)
                 .notification(ConsentNotifier
                         .builder()
                         .consentRequestId(consentArtefactsMessage.getConsentRequestId())

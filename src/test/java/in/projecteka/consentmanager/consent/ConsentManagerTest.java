@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
+import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import in.projecteka.consentmanager.consent.model.ConsentPurpose;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
@@ -99,6 +100,9 @@ class ConsentManagerTest {
 
     @Captor
     private ArgumentCaptor<ConsentArtefactResult> consentArtefactResponsecaptor;
+
+    @Captor
+    private ArgumentCaptor<ConsentArtefactsMessage> consentArtefactsMessageArgumentCaptor;
 
     @BeforeEach
     public void setUp() throws JOSEException {
@@ -288,10 +292,13 @@ class ConsentManagerTest {
         when(repository.requestOf(consentRequestId, GRANTED.toString(), patientId))
                 .thenReturn(Mono.just(consentRequestDetail));
         when(consentArtefactRepository.updateStatus(consentId, consentRequestId, REVOKED)).thenReturn(Mono.empty());
-        when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
+        when(consentNotificationPublisher.publish(consentArtefactsMessageArgumentCaptor.capture())).thenReturn(Mono.empty());
 
         StepVerifier.create(consentManager.revoke(revokeRequest, patientId))
                 .verifyComplete();
+        assertThat(consentArtefactsMessageArgumentCaptor.getValue().getConsentArtefacts().get(0).getConsentDetail()).isNull();
+        assertThat(consentArtefactsMessageArgumentCaptor.getValue().getConsentArtefacts().get(0).getSignature()).isNull();
+        assertThat(consentArtefactsMessageArgumentCaptor.getValue().getConsentArtefacts().get(0).getConsentId()).isNotNull();
     }
 
     @Test

@@ -315,26 +315,29 @@ public class ConsentManager {
     }
 
     private HIPConsentArtefactRepresentation from(ConsentArtefact consentArtefact, ConsentStatus status) {
-        HIPConsentArtefact hipConsentArtefact = HIPConsentArtefact.builder()
-                .consentId(consentArtefact.getConsentId())
-                .createdAt(consentArtefact.getCreatedAt())
-                .purpose(consentArtefact.getPurpose())
-                .careContexts(consentArtefact.getCareContexts())
-                .patient(consentArtefact.getPatient())
-                .hip(consentArtefact.getHip())
-                .hiTypes(consentArtefact.getHiTypes())
-                .permission(consentArtefact.getPermission())
-                .consentManager(getConsentManagerRef())
-                .build();
-        String signature = signConsentArtefact(hipConsentArtefact);
-
-        return HIPConsentArtefactRepresentation
-                .builder()
-                .consentId(consentArtefact.getConsentId())
-                .consentDetail(hipConsentArtefact)
-                .signature(signature)
-                .status(status)
-                .build();
+        HIPConsentArtefact hipConsentArtefact = null;
+        String signature = null;
+        if(status == GRANTED) {
+             hipConsentArtefact = HIPConsentArtefact.builder()
+                    .consentId(consentArtefact.getConsentId())
+                    .createdAt(consentArtefact.getCreatedAt())
+                    .purpose(consentArtefact.getPurpose())
+                    .careContexts(consentArtefact.getCareContexts())
+                    .patient(consentArtefact.getPatient())
+                    .hip(consentArtefact.getHip())
+                    .hiTypes(consentArtefact.getHiTypes())
+                    .permission(consentArtefact.getPermission())
+                    .consentManager(getConsentManagerRef())
+                    .build();
+             signature = signConsentArtefact(hipConsentArtefact);
+        }
+            return HIPConsentArtefactRepresentation
+                    .builder()
+                    .consentId(consentArtefact.getConsentId())
+                    .consentDetail(hipConsentArtefact)
+                    .signature(signature)
+                    .status(status)
+                    .build();
     }
 
     @SneakyThrows

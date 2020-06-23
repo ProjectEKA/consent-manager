@@ -43,7 +43,7 @@ public class CentralRegistryTokenVerifier {
         jwtProcessor.setJWSKeySelector(keySelector);
         jwtProcessor.setJWTClaimsSetVerifier(new DefaultJWTClaimsVerifier<>(
                 new JWTClaimsSet.Builder().build(),
-                new HashSet<>(Arrays.asList("sub", "iat", "exp", "scope", "clientId", "resource_access"))));
+                new HashSet<>(Arrays.asList("sub", "iat", "exp", "scope", "clientId", "realm_access"))));
     }
 
     public Mono<ServiceCaller> verify(String token) {
@@ -55,7 +55,7 @@ public class CentralRegistryTokenVerifier {
                         .flatMap(jwtClaimsSet -> {
                             try {
                                 var clientId = jwtClaimsSet.getStringClaim("clientId");
-                                var serviceCaller = new ServiceCaller(clientId, getRole(jwtClaimsSet, clientId));
+                                var serviceCaller = new ServiceCaller(clientId, getRole(jwtClaimsSet));
                                 return just(serviceCaller);
                             } catch (Exception e) {
                                 logger.error(e.getMessage(),e);
@@ -70,10 +70,9 @@ public class CentralRegistryTokenVerifier {
         }
     }
 
-    private List<Role> getRole(JWTClaimsSet jwtClaimsSet, String clientId) {
-        var resourceAccess = (JSONObject) jwtClaimsSet.getClaim("resource_access");
-        var clientObject = (JSONObject) resourceAccess.get(clientId);
-        return ((JSONArray) clientObject.get("roles"))
+    private List<Role> getRole(JWTClaimsSet jwtClaimsSet) {
+        var resourceAccess = (JSONObject) jwtClaimsSet.getClaim("realm_access");
+        return ((JSONArray) resourceAccess.get("roles"))
                 .stream()
                 .map(Object::toString)
                 .map(mayBeRole -> Role.valueOfIgnoreCase(mayBeRole).orElse(null))

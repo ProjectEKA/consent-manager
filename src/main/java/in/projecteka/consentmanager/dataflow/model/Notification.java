@@ -16,4 +16,5 @@ public class Notification {
     private String transactionId;
     private LocalDateTime doneAt;
     private Notifier notifier;
+    private StatusNotification statusNotification;
 }

@@ -5,7 +5,6 @@ import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import in.projecteka.consentmanager.dataflow.model.GatewayDataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
-import in.projecteka.consentmanager.dataflow.model.HealthInformationNotificationRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInformationResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -34,15 +33,6 @@ public class DataFlowRequestController {
                 .flatMap(requester -> dataFlowRequester.requestHealthData(dataFlowRequest));
     }
 
-    @Deprecated
-    @PostMapping("/health-information/notification")
-    public Mono<Void> notify(@RequestBody HealthInfoNotificationRequest notificationRequest) {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(requester ->
-                        dataFlowRequester.notifyHealthInfoStatus(requester.getClientId(), notificationRequest));
-    }
-
     @PostMapping(V_1_HEALTH_INFORMATION_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> requestHealthInformationV1(@Valid @RequestBody GatewayDataFlowRequest dataFlowRequest) {
@@ -60,7 +50,7 @@ public class DataFlowRequestController {
 
     @PostMapping(V_1_HEALTH_INFORMATION_NOTIFY)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public Mono<Void> healthInformationNotify(@RequestBody HealthInformationNotificationRequest notificationRequest) {
+    public Mono<Void> healthInformationNotify(@RequestBody HealthInfoNotificationRequest notificationRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
                 .doOnSuccess(requester -> Mono.defer(() -> dataFlowRequester.notifyHealthInformationStatus(notificationRequest)).subscribe())

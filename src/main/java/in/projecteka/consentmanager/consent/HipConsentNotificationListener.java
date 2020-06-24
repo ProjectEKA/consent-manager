@@ -2,9 +2,7 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
-import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
@@ -18,7 +16,6 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -63,14 +60,19 @@ public class HipConsentNotificationListener {
 
 
     private Mono<Void> sendConsentArtefactToHIP(HIPConsentArtefactRepresentation consentArtefact) {
-        String hipId = consentArtefact.getConsentDetail().getHip().getId();
-        HIPNotificationRequest notificationRequest = hipNotificationRequest(consentArtefact);
+        try {
+            String hipId = consentArtefact.getConsentDetail().getHip().getId();
+            HIPNotificationRequest notificationRequest = hipNotificationRequest(consentArtefact);
 
-        return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId)
-                .then(consentArtefactRepository.saveConsentNotification(
-                        consentArtefact.getConsentId(),
-                        ConsentNotificationStatus.SENT,
-                        ConsentNotificationReceiver.HIP));
+            return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId)
+                    .then(consentArtefactRepository.saveConsentNotification(
+                            consentArtefact.getConsentId(),
+                            ConsentNotificationStatus.SENT,
+                            ConsentNotificationReceiver.HIP));
+        }catch(Exception e){
+            logger.error(e.getMessage());
+            return Mono.empty();
+        }
     }
 
     private HIPNotificationRequest hipNotificationRequest(HIPConsentArtefactRepresentation consentArtefact) {

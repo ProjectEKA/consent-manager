@@ -318,10 +318,7 @@ public class ConsentManager {
     }
 
     private HIPConsentArtefactRepresentation from(ConsentArtefact consentArtefact, ConsentStatus status) {
-        HIPConsentArtefact hipConsentArtefact = null;
-        String signature = null;
-        if(status == GRANTED) {
-             hipConsentArtefact = HIPConsentArtefact.builder()
+            HIPConsentArtefact hipConsentArtefact = HIPConsentArtefact.builder()
                     .consentId(consentArtefact.getConsentId())
                     .createdAt(consentArtefact.getCreatedAt())
                     .purpose(consentArtefact.getPurpose())
@@ -332,8 +329,8 @@ public class ConsentManager {
                     .permission(consentArtefact.getPermission())
                     .consentManager(getConsentManagerRef())
                     .build();
-             signature = signConsentArtefact(hipConsentArtefact);
-        }
+            String signature = signConsentArtefact(hipConsentArtefact);
+
             return HIPConsentArtefactRepresentation
                     .builder()
                     .consentId(consentArtefact.getConsentId())

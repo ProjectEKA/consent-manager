@@ -16,6 +16,7 @@ import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIType;
@@ -50,6 +51,7 @@ import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactR
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.hipConsentArtefactRepresentation;
+import static in.projecteka.consentmanager.consent.TestBuilders.hipConsentNotificationAcknowledgement;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
@@ -446,5 +448,22 @@ class ConsentManagerTest {
                 .verifyComplete();
         assertThat(consentArtefactResponsecaptor.getValue().getConsent()).isNotNull();
         assertThat(consentArtefactResponsecaptor.getValue().getError()).isNull();
+    }
+
+    @Test
+    void shouldUpdateConsentNotificationStatus() {
+        var acknowledgement = hipConsentNotificationAcknowledgement().error(null).build();
+        when(consentArtefactRepository.updateConsentNotification(
+                acknowledgement.getAcknowledgement().getConsentId(),
+                ConsentNotificationStatus.ACKNOWLEDGED,
+                ConsentNotificationReceiver.HIP)).thenReturn(Mono.empty());
+
+        StepVerifier.create(consentManager.updateConsentNotification(acknowledgement))
+                .verifyComplete();
+
+        verify(consentArtefactRepository, times(1)).updateConsentNotification(
+                acknowledgement.getAcknowledgement().getConsentId(),
+                ConsentNotificationStatus.ACKNOWLEDGED,
+                ConsentNotificationReceiver.HIP);
     }
 }

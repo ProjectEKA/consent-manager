@@ -5,7 +5,7 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
-import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPReference;
@@ -25,6 +25,7 @@ import reactor.core.publisher.Mono;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
+import static org.mockito.AdditionalMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -52,7 +53,7 @@ class HipConsentNotificationListenerTest {
     private ConsentArtefactNotifier consentArtefactNotifier;
 
     @Mock
-    private CentralRegistry centralRegistry;
+    private ConsentArtefactRepository consentArtefactRepository;
 
     HipConsentNotificationListener hipConsentNotificationListener;
 
@@ -64,7 +65,7 @@ class HipConsentNotificationListenerTest {
                 destinationsConfig,
                 converter,
                 consentArtefactNotifier,
-                centralRegistry
+                consentArtefactRepository
         );
     }
 
@@ -73,6 +74,7 @@ class HipConsentNotificationListenerTest {
         var messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
         var mockMessage = Mockito.mock(Message.class);
         var mockMessageProperties = Mockito.mock(MessageProperties.class);
+        var consentId = "Consent_id";
         HIPConsentArtefactRepresentation hipConsentArtefactRepresentation = HIPConsentArtefactRepresentation.builder()
                 .status(EXPIRED)
                 .consentDetail(HIPConsentArtefact.builder()
@@ -80,7 +82,7 @@ class HipConsentNotificationListenerTest {
                                 .id("HIP_ID")
                                 .build())
                 .build())
-                .consentId("Consent_id")
+                .consentId(consentId)
                 .build();
 
         when(destinationsConfig.getQueues().get(HIP_CONSENT_NOTIFICATION_QUEUE)).thenReturn(destinationInfo);
@@ -89,6 +91,7 @@ class HipConsentNotificationListenerTest {
         doNothing().when(messageListenerContainer).setupMessageListener(messageListenerCaptor.capture());
         when(converter.fromMessage(any())).thenReturn(hipConsentArtefactRepresentation);
         when(consentArtefactNotifier.sendConsentArtefactToHIP(any(), anyString())).thenReturn(Mono.empty());
+        when(consentArtefactRepository.saveConsentNotification(consentId, ConsentNotificationStatus.SENT, ConsentNotificationReceiver.HIP)).thenReturn(Mono.empty());
         when(mockMessage.getMessageProperties()).thenReturn(mockMessageProperties);
         when(mockMessageProperties.getXDeathHeader()).thenReturn(null);
 

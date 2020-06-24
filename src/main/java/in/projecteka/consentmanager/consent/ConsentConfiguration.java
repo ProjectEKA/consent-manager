@@ -149,13 +149,13 @@ public class ConsentConfiguration {
             DestinationsConfig destinationsConfig,
             Jackson2JsonMessageConverter jackson2JsonMessageConverter,
             ConsentArtefactNotifier consentArtefactNotifier,
-            CentralRegistry centralRegistry) {
+            ConsentArtefactRepository consentArtefactRepository) {
         return new HipConsentNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 consentArtefactNotifier,
-                centralRegistry);
+                consentArtefactRepository);
     }
 
     @Bean

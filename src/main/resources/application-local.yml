@@ -62,7 +62,7 @@ consentmanager:
     # In milliseconds
     retryInterval: 1000
   gatewayservice:
-    baseUrl: http://localhost:8000
+    baseUrl: http://localhost:8000/v1
     requestTimeout: 5000
     enabled: true
 spring:

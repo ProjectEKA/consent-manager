@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
 
 @AllArgsConstructor
 public class HipConsentNotificationListener {
@@ -71,7 +72,7 @@ public class HipConsentNotificationListener {
         var requestId = UUID.randomUUID();
         var timestamp = LocalDateTime.now();
 
-        if (consentArtefact.getStatus() == EXPIRED) {
+        if (consentArtefact.getStatus() == EXPIRED || consentArtefact.getStatus() == REVOKED) {
             return HIPNotificationRequest.builder()
                     .requestId(requestId)
                     .timestamp(timestamp)

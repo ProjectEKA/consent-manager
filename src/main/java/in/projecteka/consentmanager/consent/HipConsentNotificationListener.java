@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 
 @AllArgsConstructor
 public class HipConsentNotificationListener {
@@ -62,16 +63,33 @@ public class HipConsentNotificationListener {
 
     private Mono<Void> sendConsentArtefactToHIP(HIPConsentArtefactRepresentation consentArtefact) {
         String hipId = consentArtefact.getConsentDetail().getHip().getId();
-        HIPNotificationRequest notificationRequest = HIPNotificationRequest.builder()
-                .notification(consentArtefact)
-                .requestId(UUID.randomUUID())
-                .timestamp(LocalDateTime.now())
-                .build();
+        HIPNotificationRequest notificationRequest = hipNotificationRequest(consentArtefact);
 
         return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId)
                 .then(consentArtefactRepository.saveConsentNotification(
                         consentArtefact.getConsentId(),
                         ConsentNotificationStatus.SENT,
                         ConsentNotificationReceiver.HIP));
+    }
+
+    private HIPNotificationRequest hipNotificationRequest(HIPConsentArtefactRepresentation consentArtefact) {
+        var requestId = UUID.randomUUID();
+        var timestamp = LocalDateTime.now();
+
+        if (consentArtefact.getStatus() == EXPIRED) {
+            return HIPNotificationRequest.builder()
+                    .requestId(requestId)
+                    .timestamp(timestamp)
+                    .notification(HIPConsentArtefactRepresentation.builder()
+                            .status(consentArtefact.getStatus())
+                            .consentId(consentArtefact.getConsentId())
+                            .build())
+                    .build();
+        }
+        return HIPNotificationRequest.builder()
+                .notification(consentArtefact)
+                .requestId(requestId)
+                .timestamp(timestamp)
+                .build();
     }
 }

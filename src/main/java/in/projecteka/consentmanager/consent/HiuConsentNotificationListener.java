@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.common.ListenerProperties;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
+import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.request.ConsentArtefactReference;
 import in.projecteka.consentmanager.consent.model.request.ConsentNotifier;
 import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
@@ -27,6 +28,8 @@ import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.PARKING_EXCHANGE;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 
 @AllArgsConstructor
 public class HiuConsentNotificationListener {
@@ -87,15 +90,28 @@ public class HiuConsentNotificationListener {
     }
 
     private HIUNotificationRequest hiuNotificationRequest(ConsentArtefactsMessage consentArtefactsMessage) {
+        var requestId = UUID.randomUUID();
+        ConsentStatus status = consentArtefactsMessage.getStatus();
+
+        if (status == EXPIRED || status == DENIED ) {
+            return HIUNotificationRequest.builder()
+                    .requestId(requestId)
+                    .timestamp(consentArtefactsMessage.getTimestamp())
+                    .notification(ConsentNotifier.builder()
+                            .status(status)
+                            .consentRequestId(consentArtefactsMessage.getConsentRequestId())
+                            .build())
+                    .build();
+        }
         List<ConsentArtefactReference> consentArtefactReferences = consentArtefactReferences(consentArtefactsMessage);
         return HIUNotificationRequest
                 .builder()
                 .timestamp(consentArtefactsMessage.getTimestamp())
-                .requestId(UUID.randomUUID())
+                .requestId(requestId)
                 .notification(ConsentNotifier
                         .builder()
                         .consentRequestId(consentArtefactsMessage.getConsentRequestId())
-                        .status(consentArtefactsMessage.getStatus())
+                        .status(status)
                         .consentArtefacts(consentArtefactReferences)
                         .build())
                 .build();

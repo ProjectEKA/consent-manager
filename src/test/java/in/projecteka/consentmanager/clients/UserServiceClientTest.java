@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.clients;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
-import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -32,7 +32,7 @@ public class UserServiceClientTest {
     @Mock
     private ExchangeFunction exchangeFunction;
     @Mock
-    private CentralRegistry centralRegistry;
+    private ServiceAuthentication serviceAuthentication;
 
     private UserServiceClient userServiceClient;
     private String token;
@@ -41,9 +41,13 @@ public class UserServiceClientTest {
     public void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000,false);
+        var serviceProperties = new GatewayServiceProperties("http://example.com", 1000,false, "", "", "");
         token = string();
-        userServiceClient = new UserServiceClient(webClientBuilder, "http://user-service/", () -> Mono.just(token), serviceProperties, centralRegistry);
+        userServiceClient = new UserServiceClient(webClientBuilder,
+                "http://user-service/",
+                () -> Mono.just(token),
+                serviceProperties,
+                serviceAuthentication);
     }
 
     @Test

@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.clients;
 import com.google.common.net.HttpHeaders;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
-import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.user.model.PatientResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,22 +24,25 @@ public class UserServiceClient {
     private final String url;
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
-    private final CentralRegistry centralRegistry;
+    private final ServiceAuthentication serviceAuthentication;
 
     public Mono<User> userOf(String userId) {
-        return tokenGenerator.get().flatMap(token ->
-                webClientBuilder.build()
-                        .get()
-                        .uri(String.format("%s/internal/users/%s/", url, userId))
-                        .header(AUTHORIZATION, token)
-                        .retrieve()
-                        .onStatus(httpStatus -> httpStatus.value() == 404,
-                                clientResponse -> Mono.error(ClientError.userNotFound()))
-                        .bodyToMono(User.class));
+        return tokenGenerator.get()
+                .flatMap(token ->
+                        webClientBuilder.build()
+                                .get()
+                                .uri(String.format("%s/internal/users/%s/", url, userId))
+                                .header(AUTHORIZATION, token)
+                                .retrieve()
+                                .onStatus(httpStatus -> httpStatus.value() == 404,
+                                        clientResponse -> Mono.error(ClientError.userNotFound()))
+                                .bodyToMono(User.class));
     }
 
-    public Mono<Void> sendPatientResponseToGateWay(PatientResponse patientResponse, String routingKey, String requesterId) {
-        return centralRegistry.authenticate()
+    public Mono<Void> sendPatientResponseToGateWay(PatientResponse patientResponse,
+                                                   String routingKey,
+                                                   String requesterId) {
+        return serviceAuthentication.authenticate()
                 .flatMap(authToken ->
                         webClientBuilder.build()
                                 .post()

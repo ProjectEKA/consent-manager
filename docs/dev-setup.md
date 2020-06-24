@@ -79,7 +79,7 @@
     1. Login with user-name: admin, password: welcome
     2. There are two realms `Consent-Manager` and `Central-Registry`
     3. `Consent-Manager` is only for activities with consent-manager service (consent-manager internal service calls and user-management)
-    4. `Central-Registry` is for intra-service authentication and authorisation, and being used by **Central-Registry** service. For example if *consent-manager* wants to call to *gateway,* then consent-manager needs to get a token from **Central-Registry** using the client-id and client-secret of its own, and it should have a role of `CM` assigned.
+    4. `Centra-Registry` is only for intra-service authentication and authorisation, and being used by **Gateway** service. For example if *consent-manager* wants to call to *gateway,* then consent-manager needs to get a token from **Gateway** using the client-id and client-secret of its own, and it should have a role of `CM` assigned.
         1. Under `Central-Registry` create following clients
             - 10000002 with role `HIU` and `HIP`
             - 10000005 with role `HIU` and `HIP`
@@ -152,30 +152,6 @@ cd otp-service
 dotnet run --project src/In.ProjectEKA.OtpService/In.ProjectEKA.OtpService.csproj --environment "local"
 ```
 
-### Consent-Manager
-
-1. Clone [Consent-Manager](https://github.com/ProjectEKA/consent-manager)
-2. You need to get client secret from keycloak 
-3. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients](http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients) of `consent-manager` under `credentials` tab, and use it for **KEYCLOAK_CLIENTSECRET** (client under *consent-manager* realm)
-4. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `consent-manager` under `credentials` tab, and use it for **CLIENTREGISTRY_XAUTHTOKEN** (client under *central-registry* realm)
-5. Run through command line
-
-```bash
-cd consent-manager
-CLIENTREGISTRY_XAUTHTOKEN=${CLIENTREGISTRY_XAUTHTOKEN} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew bootRunLocal
-```
-
-### Hip-Service
-
-1. Clone [hip-service](https://github.com/ProjectEKA/hip-service)
-2. Run through command line
-
-```bash
-cd hip-service
-cp src/In.ProjectEKA.DefaultHip/Resources/*.json src/In.ProjectEKA.HipService/
-dotnet run --project src/In.ProjectEKA.HipService/In.ProjectEKA.HipService.csproj --environment="local"
-```
-
 ### Gateway
 
 1. Clone [gateway](https://github.com/ProjectEKA/gateway)
@@ -185,4 +161,30 @@ dotnet run --project src/In.ProjectEKA.HipService/In.ProjectEKA.HipService.cspro
 ```bash
 cd gateway
 CLIENT_SECRET=${CLIENT_SECRET} ./gradlew bootRunLocal
+```
+
+### Consent-Manager
+
+1. Clone [Consent-Manager](https://github.com/ProjectEKA/consent-manager)
+2. You need to get client secret from keycloak 
+3. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients](http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients) of `consent-manager` under `credentials` tab, and use it for **KEYCLOAK_CLIENTSECRET** (client under *consent-manager* realm)
+4. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `ncg` under `credentials` tab, and use it for **GATEWAY_CLIENTSECRET** (client under *central-registry* realm)
+5. Run through command line
+
+```bash
+cd consent-manager
+GATEWAY_CLIENTSECRET=${CLIENTREGISTRY_XAUTHTOKEN} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew bootRunLocal
+```
+
+### Hip-Service
+
+1. Clone [hip-service](https://github.com/ProjectEKA/hip-service)
+2. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `10000005` under `credentials` tab, and use it for **CLIENT_SECRET** (client under *central-registry* realm)
+3. Run through command line
+
+```bash
+cd hip-service
+cp src/In.ProjectEKA.DefaultHip/Resources/*.json src/In.ProjectEKA.HipService/
+export authServer__clientSecret=${CLIENT_SECRET}
+dotnet run --project src/In.ProjectEKA.HipService/In.ProjectEKA.HipService.csproj --environment="local"
 ```

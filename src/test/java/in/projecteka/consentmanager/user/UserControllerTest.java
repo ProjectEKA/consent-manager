@@ -5,7 +5,7 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
@@ -84,7 +84,7 @@ class UserControllerTest {
     private JWKSet identityServiceJWKSet;
 
     @MockBean
-    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+    private GatewayTokenVerifier gatewayTokenVerifier;
 
     @MockBean
     private Authenticator authenticator;
@@ -137,7 +137,7 @@ class UserControllerTest {
         var username = string();
         var token = string();
         var sessionId = string();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(new ServiceCaller(username, List.of())));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(new ServiceCaller(username, List.of())));
         when(userService.userWith(username)).thenReturn(just(user().build()));
 
         webClient.get()
@@ -172,7 +172,7 @@ class UserControllerTest {
         var patientRequest = patientRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(userService.user(patientRequest.getQuery().getPatient().getId(),
                 patientRequest.getQuery().getRequester(),
                 patientRequest.getRequestId()))

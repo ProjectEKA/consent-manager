@@ -13,7 +13,8 @@ import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
@@ -132,7 +133,10 @@ public class LinkUserJourneyTest {
     private LinkServiceClient linkServiceClient;
 
     @MockBean
-    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+    private GatewayTokenVerifier gatewayTokenVerifier;
+
+    @MockBean
+    private ServiceAuthentication serviceAuthentication;
 
     @AfterAll
     public static void tearDown() throws IOException {
@@ -162,13 +166,13 @@ public class LinkUserJourneyTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(linkReferenceJson));
         clientRegistryServer.setDispatcher(dispatcher);
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
         when(linkRepository.insertToLinkReference(linkReference, hipId, patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.create(MonoSink::success));
         when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
                 .thenReturn(Mono.empty());
-
 
         webTestClient
                 .post()
@@ -197,6 +201,7 @@ public class LinkUserJourneyTest {
                         .setBody(errorResponseJson));
         var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
         var hipId = "10000005";
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
         when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
                 .thenReturn(Mono.just(hipId));
@@ -222,7 +227,6 @@ public class LinkUserJourneyTest {
         var token = string();
         var linkRes = patientLinkResponse().build();
         var linkResJson = new ObjectMapper().writeValueAsString(linkRes);
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
         clientRegistryServer.setDispatcher(dispatcher);
         hipServer.enqueue(
                 new MockResponse()
@@ -232,6 +236,9 @@ public class LinkUserJourneyTest {
         String transactionId = "transactionId";
         String hipId = "10000005";
         String linkRefNumber = "link-ref-num";
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
         when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber)).thenReturn(Mono.just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
         when(linkRepository.insertToLink(hipId, "123@ncg", linkRefNumber, linkRes.getPatient()))
@@ -266,6 +273,7 @@ public class LinkUserJourneyTest {
         String transactionId = "transactionId";
         String hipId = "10000005";
         String linkRefNumber = "link-ref-num";
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
         when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber)).thenReturn(Mono.just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
@@ -363,6 +371,7 @@ public class LinkUserJourneyTest {
         PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
         String transactionId = "transactionId";
         String hipId = "10000005";
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
         when(linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())).thenReturn(Mono.just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId)); //linkRes.getPatient()
         when(linkRepository.insertToLink(eq(hipId), eq("123@ncg"), eq(patientLinkRequest.getLinkRefNumber()), any()))
@@ -421,6 +430,7 @@ public class LinkUserJourneyTest {
         PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
         String transactionId = "transactionId";
         String hipId = "10000005";
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
         when(linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())).thenReturn(Mono.just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId)); //linkRes.getPatient()
         when(linkRepository.insertToLink(eq(hipId), eq("123@ncg"), eq(patientLinkRequest.getLinkRefNumber()), any()))
@@ -456,12 +466,13 @@ public class LinkUserJourneyTest {
     @Test
     public void shouldReturnGatewayTimeOutForConfirmLinkCareContexts() throws IOException {
         var token = string();
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
         clientRegistryServer.setDispatcher(dispatcher);
         gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
         String transactionId = "transactionId";
         String hipId = "10000005";
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
         when(linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())).thenReturn(Mono.just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId)); //linkRes.getPatient()
 
@@ -521,9 +532,6 @@ public class LinkUserJourneyTest {
                 case "/api/2.0/providers/10000005":
                     return new MockResponse().setResponseCode(200).setBody(tmhJson).setHeader("content-type",
                             "application/json");
-                case "/api/1.0/sessions":
-                    return new MockResponse().setResponseCode(200).setBody(session).setHeader("content-type",
-                            "application/json");
             }
             return new MockResponse().setResponseCode(404);
         }
@@ -535,7 +543,7 @@ public class LinkUserJourneyTest {
         var patientLinkReferenceResult = patientLinkReferenceResult().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifier.verify(token))
+        when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
@@ -560,7 +568,7 @@ public class LinkUserJourneyTest {
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifier.verify(token))
+        when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
@@ -578,7 +586,7 @@ public class LinkUserJourneyTest {
         var token = string();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifier.verify(token))
+        when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
@@ -603,7 +611,7 @@ public class LinkUserJourneyTest {
                 .link(patientLinkReferenceResult.getLink())
                 .build();
         String linkReferenceResponseJson = OBJECT_MAPPER.writeValueAsString(linkReferenceResponse);
-
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
         gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         clientRegistryServer.setDispatcher(dispatcher);
@@ -648,6 +656,8 @@ public class LinkUserJourneyTest {
                 .thenReturn(Mono.empty());
         when(linkServiceClient.linkPatientEnquiryRequest(linkReferenceRequest, token, hipId)).thenReturn(Mono.just(true));
         when(linkResults.get(any())).thenReturn(Mono.just(patientLinkReferenceResultJson));
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
+
         webTestClient
                 .post()
                 .uri("/v1/links/link/init")

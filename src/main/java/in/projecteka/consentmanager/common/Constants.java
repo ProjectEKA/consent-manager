@@ -23,7 +23,6 @@ public class Constants {
     public static final String V_1_HEALTH_INFORMATION_NOTIFY = "/v1/health-information/notify";
     public static final String V_1_HEALTH_INFORMATION_REQUEST_FORMAT = "%s/health-information/hip/request";
     public static final String V_1_HEALTH_INFORMATION_ON_REQUEST = "/v1/health-information/on-request";
-    public static final String V_1_HIP_CONSENT_ON_NOTIFY = "/v1/consents/hip/on-notify";
 
     //GATEWAY URL PATHs
     public static final String DATA_FLOW_REQUEST_URL_PATH = "/health-information/cm/on-request";

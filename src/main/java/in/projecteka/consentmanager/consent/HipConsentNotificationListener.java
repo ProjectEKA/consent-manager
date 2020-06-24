@@ -5,7 +5,6 @@ import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
 import lombok.AllArgsConstructor;
@@ -32,10 +31,10 @@ public class HipConsentNotificationListener {
     private final DestinationsConfig destinationsConfig;
     private final Jackson2JsonMessageConverter converter;
     private final ConsentArtefactNotifier consentArtefactNotifier;
-    private final ConsentArtefactRepository consentArtefactRepository;
+    private final CentralRegistry centralRegistry;
 
     @PostConstruct
-    public void subscribe() {
+    public void subscribe() throws ClientError {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig
                 .getQueues()
                 .get(HIP_CONSENT_NOTIFICATION_QUEUE);
@@ -52,7 +51,7 @@ public class HipConsentNotificationListener {
 
                 sendConsentArtefactToHIP(consentArtefact).block();
             } catch (Exception e) {
-                throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
             }
         };
         mlc.setupMessageListener(messageListener);
@@ -65,11 +64,7 @@ public class HipConsentNotificationListener {
         String hipId = consentArtefact.getConsentDetail().getHip().getId();
         HIPNotificationRequest notificationRequest = hipNotificationRequest(consentArtefact);
 
-        return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId)
-                .then(consentArtefactRepository.saveConsentNotification(
-                        consentArtefact.getConsentId(),
-                        ConsentNotificationStatus.SENT,
-                        ConsentNotificationReceiver.HIP));
+        return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId);
     }
 
     private HIPNotificationRequest hipNotificationRequest(HIPConsentArtefactRepresentation consentArtefact) {

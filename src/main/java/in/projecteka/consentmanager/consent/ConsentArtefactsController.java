@@ -8,7 +8,6 @@ import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactResponse;
-import in.projecteka.consentmanager.consent.model.response.HIPCosentNotificationAcknowledgment;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +24,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static in.projecteka.consentmanager.common.Constants.V_1_CONSENTS_FETCH;
-import static in.projecteka.consentmanager.common.Constants.V_1_HIP_CONSENT_ON_NOTIFY;
 
 @RestController
 @AllArgsConstructor
@@ -93,12 +91,6 @@ public class ConsentArtefactsController {
                     Mono.defer(() -> consentManager.getConsent(fetchRequest.getConsentId(), fetchRequest.getRequestId())).subscribe();
                 })
                 .then();
-    }
-
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    @PostMapping(value = V_1_HIP_CONSENT_ON_NOTIFY)
-    public Mono<Void> hipOnNotify(@RequestBody HIPCosentNotificationAcknowledgment acknowledgment) {
-        return consentManager.updateConsentNotification(acknowledgment);
     }
 
     private int getPageSize(int limit) {

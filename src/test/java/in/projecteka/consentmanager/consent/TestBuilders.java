@@ -11,7 +11,6 @@ import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentati
 import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
-import in.projecteka.consentmanager.consent.model.response.HIPCosentNotificationAcknowledgment;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestResult;
 import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
 import org.jeasy.random.EasyRandom;
@@ -60,10 +59,6 @@ public class TestBuilders {
     }
     public static FetchRequest.FetchRequestBuilder fetchRequest() {
         return easyRandom.nextObject(FetchRequest.FetchRequestBuilder.class);
-    }
-
-    public static HIPCosentNotificationAcknowledgment.HIPCosentNotificationAcknowledgmentBuilder hipConsentNotificationAcknowledgement() {
-        return easyRandom.nextObject(HIPCosentNotificationAcknowledgment.HIPCosentNotificationAcknowledgmentBuilder.class);
     }
 
     public static String string() {

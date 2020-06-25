@@ -1823,6 +1823,52 @@ paths:
         500:
           description: Error(On server side) in logging out
 
+  /sessions:
+    post:
+      summary: Login for users.
+      description: All the users can login. User types are super admin/admin/lab assistants.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: User login successfull.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   parameters:
     authorization:
@@ -1910,6 +1956,21 @@ components:
         format: uuid
       required: true
   schemas:
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          format: text
+        password:
+          type: string
+          format: text
+        grantType:
+          type: string
+          format: text
+          example: password/refreshToken
+        refreshToken:
+          type: string
     PatientDiscoveryRepresentation:
       type: object
       properties:

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
-import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -31,17 +31,16 @@ public class LinkServiceClientTest {
     private MockWebServer mockWebServer;
     private String baseUrl;
     @Mock
-    CentralRegistry centralRegistry;
-
+    ServiceAuthentication serviceAuthentication;
 
     @BeforeEach
     public void init() {
         initMocks(this);
         mockWebServer = new MockWebServer();
         baseUrl = mockWebServer.url("/").toString();
-        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000,false);
+        var serviceProperties = new GatewayServiceProperties("http://example.com", 1000, false, "", "", "");
         WebClient.Builder webClientBuilder = WebClient.builder().baseUrl(baseUrl);
-        linkServiceClient = new LinkServiceClient(webClientBuilder, centralRegistry, serviceProperties);
+        linkServiceClient = new LinkServiceClient(webClientBuilder, serviceAuthentication, serviceProperties);
     }
 
     @Test

@@ -16,6 +16,7 @@ import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.common.ListenerProperties;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.UserServiceProperties;
 import io.vertx.pgclient.PgPool;
@@ -64,6 +65,7 @@ public class ConsentConfiguration {
                                                 ConsentArtefactRepository consentArtefactRepository,
                                                 KeyPair keyPair,
                                                 ConsentNotificationPublisher consentNotificationPublisher,
+                                                ServiceAuthentication serviceAuthentication,
                                                 CentralRegistry centralRegistry,
                                                 PostConsentRequest postConsentRequest,
                                                 LinkServiceProperties linkServiceProperties,
@@ -71,7 +73,10 @@ public class ConsentConfiguration {
                                                 ConceptValidator conceptValidator,
                                                 GatewayServiceProperties gatewayServiceProperties) {
         return new ConsentManager(
-                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate, gatewayServiceProperties, centralRegistry),
+                new UserServiceClient(builder, userServiceProperties.getUrl(),
+                        identityService::authenticate,
+                        gatewayServiceProperties,
+                        serviceAuthentication),
                 repository,
                 consentArtefactRepository,
                 keyPair,
@@ -86,7 +91,7 @@ public class ConsentConfiguration {
                         gatewayServiceProperties.getBaseUrl(),
                         identityService::authenticate,
                         gatewayServiceProperties,
-                        centralRegistry));
+                        serviceAuthentication));
     }
 
     @Bean
@@ -121,9 +126,9 @@ public class ConsentConfiguration {
 
     @Bean
     public ConsentArtefactNotifier consentArtefactClient(WebClient.Builder builder,
-                                                         CentralRegistry centralRegistry,
+                                                         ServiceAuthentication serviceAuthentication,
                                                          GatewayServiceProperties gatewayServiceProperties) {
-        return new ConsentArtefactNotifier(builder, centralRegistry::authenticate, gatewayServiceProperties);
+        return new ConsentArtefactNotifier(builder, serviceAuthentication::authenticate, gatewayServiceProperties);
     }
 
     @Bean
@@ -149,13 +154,13 @@ public class ConsentConfiguration {
             DestinationsConfig destinationsConfig,
             Jackson2JsonMessageConverter jackson2JsonMessageConverter,
             ConsentArtefactNotifier consentArtefactNotifier,
-            CentralRegistry centralRegistry) {
+            ConsentArtefactRepository consentArtefactRepository) {
         return new HipConsentNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 consentArtefactNotifier,
-                centralRegistry);
+                consentArtefactRepository);
     }
 
     @Bean
@@ -169,13 +174,17 @@ public class ConsentConfiguration {
             ConsentServiceProperties consentServiceProperties,
             IdentityService identityService,
             GatewayServiceProperties gatewayServiceProperties,
-            CentralRegistry centralRegistry) {
+            ServiceAuthentication serviceAuthentication) {
         return new ConsentRequestNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 new OtpServiceClient(builder, otpServiceProperties.getUrl()),
-                new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate, gatewayServiceProperties, centralRegistry),
+                new UserServiceClient(builder,
+                        userServiceProperties.getUrl(),
+                        identityService::authenticate,
+                        gatewayServiceProperties,
+                        serviceAuthentication),
                 consentServiceProperties);
     }
 

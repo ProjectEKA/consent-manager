@@ -4,7 +4,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import in.projecteka.consentmanager.common.Authenticator;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.user.SignUpService;
@@ -47,6 +47,7 @@ import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_IN
 import static in.projecteka.consentmanager.common.Constants.V_1_PATIENTS_FIND;
 import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_ON_REQUEST;
+import static in.projecteka.consentmanager.common.Constants.V_1_HIP_CONSENT_ON_NOTIFY;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static java.util.stream.Collectors.toList;
 
@@ -66,7 +67,8 @@ public class SecurityConfiguration {
             V_1_HEALTH_INFORMATION_ON_REQUEST,
             V_1_LINKS_LINK_ON_CONFIRM,
             V_1_HEALTH_INFORMATION_REQUEST,
-            V_1_HEALTH_INFORMATION_NOTIFY
+            V_1_HEALTH_INFORMATION_NOTIFY,
+            V_1_HIP_CONSENT_ON_NOTIFY
     };
 
     static {
@@ -85,6 +87,7 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry(V_1_HEALTH_INFORMATION_REQUEST, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(V_1_HEALTH_INFORMATION_NOTIFY, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(V_1_HEALTH_INFORMATION_ON_REQUEST, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(V_1_HIP_CONSENT_ON_NOTIFY, HttpMethod.POST));
 
         RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve",
                 HttpMethod.POST,
@@ -107,7 +110,7 @@ public class SecurityConfiguration {
             ReactiveAuthenticationManager authenticationManager,
             ServerSecurityContextRepository securityContextRepository) {
 
-        final String[] whitelistedUrls = {"/**.json",
+        final String[] allowedListUrls = {"/**.json",
                 "/ValueSet/**.json",
                 "/patients/generateotp",
                 "/patients/verifyotp",
@@ -124,7 +127,7 @@ public class SecurityConfiguration {
                 "/**.yaml",
                 "/**.css",
                 "/**.png"};
-        httpSecurity.authorizeExchange().pathMatchers(whitelistedUrls).permitAll();
+        httpSecurity.authorizeExchange().pathMatchers(allowedListUrls).permitAll();
         httpSecurity.httpBasic().disable().formLogin().disable().csrf().disable().logout().disable();
         httpSecurity
                 .authorizeExchange()
@@ -144,9 +147,9 @@ public class SecurityConfiguration {
 
     @Bean
     public Authenticator authenticator(@Qualifier("identityServiceJWKSet") JWKSet jwkSet,
-                                       CacheAdapter<String, String> blacklistedTokens,
+                                       CacheAdapter<String, String> blockListedTokens,
                                        ConfigurableJWTProcessor<com.nimbusds.jose.proc.SecurityContext> jwtProcessor) {
-        return new Authenticator(jwkSet, blacklistedTokens, jwtProcessor);
+        return new Authenticator(jwkSet, blockListedTokens, jwtProcessor);
     }
 
     @Bean({"jwtProcessor"})
@@ -158,11 +161,11 @@ public class SecurityConfiguration {
     public SecurityContextRepository contextRepository(SignUpService signupService,
                                                        Authenticator authenticator,
                                                        PinVerificationTokenService pinVerificationTokenService,
-                                                       CentralRegistryTokenVerifier centralRegistryTokenVerifier) {
+                                                       GatewayTokenVerifier gatewayTokenVerifier) {
         return new SecurityContextRepository(signupService,
                 authenticator,
                 pinVerificationTokenService,
-                centralRegistryTokenVerifier);
+                gatewayTokenVerifier);
     }
 
     @RequiredArgsConstructor
@@ -179,7 +182,7 @@ public class SecurityConfiguration {
         private final SignUpService signupService;
         private final Authenticator identityServiceClient;
         private final PinVerificationTokenService pinVerificationTokenService;
-        private final CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+        private final GatewayTokenVerifier gatewayTokenVerifier;
 
         @Override
         public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {
@@ -213,7 +216,7 @@ public class SecurityConfiguration {
         }
 
         private Mono<SecurityContext> checkCentralRegistry(String token) {
-            return centralRegistryTokenVerifier.verify(token)
+            return gatewayTokenVerifier.verify(token)
                     .map(serviceCaller -> {
                         var authorities = serviceCaller.getRoles()
                                 .stream()
@@ -280,9 +283,8 @@ public class SecurityConfiguration {
         }
 
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
-            boolean isSignUp = (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
+            return (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
                     (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod));
-            return isSignUp;
         }
     }
 

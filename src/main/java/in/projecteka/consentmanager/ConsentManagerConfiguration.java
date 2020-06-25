@@ -6,12 +6,14 @@ import com.google.common.cache.LoadingCache;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
+import in.projecteka.consentmanager.clients.ServiceAuthenticationClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
-import in.projecteka.consentmanager.common.ListenerProperties;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
@@ -25,7 +27,6 @@ import io.lettuce.core.RedisURI;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
-import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
@@ -54,10 +55,8 @@ public class ConsentManagerConfiguration {
     public static final String HIP_CONSENT_NOTIFICATION_QUEUE = "hip-consent-notification-queue";
     public static final String HIP_DATA_FLOW_REQUEST_QUEUE = "hip-data-flow-request-queue";
     public static final String CONSENT_REQUEST_QUEUE = "consent-request-queue";
-    public static final String DEAD_LETTER_QUEUE = "cm-dead-letter-queue";
-    private static final String CM_DEAD_LETTER_EXCHANGE = "cm-dead-letter-exchange";
     public static final String PARKING_EXCHANGE = "parking.exchange";
-    public static final String PARKING_QUEUE = "parking.queue";
+    public static final String EXCHANGE = "exchange";
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"accessToken"})
@@ -94,10 +93,21 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public CentralRegistry centralRegistry(ClientRegistryClient clientRegistryClient,
-                                           ClientRegistryProperties clientRegistryProperties,
-                                           CacheAdapter<String, String> accessToken) {
-        return new CentralRegistry(clientRegistryClient, clientRegistryProperties, accessToken);
+    public CentralRegistry centralRegistry(ClientRegistryClient clientRegistryClient) {
+        return new CentralRegistry(clientRegistryClient);
+    }
+
+    @Bean
+    public ServiceAuthenticationClient serviceAuthenticationClient(WebClient.Builder webClientBuilder,
+                                                                   GatewayServiceProperties gatewayServiceProperties) {
+        return new ServiceAuthenticationClient(webClientBuilder, gatewayServiceProperties.getBaseUrl());
+    }
+
+    @Bean
+    public ServiceAuthentication serviceAuthentication(ServiceAuthenticationClient serviceAuthenticationClient,
+                                                       GatewayServiceProperties gatewayServiceProperties,
+                                                       CacheAdapter<String, String> accessToken) {
+        return new ServiceAuthentication(serviceAuthenticationClient, gatewayServiceProperties, accessToken);
     }
 
     @Bean
@@ -141,19 +151,17 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public DestinationsConfig destinationsConfig(AmqpAdmin amqpAdmin, ListenerProperties listenerProperties) {
+    public DestinationsConfig destinationsConfig() {
         HashMap<String, DestinationsConfig.DestinationInfo> queues = new HashMap<>();
         queues.put(CONSENT_REQUEST_QUEUE,
-                new DestinationsConfig.DestinationInfo("exchange", CONSENT_REQUEST_QUEUE));
+                new DestinationsConfig.DestinationInfo(EXCHANGE, CONSENT_REQUEST_QUEUE));
         queues.put(HIU_CONSENT_NOTIFICATION_QUEUE,
-                new DestinationsConfig.DestinationInfo("exchange", HIU_CONSENT_NOTIFICATION_QUEUE));
+                new DestinationsConfig.DestinationInfo(EXCHANGE, HIU_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_CONSENT_NOTIFICATION_QUEUE,
-                new DestinationsConfig.DestinationInfo("exchange", HIP_CONSENT_NOTIFICATION_QUEUE));
+                new DestinationsConfig.DestinationInfo(EXCHANGE, HIP_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_DATA_FLOW_REQUEST_QUEUE,
-                new DestinationsConfig.DestinationInfo("exchange", HIP_DATA_FLOW_REQUEST_QUEUE));
-
-        DestinationsConfig destinationsConfig = new DestinationsConfig(queues, null);
-        return destinationsConfig;
+                new DestinationsConfig.DestinationInfo(EXCHANGE, HIP_DATA_FLOW_REQUEST_QUEUE));
+        return new DestinationsConfig(queues);
     }
 
     @Bean
@@ -186,8 +194,9 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean("centralRegistryJWKSet")
-    public JWKSet jwkSet(ClientRegistryProperties clientRegistryProperties) throws IOException, ParseException {
-        return JWKSet.load(new URL(clientRegistryProperties.getJwkUrl()));
+    public JWKSet jwkSet(GatewayServiceProperties gatewayServiceProperties)
+            throws IOException, ParseException {
+        return JWKSet.load(new URL(gatewayServiceProperties.getJwkUrl()));
     }
 
     @Bean("identityServiceJWKSet")
@@ -197,8 +206,8 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public CentralRegistryTokenVerifier centralRegistryTokenVerifier(
+    public GatewayTokenVerifier centralRegistryTokenVerifier(
             @Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
-        return new CentralRegistryTokenVerifier(jwkSet);
+        return new GatewayTokenVerifier(jwkSet);
     }
 }

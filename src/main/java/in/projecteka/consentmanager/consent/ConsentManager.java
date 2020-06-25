@@ -13,6 +13,7 @@ import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import in.projecteka.consentmanager.consent.model.ConsentDetail;
+import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.ConsentPurpose;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
@@ -32,6 +33,7 @@ import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLight;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
+import in.projecteka.consentmanager.consent.model.response.HIPCosentNotificationAcknowledgment;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestId;
@@ -564,5 +566,16 @@ public class ConsentManager {
         return status.equals(ALL_CONSENT_ARTEFACTS)
                ? consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, null)
                : consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, status);
+    }
+
+    public Mono<Void> updateConsentNotification(HIPCosentNotificationAcknowledgment acknowledgment){
+        if(acknowledgment.getError() != null){
+            logger.error("Error in HIP Consent Notification Acknowledgment for requestId {}", acknowledgment.getResp().getRequestId());
+            return Mono.empty();
+        }
+        return consentArtefactRepository.updateConsentNotification(
+                acknowledgment.getAcknowledgement().getConsentId(),
+                ConsentNotificationStatus.ACKNOWLEDGED,
+                ConsentNotificationReceiver.HIP);
     }
 }

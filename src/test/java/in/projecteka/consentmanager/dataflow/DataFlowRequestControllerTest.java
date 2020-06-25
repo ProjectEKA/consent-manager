@@ -2,7 +2,7 @@ package in.projecteka.consentmanager.dataflow;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
@@ -67,7 +67,7 @@ class DataFlowRequestControllerTest {
     private JWKSet identityServiceJWKSet;
 
     @MockBean
-    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+    private GatewayTokenVerifier gatewayTokenVerifier;
 
     @MockBean
     private DataFlowRequester dataFlowRequester;
@@ -88,7 +88,7 @@ class DataFlowRequestControllerTest {
         var dataFlowRequestBody = gatewayDataFlowRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(dataFlowRequester.requestHealthDataInfo(any())).thenReturn(Mono.empty());
 
         webClient.post()
@@ -108,7 +108,7 @@ class DataFlowRequestControllerTest {
         var healthInformationNotificationRequest = healthInformationNotificationRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(dataFlowRequester.notifyHealthInformationStatus(healthInformationNotificationRequest))
                 .thenReturn(Mono.empty());
 
@@ -128,7 +128,7 @@ class DataFlowRequestControllerTest {
         var token = string();
         var healthInformationResponse = healthInformationResponseBuilder().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(just(caller));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(dataFlowRequestRepository.updateDataFlowRequestStatus(healthInformationResponse.getHiRequest().getTransactionId(),
                 healthInformationResponse.getHiRequest().getSessionStatus())).thenReturn(Mono.empty());
 

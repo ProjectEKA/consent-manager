@@ -13,4 +13,7 @@ public class GatewayServiceProperties {
     private final String baseUrl;
     private final int requestTimeout;
     private final Boolean enabled;
+    private final String clientSecret;
+    private final String clientId;
+    private final String jwkUrl;
 }

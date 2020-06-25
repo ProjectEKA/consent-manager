@@ -10,10 +10,7 @@ consentmanager:
     consentExpiryCronExpr: '0 0 * ? * *'
     consentRequestExpiryCronExpr: '0 0 0/12 ? * *'
   clientregistry:
-    XAuthToken: ${CLIENTREGISTRY_XAUTHTOKEN}
-    clientId: consent-manager
     url: http://localhost:8080
-    jwkUrl: http://localhost:8080/certs
   lockeduserservice:
     maximumInvalidAttempts: 5
     coolOfPeriod: 8
@@ -62,9 +59,12 @@ consentmanager:
     # In milliseconds
     retryInterval: 1000
   gatewayservice:
-    baseUrl: http://localhost:8000
+    baseUrl: http://localhost:8000/v1
     requestTimeout: 5000
     enabled: true
+    clientId: ncg
+    clientSecret: ${GATEWAY_CLIENTSECRET}
+    jwkUrl: http://localhost:8000/v1/certs
 spring:
   rabbitmq:
     host: localhost

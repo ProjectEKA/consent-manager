@@ -3,26 +3,27 @@ package in.projecteka.consentmanager.link.link;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.ErrorMap;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Identifier;
-import in.projecteka.consentmanager.clients.model.RespError;
-import in.projecteka.consentmanager.common.DelayTimeoutException;
-import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
 import in.projecteka.consentmanager.clients.model.Patient;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
-import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
-import in.projecteka.consentmanager.link.link.model.TokenConfirmation;
+import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
-import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.DelayTimeoutException;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
+import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
+import in.projecteka.consentmanager.link.link.model.TokenConfirmation;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +44,8 @@ public class Link {
     private static final Logger logger = LoggerFactory.getLogger(Link.class);
     private final LinkServiceClient linkServiceClient;
     private final LinkRepository linkRepository;
-    private final CentralRegistry centralRegistry;
+    private final ServiceAuthentication serviceAuthentication;
+    private final ClientRegistryClient centralRegistryClient;
     private final LinkServiceProperties serviceProperties;
     private final CacheAdapter<String, String> linkResults;
 
@@ -81,9 +83,7 @@ public class Link {
                         .flatMap(hipId -> getHIPPatientLinkReferenceResponse(
                                 linkReferenceRequest,
                                 hipId,
-                                patientLinkReferenceRequest.getRequestId()
-                        ))
-                );
+                                patientLinkReferenceRequest.getRequestId())));
     }
 
 
@@ -98,7 +98,7 @@ public class Link {
             in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest linkReferenceRequest,
             String hipId,
             String url) {
-        return centralRegistry
+        return serviceAuthentication
                 .authenticate()
                 .flatMap(token -> linkServiceClient.linkPatientEnquiry(linkReferenceRequest, url, token))
                 .flatMap(linkReferenceResponse -> {
@@ -115,10 +115,8 @@ public class Link {
     private Mono<PatientLinkReferenceResponse> getHIPPatientLinkReferenceResponse(
             in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest linkReferenceRequest,
             String hipId,
-            UUID requestId
-    ) {
-        return centralRegistry
-                .authenticate()
+            UUID requestId) {
+        return serviceAuthentication.authenticate()
                 .flatMap(token ->
                         scheduleThis(linkServiceClient.linkPatientEnquiryRequest(linkReferenceRequest, token, hipId))
                                 .timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
@@ -165,7 +163,7 @@ public class Link {
             String patientId,
             String hipId,
             String url) {
-        return centralRegistry.authenticate()
+        return serviceAuthentication.authenticate()
                 .flatMap(token ->
                         linkServiceClient.linkPatientConfirmation(linkRefNumber, patientLinkRequest, url, token))
                 .flatMap(patientLinkResponse ->
@@ -176,7 +174,7 @@ public class Link {
     }
 
     private Mono<String> providerUrl(String providerId) {
-        return centralRegistry.providerWith(providerId)
+        return centralRegistryClient.providerWith(providerId)
                 .flatMap(provider -> provider.getIdentifiers()
                         .stream()
                         .filter(Identifier::isOfficial)
@@ -191,7 +189,7 @@ public class Link {
     }
 
     public Mono<Void> onLinkCareContexts(PatientLinkReferenceResult patientLinkReferenceResult) {
-        if(patientLinkReferenceResult.hasResponseId()) {
+        if (patientLinkReferenceResult.hasResponseId()) {
             return linkResults.put(patientLinkReferenceResult.getResp().getRequestId(), serializeLinkReferenceResultFromHIP(patientLinkReferenceResult));
         }
         logger.error("[Link] Received a patient link reference response from Gateway without original request Id mentioned.{}", patientLinkReferenceResult.getRequestId());
@@ -254,10 +252,10 @@ public class Link {
 
     private LinkConfirmationRequest toLinkConfirmationRequest(PatientLinkRequest patientLinkRequest, UUID requestId) {
         return LinkConfirmationRequest.builder()
-                    .requestId(requestId)
-                    .timestamp(Instant.now().toString())
-                    .confirmation(new TokenConfirmation(patientLinkRequest.getLinkRefNumber(), patientLinkRequest.getToken()))
-                    .build();
+                .requestId(requestId)
+                .timestamp(Instant.now().toString())
+                .confirmation(new TokenConfirmation(patientLinkRequest.getLinkRefNumber(), patientLinkRequest.getToken()))
+                .build();
     }
 
     private long getExpectedFlowResponseDuration() {
@@ -265,7 +263,7 @@ public class Link {
     }
 
     public Mono<Void> onConfirmLink(LinkConfirmationResult confirmationResult) {
-        if(confirmationResult.hasResponseId()) {
+        if (confirmationResult.hasResponseId()) {
             return linkResults.put(confirmationResult.getResp().getRequestId(), serializeConfirmationFromHIP(confirmationResult));
         } else {
             logger.error("[Link] Received a confirmation response from Gateway without original request Id mentioned.{}", confirmationResult.getRequestId());
@@ -283,23 +281,4 @@ public class Link {
         return null;
     }
 
-    private Mono<LinkConfirmationResult> deserializeConfirmationFromHIP(String responseBody) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            return Mono.just(objectMapper.readValue(responseBody, LinkConfirmationResult.class));
-        } catch (JsonProcessingException e) {
-            logger.error("[Link] Can not deserialize response from HIP", e);
-        }
-        return Mono.empty();
-    }
-
-    private Mono<PatientLinkReferenceResult> deserializeLinkReferenceResponseFromHIP(String responseBody) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            return Mono.just(objectMapper.readValue(responseBody, PatientLinkReferenceResult.class));
-        } catch (JsonProcessingException e) {
-            logger.error("[Link] Can not deserialize link reference response from HIP", e);
-        }
-        return Mono.empty();
-    }
 }

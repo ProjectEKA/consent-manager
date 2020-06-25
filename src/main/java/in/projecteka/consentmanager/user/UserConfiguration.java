@@ -78,7 +78,7 @@ public class UserConfiguration {
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens", "usedTokens"})
+    @Bean({"unverifiedSessions", "verifiedSessions", "blockListedTokens", "usedTokens"})
     public CacheAdapter<String, String> createLoadingCacheAdapter() {
         return new LoadingCacheAdapter(createSessionCache(5));
     }
@@ -101,7 +101,7 @@ public class UserConfiguration {
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
-    @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens", "usedTokens"})
+    @Bean({"unverifiedSessions", "verifiedSessions", "blocklistedTokens", "usedTokens"})
     public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
         return new RedisCacheAdapter(redisClient, 5);
     }
@@ -119,14 +119,21 @@ public class UserConfiguration {
 
     @Bean
     public SessionService sessionService(TokenService tokenService,
-                                         CacheAdapter<String, String> blacklistedTokens,
+                                         CacheAdapter<String, String> blockListedTokens,
                                          CacheAdapter<String, String> unverifiedSessions,
                                          LockedUserService lockedUserService,
                                          UserRepository userRepository,
                                          OtpServiceClient otpServiceClient,
                                          OtpServiceProperties otpServiceProperties,
                                          OtpAttemptService otpAttemptService) {
-        return new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties, otpAttemptService);
+        return new SessionService(tokenService,
+                blockListedTokens,
+                unverifiedSessions,
+                lockedUserService,
+                userRepository,
+                otpServiceClient,
+                otpServiceProperties,
+                otpAttemptService);
     }
 
     @Bean

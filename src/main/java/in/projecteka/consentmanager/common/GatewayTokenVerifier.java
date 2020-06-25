@@ -29,11 +29,11 @@ import java.util.stream.Collectors;
 
 import static reactor.core.publisher.Mono.just;
 
-public class CentralRegistryTokenVerifier {
+public class GatewayTokenVerifier {
     private final ConfigurableJWTProcessor<SecurityContext> jwtProcessor;
-    private final Logger logger = LoggerFactory.getLogger(CentralRegistryTokenVerifier.class);
+    private final Logger logger = LoggerFactory.getLogger(GatewayTokenVerifier.class);
 
-    public CentralRegistryTokenVerifier(JWKSet jwkSet) {
+    public GatewayTokenVerifier(JWKSet jwkSet) {
         var immutableJWKSet = new ImmutableJWKSet<>(jwkSet);
         jwtProcessor = new DefaultJWTProcessor<>();
         jwtProcessor.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(JOSEObjectType.JWT));

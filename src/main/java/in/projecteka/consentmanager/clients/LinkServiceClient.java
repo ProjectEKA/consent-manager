@@ -1,13 +1,13 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
-import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
-import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
+import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -19,17 +19,18 @@ import static java.util.function.Predicate.not;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 public class LinkServiceClient {
-
     private final WebClient.Builder webClientBuilder;
-    private final CentralRegistry centralRegistry;
+    private final ServiceAuthentication serviceAuthentication;
     private final GatewayServiceProperties gatewayServiceProperties;
 
     private static final String PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH = "%s/links/link/confirm";
     private static final String PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH = "%s/links/link/init";
 
-    public LinkServiceClient(WebClient.Builder webClientBuilder, CentralRegistry centralRegistry, GatewayServiceProperties gatewayServiceProperties) {
+    public LinkServiceClient(WebClient.Builder webClientBuilder,
+                             ServiceAuthentication serviceAuthentication,
+                             GatewayServiceProperties gatewayServiceProperties) {
         this.webClientBuilder = webClientBuilder;
-        this.centralRegistry = centralRegistry;
+        this.serviceAuthentication = serviceAuthentication;
         this.gatewayServiceProperties = gatewayServiceProperties;
     }
 
@@ -84,30 +85,28 @@ public class LinkServiceClient {
                 .bodyToMono(PatientLinkResponse.class);
     }
 
-
-
     public Mono<Boolean> confirmPatientLink(
             LinkConfirmationRequest confirmationRequest,
             String hipId) {
-        return centralRegistry.authenticate()
+        return serviceAuthentication.authenticate()
                 .flatMap(authToken ->
-                    webClientBuilder.build()
-                        .post()
-                        .uri(getLinkConfirmationUrl())
-                        .header(AUTHORIZATION, authToken)
-                        .header(HDR_HIP_ID, hipId)
-                        .bodyValue(confirmationRequest)
-                        .retrieve()
-                        .onStatus(httpStatus -> httpStatus.value() == 401,
-                                // Error msg should be logged
-                                clientResponse -> Mono.error(ClientError.unknownErrorOccurred()))
-                        .onStatus(httpStatus -> httpStatus.value() == 404,
-                                clientResponse -> Mono.error(ClientError.userNotFound()))
-                        .onStatus(HttpStatus::is5xxServerError,
-                                clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
-                        .toBodilessEntity()
-                        .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout()))
-                ).thenReturn(Boolean.TRUE);
+                        webClientBuilder.build()
+                                .post()
+                                .uri(getLinkConfirmationUrl())
+                                .header(AUTHORIZATION, authToken)
+                                .header(HDR_HIP_ID, hipId)
+                                .bodyValue(confirmationRequest)
+                                .retrieve()
+                                .onStatus(httpStatus -> httpStatus.value() == 401,
+                                        // Error msg should be logged
+                                        clientResponse -> Mono.error(ClientError.unknownErrorOccurred()))
+                                .onStatus(httpStatus -> httpStatus.value() == 404,
+                                        clientResponse -> Mono.error(ClientError.userNotFound()))
+                                .onStatus(HttpStatus::is5xxServerError,
+                                        clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                                .toBodilessEntity()
+                                .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout())))
+                .thenReturn(Boolean.TRUE);
     }
 
     private String getLinkConfirmationUrl() {

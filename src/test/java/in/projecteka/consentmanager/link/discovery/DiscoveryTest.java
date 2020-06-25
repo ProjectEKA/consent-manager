@@ -5,14 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.Address;
-import in.projecteka.consentmanager.clients.model.Provider;
-import in.projecteka.consentmanager.clients.model.Telecom;
-import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
-import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifierType;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
@@ -26,18 +21,13 @@ import reactor.test.StepVerifier;
 
 import java.util.Collections;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResponse;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.identifier;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientIdentifier;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientIdentifierBuilder;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientInResponse;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientRequest;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientResponse;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.provider;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.providerIdentifier;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.telecom;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.user;
@@ -197,6 +187,4 @@ public class DiscoveryTest {
                 .expectNext(discoveryResponse)
                 .verifyComplete();
     }
-
-
 }

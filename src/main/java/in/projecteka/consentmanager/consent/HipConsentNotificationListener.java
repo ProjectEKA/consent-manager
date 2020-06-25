@@ -64,12 +64,15 @@ public class HipConsentNotificationListener {
             String hipId = consentArtefact.getConsentDetail().getHip().getId();
             HIPNotificationRequest notificationRequest = hipNotificationRequest(consentArtefact);
 
-            return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId)
-                    .then(consentArtefactRepository.saveConsentNotification(
-                            consentArtefact.getConsentId(),
-                            ConsentNotificationStatus.SENT,
-                            ConsentNotificationReceiver.HIP));
-        }catch(Exception e){
+            if (consentArtefact.getStatus() == REVOKED) {
+                return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId)
+                        .then(consentArtefactRepository.saveConsentNotification(
+                                consentArtefact.getConsentId(),
+                                ConsentNotificationStatus.SENT,
+                                ConsentNotificationReceiver.HIP));
+            }
+            return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId);
+        } catch (Exception e) {
             logger.error(e.getMessage());
             return Mono.empty();
         }

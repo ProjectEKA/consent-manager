@@ -83,7 +83,8 @@
         1. Under `Central-Registry` create following clients
             - 10000002 with role `HIU` and `HIP`
             - 10000005 with role `HIU` and `HIP`
-            - gateway with role `gateway`
+            - gateway with a role `gateway`
+            - ncg with a role 'CM'
 
         ### How to add a client
 
@@ -185,6 +186,6 @@ GATEWAY_CLIENTSECRET=${CLIENTREGISTRY_XAUTHTOKEN} KEYCLOAK_CLIENTSECRET=${KEYCLO
 ```bash
 cd hip-service
 cp src/In.ProjectEKA.DefaultHip/Resources/*.json src/In.ProjectEKA.HipService/
-export authServer__clientSecret=${CLIENT_SECRET}
+export Gateway__clientSecret=${CLIENT_SECRET}
 dotnet run --project src/In.ProjectEKA.HipService/In.ProjectEKA.HipService.csproj --environment="local"
 ```

@@ -32,6 +32,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_EXPIRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_INVALID;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_REQUEST_LIMIT_EXCEEDED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.PROVIDER_NOT_FOUND;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.REFRESH_TOKEN_INCORRECT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.QUEUE_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.REQUEST_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_ID_NOT_FOUND;
@@ -227,6 +228,12 @@ public class ClientError extends Throwable {
         return new ClientError(UNAUTHORIZED,
                 new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT,
                         "Invalid username or password")));
+    }
+
+    public static ClientError invalidRefreshToken() {
+        return new ClientError(UNAUTHORIZED,
+                new ErrorRepresentation(new Error(REFRESH_TOKEN_INCORRECT,
+                        "Invalid refresh token")));
     }
 
     public static ClientError userBlocked() {

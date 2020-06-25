@@ -50,6 +50,7 @@ public enum ErrorCode {
     FAILED_TO_GET_LINKED_CARE_CONTEXTS(1040),
     DUPLICATE_DISCOVERY_REQUEST(1041),
     UNPROCESSABLE_RESPONSE_FROM_GATEWAY(4220),
+    REFRESH_TOKEN_INCORRECT(1042),
     INVALID_RESP_REQUEST_ID(4221); /*please resume codes from the line above, we will put the codes in order later and in ranges*/
 
     private final int value;

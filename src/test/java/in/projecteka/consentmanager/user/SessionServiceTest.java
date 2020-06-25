@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
+import in.projecteka.consentmanager.user.model.GrantType;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.User;
 import org.jeasy.random.EasyRandom;
@@ -26,11 +27,9 @@ import reactor.test.StepVerifier;
 
 import static in.projecteka.consentmanager.common.Constants.BLACKLIST;
 import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
-import static in.projecteka.consentmanager.user.TestBuilders.lockedUser;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.sessionRequest;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -78,7 +77,7 @@ class SessionServiceTest {
 
     @Test
     void returnSession() {
-        var sessionRequest = sessionRequest().build();
+        var sessionRequest = sessionRequest().grantType(GrantType.PASSWORD).build();
         var expectedSession = session().build();
         when(lockedUserService.validateLogin(sessionRequest.getUsername())).thenReturn(Mono.empty());
         when(lockedUserService.removeLockedUser(sessionRequest.getUsername())).thenReturn(Mono.empty());
@@ -101,7 +100,10 @@ class SessionServiceTest {
             "null"
     })
     void returnUnAuthorizedErrorWhenUsernameIsEmpty(@ConvertWith(NullableConverter.class) String value) {
-        var sessionRequest = sessionRequest().username(value).build();
+        var sessionRequest = sessionRequest()
+                                .grantType(GrantType.PASSWORD)
+                                .username(value)
+                                .build();
 
         SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties, otpAttemptService);
 
@@ -121,7 +123,10 @@ class SessionServiceTest {
     })
     void returnUnAuthorizedErrorWhenPasswordIsEmpty(
             @ConvertWith(NullableConverter.class) String value) {
-        var sessionRequest = sessionRequest().password(value).build();
+        var sessionRequest = sessionRequest()
+                                .grantType(GrantType.PASSWORD)
+                                .password(value)
+                                .build();
         SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties, otpAttemptService);
 
 

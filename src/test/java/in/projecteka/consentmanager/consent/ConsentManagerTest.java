@@ -298,8 +298,8 @@ class ConsentManagerTest {
 
         StepVerifier.create(consentManager.revoke(revokeRequest, patientId))
                 .verifyComplete();
-        assertThat(consentArtefactsMessageArgumentCaptor.getValue().getConsentArtefacts().get(0).getConsentDetail()).isNull();
-        assertThat(consentArtefactsMessageArgumentCaptor.getValue().getConsentArtefacts().get(0).getSignature()).isNull();
+        assertThat(consentArtefactsMessageArgumentCaptor.getValue().getConsentArtefacts().get(0).getConsentDetail()).isNotNull();
+        assertThat(consentArtefactsMessageArgumentCaptor.getValue().getConsentArtefacts().get(0).getSignature()).isNotNull();
         assertThat(consentArtefactsMessageArgumentCaptor.getValue().getConsentArtefacts().get(0).getConsentId()).isNotNull();
     }
 

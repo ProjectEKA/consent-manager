@@ -2,7 +2,7 @@ package in.projecteka.consentmanager;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConsentArtefactsController;
 import in.projecteka.consentmanager.consent.ConsentNotificationPublisher;
@@ -45,7 +45,7 @@ class SecurityConfigurationTest {
     JWKSet identityServiceJWKSet;
 
     @MockBean
-    CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+    GatewayTokenVerifier gatewayTokenVerifier;
 
     @MockBean
     private DestinationsConfig destinationsConfig;
@@ -96,7 +96,7 @@ class SecurityConfigurationTest {
     void returnForbiddenError() {
         var token = string();
         var caller = ServiceCaller.builder().roles(List.of()).build();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient
                 .post()
@@ -114,7 +114,7 @@ class SecurityConfigurationTest {
         var token = string();
         var caller = ServiceCaller.builder().roles(List.of(GATEWAY)).build();
         var patientRequest = patientRequest().build();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient
                 .post()
@@ -132,7 +132,7 @@ class SecurityConfigurationTest {
         var token = string();
         var username = string();
         var caller = ServiceCaller.builder().clientId(username).roles(List.of(GATEWAY)).build();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
         when(dataFlowRequester.notifyHealthInformationStatus(any())).thenReturn(Mono.empty());
 
         webTestClient

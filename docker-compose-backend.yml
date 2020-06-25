@@ -37,7 +37,7 @@ services:
       - "5432:5432"
 
   keycloak_setup:
-    image: "bharatak/eka-keycloak-setup"
+    image: "projecteka/keycloak-setup"
     environment:
       KEYCLOAK_SERVER: http://keycloak:8080/auth
       KEYCLOAK_USER: admin

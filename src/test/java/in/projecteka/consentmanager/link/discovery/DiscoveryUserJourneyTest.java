@@ -13,7 +13,7 @@ import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
@@ -121,7 +121,7 @@ public class DiscoveryUserJourneyTest {
     private ConceptValidator conceptValidator;
 
     @MockBean
-    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+    private GatewayTokenVerifier gatewayTokenVerifier;
 
     @BeforeEach
     public void setUp() {
@@ -173,17 +173,12 @@ public class DiscoveryUserJourneyTest {
                 new TypeReference<JsonNode>() {
                 });
         var token = string();
-
         var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"ff\"}";
         String providerId = "12345";
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(
                 "consent-manager-service", true)));
         clientRegistryServer.enqueue(new MockResponse()
-                .setHeader("Content-Type", "application/json")
-                .setBody(session));
-
-        providerServer.enqueue(new MockResponse()
                 .setHeader("Content-Type", "application/json")
                 .setBody(session));
         providerServer.enqueue(new MockResponse()
@@ -370,7 +365,7 @@ public class DiscoveryUserJourneyTest {
         var patientDiscoveryResult = TestBuilders.discoveryResult().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient.post()
                 .uri("/v1/care-contexts/on-discover")
@@ -399,7 +394,7 @@ public class DiscoveryUserJourneyTest {
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient.post()
                 .uri("/v1/care-contexts/on-discover")
@@ -416,7 +411,7 @@ public class DiscoveryUserJourneyTest {
         var token = string();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(centralRegistryTokenVerifier.verify(token))
+        when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
@@ -427,5 +422,4 @@ public class DiscoveryUserJourneyTest {
                 .exchange()
                 .expectStatus().is5xxServerError();
     }
-
 }

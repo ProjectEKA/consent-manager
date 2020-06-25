@@ -11,7 +11,8 @@ import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.ListResult;
@@ -125,7 +126,10 @@ public class ConsentArtefactUserJourneyTest {
     private ConceptValidator conceptValidator;
 
     @MockBean
-    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+    private GatewayTokenVerifier gatewayTokenVerifier;
+
+    @MockBean
+    private ServiceAuthentication serviceAuthentication;
 
     private static final MockWebServer identityServer = new MockWebServer();
 
@@ -134,7 +138,6 @@ public class ConsentArtefactUserJourneyTest {
         identityServer.shutdown();
     }
 
-
     @Test
     public void shouldListConsentArtifacts() throws ParseException {
         var consentArtefact = consentArtefactRepresentation().build();
@@ -142,7 +145,6 @@ public class ConsentArtefactUserJourneyTest {
         var patientId = consentArtefact.getConsentDetail().getPatient().getId();
         var consentRequestId = "request-id";
         consentArtefact.getConsentDetail().getPermission().setDataEraseAt(toDateWithMilliSeconds("253379772420000"));
-
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))
                 .thenReturn(Flux.just(consentArtefact.getConsentDetail().getConsentId()));
@@ -171,7 +173,6 @@ public class ConsentArtefactUserJourneyTest {
                 "Cannot find the consent artefact"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         var consentRequestId = "request-id";
-
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))
                 .thenReturn(Flux.empty());
@@ -197,7 +198,6 @@ public class ConsentArtefactUserJourneyTest {
                 "Cannot retrieve Consent artefact"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         var consentRequestId = "request-id";
-
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(anotherUser, false)));
         when(consentArtefactRepository.getConsentArtefacts(eq(consentRequestId)))
                 .thenReturn(Flux.just(consentArtefact.getConsentDetail().getConsentId()));
@@ -227,7 +227,6 @@ public class ConsentArtefactUserJourneyTest {
         consentIds.add(consentRepresentation.getConsentDetail().getConsentId());
         var revokeRequest = RevokeRequest.builder().consents(consentIds).build();
         var patientId = consentRepresentation.getConsentDetail().getPatient().getId();
-
         String scope = "consent.revoke";
         when(pinVerificationTokenService.validateToken(token, scope))
                 .thenReturn(Mono.just(new Caller(patientId, false, "testSessionId")));
@@ -264,7 +263,6 @@ public class ConsentArtefactUserJourneyTest {
         consentIds.add(consentRepresentation.getConsentDetail().getConsentId());
         var revokeRequest = RevokeRequest.builder().consents(consentIds).build();
         var patientId = consentRepresentation.getConsentDetail().getPatient().getId();
-
         when(pinVerificationTokenService.validateToken(token, scope))
                 .thenReturn(Mono.just(new Caller(patientId, false)));
         when(consentArtefactRepository.getConsentWithRequest(eq(consentId)))
@@ -356,11 +354,9 @@ public class ConsentArtefactUserJourneyTest {
         var fetchRequest = fetchRequest().consentId(consentArtefact.getConsentDetail().getConsentId()).build();
         consentArtefact.getConsentDetail().getPatient().setId("test-user@ncg");
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-
-        when(centralRegistry.authenticate()).thenReturn(Mono.empty());
-        when(centralRegistryTokenVerifier.verify(token))
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.empty());
+        when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
-
         when(consentArtefactRepository.getConsentArtefact(fetchRequest.getConsentId()))
                 .thenReturn(Mono.just(consentArtefact));
         when(centralRegistry.providerWith(any())).thenReturn(Mono.just(Provider.builder().name("test-hip").build()));

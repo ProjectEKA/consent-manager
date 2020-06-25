@@ -14,9 +14,6 @@ import java.util.UUID;
 @Builder
 public class HealthInfoNotificationRequest {
     private UUID requestId;
-    private String transactionId;
-    private String consentId;
-    private LocalDateTime doneAt;
-    private Notifier notifier;
-    private StatusNotification statusNotification;
+    private LocalDateTime timestamp;
+    private Notification notification;
 }

@@ -86,7 +86,6 @@ public class ConsentConfiguration {
                 new PatientServiceClient(builder, identityService::authenticate, linkServiceProperties.getUrl()),
                 new CMProperties(identityService.getConsentManagerId()),
                 conceptValidator,
-                new ConsentArtefactQueryGenerator(),
                 new ConsentManagerClient(builder,
                         gatewayServiceProperties.getBaseUrl(),
                         identityService::authenticate,

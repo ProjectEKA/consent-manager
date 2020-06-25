@@ -9,8 +9,10 @@ import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.Query;
+import in.projecteka.consentmanager.consent.model.QueryRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
@@ -53,6 +55,14 @@ public class ConsentArtefactRepository {
             "WHERE patient_id=$1 AND (status=$2 OR $2 IS NULL)";
     private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
     private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
+    private static final String FAILED_TO_UPDATE_STATUS = "Failed to update status";
+    private static final String CAN_NOT_INITIALIZE_TRANSACTION = "Can not get connection.";
+    private static final String INSERT_CONSENT_ARTEFACT_QUERY = "INSERT INTO consent_artefact" +
+            " (consent_request_id, consent_artefact_id, patient_id, consent_artefact, signature, status) VALUES" +
+            " ($1, $2, $3, $4, $5, $6)";
+    private static final String INSERT_HIP_CONSENT_ARTEFACT_QUERY = "INSERT INTO hip_consent_artefact" +
+            " (consent_request_id, consent_artefact_id, patient_id, consent_artefact, signature, status) VALUES" +
+            " ($1, $2, $3, $4, $5, $6)";
 
     static {
         String s = "SELECT status, consent_artefact, signature, date_modified FROM ";
@@ -65,17 +75,22 @@ public class ConsentArtefactRepository {
 
     private final PgPool dbClient;
 
-    public Mono<Void> process(List<Query> queries) {
-        return doInTransaction(queries);
+    public Mono<Void> grantConsentRequest(String requestId, List<Query> artefactQueries) {
+        List<Query> queriesInTransaction = new ArrayList<>(artefactQueries);
+        queriesInTransaction.add(new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
+                Tuple.of(ConsentStatus.GRANTED.toString(),
+                        LocalDateTime.now(),
+                        requestId)));
+        return doInTransaction(queriesInTransaction, FAILED_TO_SAVE_CONSENT_ARTEFACT);
     }
 
-    private Mono<Void> doInTransaction(List<Query> queries) {
+    private Mono<Void> doInTransaction(List<Query> queries, String contextErrorMessage) {
         return Mono.create(monoSink -> dbClient.begin(connectionAttempt -> {
             if (connectionAttempt.succeeded()) {
-                TransactionContext context = new TransactionContext(connectionAttempt.result(), monoSink);
-                context.executeInTransaction(queries.iterator(), FAILED_TO_SAVE_CONSENT_ARTEFACT);
+                TransactionContext context = new TransactionContext(connectionAttempt.result(), monoSink, contextErrorMessage);
+                context.executeInTransaction(queries.iterator());
             } else {
-                monoSink.error(new RuntimeException("Can not get connectionAttempt to storage."));
+                monoSink.error(new RuntimeException(CAN_NOT_INITIALIZE_TRANSACTION));
             }
         }));
     }
@@ -192,15 +207,8 @@ public class ConsentArtefactRepository {
     }
 
     public Mono<Void> updateStatus(String consentId, String consentRequestId, ConsentStatus status) {
-        return Mono.create(monoSink -> dbClient.begin(connectionAttempt -> {
-            var queries = getUpdateQueries(consentId, consentRequestId, status);
-            if (connectionAttempt.succeeded()) {
-                TransactionContext context = new TransactionContext(connectionAttempt.result(), monoSink);
-                context.executeInTransaction(queries.iterator(), "Failed to update status");
-            } else {
-                monoSink.error(new RuntimeException("Can not get connectionAttempt to storage."));
-            }
-        }));
+        List<Query> queries = getUpdateQueries(consentId, consentRequestId, status);
+        return doInTransaction(queries, FAILED_TO_UPDATE_STATUS);
     }
 
     public Mono<Void> updateConsentArtefactStatus(String consentId, ConsentStatus status) {
@@ -262,5 +270,30 @@ public class ConsentArtefactRepository {
                 .consentDetail(consentArtefact)
                 .signature(row.getString(SIGNATURE))
                 .build();
+    }
+
+    public Mono<QueryRepresentation> artefactQueries(String requestId,
+                                                     String patientId,
+                                                     ConsentArtefact consentArtefact,
+                                                     HIPConsentArtefactRepresentation hipConsentArtefact,
+                                                     String consentArtefactSignature) {
+        Query insertCA = new Query(INSERT_CONSENT_ARTEFACT_QUERY,
+                Tuple.of(requestId,
+                        consentArtefact.getConsentId(),
+                        patientId,
+                        JsonObject.mapFrom(consentArtefact),
+                        consentArtefactSignature,
+                        ConsentStatus.GRANTED.toString()));
+        Query insertHIPCA = new Query(INSERT_HIP_CONSENT_ARTEFACT_QUERY,
+                Tuple.of(requestId,
+                        hipConsentArtefact.getConsentDetail().getConsentId(),
+                        patientId,
+                        JsonObject.mapFrom(hipConsentArtefact.getConsentDetail()),
+                        consentArtefactSignature,
+                        ConsentStatus.GRANTED.toString()));
+        return Mono.just(QueryRepresentation.builder()
+                .queries(List.of(insertCA, insertHIPCA))
+                .hipConsentArtefactRepresentations(List.of(hipConsentArtefact))
+                .build());
     }
 }

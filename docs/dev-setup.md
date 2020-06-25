@@ -55,6 +55,16 @@
 
 (*) - Optional for local setup
 
+## Clean up (recommended always)
+
+1. Run following commands to clean up your local system, before running any infra setup
+
+```bash
+docker-compose -f docker-compose-infra-lite.yml down
+docker system prune -a
+docker volume rm $(docker volume ls -qf dangling=true)
+```
+
 ## Setup infra using docker before running services:
 
 1. Clone the consent-manager repository
@@ -63,8 +73,12 @@
 
     ```bash
     docker-compose -f docker-compose-infra-lite.yml up -d
-    docker logs $(docker ps -aqf "name=^cm-db-setup$") 
-             # if you see any errors, run the above command again
+   
+    docker logs $(docker ps -aqf "name=^cm-db-setup$")
+    docker logs $(docker ps -aqf "name=^cm-db-setup$")
+    docker logs $(docker ps -aqf "name=^keycloak-setup$")
+        # if you see any errors, run the docker-compose
+   
     docker exec -it $(docker ps -aqf "name=^postgres$") /bin/bash
     psql -U postgres -H consent_manager
     \d # should list all the tables

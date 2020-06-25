@@ -94,40 +94,40 @@ docker volume rm $(docker volume ls -qf dangling=true)
     2. There are two realms `Consent-Manager` and `Central-Registry`
     3. `Consent-Manager` is only for activities with consent-manager service (consent-manager internal service calls and user-management)
     4. `Central-Registry` is only for intra-service authentication and authorisation, and being used by **Gateway** service. For example if *consent-manager* wants to call to *gateway,* then consent-manager needs to get a token from **Gateway** using the client-id and client-secret of its own, and it should have a role of `CM` assigned.
-        1. Under `Central-Registry` create following clients
-            - 10000002 with role `HIU` and `HIP`
-            - 10000005 with role `HIU` and `HIP`
-            - gateway with a role `gateway`
-            - ncg with a role 'CM'
+    **Note:** All the clients needed for local development added into the keycloak automatically. Need to assign the role manually.
+    - 10000002 with role `HIU` and `HIP`
+    - 10000005 with role `HIU` and `HIP`
+    - gateway with a role `gateway`
+    - ncg with a role 'CM'
+        
+    ### How to add a client
 
-        ### How to add a client
+    1. Click on `Clients`
+    2. Click on `Create` button in the top right corner of the clients table.
+    3. Enter the client id, i.e. `10000002`
+    4. Click on `Create`
+    5. On the clients page make the following the changes
+        - Change `Access Type` to Confidential.
+        - Turn on `Service Accounts Enabled` flag.
+        - Turn on `Authorization` flag too.
+        - Enter some random url in the `Valid Redirect URIs`. for example [*http://localhost:8080*](http://localhost:8080/).
+        - Click `save` (**tip:** From `Credentials` you can copy the `Secret` always)
 
-        1. Click on `Clients`
-        2. Click on `Create` button in the top right corner of the clients table.
-        3. Enter the client id, i.e. `10000002`
-        4. Click on `Create`
-        5. On the clients page make the following the changes
-            - Change `Access Type` to Confidential.
-            - Turn on `Service Accounts Enabled` flag.
-            - Turn on `Authorization` flag too.
-            - Enter some random url in the `Valid Redirect URIs`. for example [*http://localhost:8080*](http://localhost:8080/).
-            - Click `save` (**tip:** From `Credentials` you can copy the `Secret` always)
+    ### How to add a role in the realm
 
-        ### How to add a role in the realm
+    1. On the left-hand menu, click on `Roles`
+    2. Click on `Add Role`
+    3. Enter Role Name, for example `HIU`
+    4. Click `Save`
+    5. Repeat the same steps for the roles **(HIP, HIU, Gateway, CM)** you want to add.
 
-        1. On the left-hand menu, click on `Roles`
-        2. Click on `Add Role`
-        3. Enter Role Name, for example `HIU`
-        4. Click `Save`
-        5. Repeat the same steps for the roles **(HIP, HIU, Gateway, CM)** you want to add.
+    ### How to add a service role to a client
 
-        ### How to add a service role to a client
-
-        1. Click on `Clients`
-        2. Go to the client (for example: ncg) which you want to add role
-        3. Click on `Service Account Roles` tab
-        4. On the `Available Roles` you should see the roles you just created, select the role you want to assign, and then click `Add Selected`
-        5. Repeat the same steps for all the clients.
+    1. Click on `Clients`
+    2. Go to the client (for example: ncg) which you want to add role
+    3. Click on `Service Account Roles` tab
+    4. On the `Available Roles` you should see the roles you just created, select the role you want to assign, and then click `Add Selected`
+    5. Repeat the same steps for all the clients.
         
 5. Setup RabbitMQ
 

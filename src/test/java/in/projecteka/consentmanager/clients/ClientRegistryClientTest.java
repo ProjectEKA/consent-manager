@@ -23,7 +23,6 @@ import static in.projecteka.consentmanager.clients.TestBuilders.address;
 import static in.projecteka.consentmanager.clients.TestBuilders.coding;
 import static in.projecteka.consentmanager.clients.TestBuilders.identifier;
 import static in.projecteka.consentmanager.clients.TestBuilders.provider;
-import static in.projecteka.consentmanager.clients.TestBuilders.string;
 import static in.projecteka.consentmanager.clients.TestBuilders.telecom;
 import static in.projecteka.consentmanager.clients.TestBuilders.type;
 import static java.util.List.of;
@@ -63,7 +62,7 @@ public class ClientRegistryClientTest {
                                 .body(providerJson)
                                 .build()));
 
-        StepVerifier.create(clientRegistryClient.providersOf("Max", string()))
+        StepVerifier.create(clientRegistryClient.providersOf("Max"))
                 .assertNext(provider -> {
                     assertThat(provider.getName()).isEqualTo(source.getName());
                     assertThat(provider.getAddresses().get(0).getCity())
@@ -97,7 +96,7 @@ public class ClientRegistryClientTest {
                                 .body(providerJson)
                                 .build()));
 
-        StepVerifier.create(clientRegistryClient.providerWith("10000005", string()))
+        StepVerifier.create(clientRegistryClient.providerWith("10000005"))
                 .assertNext(provider -> {
                     assertThat(provider.getName()).isEqualTo(source.getName());
                     assertThat(provider.getAddresses().get(0).getCity())
@@ -129,7 +128,7 @@ public class ClientRegistryClientTest {
                                 .body(providerJsonResponse)
                                 .build()));
 
-        StepVerifier.create(clientRegistryClient.providerWith("10000003", string()))
+        StepVerifier.create(clientRegistryClient.providerWith("10000003"))
                 .assertNext(providerResponse -> {
                     assertThat(providerResponse.getName()).isEqualTo(provider.getName());
                     assertThat(providerResponse.getAddresses().get(0).getCity())

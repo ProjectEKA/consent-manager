@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
-import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResult;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,10 +20,10 @@ public class DataFlowRequestClient {
 
     private final WebClient.Builder webClientBuilder;
     private final GatewayServiceProperties gatewayServiceProperties;
-    private final CentralRegistry centralRegistry;
+    private final ServiceAuthentication serviceAuthentication;
 
     public Mono<Void> sendHealthInformationResponseToGateway(DataFlowRequestResult dataFlowRequest, String hiuId) {
-        return centralRegistry.authenticate()
+        return serviceAuthentication.authenticate()
                 .flatMap(authToken ->
                         webClientBuilder.build()
                                 .post()

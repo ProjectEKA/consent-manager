@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
 import io.vertx.pgclient.PgPool;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -44,8 +45,8 @@ public class DataFlowConfiguration {
     @Bean
     public DataFlowRequestClient dataFlowRequestClient(WebClient.Builder builder,
                                                        GatewayServiceProperties gatewayServiceProperties,
-                                                       CentralRegistry centralRegistry) {
-        return new DataFlowRequestClient(builder, gatewayServiceProperties, centralRegistry);
+                                                       ServiceAuthentication serviceAuthentication) {
+        return new DataFlowRequestClient(builder, gatewayServiceProperties, serviceAuthentication);
     }
 
     @Bean
@@ -55,14 +56,14 @@ public class DataFlowConfiguration {
                                          DataFlowConsentManagerProperties dataFlowConsentManagerProperties,
                                          IdentityService identityService,
                                          GatewayServiceProperties gatewayServiceProperties,
-                                         CentralRegistry centralRegistry,
+                                         ServiceAuthentication serviceAuthentication,
                                          DataFlowRequestClient dataFlowRequestClient) {
         return new DataFlowRequester(
                 new ConsentManagerClient(builder,
                         dataFlowConsentManagerProperties.getUrl(),
                         identityService::authenticate,
                         gatewayServiceProperties,
-                        centralRegistry),
+                        serviceAuthentication),
                 dataFlowRequestRepository,
                 postDataFlowRequestApproval,
                 dataFlowRequestClient);
@@ -75,8 +76,8 @@ public class DataFlowConfiguration {
 
     @Bean
     public DataRequestNotifier dataFlowClient(WebClient.Builder builder,
-                                              CentralRegistry centralRegistry,
+                                              ServiceAuthentication serviceAuthentication,
                                               GatewayServiceProperties gatewayServiceProperties) {
-        return new DataRequestNotifier(builder, centralRegistry::authenticate, gatewayServiceProperties);
+        return new DataRequestNotifier(builder, serviceAuthentication::authenticate, gatewayServiceProperties);
     }
 }

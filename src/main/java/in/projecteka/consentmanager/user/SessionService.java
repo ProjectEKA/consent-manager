@@ -2,18 +2,18 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.Meta;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.exception.InvalidPasswordException;
 import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
-import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
+import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
@@ -33,18 +33,15 @@ import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
 @AllArgsConstructor
 public class SessionService {
 
-    private final TokenService tokenService;
-    private final CacheAdapter<String, String> blacklistedTokens;
-    private CacheAdapter<String, String> unverifiedSessions;
     private final Logger logger = LoggerFactory.getLogger(SessionService.class);
-
+    private final TokenService tokenService;
+    private final CacheAdapter<String, String> blockListedTokens;
+    private CacheAdapter<String, String> unverifiedSessions;
     private final LockedUserService lockedUserService;
-
     private final UserRepository userRepository;
     private final OtpServiceClient otpServiceClient;
     private final OtpServiceProperties otpServiceProperties;
     private final OtpAttemptService otpAttemptService;
-
 
     public Mono<Session> forNew(SessionRequest request) {
         if (StringUtils.isEmpty(request.getUsername()) || StringUtils.isEmpty(request.getPassword()))
@@ -65,7 +62,7 @@ public class SessionService {
     }
 
     public Mono<Void> logout(String accessToken, LogoutRequest logoutRequest) {
-        return blacklistedTokens.put(String.format(BLACKLIST_FORMAT, BLACKLIST, accessToken), "")
+        return blockListedTokens.put(String.format(BLACKLIST_FORMAT, BLACKLIST, accessToken), "")
                 .then(tokenService.revoke(logoutRequest.getRefreshToken()));
     }
 

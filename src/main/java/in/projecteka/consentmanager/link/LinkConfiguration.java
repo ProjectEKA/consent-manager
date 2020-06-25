@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.link;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
@@ -10,6 +11,7 @@ import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
@@ -43,23 +45,25 @@ public class LinkConfiguration {
     @Bean
     public Link link(WebClient.Builder builder,
                      LinkRepository linkRepository,
-                     CentralRegistry centralRegistry,
+                     ClientRegistryClient clientRegistryClient,
                      GatewayServiceProperties gatewayServiceProperties,
                      LinkServiceProperties serviceProperties,
-                     CacheAdapter<String, String> linkResults) {
+                     CacheAdapter<String, String> linkResults,
+                     ServiceAuthentication serviceAuthentication) {
         return new Link(
-                new LinkServiceClient(builder, centralRegistry, gatewayServiceProperties),
+                new LinkServiceClient(builder, serviceAuthentication, gatewayServiceProperties),
                 linkRepository,
-                centralRegistry,
+                serviceAuthentication,
+                clientRegistryClient,
                 serviceProperties,
                 linkResults);
-     }
+    }
 
     @Bean
     public DiscoveryServiceClient discoveryServiceClient(WebClient.Builder builder,
-                                                         CentralRegistry centralRegistry,
+                                                         ServiceAuthentication serviceAuthentication,
                                                          GatewayServiceProperties gatewayServiceProperties) {
-        return new DiscoveryServiceClient(builder, centralRegistry::authenticate, gatewayServiceProperties);
+        return new DiscoveryServiceClient(builder, serviceAuthentication::authenticate, gatewayServiceProperties);
     }
 
     @Bean
@@ -67,12 +71,12 @@ public class LinkConfiguration {
                                                UserServiceProperties userServiceProperties,
                                                IdentityService identityService,
                                                GatewayServiceProperties gatewayServiceProperties,
-                                               CentralRegistry centralRegistry) {
+                                               ServiceAuthentication serviceAuthentication) {
         return new UserServiceClient(builder,
                 userServiceProperties.getUrl(),
                 identityService::authenticate,
                 gatewayServiceProperties,
-                centralRegistry);
+                serviceAuthentication);
     }
 
     @Bean

@@ -55,6 +55,16 @@
 
 (*) - Optional for local setup
 
+## Clean up (recommended always)
+
+1. Run following commands to clean up your local system, before running any infra setup
+
+```bash
+docker-compose -f docker-compose-infra-lite.yml down
+docker system prune -a
+docker volume rm $(docker volume ls -qf dangling=true)
+```
+
 ## Setup infra using docker before running services:
 
 1. Clone the consent-manager repository
@@ -63,8 +73,12 @@
 
     ```bash
     docker-compose -f docker-compose-infra-lite.yml up -d
-    docker logs $(docker ps -aqf "name=^cm-db-setup$") 
-             # if you see any errors, run the above command again
+   
+    docker logs $(docker ps -aqf "name=^cm-db-setup$")
+    docker logs $(docker ps -aqf "name=^hiu-db-setup$")
+    docker logs $(docker ps -aqf "name=^keycloak-setup$")
+        # if you see any errors, run the docker-compose again
+   
     docker exec -it $(docker ps -aqf "name=^postgres$") /bin/bash
     psql -U postgres -H consent_manager
     \d # should list all the tables
@@ -79,40 +93,41 @@
     1. Login with user-name: admin, password: welcome
     2. There are two realms `Consent-Manager` and `Central-Registry`
     3. `Consent-Manager` is only for activities with consent-manager service (consent-manager internal service calls and user-management)
-    4. `Central-Registry` is for intra-service authentication and authorisation, and being used by **Central-Registry** service. For example if *consent-manager* wants to call to *gateway,* then consent-manager needs to get a token from **Central-Registry** using the client-id and client-secret of its own, and it should have a role of `CM` assigned.
-        1. Under `Central-Registry` create following clients
-            - 10000002 with role `HIU` and `HIP`
-            - 10000005 with role `HIU` and `HIP`
-            - gateway with role `gateway`
+    4. `Central-Registry` is only for intra-service authentication and authorisation, and being used by **Gateway** service. For example if *consent-manager* wants to call to *gateway,* then consent-manager needs to get a token from **Gateway** using the client-id and client-secret of its own, and it should have a role of `CM` assigned.
+    **Note:** All the clients needed for local development added into the keycloak automatically. Need to assign the role manually.
+        - 10000002 with role `HIU` and `HIP`
+        - 10000005 with role `HIU` and `HIP`
+        - gateway with a role `gateway`
+        - ncg with a role 'CM'
+        
+    ### How to add a client
 
-        ### How to add a client
+    1. Click on `Clients`
+    2. Click on `Create` button in the top right corner of the clients table.
+    3. Enter the client id, i.e. `10000002`
+    4. Click on `Create`
+    5. On the clients page make the following the changes
+        - Change `Access Type` to Confidential.
+        - Turn on `Service Accounts Enabled` flag.
+        - Turn on `Authorization` flag too.
+        - Enter some random url in the `Valid Redirect URIs`. for example [*http://localhost:8080*](http://localhost:8080/).
+        - Click `save` (**tip:** From `Credentials` you can copy the `Secret` always)
 
-        1. Click on `Clients`
-        2. Click on `Create` button in the top right corner of the clients table.
-        3. Enter the client id, i.e. `10000002`
-        4. Click on `Create`
-        5. On the clients page make the following the changes
-            - Change `Access Type` to Confidential.
-            - Turn on `Service Accounts Enabled` flag.
-            - Turn on `Authorization` flag too.
-            - Enter some random url in the `Valid Redirect URIs`. for example [*http://localhost:8080*](http://localhost:8080/).
-            - Click `save` (**tip:** From `Credentials` you can copy the `Secret` always)
+    ### How to add a role in the realm
 
-        ### How to add a role in the realm
+    1. On the left-hand menu, click on `Roles`
+    2. Click on `Add Role`
+    3. Enter Role Name, for example `HIU`
+    4. Click `Save`
+    5. Repeat the same steps for the roles **(HIP, HIU, Gateway, CM)** you want to add.
 
-        1. On the left-hand menu, click on `Roles`
-        2. Click on `Add Role`
-        3. Enter Role Name, for example `HIU`
-        4. Click `Save`
-        5. Repeat the same steps for the roles **(HIP, HIU, Gateway, CM)** you want to add.
+    ### How to add a service role to a client
 
-        ### How to add a service role to a client
-
-        1. Click on `Clients`
-        2. Go to the client (for example: ncg) which you want to add role
-        3. Click on `Service Account Roles` tab
-        4. On the `Available Roles` you should see the roles you just created, select the role you want to assign, and then click `Add Selected`
-        5. Repeat the same steps for all the clients.
+    1. Click on `Clients`
+    2. Go to the client (for example: ncg) which you want to add role
+    3. Click on `Service Account Roles` tab
+    4. On the `Available Roles` you should see the roles you just created, select the role you want to assign, and then click `Add Selected`
+    5. Repeat the same steps for all the clients.
         
 5. Setup RabbitMQ
 
@@ -152,30 +167,6 @@ cd otp-service
 dotnet run --project src/In.ProjectEKA.OtpService/In.ProjectEKA.OtpService.csproj --environment "local"
 ```
 
-### Consent-Manager
-
-1. Clone [Consent-Manager](https://github.com/ProjectEKA/consent-manager)
-2. You need to get client secret from keycloak 
-3. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients](http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients) of `consent-manager` under `credentials` tab, and use it for **KEYCLOAK_CLIENTSECRET** (client under *consent-manager* realm)
-4. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `consent-manager` under `credentials` tab, and use it for **CLIENTREGISTRY_XAUTHTOKEN** (client under *central-registry* realm)
-5. Run through command line
-
-```bash
-cd consent-manager
-CLIENTREGISTRY_XAUTHTOKEN=${CLIENTREGISTRY_XAUTHTOKEN} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew bootRunLocal
-```
-
-### Hip-Service
-
-1. Clone [hip-service](https://github.com/ProjectEKA/hip-service)
-2. Run through command line
-
-```bash
-cd hip-service
-cp src/In.ProjectEKA.DefaultHip/Resources/*.json src/In.ProjectEKA.HipService/
-dotnet run --project src/In.ProjectEKA.HipService/In.ProjectEKA.HipService.csproj --environment="local"
-```
-
 ### Gateway
 
 1. Clone [gateway](https://github.com/ProjectEKA/gateway)
@@ -185,4 +176,30 @@ dotnet run --project src/In.ProjectEKA.HipService/In.ProjectEKA.HipService.cspro
 ```bash
 cd gateway
 CLIENT_SECRET=${CLIENT_SECRET} ./gradlew bootRunLocal
+```
+
+### Consent-Manager
+
+1. Clone [Consent-Manager](https://github.com/ProjectEKA/consent-manager)
+2. You need to get client secret from keycloak 
+3. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients](http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients) of `consent-manager` under `credentials` tab, and use it for **KEYCLOAK_CLIENTSECRET** (client under *consent-manager* realm)
+4. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `ncg` under `credentials` tab, and use it for **GATEWAY_CLIENTSECRET** (client under *central-registry* realm)
+5. Run through command line
+
+```bash
+cd consent-manager
+GATEWAY_CLIENTSECRET=${CLIENTREGISTRY_XAUTHTOKEN} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew bootRunLocal
+```
+
+### Hip-Service
+
+1. Clone [hip-service](https://github.com/ProjectEKA/hip-service)
+2. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `10000005` under `credentials` tab, and use it for **CLIENT_SECRET** (client under *central-registry* realm)
+3. Run through command line
+
+```bash
+cd hip-service
+cp src/In.ProjectEKA.DefaultHip/Resources/*.json src/In.ProjectEKA.HipService/
+export Gateway__clientSecret=${CLIENT_SECRET}
+dotnet run --project src/In.ProjectEKA.HipService/In.ProjectEKA.HipService.csproj --environment="local"
 ```

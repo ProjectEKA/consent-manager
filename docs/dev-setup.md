@@ -75,7 +75,7 @@ docker volume rm $(docker volume ls -qf dangling=true)
     docker-compose -f docker-compose-infra-lite.yml up -d
    
     docker logs $(docker ps -aqf "name=^cm-db-setup$")
-    docker logs $(docker ps -aqf "name=^cm-db-setup$")
+    docker logs $(docker ps -aqf "name=^hiu-db-setup$")
     docker logs $(docker ps -aqf "name=^keycloak-setup$")
         # if you see any errors, run the docker-compose again
    
@@ -95,10 +95,10 @@ docker volume rm $(docker volume ls -qf dangling=true)
     3. `Consent-Manager` is only for activities with consent-manager service (consent-manager internal service calls and user-management)
     4. `Central-Registry` is only for intra-service authentication and authorisation, and being used by **Gateway** service. For example if *consent-manager* wants to call to *gateway,* then consent-manager needs to get a token from **Gateway** using the client-id and client-secret of its own, and it should have a role of `CM` assigned.
     **Note:** All the clients needed for local development added into the keycloak automatically. Need to assign the role manually.
-    - 10000002 with role `HIU` and `HIP`
-    - 10000005 with role `HIU` and `HIP`
-    - gateway with a role `gateway`
-    - ncg with a role 'CM'
+        - 10000002 with role `HIU` and `HIP`
+        - 10000005 with role `HIU` and `HIP`
+        - gateway with a role `gateway`
+        - ncg with a role 'CM'
         
     ### How to add a client
 

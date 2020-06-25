@@ -77,7 +77,7 @@ docker volume rm $(docker volume ls -qf dangling=true)
     docker logs $(docker ps -aqf "name=^cm-db-setup$")
     docker logs $(docker ps -aqf "name=^cm-db-setup$")
     docker logs $(docker ps -aqf "name=^keycloak-setup$")
-        # if you see any errors, run the docker-compose
+        # if you see any errors, run the docker-compose again
    
     docker exec -it $(docker ps -aqf "name=^postgres$") /bin/bash
     psql -U postgres -H consent_manager

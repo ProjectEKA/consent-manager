@@ -19,6 +19,7 @@ import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.GrantType;
+import io.vavr.Tuple2;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -46,10 +47,10 @@ public class SessionService {
     private final OtpAttemptService otpAttemptService;
 
     public Mono<Session> forNew(SessionRequest request) {
-        if (request.getGrantType() == GrantType.PASSWORD
-                && (StringUtils.isEmpty(request.getUsername()) || StringUtils.isEmpty(request.getPassword())))
-            return Mono.error(ClientError.invalidUserNameOrPassword());
-
+        var checkIsEmpty = credentialsNotEmpty(request);
+        if(!checkIsEmpty._1){
+            return Mono.error(checkIsEmpty._2);
+        }
         return lockedUserService.validateLogin(request.getUsername())
                 .then(request.getGrantType() == GrantType.PASSWORD
                         ? tokenService.tokenForUser(request.getUsername(), request.getPassword())
@@ -68,6 +69,16 @@ public class SessionService {
                             }
                             return Mono.error(error);
                         }));
+    }
+    private Tuple2<Boolean, ClientError> credentialsNotEmpty(SessionRequest request){
+        if (request.getGrantType() == GrantType.PASSWORD
+                && (StringUtils.isEmpty(request.getUsername()) || StringUtils.isEmpty(request.getPassword())))
+            return new Tuple2(false, ClientError.invalidUserNameOrPassword());
+        else if (request.getGrantType() == GrantType.REFRESH_TOKEN && (StringUtils.isEmpty(request.getRefreshToken())))
+            return new Tuple2(false, ClientError.invalidRefreshToken());
+        else if (StringUtils.isEmpty(request.getUsername()))
+            return new Tuple2(false, ClientError.invalidUserNameOrPassword());
+        return new Tuple2(true, null);
     }
 
     public Mono<Void> logout(String accessToken, LogoutRequest logoutRequest) {

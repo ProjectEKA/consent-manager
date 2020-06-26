@@ -138,6 +138,24 @@ class SessionServiceTest {
     }
 
     @Test
+    void returnRefreshToken() {
+        var sessionRequest = sessionRequest().grantType(GrantType.REFRESH_TOKEN).build();
+        var expectedSession = session().build();
+        when(lockedUserService.validateLogin(sessionRequest.getUsername())).thenReturn(Mono.empty());
+        when(lockedUserService.removeLockedUser(sessionRequest.getUsername())).thenReturn(Mono.empty());
+        when(tokenService.tokenForRefreshToken(sessionRequest.getUsername(), sessionRequest.getRefreshToken()))
+                .thenReturn(Mono.just(expectedSession));
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties, otpAttemptService);
+
+        var sessionPublisher = sessionService.forNew(sessionRequest);
+
+        StepVerifier.create(sessionPublisher)
+                .assertNext(session -> assertThat(session).isEqualTo(expectedSession))
+                .verifyComplete();
+        verify(lockedUserService, times(1)).validateLogin(sessionRequest.getUsername());
+    }
+
+    @Test
     public void shouldBlackListToken() {
         String testAccessToken = "accessToken";
         String refreshToken = "refreshToken";

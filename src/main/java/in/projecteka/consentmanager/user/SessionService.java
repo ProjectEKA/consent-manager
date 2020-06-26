@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.exception.InvalidPasswordException;
+import in.projecteka.consentmanager.user.exception.InvalidRefreshTokenException;
 import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
@@ -17,6 +18,8 @@ import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
+import in.projecteka.consentmanager.user.model.GrantType;
+import io.vavr.Tuple2;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -44,11 +47,14 @@ public class SessionService {
     private final OtpAttemptService otpAttemptService;
 
     public Mono<Session> forNew(SessionRequest request) {
-        if (StringUtils.isEmpty(request.getUsername()) || StringUtils.isEmpty(request.getPassword()))
-            return Mono.error(ClientError.invalidUserNameOrPassword());
-
+        var checkIsEmpty = credentialsNotEmpty(request);
+        if(!checkIsEmpty._1){
+            return Mono.error(checkIsEmpty._2);
+        }
         return lockedUserService.validateLogin(request.getUsername())
-                .then(tokenService.tokenForUser(request.getUsername(), request.getPassword())
+                .then(request.getGrantType() == GrantType.PASSWORD
+                        ? tokenService.tokenForUser(request.getUsername(), request.getPassword())
+                        : tokenService.tokenForRefreshToken(request.getUsername(), request.getRefreshToken())
                         .flatMap(session -> lockedUserService.removeLockedUser(request.getUsername()).thenReturn(session))
                         .doOnError(error -> logger.error(error.getMessage(), error))
                         .onErrorResume(error ->
@@ -57,8 +63,22 @@ public class SessionService {
                                 return lockedUserService.createOrUpdateLockedUser(request.getUsername())
                                         .then(Mono.error(ClientError.invalidUserNameOrPassword()));
                             }
+                            else if (error instanceof InvalidRefreshTokenException) {
+                                return lockedUserService.createOrUpdateLockedUser(request.getUsername())
+                                        .then(Mono.error(ClientError.invalidRefreshToken()));
+                            }
                             return Mono.error(error);
                         }));
+    }
+    private Tuple2<Boolean, ClientError> credentialsNotEmpty(SessionRequest request){
+        if (request.getGrantType() == GrantType.PASSWORD
+                && (StringUtils.isEmpty(request.getUsername()) || StringUtils.isEmpty(request.getPassword())))
+            return new Tuple2(false, ClientError.invalidUserNameOrPassword());
+        else if (request.getGrantType() == GrantType.REFRESH_TOKEN && (StringUtils.isEmpty(request.getRefreshToken())))
+            return new Tuple2(false, ClientError.invalidRefreshToken());
+        else if (StringUtils.isEmpty(request.getUsername()))
+            return new Tuple2(false, ClientError.invalidUserNameOrPassword());
+        return new Tuple2(true, null);
     }
 
     public Mono<Void> logout(String accessToken, LogoutRequest logoutRequest) {

@@ -152,7 +152,7 @@ docker volume rm $(docker volume ls -qf dangling=true)
 
     ```bash
     cd client-registry
-    ./graldew bootRun
+    ./gradlew bootRun
     ```
 
 **Note:** In case, if default values specified in the [application.properties](http://application.properties) are not you use, you can change them accordingly and run.

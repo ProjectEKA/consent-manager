@@ -61,7 +61,7 @@
 
 ```bash
 docker-compose -f docker-compose-infra-lite.yml down
-docker system prune -a
+docker system prune -a -f
 docker volume rm $(docker volume ls -qf dangling=true)
 ```
 

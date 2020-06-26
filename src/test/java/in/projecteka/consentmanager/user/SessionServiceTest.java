@@ -137,6 +137,28 @@ class SessionServiceTest {
                 .verify();
     }
 
+    @ParameterizedTest
+    @CsvSource({
+            ",",
+            "empty",
+            "null"
+    })
+    void returnUnAuthorizedErrorWhenRefreshTokenIsEmpty(
+            @ConvertWith(NullableConverter.class) String value) {
+        var sessionRequest = sessionRequest()
+                .grantType(GrantType.REFRESH_TOKEN)
+                .refreshToken(value)
+                .build();
+        SessionService sessionService = new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties, otpAttemptService);
+
+
+        var sessionPublisher = sessionService.forNew(sessionRequest);
+
+        StepVerifier.create(sessionPublisher)
+                .expectErrorSatisfies(throwable -> assertThat(((ClientError) throwable).getHttpStatus() == UNAUTHORIZED))
+                .verify();
+    }
+
     @Test
     void returnRefreshToken() {
         var sessionRequest = sessionRequest().grantType(GrantType.REFRESH_TOKEN).build();

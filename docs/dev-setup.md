@@ -49,21 +49,23 @@
 - Rabbitmq
 - Postgres
 - Keycloak
-- Elastic *
-- Kibana *
-- Redis *
+- Orthanc *
+- Elastic **
+- Kibana **
+- Redis **
 
-(*) - Optional for local setup
+(*) - Needed only for HIU when dicom image transferred from HIP
+(**) - Optional for local setup
 
 ## Clean up (recommended always)
 
 1. Run following commands to clean up your local system, before running any infra setup
 
-```bash
-docker-compose -f docker-compose-infra-lite.yml down
-docker system prune -a
-docker volume rm $(docker volume ls -qf dangling=true)
-```
+    ```bash
+    docker-compose -f docker-compose-infra-lite.yml down
+    docker system prune -a
+    docker volume rm $(docker volume ls -qf dangling=true)
+    ```
 
 ## Setup infra using docker before running services:
 
@@ -80,7 +82,7 @@ docker volume rm $(docker volume ls -qf dangling=true)
         # if you see any errors, run the docker-compose again
    
     docker exec -it $(docker ps -aqf "name=^postgres$") /bin/bash
-    psql -U postgres -H consent_manager
+    psql -U postgres consent_manager
     \d # should list all the tables
     \c health_information_user
     \d # should list all the tables
@@ -134,14 +136,14 @@ docker volume rm $(docker volume ls -qf dangling=true)
     1. Clone [infrastructure](https://github.com/ProjectEKA/infrastructure) repo
     2. Run the following commands
 
-    ```bash
-    docker-compose -f docker-compose-rabbitmq.yml up -d
-    ./rabbitmqDeploy.sh
-
-    docker exec -it $(docker ps -aqf "name=^rabbitmq$") /bin/bash
-    rabbitmqctl list_queues  # should see all the queues
-    exit
-    ```
+        ```bash
+        docker-compose -f docker-compose-rabbitmq.yml up -d
+        ./rabbitmqDeploy.sh
+    
+        docker exec -it $(docker ps -aqf "name=^rabbitmq$") /bin/bash
+        rabbitmqctl list_queues  # should see all the queues
+        exit
+        ```
 
 ## How to 🏃🏻‍♀️ services
 
@@ -162,10 +164,10 @@ docker volume rm $(docker volume ls -qf dangling=true)
 1. Clone [otp-service](https://github.com/ProjectEKA/otp_service)
 2. Run through command line
 
-```bash
-cd otp-service
-dotnet run --project src/In.ProjectEKA.OtpService/In.ProjectEKA.OtpService.csproj --environment "local"
-```
+    ```bash
+    cd otp-service
+    dotnet run --project src/In.ProjectEKA.OtpService/In.ProjectEKA.OtpService.csproj --environment "local"
+    ```
 
 ### Gateway
 
@@ -173,10 +175,10 @@ dotnet run --project src/In.ProjectEKA.OtpService/In.ProjectEKA.OtpService.cspro
 2. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `gateway` under `credentials` tab, and use it for a CLIENT_SECRET (client under *central-registry* realm)
 3. Run through command line
 
-```bash
-cd gateway
-CLIENT_SECRET=${CLIENT_SECRET} ./gradlew bootRunLocal
-```
+    ```bash
+    cd gateway
+    CLIENT_SECRET=${CLIENT_SECRET} ./gradlew bootRunLocal
+    ```
 
 ### Consent-Manager
 
@@ -185,21 +187,38 @@ CLIENT_SECRET=${CLIENT_SECRET} ./gradlew bootRunLocal
 3. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients](http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients) of `consent-manager` under `credentials` tab, and use it for **KEYCLOAK_CLIENTSECRET** (client under *consent-manager* realm)
 4. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `ncg` under `credentials` tab, and use it for **GATEWAY_CLIENTSECRET** (client under *central-registry* realm)
 5. Run through command line
-
-```bash
-cd consent-manager
-GATEWAY_CLIENTSECRET=${GATEWAY_CLIENTSECRET} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew bootRunLocal
-```
+    
+    ```bash
+    cd consent-manager
+    GATEWAY_CLIENTSECRET=${GATEWAY_CLIENTSECRET} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew bootRunLocal
+    ```
 
 ### Hip-Service
 
 1. Clone [hip-service](https://github.com/ProjectEKA/hip-service)
 2. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `10000005` under `credentials` tab, and use it for **CLIENT_SECRET** (client under *central-registry* realm)
 3. Run through command line
+    ```bash
+    cd hip-service
+    cp src/In.ProjectEKA.DefaultHip/Resources/*.json src/In.ProjectEKA.HipService/
+    export Gateway__clientSecret=${CLIENT_SECRET}
+    dotnet run --project src/In.ProjectEKA.HipService/In.ProjectEKA.HipService.csproj --environment="local"
+    ```
 
-```bash
-cd hip-service
-cp src/In.ProjectEKA.DefaultHip/Resources/*.json src/In.ProjectEKA.HipService/
-export Gateway__clientSecret=${CLIENT_SECRET}
-dotnet run --project src/In.ProjectEKA.HipService/In.ProjectEKA.HipService.csproj --environment="local"
-```
+### health-information-user (HIU)
+
+1. Clone [hiu-service](https://github.com/ProjectEKA/health-information-user)
+2. Do the one time user setup, before proceeding further.
+
+    ```bash
+    docker exec -it $(docker ps -aqf "name=^postgres$") /bin/bash
+    psql -U postgres health_information_user
+    insert into "user" (username, password, role, verified) values ('admin', '$2a$04$WW.a3wKaiL2/7xWJc4jUmu4/55aJnwBJscZ.o18X.zLZcOdpwQGQa', 'ADMIN', true);
+    insert into "user" (username, password, role, verified) values ('lakshmi', '$2a$04$WW.a3wKaiL2/7xWJc4jUmu4/55aJnwBJscZ.o18X.zLZcOdpwQGQa', 'DOCTOR', true);
+    ```
+3. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `10000002` under `credentials` tab, and use it for **CLIENT_SECRET** (client under *central-registry* realm)
+4. Run through command line
+
+    ```bash
+    CLIENT_SECRET=${CLIENT_SECRET} ./gradlew bootRunLocal
+    ```

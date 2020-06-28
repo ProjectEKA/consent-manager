@@ -39,7 +39,7 @@
 - [Central Registry](https://github.com/ProjectEKA/Client-Registry)
 - [Otp-Service](https://github.com/ProjectEKA/otp_service)
 
-## Frontends:
+## Front-ends:
 
 - [Jatayu](https://github.com/ProjectEKA/Jataayu)
 - [HIU-UI](https://github.com/ProjectEKA/hiu-ui)
@@ -222,3 +222,26 @@
     ```bash
     CLIENT_SECRET=${CLIENT_SECRET} ./gradlew bootRunLocal
     ```
+   
+## How to 🏃🏻‍♀️ front-ends
+
+### HIU-UI
+
+1. Run the following command
+
+    *Note:* This is with an assumption that hiu-service is running on port **8003**
+    
+    ```bash
+    docker run -d -p 5000:5000 projecteka/hiu-ui:local
+    ```
+
+2. Since hiu-service is running on different port, **same-origin-policy** will prevent you to access the UI by default.
+   In order to avoid, run the following command to get an independent instance of chrome without **same-origin-policy**
+
+    ```bash
+   open -na Google\ Chrome --args --disable-web-security --user-data-dir=$HOME/profile-folder-name
+   ``` 
+
+3. Later versions of **Safari** allow you to Disable Cross-Origin Restrictions.
+   Just enable the developer menu from Preferences >> Advanced, and select **"Disable Cross-Origin Restrictions"** from the develop menu.
+   If you want **local** only, then you only need to enable the developer menu, and select **"Disable local file restrictions"** from the develop menu. 

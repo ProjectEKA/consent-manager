@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
@@ -71,7 +72,8 @@ public class ConsentConfiguration {
                                                 LinkServiceProperties linkServiceProperties,
                                                 IdentityService identityService,
                                                 ConceptValidator conceptValidator,
-                                                GatewayServiceProperties gatewayServiceProperties) {
+                                                GatewayServiceProperties gatewayServiceProperties,
+                                                ClientRegistryProperties clientRegistryProperties) {
         return new ConsentManager(
                 new UserServiceClient(builder, userServiceProperties.getUrl(),
                         identityService::authenticate,
@@ -84,7 +86,7 @@ public class ConsentConfiguration {
                 centralRegistry,
                 postConsentRequest,
                 new PatientServiceClient(builder, identityService::authenticate, linkServiceProperties.getUrl()),
-                new CMProperties(identityService.getConsentManagerId()),
+                new CMProperties(clientRegistryProperties.getClientId()),
                 conceptValidator,
                 new ConsentArtefactQueryGenerator(),
                 new ConsentManagerClient(builder,

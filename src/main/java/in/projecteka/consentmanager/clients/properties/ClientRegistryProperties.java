@@ -11,5 +11,4 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConstructorBinding
 public class ClientRegistryProperties {
     private final String url;
-    private final String clientId;
 }

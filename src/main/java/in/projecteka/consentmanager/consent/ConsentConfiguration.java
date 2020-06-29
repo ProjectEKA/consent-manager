@@ -72,8 +72,7 @@ public class ConsentConfiguration {
                                                 LinkServiceProperties linkServiceProperties,
                                                 IdentityService identityService,
                                                 ConceptValidator conceptValidator,
-                                                GatewayServiceProperties gatewayServiceProperties,
-                                                ClientRegistryProperties clientRegistryProperties) {
+                                                GatewayServiceProperties gatewayServiceProperties) {
         return new ConsentManager(
                 new UserServiceClient(builder, userServiceProperties.getUrl(),
                         identityService::authenticate,
@@ -86,7 +85,7 @@ public class ConsentConfiguration {
                 centralRegistry,
                 postConsentRequest,
                 new PatientServiceClient(builder, identityService::authenticate, linkServiceProperties.getUrl()),
-                new CMProperties(clientRegistryProperties.getClientId()),
+                new CMProperties(gatewayServiceProperties.getClientId()),
                 conceptValidator,
                 new ConsentArtefactQueryGenerator(),
                 new ConsentManagerClient(builder,

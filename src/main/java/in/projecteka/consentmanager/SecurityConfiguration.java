@@ -122,6 +122,7 @@ public class SecurityConfiguration {
                 "/otpsession/verify",
                 "/otpsession/permit",
                 "/sessions",
+                "/health",
                 "/**.html",
                 "/**.js",
                 "/**.yaml",

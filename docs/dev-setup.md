@@ -61,11 +61,11 @@
 
 1. Run following commands to clean up your local system, before running any infra setup
 
-    ```bash
-    docker-compose -f docker-compose-infra-lite.yml down
-    docker system prune -a
-    docker volume rm $(docker volume ls -qf dangling=true)
-    ```
+  ```bash
+  docker-compose -f docker-compose-infra-lite.yml down
+  docker system prune -a -f
+  docker volume rm $(docker volume ls -qf dangling=true)
+  ```
 
 ## Setup infra using docker before running services:
 
@@ -154,7 +154,7 @@
 
     ```bash
     cd client-registry
-    ./graldew bootRun
+    ./gradlew bootRun
     ```
 
 **Note:** In case, if default values specified in the [application.properties](http://application.properties) are not you use, you can change them accordingly and run.
@@ -241,7 +241,7 @@
     ```bash
    open -na Google\ Chrome --args --disable-web-security --user-data-dir=$HOME/profile-folder-name
    ``` 
-
+   
 3. Later versions of **Safari** allow you to Disable Cross-Origin Restrictions.
    Just enable the developer menu from Preferences >> Advanced, and select **"Disable Cross-Origin Restrictions"** from the develop menu.
    If you want **local** only, then you only need to enable the developer menu, and select **"Disable local file restrictions"** from the develop menu. 

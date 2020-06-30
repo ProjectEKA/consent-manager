@@ -62,7 +62,7 @@ public class LoadingCacheAdapter implements CacheAdapter<String, String> {
             return Mono.just(1L);
         }
         long increment = Long.parseLong(value) + 1;
-        loadingCache.put(key,String.valueOf(increment));
+        loadingCache.put(key, String.valueOf(increment));
         return Mono.just(increment);
     }
 }

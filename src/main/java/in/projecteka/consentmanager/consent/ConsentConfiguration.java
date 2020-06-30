@@ -96,10 +96,9 @@ public class ConsentConfiguration {
 
     @Bean
     public ConsentScheduler consentScheduler(
-            ConsentRequestRepository repository,
             ConsentArtefactRepository consentArtefactRepository,
             ConsentNotificationPublisher consentNotificationPublisher) {
-        return new ConsentScheduler(repository, consentArtefactRepository, consentNotificationPublisher);
+        return new ConsentScheduler(consentArtefactRepository, consentNotificationPublisher);
     }
 
     @Bean

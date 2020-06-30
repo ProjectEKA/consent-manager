@@ -149,7 +149,7 @@ public class UserService {
                                 otpAttemptAction,
                                 userName)
                         .then(otpServiceClient.send(otpRequest))
-                        .then(signupService.updatedVerfiedSession(otpRequest.getSessionId(), userName, sendOtpAction)))
+                        .then(signupService.updatedVerifiedSession(otpRequest.getSessionId(), userName, sendOtpAction)))
                 .orElse(Mono.error(new InvalidRequestException("invalid.identifier.type")));
     }
 
@@ -164,7 +164,6 @@ public class UserService {
         if (!validateOtpVerification(otpVerification)) {
             return Mono.error(new InvalidRequestException(INVALID_REQUEST_BODY));
         }
-
         return signupService.getMobileNumber(otpVerification.getSessionId())
                 .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
                 .flatMap(mobileNumber -> {
@@ -305,8 +304,8 @@ public class UserService {
     }
 
     private Mono<Void> createUserWith(String mobileNumber,
-                                         CoreSignUpRequest coreSignUpRequest,
-                                         KeycloakUser keycloakUser) {
+                                      CoreSignUpRequest coreSignUpRequest,
+                                      KeycloakUser keycloakUser) {
         User user = User.from(coreSignUpRequest, mobileNumber);
         return userRepository.save(user)
                 .then(tokenService.tokenForAdmin()

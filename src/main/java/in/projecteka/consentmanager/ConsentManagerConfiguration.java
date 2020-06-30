@@ -18,8 +18,8 @@ import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisOptions;
-import in.projecteka.consentmanager.common.health.Keycloak;
-import in.projecteka.consentmanager.common.health.Postgres;
+import in.projecteka.consentmanager.common.heartbeat.Heartbeat;
+import in.projecteka.consentmanager.common.heartbeat.RabbitmqOptions;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
@@ -214,12 +214,9 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public Keycloak keycloak(IdentityServiceProperties identityServiceProperties){
-        return new Keycloak(identityServiceProperties);
-    }
-
-    @Bean
-    public Postgres postgres(DbOptions dbOptions) {
-        return new Postgres(dbOptions);
+    public Heartbeat heartbeat(IdentityServiceProperties identityServiceProperties,
+                               DbOptions dbOptions,
+                               RabbitmqOptions rabbitmqOptions) {
+        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions);
     }
 }

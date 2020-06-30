@@ -60,7 +60,7 @@ public class TransactionPinService {
                 .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
                 .flatMap(val -> transactionPinRepository.updateRequestId(requestId, patientId)
                         .then(transactionPinRepository.getTransactionPinByPatient(patientId)
-                                .filter(transactionPin -> !transactionPin.isEmpty())
+                                .filter(Optional::isPresent)
                                 .switchIfEmpty(Mono.error(ClientError.transactionPinNotFound()))
                                 .flatMap(transactionPin -> dayCache.exists(blockedKey(patientId))
                                         .filter(exists -> !exists)

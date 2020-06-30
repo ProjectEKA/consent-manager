@@ -6,15 +6,22 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.String.format;
+
 @Repository
 @AllArgsConstructor
 public class OtpAttemptRepository {
+
+    private final Logger logger = LoggerFactory.getLogger(OtpAttemptRepository.class);
+
 
     private static final String INSERT_OTP_ATTEMPT = "INSERT INTO " +
             "otp_attempt (session_id ,cm_id, identifier_type, identifier_value, status, action) VALUES ($1,$2,$3,$4,$5,$6)";
@@ -46,10 +53,12 @@ public class OtpAttemptRepository {
     }
 
     public Mono<List<OtpAttempt>> getOtpAttempts(OtpAttempt attempt, int maxOtpAttempts) {
+        logger.info(format("getting otp request-- attempt: %s  maxOtpAttempts: %s ", attempt,maxOtpAttempts));
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_OTP_ATTEMPT)
                 .execute(Tuple.of(attempt.getIdentifierValue(), maxOtpAttempts, attempt.getAction().toString(), attempt.getCmId(), attempt.getIdentifierType()),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(new DbOperationError("Failed to select from otp attempt"));
                             } else {
                                 List<OtpAttempt> attempts = new ArrayList<>();

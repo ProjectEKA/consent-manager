@@ -1617,11 +1617,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{HIU_HOST}}/patients/Shreya@ncg",
+							"raw": "{{HIU_HOST}}/v1/patients/Shreya@ncg",
 							"host": [
 								"{{HIU_HOST}}"
 							],
 							"path": [
+								"v1",
 								"patients",
 								"Shreya@ncg"
 							]
@@ -1828,6 +1829,54 @@
 							"path": [
 								"consent",
 								"notification"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "51c7be74-e15f-4ee1-8a73-10d001796a21",
+								"exec": [
+									"pm.test(\"Update password\", function () {",
+									"    var request = JSON.parse(pm.request.body.raw);",
+									"    pm.environment.set(\"HIU_PASSWORD\", request.newPassword);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{HIU_AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"oldPassword\": \"{{HIU_PASSWORD}}\",\n  \"newPassword\": \"Password@1\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HIU_HOST}}/users/password",
+							"host": [
+								"{{HIU_HOST}}"
+							],
+							"path": [
+								"users",
+								"password"
 							]
 						}
 					},

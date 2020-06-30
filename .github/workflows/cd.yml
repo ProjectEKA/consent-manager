@@ -1,0 +1,54 @@
+name: 'Deploy'
+
+on:
+  push:
+    branches:
+      - helm_deploy
+
+
+jobs:
+  deployment:
+    runs-on: 'ubuntu-latest'
+    steps:
+    - name: 'Checkout'
+      uses: 'actions/checkout@v1'
+    
+    - name: Install kubectl
+      run: "sudo apt-get update && sudo apt-get install -y apt-transport-https gnupg2 && curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -"
+    - run: "sudo echo 'deb https://apt.kubernetes.io/ kubernetes-xenial main' | sudo  tee -a /etc/apt/sources.list.d/kubernetes.list"
+    - run: "sudo apt-get update && sudo apt-get install -y kubectl && mkdir ~/.kube"
+    - shell: bash
+      env:
+        KUBECONFIG: ${{ secrets.KUBECONFIG }}
+      run: |
+        echo "$KUBECONFIG" > ~/.kube/config
+      
+    - name: Install Helm
+      run: "curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod 700 get_helm.sh &&./get_helm.sh"
+
+    - name: 'Helm Deploy'
+      run: |
+        helm upgrade --install --wait --namespace nha consent-manager Charts/consent-manager
+        --set-string image.tag=$RELEASE_VERSION
+        --set-string secrets.Auth_Token=$Auth_Token
+        --set-string secrets.KEY_CLOAK_CONSENT_CLIENT_SECRET=$KEY_CLOAK_CONSENT_CLIENT_SECRET
+        --set-string secrets.GATEWAY_CLIENT_SECRET=$GATEWAY_CLIENT_SECRET
+        --set-string secrets.KEY_CLOAK_CONSENT_PASSWORD=$KEY_CLOAK_CONSENT_PASSWORD 
+        --set-string secrets.POSTGRES_HOST=$POSTGRES_HOST
+        --set-string secrets.POSTGRES_PORT=$POSTGRES_PORT
+        --set-string secrets.POSTGRES_USER=$POSTGRES_USER
+        --set-string secrets.POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+        --set-string secrets.REDIS_HOST=$REDIS_HOST 
+        --set-string secrets.REDIS_PASSWORD=$REDIS_PASSWORD 
+      env:
+        RELEASE_VERSION: $RELEASE_VERSION
+        Auth_Token: ${{ secrets.Auth_Token }}
+        KEY_CLOAK_CONSENT_CLIENT_SECRET: ${{ secrets.KEY_CLOAK_CONSENT_CLIENT_SECRET }}
+        KEY_CLOAK_CONSENT_PASSWORD: ${{ secrets.KEY_CLOAK_CONSENT_PASSWORD }}
+        GATEWAY_CLIENT_SECRET: ${{ secrets.GATEWAY_CLIENT_SECRET }}
+        POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+        POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+        POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+        POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        REDIS_HOST: ${{ secrets.REDIS_HOST }}
+        REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}

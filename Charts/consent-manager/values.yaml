@@ -1,0 +1,94 @@
+# Default values for consent-manager.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: "ganesan92/consent-manager"
+  tag: "92f47fd"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: true
+  hosts:
+    - consent-manager.dev.pmjay.gov.in
+  uriPrefix: "/"
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+environmentVariables:
+  AUTH_SERVER_URL: http://client-registry:8080
+  CENTRAL_REGISTRY_ID: ncg
+  CENTRAL_REGISTRY_JWK_URL: http://client-registry:8080/certs
+  CONSENT_EXPIRY_CRON_EXPRESSION: 0 0 * ? * *
+  CONSENT_MANAGER_DB_NAME: consent_manager
+  CONSENT_MANAGER_URL: http://localhost:8000
+  CONSENT_REQUEST_EXPIRY: "60"
+  CONSENT_REQUEST_EXPIRY_CRON_EXPRESSION: 0 0 0/12 ? * *
+  CONSENT_SERVICE_URL: http://localhost:8000
+  COOL_OF_PERIOD: "480"
+  Client_Registry_Url: http://client-registry:8080
+  DB_CONNECTION_POOL_SIZE: "5"
+  DEFAULT_PAGE_SIZE: "20"
+  GATEWAY_BASE_URL: http://gateway:8000/v1
+  GATEWAY_ENABLED: "true"
+  GATEWAY_REQUEST_TIMEOUT: "8000"
+  JWT_SECRET: secret
+  KEY_CLOAK_CONSENT_CLIENT_ID: ncg
+  KEY_CLOAK_CONSENT_USER_NAME: consent-service-admin-user
+  KEY_CLOAK_JWK_URL: http://keycloak:8080/auth/realms/consent-manager/protocol/openid-connect/certs
+  KEY_CLOAK_TOKEN_ISSUER: http://keycloak:8080/auth/realms/consent-manager
+  KEY_CLOAK_URL: http://keycloak:8080/auth
+  LINK_SERVICE_URL: http://localhost:8000
+  LINK_TRANSACTION_TIMEOUT: "5000"
+  LISTENERS_MAXIMUM_RETRIES: "3"
+  LISTENERS_RETRY_INTERVAL: "1000"
+  LOG_LOCATION: /applogs/app.log
+  MAXIMUM_INVALID_ATTEMPTS: "5"
+  MAX_INVALID_OTP_ATTEMPTS: "5"
+  MAX_OTP_ATTEMPTS: "5"
+  MAX_OTP_ATTEMPTS_PERIOD_IN_MIN: "10"
+  MAX_PAGE_SIZE: "100"
+  OTP_ATTEMPTS_BLOCK_PERIOD_IN_MIN: "10"
+  OTP_EXPIRY_IN_MINUTES: "5"
+  OTP_INVALID_ATTEMPT_BLOCK_PERIOD_IN_MIN: "240"
+  Otp_Service_Url: http://otp
+  RABBITMQ_HOST: rabbitmq
+  RABBITMQ_PORT: "5672"
+  TRANSACTION_PIN_DIGIT_SIZE: "4"
+  TRANSACTION_PIN_TOKEN_VALIDITY: "2"
+  USER_CREATION_TOKEN_VALIDITY: "5"
+  USER_ID_SUFFIX: '@ncg'
+  User_Service_Url: 'http://localhost:8000 '
+  GATEWAY_CLIENT_ID: ncg
+  CENTRAL_REGISTRY_JWK_URL: 'http://gateway:8000/v1/certs'
+
+secrets: {}
+

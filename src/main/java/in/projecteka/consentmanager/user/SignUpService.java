@@ -5,7 +5,13 @@ import in.projecteka.consentmanager.user.exception.InvalidSessionException;
 import in.projecteka.consentmanager.user.model.SendOtpAction;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -35,11 +41,12 @@ public class SignUpService {
 
     public Mono<SignUpSession> cacheAndSendSession(String sessionId, String mobileNumber) {
         SignUpSession signupSession = new SignUpSession(sessionId);
-        return unverifiedSessions.put(signupSession.getSessionId(), mobileNumber)
-                .then(Mono.just(signupSession));
+        return unverifiedSessions.put(signupSession.getSessionId(), mobileNumber).thenReturn(signupSession);
     }
 
-    public Mono<SignUpSession> updatedVerfiedSession(String sessionId, String userName, SendOtpAction action) {
+    public Mono<SignUpSession> updatedVerifiedSession(String sessionId,
+                                                      String userName,
+                                                      SendOtpAction action) {
         SignUpSession signupSession = new SignUpSession(sessionId);
         String sessionIdWithAction = action.toString() + signupSession.getSessionId();
         return verifiedSessions.put(sessionIdWithAction, userName)

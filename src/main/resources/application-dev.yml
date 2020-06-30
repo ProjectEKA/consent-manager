@@ -13,14 +13,14 @@ consentmanager:
     consentExpiryCronExpr: '0 0 * ? * *'
     consentRequestExpiryCronExpr: '0 0 0/12 ? * *'
   clientregistry:
-    XAuthToken: f1a857f2-0a60-45bc-8ca2-f881dbb700c6
-    clientId: consent-manager
     url: http://localhost:8080
-    jwkUrl: http://localhost:8080/certs
   gatewayservice:
-    baseUrl: http://host.docker.internal:8081/v1
-    requestTimeout: 1000
     enabled: true
+    baseUrl: http://localhost:8004/v1
+    requestTimeout: 10000
+    clientSecret: 2a38856a-61f0-4bbd-9d68-9e5243cdb73a
+    clientId: ncg
+    jwkUrl: http://localhost:8080/certs
   userservice:
     url: http://localhost:9000
     transactionPinDigitSize: 4
@@ -43,8 +43,8 @@ consentmanager:
     expiryInMinutes: 5
   keycloak:
     baseUrl: http://localhost:9001/auth
-    clientId: consent-manager
-    clientSecret: b48e9f88-6fac-4588-9171-79242aa7bb0c
+    clientId: ncg
+    clientSecret: 12d44954-b122-4b53-acbf-7b4c38fa9cf8
     userName: consentmanageruser
     password: user
     jwkUrl: http://localhost:9001/auth/realms/consent-manager/protocol/openid-connect/certs
@@ -76,3 +76,5 @@ spring:
   rabbitmq:
     host: localhost
     port: 5672
+    username: guest
+    password: guest

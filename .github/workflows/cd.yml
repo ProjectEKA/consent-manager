@@ -29,7 +29,6 @@ jobs:
     - name: 'Helm Deploy'
       run: |
         helm upgrade --install --wait --namespace nha consent-manager Charts/consent-manager \
-        --set-string image.tag=$RELEASE_VERSION \
         --set-string secrets.Auth_Token=$Auth_Token \
         --set-string secrets.KEY_CLOAK_CONSENT_CLIENT_SECRET=$KEY_CLOAK_CONSENT_CLIENT_SECRET \
         --set-string secrets.GATEWAY_CLIENT_SECRET=$GATEWAY_CLIENT_SECRET \

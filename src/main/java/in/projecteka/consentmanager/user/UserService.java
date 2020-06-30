@@ -116,7 +116,6 @@ public class UserService {
     }
 
     public Mono<SignUpSession> sendOtp(UserSignUpEnquiry userSignupEnquiry) {
-        logger.info(format("UserSignupEnquiry identifierType: %s  identifier: %s", userSignupEnquiry.getIdentifierType(), userSignupEnquiry.getIdentifier()));
         return getOtpRequest(userSignupEnquiry)
                 .map(otpRequest -> otpAttemptService
                         .validateOTPRequest(userSignupEnquiry.getIdentifierType(),

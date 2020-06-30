@@ -14,7 +14,6 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.lang.String.format;
 
 @Repository
 @AllArgsConstructor
@@ -53,7 +52,6 @@ public class OtpAttemptRepository {
     }
 
     public Mono<List<OtpAttempt>> getOtpAttempts(OtpAttempt attempt, int maxOtpAttempts) {
-        logger.info(format("getting otp request-- attempt: %s  maxOtpAttempts: %s ", attempt,maxOtpAttempts));
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_OTP_ATTEMPT)
                 .execute(Tuple.of(attempt.getIdentifierValue(), maxOtpAttempts, attempt.getAction().toString(), attempt.getCmId(), attempt.getIdentifierType()),
                         handler -> {

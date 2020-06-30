@@ -4,8 +4,6 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
 import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -14,19 +12,15 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.lang.String.format;
 
 @Service
 @AllArgsConstructor
 public class OtpAttemptService {
 
-    private final Logger logger = LoggerFactory.getLogger(OtpAttemptService.class);
-
     private final OtpAttemptRepository otpAttemptRepository;
     private final UserServiceProperties userServiceProperties;
 
     public Mono<Void> validateOTPRequest(String identifierType, String identifierValue, OtpAttempt.Action action, String cmId) {
-        logger.info(format("validating otp request-- identifierType: %s  identifierValue: %s  otpAction: %s  cmId: %s", identifierType,identifierValue,action,cmId));
         OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
                 .identifierType(identifierType)
                 .identifierValue(identifierValue)

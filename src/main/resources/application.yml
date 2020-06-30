@@ -53,7 +53,7 @@ consentmanager:
     issuer: ${KEY_CLOAK_TOKEN_ISSUER}
   db:
     host: ${POSTGRES_HOST}
-    port: ${CM_POSTGRES_PORT:5432}
+    port: ${POSTGRES_PORT:5432}
     schema: ${CONSENT_MANAGER_DB_NAME}
     user: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}

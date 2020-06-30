@@ -28,17 +28,17 @@ jobs:
 
     - name: 'Helm Deploy'
       run: |
-        helm upgrade --install --wait --namespace nha consent-manager Charts/consent-manager
-        --set-string image.tag=$RELEASE_VERSION
-        --set-string secrets.Auth_Token=$Auth_Token
-        --set-string secrets.KEY_CLOAK_CONSENT_CLIENT_SECRET=$KEY_CLOAK_CONSENT_CLIENT_SECRET
-        --set-string secrets.GATEWAY_CLIENT_SECRET=$GATEWAY_CLIENT_SECRET
-        --set-string secrets.KEY_CLOAK_CONSENT_PASSWORD=$KEY_CLOAK_CONSENT_PASSWORD 
-        --set-string secrets.POSTGRES_HOST=$POSTGRES_HOST
-        --set-string secrets.POSTGRES_PORT=$POSTGRES_PORT
-        --set-string secrets.POSTGRES_USER=$POSTGRES_USER
-        --set-string secrets.POSTGRES_PASSWORD=$POSTGRES_PASSWORD
-        --set-string secrets.REDIS_HOST=$REDIS_HOST 
+        helm upgrade --install --wait --namespace nha consent-manager Charts/consent-manager \
+        --set-string image.tag=$RELEASE_VERSION \
+        --set-string secrets.Auth_Token=$Auth_Token \
+        --set-string secrets.KEY_CLOAK_CONSENT_CLIENT_SECRET=$KEY_CLOAK_CONSENT_CLIENT_SECRET \
+        --set-string secrets.GATEWAY_CLIENT_SECRET=$GATEWAY_CLIENT_SECRET \
+        --set-string secrets.KEY_CLOAK_CONSENT_PASSWORD=$KEY_CLOAK_CONSENT_PASSWORD \
+        --set-string secrets.POSTGRES_HOST=$POSTGRES_HOST \
+        --set-string secrets.POSTGRES_PORT=$POSTGRES_PORT \
+        --set-string secrets.POSTGRES_USER=$POSTGRES_USER \
+        --set-string secrets.POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
+        --set-string secrets.REDIS_HOST=$REDIS_HOST \
         --set-string secrets.REDIS_PASSWORD=$REDIS_PASSWORD 
       env:
         RELEASE_VERSION: $RELEASE_VERSION

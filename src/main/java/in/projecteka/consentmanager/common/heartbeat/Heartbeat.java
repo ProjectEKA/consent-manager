@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.common.heartbeat;
 
+import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import in.projecteka.consentmanager.DbOptions;
 import in.projecteka.consentmanager.clients.model.Error;
@@ -8,7 +9,6 @@ import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties
 import in.projecteka.consentmanager.common.heartbeat.model.HeartbeatResponse;
 import in.projecteka.consentmanager.common.heartbeat.model.Status;
 import lombok.AllArgsConstructor;
-import com.rabbitmq.client.Connection;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -25,13 +25,12 @@ public class Heartbeat {
 
     public Mono<HeartbeatResponse> getStatus() {
         try {
-            if (isPostgresUp() && isKeycloakUp() && isRabbitMQUp() && isRedisUp()) {
-                return Mono.just(HeartbeatResponse.builder()
-                        .timeStamp(Instant.now().toString())
-                        .status(Status.UP)
-                        .build());
-            }
-            return Mono.just(HeartbeatResponse.builder()
+            return isPostgresUp() && isKeycloakUp() && isRabbitMQUp() && isRedisUp()
+                    ? Mono.just(HeartbeatResponse.builder()
+                    .timeStamp(Instant.now().toString())
+                    .status(Status.UP)
+                    .build())
+                    : Mono.just(HeartbeatResponse.builder()
                     .timeStamp(Instant.now().toString())
                     .status(Status.DOWN)
                     .error(Error.builder().code(ErrorCode.SERVICE_DOWN).message("Service down").build())

@@ -100,13 +100,12 @@ public class PatientsController {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/profile")
     public Mono<Void> create(@RequestBody SignUpRequest request,
-                                @RequestHeader(name = "Authorization") String token) {
+                             @RequestHeader(name = "Authorization") String token) {
         var signUpRequests = SignUpRequestValidator.validate(request, userService.getUserIdSuffix());
         return signUpRequests.isValid()
                ? Mono.justOrEmpty(signupService.sessionFrom(token))
                        .flatMap(sessionId -> userService.create(signUpRequests.get(), sessionId)
-                               .zipWith(Mono.just(sessionId))
-                               .flatMap(tuple -> signupService.removeOf(tuple.getT2()).thenReturn(tuple.getT1())))
+                               .then(signupService.removeOf(sessionId)))
                : Mono.error(new ClientError(BAD_REQUEST,
                        new ErrorRepresentation(new Error(INVALID_REQUESTER,
                                signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));

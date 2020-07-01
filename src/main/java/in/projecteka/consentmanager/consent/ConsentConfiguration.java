@@ -84,7 +84,7 @@ public class ConsentConfiguration {
                 centralRegistry,
                 postConsentRequest,
                 new PatientServiceClient(builder, identityService::authenticate, linkServiceProperties.getUrl()),
-                new CMProperties(identityService.getConsentManagerId()),
+                new CMProperties(gatewayServiceProperties.getClientId()),
                 conceptValidator,
                 new ConsentArtefactQueryGenerator(),
                 new ConsentManagerClient(builder,
@@ -96,10 +96,9 @@ public class ConsentConfiguration {
 
     @Bean
     public ConsentScheduler consentScheduler(
-            ConsentRequestRepository repository,
             ConsentArtefactRepository consentArtefactRepository,
             ConsentNotificationPublisher consentNotificationPublisher) {
-        return new ConsentScheduler(repository, consentArtefactRepository, consentNotificationPublisher);
+        return new ConsentScheduler(consentArtefactRepository, consentNotificationPublisher);
     }
 
     @Bean

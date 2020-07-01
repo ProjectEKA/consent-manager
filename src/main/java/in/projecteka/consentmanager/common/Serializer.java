@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
+import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
+
 public final class Serializer {
     private static final Logger logger = LoggerFactory.getLogger(Serializer.class);
 
@@ -20,7 +22,8 @@ public final class Serializer {
     private static final ObjectMapper mapper =
             new ObjectMapper()
                     .registerModule(new JavaTimeModule())
-                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                    .configure(WRITE_DATES_AS_TIMESTAMPS, false);
 
     @SneakyThrows
     public static <T> String from(T data) {

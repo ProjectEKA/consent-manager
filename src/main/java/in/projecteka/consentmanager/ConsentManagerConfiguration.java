@@ -18,6 +18,8 @@ import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisOptions;
+import in.projecteka.consentmanager.common.heartbeat.Heartbeat;
+import in.projecteka.consentmanager.common.heartbeat.RabbitmqOptions;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
@@ -209,5 +211,12 @@ public class ConsentManagerConfiguration {
     public GatewayTokenVerifier centralRegistryTokenVerifier(
             @Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
         return new GatewayTokenVerifier(jwkSet);
+    }
+
+    @Bean
+    public Heartbeat heartbeat(IdentityServiceProperties identityServiceProperties,
+                               DbOptions dbOptions,
+                               RabbitmqOptions rabbitmqOptions) {
+        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions);
     }
 }

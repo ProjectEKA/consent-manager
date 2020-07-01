@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "consent-manager.fullname" . }}
+  name: {{ include "fullname" . }}
   labels:
-    {{- include "consent-manager.labels" . | nindent 4 }}
+    {{- include "labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "consent-manager.selectorLabels" . | nindent 6 }}
+      {{- include "selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "consent-manager.selectorLabels" . | nindent 8 }}
+        {{- include "selectorLabels" . | nindent 8 }}
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
     {{- end }}
-      serviceAccountName: {{ include "consent-manager.serviceAccountName" . }}
+      serviceAccountName: {{ include "serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -36,7 +36,7 @@ spec:
             - name: {{ $key }}
               valueFrom:
                 secretKeyRef:
-                  name: consent-manager-credentials
+                  name: {{ include "fullname" . }}-credentials
                   key: {{ $key }}
             {{- end }}
           ports:
@@ -48,7 +48,7 @@ spec:
       volumes:
       - name: credentials
         secret:
-          secretName: consent-manager-credentials
+          secretName: {{ include "name" . }}-credentials
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

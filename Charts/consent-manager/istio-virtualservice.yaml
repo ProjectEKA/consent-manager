@@ -2,9 +2,9 @@
 # apiVersion: networking.istio.io/v1beta1
 # kind: VirtualService
 # metadata:
-#   name: {{ include "consent-manager.fullname" . }}
+#   name: {{ include "fullname" . }}
 #   labels:
-#     {{- include "consent-manager.labels" . | nindent 4 }}
+#     {{- include "labels" . | nindent 4 }}
 # spec:
 #   hosts:
 #   {{- toYaml .Values.ingress.hosts | nindent 2 }}

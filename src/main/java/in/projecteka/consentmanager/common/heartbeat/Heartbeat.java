@@ -46,7 +46,7 @@ public class Heartbeat {
             return Mono.just(HeartbeatResponse.builder()
                     .timeStamp(Instant.now().toString())
                     .status(Status.DOWN)
-                    .error(Error.builder().code(ErrorCode.SERVICE_DOWN).message(e.getMessage()).build())
+                    .error(Error.builder().code(ErrorCode.SERVICE_DOWN).message("Service down").build())
                     .build());
         }
     }

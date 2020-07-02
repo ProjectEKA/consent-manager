@@ -29,6 +29,8 @@ import io.lettuce.core.RedisURI;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
@@ -120,7 +122,7 @@ public class ConsentManagerConfiguration {
 
     @Bean
     public LockedUsersRepository lockedUsersRepository(DbOptions dbOptions) {
-        return new LockedUsersRepository(pgPool(dbOptions));
+        return new LockedUsersRepository(LoggerFactory.getLogger(LockedUsersRepository.class), pgPool(dbOptions));
     }
 
     @Bean

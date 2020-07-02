@@ -6,10 +6,13 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
 import reactor.core.publisher.Mono;
 
 @AllArgsConstructor
 public class LockedUsersRepository {
+
+    Logger logger;
 
     private static final String UPSERT_INVALID_ATTEMPTS = "INSERT INTO " +
             "locked_users (patient_id,is_locked) VALUES ($1, $2) " +
@@ -31,6 +34,7 @@ public class LockedUsersRepository {
                 .execute(Tuple.of(cmId, false),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(ClientError.failedToInsertLockedUser());
                                 return;
                             }
@@ -44,6 +48,7 @@ public class LockedUsersRepository {
                 .execute(Tuple.of(patientsId),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(ClientError.failedToUpdateLockedUser());
                                 return;
                             }
@@ -57,6 +62,7 @@ public class LockedUsersRepository {
                 .execute(Tuple.of(patientId),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(ClientError.failedToFetchLockedUser());
                                 return;
                             }

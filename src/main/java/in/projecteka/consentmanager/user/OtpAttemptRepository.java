@@ -44,6 +44,7 @@ public class OtpAttemptRepository {
                         otpAttempt.getAction().toString()),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(new DbOperationError("Failed to create otp attempt"));
                                 return;
                             }
@@ -73,6 +74,7 @@ public class OtpAttemptRepository {
                 .execute(Tuple.of(attempt.getIdentifierValue(), attempt.getAction().toString(), attempt.getCmId(), attempt.getIdentifierType()),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(new DbOperationError("Failed to delete from otp attempts"));
                             } else {
                                 monoSink.success();

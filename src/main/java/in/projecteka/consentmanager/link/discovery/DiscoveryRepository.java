@@ -4,11 +4,15 @@ import in.projecteka.consentmanager.common.DbOperation;
 import in.projecteka.consentmanager.common.DbOperationError;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
 public class DiscoveryRepository {
+
+    Logger logger = LoggerFactory.getLogger(DiscoveryRepository.class);
 
     private static final String INSERT_TO_DISCOVERY_REQUEST = "INSERT INTO discovery_request " +
             "(transaction_id, request_id, patient_id, hip_id) VALUES ($1, $2, $3, $4)";
@@ -26,6 +30,7 @@ public class DiscoveryRepository {
                         .execute(Tuple.of(transactionId.toString(), requestId.toString(), patientId, providerId),
                                 handler -> {
                                     if (handler.failed()) {
+                                        logger.error(handler.cause().getMessage(), handler.cause());
                                         monoSink.error(new DbOperationError());
                                         return;
                                     }

@@ -6,22 +6,29 @@ import in.projecteka.consentmanager.DbOptions;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
+import in.projecteka.consentmanager.common.cache.RedisOptions;
 import in.projecteka.consentmanager.common.heartbeat.model.HeartbeatResponse;
 import in.projecteka.consentmanager.common.heartbeat.model.Status;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.SocketAddress;
+import java.net.Socket;
+import java.net.InetSocketAddress;
+
 import java.time.Instant;
 import java.util.concurrent.TimeoutException;
 
 @AllArgsConstructor
 public class Heartbeat {
-    private IdentityServiceProperties identityServiceProperties;
-    private DbOptions dbOptions;
-    private RabbitmqOptions rabbitmqOptions;
+    private final IdentityServiceProperties identityServiceProperties;
+    private final DbOptions dbOptions;
+    private final RabbitmqOptions rabbitmqOptions;
+    private final RedisOptions redisOptions;
 
     public Mono<HeartbeatResponse> getStatus() {
         try {
@@ -35,7 +42,7 @@ public class Heartbeat {
                     .status(Status.DOWN)
                     .error(Error.builder().code(ErrorCode.SERVICE_DOWN).message("Service down").build())
                     .build());
-        } catch (IOException | InterruptedException | TimeoutException e) {
+        } catch (IOException | TimeoutException e) {
             return Mono.just(HeartbeatResponse.builder()
                     .timeStamp(Instant.now().toString())
                     .status(Status.DOWN)
@@ -44,12 +51,8 @@ public class Heartbeat {
         }
     }
 
-    private boolean isRedisUp() throws IOException, InterruptedException {
-        String command = "redis-cli ping";
-        Runtime runtime = Runtime.getRuntime();
-        Process process = runtime.exec(command);
-        int exitValue = process.waitFor();
-        return exitValue == 0;
+    private boolean isRedisUp() throws IOException {
+        return checkConnection(redisOptions.getHost(), redisOptions.getPort());
     }
 
     private boolean isRabbitMQUp() throws IOException, TimeoutException {
@@ -69,11 +72,21 @@ public class Heartbeat {
         return responseCode == 200;
     }
 
-    private boolean isPostgresUp() throws IOException, InterruptedException {
-        String cmd = String.format("pg_isready -h %s -p %s", dbOptions.getHost(), dbOptions.getPort());
-        Runtime run = Runtime.getRuntime();
-        Process pr = run.exec(cmd);
-        int exitValue = pr.waitFor();
-        return exitValue == 0;
+    private boolean isPostgresUp() throws IOException {
+        return checkConnection(dbOptions.getHost(), dbOptions.getPort());
+    }
+
+    private boolean checkConnection(String host, int port) throws IOException {
+        boolean isAlive;
+        SocketAddress socketAddress = new InetSocketAddress(host, port);
+        Socket socket = new Socket();
+        try {
+            socket.connect(socketAddress);
+            socket.close();
+            isAlive = true;
+        } catch (IOException exception) {
+            throw exception;
+        }
+        return isAlive;
     }
 }

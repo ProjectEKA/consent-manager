@@ -216,7 +216,8 @@ public class ConsentManagerConfiguration {
     @Bean
     public Heartbeat heartbeat(IdentityServiceProperties identityServiceProperties,
                                DbOptions dbOptions,
-                               RabbitmqOptions rabbitmqOptions) {
-        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions);
+                               RabbitmqOptions rabbitmqOptions,
+                               RedisOptions redisOptions) {
+        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions, redisOptions);
     }
 }

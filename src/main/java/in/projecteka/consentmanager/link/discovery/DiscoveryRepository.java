@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public class DiscoveryRepository {
 
-    Logger logger = LoggerFactory.getLogger(DiscoveryRepository.class);
+    private static final Logger logger = LoggerFactory.getLogger(DiscoveryRepository.class);
 
     private static final String INSERT_TO_DISCOVERY_REQUEST = "INSERT INTO discovery_request " +
             "(transaction_id, request_id, patient_id, hip_id) VALUES ($1, $2, $3, $4)";

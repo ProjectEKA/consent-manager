@@ -19,7 +19,7 @@ import static in.projecteka.consentmanager.common.Serializer.from;
 
 public class DataFlowRequestRepository {
 
-    Logger logger = LoggerFactory.getLogger(DataFlowRequestRepository.class);
+    private static final Logger logger = LoggerFactory.getLogger(DataFlowRequestRepository.class);
 
     private static final String INSERT_TO_DATA_FLOW_REQUEST = "INSERT INTO data_flow_request (transaction_id, " +
             "consent_artefact_id, data_flow_request) VALUES ($1, $2, $3)";

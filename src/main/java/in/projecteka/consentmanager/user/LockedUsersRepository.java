@@ -7,12 +7,13 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 @AllArgsConstructor
 public class LockedUsersRepository {
 
-    Logger logger;
+    private static final Logger logger = LoggerFactory.getLogger(LockedUsersRepository.class);
 
     private static final String UPSERT_INVALID_ATTEMPTS = "INSERT INTO " +
             "locked_users (patient_id,is_locked) VALUES ($1, $2) " +

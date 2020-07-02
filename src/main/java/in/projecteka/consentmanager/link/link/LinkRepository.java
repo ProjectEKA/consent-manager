@@ -30,7 +30,7 @@ import static in.projecteka.consentmanager.common.Serializer.to;
 
 public class LinkRepository {
 
-    Logger logger = LoggerFactory.getLogger(LinkRepository.class);
+    private static final Logger logger = LoggerFactory.getLogger(LinkRepository.class);
 
     private static final String SELECT_LINKED_CARE_CONTEXTS = "SELECT hip_id, patient FROM link WHERE " +
             "consent_manager_user_id=$1";

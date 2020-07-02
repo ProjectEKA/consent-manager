@@ -17,7 +17,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class TransactionPinRepository {
 
-    Logger logger;
+    private static final Logger logger = LoggerFactory.getLogger(TransactionPinRepository.class);
 
     private static final String INSERT_TRANSACTION_PIN = "INSERT INTO " +
             "transaction_pin (pin, patient_id) VALUES ($1, $2)";

@@ -33,7 +33,7 @@ import static in.projecteka.consentmanager.common.Serializer.to;
 @AllArgsConstructor
 public class ConsentArtefactRepository {
 
-    private final Logger logger = LoggerFactory.getLogger(ConsentArtefactRepository.class);
+    private final static Logger logger = LoggerFactory.getLogger(ConsentArtefactRepository.class);
 
     public static final String CONSENT_ARTEFACT = "consent_artefact";
     public static final String STATUS = "status";

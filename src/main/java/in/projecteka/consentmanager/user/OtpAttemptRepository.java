@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 public class OtpAttemptRepository {
 
-    private final Logger logger = LoggerFactory.getLogger(OtpAttemptRepository.class);
+    private final static Logger logger = LoggerFactory.getLogger(OtpAttemptRepository.class);
 
 
     private static final String INSERT_OTP_ATTEMPT = "INSERT INTO " +

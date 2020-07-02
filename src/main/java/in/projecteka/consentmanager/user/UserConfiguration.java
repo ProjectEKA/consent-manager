@@ -13,7 +13,6 @@ import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import io.lettuce.core.RedisClient;
 import io.vertx.pgclient.PgPool;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -139,7 +138,7 @@ public class UserConfiguration {
 
     @Bean
     public TransactionPinRepository transactionPinRepository(PgPool dbClient) {
-        return new TransactionPinRepository(LoggerFactory.getLogger(TransactionPinRepository.class), dbClient);
+        return new TransactionPinRepository(dbClient);
     }
 
     @Bean

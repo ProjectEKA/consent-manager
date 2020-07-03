@@ -93,6 +93,7 @@ public class UserRepository {
                 .execute(Tuple.of(gender.toString(), phoneNumber),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 userFluxSink.error(new DbOperationError("Failed to select from patient"));
                             } else {
                                 handler.result().forEach(row -> {

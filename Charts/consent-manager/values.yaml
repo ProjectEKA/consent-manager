@@ -30,7 +30,7 @@ service:
   port: 8000
 
 ingress:
-  enabled: true
+  enabled: false
   hosts:
     - consent-manager.dev.pmjay.gov.in
   uriPrefix: "/"

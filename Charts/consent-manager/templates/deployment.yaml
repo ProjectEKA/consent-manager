@@ -36,7 +36,7 @@ spec:
             - name: {{ $key }}
               valueFrom:
                 secretKeyRef:
-                  name: consent-manager-credentials
+                  name: {{ include "consent-manager.fullname" $ }}-secrets
                   key: {{ $key }}
             {{- end }}
           ports:
@@ -46,9 +46,9 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
-      - name: credentials
+      - name: secrets
         secret:
-          secretName: consent-manager-credentials
+          secretName: {{ include "consent-manager.fullname" $ }}-secrets
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

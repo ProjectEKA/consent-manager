@@ -80,13 +80,9 @@ public class Heartbeat {
         boolean isAlive;
         SocketAddress socketAddress = new InetSocketAddress(host, port);
         Socket socket = new Socket();
-        try {
-            socket.connect(socketAddress);
-            socket.close();
-            isAlive = true;
-        } catch (IOException exception) {
-            throw exception;
-        }
+        socket.connect(socketAddress);
+        isAlive = socket.isConnected();
+        socket.close();
         return isAlive;
     }
 }

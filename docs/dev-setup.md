@@ -232,7 +232,7 @@
     *Note:* This is with an assumption that hiu-service is running on port **8003**
     
     ```bash
-    docker run -d -p 5000:5000 projecteka/hiu-ui:local
+    docker run -d -p 5002:5000 projecteka/hiu-ui:local
     ```
 
 2. Since hiu-service is running on different port, **same-origin-policy** will prevent you to access the UI by default.

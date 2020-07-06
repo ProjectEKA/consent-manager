@@ -28,27 +28,6 @@ public class LinkController {
 
     private final Link link;
 
-    /**
-     * @deprecated
-     */
-    @Deprecated
-    @PostMapping("/patients/link")
-    public Mono<PatientLinkReferenceResponse> linkCareContexts(
-            @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller -> link.patientWith(caller.getUsername(), patientLinkReferenceRequest));
-    }
-
-    @Deprecated
-    @PostMapping("/patients/link/{linkRefNumber}")
-    public Mono<PatientLinkResponse> verifyToken(@PathVariable("linkRefNumber") String linkRefNumber,
-                                                 @RequestBody PatientLinkRequest patientLinkRequest) {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller -> link.verifyToken(linkRefNumber, patientLinkRequest, caller.getUsername()));
-    }
-
     @GetMapping("/patients/links")
     public Mono<PatientLinksResponse> getLinkedCareContexts() {
         return ReactiveSecurityContextHolder.getContext()
@@ -96,8 +75,7 @@ public class LinkController {
 
     @PostMapping("/v1/links/link/init")
     public Mono<PatientLinkReferenceResponse> linkPatientCareContexts(
-            @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest
-    ) {
+            @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .flatMap(caller -> link.patientCareContexts(caller.getUsername(), patientLinkReferenceRequest));

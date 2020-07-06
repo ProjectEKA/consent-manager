@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.common.DbOperation;
@@ -49,23 +48,6 @@ public class LinkRepository {
 
     public LinkRepository(PgPool dbClient) {
         this.dbClient = dbClient;
-    }
-
-    @SneakyThrows
-    public Mono<Void> insertToLinkReference(PatientLinkReferenceResponse patientLinkReferenceResponse,
-                                            String hipId,
-                                            UUID requestId) {
-        return Mono.create(monoSink ->
-                dbClient.preparedQuery(INSERT_TO_LINK_REFERENCE)
-                        .execute(Tuple.of(new JsonObject(from(patientLinkReferenceResponse)), hipId, requestId.toString()),
-                                handler -> {
-                                    if (handler.failed()) {
-                                        logger.error(handler.cause().getMessage(), handler.cause());
-                                        monoSink.error(new DbOperationError());
-                                        return;
-                                    }
-                                    monoSink.success();
-                                }));
     }
 
     @SneakyThrows

@@ -13,31 +13,13 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
-import in.projecteka.consentmanager.user.model.Gender;
-import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
-import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
-import in.projecteka.consentmanager.user.model.Identifier;
-import in.projecteka.consentmanager.user.model.IdentifierType;
-import in.projecteka.consentmanager.user.model.InitiateCmIdRecoveryRequest;
-import in.projecteka.consentmanager.user.model.LoginMode;
-import in.projecteka.consentmanager.user.model.LoginModeResponse;
-import in.projecteka.consentmanager.user.model.OtpAttempt;
-import in.projecteka.consentmanager.user.model.OtpMediumType;
-import in.projecteka.consentmanager.user.model.OtpVerification;
-import in.projecteka.consentmanager.user.model.Profile;
-import in.projecteka.consentmanager.user.model.RecoverCmIdResponse;
-import in.projecteka.consentmanager.user.model.SendOtpAction;
-import in.projecteka.consentmanager.user.model.SignUpSession;
-import in.projecteka.consentmanager.user.model.Token;
-import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
-import in.projecteka.consentmanager.user.model.UpdateUserRequest;
-import in.projecteka.consentmanager.user.model.User;
-import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.consentmanager.user.model.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,6 +31,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -118,13 +101,30 @@ public class PatientControllerTest {
     @MockBean
     private ConceptValidator conceptValidator;
 
+    @Mock
+    private PatientName patientName;
+
+    @Mock
+    private DateOfBirth dateOfBirth;
+
+    @BeforeAll
+    public void setUp(){
+        when(patientName.getFirstName()).thenReturn("User");
+        when(patientName.getMiddleName()).thenReturn("Name");
+        when(patientName.getLastName()).thenReturn("withAlphabet");
+
+        when(dateOfBirth.getDate()).thenReturn(LocalDate.now().getDayOfMonth());
+        when(dateOfBirth.getMonth()).thenReturn(LocalDate.now().getMonthValue());
+        when(dateOfBirth.getYear()).thenReturn(LocalDate.now().getYear());
+    }
+
     @Test
     public void createUser() {
         var signUpRequest = coreSignUpRequest()
                 .username("username@ncg")
-                .name("RandomName")
+                .name(patientName)
                 .password("@2Abaafasfas")
-                .yearOfBirth(now().getYear())
+                .dateOfBirth(dateOfBirth)
                 .build();
         var token = string();
         var sessionId = string();
@@ -144,9 +144,11 @@ public class PatientControllerTest {
 
     @Test
     public void returnBadRequestForUserCreation() {
+        when(dateOfBirth.getDate()).thenReturn(LocalDate.now().getDayOfMonth() + 1);
+
         var signUpRequest = coreSignUpRequest()
-                .name("RandomName")
-                .yearOfBirth(now().plusDays(1).getYear())
+                .name(patientName)
+                .dateOfBirth(dateOfBirth)
                 .build();
         var token = string();
         var sessionId = string();
@@ -479,7 +481,7 @@ public class PatientControllerTest {
         String cmId = "abc@ncg";
         InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
-        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(patientName).dateOfBirth(dateOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
 
         UserSignUpEnquiry userSignUpEnquiry = UserSignUpEnquiry.builder()
                 .identifierType(IdentifierType.MOBILE.toString())
@@ -586,7 +588,7 @@ public class PatientControllerTest {
         String cmId = "abc@ncg";
         InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
-        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(patientName).dateOfBirth(dateOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
 
         UserSignUpEnquiry userSignUpEnquiry = UserSignUpEnquiry.builder()
                 .identifierType(IdentifierType.MOBILE.toString())

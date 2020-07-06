@@ -32,7 +32,7 @@ class SignUpRequestValidatorTest {
     @BeforeAll
     public void setUp(){
         when(patientName.getFirstName()).thenReturn("User");
-        when(patientName.getMName()).thenReturn("Name");
+        when(patientName.getMiddleName()).thenReturn("Name");
         when(patientName.getLastName()).thenReturn("withAlphabet");
 
         when(dateOfBirth.getDate()).thenReturn(LocalDate.now().getDayOfMonth());
@@ -91,7 +91,7 @@ class SignUpRequestValidatorTest {
     @Test
     void returnInValidSignUpRequestWithEmptyName() {
         when(patientName.getFirstName()).thenReturn(null);
-        when(patientName.getMName()).thenReturn(null);
+        when(patientName.getMiddleName()).thenReturn(null);
         when(patientName.getLastName()).thenReturn(null);
 
         var signUpRequest = signUpRequest()

@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.link;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
@@ -45,7 +44,6 @@ public class LinkConfiguration {
     @Bean
     public Link link(WebClient.Builder builder,
                      LinkRepository linkRepository,
-                     ClientRegistryClient clientRegistryClient,
                      GatewayServiceProperties gatewayServiceProperties,
                      LinkServiceProperties serviceProperties,
                      CacheAdapter<String, String> linkResults,
@@ -54,7 +52,6 @@ public class LinkConfiguration {
                 new LinkServiceClient(builder, serviceAuthentication, gatewayServiceProperties),
                 linkRepository,
                 serviceAuthentication,
-                clientRegistryClient,
                 serviceProperties,
                 linkResults);
     }

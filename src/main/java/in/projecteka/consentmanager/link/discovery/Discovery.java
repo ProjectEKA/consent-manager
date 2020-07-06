@@ -19,7 +19,6 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
-import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +100,10 @@ public class Discovery {
 	}
 
 	private ErrorRepresentation cmErrorRepresentation(RespError respError) {
-		Error error = Error.builder().code(ErrorMap.hipToCmError(respError.getCode())).message(respError.getMessage()).build();
+		Error error = Error.builder()
+				.code(ErrorMap.hipToCmError(respError.getCode()))
+				.message(respError.getMessage())
+				.build();
 		return ErrorRepresentation.builder().error(error).build();
 	}
 
@@ -128,17 +130,10 @@ public class Discovery {
 		return userServiceClient.userOf(patientId);
 	}
 
-	private Mono<String> providerUrl(String providerId) {
-		return centralRegistry.providerWith(providerId)
-				.flatMap(provider -> provider.getIdentifiers()
-						.stream()
-						.filter(Identifier::isOfficial)
-						.findFirst()
-						.map(identifier -> Mono.just(identifier.getSystem()))
-						.orElse(Mono.empty()));
-	}
-
-	private PatientRequest requestFor(User user, UUID transactionId, List<PatientIdentifier> unverifiedIdentifiers, UUID requestId) {
+	private PatientRequest requestFor(User user,
+									  UUID transactionId,
+									  List<PatientIdentifier> unverifiedIdentifiers,
+									  UUID requestId) {
 		var phoneNumber = in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
 				.type(MOBILE)
 				.value(user.getPhone())
@@ -165,19 +160,6 @@ public class Discovery {
 				.transactionId(transactionId)
 				.timestamp(java.time.Instant.now().toString())
 				.build();
-	}
-
-	private Mono<DiscoveryResponse> insertDiscoveryRequest(PatientResponse patientResponse,
-	                                                       String providerId,
-	                                                       String patientId,
-	                                                       UUID transactionId,
-	                                                       UUID requestId) {
-		return discoveryRepository.insert(providerId, patientId, transactionId, requestId).
-				then(Mono.just(DiscoveryResponse.
-						builder().
-						patient(patientResponse.getPatient()).
-						transactionId(transactionId)
-						.build()));
 	}
 
 	private boolean isValid(Provider provider) {

@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -18,27 +19,19 @@ import static in.projecteka.consentmanager.common.Constants.HDR_HIP_ID;
 import static java.util.function.Predicate.not;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
+@AllArgsConstructor
 public class LinkServiceClient {
-    private final WebClient.Builder webClientBuilder;
-    private final ServiceAuthentication serviceAuthentication;
-    private final GatewayServiceProperties gatewayServiceProperties;
-
     private static final String PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH = "%s/links/link/confirm";
     private static final String PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH = "%s/links/link/init";
-
-    public LinkServiceClient(WebClient.Builder webClientBuilder,
-                             ServiceAuthentication serviceAuthentication,
-                             GatewayServiceProperties gatewayServiceProperties) {
-        this.webClientBuilder = webClientBuilder;
-        this.serviceAuthentication = serviceAuthentication;
-        this.gatewayServiceProperties = gatewayServiceProperties;
-    }
+    private final WebClient webClientBuilder;
+    private final ServiceAuthentication serviceAuthentication;
+    private final GatewayServiceProperties gatewayServiceProperties;
 
     public Mono<PatientLinkReferenceResponse> linkPatientEnquiry(
             PatientLinkReferenceRequest patientLinkReferenceRequest,
             String url,
             String authorization) {
-        return webClientBuilder.build()
+        return webClientBuilder
                 .post()
                 .uri(String.format("%s/patients/link", url))
                 .header(AUTHORIZATION, authorization)
@@ -50,8 +43,10 @@ public class LinkServiceClient {
                 .bodyToMono(PatientLinkReferenceResponse.class);
     }
 
-    public Mono<Boolean> linkPatientEnquiryRequest(PatientLinkReferenceRequest patientLinkReferenceRequest, String authorization, String hipId) {
-        return webClientBuilder.build()
+    public Mono<Boolean> linkPatientEnquiryRequest(PatientLinkReferenceRequest patientLinkReferenceRequest,
+                                                   String authorization,
+                                                   String hipId) {
+        return webClientBuilder
                 .post()
                 .uri(getLinkEnquiryUrl())
                 .header(AUTHORIZATION, authorization)
@@ -73,7 +68,7 @@ public class LinkServiceClient {
             PatientLinkRequest patientLinkRequest,
             String url,
             String authorization) {
-        return webClientBuilder.build()
+        return webClientBuilder
                 .post()
                 .uri(String.format("%s/patients/link/%s", url, linkRefNumber))
                 .header(AUTHORIZATION, authorization)
@@ -90,7 +85,7 @@ public class LinkServiceClient {
             String hipId) {
         return serviceAuthentication.authenticate()
                 .flatMap(authToken ->
-                        webClientBuilder.build()
+                        webClientBuilder
                                 .post()
                                 .uri(getLinkConfirmationUrl())
                                 .header(AUTHORIZATION, authToken)
@@ -116,5 +111,4 @@ public class LinkServiceClient {
     private String getLinkEnquiryUrl() {
         return String.format(PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH, gatewayServiceProperties.getBaseUrl());
     }
-
 }

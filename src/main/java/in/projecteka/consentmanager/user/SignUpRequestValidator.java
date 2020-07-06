@@ -36,33 +36,23 @@ public class SignUpRequestValidator {
     public static Validation<Seq<String>, CoreSignUpRequest> validate(SignUpRequest signUpRequest,
                                                                       String userIdSuffix) {
         return Validation.combine(
-                validateFirstName(signUpRequest.getName().getFName()),
-                validateMiddleName(signUpRequest.getName().getMName()),
-                validateLastName(signUpRequest.getName().getLName()),
+                validateFirstName(signUpRequest.getName()),
                 validate(signUpRequest.getGender()),
                 validateUserName(signUpRequest.getUsername(), userIdSuffix),
                 validatePassword(signUpRequest.getPassword()),
-                validateDateOfBirth(signUpRequest.getDateOfBirth().getDate()),
-                validateMonthOfBirth(signUpRequest.getDateOfBirth().getMonth()),
-                validateYearOfBirth(signUpRequest.getDateOfBirth().getYear()),
+                validateYearOfBirth(signUpRequest.getDateOfBirth()),
                 validateUnVerifiedIdentifiers(signUpRequest.getUnverifiedIdentifiers()))
-                .ap((firstName, middleName, lastName, gender, username, password, dateOfBirth, monthOfBirth, yearOfBirth, unverifiedIdentifiers) ->
-                        CoreSignUpRequest.builder()
-                                .name(PatientName.builder()
-                                        .fName(firstName)
-                                        .mName(middleName)
-                                        .lName(lastName)
-                                        .build())
-                                .gender(gender)
-                                .username(username)
-                                .password(password)
-                                .dateOfBirth(DateOfBirth.builder()
-                                        .date(dateOfBirth)
-                                        .month(monthOfBirth)
-                                        .year(yearOfBirth)
-                                        .build())
-                                .unverifiedIdentifiers(unverifiedIdentifiers)
-                                .build());
+                .ap((name, gender, username, password, yearOfBirth, unverifiedIdentifiers) ->
+                         CoreSignUpRequest.builder()
+                                    .name(name)
+                                    .gender(gender)
+                                    .username(username)
+                                    .password(password)
+                                    .dateOfBirth(yearOfBirth)
+                                    .unverifiedIdentifiers(unverifiedIdentifiers)
+                                    .build()
+                );
+
         // TODO:: Check this once
     }
 
@@ -125,11 +115,18 @@ public class SignUpRequestValidator {
         return Validation.invalid("gender can't be empty");
     }
 
-    private static Validation<String, String> validateFirstName(String firstName) {
-        if (Strings.isNullOrEmpty(firstName)) {
+    private static Validation<String, PatientName> validateFirstName(PatientName name) {
+        if (Strings.isNullOrEmpty(name.getFName())) {
             return Validation.invalid("Name can't be empty");
         }
-        return allowed(VALID_NAME_CHARS, "name", firstName);
+        if (Strings.isNullOrEmpty(name.getMName())) {
+            PatientName.builder().mName("");
+        }
+        if (Strings.isNullOrEmpty(name.getLName())) {
+            PatientName.builder().lName("");
+        }
+
+        return allowed(VALID_NAME_CHARS, "first_name", name);
     }
 
     private static Validation<String, String> validateMiddleName(String middleName) {
@@ -172,6 +169,16 @@ public class SignUpRequestValidator {
         return Validation.valid(username);
     }
 
+    private static Validation<String, PatientName> allowed(String characters, String fieldName, PatientName name) {
+        return CharSeq.of(name.getFName())
+                .replaceAll(characters, "")
+                .transform(seq -> seq.isEmpty()
+                        ? Validation.valid(name)
+                        : Validation.invalid(format("%s contains invalid characters: ' %s '",
+                        fieldName,
+                        seq.distinct().sorted())));
+    }
+
     private static Validation<String, String> allowed(String characters, String fieldName, String value) {
         return CharSeq.of(value)
                 .replaceAll(characters, "")
@@ -182,9 +189,25 @@ public class SignUpRequestValidator {
                                           seq.distinct().sorted())));
     }
 
-    private static Validation<String, Integer> validateYearOfBirth(Integer year) {
-        return year == null || ((year <= (TODAY.getYear())) && (year >= TODAY.getYear() - 120))
-               ? Validation.valid(year)
+    private static Validation<String, DateOfBirth> validateYearOfBirth(DateOfBirth date) {
+
+        if(date == null){
+            date.builder().date(01);
+        }
+        if(date.getMonth() == null){
+            date.builder().month(01);
+        }
+
+        if(date.getMonth() > 12 && date.getMonth() < 1){
+            return Validation.invalid("Month cannot be more than 12");
+        }
+
+        if(date.getDate() > 31 && date.getDate() < 1){
+            return Validation.invalid("Date cannot be more than 31");
+        }
+
+        return date.getYear() == null || ((date.getYear() <= (TODAY.getYear())) && (date.getYear() >= TODAY.getYear() - 120))
+               ? Validation.valid(date)
                : Validation.invalid("Year of birth can't be in future or older than 120 years");
     }
 

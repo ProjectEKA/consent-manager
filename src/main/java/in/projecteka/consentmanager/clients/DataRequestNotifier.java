@@ -17,14 +17,14 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
 public class DataRequestNotifier {
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
 
     public Mono<Void> notifyHip(DataFlowRequest dataFlowRequest, String hipUrl) {
         return tokenGenerator.get()
                 .flatMap(token ->
-                        webClientBuilder.build()
+                        webClientBuilder
                                 .post()
                                 .uri(hipUrl + "/health-information/request")
                                 .header(AUTHORIZATION, token)
@@ -39,7 +39,7 @@ public class DataRequestNotifier {
     public Mono<Void> notifyHip(DataRequest dataFlowRequest, String hipId) {
         return tokenGenerator.get()
                 .flatMap(token ->
-                        webClientBuilder.build()
+                        webClientBuilder
                                 .post()
                                 .uri(getDataFlowRequestUrl())
                                 .header(AUTHORIZATION, token)

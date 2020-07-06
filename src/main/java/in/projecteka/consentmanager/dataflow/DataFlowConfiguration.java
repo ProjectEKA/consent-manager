@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.common.ServiceAuthentication;
 import io.vertx.pgclient.PgPool;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -43,14 +44,14 @@ public class DataFlowConfiguration {
     }
 
     @Bean
-    public DataFlowRequestClient dataFlowRequestClient(WebClient.Builder builder,
+    public DataFlowRequestClient dataFlowRequestClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                        GatewayServiceProperties gatewayServiceProperties,
                                                        ServiceAuthentication serviceAuthentication) {
         return new DataFlowRequestClient(builder, gatewayServiceProperties, serviceAuthentication);
     }
 
     @Bean
-    public DataFlowRequester dataRequest(WebClient.Builder builder,
+    public DataFlowRequester dataRequest(@Qualifier("customBuilder") WebClient.Builder builder,
                                          DataFlowRequestRepository dataFlowRequestRepository,
                                          PostDataFlowRequestApproval postDataFlowRequestApproval,
                                          DataFlowConsentManagerProperties dataFlowConsentManagerProperties,
@@ -75,9 +76,9 @@ public class DataFlowConfiguration {
     }
 
     @Bean
-    public DataRequestNotifier dataFlowClient(WebClient.Builder builder,
+    public DataRequestNotifier dataFlowClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                               ServiceAuthentication serviceAuthentication,
                                               GatewayServiceProperties gatewayServiceProperties) {
-        return new DataRequestNotifier(builder, serviceAuthentication::authenticate, gatewayServiceProperties);
+        return new DataRequestNotifier(builder.build(), serviceAuthentication::authenticate, gatewayServiceProperties);
     }
 }

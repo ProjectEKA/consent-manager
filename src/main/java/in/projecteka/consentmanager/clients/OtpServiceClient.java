@@ -15,15 +15,14 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 public class OtpServiceClient {
 
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient webClient;
 
-    public OtpServiceClient(WebClient.Builder webClientBuilder, String baseUrl) {
-        this.webClientBuilder = webClientBuilder;
-        this.webClientBuilder.baseUrl(baseUrl);
+    public OtpServiceClient(WebClient.Builder webClient, String baseUrl) {
+        this.webClient = webClient.baseUrl(baseUrl).build();
     }
 
     public Mono<Void> send(OtpRequest requestBody) {
-        return webClientBuilder.build()
+        return webClient
                 .post()
                 .uri(uriBuilder -> uriBuilder.path("/otp").build())
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
@@ -36,7 +35,7 @@ public class OtpServiceClient {
     }
 
     public Mono<Void> verify(String sessionId, String otp) {
-        return webClientBuilder.build()
+        return webClient
                 .post()
                 .uri(uriBuilder -> uriBuilder
                         .path("/otp/{sessionId}/verify")
@@ -56,7 +55,7 @@ public class OtpServiceClient {
     }
 
     public Mono<Void> send(Notification notification) {
-        return webClientBuilder.build()
+        return webClient
                 .post()
                 .uri(uriBuilder -> uriBuilder.path("/notification").build())
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
@@ -68,7 +67,7 @@ public class OtpServiceClient {
     }
 
     public Mono<Void> send(ConsentManagerIdNotification consentManagerIdNotification) {
-        return webClientBuilder.build()
+        return webClient
                 .post()
                 .uri(uriBuilder -> uriBuilder.path("/notification").build())
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)

@@ -20,7 +20,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 public class UserServiceClient {
 
     private static final String PATIENT_FIND_URL_PATH = "/patients/on-find";
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient webClient;
     private final String url;
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
@@ -29,7 +29,7 @@ public class UserServiceClient {
     public Mono<User> userOf(String userId) {
         return tokenGenerator.get()
                 .flatMap(token ->
-                        webClientBuilder.build()
+                        webClient
                                 .get()
                                 .uri(String.format("%s/internal/users/%s/", url, userId))
                                 .header(AUTHORIZATION, token)
@@ -44,7 +44,7 @@ public class UserServiceClient {
                                                    String requesterId) {
         return serviceAuthentication.authenticate()
                 .flatMap(authToken ->
-                        webClientBuilder.build()
+                        webClient
                                 .post()
                                 .uri(gatewayServiceProperties.getBaseUrl() + PATIENT_FIND_URL_PATH)
                                 .contentType(MediaType.APPLICATION_JSON)

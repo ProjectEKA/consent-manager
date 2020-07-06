@@ -38,12 +38,12 @@ public class UserServiceClientTest {
     private String token;
 
     @BeforeEach
-    public void init() {
+    void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         var serviceProperties = new GatewayServiceProperties("http://example.com", 1000,false, "", "", "");
         token = string();
-        userServiceClient = new UserServiceClient(webClientBuilder,
+        userServiceClient = new UserServiceClient(webClientBuilder.build(),
                 "http://user-service/",
                 () -> Mono.just(token),
                 serviceProperties,
@@ -51,7 +51,7 @@ public class UserServiceClientTest {
     }
 
     @Test
-    public void shouldGetUser() throws IOException {
+    void shouldGetUser() throws IOException {
         User user = user().name("first name").build();
         String patientResponseBody = new ObjectMapper().writeValueAsString(user);
         when(exchangeFunction.exchange(captor.capture()))
@@ -63,7 +63,7 @@ public class UserServiceClientTest {
                 .assertNext(response -> assertThat(response.getName()).isEqualTo(user.getName()))
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://user-service/internal/users/1/");
+        assertThat(captor.getValue().url().toString()).hasToString("http://user-service/internal/users/1/");
         assertThat(captor.getValue().headers().get(HttpHeaders.AUTHORIZATION).get(0)).isEqualTo(token);
     }
 }

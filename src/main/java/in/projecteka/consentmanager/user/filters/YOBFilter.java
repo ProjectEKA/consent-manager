@@ -12,7 +12,7 @@ public class YOBFilter implements FilterStrategy<Integer> {
         if (YOB == null) {
             return Mono.just(users);
         }
-        List<User> filteredRows = users.stream().filter(row -> row.getYearOfBirth() != null && row.getYearOfBirth().equals(YOB)).collect(Collectors.toList());
+        List<User> filteredRows = users.stream().filter(row -> row.getDateOfBirth().getYear() != null && row.getDateOfBirth().getYear().equals(YOB)).collect(Collectors.toList());
         return Mono.just(filteredRows);
     }
 }

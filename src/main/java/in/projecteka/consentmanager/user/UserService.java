@@ -88,7 +88,7 @@ public class UserService {
                 .map(user -> {
                     Patient patient = Patient.builder()
                             .id(user.getIdentifier())
-                            .name(user.getName())
+                            .name(user.getName().getFullName())
                             .build();
                     var patientResponse = PatientResponse.builder()
                             .requestId(UUID.randomUUID())
@@ -239,7 +239,7 @@ public class UserService {
     public Mono<Void> create(CoreSignUpRequest coreSignUpRequest, String sessionId) {
         UserCredential credential = new UserCredential(coreSignUpRequest.getPassword());
         KeycloakUser keycloakUser = new KeycloakUser(
-                coreSignUpRequest.getName(),
+                coreSignUpRequest.getName().getFullName(),
                 coreSignUpRequest.getUsername(),
                 Collections.singletonList(credential),
                 Boolean.TRUE.toString());

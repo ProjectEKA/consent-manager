@@ -36,24 +36,22 @@ public class SignUpRequestValidator {
     public static Validation<Seq<String>, CoreSignUpRequest> validate(SignUpRequest signUpRequest,
                                                                       String userIdSuffix) {
         return Validation.combine(
-                validateFirstName(signUpRequest.getName()),
+                validateName(signUpRequest.getName()),
                 validate(signUpRequest.getGender()),
                 validateUserName(signUpRequest.getUsername(), userIdSuffix),
                 validatePassword(signUpRequest.getPassword()),
-                validateYearOfBirth(signUpRequest.getDateOfBirth()),
+                validateDateOfBirth(signUpRequest.getDateOfBirth()),
                 validateUnVerifiedIdentifiers(signUpRequest.getUnverifiedIdentifiers()))
-                .ap((name, gender, username, password, yearOfBirth, unverifiedIdentifiers) ->
+                .ap((name, gender, username, password, dateOfBirth, unverifiedIdentifiers) ->
                          CoreSignUpRequest.builder()
                                     .name(name)
                                     .gender(gender)
                                     .username(username)
                                     .password(password)
-                                    .dateOfBirth(yearOfBirth)
+                                    .dateOfBirth(dateOfBirth)
                                     .unverifiedIdentifiers(unverifiedIdentifiers)
                                     .build()
                 );
-
-        // TODO:: Check this once
     }
 
     protected static Validation<String, List<Identifier>> validateUnVerifiedIdentifiers(
@@ -115,15 +113,15 @@ public class SignUpRequestValidator {
         return Validation.invalid("gender can't be empty");
     }
 
-    private static Validation<String, PatientName> validateFirstName(PatientName name) {
-        if (Strings.isNullOrEmpty(name.getFName())) {
+    private static Validation<String, PatientName> validateName(PatientName name) {
+        if (Strings.isNullOrEmpty(name.getFirstName())) {
             return Validation.invalid("Name can't be empty");
         }
-        if (Strings.isNullOrEmpty(name.getMName())) {
-            PatientName.builder().mName("");
+        if (Strings.isNullOrEmpty(name.getMiddleName())) {
+            PatientName.builder().middleName("");
         }
-        if (Strings.isNullOrEmpty(name.getLName())) {
-            PatientName.builder().lName("");
+        if (Strings.isNullOrEmpty(name.getLastName())) {
+            PatientName.builder().lastName("");
         }
 
         return allowed(VALID_NAME_CHARS, "first_name", name);
@@ -170,7 +168,7 @@ public class SignUpRequestValidator {
     }
 
     private static Validation<String, PatientName> allowed(String characters, String fieldName, PatientName name) {
-        return CharSeq.of(name.getFName())
+        return CharSeq.of(name.getFirstName())
                 .replaceAll(characters, "")
                 .transform(seq -> seq.isEmpty()
                         ? Validation.valid(name)
@@ -189,7 +187,7 @@ public class SignUpRequestValidator {
                                           seq.distinct().sorted())));
     }
 
-    private static Validation<String, DateOfBirth> validateYearOfBirth(DateOfBirth date) {
+    private static Validation<String, DateOfBirth> validateDateOfBirth(DateOfBirth date) {
 
         if(date == null){
             date.builder().date(01);

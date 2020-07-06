@@ -21,7 +21,7 @@ public class UserRepository {
             "first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers)" +
             " values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);";
 
-    private static final String SELECT_PATIENT = "select id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers" +
+    private static final String SELECT_PATIENT = "select id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers " +
             "from patient where id = $1";
 
     private static final String SELECT_PATIENT_BY_GENDER_MOB = "select id, first_name, middle_name, last_name, date_of_birth, month_of_birth, year_of_birth, unverified_identifiers from patient" +
@@ -50,9 +50,9 @@ public class UserRepository {
                                 var user = User.builder()
                                         .identifier(patientRow.getString("id"))
                                         .name(PatientName.builder()
-                                                .fName(patientRow.getString("first_name"))
-                                                .mName(patientRow.getString("middle_name"))
-                                                .lName(patientRow.getString("last_name"))
+                                                .firstName(patientRow.getString("first_name"))
+                                                .middleName(patientRow.getString("middle_name"))
+                                                .lastName(patientRow.getString("last_name"))
                                                 .build()
                                         )
                                         .dateOfBirth(DateOfBirth.builder()
@@ -74,9 +74,9 @@ public class UserRepository {
 
     public Mono<Void> save(User user) {
         Tuple userDetails = Tuple.of(user.getIdentifier(),
-                user.getName().getFName(),
-                user.getName().getMName(),
-                user.getName().getLName(),
+                user.getName().getFirstName(),
+                user.getName().getMiddleName(),
+                user.getName().getLastName(),
                 user.getGender().toString(),
                 user.getDateOfBirth().getDate(),
                 user.getDateOfBirth().getMonth(),
@@ -115,9 +115,9 @@ public class UserRepository {
                                     var user = User.builder()
                                             .identifier(row.getString("id"))
                                             .name(PatientName.builder()
-                                                    .fName(row.getString("first_name"))
-                                                    .mName(row.getString("middle_name"))
-                                                    .lName(row.getString("last_name"))
+                                                    .firstName(row.getString("first_name"))
+                                                    .middleName(row.getString("middle_name"))
+                                                    .lastName(row.getString("last_name"))
                                                     .build()
                                             )
                                             .dateOfBirth(DateOfBirth.builder()

@@ -31,9 +31,9 @@ class SignUpRequestValidatorTest {
 
     @BeforeAll
     public void setUp(){
-        when(patientName.getFName()).thenReturn("User");
+        when(patientName.getFirstName()).thenReturn("User");
         when(patientName.getMName()).thenReturn("Name");
-        when(patientName.getLName()).thenReturn("withAlphabet");
+        when(patientName.getLastName()).thenReturn("withAlphabet");
 
         when(dateOfBirth.getDate()).thenReturn(LocalDate.now().getDayOfMonth());
         when(dateOfBirth.getMonth()).thenReturn(LocalDate.now().getMonthValue());
@@ -90,9 +90,9 @@ class SignUpRequestValidatorTest {
 
     @Test
     void returnInValidSignUpRequestWithEmptyName() {
-        when(patientName.getFName()).thenReturn(null);
+        when(patientName.getFirstName()).thenReturn(null);
         when(patientName.getMName()).thenReturn(null);
-        when(patientName.getLName()).thenReturn(null);
+        when(patientName.getLastName()).thenReturn(null);
 
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")

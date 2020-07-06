@@ -8,19 +8,19 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class PatientName {
-    private final String fName;
-    private final String mName;
-    private final String lName;
+    private final String firstName;
+    private final String middleName;
+    private final String lastName;
 
     public String getFullName(){
-        var fullName = fName;
+        var fullName = firstName;
 
-        if (mName != null){
-            fullName += " " + mName;
+        if (middleName != null){
+            fullName += " " + middleName;
         }
 
-        if (lName != null){
-            fullName += " " + lName;
+        if (lastName != null){
+            fullName += " " + lastName;
         }
         return fullName;
     }

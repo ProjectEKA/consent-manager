@@ -16,14 +16,14 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 public class ServiceAuthenticationClient {
     private final Logger logger = LoggerFactory.getLogger(ServiceAuthenticationClient.class);
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient webClient;
 
-    public ServiceAuthenticationClient(WebClient.Builder webClientBuilder, String baseUrl) {
-        this.webClientBuilder = webClientBuilder.baseUrl(baseUrl);
+    public ServiceAuthenticationClient(WebClient.Builder webClient, String baseUrl) {
+        this.webClient = webClient.baseUrl(baseUrl).build();
     }
 
     public Mono<Session> getTokenFor(String clientId, String clientSecret) {
-        return webClientBuilder.build()
+        return webClient
                 .post()
                 .uri("/sessions")
                 .contentType(APPLICATION_JSON)

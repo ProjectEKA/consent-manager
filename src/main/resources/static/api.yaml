@@ -2847,13 +2847,13 @@ components:
     PatientName:
       type: object
       properties:
-        firstName:
+        first:
           type: string
           example: Raj
-        lastName:
+        last:
           type: string
           example: Kumar
-        middleName:
+        middle:
           type: string
           example: Sharma
     DateOfBirth:

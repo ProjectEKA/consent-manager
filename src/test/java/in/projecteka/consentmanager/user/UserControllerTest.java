@@ -29,6 +29,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
@@ -169,7 +171,9 @@ class UserControllerTest {
     @Test
     public void returnPatientResponseWhenUserFound() {
         var token = string();
-        var patientRequest = patientRequest().build();
+        var patientRequest = patientRequest()
+                            .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
+                            .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));

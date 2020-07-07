@@ -48,6 +48,8 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -362,7 +364,9 @@ public class DiscoveryUserJourneyTest {
     @Test
     public void onDiscoverPatientCareContexts() {
         var token = string();
-        var patientDiscoveryResult = TestBuilders.discoveryResult().build();
+        var patientDiscoveryResult = TestBuilders.discoveryResult()
+                                     .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
+                                     .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
@@ -391,6 +395,7 @@ public class DiscoveryUserJourneyTest {
                 .patient(null)
                 .error(error)
                 .resp(gatewayResponse)
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 

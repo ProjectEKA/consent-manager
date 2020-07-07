@@ -53,6 +53,8 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -368,7 +370,9 @@ public class LinkUserJourneyTest {
     @Test
     public void onLinkCareContexts() {
         var token = string();
-        var patientLinkReferenceResult = patientLinkReferenceResult().build();
+        var patientLinkReferenceResult = patientLinkReferenceResult()
+                                         .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
+                                         .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
         when(gatewayTokenVerifier.verify(token))
@@ -393,6 +397,7 @@ public class LinkUserJourneyTest {
         var patientLinkReferenceResult = PatientLinkReferenceResult.builder()
                 .requestId(UUID.randomUUID())
                 .resp(gatewayResponse)
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 

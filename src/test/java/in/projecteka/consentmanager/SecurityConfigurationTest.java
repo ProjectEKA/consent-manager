@@ -22,6 +22,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_NOTIFY;
@@ -113,7 +115,9 @@ class SecurityConfigurationTest {
     void return202Accepted() {
         var token = string();
         var caller = ServiceCaller.builder().roles(List.of(GATEWAY)).build();
-        var patientRequest = patientRequest().build();
+        var patientRequest = patientRequest()
+                             .timestamp(LocalDateTime.now(ZoneOffset.UTC))
+                             .build();
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient

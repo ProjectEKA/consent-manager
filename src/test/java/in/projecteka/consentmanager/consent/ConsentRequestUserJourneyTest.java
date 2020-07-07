@@ -596,7 +596,7 @@ public class ConsentRequestUserJourneyTest {
                 .hiTypes(HIType.values())
                 .build();
         in.projecteka.consentmanager.consent.model.request.ConsentRequest consentRequest = consentRequest()
-                .timestamp(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(2))
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
                 .consent(requestedDetail)
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();

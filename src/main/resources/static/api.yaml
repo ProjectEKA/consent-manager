@@ -2732,13 +2732,11 @@ components:
           type: string
           example: user@ncg
         name:
-          type: string
-          example: Raj Sharma
+          $ref: '#/components/schemas/PatientName'
         gender:
           $ref: '#/components/schemas/Gender'
-        yearOfBirth:
-          type: integer
-          example: 1979
+        dateOfBirth:
+          $ref: '#/components/schemas/DateOfBirth'
         hasTransactionPin:
           type: boolean
         verifiedIdentifiers:
@@ -2788,6 +2786,7 @@ components:
         - M
         - F
         - O
+        - U
     CreatePinRequest:
       type: object
       properties:
@@ -2830,16 +2829,14 @@ components:
       type: object
       properties:
         name:
-          type: string
-          example: Raj Sharma
+          $ref: '#/components/schemas/PatientName'
         username:
           type: string
           example: raj.sharma@ncg
         password:
           type: string
-        yearOfBirth:
-          type: integer
-          example: 2000
+        dateOfBirth:
+          $ref: '#/components/schemas/DateOfBirth'
         gender:
           $ref: '#/components/schemas/Gender'
       required:
@@ -2847,17 +2844,39 @@ components:
         - username
         - password
         - gender
+    PatientName:
+      type: object
+      properties:
+        first:
+          type: string
+          example: Raj
+        last:
+          type: string
+          example: Kumar
+        middle:
+          type: string
+          example: Sharma
+    DateOfBirth:
+      type: object
+      properties:
+        date:
+          type: integer
+          example: 01
+        month:
+          type: integer
+          example: 01
+        year:
+          type: integer
+          example: 01
     RecoverCmIdRequest:
       type: object
       properties:
         name:
-          type: string
-          example: Raj Sharma
+          $ref: '#/components/schemas/PatientName'
         gender:
           $ref: '#/components/schemas/Gender'
-        yearOfBirth:
-          type: integer
-          example: 2000
+        dateOfBirth:
+          $ref: '#/components/schemas/DateOfBirth'
         verifiedIdentifiers:
           description: verified identifiers are passed
           type: array
@@ -3048,4 +3067,3 @@ components:
         - username
         - otp
         - sessionId
-

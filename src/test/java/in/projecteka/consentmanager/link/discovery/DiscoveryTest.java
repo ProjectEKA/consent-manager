@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifierType;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.consentmanager.user.model.PatientName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -22,15 +23,7 @@ import reactor.test.StepVerifier;
 import java.util.Collections;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResponse;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.identifier;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientIdentifierBuilder;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientInResponse;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.provider;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.telecom;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.user;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.*;
 import static java.util.List.of;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -146,7 +139,8 @@ public class DiscoveryTest {
         var transactionId = UUID.randomUUID();
         var requestId = UUID.randomUUID();
         var patientId = string();
-        var user = user().identifier("1").name("first name").phone("+91-9999999999").build();
+        PatientName name = PatientName.builder().firstName("first name").middleName(null).lastName(null).build();
+        var user = user().identifier("1").name(name).phone("+91-9999999999").build();
         PatientIdentifier ncp1008 = patientIdentifierBuilder().type(PatientIdentifierType.MR).value("NCP1008").build();
         var unverifiedIdentifiers = Collections.singletonList(ncp1008);
         UUID gatewayOnDiscoverRequestId = UUID.randomUUID();

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
+import in.projecteka.consentmanager.user.model.PatientName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -52,7 +53,12 @@ public class UserServiceClientTest {
 
     @Test
     public void shouldGetUser() throws IOException {
-        User user = user().name("first name").build();
+        User user = user().name(PatientName.builder()
+                                .firstName("first name")
+                                .middleName("")
+                                .lastName("")
+                                .build())
+                    .build();
         String patientResponseBody = new ObjectMapper().writeValueAsString(user);
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
@@ -60,7 +66,7 @@ public class UserServiceClientTest {
                         .body(patientResponseBody).build()));
 
         StepVerifier.create(userServiceClient.userOf("1"))
-                .assertNext(response -> assertThat(response.getName()).isEqualTo(user.getName()))
+                .assertNext(response -> assertThat(response.getName().getFullName()).isEqualTo(user.getName().getFullName()))
                 .verifyComplete();
 
         assertThat(captor.getValue().url().toString()).isEqualTo("http://user-service/internal/users/1/");

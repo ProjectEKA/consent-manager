@@ -29,24 +29,18 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
-import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static in.projecteka.consentmanager.user.TestBuilders.*;
 import static java.lang.String.format;
-import static java.time.LocalDate.now;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @SuppressWarnings("unused")
@@ -122,7 +116,7 @@ public class PatientControllerTest {
     public void createUser() {
         var signUpRequest = coreSignUpRequest()
                 .username("username@ncg")
-                .name(patientName)
+                .name(patientName().build())
                 .password("@2Abaafasfas")
                 .dateOfBirth(dateOfBirth)
                 .build();

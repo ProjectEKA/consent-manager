@@ -12,7 +12,7 @@ public class NameFilter implements FilterStrategy<String> {
         if (name == null) {
             return Mono.just(users);
         }
-        List<User> filteredRows = users.stream().filter(row -> row.getName() != null && row.getName().equals(name)).collect(Collectors.toList());
+        List<User> filteredRows = users.stream().filter(row -> row.getName() != null && row.getName().getFullName().equals(name)).collect(Collectors.toList());
         return Mono.just(filteredRows);
     }
 }

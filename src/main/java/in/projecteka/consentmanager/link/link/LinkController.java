@@ -1,10 +1,13 @@
 package in.projecteka.consentmanager.link.link;
 
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.RequestValidator;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
@@ -25,7 +28,8 @@ import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_IN
 @RestController
 @AllArgsConstructor
 public class LinkController {
-
+    private final RequestValidator validator;
+    private final CacheAdapter<String, String> cacheForReplayAttack;
     private final Link link;
 
     @GetMapping("/patients/links")
@@ -43,7 +47,15 @@ public class LinkController {
 
     @PostMapping(V_1_LINKS_LINK_ON_INIT)
     public Mono<Void> onLinkCareContexts(@RequestBody PatientLinkReferenceResult patientLinkReferenceResult) {
-        return link.onLinkCareContexts(patientLinkReferenceResult);
+        return Mono.just(patientLinkReferenceResult)
+                .filterWhen(res -> validator.validate(patientLinkReferenceResult.getRequestId().toString(),
+                        patientLinkReferenceResult.getTimestamp()))
+                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .flatMap(res -> link.onLinkCareContexts(patientLinkReferenceResult)
+                .then(cacheForReplayAttack.put(
+                        patientLinkReferenceResult.getRequestId().toString(),
+                        patientLinkReferenceResult.getTimestamp().toString()
+                )));
     }
 
     /**

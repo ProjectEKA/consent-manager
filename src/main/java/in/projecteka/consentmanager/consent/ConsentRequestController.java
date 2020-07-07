@@ -1,6 +1,8 @@
 package in.projecteka.consentmanager.consent;
 
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.model.ConsentRequestValidator;
 import in.projecteka.consentmanager.consent.model.request.ConsentApprovalRequest;
@@ -35,6 +37,9 @@ public class ConsentRequestController {
 	private final ConsentManager consentManager;
 	private final ConsentServiceProperties serviceProperties;
 	private final CacheAdapter<String, String> usedTokens;
+	private final CacheAdapter<String, String> cacheForReplayAttack;
+	private final RequestValidator validator;
+
 	private static final Logger logger = LoggerFactory.getLogger(ConsentRequestController.class);
 
 	@InitBinder("consentRequest")
@@ -49,12 +54,17 @@ public class ConsentRequestController {
 				.map(ConsentRequestController::buildResponse);
 	}
 
-    @PostMapping(value = V_1_CONSENT_REQUESTS_INIT)
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public Mono<Void> initConsentRequest(
-            @RequestBody @Valid @ModelAttribute("consentRequest") ConsentRequest request) {
-        return consentManager.requestConsent(request.getConsent(), request.getRequestId());
-    }
+	@PostMapping(value = V_1_CONSENT_REQUESTS_INIT)
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public Mono<Void> initConsentRequest(
+			@RequestBody @Valid @ModelAttribute("consentRequest") ConsentRequest request) {
+		return Mono.just(request)
+				.filterWhen(req -> validator.validate(request.getRequestId().toString(), request.getTimestamp()))
+				.switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+				.flatMap(validatedRequest ->
+						consentManager.requestConsent(request.getConsent(), request.getRequestId())
+						.then(cacheForReplayAttack.put(request.getRequestId().toString(), request.getTimestamp().toString())));
+	}
 
 	@GetMapping(value = "/consent-requests")
 	public Mono<ConsentRequestsRepresentation> allConsents(

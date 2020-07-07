@@ -50,6 +50,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -595,6 +596,7 @@ public class ConsentRequestUserJourneyTest {
                 .hiTypes(HIType.values())
                 .build();
         in.projecteka.consentmanager.consent.model.request.ConsentRequest consentRequest = consentRequest()
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(2))
                 .consent(requestedDetail)
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();

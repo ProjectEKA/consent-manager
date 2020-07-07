@@ -2788,6 +2788,7 @@ components:
         - M
         - F
         - O
+        - U
     CreatePinRequest:
       type: object
       properties:
@@ -2830,16 +2831,14 @@ components:
       type: object
       properties:
         name:
-          type: string
-          example: Raj Sharma
+          $ref: '#/components/schemas/PatientName'
         username:
           type: string
           example: raj.sharma@ncg
         password:
           type: string
-        yearOfBirth:
-          type: integer
-          example: 2000
+        dateOfBirth:
+          $ref: '#/components/schemas/DateOfBirth'
         gender:
           $ref: '#/components/schemas/Gender'
       required:
@@ -2847,6 +2846,30 @@ components:
         - username
         - password
         - gender
+    PatientName:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: Raj
+        lastName:
+          type: string
+          example: Kumar
+        middleName:
+          type: string
+          example: Sharma
+    DateOfBirth:
+      type: object
+      properties:
+        date:
+          type: integer
+          example: 01
+        month:
+          type: integer
+          example: 01
+        year:
+          type: integer
+          example: 01
     RecoverCmIdRequest:
       type: object
       properties:

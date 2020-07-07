@@ -338,7 +338,7 @@ public class UserService {
                 .getUserBy(request.getGender(), getIdentifierValue(request.getVerifiedIdentifiers(), MOBILE))
                 .collectList()
                 .flatMap(users -> new NameFilter().filter(users, request.getName()))
-                .flatMap(users -> new YOBFilter().filter(users, request.getYearOfBirth()))
+                .flatMap(users -> new YOBFilter().filter(users, request.getDateOfBirth()))
                 .flatMap(users -> new ABPMJAYIdFilter().filter(users, request.getUnverifiedIdentifiers()))
                 .flatMap(this::getDistinctUser);
     }

@@ -23,7 +23,15 @@ import reactor.test.StepVerifier;
 import java.util.Collections;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.*;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResponse;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.identifier;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientIdentifierBuilder;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientInResponse;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.provider;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.telecom;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.user;
 import static java.util.List.of;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -139,7 +147,7 @@ public class DiscoveryTest {
         var transactionId = UUID.randomUUID();
         var requestId = UUID.randomUUID();
         var patientId = string();
-        PatientName name = PatientName.builder().firstName("first name").middleName(null).lastName(null).build();
+        PatientName name = PatientName.builder().first("first name").middle(null).last(null).build();
         var user = user().identifier("1").name(name).phone("+91-9999999999").build();
         PatientIdentifier ncp1008 = patientIdentifierBuilder().type(PatientIdentifierType.MR).value("NCP1008").build();
         var unverifiedIdentifiers = Collections.singletonList(ncp1008);

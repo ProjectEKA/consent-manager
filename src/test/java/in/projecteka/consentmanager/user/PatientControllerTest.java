@@ -13,13 +13,33 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.user.model.*;
+import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.Gender;
+import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
+import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
+import in.projecteka.consentmanager.user.model.Identifier;
+import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.InitiateCmIdRecoveryRequest;
+import in.projecteka.consentmanager.user.model.LoginMode;
+import in.projecteka.consentmanager.user.model.LoginModeResponse;
+import in.projecteka.consentmanager.user.model.OtpAttempt;
+import in.projecteka.consentmanager.user.model.OtpMediumType;
+import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.PatientName;
+import in.projecteka.consentmanager.user.model.DateOfBirth;
+import in.projecteka.consentmanager.user.model.Profile;
+import in.projecteka.consentmanager.user.model.RecoverCmIdResponse;
+import in.projecteka.consentmanager.user.model.SendOtpAction;
+import in.projecteka.consentmanager.user.model.SignUpSession;
+import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
+import in.projecteka.consentmanager.user.model.UpdateUserRequest;
+import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,12 +55,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static in.projecteka.consentmanager.user.TestBuilders.*;
+import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
+import static in.projecteka.consentmanager.user.TestBuilders.patientName;
+import static in.projecteka.consentmanager.user.TestBuilders.dateOfBirth;
+import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @SuppressWarnings("unused")
@@ -99,7 +125,7 @@ public class PatientControllerTest {
     public void createUser() {
         var signUpRequest = coreSignUpRequest()
                 .username("username@ncg")
-                .name(patientName().firstName("abc").build())
+                .name(patientName().first("abc").build())
                 .password("@2Abaafasfas")
                 .dateOfBirth(dateOfBirth().year(1998).build())
                 .build();
@@ -122,7 +148,7 @@ public class PatientControllerTest {
     @Test
     public void returnBadRequestForUserCreation() {
         var signUpRequest = coreSignUpRequest()
-                .name(patientName().firstName("abc").build())
+                .name(patientName().first("abc").build())
                 .dateOfBirth(dateOfBirth().date(LocalDate.now().getDayOfMonth() + 1).build())
                 .build();
         var token = string();
@@ -446,17 +472,17 @@ public class PatientControllerTest {
 
     @Test
     public void generateOtpOnGettingSinglePatientRecordForInitiateRecoverCmId() throws JsonProcessingException {
-        String name = "abc";
+        PatientName name = patientName().first("abc").build();
         Gender gender = Gender.F;
-        Integer yearOfBirth = 1999;
+        DateOfBirth dateOfBirth = dateOfBirth().year(1998).build();
         String verifiedIdentifierValue = "+91-9999999999";
         String unverifiedIdentifierValue = "P1234ABCD";
         ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
         ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
-        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(patientName().firstName("abc").
+        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(patientName().first("abc").
                 build()).dateOfBirth(dateOfBirth()
                 .year(1998).build()).
                 unverifiedIdentifiers(unverifiedIdentifiersResponse).
@@ -492,15 +518,15 @@ public class PatientControllerTest {
 
     @Test
     public void shouldThrowAnErrorWhenNoOrMultipleMatchingPatientRecordFoundForInitiateRecoverCmId() throws JsonProcessingException {
-        String name = "abc";
+        PatientName name = patientName().first("abc").build();
         Gender gender = Gender.F;
-        Integer yearOfBirth = 1999;
+        DateOfBirth dateOfBirth = dateOfBirth().year(1998).build();
         String verifiedIdentifierValue = "+91-9999999999";
         String unverifiedIdentifierValue = "P1234ABCD";
         ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
         ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
 
         when(userService.getPatientByDetails(any())).thenReturn(Mono.empty());
 
@@ -515,15 +541,15 @@ public class PatientControllerTest {
 
     @Test
     void shouldThrowAnErrorWhenMendatoryFieldsAreNotProvidedInRequestBodyForInitiateRecoverCMId() {
-        String name = "abc";
+        PatientName name = patientName().first("abc").build();
         Gender gender = null;
-        Integer yearOfBirth = 1999;
+        DateOfBirth dateOfBirth = dateOfBirth().year(1998).build();
         String verifiedIdentifierValue = "+91-9999999999";
         String unverifiedIdentifierValue = "P1234ABCD";
         ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
         ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
 
         webClient.post()
                 .uri("/patients/profile/recovery-init")
@@ -536,15 +562,15 @@ public class PatientControllerTest {
 
     @Test
     void shouldThrowAnErrorWhenIdentifiersAreMappedIncorrectlyInRequestBodyForInitiateRecoverCMId() {
-        String name = "abc";
+        PatientName name = patientName().first("abc").build();
         Gender gender = Gender.F;
-        Integer yearOfBirth = 1999;
+        DateOfBirth dateOfBirth = dateOfBirth().year(1998).build();
         String verifiedIdentifierValue = "+91-9999999999";
         String unverifiedIdentifierValue = "P1234ABCD";
         ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(List.of(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue),new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
 
         webClient.post()
                 .uri("/patients/profile/recovery-init")
@@ -557,18 +583,18 @@ public class PatientControllerTest {
 
     @Test
     public void shouldThrowAnErrorIfSignUpSessionIsNullForInitiateRecoverCmId() throws JsonProcessingException {
-        String name = "abc";
+        PatientName name = patientName().first("abc").build();
         Gender gender = Gender.F;
-        Integer yearOfBirth = 1999;
+        DateOfBirth dateOfBirth = dateOfBirth().year(1998).build();
         String verifiedIdentifierValue = "+91-9999999999";
         String unverifiedIdentifierValue = "P1234ABCD";
         ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
         ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
         User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue)
-                .name(patientName().firstName("abc").build())
+                .name(patientName().first("abc").build())
                 .dateOfBirth(dateOfBirth().year(1998).build())
                 .unverifiedIdentifiers(unverifiedIdentifiersResponse)
                 .build();

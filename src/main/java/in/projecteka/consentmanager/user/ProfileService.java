@@ -28,9 +28,9 @@ public class ProfileService {
     private Profile from(User user, Boolean hasTransactionPin) {
         Profile.ProfileBuilder builder = Profile.builder()
                 .id(user.getIdentifier())
-                .name(user.getName().getFullName())
+                .name(user.getName())
                 .gender(user.getGender())
-                .yearOfBirth(user.getDateOfBirth().getYear())
+                .dateOfBirth(user.getDateOfBirth())
                 .hasTransactionPin(hasTransactionPin)
                 .verifiedIdentifiers(singletonList(new Identifier(IdentifierType.MOBILE, user.getPhone())));
         JsonArray unverifiedIdentifiersJson = user.getUnverifiedIdentifiers();

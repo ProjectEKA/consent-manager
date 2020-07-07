@@ -54,9 +54,9 @@ public class UserServiceClientTest {
     @Test
     public void shouldGetUser() throws IOException {
         User user = user().name(PatientName.builder()
-                                .firstName("first name")
-                                .middleName("")
-                                .lastName("")
+                                .first("first name")
+                                .middle("")
+                                .last("")
                                 .build())
                     .build();
         String patientResponseBody = new ObjectMapper().writeValueAsString(user);

@@ -50,9 +50,9 @@ public class UserRepository {
                                 var user = User.builder()
                                         .identifier(patientRow.getString("id"))
                                         .name(PatientName.builder()
-                                                .firstName(patientRow.getString("first_name"))
-                                                .middleName(patientRow.getString("middle_name"))
-                                                .lastName(patientRow.getString("last_name"))
+                                                .first(patientRow.getString("first_name"))
+                                                .middle(patientRow.getString("middle_name"))
+                                                .last(patientRow.getString("last_name"))
                                                 .build()
                                         )
                                         .dateOfBirth(DateOfBirth.builder()
@@ -74,9 +74,9 @@ public class UserRepository {
 
     public Mono<Void> save(User user) {
         Tuple userDetails = Tuple.of(user.getIdentifier(),
-                user.getName().getFirstName(),
-                user.getName().getMiddleName(),
-                user.getName().getLastName(),
+                user.getName().getFirst(),
+                user.getName().getMiddle(),
+                user.getName().getLast(),
                 user.getGender().toString(),
                 user.getDateOfBirth().getDate(),
                 user.getDateOfBirth().getMonth(),
@@ -115,9 +115,9 @@ public class UserRepository {
                                     var user = User.builder()
                                             .identifier(row.getString("id"))
                                             .name(PatientName.builder()
-                                                    .firstName(row.getString("first_name"))
-                                                    .middleName(row.getString("middle_name"))
-                                                    .lastName(row.getString("last_name"))
+                                                    .first(row.getString("first_name"))
+                                                    .middle(row.getString("middle_name"))
+                                                    .last(row.getString("last_name"))
                                                     .build()
                                             )
                                             .dateOfBirth(DateOfBirth.builder()

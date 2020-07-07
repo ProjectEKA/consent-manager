@@ -1,7 +1,14 @@
 package in.projecteka.consentmanager.user;
 
 import com.google.common.base.Strings;
-import in.projecteka.consentmanager.user.model.*;
+import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.DateOfBirth;
+import in.projecteka.consentmanager.user.model.Gender;
+import in.projecteka.consentmanager.user.model.Identifier;
+import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.PatientName;
+import in.projecteka.consentmanager.user.model.SignUpIdentifier;
+import in.projecteka.consentmanager.user.model.SignUpRequest;
 import io.vavr.collection.CharSeq;
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
@@ -114,14 +121,14 @@ public class SignUpRequestValidator {
     }
 
     private static Validation<String, PatientName> validateName(PatientName name) {
-        if (Strings.isNullOrEmpty(name.getFirstName())) {
+        if (Strings.isNullOrEmpty(name.getFirst())) {
             return Validation.invalid("Name can't be empty");
         }
-        if (Strings.isNullOrEmpty(name.getMiddleName())) {
-            PatientName.builder().middleName("");
+        if (Strings.isNullOrEmpty(name.getMiddle())) {
+            PatientName.builder().middle("");
         }
-        if (Strings.isNullOrEmpty(name.getLastName())) {
-            PatientName.builder().lastName("");
+        if (Strings.isNullOrEmpty(name.getLast())) {
+            PatientName.builder().last("");
         }
 
         return allowed(VALID_NAME_CHARS, "first_name", name);
@@ -168,7 +175,7 @@ public class SignUpRequestValidator {
     }
 
     private static Validation<String, PatientName> allowed(String characters, String fieldName, PatientName name) {
-        return CharSeq.of(name.getFirstName())
+        return CharSeq.of(name.getFirst())
                 .replaceAll(characters, "")
                 .transform(seq -> seq.isEmpty()
                         ? Validation.valid(name)

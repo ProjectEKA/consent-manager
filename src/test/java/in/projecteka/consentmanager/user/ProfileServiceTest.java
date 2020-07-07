@@ -41,9 +41,9 @@ public class ProfileServiceTest {
         var user = user().build();
         var profile = Profile.builder()
                 .id(user.getIdentifier())
-                .name(user.getName().getFullName())
+                .name(user.getName())
                 .gender(user.getGender())
-                .yearOfBirth(user.getDateOfBirth().getYear())
+                .dateOfBirth(user.getDateOfBirth())
                 .hasTransactionPin(true)
                 .verifiedIdentifiers(singletonList(new Identifier(IdentifierType.MOBILE, user.getPhone())));
         JsonArray unverifiedIdentifiersJson = user.getUnverifiedIdentifiers();

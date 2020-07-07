@@ -95,30 +95,13 @@ public class PatientControllerTest {
     @MockBean
     private ConceptValidator conceptValidator;
 
-    @Mock
-    private PatientName patientName;
-
-    @Mock
-    private DateOfBirth dateOfBirth;
-
-    @BeforeAll
-    public void setUp(){
-        when(patientName.getFirstName()).thenReturn("User");
-        when(patientName.getMiddleName()).thenReturn("Name");
-        when(patientName.getLastName()).thenReturn("withAlphabet");
-
-        when(dateOfBirth.getDate()).thenReturn(LocalDate.now().getDayOfMonth());
-        when(dateOfBirth.getMonth()).thenReturn(LocalDate.now().getMonthValue());
-        when(dateOfBirth.getYear()).thenReturn(LocalDate.now().getYear());
-    }
-
     @Test
     public void createUser() {
         var signUpRequest = coreSignUpRequest()
                 .username("username@ncg")
-                .name(patientName().build())
+                .name(patientName().firstName("abc").build())
                 .password("@2Abaafasfas")
-                .dateOfBirth(dateOfBirth)
+                .dateOfBirth(dateOfBirth().year(1998).build())
                 .build();
         var token = string();
         var sessionId = string();
@@ -138,11 +121,9 @@ public class PatientControllerTest {
 
     @Test
     public void returnBadRequestForUserCreation() {
-        when(dateOfBirth.getDate()).thenReturn(LocalDate.now().getDayOfMonth() + 1);
-
         var signUpRequest = coreSignUpRequest()
-                .name(patientName)
-                .dateOfBirth(dateOfBirth)
+                .name(patientName().firstName("abc").build())
+                .dateOfBirth(dateOfBirth().date(LocalDate.now().getDayOfMonth() + 1).build())
                 .build();
         var token = string();
         var sessionId = string();
@@ -475,7 +456,11 @@ public class PatientControllerTest {
         String cmId = "abc@ncg";
         InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
-        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(patientName).dateOfBirth(dateOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(patientName().firstName("abc").
+                build()).dateOfBirth(dateOfBirth()
+                .year(1998).build()).
+                unverifiedIdentifiers(unverifiedIdentifiersResponse).
+                build();
 
         UserSignUpEnquiry userSignUpEnquiry = UserSignUpEnquiry.builder()
                 .identifierType(IdentifierType.MOBILE.toString())
@@ -582,7 +567,11 @@ public class PatientControllerTest {
         String cmId = "abc@ncg";
         InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender,yearOfBirth,verifiedIdentifiers,unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
-        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(patientName).dateOfBirth(dateOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue)
+                .name(patientName().firstName("abc").build())
+                .dateOfBirth(dateOfBirth().year(1998).build())
+                .unverifiedIdentifiers(unverifiedIdentifiersResponse)
+                .build();
 
         UserSignUpEnquiry userSignUpEnquiry = UserSignUpEnquiry.builder()
                 .identifierType(IdentifierType.MOBILE.toString())

@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.NullableConverter;
-import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.IdentifierType;
 import in.projecteka.consentmanager.user.model.SignUpIdentifier;
 import org.junit.jupiter.api.Test;
@@ -23,8 +22,8 @@ class SignUpRequestValidatorTest {
     void returnValidSignUpRequestWithAllFields() {
         var signUpRequest = signUpRequest()
                 .password("aB1 #afasas")
-                .name(patientName().build())
-                .dateOfBirth(dateOfBirth().build())
+                .name(patientName().firstName("Alan").build())
+                .dateOfBirth(dateOfBirth().date(1).month(11).year(1998).build())
                 .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -37,8 +36,8 @@ class SignUpRequestValidatorTest {
     void returnValidSignUpRequestWithOptionalDateOfBirth() {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .name(patientName().build())
-                .dateOfBirth(null)
+                .name(patientName().firstName("Alan").build())
+                .dateOfBirth(dateOfBirth().year(null).build())
                 .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -49,12 +48,10 @@ class SignUpRequestValidatorTest {
 
     @Test
     void returnInValidSignUpRequestWithFutureYearOfBirth() {
-        DateOfBirth dateOfBirth = dateOfBirth().year(LocalDate.now().getYear() + 1).build();
-
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .name(patientName().build())
-                .dateOfBirth(dateOfBirth)
+                .name(patientName().firstName("Alan").build())
+                .dateOfBirth(dateOfBirth().date(1).month(11).year(LocalDate.now().getYear() + 1).build())
                 .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -67,8 +64,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithEmptyName() {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .name(null)
-                .dateOfBirth(dateOfBirth().build())
+                .name(patientName().firstName("").build())
+                .dateOfBirth(dateOfBirth().date(1).month(11).year(1987).build())
                 .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
@@ -83,8 +80,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithEmptyGender() {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .name(patientName().build())
-                .dateOfBirth(dateOfBirth().build())
+                .name(patientName().firstName("Alan").build())
+                .dateOfBirth(dateOfBirth().date(1).month(11).year(1997).build())
                 .username("usernameWithAlphabetsAnd1@ncg")
                 .gender(null)
                 .build();
@@ -105,8 +102,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithEmptyUser(@ConvertWith(NullableConverter.class) String name) {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .name(patientName().build())
-                .dateOfBirth(dateOfBirth().build())
+                .name(patientName().firstName("Alan").build())
+                .dateOfBirth(dateOfBirth().date(1).month(11).year(1997).build())
                 .username(name)
                 .build();
 
@@ -126,8 +123,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithRandomValues(@ConvertWith(NullableConverter.class) String name) {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .name(patientName().build())
-                .dateOfBirth(dateOfBirth().build())
+                .name(patientName().firstName("Alan").build())
+                .dateOfBirth(dateOfBirth().date(1).month(11).year(1996).build())
                 .username(name)
                 .build();
 
@@ -162,8 +159,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithUserLesserThanMinimumLength(String username) {
         var signUpRequest = signUpRequest()
                 .password("aB1#afasas")
-                .name(patientName().build())
-                .dateOfBirth(dateOfBirth().build())
+                .name(patientName().firstName("Alan").build())
+                .dateOfBirth(dateOfBirth().date(1).month(11).year(1997).build())
                 .username(username)
                 .build();
 
@@ -185,8 +182,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithWeak(String password) {
         var signUpRequest = signUpRequest()
                 .password(password)
-                .name(patientName().build())
-                .dateOfBirth(dateOfBirth().build())
+                .name(patientName().firstName("Alan").build())
+                .dateOfBirth(dateOfBirth().date(1).month(11).year(1997).build())
                 .username("username@ncg")
                 .build();
 
@@ -204,8 +201,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithEmptyPassword(@ConvertWith(NullableConverter.class) String password) {
         var signUpRequest = signUpRequest()
                 .password(password)
-                .name(patientName().build())
-                .dateOfBirth(dateOfBirth().build())
+                .name(patientName().firstName("Alan").build())
+                .dateOfBirth(dateOfBirth().year(1997).build())
                 .username("username@ncg")
                 .build();
 
@@ -220,12 +217,8 @@ class SignUpRequestValidatorTest {
     void returnInValidSignUpRequestWithYearOfBirthGreaterThan120() {
         var signUpRequest = signUpRequest()
                 .password("aB1 #afasas")
-                .name(patientName().build())
-                .dateOfBirth(dateOfBirth()
-                                .date(LocalDate.now().getDayOfMonth())
-                                .month(LocalDate.now().getMonthValue())
-                                .year(LocalDate.now().getYear() - 121)
-                             .build())
+                .name(patientName().firstName("Alan").build())
+                .dateOfBirth(dateOfBirth().date(1).month(11).year(LocalDate.now().getYear() - 121).build())
                 .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 

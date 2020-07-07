@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSENT_NOTIFICATION_QUEUE;
@@ -80,7 +81,7 @@ public class HipConsentNotificationListener {
 
     private HIPNotificationRequest hipNotificationRequest(HIPConsentArtefactRepresentation consentArtefact) {
         var requestId = UUID.randomUUID();
-        var timestamp = LocalDateTime.now();
+        var timestamp = LocalDateTime.now(ZoneOffset.UTC);
 
         if (consentArtefact.getStatus() == EXPIRED || consentArtefact.getStatus() == REVOKED) {
             return HIPNotificationRequest.builder()

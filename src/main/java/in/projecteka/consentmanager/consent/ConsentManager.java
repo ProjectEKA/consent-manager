@@ -52,8 +52,8 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignedObject;
-import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -133,7 +133,7 @@ public class ConsentManager {
                 .build();
         ConsentRequestResult consentRequestResult = ConsentRequestResult.builder()
                 .requestId(UUID.randomUUID())
-                .timestamp(Instant.now().toString())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .consentRequest(request)
                 .resp(GatewayResponse.builder().requestId(requestId.toString()).build())
                 .build();
@@ -409,7 +409,7 @@ public class ConsentManager {
                             .build();
                     return ConsentArtefactResult.builder()
                             .requestId(UUID.randomUUID())
-                            .timestamp(Instant.now().toString())
+                            .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                             .consent(consent)
                             .resp(GatewayResponse.builder().requestId(requestId.toString()).build())
                             .build();
@@ -418,7 +418,7 @@ public class ConsentManager {
                     logger.error(exception.getMessage(), exception);
                     var consentArtefactResult = ConsentArtefactResult.builder()
                             .requestId(UUID.randomUUID())
-                            .timestamp(Instant.now().toString())
+                            .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                             .error(ClientError.from(exception))
                             .resp(GatewayResponse.builder().requestId(requestId.toString()).build())
                             .build();

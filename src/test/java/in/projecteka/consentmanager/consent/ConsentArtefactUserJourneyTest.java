@@ -42,6 +42,8 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -351,7 +353,9 @@ public class ConsentArtefactUserJourneyTest {
     void shouldfetchConsent() {
         var token = string();
         var consentArtefact = consentArtefactRepresentation().build();
-        var fetchRequest = fetchRequest().consentId(consentArtefact.getConsentDetail().getConsentId()).build();
+        var fetchRequest = fetchRequest().consentId(consentArtefact.getConsentDetail().getConsentId())
+                                         .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
+                                         .build();
         consentArtefact.getConsentDetail().getPatient().setId("test-user@ncg");
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
         when(serviceAuthentication.authenticate()).thenReturn(Mono.empty());

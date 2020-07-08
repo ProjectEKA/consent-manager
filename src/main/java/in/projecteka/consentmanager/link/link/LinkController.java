@@ -82,7 +82,11 @@ public class LinkController {
      */
     @PostMapping(V_1_LINKS_LINK_ON_CONFIRM)
     public Mono<Void> onConfirmLink(@RequestBody @Valid LinkConfirmationResult confirmationResult) {
-        return link.onConfirmLink(confirmationResult);
+        return Mono.just(confirmationResult)
+                .filterWhen(req -> validator.validate(confirmationResult.getRequestId().toString(),confirmationResult.getTimestamp()))
+                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .flatMap(validatedRequest -> link.onConfirmLink(confirmationResult)
+                        .then(cacheForReplayAttack.put(confirmationResult.getRequestId().toString(),confirmationResult.getTimestamp().toString())));
     }
 
     @PostMapping("/v1/links/link/init")

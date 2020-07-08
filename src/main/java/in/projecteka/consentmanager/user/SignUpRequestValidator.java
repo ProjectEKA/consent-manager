@@ -134,20 +134,6 @@ public class SignUpRequestValidator {
         return allowed(VALID_NAME_CHARS, "first_name", name);
     }
 
-    private static Validation<String, String> validateMiddleName(String middleName) {
-        if (Strings.isNullOrEmpty(middleName)) {
-            return Validation.valid("");
-        }
-        return Validation.valid(middleName);
-    }
-
-    private static Validation<String, String> validateLastName(String lastName) {
-        if (Strings.isNullOrEmpty(lastName)) {
-            return Validation.valid("");
-        }
-        return Validation.valid(lastName);
-    }
-
     private static Validation<String, String> validateUserName(String username, String userIdSuffix) {
         final String VALID_USERNAME_CHARS = "[a-zA-Z@0-9.\\-]";
         if (Strings.isNullOrEmpty(username)) {
@@ -214,24 +200,6 @@ public class SignUpRequestValidator {
         return date.getYear() == null || ((date.getYear() <= (TODAY.getYear())) && (date.getYear() >= TODAY.getYear() - 120))
                ? Validation.valid(date)
                : Validation.invalid("Year of birth can't be in future or older than 120 years");
-    }
-
-    private static Validation<String, Integer> validateDateOfBirth(Integer date) {
-        if (date == null){
-            return Validation.valid(0);
-        }
-        return (date <= 31 && date >= 1)
-                ? Validation.valid(date)
-                : Validation.invalid("Date cannot be more than 31");
-    }
-
-    private static Validation<String, Integer> validateMonthOfBirth(Integer month) {
-        if (month == null){
-            return Validation.valid(0);
-        }
-        return (month <= 12 && month >= 1)
-                ? Validation.valid(month)
-                : Validation.invalid("Month cannot be more than 12");
     }
 
     public static Validation<String, String> validatePassword(String password) {

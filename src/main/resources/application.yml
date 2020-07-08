@@ -81,3 +81,5 @@ spring:
     port: ${RABBITMQ_PORT}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+webclient:
+  keepAlive: ${CM_KEEP_ALIVE:false}

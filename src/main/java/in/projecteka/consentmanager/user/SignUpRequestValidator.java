@@ -131,7 +131,7 @@ public class SignUpRequestValidator {
             PatientName.builder().last("");
         }
 
-        return allowed(VALID_NAME_CHARS, "first_name", name);
+        return allowed(VALID_NAME_CHARS, "name", name);
     }
 
     private static Validation<String, String> validateUserName(String username, String userIdSuffix) {
@@ -161,7 +161,11 @@ public class SignUpRequestValidator {
     }
 
     private static Validation<String, PatientName> allowed(String characters, String fieldName, PatientName name) {
-        return CharSeq.of(name.getFirst())
+        if (name.createFullName().length() >  99){
+            return Validation.invalid(format("%s should be between %d and %d characters", "name", 1, 99));
+        }
+
+        return CharSeq.of(name.createFullName())
                 .replaceAll(characters, "")
                 .transform(seq -> seq.isEmpty()
                         ? Validation.valid(name)

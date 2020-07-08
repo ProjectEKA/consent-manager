@@ -12,14 +12,14 @@ public class PatientName {
     private final String middle;
     private final String last;
 
-    public String getFullName(){
+    public String createFullName(){
         var fullName = first;
 
-        if (middle != null){
+        if (middle != null && !middle.isEmpty()){
             fullName += " " + middle;
         }
 
-        if (last != null){
+        if (last != null && !last.isEmpty()){
             fullName += " " + last;
         }
         return fullName;

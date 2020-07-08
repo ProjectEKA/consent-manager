@@ -66,7 +66,7 @@ public class UserServiceClientTest {
                         .body(patientResponseBody).build()));
 
         StepVerifier.create(userServiceClient.userOf("1"))
-                .assertNext(response -> assertThat(response.getName().getFullName()).isEqualTo(user.getName().getFullName()))
+                .assertNext(response -> assertThat(response.getName().createFullName()).isEqualTo(user.getName().createFullName()))
                 .verifyComplete();
 
         assertThat(captor.getValue().url().toString()).isEqualTo("http://user-service/internal/users/1/");

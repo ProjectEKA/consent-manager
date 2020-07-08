@@ -615,7 +615,7 @@ class UserServiceTest {
         StepVerifier.create(userService.getPatientByDetails(request))
                 .assertNext(response -> {
                     assertThat(response.getIdentifier()).isEqualTo(cmId);
-                    assertThat(response.getName().getFullName()).isEqualTo(name.getFullName());
+                    assertThat(response.getName().createFullName()).isEqualTo(name.createFullName());
                     assertThat(response.getPhone()).isEqualTo(verifiedIdentifierValue);
                     assertThat(response.getDateOfBirth().getYear()).isEqualTo(dateOfBirth.getYear());
                 })

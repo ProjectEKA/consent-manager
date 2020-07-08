@@ -126,7 +126,8 @@ public class UserRepository {
                                                     .year(row.getInteger("year_of_birth"))
                                                     .build())
                                             .unverifiedIdentifiers((JsonArray) row.getValue("unverified_identifiers"))
-                                            .phone(row.getString("phone_number"))
+                                            .gender(gender)
+                                            .phone(phoneNumber)
                                             .build();
                                     userFluxSink.next(user);
                                 });

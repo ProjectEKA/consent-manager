@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.user.model;
 
+import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,11 +16,11 @@ public class PatientName {
     public String createFullName(){
         var fullName = first;
 
-        if (middle != null && !middle.isEmpty()){
+        if (!Strings.isNullOrEmpty(middle)){
             fullName += " " + middle;
         }
 
-        if (last != null && !last.isEmpty()){
+        if (!Strings.isNullOrEmpty(last)){
             fullName += " " + last;
         }
         return fullName;

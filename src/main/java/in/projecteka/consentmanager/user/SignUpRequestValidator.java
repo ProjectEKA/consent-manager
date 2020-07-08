@@ -182,21 +182,16 @@ public class SignUpRequestValidator {
 
     private static Validation<String, DateOfBirth> validateDateOfBirth(DateOfBirth date) {
 
-        if(date == null){
-            date.builder().date(01);
+        if(date.getDate() != null){
+            if(date.getDate() > 31 && date.getDate() < 1){
+                return Validation.invalid("Date cannot be more than 31");
+            }
         }
-        if(date.getMonth() == null){
-            date.builder().month(01);
+        if(date.getMonth() != null){
+            if(date.getMonth() > 12 && date.getMonth() < 1){
+                return Validation.invalid("Month cannot be more than 12");
+            }
         }
-
-        if(date.getMonth() > 12 && date.getMonth() < 1){
-            return Validation.invalid("Month cannot be more than 12");
-        }
-
-        if(date.getDate() > 31 && date.getDate() < 1){
-            return Validation.invalid("Date cannot be more than 31");
-        }
-
         return date.getYear() == null || ((date.getYear() <= (TODAY.getYear())) && (date.getYear() >= TODAY.getYear() - 120))
                ? Validation.valid(date)
                : Validation.invalid("Year of birth can't be in future or older than 120 years");

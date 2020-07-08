@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -53,9 +54,11 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -73,8 +76,8 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static java.util.List.of;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -124,6 +127,9 @@ public class LinkUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConceptValidator conceptValidator;
+
+    @MockBean
+    private RequestValidator validator;
 
     @MockBean
     @Qualifier("linkResults")
@@ -371,10 +377,12 @@ public class LinkUserJourneyTest {
     public void onLinkCareContexts() {
         var token = string();
         var patientLinkReferenceResult = patientLinkReferenceResult()
-                                         .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
+                                         .requestId(UUID.randomUUID())
+                                         .timestamp(Instant.now().plusSeconds(60L).toString())
                                          .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
 
@@ -397,7 +405,7 @@ public class LinkUserJourneyTest {
         var patientLinkReferenceResult = PatientLinkReferenceResult.builder()
                 .requestId(UUID.randomUUID())
                 .resp(gatewayResponse)
-                .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
+                .timestamp(Instant.now().plusSeconds(60L).toString())
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 

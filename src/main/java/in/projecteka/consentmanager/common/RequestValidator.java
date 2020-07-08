@@ -13,13 +13,10 @@ import java.time.format.DateTimeFormatter;
 public class RequestValidator {
     private final CacheAdapter<String, String> cacheForReplayAttack;
 
-    public Mono<Boolean> validate(String requestId, LocalDateTime timestamp) {
+    public Mono<Boolean> validate(String requestId, String timestamp) {
         return isRequestIdPresent(requestId)
                 .flatMap(isRequestIdPresent ->
-                        isRequestIdValidInGivenTimestamp(timestamp)
-                                .flatMap(isRequestIdValidInGivenTimestamp ->
-                                        Mono.just(!isRequestIdPresent && isRequestIdValidInGivenTimestamp))
-                );
+                        Mono.just(!isRequestIdPresent && isRequestIdValidInGivenTimestamp(timestamp)));
     }
 
     private Mono<Boolean> isRequestIdPresent(String requestId) {
@@ -28,8 +25,8 @@ public class RequestValidator {
                 .switchIfEmpty(Mono.just(false));
     }
 
-    private Mono<Boolean> isRequestIdValidInGivenTimestamp(LocalDateTime timestamp) {
-        return  Mono.just(isValidTimestamp(toDate(timestamp.toString())));
+    private boolean isRequestIdValidInGivenTimestamp(String timestamp) {
+        return  isValidTimestamp(toDate(timestamp));
 
     }
 

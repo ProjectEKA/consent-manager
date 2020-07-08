@@ -22,7 +22,7 @@ import java.util.UUID;
 @Data
 public class PatientLinkReferenceResult {
     private UUID requestId;
-    private LocalDateTime timestamp;
+    private String timestamp;
     private UUID transactionId;
     private Link link;
     private RespError error;

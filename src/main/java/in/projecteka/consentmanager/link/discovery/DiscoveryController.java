@@ -57,12 +57,12 @@ public class DiscoveryController {
     @PostMapping(V_1_CARE_CONTEXTS_ON_DISCOVER)
     public Mono<Void> onDiscoverPatientCareContexts(@RequestBody @Valid DiscoveryResult discoveryResult) {
         return Mono.just(discoveryResult)
-                .filterWhen(req -> validator.validate(discoveryResult.getRequestId().toString(),discoveryResult.getTimestamp()))
+                .filterWhen(req -> validator.validate(discoveryResult.getRequestId().toString()
+                        , discoveryResult.getTimestamp().toString()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(validatedRequest ->
                         discovery.onDiscoverPatientCareContexts(discoveryResult)
-                        .then(cacheForReplayAttack.put(discoveryResult.getRequestId().toString(),discoveryResult.getTimestamp().toString())));
-
+                                .then(cacheForReplayAttack.put(discoveryResult.getRequestId().toString(), discoveryResult.getTimestamp().toString())));
     }
 
     private UUID newRequest() {

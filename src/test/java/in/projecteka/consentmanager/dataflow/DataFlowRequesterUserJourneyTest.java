@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
@@ -125,6 +126,9 @@ public class DataFlowRequesterUserJourneyTest {
     private ConceptValidator conceptValidator;
 
     @MockBean
+    private RequestValidator validator;
+
+    @MockBean
     private DataFlowRequestClient dataFlowRequestClient;
 
     @MockBean
@@ -162,6 +166,8 @@ public class DataFlowRequesterUserJourneyTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(consentArtefactRepresentationJson));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
@@ -297,6 +303,8 @@ public class DataFlowRequesterUserJourneyTest {
                         .setBody(consentArtefactRepresentationJson));
         var user = "{\"preferred_username\": \"service-account-10000005\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
+
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
@@ -358,6 +366,7 @@ public class DataFlowRequesterUserJourneyTest {
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
 
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of(GATEWAY))));
         when(consentManagerClient.getConsentArtefact(dataFlowRequest.getHiRequest().getConsent().getId()))
                 .thenReturn(Mono.just(consentArtefact));
@@ -377,6 +386,45 @@ public class DataFlowRequesterUserJourneyTest {
                 .exchange()
                 .expectStatus()
                 .isAccepted();
+    }
+
+    @Test
+    void shouldFailWithTooManyRequestsErrorIfDataFlowRequestIsInvalid() throws IOException {
+        String token = string();
+        var hiuId = "10000005";
+        var dataFlowRequest = gatewayDataFlowRequest().build();
+        dataFlowRequest.getHiRequest().getDateRange().setFrom(toDate("2020-01-15T08:47:48"));
+        dataFlowRequest.getHiRequest().getDateRange().setTo(toDate("2020-01-20T08:47:48"));
+        var consentArtefact = consentArtefactRepresentation().build();
+        consentArtefact.setStatus(ConsentStatus.GRANTED);
+        consentArtefact.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
+        consentArtefact.getConsentDetail().getPermission().setDataEraseAt(toDateWithMilliSeconds("253379772420000"));
+        consentArtefact.getConsentDetail().getPermission().
+                setDateRange(AccessPeriod.builder()
+                        .fromDate(toDate("2020-01-15T08:47:48"))
+                        .toDate(toDate("2020-01-20T08:47:48"))
+                        .build());
+        var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefact);
+        consentManagerServer.enqueue(
+                new MockResponse()
+                        .setHeader("Content-Type", "application/json")
+                        .setBody(consentArtefactRepresentationJson));
+        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+        gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of(GATEWAY))));
+
+        webTestClient
+                .post()
+                .uri("/v1/health-information/request")
+                .header(AUTHORIZATION, token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(dataFlowRequest)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .is4xxClientError();
     }
 
     public static class ContextInitializer

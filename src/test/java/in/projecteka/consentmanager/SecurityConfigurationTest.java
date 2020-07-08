@@ -3,6 +3,7 @@ package in.projecteka.consentmanager;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConsentArtefactsController;
 import in.projecteka.consentmanager.consent.ConsentNotificationPublisher;
@@ -12,6 +13,7 @@ import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.dataflow.DataFlowRequester;
+import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,7 @@ import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.common.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -75,6 +78,9 @@ class SecurityConfigurationTest {
 
     @MockBean
     private PinVerificationTokenService pinVerificationTokenService;
+
+    @MockBean
+    private RequestValidator validator;
 
     @MockBean
     private DataFlowRequester dataFlowRequester;
@@ -135,7 +141,10 @@ class SecurityConfigurationTest {
     void return202AcceptedForHealthInfoNotify() {
         var token = string();
         var username = string();
+        var healthInfoNotification = HealthInfoNotificationRequest.builder().build();
         var caller = ServiceCaller.builder().clientId(username).roles(List.of(GATEWAY)).build();
+
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
         when(dataFlowRequester.notifyHealthInformationStatus(any())).thenReturn(Mono.empty());
 
@@ -144,7 +153,7 @@ class SecurityConfigurationTest {
                 .uri(V_1_HEALTH_INFORMATION_NOTIFY)
                 .contentType(APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
-                .bodyValue("{}")
+                .bodyValue(healthInfoNotification)
                 .exchange()
                 .expectStatus()
                 .isAccepted();

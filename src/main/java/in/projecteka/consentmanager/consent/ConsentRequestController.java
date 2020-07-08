@@ -59,7 +59,8 @@ public class ConsentRequestController {
 	public Mono<Void> initConsentRequest(
 			@RequestBody @Valid @ModelAttribute("consentRequest") ConsentRequest request) {
 		return Mono.just(request)
-				.filterWhen(req -> validator.validate(request.getRequestId().toString(), request.getTimestamp()))
+				.filterWhen(req ->
+						validator.validate(request.getRequestId().toString(), request.getTimestamp().toString()))
 				.switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
 				.flatMap(validatedRequest ->
 						consentManager.requestConsent(request.getConsent(), request.getRequestId())

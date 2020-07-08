@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
@@ -52,6 +53,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
@@ -121,6 +123,9 @@ public class DiscoveryUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConceptValidator conceptValidator;
+
+    @MockBean
+    private RequestValidator validator;
 
     @MockBean
     private GatewayTokenVerifier gatewayTokenVerifier;
@@ -365,10 +370,12 @@ public class DiscoveryUserJourneyTest {
     public void onDiscoverPatientCareContexts() {
         var token = string();
         var patientDiscoveryResult = TestBuilders.discoveryResult()
+                                     .requestId(UUID.randomUUID())
                                      .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
                                      .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient.post()
@@ -392,6 +399,7 @@ public class DiscoveryUserJourneyTest {
                 .message("Could not identify a unique patient. Need more information.")
                 .build();
         var patientDiscoveryResult = DiscoveryResult.builder()
+                .requestId(UUID.randomUUID())
                 .patient(null)
                 .error(error)
                 .resp(gatewayResponse)
@@ -399,6 +407,7 @@ public class DiscoveryUserJourneyTest {
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient.post()

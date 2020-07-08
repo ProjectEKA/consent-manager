@@ -41,7 +41,8 @@ public class UserController {
     @PostMapping(V_1_PATIENTS_FIND)
     public Mono<Void> userWith(@Valid @RequestBody PatientRequest patientRequest) {
         return Mono.just(patientRequest)
-                .filterWhen(req -> validator.validate(patientRequest.getRequestId().toString(), patientRequest.getTimestamp()))
+                .filterWhen(req ->
+                        validator.validate(patientRequest.getRequestId().toString(), patientRequest.getTimestamp().toString()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(validatedRequest -> userService.user(patientRequest.getQuery().getPatient().getId(),
                                              patientRequest.getQuery().getRequester(),

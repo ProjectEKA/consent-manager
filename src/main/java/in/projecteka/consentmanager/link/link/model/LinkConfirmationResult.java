@@ -19,7 +19,7 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LinkConfirmationResult {
     private UUID requestId;
-    private LocalDateTime timestamp;
+    private String timestamp;
     private PatientRepresentation patient;
     private RespError error;
     @NotNull

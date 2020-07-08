@@ -92,22 +92,26 @@ public class ConsentArtefactsController {
     @PostMapping(value = V_1_CONSENTS_FETCH)
     public Mono<Void> fetchConsent(@RequestBody FetchRequest fetchRequest) {
       return Mono.just(fetchRequest)
-              .filterWhen(req -> validator.validate(fetchRequest.getRequestId().toString(),fetchRequest.getTimestamp()))
+              .filterWhen(req ->
+                      validator.validate(fetchRequest.getRequestId().toString(),fetchRequest.getTimestamp().toString()))
               .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
               .flatMap(validatedRequest -> ReactiveSecurityContextHolder.getContext()
                       .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
-                      .doOnSuccess(requester -> {
-                          Mono.defer(() -> consentManager.getConsent(fetchRequest.getConsentId(), fetchRequest.getRequestId())).subscribe();
-                      })
-                      .then()
-                      .then(cacheForReplayAttack.put(fetchRequest.getRequestId().toString(),fetchRequest.getTimestamp().toString())));
+                      .doOnSuccess(requester -> Mono.defer(() -> {
+                          cacheForReplayAttack.put(
+                                  fetchRequest.getRequestId().toString(),fetchRequest.getTimestamp().toString());
+                          return consentManager.getConsent(fetchRequest.getConsentId(), fetchRequest.getRequestId());
+                      }).subscribe())
+                      .then());
     }
 
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PostMapping(value = V_1_HIP_CONSENT_ON_NOTIFY)
     public Mono<Void> hipOnNotify(@RequestBody HIPCosentNotificationAcknowledgment acknowledgment) {
         return Mono.just(acknowledgment)
-                .filterWhen(req -> validator.validate(acknowledgment.getRequestId().toString(),acknowledgment.getTimestamp()))
+                .filterWhen(req ->
+                        validator.validate(acknowledgment.getRequestId().toString()
+                                ,acknowledgment.getTimestamp().toString()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(validatedRequest -> consentManager.updateConsentNotification(acknowledgment)
                         .then(cacheForReplayAttack.put(acknowledgment.getRequestId().toString(),acknowledgment.getTimestamp().toString())));

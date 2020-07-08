@@ -55,13 +55,13 @@ public class UserConfiguration {
     }
 
     @Bean
-    public OtpServiceClient otpServiceClient(WebClient.Builder builder,
+    public OtpServiceClient otpServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                              OtpServiceProperties otpServiceProperties) {
         return new OtpServiceClient(builder, otpServiceProperties.getUrl());
     }
 
     @Bean
-    public IdentityServiceClient keycloakClient(WebClient.Builder builder,
+    public IdentityServiceClient keycloakClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                 IdentityServiceProperties identityServiceProperties) {
         return new IdentityServiceClient(builder, identityServiceProperties);
     }

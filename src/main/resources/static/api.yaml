@@ -2732,13 +2732,11 @@ components:
           type: string
           example: user@ncg
         name:
-          type: string
-          example: Raj Sharma
+          $ref: '#/components/schemas/PatientName'
         gender:
           $ref: '#/components/schemas/Gender'
-        yearOfBirth:
-          type: integer
-          example: 1979
+        dateOfBirth:
+          $ref: '#/components/schemas/DateOfBirth'
         hasTransactionPin:
           type: boolean
         verifiedIdentifiers:
@@ -2849,13 +2847,13 @@ components:
     PatientName:
       type: object
       properties:
-        firstName:
+        first:
           type: string
           example: Raj
-        lastName:
+        last:
           type: string
           example: Kumar
-        middleName:
+        middle:
           type: string
           example: Sharma
     DateOfBirth:
@@ -2874,13 +2872,11 @@ components:
       type: object
       properties:
         name:
-          type: string
-          example: Raj Sharma
+          $ref: '#/components/schemas/PatientName'
         gender:
           $ref: '#/components/schemas/Gender'
-        yearOfBirth:
-          type: integer
-          example: 2000
+        dateOfBirth:
+          $ref: '#/components/schemas/DateOfBirth'
         verifiedIdentifiers:
           description: verified identifiers are passed
           type: array
@@ -3071,4 +3067,3 @@ components:
         - username
         - otp
         - sessionId
-

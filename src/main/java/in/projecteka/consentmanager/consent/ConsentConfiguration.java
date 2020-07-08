@@ -59,7 +59,7 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    public ConsentManager consentRequestService(WebClient.Builder builder,
+    public ConsentManager consentRequestService(@Qualifier("customBuilder") WebClient.Builder builder,
                                                 ConsentRequestRepository repository,
                                                 UserServiceProperties userServiceProperties,
                                                 ConsentArtefactRepository consentArtefactRepository,
@@ -73,7 +73,7 @@ public class ConsentConfiguration {
                                                 ConceptValidator conceptValidator,
                                                 GatewayServiceProperties gatewayServiceProperties) {
         return new ConsentManager(
-                new UserServiceClient(builder, userServiceProperties.getUrl(),
+                new UserServiceClient(builder.build(), userServiceProperties.getUrl(),
                         identityService::authenticate,
                         gatewayServiceProperties,
                         serviceAuthentication),
@@ -83,7 +83,7 @@ public class ConsentConfiguration {
                 consentNotificationPublisher,
                 centralRegistry,
                 postConsentRequest,
-                new PatientServiceClient(builder, identityService::authenticate, linkServiceProperties.getUrl()),
+                new PatientServiceClient(builder.build(), identityService::authenticate, linkServiceProperties.getUrl()),
                 new CMProperties(gatewayServiceProperties.getClientId()),
                 conceptValidator,
                 new ConsentArtefactQueryGenerator(),
@@ -124,7 +124,7 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    public ConsentArtefactNotifier consentArtefactClient(WebClient.Builder builder,
+    public ConsentArtefactNotifier consentArtefactClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                          ServiceAuthentication serviceAuthentication,
                                                          GatewayServiceProperties gatewayServiceProperties) {
         return new ConsentArtefactNotifier(builder, serviceAuthentication::authenticate, gatewayServiceProperties);
@@ -167,7 +167,7 @@ public class ConsentConfiguration {
             MessageListenerContainerFactory messageListenerContainerFactory,
             DestinationsConfig destinationsConfig,
             Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-            WebClient.Builder builder,
+            @Qualifier("customBuilder") WebClient.Builder builder,
             OtpServiceProperties otpServiceProperties,
             UserServiceProperties userServiceProperties,
             ConsentServiceProperties consentServiceProperties,
@@ -179,7 +179,7 @@ public class ConsentConfiguration {
                 destinationsConfig,
                 jackson2JsonMessageConverter,
                 new OtpServiceClient(builder, otpServiceProperties.getUrl()),
-                new UserServiceClient(builder,
+                new UserServiceClient(builder.build(),
                         userServiceProperties.getUrl(),
                         identityService::authenticate,
                         gatewayServiceProperties,

@@ -20,7 +20,8 @@ import java.net.SocketAddress;
 import java.net.Socket;
 import java.net.InetSocketAddress;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.concurrent.TimeoutException;
 
 @AllArgsConstructor
@@ -36,17 +37,17 @@ public class Heartbeat {
         try {
             return isPostgresUp() && isKeycloakUp() && isRabbitMQUp() && isCacheUp()
                     ? Mono.just(HeartbeatResponse.builder()
-                    .timeStamp(Instant.now().toString())
+                    .timeStamp(LocalDateTime.now(ZoneOffset.UTC))
                     .status(Status.UP)
                     .build())
                     : Mono.just(HeartbeatResponse.builder()
-                    .timeStamp(Instant.now().toString())
+                    .timeStamp(LocalDateTime.now(ZoneOffset.UTC))
                     .status(Status.DOWN)
                     .error(Error.builder().code(ErrorCode.SERVICE_DOWN).message("Service down").build())
                     .build());
         } catch (IOException | TimeoutException e) {
             return Mono.just(HeartbeatResponse.builder()
-                    .timeStamp(Instant.now().toString())
+                    .timeStamp(LocalDateTime.now(ZoneOffset.UTC))
                     .status(Status.DOWN)
                     .error(Error.builder().code(ErrorCode.SERVICE_DOWN).message("Service down").build())
                     .build());

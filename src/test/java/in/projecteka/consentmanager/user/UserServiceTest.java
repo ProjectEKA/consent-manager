@@ -13,6 +13,7 @@ import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
+import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
@@ -20,6 +21,7 @@ import in.projecteka.consentmanager.user.model.InitiateCmIdRecoveryRequest;
 import in.projecteka.consentmanager.user.model.LoginMode;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.consentmanager.user.model.PatientResponse;
 import in.projecteka.consentmanager.user.model.SendOtpAction;
 import in.projecteka.consentmanager.user.model.SignUpSession;
@@ -276,7 +278,12 @@ class UserServiceTest {
 
     @Test
     public void shouldCreateUser() {
-        var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.now().getYear()).build();
+        var signUpRequest = coreSignUpRequest()
+                            .dateOfBirth(DateOfBirth.builder()
+                                    .month(LocalDate.now().getMonthValue())
+                                    .year(LocalDate.now().getYear())
+                                    .build())
+                            .build();
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
@@ -291,7 +298,12 @@ class UserServiceTest {
 
     @Test
     public void shouldReturnUserAlreadyExistsError() {
-        var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
+        var signUpRequest = coreSignUpRequest()
+                                .dateOfBirth(DateOfBirth.builder()
+                                        .month(LocalDate.now().getMonthValue())
+                                        .year(LocalDate.MIN.getYear())
+                                        .build())
+                            .build();
         var sessionId = string();
         var user = user().identifier(signUpRequest.getUsername()).build();
         when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(string()));
@@ -308,7 +320,15 @@ class UserServiceTest {
 
     @Test
     public void shouldCreateUserWhenYOBIsNull() {
-        var signUpRequest = coreSignUpRequest().name("apoorva g a").yearOfBirth(null).build();
+        var signUpRequest = coreSignUpRequest()
+                            .name(
+                                PatientName.builder()
+                                        .first("apoorva")
+                                        .middle("g")
+                                        .last("a")
+                                        .build())
+                            .dateOfBirth(null)
+                            .build();
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
@@ -323,7 +343,12 @@ class UserServiceTest {
 
     @Test
     public void shouldNotCreateUserWhenIDPClientFails() {
-        var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
+        var signUpRequest = coreSignUpRequest()
+                                .dateOfBirth(DateOfBirth.builder()
+                                        .month(LocalDate.now().getMonthValue())
+                                        .year(LocalDate.MIN.getYear())
+                                        .build())
+                            .build();
         var mobileNumber = string();
         var user = User.from(signUpRequest, mobileNumber);
         var identifier = user.getIdentifier();
@@ -346,7 +371,12 @@ class UserServiceTest {
 
     @Test
     void shouldNotCreateUserWhenPersistingToDbFails() {
-        var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
+        var signUpRequest = coreSignUpRequest()
+                                .dateOfBirth(DateOfBirth.builder()
+                                        .month(LocalDate.now().getMonthValue())
+                                        .year(LocalDate.MIN.getYear())
+                                        .build())
+                            .build();
         var mobileNumber = string();
         var user = User.from(signUpRequest, mobileNumber);
         var identifier = user.getIdentifier();
@@ -568,26 +598,26 @@ class UserServiceTest {
 
     @Test
     void shouldReturnCMIdForSingleMatchingRecordForInitiateRecoverCMId() {
-        String name = "abc";
+        PatientName name = PatientName.builder().first("abc").middle(null).last(null).build();
         Gender gender = Gender.F;
-        Integer yearOfBirth = 1999;
+        DateOfBirth dateOfBirth = DateOfBirth.builder().year(1999).build();
         String verifiedIdentifierValue = "+91-8888888888";
         String unverifiedIdentifierValue = "P1234ABCD";
         var verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
         var unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        var request = new InitiateCmIdRecoveryRequest(name, gender, yearOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
+        var request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
         var unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type", "ABPMJAYID").put("value", unverifiedIdentifierValue));
-        var recoverCmIdRows = new ArrayList<>(Collections.singletonList(User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build()));
+        var recoverCmIdRows = new ArrayList<>(Collections.singletonList(User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(name).dateOfBirth(dateOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build()));
 
         when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(Flux.fromIterable(recoverCmIdRows));
 
         StepVerifier.create(userService.getPatientByDetails(request))
                 .assertNext(response -> {
                     assertThat(response.getIdentifier()).isEqualTo(cmId);
-                    assertThat(response.getName()).isEqualTo(name);
+                    assertThat(response.getName().createFullName()).isEqualTo(name.createFullName());
                     assertThat(response.getPhone()).isEqualTo(verifiedIdentifierValue);
-                    assertThat(response.getYearOfBirth()).isEqualTo(yearOfBirth);
+                    assertThat(response.getDateOfBirth().getYear()).isEqualTo(dateOfBirth.getYear());
                 })
                 .verifyComplete();
         verify(userRepository, times(1)).getUserBy(gender, verifiedIdentifierValue);
@@ -595,17 +625,17 @@ class UserServiceTest {
 
     @Test
     void shouldReturnEmptyMonoForMultipleMatchingRecordsForInitiateRecoverCMId() {
-        String name = "abc";
+        PatientName name = PatientName.builder().first("abc").middle("").last(null).build();
         Gender gender = Gender.F;
-        Integer yearOfBirth = 1999;
+        DateOfBirth dateOfBirth = DateOfBirth.builder().year(1999).build();
         String verifiedIdentifierValue = "+91-8888888888";
         String unverifiedIdentifierValue = "P1234ABCD";
         var verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
         var unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        var request = new InitiateCmIdRecoveryRequest(name, gender, yearOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
+        var request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type", "ABPMJAYID").put("value", unverifiedIdentifierValue));
-        User recoverCmIdRow = User.builder().identifier(cmId).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        User recoverCmIdRow = User.builder().identifier(cmId).name(name).dateOfBirth(dateOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
         var recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow, recoverCmIdRow));
 
         when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(Flux.fromIterable(recoverCmIdRows));
@@ -617,17 +647,17 @@ class UserServiceTest {
 
     @Test
     void shouldThrowAnErrorWhenNoMatchingRecordFoundAndPMJAYIdIsNullInRecordsForInitiateRecoverCMId() {
-        String name = "abc";
+        PatientName name = PatientName.builder().first("abc").middle("").last(null).build();
         Gender gender = Gender.F;
-        Integer yearOfBirth = 1999;
+        DateOfBirth dateOfBirth = DateOfBirth.builder().year(1999).build();
         String verifiedIdentifierValue = "+91-8888888888";
         String unverifiedIdentifierValue = "P1234ABCD";
         ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
         ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, yearOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = null;
-        User recoverCmIdRow = User.builder().identifier(cmId).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        User recoverCmIdRow = User.builder().identifier(cmId).name(name).dateOfBirth(dateOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
         ArrayList<User> recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow));
 
         when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(Flux.fromIterable(recoverCmIdRows));

@@ -89,7 +89,7 @@ public class UserService {
                 .map(user -> {
                     Patient patient = Patient.builder()
                             .id(user.getIdentifier())
-                            .name(user.getName())
+                            .name(user.getName().createFullName())
                             .build();
                     var patientResponse = PatientResponse.builder()
                             .requestId(UUID.randomUUID())
@@ -240,7 +240,7 @@ public class UserService {
     public Mono<Void> create(CoreSignUpRequest coreSignUpRequest, String sessionId) {
         UserCredential credential = new UserCredential(coreSignUpRequest.getPassword());
         KeycloakUser keycloakUser = new KeycloakUser(
-                coreSignUpRequest.getName(),
+                coreSignUpRequest.getName().createFullName(),
                 coreSignUpRequest.getUsername(),
                 Collections.singletonList(credential),
                 Boolean.TRUE.toString());
@@ -339,7 +339,7 @@ public class UserService {
                 .getUserBy(request.getGender(), getIdentifierValue(request.getVerifiedIdentifiers(), MOBILE))
                 .collectList()
                 .flatMap(users -> new NameFilter().filter(users, request.getName()))
-                .flatMap(users -> new YOBFilter().filter(users, request.getYearOfBirth()))
+                .flatMap(users -> new YOBFilter().filter(users, request.getDateOfBirth()))
                 .flatMap(users -> new ABPMJAYIdFilter().filter(users, request.getUnverifiedIdentifiers()))
                 .flatMap(this::getDistinctUser);
     }

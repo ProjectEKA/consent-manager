@@ -10,7 +10,6 @@ import lombok.Value;
 import org.springframework.util.StringUtils;
 
 import javax.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Value

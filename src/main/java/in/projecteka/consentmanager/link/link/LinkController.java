@@ -91,7 +91,8 @@ public class LinkController {
                         ,convertTimestampToLocalDateTimeUTC(confirmationResult.getTimestamp()).toString()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(validatedRequest -> link.onConfirmLink(confirmationResult)
-                        .then(cacheForReplayAttack.put(confirmationResult.getRequestId().toString(),confirmationResult.getTimestamp().toString())));
+                        .then(cacheForReplayAttack.put(confirmationResult.getRequestId().toString(),
+                                                       confirmationResult.getTimestamp())));
     }
 
     @PostMapping("/v1/links/link/init")

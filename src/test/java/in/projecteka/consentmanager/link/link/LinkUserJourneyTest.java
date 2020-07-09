@@ -73,8 +73,10 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static java.util.List.of;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyString;
+
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)

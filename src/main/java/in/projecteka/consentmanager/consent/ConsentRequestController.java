@@ -63,8 +63,8 @@ public class ConsentRequestController {
 						validator.validate(request.getRequestId().toString(), request.getTimestamp().toString()))
 				.switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
 				.flatMap(validatedRequest ->
-						consentManager.requestConsent(request.getConsent(), request.getRequestId())
-						.then(cacheForReplayAttack.put(request.getRequestId().toString(), request.getTimestamp().toString())));
+						cacheForReplayAttack.put(request.getRequestId().toString(), request.getTimestamp().toString())
+						.then(consentManager.requestConsent(request.getConsent(), request.getRequestId())));
 	}
 
 	@GetMapping(value = "/consent-requests")

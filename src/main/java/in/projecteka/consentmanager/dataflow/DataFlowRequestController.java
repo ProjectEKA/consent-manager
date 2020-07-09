@@ -46,10 +46,10 @@ public class DataFlowRequestController {
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(req -> ReactiveSecurityContextHolder.getContext()
                         .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
-                        .doOnSuccess(requester -> Mono.defer(() -> {
-                            cacheForReplayAttack.put(req.getRequestId().toString(), req.getTimestamp().toString());
-                            return dataFlowRequester.requestHealthDataInfo(dataFlowRequest);
-                        }).subscribe())
+                        .doOnSuccess(requester -> Mono.defer(() ->
+                                cacheForReplayAttack.put(req.getRequestId().toString(), req.getTimestamp().toString())
+                                        .then(dataFlowRequester.requestHealthDataInfo(dataFlowRequest))
+                        ).subscribe())
                         .then());
     }
 
@@ -59,10 +59,10 @@ public class DataFlowRequestController {
         return Mono.just(healthInformationResponse)
                 .filterWhen(res -> validator.validate(res.getRequestId().toString(), res.getTimestamp().toString()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
-                .flatMap(res -> dataFlowRequester.updateDataflowRequestStatus(healthInformationResponse)
-                        .then(cacheForReplayAttack.put(
-                                healthInformationResponse.getRequestId().toString(),
-                                healthInformationResponse.getTimestamp().toString()))
+                .flatMap(res -> cacheForReplayAttack.put(
+                        healthInformationResponse.getRequestId().toString(),
+                        healthInformationResponse.getTimestamp().toString())
+                        .then(dataFlowRequester.updateDataflowRequestStatus(healthInformationResponse))
                 );
     }
 
@@ -76,10 +76,10 @@ public class DataFlowRequestController {
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(req -> ReactiveSecurityContextHolder.getContext()
                         .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
-                        .doOnSuccess(requester -> Mono.defer(() -> {
-                            cacheForReplayAttack.put(req.getRequestId().toString(), req.getTimestamp().toString());
-                            return dataFlowRequester.notifyHealthInformationStatus(notificationRequest);
-                        }).subscribe())
+                        .doOnSuccess(requester -> Mono.defer(() ->
+                                cacheForReplayAttack.put(req.getRequestId().toString(), req.getTimestamp().toString())
+                                        .then(dataFlowRequester.notifyHealthInformationStatus(notificationRequest))
+                        ).subscribe())
                         .then());
     }
 }

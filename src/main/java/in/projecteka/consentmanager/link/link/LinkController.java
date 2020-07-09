@@ -55,11 +55,11 @@ public class LinkController {
                 .filterWhen(res -> validator.validate(patientLinkReferenceResult.getRequestId().toString(),
                         convertTimestampToLocalDateTimeUTC(patientLinkReferenceResult.getTimestamp()).toString()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
-                .flatMap(res -> link.onLinkCareContexts(patientLinkReferenceResult)
-                .then(cacheForReplayAttack.put(
+                .flatMap(res -> cacheForReplayAttack.put(
                         patientLinkReferenceResult.getRequestId().toString(),
                         patientLinkReferenceResult.getTimestamp()
-                )));
+                )
+                        .then(link.onLinkCareContexts(patientLinkReferenceResult)));
     }
 
     /**

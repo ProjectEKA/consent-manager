@@ -61,8 +61,8 @@ public class DiscoveryController {
                         , discoveryResult.getTimestamp().toString()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(validatedRequest ->
-                        discovery.onDiscoverPatientCareContexts(discoveryResult)
-                                .then(cacheForReplayAttack.put(discoveryResult.getRequestId().toString(), discoveryResult.getTimestamp().toString())));
+                        cacheForReplayAttack.put(discoveryResult.getRequestId().toString(), discoveryResult.getTimestamp().toString())
+                                .then(discovery.onDiscoverPatientCareContexts(discoveryResult)));
     }
 
     private UUID newRequest() {

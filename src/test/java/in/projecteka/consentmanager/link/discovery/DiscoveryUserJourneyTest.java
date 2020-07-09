@@ -120,6 +120,10 @@ public class DiscoveryUserJourneyTest {
     @Qualifier("discoveryResults")
     CacheAdapter<String,String> discoveryResults;
 
+    @MockBean
+    @Qualifier("cacheForReplayAttack")
+    CacheAdapter<String,String> cacheForReplayAttack;
+
     @SuppressWarnings("unused")
     @MockBean
     private ConceptValidator conceptValidator;
@@ -374,6 +378,8 @@ public class DiscoveryUserJourneyTest {
 
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+        when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
+        when(discoveryResults.put(anyString(), anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
                 .uri("/v1/care-contexts/on-discover")
@@ -426,6 +432,7 @@ public class DiscoveryUserJourneyTest {
 
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+        when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
                 .uri("/v1/care-contexts/on-discover")

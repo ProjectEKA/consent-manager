@@ -133,6 +133,10 @@ public class LinkUserJourneyTest {
     CacheAdapter<String,String> linkResults;
 
     @MockBean
+    @Qualifier("cacheForReplayAttack")
+    CacheAdapter<String,String> cacheForReplayAttack;
+
+    @MockBean
     private LinkServiceClient linkServiceClient;
 
     @MockBean
@@ -382,6 +386,8 @@ public class LinkUserJourneyTest {
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
+        when(cacheForReplayAttack.put(anyString(),anyString())).thenReturn(Mono.empty());
+        when(linkResults.put(anyString(),anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
                 .uri("/v1/links/link/on-init")
@@ -433,6 +439,7 @@ public class LinkUserJourneyTest {
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
+        when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
                 .uri("/v1/links/link/on-init")

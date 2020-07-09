@@ -9,7 +9,8 @@ public enum HIType {
     CONDITION("Condition"),
     OBSERVATION("Observation"),
     DIAGNOSTIC_REPORT("DiagnosticReport"),
-    MEDICATION_REQUEST("MedicationRequest");
+    MEDICATION_REQUEST("MedicationRequest"),
+    DOCUMENT_REFERENCE("DocumentReference");
 
     private final String resourceType;
 

@@ -230,15 +230,14 @@ public class ConsentManagerConfiguration {
         return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions, redisOptions);
     }
 
-    @ConditionalOnProperty(value = "webclient.keepalive", havingValue = "false")
     @Bean
+    @ConditionalOnProperty(value = "webclient.keepalive", havingValue = "false")
     public ClientHttpConnector clientHttpConnector() {
         return new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.newConnection()));
     }
 
     @Bean("customBuilder")
-    public WebClient.Builder webClient(final ClientHttpConnector clientHttpConnector,
-                                       ObjectMapper objectMapper) {
+    public WebClient.Builder webClient(final ClientHttpConnector clientHttpConnector, ObjectMapper objectMapper) {
         return WebClient
                 .builder()
                 .exchangeStrategies(exchangeStrategies(objectMapper))

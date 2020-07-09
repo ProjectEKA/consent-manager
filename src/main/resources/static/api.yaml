@@ -2856,6 +2856,8 @@ components:
         middle:
           type: string
           example: Sharma
+      required:
+        - first
     DateOfBirth:
       type: object
       properties:
@@ -2868,6 +2870,8 @@ components:
         year:
           type: integer
           example: 01
+      required:
+        - year
     RecoverCmIdRequest:
       type: object
       properties:

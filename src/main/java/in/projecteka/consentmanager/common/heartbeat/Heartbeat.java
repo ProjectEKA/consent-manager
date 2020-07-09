@@ -25,10 +25,12 @@ import java.util.concurrent.TimeoutException;
 
 @AllArgsConstructor
 public class Heartbeat {
+    public static final String CACHE_METHOD_NAME = "guava";
     private final IdentityServiceProperties identityServiceProperties;
     private final DbOptions dbOptions;
     private final RabbitmqOptions rabbitmqOptions;
     private final RedisOptions redisOptions;
+    private final CacheMethodProperty cacheMethodProperty;
 
     public Mono<HeartbeatResponse> getStatus() {
         try {
@@ -52,6 +54,8 @@ public class Heartbeat {
     }
 
     private boolean isRedisUp() throws IOException {
+        if (cacheMethodProperty.getMethodName().equals(CACHE_METHOD_NAME))
+            return true;
         return checkConnection(redisOptions.getHost(), redisOptions.getPort());
     }
 

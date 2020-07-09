@@ -55,10 +55,7 @@ import reactor.core.publisher.MonoSink;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -397,6 +394,30 @@ public class LinkUserJourneyTest {
     }
 
     @Test
+    public void shouldFailWithTwoManyRequestsErrorForInvalidRequest() {
+        var token = string();
+        var patientLinkReferenceResult = patientLinkReferenceResult()
+                                         .requestId(UUID.randomUUID())
+                                         .timestamp(Instant.now().toString())
+                                         .build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(gatewayTokenVerifier.verify(token))
+                .thenReturn(Mono.just(caller));
+
+        webTestClient.post()
+                .uri("/v1/links/link/on-init")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientLinkReferenceResult)
+                .exchange()
+                .expectStatus()
+                .is4xxClientError();
+    }
+
+    @Test
     public void shouldFailOnLinkCareContextsWhenRequestIdIsNotGiven() throws Exception {
         var token = string();
         var gatewayResponse = GatewayResponse.builder()
@@ -409,6 +430,7 @@ public class LinkUserJourneyTest {
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
 
@@ -429,6 +451,7 @@ public class LinkUserJourneyTest {
 
         when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
 
         webTestClient.post()
                 .uri("/v1/links/link/on-init")

@@ -369,10 +369,7 @@ public class DiscoveryUserJourneyTest {
     @Test
     public void onDiscoverPatientCareContexts() {
         var token = string();
-        var patientDiscoveryResult = TestBuilders.discoveryResult()
-                                     .requestId(UUID.randomUUID())
-                                     .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
-                                     .build();
+        var patientDiscoveryResult = TestBuilders.discoveryResult().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
@@ -386,6 +383,26 @@ public class DiscoveryUserJourneyTest {
                 .bodyValue(patientDiscoveryResult)
                 .exchange()
                 .expectStatus().isOk();
+    }
+
+    @Test
+    public void shouldFailWithTwoManyRequestsErrorForInvalidRequest() {
+        var token = string();
+        var patientDiscoveryResult = TestBuilders.discoveryResult().build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+
+        webTestClient.post()
+                .uri("/v1/care-contexts/on-discover")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientDiscoveryResult)
+                .exchange()
+                .expectStatus()
+                .is4xxClientError();
     }
 
     @Test

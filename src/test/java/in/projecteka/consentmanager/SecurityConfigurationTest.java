@@ -27,6 +27,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
@@ -121,9 +122,9 @@ class SecurityConfigurationTest {
     void return202Accepted() {
         var token = string();
         var caller = ServiceCaller.builder().roles(List.of(GATEWAY)).build();
-        var patientRequest = patientRequest()
-                             .timestamp(LocalDateTime.now(ZoneOffset.UTC))
-                             .build();
+        var patientRequest = patientRequest().build();
+
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient
@@ -141,7 +142,10 @@ class SecurityConfigurationTest {
     void return202AcceptedForHealthInfoNotify() {
         var token = string();
         var username = string();
-        var healthInfoNotification = HealthInfoNotificationRequest.builder().build();
+        var healthInfoNotification = HealthInfoNotificationRequest.builder()
+                                     .requestId(UUID.randomUUID())
+                                     .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
+                                     .build();
         var caller = ServiceCaller.builder().clientId(username).roles(List.of(GATEWAY)).build();
 
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));

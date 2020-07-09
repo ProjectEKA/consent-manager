@@ -168,7 +168,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\"name\": \"John Doe\",\n\"username\": \"{{lowerfirstname}}.{{lowerlastname}}@ncg\",\n\"password\": \"{{$randomPassword}}#\",\n\"yearOfBirth\": 1966,\n\"gender\": \"M\"\n}",
+							"raw": "{\n\"name\":{\n\"first\": \"Hina\", \n\"last\": \"Patel\", \n\"middle\": \"\"\n },\n\"username\": \"{{lowerfirstname}}.{{lowerlastname}}@ncg\",\n\"password\": \"{{$randomPassword}}#\",\n\"dateOfBirth\":{ \n\"date\": 12, \n\"month\":12, \n\"year\":1966\n},\n\"gender\": \"F\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"

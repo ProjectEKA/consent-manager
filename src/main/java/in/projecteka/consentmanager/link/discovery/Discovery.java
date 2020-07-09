@@ -101,7 +101,7 @@ public class Discovery {
 
 	private ErrorRepresentation cmErrorRepresentation(RespError respError) {
 		Error error = Error.builder()
-				.code(ErrorMap.hipToCmError(respError.getCode()))
+				.code(ErrorMap.toCmError(respError.getCode()))
 				.message(respError.getMessage())
 				.build();
 		return ErrorRepresentation.builder().error(error).build();

@@ -1,5 +1,7 @@
 package in.projecteka.consentmanager.clients.model;
 
+import in.projecteka.consentmanager.user.model.DateOfBirth;
+import in.projecteka.consentmanager.user.model.PatientName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,8 +15,8 @@ import lombok.Setter;
 @Builder
 public class User {
     private String identifier;
-    private String name;
+    private PatientName name;
     private Gender gender;
-    private Integer yearOfBirth;
+    private DateOfBirth dateOfBirth;
     private String phone;
 }

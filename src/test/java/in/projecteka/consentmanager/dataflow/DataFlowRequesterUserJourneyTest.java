@@ -222,7 +222,7 @@ public class DataFlowRequesterUserJourneyTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus()
-                .isUnauthorized()
+                .isEqualTo(410)
                 .expectBody()
                 .json(errorResponseJson);
     }
@@ -310,7 +310,7 @@ public class DataFlowRequesterUserJourneyTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus()
-                .isEqualTo(409)
+                .isEqualTo(412)
                 .expectBody()
                 .json(errorResponseJson);
     }

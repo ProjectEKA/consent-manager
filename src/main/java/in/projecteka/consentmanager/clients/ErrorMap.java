@@ -20,11 +20,8 @@ public class ErrorMap {
             put(3407, ErrorCode.DISCOVERY_REQUEST_NOT_FOUND);
 
             //gateway
-            put(1000, ErrorCode.UNKNOWN_ERROR_OCCURRED);
-            put(1017, ErrorCode.INVALID_TOKEN);
-            put(4222, ErrorCode.SERVICE_DOWN);
+            put(2500, ErrorCode.UNKNOWN_ERROR_OCCURRED);
         }
-
     };
 
     public static ErrorCode toCmError(Integer errorCode) {

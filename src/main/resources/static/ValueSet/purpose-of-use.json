@@ -43,11 +43,6 @@
   "expansion": {
     "timestamp": "2020-01-01T08:15:30+05:30",
     "contains": [
-      {
-        "code": "COVID19-IMMUNOPASS",
-        "system": "http://projecteka.in/",
-        "display": "Covid19 Immunity Pass"
-      }
     ]
   }
 }

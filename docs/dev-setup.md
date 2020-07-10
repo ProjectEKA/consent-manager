@@ -74,6 +74,9 @@
 3. In the command line, run the following
 
     ```bash
+    docker pull projecteka/gateway-db-initializer
+    docker pull projecteka/cm-db-initializer
+    docker pull projecteka/hiu-db-initializer
     docker-compose -f docker-compose-infra-lite.yml up -d
    
     docker logs $(docker ps -aqf "name=^cm-db-setup$")

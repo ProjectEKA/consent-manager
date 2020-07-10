@@ -9,9 +9,9 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 public class InitiateCmIdRecoveryRequest {
-    private final String name;
+    private final PatientName name;
     private final Gender gender;
-    private final Integer yearOfBirth;
+    private final DateOfBirth dateOfBirth;
     private final List<Identifier> verifiedIdentifiers;
     private final List<Identifier> unverifiedIdentifiers;
 }

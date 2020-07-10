@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifierType;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.consentmanager.user.model.PatientName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -146,7 +147,8 @@ public class DiscoveryTest {
         var transactionId = UUID.randomUUID();
         var requestId = UUID.randomUUID();
         var patientId = string();
-        var user = user().identifier("1").name("first name").phone("+91-9999999999").build();
+        PatientName name = PatientName.builder().first("first name").middle(null).last(null).build();
+        var user = user().identifier("1").name(name).phone("+91-9999999999").build();
         PatientIdentifier ncp1008 = patientIdentifierBuilder().type(PatientIdentifierType.MR).value("NCP1008").build();
         var unverifiedIdentifiers = Collections.singletonList(ncp1008);
         UUID gatewayOnDiscoverRequestId = UUID.randomUUID();

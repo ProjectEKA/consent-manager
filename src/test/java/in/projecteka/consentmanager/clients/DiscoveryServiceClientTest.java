@@ -17,6 +17,7 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.TestBuilders.patientInRequest;
@@ -51,7 +52,7 @@ public class DiscoveryServiceClientTest {
         var patientRequest = patientRequest()
                 .patient(patientInRequest().build())
                 .requestId(UUID.randomUUID())
-                .timestamp(LocalDateTime.now().toString())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
 
         StepVerifier.create(

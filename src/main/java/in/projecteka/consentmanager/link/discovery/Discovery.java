@@ -27,6 +27,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -148,9 +150,9 @@ public class Discovery {
 								.build()).collect(Collectors.toList());
 		Patient patient = Patient.builder()
 				.id(user.getIdentifier())
-				.name(user.getName())
+				.name(user.getName().createFullName())
 				.gender(user.getGender())
-				.yearOfBirth(user.getYearOfBirth())
+				.yearOfBirth(user.getDateOfBirth().getYear())
 				.verifiedIdentifiers(List.of(phoneNumber))
 				.unverifiedIdentifiers(unverifiedIds)
 				.build();
@@ -158,7 +160,7 @@ public class Discovery {
 				.patient(patient)
 				.requestId(requestId)
 				.transactionId(transactionId)
-				.timestamp(java.time.Instant.now().toString())
+				.timestamp(LocalDateTime.now(ZoneOffset.UTC))
 				.build();
 	}
 

@@ -22,6 +22,7 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
@@ -237,7 +238,7 @@ public class LinkUserJourneyTest {
                 "}";
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
+                .uri(Constants.APP_PATH_CONFIRM_LINK + "/" + patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -279,7 +280,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
+                .uri(Constants.APP_PATH_CONFIRM_LINK + "/" + patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -311,7 +312,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
+                .uri(Constants.APP_PATH_CONFIRM_LINK + "/" + patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -375,7 +376,7 @@ public class LinkUserJourneyTest {
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
-                .uri("/v1/links/link/on-init")
+                .uri(Constants.PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -400,7 +401,7 @@ public class LinkUserJourneyTest {
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
-                .uri("/v1/links/link/on-init")
+                .uri(Constants.PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -418,7 +419,7 @@ public class LinkUserJourneyTest {
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
-                .uri("/v1/links/link/on-init")
+                .uri(Constants.PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -454,7 +455,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/init")
+                .uri(Constants.PATH_LINK_INIT)
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkReferenceRequest)
@@ -488,7 +489,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/init")
+                .uri(Constants.PATH_LINK_INIT)
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkReferenceRequest)

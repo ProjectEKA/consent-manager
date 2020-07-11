@@ -74,8 +74,14 @@
 3. In the command line, run the following
 
     ```bash
+    docker pull projecteka/gateway-db-initializer
+    docker pull projecteka/cm-db-initializer
+    docker pull projecteka/hiu-db-initializer
     docker-compose -f docker-compose-infra-lite.yml up -d
    
+    chmod +x db-init-local.sh
+    ./db-init-local.sh
+     
     docker logs $(docker ps -aqf "name=^cm-db-setup$")
     docker logs $(docker ps -aqf "name=^hiu-db-setup$")
     docker logs $(docker ps -aqf "name=^keycloak-setup$")

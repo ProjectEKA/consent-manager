@@ -16,11 +16,11 @@ consentmanager:
     url: http://localhost:8080
   gatewayservice:
     enabled: true
-    baseUrl: http://localhost:8004/v1
+    baseUrl: http://localhost:8004/v0.5
     requestTimeout: 10000
     clientSecret: 2a38856a-61f0-4bbd-9d68-9e5243cdb73a
     clientId: ncg
-    jwkUrl: http://localhost:8080/certs
+    jwkUrl: http://localhost:8004/v0.5/certs
   userservice:
     url: http://localhost:9000
     transactionPinDigitSize: 4

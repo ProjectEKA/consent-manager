@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.link.discovery.model.patient.request;
 import lombok.Builder;
 import lombok.Value;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Builder
@@ -10,6 +11,6 @@ import java.util.UUID;
 public class PatientRequest {
     Patient patient;
     UUID requestId;
-    String timestamp;
+    LocalDateTime timestamp;
     UUID transactionId;
 }

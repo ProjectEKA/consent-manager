@@ -29,7 +29,8 @@ import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -51,6 +52,7 @@ public class Link {
         Patient patient = toHIPPatient(patientId, patientLinkReferenceRequest.getPatient());
         var linkReferenceRequest = new in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest(
                 patientLinkReferenceRequest.getRequestId().toString(),
+                LocalDateTime.now(ZoneOffset.UTC),
                 patientLinkReferenceRequest.getTransactionId(),
                 patient);
 
@@ -165,7 +167,7 @@ public class Link {
     private LinkConfirmationRequest toLinkConfirmationRequest(PatientLinkRequest patientLinkRequest, UUID requestId) {
         return LinkConfirmationRequest.builder()
                 .requestId(requestId)
-                .timestamp(Instant.now().toString())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .confirmation(new TokenConfirmation(patientLinkRequest.getLinkRefNumber(), patientLinkRequest.getToken()))
                 .build();
     }

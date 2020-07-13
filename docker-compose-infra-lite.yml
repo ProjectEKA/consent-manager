@@ -63,6 +63,14 @@ services:
     depends_on:
       - cm-db-setup
 
+  gateway-db-setup:
+    image: projecteka/gateway-db-initializer
+    container_name: gateway-db-setup
+    environment:
+      - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/gateway -Djdbc.username=postgres -Djdbc.password=password'
+    depends_on:
+      - hiu-db-setup
+
   orthanc:
     image: jodogne/orthanc-plugins
     container_name: orthanc-plugins

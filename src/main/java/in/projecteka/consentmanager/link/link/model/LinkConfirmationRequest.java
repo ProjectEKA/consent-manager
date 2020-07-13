@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -14,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Data
 public class LinkConfirmationRequest {
-    UUID requestId;
-    String timestamp;
-    TokenConfirmation confirmation;
+    private UUID requestId;
+    private LocalDateTime timestamp;
+    private TokenConfirmation confirmation;
 }

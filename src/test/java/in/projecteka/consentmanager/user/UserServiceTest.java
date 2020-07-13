@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.HealthAccountServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
@@ -10,6 +11,7 @@ import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresen
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.clients.properties.HealthAccountServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
@@ -68,6 +70,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -86,6 +89,9 @@ class UserServiceTest {
 
     @Mock
     private OtpServiceClient otpServiceClient;
+
+    @Mock
+    private HealthAccountServiceClient healthAccountServiceClient;
 
     @Mock
     private SignUpService signupService;
@@ -126,10 +132,14 @@ class UserServiceTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"), 5);
+        var healthAccountServiceProperties = new HealthAccountServiceProperties(false,"", Collections.singletonList("MOBILE"), 5);
+
         userService = new UserService(
                 userRepository,
                 otpServiceProperties,
                 otpServiceClient,
+                healthAccountServiceProperties,
+                healthAccountServiceClient,
                 signupService,
                 identityServiceClient,
                 tokenService,
@@ -748,5 +758,38 @@ class UserServiceTest {
         verify(userServiceClient, times(1)).sendPatientResponseToGateWay(any(), any(), any());
         assertThat(patientResponse.getValue().getError()).isNull();
         assertThat(patientResponse.getValue().getPatient()).isNotNull();
+    }
+
+    @Test
+    void callHasServiceClientToSentOTPWhenHasServiceIsEnabled() {
+        var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"), 5);
+        var healthAccountServiceProperties = new HealthAccountServiceProperties(true,"", Collections.singletonList("MOBILE"), 5);
+
+        userService = new UserService(
+                userRepository,
+                otpServiceProperties,
+                otpServiceClient,
+                healthAccountServiceProperties,
+                healthAccountServiceClient,
+                signupService,
+                identityServiceClient,
+                tokenService,
+                properties,
+                otpAttemptService,
+                lockedUserService,
+                userServiceClient);
+
+        var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", "+91-9788888");
+        var sessionId = string();
+        var signUpSession = new SignUpSession(sessionId);
+        when(healthAccountServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
+        when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq("+91-9788888")))
+                .thenReturn(Mono.just(signUpSession));
+        when(otpAttemptService.validateOTPRequest(userSignUpEnquiry.getIdentifierType(), userSignUpEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_REGISTRATION)).thenReturn(Mono.empty());
+
+        Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
+
+        verify(healthAccountServiceClient, times(1)).send(any(OtpRequest.class));
+        verify(otpServiceClient, never()).send(any(OtpRequest.class));
     }
 }

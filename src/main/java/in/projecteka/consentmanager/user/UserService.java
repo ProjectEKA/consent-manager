@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.HealthAccountServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
@@ -9,6 +10,7 @@ import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.clients.properties.HealthAccountServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.consent.model.Action;
 import in.projecteka.consentmanager.consent.model.Communication;
@@ -65,6 +67,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final OtpServiceProperties otpServiceProperties;
     private final OtpServiceClient otpServiceClient;
+    private final HealthAccountServiceProperties healthAccountServiceProperties;
+    private final HealthAccountServiceClient healthAccountServiceClient;
     private final SignUpService signupService;
     private final IdentityServiceClient identityServiceClient;
     private final TokenService tokenService;
@@ -122,14 +126,22 @@ public class UserService {
                         .validateOTPRequest(userSignupEnquiry.getIdentifierType(),
                                 userSignupEnquiry.getIdentifier(),
                                 OtpAttempt.Action.OTP_REQUEST_REGISTRATION)
-                        .then(otpServiceClient.send(otpRequest))
+                        .then(sendOTP(otpRequest))
                         .then(signupService.cacheAndSendSession(otpRequest.getSessionId(),
                                 otpRequest.getCommunication().getValue())))
                 .orElse(Mono.error(new InvalidRequestException("invalid.identifier.type")));
     }
 
+    private Mono<Void> sendOTP(OtpRequest otpRequest) {
+        if (healthAccountServiceProperties.isEnabled()) {
+            return healthAccountServiceClient.send(otpRequest).then();
+        }
+        return otpServiceClient.send(otpRequest);
+    }
+
     private Optional<OtpRequest> getOtpRequest(UserSignUpEnquiry userSignupEnquiry) {
         String identifierType = userSignupEnquiry.getIdentifierType().toUpperCase();
+        //TODO-Temp: should below be applicable for hasServiceAsWell
         if (!otpServiceProperties.getIdentifiers().contains(identifierType)) {
             return Optional.empty();
         }

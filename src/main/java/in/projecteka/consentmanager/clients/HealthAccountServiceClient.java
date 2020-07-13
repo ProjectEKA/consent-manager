@@ -12,10 +12,10 @@ import java.util.Map;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
-public class HASServiceClient {
+public class HealthAccountServiceClient {
     private final WebClient webClient;
 
-    public HASServiceClient(WebClient.Builder webClient, String baseUrl) {
+    public HealthAccountServiceClient(WebClient.Builder webClient, String baseUrl) {
         this.webClient = webClient.baseUrl(baseUrl).build();
     }
 

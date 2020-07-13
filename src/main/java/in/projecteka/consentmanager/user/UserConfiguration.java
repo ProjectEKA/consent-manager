@@ -3,9 +3,11 @@ package in.projecteka.consentmanager.user;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import in.projecteka.consentmanager.clients.HealthAccountServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.properties.HealthAccountServiceProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -30,6 +32,8 @@ public class UserConfiguration {
     public UserService userService(UserRepository userRepository,
                                    OtpServiceProperties otpServiceProperties,
                                    OtpServiceClient otpServiceClient,
+                                   HealthAccountServiceProperties healthAccountServiceProperties,
+                                   HealthAccountServiceClient healthAccountServiceClient,
                                    SignUpService signupService,
                                    IdentityServiceClient identityServiceClient,
                                    TokenService tokenService,
@@ -40,6 +44,8 @@ public class UserConfiguration {
         return new UserService(userRepository,
                 otpServiceProperties,
                 otpServiceClient,
+                healthAccountServiceProperties,
+                healthAccountServiceClient,
                 signupService,
                 identityServiceClient,
                 tokenService,
@@ -58,6 +64,12 @@ public class UserConfiguration {
     public OtpServiceClient otpServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                              OtpServiceProperties otpServiceProperties) {
         return new OtpServiceClient(builder, otpServiceProperties.getUrl());
+    }
+
+    @Bean
+    public HealthAccountServiceClient healthAccountServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
+                                                       HealthAccountServiceProperties healthAccountServiceProperties) {
+        return new HealthAccountServiceClient(builder, healthAccountServiceProperties.getUrl());
     }
 
     @Bean

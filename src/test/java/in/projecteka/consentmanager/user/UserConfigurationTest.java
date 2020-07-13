@@ -1,8 +1,10 @@
 package in.projecteka.consentmanager.user;
 
+import in.projecteka.consentmanager.clients.HealthAccountServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.properties.HealthAccountServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -19,6 +21,12 @@ class UserConfigurationTest {
 
     @Mock
     private OtpServiceClient otpServiceClient;
+
+    @Mock
+    private HealthAccountServiceProperties healthAccountServiceProperties;
+
+    @Mock
+    private HealthAccountServiceClient healthAccountServiceClient;
 
     @Mock
     private SignUpService signupService;
@@ -49,6 +57,8 @@ class UserConfigurationTest {
                 mockUserRepository,
                 otpServiceProperties,
                 otpServiceClient,
+                healthAccountServiceProperties,
+                healthAccountServiceClient,
                 signupService,
                 identityServiceClient,
                 tokenService,

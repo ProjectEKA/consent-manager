@@ -74,8 +74,11 @@
 3. In the command line, run the following
 
     ```bash
+    docker pull projecteka/gateway-db-initializer
+    docker pull projecteka/cm-db-initializer
+    docker pull projecteka/hiu-db-initializer
     docker-compose -f docker-compose-infra-lite.yml up -d
-   
+     
     docker logs $(docker ps -aqf "name=^cm-db-setup$")
     docker logs $(docker ps -aqf "name=^hiu-db-setup$")
     docker logs $(docker ps -aqf "name=^keycloak-setup$")
@@ -88,6 +91,14 @@
     \d # should list all the tables
     exit # twice
     ```
+4. In order to have route table for bridges and CM, clone the gateway repository, and run the following commands.
+
+    ```bash
+    brew install postgresql # only if you don't have psql in your machine
+    chmod +x db-init-local.sh
+    ./db-init-local.sh
+    ```
+   
 **Note:** In case, you want to run Kibana, elastic, use *docker-compose-backend.yml*
 
 5. Keycloak runs at [http://localhost:9001](http://localhost:9001)

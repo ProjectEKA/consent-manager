@@ -35,6 +35,10 @@
           {
             "code": "DSRCH",
             "display": "Disease Specific Healthcare Research"
+          },
+          {
+            "code": "PATRQT",
+            "display": "Self Requested"
           }
         ]
       }

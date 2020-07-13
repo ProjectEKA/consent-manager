@@ -22,11 +22,15 @@
           },
           {
             "code": "DiagnosticReport",
-            "display": "DiagnosticReport"
+            "display": "Diagnostic Report"
           },
           {
             "code": "MedicationRequest",
-            "display": "Medication Request"
+            "display": "Prescribed Medications"
+          },
+          {
+            "code": "DocumentReference",
+            "display": "Clinical Documents"
           }
         ]
       }

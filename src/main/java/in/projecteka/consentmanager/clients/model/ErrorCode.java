@@ -51,7 +51,8 @@ public enum ErrorCode {
     UNPROCESSABLE_RESPONSE_FROM_GATEWAY(1422),
     REFRESH_TOKEN_INCORRECT(1403),
     INVALID_RESP_REQUEST_ID(1506),
-    SERVICE_DOWN(1503); /*please resume codes from the line above, we will put the codes in order later
+    SERVICE_DOWN(1503),
+    DUPLICATE_DISCOVERY_REQUEST(1409); /*please resume codes from the line above, we will put the codes in order later
     and in ranges*/
 
     private final int value;

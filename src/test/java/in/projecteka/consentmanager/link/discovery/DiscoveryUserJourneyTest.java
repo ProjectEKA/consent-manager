@@ -296,7 +296,7 @@ public class DiscoveryUserJourneyTest {
                 "  \"transactionId\": \"2b7778a0-9eb7-4ed4-8693-ed8be2eac9d2\",\n" +
                 "  \"patient\": null,\n" +
                 "  \"error\": {\n" +
-                "    \"code\": 1000,\n" +
+                "    \"code\": 3404,\n" +
                 "    \"message\": \"Could not find patient information\"\n" +
                 "  }\n" +
                 "}";

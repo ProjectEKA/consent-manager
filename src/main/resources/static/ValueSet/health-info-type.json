@@ -27,6 +27,11 @@
           {
             "code": "MedicationRequest",
             "display": "Medication Request"
+          },
+          {
+            "code": "DocumentReference",
+            "display": "Document Reference"
+
           }
         ]
       }

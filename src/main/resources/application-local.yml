@@ -34,7 +34,7 @@ consentmanager:
   keycloak:
     baseUrl: http://localhost:9001/auth
     clientId: consent-manager
-    clientSecret: ${KEYCLOAK_CLIENTSECRET}
+    clientSecret: 15672b77-7ba6-4299-904c-6b465ce256c5
     userName: consent-service-admin-user
     password: welcome
     jwkUrl: http://localhost:9001/auth/realms/consent-manager/protocol/openid-connect/certs
@@ -63,7 +63,7 @@ consentmanager:
     requestTimeout: 5000
     enabled: true
     clientId: ncg
-    clientSecret: ${GATEWAY_CLIENTSECRET}
+    clientSecret: 78f132a0-31b4-44e4-8294-ee99a41edc0a
     jwkUrl: http://localhost:8000/v1/certs
 spring:
   rabbitmq:

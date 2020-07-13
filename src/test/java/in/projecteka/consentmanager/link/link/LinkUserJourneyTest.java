@@ -267,7 +267,7 @@ public class LinkUserJourneyTest {
                 "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
                 "  \"timestamp\": \"2020-05-25T15:03:44.557Z\",\n" +
                 "  \"error\": {\n" +
-                "    \"code\": 1006,\n" +
+                "    \"code\": 3413,\n" +
                 "    \"message\": \"Invalid Link reference\"\n" +
                 "  }," +
                 "  \"resp\": {\n" +

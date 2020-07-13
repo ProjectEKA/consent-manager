@@ -102,13 +102,13 @@ public class Discovery {
                         .subscribe());
     }
 
-    private ErrorRepresentation cmErrorRepresentation(RespError respError) {
-        Error error = Error.builder()
-                .code(ErrorMap.hipToCmError(respError.getCode()))
-                .message(respError.getMessage())
-                .build();
-        return ErrorRepresentation.builder().error(error).build();
-    }
+	private ErrorRepresentation cmErrorRepresentation(RespError respError) {
+		Error error = Error.builder()
+				.code(ErrorMap.toCmError(respError.getCode()))
+				.message(respError.getMessage())
+				.build();
+		return ErrorRepresentation.builder().error(error).build();
+	}
 
     public Mono<Void> onDiscoverPatientCareContexts(DiscoveryResult discoveryResult) {
         if (discoveryResult.hasResponseId()) {

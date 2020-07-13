@@ -363,7 +363,7 @@ public class ConsentArtefactUserJourneyTest {
         when(consentManagerClient.sendConsentArtefactResponseToGateway(any(), any())).thenReturn(Mono.empty());
 
         webTestClient.post()
-                .uri("/v1/consents/fetch")
+                .uri(Constants.PATH_CONSENTS_FETCH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", token)
                 .bodyValue(fetchRequest)

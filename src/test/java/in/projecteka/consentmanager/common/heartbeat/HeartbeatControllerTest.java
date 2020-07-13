@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.consentmanager.common.Constants;
 import in.projecteka.consentmanager.common.TestBuilders;
 import in.projecteka.consentmanager.common.heartbeat.model.HeartbeatResponse;
 import in.projecteka.consentmanager.common.heartbeat.model.Status;
@@ -58,7 +59,7 @@ public class HeartbeatControllerTest {
         when(heartbeat.getStatus()).thenReturn(Mono.just(heartbeatResponse));
 
         webTestClient.get()
-                .uri("/v1/heartbeat")
+                .uri(Constants.PATH_HEARTBEAT)
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -78,7 +79,7 @@ public class HeartbeatControllerTest {
         when(heartbeat.getStatus()).thenReturn(Mono.just(heartbeatResponse));
 
         webTestClient.get()
-                .uri("/v1/heartbeat")
+                .uri(Constants.PATH_HEARTBEAT)
                 .exchange()
                 .expectStatus()
                 .isOk()

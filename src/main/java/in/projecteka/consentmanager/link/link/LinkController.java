@@ -46,7 +46,7 @@ public class LinkController {
                 .flatMap(link::getLinkedCareContexts);
     }
 
-    @GetMapping(Constants.APP_PATH_INTERNAL_GET_LINKED_CARECONTEXTS)
+    @GetMapping(Constants.APP_PATH_INTERNAL_GET_LINKED_CARE_CONTEXTS)
     public Mono<PatientLinksResponse> getLinkedCareContextInternal(@PathVariable String username) {
         return link.getLinkedCareContexts(username);
     }

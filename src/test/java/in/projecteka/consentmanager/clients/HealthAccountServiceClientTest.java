@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.clients;
 import in.projecteka.consentmanager.clients.model.OtpRequestResponse;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.clients.model.HealthAccountServiceTokenResponse;
 import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,10 +58,34 @@ class HealthAccountServiceClientTest {
         Mono<OtpRequestResponse> response = healthAccountServiceClient.send(otpRequest);
 
         StepVerifier.create(response).assertNext(
-                otpRequestResponse -> assertThat(otpRequestResponse.getTxnID()).isEqualTo("12345")
+                otpRequestResponse -> assertThat(otpRequestResponse.getTransactionId()).isEqualTo("12345")
         ).verifyComplete();
 
         assertThat(captor.getValue().url().getPath()).isEqualTo("/healthaccountservice/v1/ha/generate_mobile_otp");
+        assertThat(captor.getValue().url().getHost()).isEqualTo("localhost");
+    }
+
+    @Test
+    public void shouldVerifyOTPForGivenTransactionId() {
+        var sessionId = easyRandom.nextObject(String.class);
+        var otpValue = easyRandom.nextObject(String.class);
+
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(
+                Mono.just(
+                        ClientResponse
+                                .create(HttpStatus.OK)
+                                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                .body("{\"token\":\"12345\"}")
+                                .build()));
+
+        Mono<HealthAccountServiceTokenResponse> response = healthAccountServiceClient.verifyOtp(sessionId, otpValue);
+
+        StepVerifier.create(response).assertNext(
+                verificationTokenResponse
+                        -> assertThat(verificationTokenResponse.getToken()).isEqualTo("12345")
+        ).verifyComplete();
+
+        assertThat(captor.getValue().url().getPath()).isEqualTo("/healthaccountservice/v1/ha/verify_mobile_otp");
         assertThat(captor.getValue().url().getHost()).isEqualTo("localhost");
     }
 }

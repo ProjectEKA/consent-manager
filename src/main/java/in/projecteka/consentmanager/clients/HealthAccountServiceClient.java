@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.OtpRequestResponse;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.clients.model.HealthAccountServiceTokenResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -14,39 +15,39 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 public class HealthAccountServiceClient {
     private final WebClient webClient;
+    private final String OTP_REQUEST_FOR_MOBILE_PATH = "/v1/ha/generate_mobile_otp";
+    private final String OTP_VERIFY_FOR_MOBILE_PATH = "/v1/ha/verify_mobile_otp";
 
     public HealthAccountServiceClient(WebClient.Builder webClient, String baseUrl) {
         this.webClient = webClient.baseUrl(baseUrl).build();
     }
 
     public Mono<OtpRequestResponse> send(OtpRequest otpRequest) {
+        HashMap<String, String> requestBody = new HashMap<>();
+        requestBody.put("mobile", otpRequest.getCommunication().getValue());
+
         return webClient
                 .post()
-                .uri(uriBuilder -> uriBuilder.path(getPath(otpRequest)).build())
+                .uri(uriBuilder -> uriBuilder.path(OTP_REQUEST_FOR_MOBILE_PATH).build())
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
-                .body(Mono.just(getRequestBody(otpRequest)), Map.class)
+                .body(Mono.just(requestBody), Map.class)
                 .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(OtpRequestResponse.class);
     }
 
-    private String getPath(OtpRequest otpRequest) {
-        if (isModeMobile(otpRequest)) {
-            return "/v1/ha/generate_mobile_otp";
-        }
-        return null;
-    }
+    public Mono<HealthAccountServiceTokenResponse> verifyOtp(String sessionId, String otpValue) {
+        HashMap<String, String> requestBody = new HashMap<>();
+        requestBody.put("txnId", sessionId);
+        requestBody.put("otp", otpValue);
 
-    private HashMap<String, String> getRequestBody(OtpRequest requestBody) {
-        if (isModeMobile(requestBody)){
-            HashMap<String, String> mobileRequestBody = new HashMap<>();
-            mobileRequestBody.put("mobile", requestBody.getCommunication().getValue());
-            return mobileRequestBody;
-        }
-        return new HashMap<>();
-    }
-
-    private boolean isModeMobile(OtpRequest otpRequest) {
-        return otpRequest.getCommunication().getMode().equals("MOBILE");
+        return webClient
+                .post()
+                .uri(uriBuilder -> uriBuilder.path(OTP_VERIFY_FOR_MOBILE_PATH).build())
+                .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                .body(Mono.just(requestBody), Map.class)
+                .retrieve()
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .bodyToMono(HealthAccountServiceTokenResponse.class);
     }
 }

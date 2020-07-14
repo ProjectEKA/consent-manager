@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.consentmanager.clients.model.HealthAccountServiceTokenResponse;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
@@ -126,19 +127,17 @@ public class UserService {
                         .validateOTPRequest(userSignupEnquiry.getIdentifierType(),
                                 userSignupEnquiry.getIdentifier(),
                                 OtpAttempt.Action.OTP_REQUEST_REGISTRATION)
-                        .then(sendOTP(otpRequest))
-                        .then(signupService.cacheAndSendSession(otpRequest.getSessionId(),
-                                otpRequest.getCommunication().getValue())))
+                        .then(healthAccountServiceClient.send(otpRequest))
+                        .flatMap(otpRequestResponse -> signupService.cacheAndSendSession(
+                                otpRequestResponse.getTransactionId(),
+                                otpRequest.getCommunication().getValue())
+                        )
+                )
                 .orElse(Mono.error(new InvalidRequestException("invalid.identifier.type")));
-    }
-
-    private Mono<Void> sendOTP(OtpRequest otpRequest) {
-        return healthAccountServiceClient.send(otpRequest).then();
     }
 
     private Optional<OtpRequest> getOtpRequest(UserSignUpEnquiry userSignupEnquiry) {
         String identifierType = userSignupEnquiry.getIdentifierType().toUpperCase();
-        //TODO-Temp: should below be applicable for hasServiceAsWell
         if (!healthAccountServiceProperties.getIdentifiers().contains(identifierType)) {
             return Optional.empty();
         }
@@ -163,6 +162,17 @@ public class UserService {
                 .orElse(Mono.error(new InvalidRequestException("invalid.identifier.type")));
     }
 
+    private Mono<HealthAccountServiceTokenResponse> validateAndVerifyOtpFromHealthAccountService(OtpVerification otpVerification, OtpAttempt attempt) {
+        Mono<HealthAccountServiceTokenResponse> verifyOtp = otpAttemptService.validateOTPSubmission(attempt)
+                .then(healthAccountServiceClient.verifyOtp(otpVerification.getSessionId(), otpVerification.getValue()));
+
+        return verifyOtp
+                .onErrorResume(ClientError.class, error -> otpAttemptService.handleInvalidOTPError(error, attempt))
+                .then(otpAttemptService.removeMatchingAttempts(attempt))
+                .then(verifyOtp);
+    }
+
+    //TODO: Below should be removed once we have replaced all OTP mechaninsm with HAS
     private Mono<Void> validateAndVerifyOtp(OtpVerification otpVerification, OtpAttempt attempt) {
         return otpAttemptService.validateOTPSubmission(attempt)
                 .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue()))
@@ -182,8 +192,8 @@ public class UserService {
                             .identifierType(MOBILE.name())
                             .identifierValue(mobileNumber)
                             .action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION);
-                    return validateAndVerifyOtp(otpVerification, builder.build())
-                            .then(signupService.generateToken(otpVerification.getSessionId()));
+                    return validateAndVerifyOtpFromHealthAccountService(otpVerification, builder.build())
+                            .flatMap(tokenResponse -> signupService.generateToken(tokenResponse.getToken()));
                 });
     }
 

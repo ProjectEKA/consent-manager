@@ -210,7 +210,7 @@ public class ConsentArtefactUserJourneyTest {
                 .header("Authorization", token)
                 .exchange()
                 .expectStatus()
-                .isForbidden()
+                .isEqualTo(403)
                 .expectBody()
                 .json(errorResponseJson);
     }
@@ -278,7 +278,7 @@ public class ConsentArtefactUserJourneyTest {
                 .bodyValue(revokeRequest)
                 .exchange()
                 .expectStatus()
-                .isEqualTo(409)
+                .isEqualTo(412)
                 .expectBody()
                 .json(errorResponseJson);
 

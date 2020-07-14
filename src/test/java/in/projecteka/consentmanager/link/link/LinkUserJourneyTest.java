@@ -275,7 +275,7 @@ public class LinkUserJourneyTest {
                 "    \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n" +
                 "  }\n" +
                 "}";
-        String errorResponseJson = "{\"error\":{\"code\":1039,\"message\":\"Invalid Link reference\"}}";
+        String errorResponseJson = "{\"error\":{\"code\":1413,\"message\":\"Invalid Link reference\"}}";
         when(linkResults.get(any())).thenReturn(Mono.just(linkConfirmationResult));
 
         webTestClient

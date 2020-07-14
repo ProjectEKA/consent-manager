@@ -46,14 +46,14 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUN
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.CONFLICT;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.GATEWAY_TIMEOUT;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
+import static org.springframework.http.HttpStatus.PRECONDITION_FAILED;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 
 @Getter
@@ -209,7 +209,7 @@ public class ClientError extends Throwable {
     }
 
     public static ClientError consentExpired() {
-        return new ClientError(UNAUTHORIZED,
+        return new ClientError(HttpStatus.GONE,
                 new ErrorRepresentation(new Error(CONSENT_ARTEFACT_EXPIRED, "Consent artefact expired")));
     }
 
@@ -270,7 +270,7 @@ public class ClientError extends Throwable {
     }
 
     public static ClientError consentNotGranted() {
-        return new ClientError(CONFLICT,
+        return new ClientError(PRECONDITION_FAILED,
                 new ErrorRepresentation(new Error(CONSENT_NOT_GRANTED, "Not a granted consent.")));
     }
 

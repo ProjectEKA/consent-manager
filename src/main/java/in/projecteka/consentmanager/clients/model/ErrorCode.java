@@ -53,7 +53,7 @@ public enum ErrorCode {
     INVALID_RESP_REQUEST_ID(1506),
     SERVICE_DOWN(1503),
     DISCOVERY_REQUEST_NOT_FOUND(1512),
-    INVALID_REQUEST(1043); /*please resume codes from the line above, we will put the codes in order later
+    INVALID_REQUEST(1513); /*please resume codes from the line above, we will put the codes in order later
     and in ranges*/
 
     private final int value;

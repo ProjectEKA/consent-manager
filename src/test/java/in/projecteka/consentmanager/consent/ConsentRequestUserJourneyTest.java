@@ -622,7 +622,7 @@ public class ConsentRequestUserJourneyTest {
         gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
 
         webTestClient.post()
-                .uri("/v1/consent-requests/init")
+                .uri(Constants.PATH_CONSENT_REQUESTS_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, authToken)

@@ -29,7 +29,7 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
-import static in.projecteka.consentmanager.common.Constants.V_1_CONSENT_REQUESTS_INIT;
+import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
 
 @RestController
 @AllArgsConstructor
@@ -54,7 +54,7 @@ public class ConsentRequestController {
 				.map(ConsentRequestController::buildResponse);
 	}
 
-	@PostMapping(value = V_1_CONSENT_REQUESTS_INIT)
+	@PostMapping(value = PATH_CONSENT_REQUESTS_INIT)
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	public Mono<Void> initConsentRequest(
 			@RequestBody @Valid @ModelAttribute("consentRequest") ConsentRequest request) {
@@ -67,7 +67,7 @@ public class ConsentRequestController {
 						.then(consentManager.requestConsent(request.getConsent(), request.getRequestId())));
 	}
 
-	@GetMapping(value = "/consent-requests")
+	@GetMapping(value = Constants.APP_PATH_GET_CONSENT_REQUESTS)
 	public Mono<ConsentRequestsRepresentation> allConsents(
 			@RequestParam(defaultValue = "-1") int limit,
 			@RequestParam(defaultValue = "0") int offset,
@@ -96,7 +96,7 @@ public class ConsentRequestController {
 		return RequestCreatedRepresentation.builder().consentRequestId(requestId).build();
 	}
 
-	@PostMapping(value = "/consent-requests/{request-id}/approve")
+	@PostMapping(value = Constants.APP_PATH_APPROVE_CONSENT_REQUEST)
 	public Mono<ConsentApprovalResponse> approveConsent(
 			@PathVariable(value = "request-id") String requestId,
 			@Valid @RequestBody ConsentApprovalRequest consentApprovalRequest) {
@@ -111,7 +111,7 @@ public class ConsentRequestController {
 								}));
 	}
 
-	@PostMapping(value = "/consent-requests/{id}/deny")
+	@PostMapping(value = Constants.APP_PATH_DENY_CONSENT)
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public Mono<Void> deny(@PathVariable(value = "id") String id) {
 		return ReactiveSecurityContextHolder.getContext()

@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @AllArgsConstructor
 @Builder
@@ -13,6 +15,7 @@ import lombok.NoArgsConstructor;
 @Data
 public class PatientLinkReferenceRequest {
     private String requestId;
+    private LocalDateTime timestamp;
     private String transactionId;
     private Patient patient;
 }

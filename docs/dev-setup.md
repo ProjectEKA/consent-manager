@@ -9,10 +9,8 @@
     - You can use postgres docker container if you would like to. There will be instructions about how to do it.
 - Intellij
     - [https://www.jetbrains.com/idea/download/#section=mac](https://www.jetbrains.com/idea/download/#section=mac)
-    - If you are from thoughtworks, and don’t have license please sent email to [software-support@thoughtworks.com](mailto:software-support@thoughtworks.com) to get a license
 - Rider (for c# - HIP)
     - [https://www.jetbrains.com/rider/download/#section=mac](https://www.jetbrains.com/rider/download/#section=mac)
-    - If you are from thoughtworks, and don’t have license please sent email to [software-support@thoughtworks.com](mailto:software-support@thoughtworks.com) to get a license
 - VS Code
     - [https://code.visualstudio.com/download](https://code.visualstudio.com/download)
 - Android Studio (only for app development)
@@ -74,8 +72,11 @@
 3. In the command line, run the following
 
     ```bash
+    docker pull projecteka/gateway-db-initializer
+    docker pull projecteka/cm-db-initializer
+    docker pull projecteka/hiu-db-initializer
     docker-compose -f docker-compose-infra-lite.yml up -d
-   
+     
     docker logs $(docker ps -aqf "name=^cm-db-setup$")
     docker logs $(docker ps -aqf "name=^hiu-db-setup$")
     docker logs $(docker ps -aqf "name=^keycloak-setup$")
@@ -88,6 +89,14 @@
     \d # should list all the tables
     exit # twice
     ```
+4. In order to have route table for bridges and CM, clone the gateway repository, and run the following commands.
+
+    ```bash
+    brew install postgresql # only if you don't have psql in your machine
+    chmod +x db-init-local.sh
+    ./db-init-local.sh
+    ```
+   
 **Note:** In case, you want to run Kibana, elastic, use *docker-compose-backend.yml*
 
 5. Keycloak runs at [http://localhost:9001](http://localhost:9001)
@@ -232,7 +241,8 @@
     *Note:* This is with an assumption that hiu-service is running on port **8003**
     
     ```bash
-    docker run -d -p 5000:5000 projecteka/hiu-ui:local
+    docker pull projecteka/hiu-ui:local # to pull latest `local` image
+    docker run -d -p 5002:5000 projecteka/hiu-ui:local
     ```
 
 2. Since hiu-service is running on different port, **same-origin-policy** will prevent you to access the UI by default.

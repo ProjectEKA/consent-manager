@@ -18,11 +18,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_NOTIFY;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
 import javax.validation.Valid;
 
-import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_ON_REQUEST;
-import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_REQUEST;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
 
 @RestController
 @AllArgsConstructor
@@ -38,7 +38,7 @@ public class DataFlowRequestController {
                 .flatMap(requester -> dataFlowRequester.requestHealthData(dataFlowRequest));
     }
 
-    @PostMapping(V_1_HEALTH_INFORMATION_REQUEST)
+    @PostMapping(PATH_HEALTH_INFORMATION_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> requestHealthInformationV1(@Valid @RequestBody GatewayDataFlowRequest dataFlowRequest) {
         return Mono.just(dataFlowRequest)
@@ -53,7 +53,7 @@ public class DataFlowRequestController {
                         .then());
     }
 
-    @PostMapping(V_1_HEALTH_INFORMATION_ON_REQUEST)
+    @PostMapping(PATH_HEALTH_INFORMATION_ON_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> onRequestHealthInformationV1(@RequestBody @Valid HealthInformationResponse healthInformationResponse) {
         return Mono.just(healthInformationResponse)
@@ -66,9 +66,7 @@ public class DataFlowRequestController {
                 );
     }
 
-
-
-    @PostMapping(V_1_HEALTH_INFORMATION_NOTIFY)
+    @PostMapping(PATH_HEALTH_INFORMATION_NOTIFY)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> healthInformationNotify(@RequestBody HealthInfoNotificationRequest notificationRequest) {
         return Mono.just(notificationRequest)

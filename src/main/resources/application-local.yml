@@ -59,12 +59,12 @@ consentmanager:
     # In milliseconds
     retryInterval: 1000
   gatewayservice:
-    baseUrl: http://localhost:8000/v1
+    baseUrl: http://localhost:8000/v0.5
     requestTimeout: 5000
     enabled: true
     clientId: ncg
     clientSecret: ${GATEWAY_CLIENTSECRET}
-    jwkUrl: http://localhost:8000/v1/certs
+    jwkUrl: http://localhost:8000/v0.5/certs
 spring:
   rabbitmq:
     host: localhost

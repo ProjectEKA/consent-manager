@@ -19,22 +19,22 @@ import reactor.core.publisher.Mono;
 public class SessionController {
     private final SessionService sessionService;
 
-    @PostMapping("/sessions")
+    @PostMapping(Constants.APP_PATH_NEW_SESSION)
     public Mono<Session> forNew(@RequestBody SessionRequest sessionRequest) {
         return sessionService.forNew(sessionRequest);
     }
 
-    @PostMapping("/otpsession/verify")
+    @PostMapping(Constants.APP_PATH_VERIFY_OTP_FOR_SESSION)
     public Mono<OtpVerificationResponse> verify(@RequestBody OtpVerificationRequest otpVerificationRequest) {
         return sessionService.sendOtp(otpVerificationRequest);
     }
 
-    @PostMapping("/otpsession/permit")
+    @PostMapping(Constants.APP_PATH_SESSION_PERMIT_BY_OTP)
     public Mono<Session> permit(@RequestBody OtpPermitRequest otpPermitRequest) {
         return sessionService.validateOtp(otpPermitRequest);
     }
 
-    @PostMapping("/logout")
+    @PostMapping(Constants.APP_PATH_LOGOUT)
     public Mono<Void> logout(@RequestHeader(name = "Authorization") String accessToken,
                              @RequestBody LogoutRequest logoutRequest) {
         String[] splitAccessToken = accessToken.split(" ");

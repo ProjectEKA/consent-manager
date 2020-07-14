@@ -23,7 +23,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_NOTIFY;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationNotificationRequest;
@@ -98,7 +98,7 @@ class DataFlowRequestControllerTest {
         when(dataFlowRequester.requestHealthDataInfo(any())).thenReturn(Mono.empty());
 
         webClient.post()
-                .uri("/v1/health-information/request")
+                .uri(in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -141,7 +141,7 @@ class DataFlowRequestControllerTest {
                 .thenReturn(Mono.empty());
 
         webClient.post()
-                .uri(V_1_HEALTH_INFORMATION_NOTIFY)
+                .uri(PATH_HEALTH_INFORMATION_NOTIFY)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -184,7 +184,7 @@ class DataFlowRequestControllerTest {
         when(dataFlowRequester.updateDataflowRequestStatus(healthInformationResponse)).thenReturn(Mono.empty());
 
         webClient.post()
-                .uri("/v1/health-information/on-request")
+                .uri(in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST)
                 .header(AUTHORIZATION,token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(healthInformationResponse))

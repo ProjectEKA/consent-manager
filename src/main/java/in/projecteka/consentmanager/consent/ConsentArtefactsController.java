@@ -26,8 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.common.Constants.V_1_CONSENTS_FETCH;
-import static in.projecteka.consentmanager.common.Constants.V_1_HIP_CONSENT_ON_NOTIFY;
+import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
+import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
 
 @RestController
 @AllArgsConstructor
@@ -40,19 +40,19 @@ public class ConsentArtefactsController {
     private final CacheAdapter<String, String> cacheForReplayAttack;
     private final RequestValidator validator;
 
-    @GetMapping(value = "/consents/{consentId}")
+    @GetMapping(value = Constants.APP_PATH_GET_CONSENT)
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(@PathVariable(value = "consentId") String consentId) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
                 .flatMap(requester -> consentManager.getConsent(consentId, requester.getClientId()));
     }
 
-    @GetMapping(value = "/internal/consents/{consentId}")
+    @GetMapping(value = Constants.APP_PATH_INTERNAL_GET_CONSENT)
     public Mono<ConsentArtefactLightRepresentation> getConsent(@PathVariable String consentId) {
         return consentManager.getConsentArtefactLight(consentId);
     }
 
-    @GetMapping(value = "/consent-requests/{request-id}/consent-artefacts")
+    @GetMapping(value = Constants.APP_PATH_GET_CONSENT_ARTEFACTS_FOR_REQUEST)
     public Flux<ConsentArtefactRepresentation> getConsents(@PathVariable(value = "request-id") String requestId) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
@@ -60,7 +60,7 @@ public class ConsentArtefactsController {
                 .flatMapMany(patient -> consentManager.getConsents(requestId, patient));
     }
 
-    @GetMapping(value = "/consent-artefacts")
+    @GetMapping(value = Constants.APP_PATH_GET_CONSENT_ARTEFACTS)
     public Mono<ConsentArtefactResponse> getAllConsentArtefacts(
             @RequestParam(defaultValue = "ALL") String status,
             @RequestParam(defaultValue = "-1") int limit,
@@ -76,7 +76,7 @@ public class ConsentArtefactsController {
                         .offset(offset).build());
     }
 
-    @PostMapping(value = "/consents/revoke")
+    @PostMapping(value = Constants.APP_PATH_REVOKE_CONSENTS)
     public Mono<Void> revokeConsent(@RequestBody RevokeRequest revokeRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
@@ -89,7 +89,7 @@ public class ConsentArtefactsController {
     }
 
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @PostMapping(value = V_1_CONSENTS_FETCH)
+    @PostMapping(value = PATH_CONSENTS_FETCH)
     public Mono<Void> fetchConsent(@RequestBody FetchRequest fetchRequest) {
       return Mono.just(fetchRequest)
               .filterWhen(req ->
@@ -106,7 +106,7 @@ public class ConsentArtefactsController {
     }
 
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @PostMapping(value = V_1_HIP_CONSENT_ON_NOTIFY)
+    @PostMapping(value = PATH_HIP_CONSENT_ON_NOTIFY)
     public Mono<Void> hipOnNotify(@RequestBody HIPCosentNotificationAcknowledgment acknowledgment) {
         return Mono.just(acknowledgment)
                 .filterWhen(req ->

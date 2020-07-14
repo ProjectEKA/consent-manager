@@ -228,7 +228,7 @@ public class DataFlowRequesterUserJourneyTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus()
-                .isUnauthorized()
+                .isEqualTo(410)
                 .expectBody()
                 .json(errorResponseJson);
     }
@@ -318,7 +318,7 @@ public class DataFlowRequesterUserJourneyTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus()
-                .isEqualTo(409)
+                .isEqualTo(412)
                 .expectBody()
                 .json(errorResponseJson);
     }
@@ -378,7 +378,7 @@ public class DataFlowRequesterUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/health-information/request")
+                .uri(Constants.PATH_HEALTH_INFORMATION_REQUEST)
                 .header(AUTHORIZATION, token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(dataFlowRequest)

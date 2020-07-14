@@ -212,7 +212,7 @@ public class ConsentArtefactUserJourneyTest {
                 .header("Authorization", token)
                 .exchange()
                 .expectStatus()
-                .isForbidden()
+                .isEqualTo(403)
                 .expectBody()
                 .json(errorResponseJson);
     }
@@ -280,7 +280,7 @@ public class ConsentArtefactUserJourneyTest {
                 .bodyValue(revokeRequest)
                 .exchange()
                 .expectStatus()
-                .isEqualTo(409)
+                .isEqualTo(412)
                 .expectBody()
                 .json(errorResponseJson);
 
@@ -367,7 +367,7 @@ public class ConsentArtefactUserJourneyTest {
         when(consentManagerClient.sendConsentArtefactResponseToGateway(any(), any())).thenReturn(Mono.empty());
 
         webTestClient.post()
-                .uri("/v1/consents/fetch")
+                .uri(Constants.PATH_CONSENTS_FETCH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", token)
                 .bodyValue(fetchRequest)

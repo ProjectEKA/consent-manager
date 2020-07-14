@@ -21,7 +21,7 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
-import static in.projecteka.consentmanager.common.Constants.V_1_PATIENTS_FIND;
+import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
 import static org.springframework.http.HttpStatus.CREATED;
 
 @RestController
@@ -32,13 +32,13 @@ public class UserController {
     private final RequestValidator validator;
 
     // TODO: Should not return phone number from this API.
-    @GetMapping("/users/{userName}")
+    @GetMapping(Constants.APP_PATH_FIND_BY_USER_NAME)
     public Mono<User> userWith(@PathVariable String userName) {
         return userService.userWith(userName);
     }
 
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @PostMapping(V_1_PATIENTS_FIND)
+    @PostMapping(PATH_FIND_PATIENT)
     public Mono<Void> userWith(@Valid @RequestBody PatientRequest patientRequest) {
         return Mono.just(patientRequest)
                 .filterWhen(req ->
@@ -50,8 +50,8 @@ public class UserController {
                         .then(cacheForReplayAttack.put(patientRequest.getRequestId().toString(), patientRequest.getTimestamp().toString())));
     }
 
-    @PostMapping("/users/verify")
     @ResponseStatus(CREATED)
+    @PostMapping(Constants.APP_PATH_USER_SIGN_UP_ENQUIRY)
     public Mono<SignUpSession> sendOtp(@RequestBody UserSignUpEnquiry request) {
         return userService.sendOtp(request);
     }
@@ -63,7 +63,7 @@ public class UserController {
 
     // TODO: should be moved to patients and need to make sure only consent manager service uses it.
     // Not patient themselves
-    @GetMapping("/internal/users/{userName}")
+    @GetMapping(Constants.APP_PATH_INTERNAL_FIND_USER_BY_USERNAME)
     public Mono<User> internalUserWith(@PathVariable String userName) {
         return userService.userWith(userName);
     }

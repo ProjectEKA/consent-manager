@@ -40,10 +40,9 @@ public class ConsentArtefactNotifier {
     }
 
 
-    private Mono<Void> postConsentArtifactToHiu(Object body, String hiuId) {
+    private Mono<Void> postConsentArtifactToHiu(HIUNotificationRequest body, String hiuId) {
         return tokenGenerator.get()
-                .flatMap(token ->
-                        webClient
+                .flatMap(token -> webClient
                                 .post()
                                 .uri(gatewayServiceProperties.getBaseUrl() + HIU_CONSENT_NOTIFICATION_URL_PATH)
                                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -60,10 +59,9 @@ public class ConsentArtefactNotifier {
                 .then();
     }
 
-    private Mono<Void> postConsentArtefactToHip(Object body, String hipId) {
+    private Mono<Void> postConsentArtefactToHip(HIPNotificationRequest body, String hipId) {
         return tokenGenerator.get()
-                .flatMap(token ->
-                        webClient
+                .flatMap(token -> webClient
                                 .post()
                                 .uri(gatewayServiceProperties.getBaseUrl() + HIP_CONSENT_NOTIFICATION_URL_PATH)
                                 .contentType(MediaType.APPLICATION_JSON)

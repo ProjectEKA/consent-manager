@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.consent.PinVerificationTokenService;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.dataflow.DataFlowRequester;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
+import in.projecteka.consentmanager.user.Constants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_NOTIFY;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.common.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
@@ -93,7 +94,7 @@ class SecurityConfigurationTest {
     void return401UnAuthorized() {
         webTestClient
                 .post()
-                .uri("/v1/patients/find")
+                .uri(in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT)
                 .contentType(APPLICATION_JSON)
                 .bodyValue("{}")
                 .exchange()
@@ -109,7 +110,7 @@ class SecurityConfigurationTest {
 
         webTestClient
                 .post()
-                .uri("/v1/patients/find")
+                .uri(in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT)
                 .contentType(APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .bodyValue("{}")
@@ -129,7 +130,7 @@ class SecurityConfigurationTest {
 
         webTestClient
                 .post()
-                .uri("/v1/patients/find")
+                .uri(Constants.PATH_FIND_PATIENT)
                 .contentType(APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .bodyValue(patientRequest)
@@ -154,7 +155,7 @@ class SecurityConfigurationTest {
 
         webTestClient
                 .post()
-                .uri(V_1_HEALTH_INFORMATION_NOTIFY)
+                .uri(PATH_HEALTH_INFORMATION_NOTIFY)
                 .contentType(APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .bodyValue(healthInfoNotification)

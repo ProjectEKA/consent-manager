@@ -23,6 +23,7 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
@@ -248,7 +249,7 @@ public class LinkUserJourneyTest {
                 "}";
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
+                .uri(Constants.APP_PATH_CONFIRM_LINK + "/" + patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -278,19 +279,19 @@ public class LinkUserJourneyTest {
                 "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
                 "  \"timestamp\": \"2020-05-25T15:03:44.557Z\",\n" +
                 "  \"error\": {\n" +
-                "    \"code\": 1006,\n" +
+                "    \"code\": 3413,\n" +
                 "    \"message\": \"Invalid Link reference\"\n" +
                 "  }," +
                 "  \"resp\": {\n" +
                 "    \"requestId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n" +
                 "  }\n" +
                 "}";
-        String errorResponseJson = "{\"error\":{\"code\":1039,\"message\":\"Invalid Link reference\"}}";
+        String errorResponseJson = "{\"error\":{\"code\":1413,\"message\":\"Invalid Link reference\"}}";
         when(linkResults.get(any())).thenReturn(Mono.just(linkConfirmationResult));
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
+                .uri(Constants.APP_PATH_CONFIRM_LINK + "/" + patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -322,7 +323,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
+                .uri(Constants.APP_PATH_CONFIRM_LINK + "/" + patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -392,7 +393,7 @@ public class LinkUserJourneyTest {
         when(linkResults.put(anyString(),anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
-                .uri("/v1/links/link/on-init")
+                .uri(Constants.PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -444,7 +445,7 @@ public class LinkUserJourneyTest {
         when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
-                .uri("/v1/links/link/on-init")
+                .uri(Constants.PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -463,7 +464,7 @@ public class LinkUserJourneyTest {
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
 
         webTestClient.post()
-                .uri("/v1/links/link/on-init")
+                .uri(Constants.PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -499,7 +500,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/init")
+                .uri(Constants.PATH_LINK_INIT)
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkReferenceRequest)
@@ -533,7 +534,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/init")
+                .uri(Constants.PATH_LINK_INIT)
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkReferenceRequest)

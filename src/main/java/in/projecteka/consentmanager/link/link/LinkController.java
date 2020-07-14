@@ -97,7 +97,7 @@ public class LinkController {
                                                        confirmationResult.getTimestamp())));
     }
 
-    @PostMapping(Constants.PATH_LINK_INIT)
+    @PostMapping(Constants.APP_PATH_LINK_INIT)
     public Mono<PatientLinkReferenceResponse> linkPatientCareContexts(
             @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
         return ReactiveSecurityContextHolder.getContext()

@@ -39,6 +39,16 @@
   "expansion": {
     "timestamp": "2020-01-01T08:15:30+05:30",
     "contains": [
+      {
+        "code": "Prescription",
+        "system": "http://projecteka.in/sct/761938008",
+        "display": "Prescription"
+      },
+      {
+        "code": "DischargeSummary",
+        "system": "http://projecteka.in/sct/373942005",
+        "display": "Discharge Summary"
+      }
     ]
   }
 }

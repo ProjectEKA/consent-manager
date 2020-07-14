@@ -37,7 +37,6 @@ public class ConsentRequestController {
 	private final ConsentManager consentManager;
 	private final ConsentServiceProperties serviceProperties;
 	private final CacheAdapter<String, String> usedTokens;
-	private final CacheAdapter<String, String> cacheForReplayAttack;
 	private final RequestValidator validator;
 
 	private static final Logger logger = LoggerFactory.getLogger(ConsentRequestController.class);
@@ -63,7 +62,7 @@ public class ConsentRequestController {
 						validator.validate(request.getRequestId().toString(), request.getTimestamp().toString()))
 				.switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
 				.flatMap(validatedRequest ->
-						cacheForReplayAttack.put(request.getRequestId().toString(), request.getTimestamp().toString())
+						validator.put(request.getRequestId().toString(), request.getTimestamp().toString())
 						.then(consentManager.requestConsent(request.getConsent(), request.getRequestId())));
 	}
 

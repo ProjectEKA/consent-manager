@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
-public class DataRequestNotifierTest {
+class DataRequestNotifierTest {
     @Captor
     private ArgumentCaptor<ClientRequest> captor;
     @Mock
@@ -37,7 +37,7 @@ public class DataRequestNotifierTest {
     }
 
     @Test
-    public void shouldDiscoverPatients() {
+    void shouldDiscoverPatients() {
         var token = string();
         when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
                 .header("Content-Type", "application/json")
@@ -55,7 +55,7 @@ public class DataRequestNotifierTest {
     }
 
     @Test
-    public void shouldNotifyHip() {
+    void shouldNotifyHip() {
         var token = string();
         when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
                 .header("Content-Type", "application/json")

@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.RequestValidator;
-import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.PatientRequest;
 import in.projecteka.consentmanager.user.model.SignUpSession;
@@ -28,7 +27,6 @@ import static org.springframework.http.HttpStatus.CREATED;
 @AllArgsConstructor
 public class UserController {
     private final UserService userService;
-    private final CacheAdapter<String, String> cacheForReplayAttack;
     private final RequestValidator validator;
 
     // TODO: Should not return phone number from this API.
@@ -47,7 +45,7 @@ public class UserController {
                 .flatMap(validatedRequest -> userService.user(patientRequest.getQuery().getPatient().getId(),
                                              patientRequest.getQuery().getRequester(),
                                              patientRequest.getRequestId())
-                        .then(cacheForReplayAttack.put(patientRequest.getRequestId().toString(), patientRequest.getTimestamp().toString())));
+                        .then(validator.put(patientRequest.getRequestId().toString(), patientRequest.getTimestamp().toString())));
     }
 
     @ResponseStatus(CREATED)

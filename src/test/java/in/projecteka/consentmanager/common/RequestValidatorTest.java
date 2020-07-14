@@ -10,7 +10,6 @@ import reactor.test.StepVerifier;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeParseException;
 
 import static in.projecteka.consentmanager.common.TestBuilders.string;
 import static org.mockito.Mockito.when;
@@ -32,7 +31,7 @@ class RequestValidatorTest {
         String timestamp = LocalDateTime.now(ZoneOffset.UTC).toString();
         RequestValidator validator = new RequestValidator(cacheForReplayAttack);
 
-        when(cacheForReplayAttack.get(requestId)).thenReturn(Mono.empty());
+        when(cacheForReplayAttack.get("replay_" + requestId)).thenReturn(Mono.empty());
 
         StepVerifier
                 .create(validator.validate(requestId, timestamp))
@@ -47,7 +46,7 @@ class RequestValidatorTest {
         String timestamp = LocalDateTime.now(ZoneOffset.UTC).toString();
         RequestValidator validator = new RequestValidator(cacheForReplayAttack);
 
-        when(cacheForReplayAttack.get(requestId)).thenReturn(Mono.just("testString"));
+        when(cacheForReplayAttack.get("replay_" + requestId)).thenReturn(Mono.just("testString"));
 
         StepVerifier
                 .create(validator.validate(requestId, timestamp))
@@ -62,7 +61,7 @@ class RequestValidatorTest {
         String timestamp = LocalDateTime.now(ZoneOffset.UTC).minusMinutes(2).toString();
         RequestValidator validator = new RequestValidator(cacheForReplayAttack);
 
-        when(cacheForReplayAttack.get(requestId)).thenReturn(Mono.empty());
+        when(cacheForReplayAttack.get("replay_" + requestId)).thenReturn(Mono.empty());
 
         StepVerifier
                 .create(validator.validate(requestId, timestamp))
@@ -77,7 +76,7 @@ class RequestValidatorTest {
         String timestamp = LocalDateTime.now(ZoneOffset.UTC).plusMinutes(10).toString();
         RequestValidator validator = new RequestValidator(cacheForReplayAttack);
 
-        when(cacheForReplayAttack.get(requestId)).thenReturn(Mono.empty());
+        when(cacheForReplayAttack.get("replay_" + requestId)).thenReturn(Mono.empty());
 
         StepVerifier
                 .create(validator.validate(requestId, timestamp))
@@ -91,8 +90,7 @@ class RequestValidatorTest {
         String requestId = string();
         String timestamp = string();
         RequestValidator validator = new RequestValidator(cacheForReplayAttack);
-
-        when(cacheForReplayAttack.get(requestId)).thenReturn(Mono.empty());
+        when(cacheForReplayAttack.get("replay_" + requestId)).thenReturn(Mono.empty());
 
         StepVerifier
                 .create(validator.validate(requestId, timestamp))
@@ -100,5 +98,4 @@ class RequestValidatorTest {
                 .expectComplete()
                 .verify();
     }
-
 }

@@ -110,7 +110,7 @@ class UserControllerTest {
     private RequestValidator validator;
 
     @Test
-    public void shouldReturnTemporarySessionIfOtpRequestIsSuccessful() {
+    void shouldReturnTemporarySessionIfOtpRequestIsSuccessful() {
         var userSignupEnquiry = new UserSignUpEnquiry("MOBILE", string());
         when(userService.sendOtp(any())).thenReturn(just(new SignUpSession(string())));
 
@@ -124,7 +124,7 @@ class UserControllerTest {
     }
 
     @Test
-    public void shouldReturnTemporarySessionIfOtpPermitRequestIsSuccessful() {
+    void shouldReturnTemporarySessionIfOtpPermitRequestIsSuccessful() {
         var otpVerification = new OtpVerification(string(), string());
         Token token = new Token(string());
 
@@ -140,7 +140,7 @@ class UserControllerTest {
     }
 
     @Test
-    public void returnUserForCentralRegistryAuthenticatedSystem() {
+    void returnUserForCentralRegistryAuthenticatedSystem() {
         var username = string();
         var token = string();
         var sessionId = string();
@@ -157,7 +157,7 @@ class UserControllerTest {
     }
 
     @Test
-    public void returnUser() {
+    void returnUser() {
         var username = string();
         var token = string();
         var sessionId = string();
@@ -174,11 +174,11 @@ class UserControllerTest {
     }
 
     @Test
-    public void returnPatientResponseWhenUserFound() {
+    void returnPatientResponseWhenUserFound() {
         var token = string();
         var patientRequest = patientRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-
+        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
         when(validator.validate(anyString(),anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(userService.user(patientRequest.getQuery().getPatient().getId(),
@@ -197,7 +197,7 @@ class UserControllerTest {
     }
 
     @Test
-    public void shouldFailWithTooManyRequestsErrorForInvalidRequest() {
+    void shouldFailWithTooManyRequestsErrorForInvalidRequest() {
         var token = string();
         var patientRequest = patientRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();

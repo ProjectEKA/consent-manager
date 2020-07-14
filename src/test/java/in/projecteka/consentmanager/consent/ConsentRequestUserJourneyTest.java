@@ -75,12 +75,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 @ExtendWith(SpringExtension.class)
-@AutoConfigureWebTestClient(timeout = "6000")
+@AutoConfigureWebTestClient
 @ContextConfiguration(initializers = ConsentRequestUserJourneyTest.PropertyInitializer.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class ConsentRequestUserJourneyTest {
+class ConsentRequestUserJourneyTest {
     @Autowired
     private WebTestClient webTestClient;
 
@@ -181,7 +180,7 @@ public class ConsentRequestUserJourneyTest {
             "}";
 
     @AfterAll
-    public static void tearDown() throws IOException {
+    static void tearDown() throws IOException {
         clientRegistryServer.shutdown();
         userServer.shutdown();
         identityServer.shutdown();
@@ -230,7 +229,7 @@ public class ConsentRequestUserJourneyTest {
             "        }";
 
     @Test
-    public void shouldAcceptConsentRequest() {
+    void shouldAcceptConsentRequest() {
         var authToken = string();
         var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         when(gatewayTokenVerifier.verify(authToken))
@@ -307,7 +306,7 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldGetConsentRequests() {
+    void shouldGetConsentRequests() {
         var token = string();
         List<ConsentRequestDetail> requests = new ArrayList<>();
         ListResult<List<ConsentRequestDetail>> result = new ListResult<>(requests, 0);
@@ -329,7 +328,7 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldGetConsentRequestsForStatus() {
+    void shouldGetConsentRequestsForStatus() {
         var token = string();
         List<ConsentRequestDetail> requests = new ArrayList<>();
         ConsentRequestDetail detail = ConsentRequestDetail.builder().build();
@@ -356,14 +355,14 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldSendNotificationMessage() {
+    void shouldSendNotificationMessage() {
         var notificationMessage = notificationMessage().build();
         consentRequestNotificationListener.notifyUserWith(notificationMessage);
         verify(consentRequestNotificationListener).notifyUserWith(notificationMessage);
     }
 
     @Test
-    public void shouldApproveConsentGrant() throws JsonProcessingException {
+    void shouldApproveConsentGrant() throws JsonProcessingException {
         var token = string();
         String patientId = "ashok.kumar@ncg";
         var consentRequestDetail = OBJECT_MAPPER.readValue(requestedConsentJson, ConsentRequestDetail.class);
@@ -420,7 +419,7 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldNotApproveConsentGrantForInvalidCareContext() throws JsonProcessingException {
+    void shouldNotApproveConsentGrantForInvalidCareContext() throws JsonProcessingException {
         var token = string();
         var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
@@ -483,7 +482,7 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldDenyConsentRequest() {
+    void shouldDenyConsentRequest() {
         var token = string();
         var requestId = string();
         var patientId = string();
@@ -508,7 +507,7 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldThrowErrorForInvalidPurposeInConsentRequest() {
+    void shouldThrowErrorForInvalidPurposeInConsentRequest() {
         var authToken = string();
         when(gatewayTokenVerifier.verify(authToken)).thenReturn(Mono.just(new ServiceCaller("MAX-ID", List.of())));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
@@ -583,7 +582,7 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldAcceptInitConsentRequest() {
+    void shouldAcceptInitConsentRequest() {
         var authToken = string();
         var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         String HIUId = "MAX-ID";
@@ -608,6 +607,7 @@ public class ConsentRequestUserJourneyTest {
         when(authenticator.verify(authToken)).thenReturn(Mono.just(new Caller("user-id", false)));
         when(gatewayTokenVerifier.verify(authToken))
                 .thenReturn(Mono.just(caller));
+        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(repository.requestOf(anyString())).thenReturn(Mono.empty());
@@ -638,7 +638,7 @@ public class ConsentRequestUserJourneyTest {
                 .isAccepted();
     }
 
-    public static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+    static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(ConfigurableApplicationContext applicationContext) {
             TestPropertyValues values = TestPropertyValues.of(

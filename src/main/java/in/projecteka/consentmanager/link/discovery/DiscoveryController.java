@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.link.discovery;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.RequestValidator;
-import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.DiscoveryRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
@@ -31,7 +30,6 @@ public class DiscoveryController {
     private static final String APP_PATH_GET_PROVIDER_BY_ID = "/providers/{provider-id}";
     private static final String APP_PATH_SEARCH_PROVIDERS = "/providers";
     private final Discovery discovery;
-    private final CacheAdapter<String, String> cacheForReplayAttack;
     private final RequestValidator validator;
 
     @GetMapping(APP_PATH_SEARCH_PROVIDERS)
@@ -60,12 +58,12 @@ public class DiscoveryController {
     @PostMapping(PATH_CARE_CONTEXTS_ON_DISCOVER)
     public Mono<Void> onDiscoverPatientCareContexts(@RequestBody @Valid DiscoveryResult discoveryResult) {
         return Mono.just(discoveryResult)
-                .filterWhen(req -> validator.validate(discoveryResult.getRequestId().toString()
-                        , discoveryResult.getTimestamp().toString()))
+                .filterWhen(req -> validator.validate(discoveryResult.getRequestId().toString(),
+                        discoveryResult.getTimestamp().toString()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
-                .flatMap(validatedRequest ->
-                        cacheForReplayAttack.put(discoveryResult.getRequestId().toString(), discoveryResult.getTimestamp().toString())
-                                .then(discovery.onDiscoverPatientCareContexts(discoveryResult)));
+                .flatMap(validatedRequest -> validator.put(discoveryResult.getRequestId().toString(),
+                        discoveryResult.getTimestamp().toString())
+                        .then(discovery.onDiscoverPatientCareContexts(discoveryResult)));
     }
 
     private UUID newRequest() {

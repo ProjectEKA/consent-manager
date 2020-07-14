@@ -54,7 +54,7 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void shouldThrowExceptionIfTokenCallFails() {
+    void shouldThrowExceptionIfTokenCallFails() {
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
                 Mono.just(ClientResponse
                         .create(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -68,12 +68,12 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void shouldThrowExceptionForExpiredOTP() throws JsonProcessingException {
+    void shouldThrowExceptionForExpiredOTP() throws JsonProcessingException {
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
                 Mono.just(ClientResponse
                         .create(HttpStatus.UNAUTHORIZED)
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .body(InvalidOtpResponse("1003", "Invalid Otp"))
+                        .body(InvalidOtpResponse("1003"))
                         .build()));
         StepVerifier.create(identityServiceClient.getToken(formData))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
@@ -83,12 +83,12 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void shouldThrowExceptionForIncorrectOTP() throws JsonProcessingException {
+    void shouldThrowExceptionForIncorrectOTP() throws JsonProcessingException {
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
                 Mono.just(ClientResponse
                         .create(HttpStatus.UNAUTHORIZED)
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .body(InvalidOtpResponse("1002", "Invalid Otp"))
+                        .body(InvalidOtpResponse("1002"))
                         .build()));
         StepVerifier.create(identityServiceClient.getToken(formData))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
@@ -97,16 +97,16 @@ class IdentityServiceClientTest {
                 .verify();
     }
 
-    private static String InvalidOtpResponse(String error, String description) throws JsonProcessingException {
+    private static String InvalidOtpResponse(String error) throws JsonProcessingException {
         Map<String, String> map = new HashMap<>(2);
         map.put("error", error);
-        map.put("error_description", description);
+        map.put("error_description", "Invalid Otp");
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.writeValueAsString(map);
     }
 
     @Test
-    public void shouldReturnAccessTokenForUser() {
+    void shouldReturnAccessTokenForUser() {
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
                 Mono.just(ClientResponse
                         .create(HttpStatus.OK)
@@ -118,7 +118,7 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void shouldCreateUserAccountInKeycloak() {
+    void shouldCreateUserAccountInKeycloak() {
         var request = keycloakCreateUser().build();
         var token = session().build();
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
@@ -134,7 +134,7 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void shouldGetUserFromKeyCloak() throws JsonProcessingException {
+    void shouldGetUserFromKeyCloak() throws JsonProcessingException {
         var userName = string();
         var accessToken = string();
         KeyCloakUserRepresentation keyCloakUserRepresentation = KeyCloakUserRepresentation.builder()
@@ -153,7 +153,7 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void shouldGetUserFailsFromKeyCloak() throws JsonProcessingException {
+    void shouldGetUserFailsFromKeyCloak() throws JsonProcessingException {
         var userName = string();
         var accessToken = string();
 
@@ -172,7 +172,7 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void shouldUpdateUserInKeyCloak() throws JsonProcessingException {
+    void shouldUpdateUserInKeyCloak() throws JsonProcessingException {
         var userPwd = "Test@325";
         var keyCloakUserId = "userId";
         String accessToken = "Bearer " + string();
@@ -192,7 +192,7 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void shouldReturnErrorWhenUserNotFoundWhileUpdatingUserInKeyCloak() throws JsonProcessingException {
+    void shouldReturnErrorWhenUserNotFoundWhileUpdatingUserInKeyCloak() throws JsonProcessingException {
         String accessToken = "Bearer " + string();
         var userPwd = "Test@325";
         var keyCloakUserId = "userId";
@@ -214,7 +214,7 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void shouldThrowExceptionIfUserCreationRequestFails() {
+    void shouldThrowExceptionIfUserCreationRequestFails() {
         var request = keycloakCreateUser().build();
         var token = session().build();
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
@@ -232,7 +232,7 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void shouldLogout() {
+    void shouldLogout() {
         when(exchangeFunction.exchange(captor.capture())).
                 thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK).build()));
 
@@ -242,7 +242,7 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void shouldThrowErrorIfUpstreamLogoutRequestFails() {
+    void shouldThrowErrorIfUpstreamLogoutRequestFails() {
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
                 Mono.just(ClientResponse
                         .create(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -256,7 +256,7 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void getCredentials() throws JsonProcessingException {
+    void getCredentials() throws JsonProcessingException {
         var userName = string();
         var accessToken = string();
         KeyCloakUserCredentialRepresentation keyCreds = KeyCloakUserCredentialRepresentation.builder()
@@ -276,7 +276,7 @@ class IdentityServiceClientTest {
     }
 
     @Test
-    public void getCredentialsFailsFromKeyCloak() throws JsonProcessingException {
+    void getCredentialsFailsFromKeyCloak() {
         var userName = string();
         var accessToken = string();
 

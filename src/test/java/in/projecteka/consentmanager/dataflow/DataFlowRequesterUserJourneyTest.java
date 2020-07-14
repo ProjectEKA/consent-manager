@@ -70,7 +70,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 @ContextConfiguration(initializers = DataFlowRequesterUserJourneyTest.ContextInitializer.class)
-public class DataFlowRequesterUserJourneyTest {
+class DataFlowRequesterUserJourneyTest {
     private static final MockWebServer consentManagerServer = new MockWebServer();
     private static final MockWebServer identityServer = new MockWebServer();
     private static final MockWebServer gatewayServer = new MockWebServer();
@@ -136,7 +136,7 @@ public class DataFlowRequesterUserJourneyTest {
 
 
     @AfterAll
-    public static void tearDown() throws IOException {
+    static void tearDown() throws IOException {
         consentManagerServer.shutdown();
         identityServer.shutdown();
         gatewayServer.shutdown();
@@ -166,7 +166,7 @@ public class DataFlowRequesterUserJourneyTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(consentArtefactRepresentationJson));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
-
+        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
@@ -324,7 +324,7 @@ public class DataFlowRequesterUserJourneyTest {
     }
 
     @Test
-    public void shouldSendDataRequestToHip() {
+    void shouldSendDataRequestToHip() {
         var dataFlowRequestMessage = dataFlowRequestMessage().build();
         var provider = provider().build();
         var dataFlowRequest = new in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest(
@@ -365,7 +365,7 @@ public class DataFlowRequesterUserJourneyTest {
                         .setBody(consentArtefactRepresentationJson));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
-
+        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of(GATEWAY))));
         when(consentManagerClient.getConsentArtefact(dataFlowRequest.getHiRequest().getConsent().getId()))
@@ -388,7 +388,7 @@ public class DataFlowRequesterUserJourneyTest {
                 .isAccepted();
     }
 
-    public static class ContextInitializer
+    static class ContextInitializer
             implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(ConfigurableApplicationContext applicationContext) {

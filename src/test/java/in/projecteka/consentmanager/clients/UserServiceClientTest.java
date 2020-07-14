@@ -27,7 +27,7 @@ import static in.projecteka.consentmanager.clients.TestBuilders.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-public class UserServiceClientTest {
+class UserServiceClientTest {
     @Captor
     private ArgumentCaptor<ClientRequest> captor;
     @Mock
@@ -52,7 +52,7 @@ public class UserServiceClientTest {
     }
 
     @Test
-    public void shouldGetUser() throws IOException {
+    void shouldGetUser() throws IOException {
         User user = user().name(PatientName.builder()
                                 .first("first name")
                                 .middle("")

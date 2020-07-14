@@ -1729,6 +1729,47 @@
 					"response": []
 				},
 				{
+					"name": "Create Patient Consent Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							},
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"hipIds\":[\"10000005\",\"10000003\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HIU_HOST}}/v1/hiu/patient/consent-request",
+							"host": [
+								"{{HIU_HOST}}"
+							],
+							"path": [
+								"v1",
+								"hiu",
+								"patient",
+								"consent-request"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Session",
 					"event": [
 						{

@@ -1350,6 +1350,13 @@ paths:
       responses:
         '200':
           description: Login details updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateLoginDetailsResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/UpdateLoginDetailsResponse'
         '400':
           description: >
             **Causes:**
@@ -2961,6 +2968,12 @@ components:
         - health-id
         - password
 
+    UpdateLoginDetailsResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT Token
 
     RecoverCmIdRequest:
       type: object

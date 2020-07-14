@@ -2903,8 +2903,6 @@ components:
       properties:
         name:
           $ref: '#/components/schemas/PatientName'
-        password:
-          type: string
         dateOfBirth:
           $ref: '#/components/schemas/DateOfBirth'
         gender:

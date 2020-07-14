@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -54,6 +55,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -62,6 +64,7 @@ import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResponse;
@@ -74,6 +77,8 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static java.util.List.of;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
+
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -125,8 +130,15 @@ public class LinkUserJourneyTest {
     private ConceptValidator conceptValidator;
 
     @MockBean
+    private RequestValidator validator;
+
+    @MockBean
     @Qualifier("linkResults")
     CacheAdapter<String,String> linkResults;
+
+    @MockBean
+    @Qualifier("cacheForReplayAttack")
+    CacheAdapter<String,String> cacheForReplayAttack;
 
     @MockBean
     private LinkServiceClient linkServiceClient;
@@ -369,20 +381,50 @@ public class LinkUserJourneyTest {
     @Test
     public void onLinkCareContexts() {
         var token = string();
-        var patientLinkReferenceResult = patientLinkReferenceResult().build();
+        var patientLinkReferenceResult = patientLinkReferenceResult()
+                                         .requestId(UUID.randomUUID())
+                                         .timestamp(Instant.now().plusSeconds(60L).toString())
+                                         .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
+        when(cacheForReplayAttack.put(anyString(),anyString())).thenReturn(Mono.empty());
+        when(linkResults.put(anyString(),anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
-                .uri(Constants.PATH_LINK_ON_INIT)
+                .uri(PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .bodyValue(patientLinkReferenceResult)
                 .exchange()
                 .expectStatus().isOk();
+    }
+
+    @Test
+    public void shouldFailWithTwoManyRequestsErrorForInvalidRequest() {
+        var token = string();
+        var patientLinkReferenceResult = patientLinkReferenceResult()
+                                         .requestId(UUID.randomUUID())
+                                         .timestamp(Instant.now().toString())
+                                         .build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(gatewayTokenVerifier.verify(token))
+                .thenReturn(Mono.just(caller));
+
+        webTestClient.post()
+                .uri(PATH_LINK_ON_INIT)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientLinkReferenceResult)
+                .exchange()
+                .expectStatus()
+                .is4xxClientError();
     }
 
     @Test
@@ -394,14 +436,17 @@ public class LinkUserJourneyTest {
         var patientLinkReferenceResult = PatientLinkReferenceResult.builder()
                 .requestId(UUID.randomUUID())
                 .resp(gatewayResponse)
+                .timestamp(Instant.now().plusSeconds(60L).toString())
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
+        when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
-                .uri(Constants.PATH_LINK_ON_INIT)
+                .uri(PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -417,9 +462,10 @@ public class LinkUserJourneyTest {
 
         when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
 
         webTestClient.post()
-                .uri(Constants.PATH_LINK_ON_INIT)
+                .uri(PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)

@@ -66,7 +66,6 @@ public class SecurityConfiguration {
             PATH_LINK_ON_INIT,
             PATH_LINK_ON_CONFIRM,
             PATH_HEALTH_INFORMATION_ON_REQUEST,
-            PATH_LINK_ON_CONFIRM,
             PATH_HEALTH_INFORMATION_REQUEST,
             PATH_HEALTH_INFORMATION_NOTIFY,
             PATH_HIP_CONSENT_ON_NOTIFY

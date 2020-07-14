@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.model.AccessPeriod;
 import in.projecteka.consentmanager.consent.model.ConsentPermission;
@@ -50,6 +51,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -131,6 +133,9 @@ public class ConsentRequestUserJourneyTest {
 
     @MockBean
     private ConceptValidator conceptValidator;
+
+    @MockBean
+    private RequestValidator validator;
 
     @MockBean
     private ConsentManagerClient consentManagerClient;
@@ -595,6 +600,7 @@ public class ConsentRequestUserJourneyTest {
                 .hiTypes(HIType.values())
                 .build();
         in.projecteka.consentmanager.consent.model.request.ConsentRequest consentRequest = consentRequest()
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
                 .consent(requestedDetail)
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
@@ -602,6 +608,7 @@ public class ConsentRequestUserJourneyTest {
         when(authenticator.verify(authToken)).thenReturn(Mono.just(new Caller("user-id", false)));
         when(gatewayTokenVerifier.verify(authToken))
                 .thenReturn(Mono.just(caller));
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(repository.requestOf(anyString())).thenReturn(Mono.empty());
         when(conceptValidator.validatePurpose(any())).thenReturn(Mono.just(true));

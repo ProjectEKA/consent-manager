@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
@@ -49,12 +50,16 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -117,9 +122,16 @@ public class DiscoveryUserJourneyTest {
     @Qualifier("discoveryResults")
     CacheAdapter<String,String> discoveryResults;
 
+    @MockBean
+    @Qualifier("cacheForReplayAttack")
+    CacheAdapter<String,String> cacheForReplayAttack;
+
     @SuppressWarnings("unused")
     @MockBean
     private ConceptValidator conceptValidator;
+
+    @MockBean
+    private RequestValidator validator;
 
     @MockBean
     private GatewayTokenVerifier gatewayTokenVerifier;
@@ -366,16 +378,39 @@ public class DiscoveryUserJourneyTest {
         var patientDiscoveryResult = TestBuilders.discoveryResult().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+        when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
+        when(discoveryResults.put(anyString(), anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
-                .uri(Constants.PATH_CARE_CONTEXTS_ON_DISCOVER)
+                .uri(PATH_CARE_CONTEXTS_ON_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .bodyValue(patientDiscoveryResult)
                 .exchange()
                 .expectStatus().isOk();
+    }
+
+    @Test
+    public void shouldFailWithTwoManyRequestsErrorForInvalidRequest() {
+        var token = string();
+        var patientDiscoveryResult = TestBuilders.discoveryResult().build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+
+        webTestClient.post()
+                .uri(PATH_CARE_CONTEXTS_ON_DISCOVER)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientDiscoveryResult)
+                .exchange()
+                .expectStatus()
+                .is4xxClientError();
     }
 
     @Test
@@ -389,16 +424,20 @@ public class DiscoveryUserJourneyTest {
                 .message("Could not identify a unique patient. Need more information.")
                 .build();
         var patientDiscoveryResult = DiscoveryResult.builder()
+                .requestId(UUID.randomUUID())
                 .patient(null)
                 .error(error)
                 .resp(gatewayResponse)
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+        when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
-                .uri(Constants.PATH_CARE_CONTEXTS_ON_DISCOVER)
+                .uri(PATH_CARE_CONTEXTS_ON_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -416,7 +455,7 @@ public class DiscoveryUserJourneyTest {
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
-                .uri(Constants.PATH_CARE_CONTEXTS_ON_DISCOVER)
+                .uri(PATH_CARE_CONTEXTS_ON_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)

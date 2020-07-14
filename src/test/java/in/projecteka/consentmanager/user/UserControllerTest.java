@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConceptValidator;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
@@ -28,15 +29,18 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
+import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
 import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -101,6 +105,9 @@ class UserControllerTest {
 
     @MockBean
     private UserServiceClient userServiceClient;
+
+    @MockBean
+    private RequestValidator validator;
 
     @Test
     public void shouldReturnTemporarySessionIfOtpRequestIsSuccessful() {
@@ -172,6 +179,7 @@ class UserControllerTest {
         var patientRequest = patientRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
+        when(validator.validate(anyString(),anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(userService.user(patientRequest.getQuery().getPatient().getId(),
                 patientRequest.getQuery().getRequester(),
@@ -179,13 +187,32 @@ class UserControllerTest {
                 .thenReturn(empty());
 
         webClient.post()
-                .uri(Constants.PATH_FIND_PATIENT)
+                .uri(PATH_FIND_PATIENT)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .body(BodyInserters.fromValue(patientRequest))
                 .exchange()
                 .expectStatus()
                 .isAccepted();
+    }
+
+    @Test
+    public void shouldFailWithTooManyRequestsErrorForInvalidRequest() {
+        var token = string();
+        var patientRequest = patientRequest().build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+
+        when(validator.validate(anyString(),anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
+
+        webClient.post()
+                .uri(PATH_FIND_PATIENT)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .body(BodyInserters.fromValue(patientRequest))
+                .exchange()
+                .expectStatus()
+                .is4xxClientError();
     }
 }
 

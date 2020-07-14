@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.clients.model.HASOtpRequestResponse;
+import in.projecteka.consentmanager.clients.model.OtpRequestResponse;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import org.jeasy.random.EasyRandom;
@@ -54,10 +54,10 @@ class HealthAccountServiceClientTest {
                                 .body("{\"txnID\":\"12345\"}")
                                 .build()));
 
-        Mono<HASOtpRequestResponse> response = healthAccountServiceClient.send(otpRequest);
+        Mono<OtpRequestResponse> response = healthAccountServiceClient.send(otpRequest);
 
         StepVerifier.create(response).assertNext(
-                hasOtpRequestResponse -> assertThat(hasOtpRequestResponse.getTxnID()).isEqualTo("12345")
+                otpRequestResponse -> assertThat(otpRequestResponse.getTxnID()).isEqualTo("12345")
         ).verifyComplete();
 
         assertThat(captor.getValue().url().getPath()).isEqualTo("/healthaccountservice/v1/ha/generate_mobile_otp");

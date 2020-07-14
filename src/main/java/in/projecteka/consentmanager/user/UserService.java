@@ -133,16 +133,13 @@ public class UserService {
     }
 
     private Mono<Void> sendOTP(OtpRequest otpRequest) {
-        if (healthAccountServiceProperties.isEnabled()) {
-            return healthAccountServiceClient.send(otpRequest).then();
-        }
-        return otpServiceClient.send(otpRequest);
+        return healthAccountServiceClient.send(otpRequest).then();
     }
 
     private Optional<OtpRequest> getOtpRequest(UserSignUpEnquiry userSignupEnquiry) {
         String identifierType = userSignupEnquiry.getIdentifierType().toUpperCase();
         //TODO-Temp: should below be applicable for hasServiceAsWell
-        if (!otpServiceProperties.getIdentifiers().contains(identifierType)) {
+        if (!healthAccountServiceProperties.getIdentifiers().contains(identifierType)) {
             return Optional.empty();
         }
         var communication = new OtpCommunicationData(userSignupEnquiry.getIdentifierType(),

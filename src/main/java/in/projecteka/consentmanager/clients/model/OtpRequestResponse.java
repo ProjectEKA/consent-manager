@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @Data
-public class HASOtpRequestResponse {
+public class OtpRequestResponse {
     private String txnID;
 }

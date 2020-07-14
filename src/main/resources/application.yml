@@ -41,6 +41,11 @@ consentmanager:
     identifiers:
       - MOBILE
     expiryInMinutes: ${OTP_EXPIRY_IN_MINUTES}
+  healthaccountservice:
+      url: ${Health_Account_Service_Url}
+      identifiers:
+        - MOBILE
+      expiryInMinutes: ${OTP_EXPIRY_IN_MINUTES}
   jwt:
     secret: ${JWT_SECRET}
   keycloak:

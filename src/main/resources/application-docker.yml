@@ -21,6 +21,11 @@ consentmanager:
     identifiers:
       - MOBILE
     expiryInMinutes: 5
+  healthaccountservice:
+    url: http://localhost:5000
+    identifiers:
+      - MOBILE
+    expiryInMinutes: 5
   keycloak:
     baseUrl: http://keycloak:8080/auth
     clientId: consent-manager

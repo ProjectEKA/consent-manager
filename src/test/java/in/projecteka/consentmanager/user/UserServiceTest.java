@@ -132,7 +132,7 @@ class UserServiceTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"), 5);
-        var healthAccountServiceProperties = new HealthAccountServiceProperties(false,"", Collections.singletonList("MOBILE"), 5);
+        var healthAccountServiceProperties = new HealthAccountServiceProperties("", Collections.singletonList("MOBILE"), 5);
 
         userService = new UserService(
                 userRepository,
@@ -154,13 +154,14 @@ class UserServiceTest {
         var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", "+91-9788888");
         var sessionId = string();
         var signUpSession = new SignUpSession(sessionId);
-        when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
+        when(healthAccountServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
         when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq("+91-9788888")))
                 .thenReturn(Mono.just(signUpSession));
         when(otpAttemptService.validateOTPRequest(userSignUpEnquiry.getIdentifierType(), userSignUpEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_REGISTRATION)).thenReturn(Mono.empty());
 
         Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
 
+        verify(healthAccountServiceClient, times(1)).send(any(OtpRequest.class));
         assertThat(otpRequestArgumentCaptor.getValue().getSessionId()).isEqualTo(sessionCaptor.getValue());
         StepVerifier.create(signUp)
                 .assertNext(session -> assertThat(session).isEqualTo(signUpSession))
@@ -758,38 +759,5 @@ class UserServiceTest {
         verify(userServiceClient, times(1)).sendPatientResponseToGateWay(any(), any(), any());
         assertThat(patientResponse.getValue().getError()).isNull();
         assertThat(patientResponse.getValue().getPatient()).isNotNull();
-    }
-
-    @Test
-    void callHasServiceClientToSentOTPWhenHasServiceIsEnabled() {
-        var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"), 5);
-        var healthAccountServiceProperties = new HealthAccountServiceProperties(true,"", Collections.singletonList("MOBILE"), 5);
-
-        userService = new UserService(
-                userRepository,
-                otpServiceProperties,
-                otpServiceClient,
-                healthAccountServiceProperties,
-                healthAccountServiceClient,
-                signupService,
-                identityServiceClient,
-                tokenService,
-                properties,
-                otpAttemptService,
-                lockedUserService,
-                userServiceClient);
-
-        var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", "+91-9788888");
-        var sessionId = string();
-        var signUpSession = new SignUpSession(sessionId);
-        when(healthAccountServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
-        when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq("+91-9788888")))
-                .thenReturn(Mono.just(signUpSession));
-        when(otpAttemptService.validateOTPRequest(userSignUpEnquiry.getIdentifierType(), userSignUpEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_REGISTRATION)).thenReturn(Mono.empty());
-
-        Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
-
-        verify(healthAccountServiceClient, times(1)).send(any(OtpRequest.class));
-        verify(otpServiceClient, never()).send(any(OtpRequest.class));
     }
 }

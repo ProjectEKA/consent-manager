@@ -53,6 +53,7 @@ import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.springframework.http.HttpStatus.PRECONDITION_FAILED;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 
 @Getter
@@ -133,7 +134,7 @@ public class ClientError extends Throwable {
     }
 
     public static ClientError consentArtefactForbidden() {
-        return new ClientError(INTERNAL_SERVER_ERROR,
+        return new ClientError(FORBIDDEN,
                 new ErrorRepresentation(new Error(CONSENT_ARTEFACT_FORBIDDEN, "Cannot retrieve Consent artefact")));
     }
 

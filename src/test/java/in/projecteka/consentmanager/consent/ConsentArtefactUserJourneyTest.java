@@ -210,7 +210,7 @@ public class ConsentArtefactUserJourneyTest {
                 .header("Authorization", token)
                 .exchange()
                 .expectStatus()
-                .isEqualTo(500)
+                .isEqualTo(403)
                 .expectBody()
                 .json(errorResponseJson);
     }

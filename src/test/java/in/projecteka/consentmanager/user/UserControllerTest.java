@@ -179,7 +179,7 @@ class UserControllerTest {
                 .thenReturn(empty());
 
         webClient.post()
-                .uri("/v1/patients/find")
+                .uri(Constants.PATH_FIND_PATIENT)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .body(BodyInserters.fromValue(patientRequest))

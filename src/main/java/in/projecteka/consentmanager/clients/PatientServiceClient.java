@@ -13,6 +13,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @AllArgsConstructor
 public class PatientServiceClient {
 
+    private static final String INTERNAL_PATH_PATIENT_LINKS = "%s/internal/patients/%s/links";
     private final WebClient webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
     private final String baseUrl;
@@ -22,7 +23,7 @@ public class PatientServiceClient {
                 .flatMap(authorization ->
                         webClientBuilder
                                 .get()
-                                .uri(String.format("%s/internal/patients/%s/links", baseUrl, username))
+                                .uri(String.format(INTERNAL_PATH_PATIENT_LINKS, baseUrl, username))
                                 .header(AUTHORIZATION, authorization)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,

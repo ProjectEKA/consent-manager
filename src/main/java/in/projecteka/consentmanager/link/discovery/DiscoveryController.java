@@ -18,26 +18,29 @@ import reactor.core.publisher.Mono;
 import javax.validation.Valid;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.common.Constants.V_1_CARE_CONTEXTS_ON_DISCOVER;
+import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_DISCOVER;
+import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 
 @RestController
 @AllArgsConstructor
 public class DiscoveryController {
 
+    private static final String APP_PATH_GET_PROVIDER_BY_ID = "/providers/{provider-id}";
+    private static final String APP_PATH_SEARCH_PROVIDERS = "/providers";
     private final Discovery discovery;
 
-    @GetMapping("/providers")
+    @GetMapping(APP_PATH_SEARCH_PROVIDERS)
     public Flux<ProviderRepresentation> getProvidersByName(@RequestParam String name) {
         return discovery.providersFrom(name);
     }
 
-    @GetMapping("/providers/{provider-id}")
+    @GetMapping(APP_PATH_GET_PROVIDER_BY_ID)
     public Mono<ProviderRepresentation> getProvider(@PathVariable(value = "provider-id") String providerId) {
         return discovery.providerBy(providerId);
     }
 
 
-    @PostMapping("/v1/care-contexts/discover")
+    @PostMapping(PATH_CARE_CONTEXTS_DISCOVER)
     public Mono<DiscoveryResponse> discoverPatientCareContexts(@RequestBody @Valid DiscoveryRequest discoveryRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
@@ -49,7 +52,7 @@ public class DiscoveryController {
                         discoveryRequest.getRequestId()));
     }
 
-    @PostMapping(V_1_CARE_CONTEXTS_ON_DISCOVER)
+    @PostMapping(PATH_CARE_CONTEXTS_ON_DISCOVER)
     public Mono<Void> onDiscoverPatientCareContexts(@RequestBody @Valid DiscoveryResult discoveryResult){
         return discovery.onDiscoverPatientCareContexts(discoveryResult);
     }

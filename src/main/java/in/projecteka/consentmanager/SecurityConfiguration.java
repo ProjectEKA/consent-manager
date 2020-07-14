@@ -35,19 +35,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static in.projecteka.consentmanager.common.Constants.PATH_HEARTBEAT;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
-import static in.projecteka.consentmanager.common.Constants.V_1_CARE_CONTEXTS_ON_DISCOVER;
-import static in.projecteka.consentmanager.common.Constants.V_1_CONSENT_REQUESTS_INIT;
-import static in.projecteka.consentmanager.common.Constants.V_1_CONSENTS_FETCH;
-import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_REQUEST;
-import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_CONFIRM;
-import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_INIT;
-import static in.projecteka.consentmanager.common.Constants.V_1_PATIENTS_FIND;
-import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_NOTIFY;
-import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_ON_REQUEST;
-import static in.projecteka.consentmanager.common.Constants.V_1_HIP_CONSENT_ON_NOTIFY;
+import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
+import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
+import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
+import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
+import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
+import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
+import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static java.util.stream.Collectors.toList;
 
@@ -58,17 +59,17 @@ public class SecurityConfiguration {
     private static final List<Map.Entry<String, HttpMethod>> SERVICE_ONLY_URLS = new ArrayList<>();
     private static final List<RequestMatcher> PIN_VERIFICATION_MATCHERS = new ArrayList<>();
     private static final String[] GATEWAY_APIS = new String[]{
-            V_1_CARE_CONTEXTS_ON_DISCOVER,
-            V_1_CONSENT_REQUESTS_INIT,
-            V_1_CONSENTS_FETCH,
-            V_1_PATIENTS_FIND,
-            V_1_LINKS_LINK_ON_INIT,
-            V_1_LINKS_LINK_ON_CONFIRM,
-            V_1_HEALTH_INFORMATION_ON_REQUEST,
-            V_1_LINKS_LINK_ON_CONFIRM,
-            V_1_HEALTH_INFORMATION_REQUEST,
-            V_1_HEALTH_INFORMATION_NOTIFY,
-            V_1_HIP_CONSENT_ON_NOTIFY
+            PATH_CARE_CONTEXTS_ON_DISCOVER,
+            PATH_CONSENT_REQUESTS_INIT,
+            PATH_CONSENTS_FETCH,
+            PATH_FIND_PATIENT,
+            PATH_LINK_ON_INIT,
+            PATH_LINK_ON_CONFIRM,
+            PATH_HEALTH_INFORMATION_ON_REQUEST,
+            PATH_LINK_ON_CONFIRM,
+            PATH_HEALTH_INFORMATION_REQUEST,
+            PATH_HEALTH_INFORMATION_NOTIFY,
+            PATH_HIP_CONSENT_ON_NOTIFY
     };
 
     static {
@@ -78,16 +79,16 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/request", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/consent-requests", HttpMethod.POST));
 
-        SERVICE_ONLY_URLS.add(Map.entry(V_1_CONSENT_REQUESTS_INIT, HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry(V_1_CARE_CONTEXTS_ON_DISCOVER, HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry(V_1_LINKS_LINK_ON_INIT, HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry(V_1_LINKS_LINK_ON_CONFIRM, HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry(V_1_PATIENTS_FIND, HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry(V_1_CONSENTS_FETCH, HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry(V_1_HEALTH_INFORMATION_REQUEST, HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry(V_1_HEALTH_INFORMATION_NOTIFY, HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry(V_1_HEALTH_INFORMATION_ON_REQUEST, HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry(V_1_HIP_CONSENT_ON_NOTIFY, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(PATH_CONSENT_REQUESTS_INIT, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(PATH_CARE_CONTEXTS_ON_DISCOVER, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(PATH_LINK_ON_INIT, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(PATH_LINK_ON_CONFIRM, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(PATH_FIND_PATIENT, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(PATH_CONSENTS_FETCH, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(PATH_HEALTH_INFORMATION_REQUEST, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(PATH_HEALTH_INFORMATION_NOTIFY, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(PATH_HEALTH_INFORMATION_ON_REQUEST, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_CONSENT_ON_NOTIFY, HttpMethod.POST));
 
         RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve",
                 HttpMethod.POST,
@@ -122,7 +123,7 @@ public class SecurityConfiguration {
                 "/otpsession/verify",
                 "/otpsession/permit",
                 "/sessions",
-                "/v1/heartbeat",
+                PATH_HEARTBEAT,
                 "/**.html",
                 "/**.js",
                 "/**.yaml",

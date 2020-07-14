@@ -20,6 +20,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 public class UserServiceClient {
 
     private static final String PATIENT_FIND_URL_PATH = "/patients/on-find";
+    private static final String INTERNAL_PATH_USER_IDENTIFICATION = "%s/internal/users/%s/";
     private final WebClient webClient;
     private final String url;
     private final Supplier<Mono<String>> tokenGenerator;
@@ -31,7 +32,7 @@ public class UserServiceClient {
                 .flatMap(token ->
                         webClient
                                 .get()
-                                .uri(String.format("%s/internal/users/%s/", url, userId))
+                                .uri(String.format(INTERNAL_PATH_USER_IDENTIFICATION, url, userId))
                                 .header(AUTHORIZATION, token)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 404,

@@ -43,6 +43,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -88,11 +89,11 @@ public class UserService {
                 .map(user -> {
                     Patient patient = Patient.builder()
                             .id(user.getIdentifier())
-                            .name(user.getName())
+                            .name(user.getName().createFullName())
                             .build();
                     var patientResponse = PatientResponse.builder()
                             .requestId(UUID.randomUUID())
-                            .timestamp(LocalDateTime.now())
+                            .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                             .patient(patient)
                             .resp(GatewayResponse.builder().requestId(requestId.toString()).build())
                             .build();
@@ -102,7 +103,7 @@ public class UserService {
                 .onErrorResume(ClientError.class, exception -> {
                     var patientResponse = PatientResponse.builder()
                             .requestId(UUID.randomUUID())
-                            .timestamp(LocalDateTime.now())
+                            .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                             .error(from(exception))
                             .resp(GatewayResponse.builder().requestId(requestId.toString()).build())
                             .build();
@@ -239,7 +240,7 @@ public class UserService {
     public Mono<Void> create(CoreSignUpRequest coreSignUpRequest, String sessionId) {
         UserCredential credential = new UserCredential(coreSignUpRequest.getPassword());
         KeycloakUser keycloakUser = new KeycloakUser(
-                coreSignUpRequest.getName(),
+                coreSignUpRequest.getName().createFullName(),
                 coreSignUpRequest.getUsername(),
                 Collections.singletonList(credential),
                 Boolean.TRUE.toString());
@@ -338,7 +339,7 @@ public class UserService {
                 .getUserBy(request.getGender(), getIdentifierValue(request.getVerifiedIdentifiers(), MOBILE))
                 .collectList()
                 .flatMap(users -> new NameFilter().filter(users, request.getName()))
-                .flatMap(users -> new YOBFilter().filter(users, request.getYearOfBirth()))
+                .flatMap(users -> new YOBFilter().filter(users, request.getDateOfBirth()))
                 .flatMap(users -> new ABPMJAYIdFilter().filter(users, request.getUnverifiedIdentifiers()))
                 .flatMap(this::getDistinctUser);
     }

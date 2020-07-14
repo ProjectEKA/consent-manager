@@ -10,9 +10,9 @@ import lombok.Getter;
 @Builder
 public class User {
     private final String identifier;
-    private final String name;
+    private final PatientName name;
     private final Gender gender;
-    private final Integer yearOfBirth;
+    private final DateOfBirth dateOfBirth;
     private final String phone;
     private final JsonArray unverifiedIdentifiers;
 
@@ -20,7 +20,7 @@ public class User {
         return new User(request.getUsername().toLowerCase(),
                 request.getName(),
                 request.getGender(),
-                request.getYearOfBirth(),
+                request.getDateOfBirth(),
                 mobileNumber,
                 request.getUnverifiedIdentifiers() != null ? new JsonArray(request.getUnverifiedIdentifiers()) : null);
     }

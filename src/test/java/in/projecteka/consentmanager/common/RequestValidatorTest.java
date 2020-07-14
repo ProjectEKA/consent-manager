@@ -42,7 +42,7 @@ class RequestValidatorTest {
     }
 
     @Test
-    void shouldReturnFalseIfRequestIdIsAlreadyCached() {
+    void shouldThrowTooManyRequestsErrorIfRequestIdIsAlreadyCached() {
         String requestId = string();
         String timestamp = LocalDateTime.now(ZoneOffset.UTC).toString();
         RequestValidator validator = new RequestValidator(cacheForReplayAttack);
@@ -87,7 +87,7 @@ class RequestValidatorTest {
     }
 
     @Test
-    void shouldReturnFalseIfTimestampIsNotValidFormat() {
+    void shouldReturnFalseIfTimestampIsInNotValidFormat() {
         String requestId = string();
         String timestamp = string();
         RequestValidator validator = new RequestValidator(cacheForReplayAttack);

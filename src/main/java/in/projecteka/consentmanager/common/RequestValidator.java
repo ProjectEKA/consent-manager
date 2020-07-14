@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.common;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
-import in.projecteka.consentmanager.user.SignUpService;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

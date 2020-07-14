@@ -64,6 +64,7 @@ import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResponse;
@@ -393,7 +394,7 @@ public class LinkUserJourneyTest {
         when(linkResults.put(anyString(),anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
-                .uri(Constants.PATH_LINK_ON_INIT)
+                .uri(PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -416,7 +417,7 @@ public class LinkUserJourneyTest {
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
-                .uri("/v1/links/link/on-init")
+                .uri(PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -445,7 +446,7 @@ public class LinkUserJourneyTest {
         when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
-                .uri(Constants.PATH_LINK_ON_INIT)
+                .uri(PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -464,7 +465,7 @@ public class LinkUserJourneyTest {
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
 
         webTestClient.post()
-                .uri(Constants.PATH_LINK_ON_INIT)
+                .uri(PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)

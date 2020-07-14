@@ -163,7 +163,7 @@ class DataFlowRequestControllerTest {
                 .thenReturn(Mono.empty());
 
         webClient.post()
-                .uri(V_1_HEALTH_INFORMATION_NOTIFY)
+                .uri(PATH_HEALTH_INFORMATION_NOTIFY)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .contentType(MediaType.APPLICATION_JSON)

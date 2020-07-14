@@ -59,6 +59,7 @@ import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -383,7 +384,7 @@ public class DiscoveryUserJourneyTest {
         when(discoveryResults.put(anyString(), anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
-                .uri(Constants.PATH_CARE_CONTEXTS_ON_DISCOVER)
+                .uri(PATH_CARE_CONTEXTS_ON_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -402,7 +403,7 @@ public class DiscoveryUserJourneyTest {
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient.post()
-                .uri("/v1/care-contexts/on-discover")
+                .uri(PATH_CARE_CONTEXTS_ON_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -436,7 +437,7 @@ public class DiscoveryUserJourneyTest {
         when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
-                .uri(Constants.PATH_CARE_CONTEXTS_ON_DISCOVER)
+                .uri(PATH_CARE_CONTEXTS_ON_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -454,7 +455,7 @@ public class DiscoveryUserJourneyTest {
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
-                .uri(Constants.PATH_CARE_CONTEXTS_ON_DISCOVER)
+                .uri(PATH_CARE_CONTEXTS_ON_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)

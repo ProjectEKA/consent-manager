@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.common;
 
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,8 +51,8 @@ class RequestValidatorTest {
 
         StepVerifier
                 .create(validator.validate(requestId, timestamp))
-                .expectNext(false)
-                .expectComplete()
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is4xxClientError())
                 .verify();
     }
 
@@ -95,7 +96,8 @@ class RequestValidatorTest {
 
         StepVerifier
                 .create(validator.validate(requestId, timestamp))
-                .expectError(DateTimeParseException.class)
+                .expectNext(false)
+                .expectComplete()
                 .verify();
     }
 

@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
@@ -60,6 +61,7 @@ import static java.lang.String.valueOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -126,6 +128,9 @@ public class ConsentArtefactUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConceptValidator conceptValidator;
+
+    @MockBean
+    private RequestValidator validator;
 
     @MockBean
     private GatewayTokenVerifier gatewayTokenVerifier;
@@ -361,6 +366,7 @@ public class ConsentArtefactUserJourneyTest {
         when(serviceAuthentication.authenticate()).thenReturn(Mono.empty());
         when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(consentArtefactRepository.getConsentArtefact(fetchRequest.getConsentId()))
                 .thenReturn(Mono.just(consentArtefact));
         when(centralRegistry.providerWith(any())).thenReturn(Mono.just(Provider.builder().name("test-hip").build()));

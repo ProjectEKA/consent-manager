@@ -34,6 +34,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
+import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
 import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
@@ -186,7 +187,7 @@ class UserControllerTest {
                 .thenReturn(empty());
 
         webClient.post()
-                .uri(Constants.PATH_FIND_PATIENT)
+                .uri(PATH_FIND_PATIENT)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .body(BodyInserters.fromValue(patientRequest))
@@ -205,7 +206,7 @@ class UserControllerTest {
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
 
         webClient.post()
-                .uri("/v1/patients/find")
+                .uri(PATH_FIND_PATIENT)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .body(BodyInserters.fromValue(patientRequest))

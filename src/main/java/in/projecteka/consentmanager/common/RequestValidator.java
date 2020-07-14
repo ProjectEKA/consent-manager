@@ -1,33 +1,43 @@
 package in.projecteka.consentmanager.common;
 
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.user.SignUpService;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 @AllArgsConstructor
 public class RequestValidator {
     private final CacheAdapter<String, String> cacheForReplayAttack;
+    private static final Logger logger = LoggerFactory.getLogger(RequestValidator.class);
+
 
     public Mono<Boolean> validate(String requestId, String timestamp) {
         return isRequestIdPresent(requestId)
-                .flatMap(isRequestIdPresent ->
-                        Mono.just(!isRequestIdPresent && isRequestIdValidInGivenTimestamp(timestamp)));
+                .flatMap(result -> Mono.error(ClientError.tooManyRequests()))
+                .then(Mono.just(isRequestIdValidInGivenTimestamp(timestamp)));
     }
 
     private Mono<Boolean> isRequestIdPresent(String requestId) {
         return cacheForReplayAttack.get(requestId)
-                .map(StringUtils::hasText)
-                .switchIfEmpty(Mono.just(false));
+                .map(StringUtils::hasText);
     }
 
     private boolean isRequestIdValidInGivenTimestamp(String timestamp) {
-        return  isValidTimestamp(toDate(timestamp));
-
+         try {
+             return isValidTimestamp(toDate(timestamp));
+         } catch (DateTimeParseException e) {
+             logger.error(e.getMessage(), e);
+             return false;
+         }
     }
 
     private LocalDateTime toDate(String timestamp) {

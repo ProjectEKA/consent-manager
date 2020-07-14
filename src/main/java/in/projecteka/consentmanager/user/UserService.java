@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.clients.model.HealthAccountServiceTokenRespo
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.clients.model.OtpRequestResponse;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.HealthAccountServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
@@ -52,6 +53,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 import static in.projecteka.consentmanager.clients.ClientError.failedToFetchUserCredentials;
 import static in.projecteka.consentmanager.clients.ClientError.from;
@@ -192,8 +194,9 @@ public class UserService {
                             .identifierType(MOBILE.name())
                             .identifierValue(mobileNumber)
                             .action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION);
+
                     return validateAndVerifyOtpFromHealthAccountService(otpVerification, builder.build())
-                            .flatMap(tokenResponse -> signupService.generateToken(tokenResponse.getToken()));
+                            .flatMap(tokenResponse -> Mono.just(new Token(tokenResponse.getToken())));
                 });
     }
 

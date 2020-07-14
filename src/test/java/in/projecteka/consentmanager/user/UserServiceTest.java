@@ -183,20 +183,18 @@ class UserServiceTest {
     public void shouldReturnTokenReceivedFromHealthAccountService() {
         var sessionId = string();
         var otp = string();
-        var token = string();
         var mobileNumber = "+91-8888888888";
 
         ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(healthAccountServiceClient.verifyOtp(eq(sessionId), eq(otp))).thenReturn(Mono.just(new HealthAccountServiceTokenResponse("token")));
-        when(signupService.generateToken("token")).thenReturn(Mono.just(new Token(token)));
 
         when(signupService.getMobileNumber(eq(sessionId))).thenReturn(Mono.just(mobileNumber));
         when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
         when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
 
         StepVerifier.create(userService.verifyOtpForRegistration(otpVerification))
-                .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
+                .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo("token"))
                 .verifyComplete();
 
         var capturedAttempts = argument.getAllValues();

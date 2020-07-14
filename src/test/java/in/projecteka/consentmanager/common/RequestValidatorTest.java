@@ -1,85 +1,53 @@
 package in.projecteka.consentmanager.common;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
-import org.junit.jupiter.api.BeforeEach;
+import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import reactor.core.publisher.Mono;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.common.TestBuilders.string;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 class RequestValidatorTest {
 
-    @Mock
-    private CacheAdapter<String, String> cacheForReplayAttack;
+    private static CacheAdapter<String, String> cacheForReplayAttack;
 
-    @BeforeEach
-    void setUp() {
-        initMocks(this);
+    @BeforeAll
+    static void setUp() {
+        cacheForReplayAttack = new LoadingCacheAdapter(CacheBuilder
+                .newBuilder()
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .build(new CacheLoader<>() {
+                    public String load(String key) {
+                        return "";
+                    }
+                }));
     }
 
-    @Test
-    void shouldReturnTrueForValidRequest() {
-        String requestId = string();
-        String timestamp = LocalDateTime.now(ZoneOffset.UTC).toString();
-        RequestValidator validator = new RequestValidator(cacheForReplayAttack);
-
-        when(cacheForReplayAttack.get("replay_" + requestId)).thenReturn(Mono.empty());
-
-        StepVerifier
-                .create(validator.validate(requestId, timestamp))
-                .expectNext(true)
-                .expectComplete()
-                .verify();
+    private static Stream<Arguments> nonAllowedDates() {
+        var pastDate = LocalDateTime.now(ZoneOffset.UTC).minusMinutes(2);
+        var futureDate = LocalDateTime.now(ZoneOffset.UTC).plusMinutes(10);
+        return Stream.of(Arguments.of(pastDate), Arguments.of(futureDate));
     }
 
-    @Test
-    void shouldThrowTooManyRequestsErrorIfRequestIdIsAlreadyCached() {
-        String requestId = string();
-        String timestamp = LocalDateTime.now(ZoneOffset.UTC).toString();
+    @ParameterizedTest
+    @MethodSource("nonAllowedDates")
+    void shouldReturnFalseIfTimestampIsExpired(LocalDateTime time) {
         RequestValidator validator = new RequestValidator(cacheForReplayAttack);
 
-        when(cacheForReplayAttack.get("replay_" + requestId)).thenReturn(Mono.just("testString"));
-
         StepVerifier
-                .create(validator.validate(requestId, timestamp))
-                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
-                        ((ClientError) throwable).getHttpStatus().is4xxClientError())
-                .verify();
-    }
-
-    @Test
-    void shouldReturnFalseIfTimestampIsInvalid() {
-        String requestId = string();
-        String timestamp = LocalDateTime.now(ZoneOffset.UTC).minusMinutes(2).toString();
-        RequestValidator validator = new RequestValidator(cacheForReplayAttack);
-
-        when(cacheForReplayAttack.get("replay_" + requestId)).thenReturn(Mono.empty());
-
-        StepVerifier
-                .create(validator.validate(requestId, timestamp))
-                .expectNext(false)
-                .expectComplete()
-                .verify();
-    }
-
-    @Test
-    void shouldReturnFalseIfTimestampIsExpired() {
-        String requestId = string();
-        String timestamp = LocalDateTime.now(ZoneOffset.UTC).plusMinutes(10).toString();
-        RequestValidator validator = new RequestValidator(cacheForReplayAttack);
-
-        when(cacheForReplayAttack.get("replay_" + requestId)).thenReturn(Mono.empty());
-
-        StepVerifier
-                .create(validator.validate(requestId, timestamp))
+                .create(validator.validate(string(), time.toString()))
                 .expectNext(false)
                 .expectComplete()
                 .verify();
@@ -87,14 +55,36 @@ class RequestValidatorTest {
 
     @Test
     void shouldReturnFalseIfTimestampIsInNotValidFormat() {
-        String requestId = string();
-        String timestamp = string();
         RequestValidator validator = new RequestValidator(cacheForReplayAttack);
-        when(cacheForReplayAttack.get("replay_" + requestId)).thenReturn(Mono.empty());
 
         StepVerifier
-                .create(validator.validate(requestId, timestamp))
+                .create(validator.validate(string(), string()))
                 .expectNext(false)
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    void returnErrorIfEntryExists() {
+        var requestValidator = new RequestValidator(cacheForReplayAttack);
+        var requestId = string();
+        var timestamp = string();
+        requestValidator.put(requestId, timestamp).subscribe().dispose();
+
+        StepVerifier
+                .create(requestValidator.validate(requestId, timestamp))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is4xxClientError())
+                .verify();
+    }
+
+    @Test
+    void returnTrueIfEntryDoesNotExists() {
+        var requestValidator = new RequestValidator(cacheForReplayAttack);
+
+        StepVerifier
+                .create(requestValidator.validate(string(), LocalDateTime.now(ZoneOffset.UTC).toString()))
+                .expectNext(true)
                 .expectComplete()
                 .verify();
     }

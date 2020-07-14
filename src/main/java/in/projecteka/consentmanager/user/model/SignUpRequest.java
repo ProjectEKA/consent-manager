@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Value;
 
 import java.util.List;
 
@@ -13,11 +12,11 @@ import java.util.List;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class SignUpRequest {
-    private final String name;
+    private final PatientName name;
     private final String username;
     private final String password;
     private final Gender gender;
-    private final Integer yearOfBirth;
+    private final DateOfBirth dateOfBirth;
     private final List<SignUpIdentifier> unverifiedIdentifiers;
 }
 

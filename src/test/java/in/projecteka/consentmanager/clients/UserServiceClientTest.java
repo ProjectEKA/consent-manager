@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
+import in.projecteka.consentmanager.user.model.PatientName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -38,12 +39,12 @@ public class UserServiceClientTest {
     private String token;
 
     @BeforeEach
-    public void init() {
+    void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         var serviceProperties = new GatewayServiceProperties("http://example.com", 1000,false, "", "", "");
         token = string();
-        userServiceClient = new UserServiceClient(webClientBuilder,
+        userServiceClient = new UserServiceClient(webClientBuilder.build(),
                 "http://user-service/",
                 () -> Mono.just(token),
                 serviceProperties,
@@ -52,7 +53,12 @@ public class UserServiceClientTest {
 
     @Test
     public void shouldGetUser() throws IOException {
-        User user = user().name("first name").build();
+        User user = user().name(PatientName.builder()
+                                .first("first name")
+                                .middle("")
+                                .last("")
+                                .build())
+                    .build();
         String patientResponseBody = new ObjectMapper().writeValueAsString(user);
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
@@ -60,10 +66,10 @@ public class UserServiceClientTest {
                         .body(patientResponseBody).build()));
 
         StepVerifier.create(userServiceClient.userOf("1"))
-                .assertNext(response -> assertThat(response.getName()).isEqualTo(user.getName()))
+                .assertNext(response -> assertThat(response.getName().createFullName()).isEqualTo(user.getName().createFullName()))
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://user-service/internal/users/1/");
+        assertThat(captor.getValue().url().toString()).hasToString("http://user-service/internal/users/1/");
         assertThat(captor.getValue().headers().get(HttpHeaders.AUTHORIZATION).get(0)).isEqualTo(token);
     }
 }

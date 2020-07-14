@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.link;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
@@ -22,6 +21,7 @@ import in.projecteka.consentmanager.link.link.LinkRepository;
 import in.projecteka.consentmanager.user.UserServiceProperties;
 import io.lettuce.core.RedisClient;
 import io.vertx.pgclient.PgPool;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,36 +43,36 @@ public class LinkConfiguration {
     }
 
     @Bean
-    public Link link(WebClient.Builder builder,
+    public Link link(@Qualifier("customBuilder") WebClient.Builder builder,
                      LinkRepository linkRepository,
-                     ClientRegistryClient clientRegistryClient,
                      GatewayServiceProperties gatewayServiceProperties,
                      LinkServiceProperties serviceProperties,
                      CacheAdapter<String, String> linkResults,
                      ServiceAuthentication serviceAuthentication) {
         return new Link(
-                new LinkServiceClient(builder, serviceAuthentication, gatewayServiceProperties),
+                new LinkServiceClient(builder.build(), serviceAuthentication, gatewayServiceProperties),
                 linkRepository,
                 serviceAuthentication,
-                clientRegistryClient,
                 serviceProperties,
                 linkResults);
     }
 
     @Bean
-    public DiscoveryServiceClient discoveryServiceClient(WebClient.Builder builder,
+    public DiscoveryServiceClient discoveryServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                          ServiceAuthentication serviceAuthentication,
                                                          GatewayServiceProperties gatewayServiceProperties) {
-        return new DiscoveryServiceClient(builder, serviceAuthentication::authenticate, gatewayServiceProperties);
+        return new DiscoveryServiceClient(builder.build(),
+                serviceAuthentication::authenticate,
+                gatewayServiceProperties);
     }
 
     @Bean
-    public UserServiceClient userServiceClient(WebClient.Builder builder,
+    public UserServiceClient userServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                UserServiceProperties userServiceProperties,
                                                IdentityService identityService,
                                                GatewayServiceProperties gatewayServiceProperties,
                                                ServiceAuthentication serviceAuthentication) {
-        return new UserServiceClient(builder,
+        return new UserServiceClient(builder.build(),
                 userServiceProperties.getUrl(),
                 identityService::authenticate,
                 gatewayServiceProperties,

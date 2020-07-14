@@ -21,6 +21,8 @@ import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 
 import javax.annotation.PostConstruct;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import java.util.Map;
@@ -96,7 +98,7 @@ public class HiuConsentNotificationListener {
         if (status == EXPIRED || status == DENIED ) {
             return HIUNotificationRequest.builder()
                     .requestId(requestId)
-                    .timestamp(consentArtefactsMessage.getTimestamp())
+                    .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                     .notification(ConsentNotifier.builder()
                             .status(status)
                             .consentRequestId(consentArtefactsMessage.getConsentRequestId())
@@ -106,7 +108,7 @@ public class HiuConsentNotificationListener {
         List<ConsentArtefactReference> consentArtefactReferences = consentArtefactReferences(consentArtefactsMessage);
         return HIUNotificationRequest
                 .builder()
-                .timestamp(consentArtefactsMessage.getTimestamp())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .requestId(requestId)
                 .notification(ConsentNotifier
                         .builder()

@@ -369,7 +369,7 @@ public class DataFlowRequesterUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/health-information/request")
+                .uri(Constants.PATH_HEALTH_INFORMATION_REQUEST)
                 .header(AUTHORIZATION, token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(dataFlowRequest)

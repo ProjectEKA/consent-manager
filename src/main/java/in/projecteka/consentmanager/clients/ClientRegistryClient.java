@@ -10,14 +10,14 @@ import static java.lang.String.format;
 
 public class ClientRegistryClient {
 
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient webClient;
 
-    public ClientRegistryClient(WebClient.Builder webClientBuilder, String baseUrl) {
-        this.webClientBuilder = webClientBuilder.baseUrl(baseUrl);
+    public ClientRegistryClient(WebClient.Builder webClient, String baseUrl) {
+        this.webClient = webClient.baseUrl(baseUrl).build();
     }
 
     public Flux<Provider> providersOf(String name) {
-        return webClientBuilder.build()
+        return webClient
                 .get()
                 .uri(format("/api/2.0/providers?name=%s", name))
                 .retrieve()
@@ -25,7 +25,7 @@ public class ClientRegistryClient {
     }
 
     public Mono<Provider> providerWith(String id) {
-        return webClientBuilder.build()
+        return webClient
                 .get()
                 .uri(format("/api/2.0/providers/%s", id))
                 .retrieve()

@@ -44,12 +44,13 @@ public class DataRequestNotifierTest {
                 .build()));
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         DataFlowRequest dataFlowRequest = dataFlowRequestBuilder().build();
-        DataRequestNotifier dataRequestNotifier = new DataRequestNotifier(webClientBuilder, () -> Mono.just(token),gatewayServiceProperties);
+        DataRequestNotifier dataRequestNotifier = new DataRequestNotifier(webClientBuilder.build(),
+                () -> Mono.just(token), gatewayServiceProperties);
 
         StepVerifier.create(dataRequestNotifier.notifyHip(dataFlowRequest, "http://hip-url/"))
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://hip-url/health-information/request");
+        assertThat(captor.getValue().url().toString()).hasToString("http://hip-url/health-information/request");
         assertThat(captor.getValue().headers().getFirst(AUTHORIZATION)).isEqualTo(token);
     }
 
@@ -62,12 +63,13 @@ public class DataRequestNotifierTest {
         when(gatewayServiceProperties.getBaseUrl()).thenReturn("someUrl");
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         DataRequest dataRequest = DataRequest.builder().build();
-        DataRequestNotifier dataRequestNotifier = new DataRequestNotifier(webClientBuilder, () -> Mono.just(token),gatewayServiceProperties);
+        DataRequestNotifier dataRequestNotifier = new DataRequestNotifier(webClientBuilder.build(),
+                () -> Mono.just(token), gatewayServiceProperties);
 
         StepVerifier.create(dataRequestNotifier.notifyHip(dataRequest, "hipId"))
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("someUrl/health-information/hip/request");
+        assertThat(captor.getValue().url().toString()).hasToString("someUrl/health-information/hip/request");
         assertThat(captor.getValue().headers().getFirst(AUTHORIZATION)).isEqualTo(token);
     }
 }

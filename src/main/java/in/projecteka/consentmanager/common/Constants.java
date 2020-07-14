@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.common;
 
 public class Constants {
-    public static final String API_VERSION = "v1";
+    public static final String API_VERSION = "v0.5";
     public static final String BLACKLIST = "blacklist";
     public static final String BLACKLIST_FORMAT = "%s:%s";
     public static final String SCOPE_CONSENT_APPROVE = "consentrequest.approve";
@@ -13,20 +13,13 @@ public class Constants {
     public static final String HDR_HIU_ID = "X-HIU-ID";
 
     //APIs
-    public static final String V_1_CARE_CONTEXTS_ON_DISCOVER = "/v1/care-contexts/on-discover";
-    public static final String V_1_CONSENT_REQUESTS_INIT = "/v1/consent-requests/init";
-    public static final String V_1_CONSENTS_FETCH = "/v1/consents/fetch";
-    public static final String V_1_PATIENTS_FIND = "/v1/patients/find";
-    public static final String V_1_LINKS_LINK_ON_INIT = "/v1/links/link/on-init";
-    public static final String V_1_LINKS_LINK_ON_CONFIRM = "/v1/links/link/on-confirm";
-    public static final String V_1_HEALTH_INFORMATION_REQUEST = "/v1/health-information/request";
-    public static final String V_1_HEALTH_INFORMATION_NOTIFY = "/v1/health-information/notify";
-    public static final String V_1_HEALTH_INFORMATION_REQUEST_FORMAT = "%s/health-information/hip/request";
-    public static final String V_1_HEALTH_INFORMATION_ON_REQUEST = "/v1/health-information/on-request";
-    public static final String V_1_HIP_CONSENT_ON_NOTIFY = "/v1/consents/hip/on-notify";
+    public static final String CURRENT_VERSION = "/" + API_VERSION;
 
-    //GATEWAY URL PATHs
-    public static final String DATA_FLOW_REQUEST_URL_PATH = "/health-information/cm/on-request";
+    public static final String PATH_HEARTBEAT = CURRENT_VERSION + "/heartbeat";
+
+    //Gateway API paths
+    public static final String PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH = "%s/links/link/confirm";
+    public static final String PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH = "%s/links/link/init";
 
     private Constants() {}
 }

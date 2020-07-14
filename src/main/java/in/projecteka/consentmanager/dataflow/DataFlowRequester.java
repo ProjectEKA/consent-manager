@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -178,7 +179,7 @@ public class DataFlowRequester {
     }
 
     private boolean isConsentExpired(ConsentArtefactRepresentation consentArtefactRepresentation) {
-        return consentArtefactRepresentation.getConsentDetail().getPermission().getDataEraseAt().isBefore(LocalDateTime.now());
+        return consentArtefactRepresentation.getConsentDetail().getPermission().getDataEraseAt().isBefore(LocalDateTime.now(ZoneOffset.UTC));
     }
 
     private Mono<Boolean> validateRequest(UUID requestId) {

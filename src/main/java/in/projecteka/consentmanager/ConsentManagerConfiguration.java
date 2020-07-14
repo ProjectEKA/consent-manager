@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -18,6 +19,8 @@ import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisOptions;
+import in.projecteka.consentmanager.common.heartbeat.Heartbeat;
+import in.projecteka.consentmanager.common.heartbeat.RabbitmqOptions;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
@@ -35,8 +38,15 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.client.reactive.ClientHttpConnector;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.ServerCodecConfigurer;
+import org.springframework.http.codec.json.Jackson2JsonDecoder;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 
 import java.io.IOException;
 import java.net.URL;
@@ -98,8 +108,9 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public ServiceAuthenticationClient serviceAuthenticationClient(WebClient.Builder webClientBuilder,
-                                                                   GatewayServiceProperties gatewayServiceProperties) {
+    public ServiceAuthenticationClient serviceAuthenticationClient(
+            @Qualifier("customBuilder") WebClient.Builder webClientBuilder,
+            GatewayServiceProperties gatewayServiceProperties) {
         return new ServiceAuthenticationClient(webClientBuilder, gatewayServiceProperties.getBaseUrl());
     }
 
@@ -111,7 +122,7 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public ClientRegistryClient clientRegistryClient(WebClient.Builder builder,
+    public ClientRegistryClient clientRegistryClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                      ClientRegistryProperties clientRegistryProperties) {
         return new ClientRegistryClient(builder, clientRegistryProperties.getUrl());
     }
@@ -209,5 +220,38 @@ public class ConsentManagerConfiguration {
     public GatewayTokenVerifier centralRegistryTokenVerifier(
             @Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
         return new GatewayTokenVerifier(jwkSet);
+    }
+
+    @Bean
+    public Heartbeat heartbeat(IdentityServiceProperties identityServiceProperties,
+                               DbOptions dbOptions,
+                               RabbitmqOptions rabbitmqOptions,
+                               RedisOptions redisOptions) {
+        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions, redisOptions);
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "webclient.keepalive", havingValue = "false")
+    public ClientHttpConnector clientHttpConnector() {
+        return new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.newConnection()));
+    }
+
+    @Bean("customBuilder")
+    public WebClient.Builder webClient(final ClientHttpConnector clientHttpConnector, ObjectMapper objectMapper) {
+        return WebClient
+                .builder()
+                .exchangeStrategies(exchangeStrategies(objectMapper))
+                .clientConnector(clientHttpConnector);
+    }
+
+    private ExchangeStrategies exchangeStrategies(ObjectMapper objectMapper) {
+        var encoder = new Jackson2JsonEncoder(objectMapper);
+        var decoder = new Jackson2JsonDecoder(objectMapper);
+        return ExchangeStrategies
+                .builder()
+                .codecs(configurer -> {
+                    configurer.defaultCodecs().jackson2JsonEncoder(encoder);
+                    configurer.defaultCodecs().jackson2JsonDecoder(decoder);
+                }).build();
     }
 }

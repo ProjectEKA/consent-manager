@@ -22,6 +22,7 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
@@ -61,13 +62,11 @@ import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
-import static in.projecteka.consentmanager.link.link.TestBuilders.errorRepresentation;
 import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResponse;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResult;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkRequest;
-import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkResponse;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientRepresentation;
 import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.link.TestBuilders.string;
@@ -153,146 +152,6 @@ public class LinkUserJourneyTest {
     }
 
     @Test
-    public void shouldGetLinkReference() throws IOException {
-        var token = string();
-        var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
-        var hipId = "10000005";
-        var linkReference = patientLinkReferenceResponse().build();
-        linkReference.setTransactionId(patientLinkReferenceRequest.getTransactionId());
-        var linkReferenceJson = new ObjectMapper().writeValueAsString(linkReference);
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
-        hipServer.enqueue(
-                new MockResponse()
-                        .setHeader("Content-Type", "application/json")
-                        .setBody(linkReferenceJson));
-        clientRegistryServer.setDispatcher(dispatcher);
-        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
-        when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
-                .thenReturn(Mono.just(hipId));
-        when(linkRepository.insertToLinkReference(linkReference, hipId, patientLinkReferenceRequest.getRequestId()))
-                .thenReturn(Mono.create(MonoSink::success));
-        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
-                .thenReturn(Mono.empty());
-
-        webTestClient
-                .post()
-                .uri("/patients/link")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(patientLinkReferenceRequest)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody()
-                .json(linkReferenceJson);
-    }
-
-    @Test
-    public void shouldGiveErrorFromHIP() throws IOException {
-        var token = string();
-        var errorResponse = errorRepresentation().build();
-        var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
-        clientRegistryServer.setDispatcher(dispatcher);
-        hipServer.enqueue(
-                new MockResponse()
-                        .setHeader("Content-Type", "application/json")
-                        .setStatus("HTTP/1.1 404")
-                        .setBody(errorResponseJson));
-        var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
-        var hipId = "10000005";
-        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
-        when(linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId()))
-                .thenReturn(Mono.just(hipId));
-        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
-                .thenReturn(Mono.empty());
-
-        webTestClient
-                .post()
-                .uri("/patients/link")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(patientLinkReferenceRequest)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus()
-                .isNotFound()
-                .expectBody()
-                .json(errorResponseJson);
-    }
-
-    @Test
-    public void shouldLinkCareContexts() throws IOException {
-        var token = string();
-        var linkRes = patientLinkResponse().build();
-        var linkResJson = new ObjectMapper().writeValueAsString(linkRes);
-        clientRegistryServer.setDispatcher(dispatcher);
-        hipServer.enqueue(
-                new MockResponse()
-                        .setHeader("Content-Type", "application/json")
-                        .setBody(linkResJson));
-        PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
-        String transactionId = "transactionId";
-        String hipId = "10000005";
-        String linkRefNumber = "link-ref-num";
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
-        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
-        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
-        when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber)).thenReturn(Mono.just(transactionId));
-        when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
-        when(linkRepository.insertToLink(hipId, "123@ncg", linkRefNumber, linkRes.getPatient()))
-                .thenReturn(Mono.empty());
-
-        webTestClient
-                .post()
-                .uri("/patients/link/link-ref-num")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(patientLinkRequest)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody()
-                .json(linkResJson);
-    }
-
-    @Test
-    public void shouldGiveOtpExpiredError() throws IOException {
-        var token = string();
-        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.OTP_EXPIRED, "OTP Expired, please try again"));
-        var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
-        clientRegistryServer.setDispatcher(dispatcher);
-        hipServer.enqueue(
-                new MockResponse()
-                        .setHeader("Content-Type", "application/json")
-                        .setStatus("HTTP/1.1 401")
-                        .setBody(errorResponseJson));
-        PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
-        String transactionId = "transactionId";
-        String hipId = "10000005";
-        String linkRefNumber = "link-ref-num";
-        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
-        when(linkRepository.getTransactionIdFromLinkReference(linkRefNumber)).thenReturn(Mono.just(transactionId));
-        when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(Mono.just(hipId));
-
-        webTestClient
-                .post()
-                .uri("/patients/link/link-ref-num")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(patientLinkRequest)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus()
-                .isUnauthorized()
-                .expectBody()
-                .json(errorResponseJson);
-    }
-
-    @Test
     public void shouldReturnLinkedCareContexts() throws IOException {
         var token = string();
         var patientId = "5@ncg";
@@ -331,36 +190,6 @@ public class LinkUserJourneyTest {
                 .json(patientLinksRes);
     }
 
-    @Test
-    public void shouldGiveRequestAlreadyExistsError() throws IOException {
-        var token = string();
-        var errorResponse = ErrorRepresentation.builder()
-                .error(Error.builder()
-                        .code(ErrorCode.REQUEST_ALREADY_EXISTS)
-                        .message("A request with this request id already exists.")
-                        .build())
-                .build();
-        var errorResponseJson = new ObjectMapper().writeValueAsString(errorResponse);
-        clientRegistryServer.setDispatcher(dispatcher);
-        var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
-
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("user-id", false)));
-        when(linkRepository.selectLinkReference(patientLinkReferenceRequest.getRequestId()))
-                .thenReturn(Mono.just("some string"));
-
-        webTestClient
-                .post()
-                .uri("/patients/link")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(patientLinkReferenceRequest)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus()
-                .isBadRequest()
-                .expectBody()
-                .json(errorResponseJson);
-    }
 
     @Test
     public void shouldConfirmLinkCareContexts() throws IOException {
@@ -409,7 +238,7 @@ public class LinkUserJourneyTest {
                 "}";
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
+                .uri(Constants.APP_PATH_CONFIRM_LINK + "/" + patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -439,7 +268,7 @@ public class LinkUserJourneyTest {
                 "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
                 "  \"timestamp\": \"2020-05-25T15:03:44.557Z\",\n" +
                 "  \"error\": {\n" +
-                "    \"code\": 1006,\n" +
+                "    \"code\": 3413,\n" +
                 "    \"message\": \"Invalid Link reference\"\n" +
                 "  }," +
                 "  \"resp\": {\n" +
@@ -451,7 +280,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
+                .uri(Constants.APP_PATH_CONFIRM_LINK + "/" + patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -483,7 +312,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/confirm/"+patientLinkRequest.getLinkRefNumber())
+                .uri(Constants.APP_PATH_CONFIRM_LINK + "/" + patientLinkRequest.getLinkRefNumber())
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkRequest)
@@ -547,7 +376,7 @@ public class LinkUserJourneyTest {
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
-                .uri("/v1/links/link/on-init")
+                .uri(Constants.PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -572,7 +401,7 @@ public class LinkUserJourneyTest {
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
-                .uri("/v1/links/link/on-init")
+                .uri(Constants.PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -590,7 +419,7 @@ public class LinkUserJourneyTest {
                 .thenReturn(Mono.just(caller));
 
         webTestClient.post()
-                .uri("/v1/links/link/on-init")
+                .uri(Constants.PATH_LINK_ON_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -626,7 +455,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/init")
+                .uri(Constants.PATH_LINK_INIT)
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkReferenceRequest)
@@ -660,7 +489,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri("/v1/links/link/init")
+                .uri(Constants.PATH_LINK_INIT)
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkReferenceRequest)

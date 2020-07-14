@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_DATA_FLOW_REQUEST_QUEUE;
@@ -57,7 +58,7 @@ public class DataFlowBroadcastListener {
                     DataRequest dataRequest = DataRequest.builder()
                             .transactionId(UUID.fromString(dataFlowRequestMessage.getTransactionId()))
                             .requestId(UUID.randomUUID())
-                            .timestamp(LocalDateTime.now())
+                            .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                             .hiRequest(HiRequest.builder()
                                     .consent(dataFlowRequest.getConsent())
                                     .dataPushUrl(dataFlowRequest.getDataPushUrl())

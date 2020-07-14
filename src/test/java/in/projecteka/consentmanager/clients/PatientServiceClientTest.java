@@ -16,7 +16,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 
 import static in.projecteka.consentmanager.clients.TestBuilders.string;
@@ -31,16 +30,17 @@ class PatientServiceClientTest {
     private ExchangeFunction exchangeFunction;
 
     @BeforeEach
-    public void init() {
+    void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder()
                 .exchangeFunction(exchangeFunction);
         LinkServiceProperties serviceProperties = new LinkServiceProperties("http://user-service/", 1000);
-        patientServiceClient = new PatientServiceClient(webClientBuilder, () -> Mono.just(string()), serviceProperties.getUrl());
+        patientServiceClient = new PatientServiceClient(webClientBuilder.build(),
+                () -> Mono.just(string()), serviceProperties.getUrl());
     }
 
     @Test
-    public void shouldGetCareContexts() throws IOException, InterruptedException {
+    void shouldGetCareContexts() throws IOException, InterruptedException {
         String patientLinkJson = "{\n" +
                 "  \"patient\": {\n" +
                 "    \"id\": \"string\",\n" +
@@ -74,10 +74,14 @@ class PatientServiceClientTest {
         StepVerifier.create(
                 patientServiceClient.retrievePatientLinks("patientAuthToken"))
                 .assertNext(linkedCareContexts -> {
-                    assertThat(linkedCareContexts.hasCCReferences("TMH", Collections.emptyList())).isEqualTo(true);
-                    assertThat(linkedCareContexts.hasCCReferences("MAX", Collections.emptyList())).isEqualTo(false);
-                    assertThat(linkedCareContexts.hasCCReferences("TMH", Arrays.asList("patientX.OpdContext"))).isEqualTo(true);
-                    assertThat(linkedCareContexts.hasCCReferences("MAX", Arrays.asList("patientX.OpdContext"))).isEqualTo(false);
+                    assertThat(linkedCareContexts.hasCCReferences("TMH", Collections.emptyList())).isTrue();
+                    assertThat(linkedCareContexts.hasCCReferences("MAX", Collections.emptyList())).isFalse();
+                    assertThat(
+                            linkedCareContexts.hasCCReferences("TMH", Collections.singletonList("patientX.OpdContext")))
+                            .isTrue();
+                    assertThat(
+                            linkedCareContexts.hasCCReferences("MAX", Collections.singletonList("patientX.OpdContext")))
+                            .isFalse();
                 })
                 .verifyComplete();
     }

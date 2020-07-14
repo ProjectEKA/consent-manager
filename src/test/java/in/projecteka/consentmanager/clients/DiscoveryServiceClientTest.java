@@ -17,6 +17,7 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.TestBuilders.patientInRequest;
@@ -37,7 +38,7 @@ public class DiscoveryServiceClientTest {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         var serviceProperties = new GatewayServiceProperties("http://ncg-gateway.com/v1", 1000, false, "", "", "");
-        discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder,
+        discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder.build(),
                 () -> Mono.just(string()),
                 serviceProperties);
     }
@@ -51,13 +52,13 @@ public class DiscoveryServiceClientTest {
         var patientRequest = patientRequest()
                 .patient(patientInRequest().build())
                 .requestId(UUID.randomUUID())
-                .timestamp(LocalDateTime.now().toString())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
 
         StepVerifier.create(
                 discoveryServiceClient.requestPatientFor(patientRequest, "hipId"))
-                .assertNext(response -> assertThat(response).isEqualTo(true))
+                .assertNext(response -> assertThat(response).isTrue())
                 .verifyComplete();
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://ncg-gateway.com/v1/care-contexts/discover");
+        assertThat(captor.getValue().url().toString()).hasToString("http://ncg-gateway.com/v1/care-contexts/discover");
     }
 }

@@ -12,19 +12,19 @@ import java.util.function.Supplier;
 
 import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
 import static in.projecteka.consentmanager.common.Constants.HDR_HIP_ID;
-import static in.projecteka.consentmanager.common.Constants.V_1_HEALTH_INFORMATION_REQUEST_FORMAT;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_HIP_INFORMATION_REQUEST;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
 public class DataRequestNotifier {
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
 
     public Mono<Void> notifyHip(DataFlowRequest dataFlowRequest, String hipUrl) {
         return tokenGenerator.get()
                 .flatMap(token ->
-                        webClientBuilder.build()
+                        webClientBuilder
                                 .post()
                                 .uri(hipUrl + "/health-information/request")
                                 .header(AUTHORIZATION, token)
@@ -39,7 +39,7 @@ public class DataRequestNotifier {
     public Mono<Void> notifyHip(DataRequest dataFlowRequest, String hipId) {
         return tokenGenerator.get()
                 .flatMap(token ->
-                        webClientBuilder.build()
+                        webClientBuilder
                                 .post()
                                 .uri(getDataFlowRequestUrl())
                                 .header(AUTHORIZATION, token)
@@ -53,6 +53,6 @@ public class DataRequestNotifier {
     }
 
     private String getDataFlowRequestUrl() {
-        return String.format(V_1_HEALTH_INFORMATION_REQUEST_FORMAT, gatewayServiceProperties.getBaseUrl());
+        return gatewayServiceProperties.getBaseUrl() + PATH_HEALTH_HIP_INFORMATION_REQUEST;
     }
 }

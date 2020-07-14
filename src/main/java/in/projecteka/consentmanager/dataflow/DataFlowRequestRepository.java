@@ -8,6 +8,8 @@ import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -16,6 +18,9 @@ import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccur
 import static in.projecteka.consentmanager.common.Serializer.from;
 
 public class DataFlowRequestRepository {
+
+    private static final Logger logger = LoggerFactory.getLogger(DataFlowRequestRepository.class);
+
     private static final String INSERT_TO_DATA_FLOW_REQUEST = "INSERT INTO data_flow_request (transaction_id, " +
             "consent_artefact_id, data_flow_request) VALUES ($1, $2, $3)";
     private static final String SELECT_HIP_ID_FROM_CONSENT_ARTEFACT = "SELECT consent_artefact -> 'hip' ->> 'id' as " +
@@ -40,6 +45,7 @@ public class DataFlowRequestRepository {
                         new JsonObject(from(dataFlowRequest))),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(new DbOperationError());
                                 return;
                             }
@@ -55,6 +61,7 @@ public class DataFlowRequestRepository {
                         .execute(Tuple.of(consentId),
                                 handler -> {
                                     if (handler.failed()) {
+                                        logger.error(handler.cause().getMessage(), handler.cause());
                                         monoSink.error(new DbOperationError());
                                         return;
                                     }
@@ -75,6 +82,7 @@ public class DataFlowRequestRepository {
                                 notificationRequest.getRequestId().toString()),
                                 handler -> {
                                     if (handler.failed()) {
+                                        logger.error(handler.cause().getMessage(), handler.cause());
                                         monoSink.error(new DbOperationError());
                                         return;
                                     }
@@ -92,6 +100,7 @@ public class DataFlowRequestRepository {
                         .execute(Tuple.of(status.name(), transactionId),
                                 handler -> {
                                     if (handler.failed()) {
+                                        logger.error(handler.cause().getMessage(), handler.cause());
                                         monoSink.error(new DbOperationError());
                                         return;
                                     }

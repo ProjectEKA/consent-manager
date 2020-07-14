@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
-import static in.projecteka.consentmanager.common.Constants.DATA_FLOW_REQUEST_URL_PATH;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_DATA_FLOW_CM_ON_REQUEST;
 import static in.projecteka.consentmanager.common.Constants.HDR_HIU_ID;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
@@ -33,7 +33,7 @@ public class DataFlowRequestClient {
                 .flatMap(authToken ->
                         webClient
                                 .post()
-                                .uri(gatewayServiceProperties.getBaseUrl() + DATA_FLOW_REQUEST_URL_PATH)
+                                .uri(gatewayServiceProperties.getBaseUrl() + PATH_DATA_FLOW_CM_ON_REQUEST)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header(AUTHORIZATION, authToken)
                                 .header(HDR_HIU_ID, hiuId)

@@ -5,11 +5,12 @@ import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import lombok.AllArgsConstructor;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context    .ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,8 +20,8 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
-import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_CONFIRM;
-import static in.projecteka.consentmanager.common.Constants.V_1_LINKS_LINK_ON_INIT;
+import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
+import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 
 @RestController
 @AllArgsConstructor
@@ -28,7 +29,7 @@ public class LinkController {
 
     private final Link link;
 
-    @GetMapping("/patients/links")
+    @GetMapping(Constants.APP_PATH_GET_PATIENTS_LINKS)
     public Mono<PatientLinksResponse> getLinkedCareContexts() {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
@@ -36,12 +37,12 @@ public class LinkController {
                 .flatMap(link::getLinkedCareContexts);
     }
 
-    @GetMapping("internal/patients/{username}/links")
+    @GetMapping(Constants.APP_PATH_INTERNAL_GET_LINKED_CARECONTEXTS)
     public Mono<PatientLinksResponse> getLinkedCareContextInternal(@PathVariable String username) {
         return link.getLinkedCareContexts(username);
     }
 
-    @PostMapping(V_1_LINKS_LINK_ON_INIT)
+    @PostMapping(PATH_LINK_ON_INIT)
     public Mono<Void> onLinkCareContexts(@RequestBody PatientLinkReferenceResult patientLinkReferenceResult) {
         return link.onLinkCareContexts(patientLinkReferenceResult);
     }
@@ -53,7 +54,7 @@ public class LinkController {
      * @param patientLinkRequest
      * @return
      */
-    @PostMapping("/v1/links/link/confirm/{linkRefNumber}")
+    @PostMapping(in.projecteka.consentmanager.link.Constants.APP_PATH_CONFIRM_LINK_REF_NUMBER)
     public Mono<PatientLinkResponse> confirmLink(
             @PathVariable("linkRefNumber") String linkRefNumber,
             @RequestBody PatientLinkRequest patientLinkRequest) {
@@ -68,12 +69,12 @@ public class LinkController {
      * @param confirmationResult
      * @return
      */
-    @PostMapping(V_1_LINKS_LINK_ON_CONFIRM)
+    @PostMapping(PATH_LINK_ON_CONFIRM)
     public Mono<Void> onConfirmLink(@RequestBody @Valid LinkConfirmationResult confirmationResult) {
         return link.onConfirmLink(confirmationResult);
     }
 
-    @PostMapping("/v1/links/link/init")
+    @PostMapping(Constants.PATH_LINK_INIT)
     public Mono<PatientLinkReferenceResponse> linkPatientCareContexts(
             @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
         return ReactiveSecurityContextHolder.getContext()

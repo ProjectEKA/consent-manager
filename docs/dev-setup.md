@@ -9,10 +9,8 @@
     - You can use postgres docker container if you would like to. There will be instructions about how to do it.
 - Intellij
     - [https://www.jetbrains.com/idea/download/#section=mac](https://www.jetbrains.com/idea/download/#section=mac)
-    - If you are from thoughtworks, and don’t have license please sent email to [software-support@thoughtworks.com](mailto:software-support@thoughtworks.com) to get a license
 - Rider (for c# - HIP)
     - [https://www.jetbrains.com/rider/download/#section=mac](https://www.jetbrains.com/rider/download/#section=mac)
-    - If you are from thoughtworks, and don’t have license please sent email to [software-support@thoughtworks.com](mailto:software-support@thoughtworks.com) to get a license
 - VS Code
     - [https://code.visualstudio.com/download](https://code.visualstudio.com/download)
 - Android Studio (only for app development)
@@ -243,6 +241,7 @@
     *Note:* This is with an assumption that hiu-service is running on port **8003**
     
     ```bash
+    docker pull projecteka/hiu-ui:local # to pull latest `local` image
     docker run -d -p 5002:5000 projecteka/hiu-ui:local
     ```
 

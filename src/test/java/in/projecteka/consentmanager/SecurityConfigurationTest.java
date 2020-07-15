@@ -30,9 +30,9 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.common.TestBuilders.string;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -124,8 +124,8 @@ class SecurityConfigurationTest {
         var token = string();
         var caller = ServiceCaller.builder().roles(List.of(GATEWAY)).build();
         var patientRequest = patientRequest().build();
-
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient
@@ -144,11 +144,11 @@ class SecurityConfigurationTest {
         var token = string();
         var username = string();
         var healthInfoNotification = HealthInfoNotificationRequest.builder()
-                                     .requestId(UUID.randomUUID())
-                                     .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
-                                     .build();
+                .requestId(UUID.randomUUID())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
+                .build();
         var caller = ServiceCaller.builder().clientId(username).roles(List.of(GATEWAY)).build();
-
+        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
         when(dataFlowRequester.notifyHealthInformationStatus(any())).thenReturn(Mono.empty());

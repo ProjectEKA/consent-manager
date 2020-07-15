@@ -7,7 +7,6 @@ import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.RequestValidator;
-import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
-
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -35,7 +33,6 @@ import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 @AllArgsConstructor
 public class LinkController {
     private final RequestValidator validator;
-    private final CacheAdapter<String, String> cacheForReplayAttack;
     private final Link link;
 
     @GetMapping(Constants.APP_PATH_GET_PATIENTS_LINKS)
@@ -57,16 +54,16 @@ public class LinkController {
                 .filterWhen(res -> validator.validate(patientLinkReferenceResult.getRequestId().toString(),
                         convertTimestampToLocalDateTimeUTC(patientLinkReferenceResult.getTimestamp()).toString()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
-                .flatMap(res -> cacheForReplayAttack.put(
-                        patientLinkReferenceResult.getRequestId().toString(),
-                        patientLinkReferenceResult.getTimestamp()
-                )
-                        .then(link.onLinkCareContexts(patientLinkReferenceResult)));
+                .flatMap(res ->
+                        validator.put(patientLinkReferenceResult.getRequestId().toString(),
+                                patientLinkReferenceResult.getTimestamp())
+                                .then(link.onLinkCareContexts(patientLinkReferenceResult)));
     }
 
     /**
      * This API is intended for a CM App.
      * e.g. a mobile app or from other channels
+     *
      * @param linkRefNumber
      * @param patientLinkRequest
      * @return
@@ -83,6 +80,7 @@ public class LinkController {
 
     /**
      * HIP->Gateway Callback API for /links/link/confirm
+     *
      * @param confirmationResult
      * @return
      */
@@ -90,11 +88,11 @@ public class LinkController {
     public Mono<Void> onConfirmLink(@RequestBody @Valid LinkConfirmationResult confirmationResult) {
         return Mono.just(confirmationResult)
                 .filterWhen(req -> validator.validate(confirmationResult.getRequestId().toString()
-                        ,convertTimestampToLocalDateTimeUTC(confirmationResult.getTimestamp()).toString()))
+                        , convertTimestampToLocalDateTimeUTC(confirmationResult.getTimestamp()).toString()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
-                .flatMap(validatedRequest -> link.onConfirmLink(confirmationResult)
-                        .then(cacheForReplayAttack.put(confirmationResult.getRequestId().toString(),
-                                                       confirmationResult.getTimestamp())));
+                .flatMap(discard -> link.onConfirmLink(confirmationResult)
+                        .then(validator.put(confirmationResult.getRequestId().toString(),
+                                confirmationResult.getTimestamp())));
     }
 
     @PostMapping(Constants.APP_PATH_LINK_INIT)
@@ -106,8 +104,6 @@ public class LinkController {
     }
 
     private LocalDateTime convertTimestampToLocalDateTimeUTC(String timestamp) {
-        return LocalDateTime.ofInstant(
-                Instant.parse(timestamp), ZoneOffset.UTC);
+        return LocalDateTime.ofInstant(Instant.parse(timestamp), ZoneOffset.UTC);
     }
-
 }

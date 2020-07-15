@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
-public class ConsentArtefactNotifierTest {
+class ConsentArtefactNotifierTest {
     @Captor
     private ArgumentCaptor<ClientRequest> captor;
     private ConsentArtefactNotifier consentArtefactNotifier;
@@ -38,7 +38,7 @@ public class ConsentArtefactNotifierTest {
     private ExchangeFunction exchangeFunction;
 
     @BeforeEach
-    public void init() {
+    void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         var token = string();
@@ -109,7 +109,7 @@ public class ConsentArtefactNotifierTest {
 
         StepVerifier.create(dataRequestNotifier.sendConsentArtifactToHIU(request, "1000005")).verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://example.com/consents/hiu/notify");
+        assertThat(captor.getValue().url().toString()).hasToString("http://example.com/consents/hiu/notify");
         assertThat(captor.getValue().headers().getFirst(AUTHORIZATION)).isEqualTo(token);
     }
 
@@ -131,7 +131,7 @@ public class ConsentArtefactNotifierTest {
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().is4xxClientError())
                 .verify();
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://example.com/consents/hiu/notify");
+        assertThat(captor.getValue().url().toString()).hasToString("http://example.com/consents/hiu/notify");
         assertThat(captor.getValue().headers().getFirst(AUTHORIZATION)).isEqualTo(token);
     }
 
@@ -153,7 +153,7 @@ public class ConsentArtefactNotifierTest {
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().is5xxServerError())
                 .verify();
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://example.com/consents/hiu/notify");
+        assertThat(captor.getValue().url().toString()).hasToString("http://example.com/consents/hiu/notify");
         assertThat(captor.getValue().headers().getFirst(AUTHORIZATION)).isEqualTo(token);
     }
 }

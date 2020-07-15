@@ -75,9 +75,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 @ExtendWith(SpringExtension.class)
-@AutoConfigureWebTestClient(timeout = "6000")
+@AutoConfigureWebTestClient
 @ContextConfiguration(initializers = ConsentRequestUserJourneyTest.PropertyInitializer.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ConsentRequestUserJourneyTest {
@@ -608,6 +607,7 @@ class ConsentRequestUserJourneyTest {
         when(authenticator.verify(authToken)).thenReturn(Mono.just(new Caller("user-id", false)));
         when(gatewayTokenVerifier.verify(authToken))
                 .thenReturn(Mono.just(caller));
+        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(repository.requestOf(anyString())).thenReturn(Mono.empty());

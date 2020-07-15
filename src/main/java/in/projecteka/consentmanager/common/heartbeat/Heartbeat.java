@@ -34,7 +34,7 @@ public class Heartbeat {
 
     public Mono<HeartbeatResponse> getStatus() {
         try {
-            return isPostgresUp() && isKeycloakUp() && isRabbitMQUp() && isRedisUp()
+            return isPostgresUp() && isKeycloakUp() && isRabbitMQUp() && isCacheUp()
                     ? Mono.just(HeartbeatResponse.builder()
                     .timeStamp(Instant.now().toString())
                     .status(Status.UP)
@@ -53,7 +53,7 @@ public class Heartbeat {
         }
     }
 
-    private boolean isRedisUp() throws IOException {
+    private boolean isCacheUp() throws IOException {
         if (cacheMethodProperty.getMethodName().equalsIgnoreCase(REDIS_CACHE))
             return checkConnection(redisOptions.getHost(), redisOptions.getPort());
         return true;

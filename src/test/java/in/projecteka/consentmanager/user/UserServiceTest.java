@@ -73,7 +73,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -153,7 +152,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldReturnTemporarySessionReceivedFromClient() {
+    public void shouldSendOTPRequestToHealthAccountService() {
         var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", "+91-9788888");
         var sessionId = string();
         var signUpSession = new SignUpSession(sessionId);
@@ -173,6 +172,25 @@ class UserServiceTest {
     }
 
     @Test
+    public void shouldSendOTPRequestToOTPService() {
+        var whitelistedMobileNumber = "+91-8888888888";
+        var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", whitelistedMobileNumber);
+        var sessionId = string();
+        var signUpSession = new SignUpSession(sessionId);
+        when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
+        when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq(whitelistedMobileNumber)))
+                .thenReturn(Mono.just(signUpSession));
+        when(otpAttemptService.validateOTPRequest(userSignUpEnquiry.getIdentifierType(), userSignUpEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_REGISTRATION)).thenReturn(Mono.empty());
+
+        Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
+
+        assertThat(otpRequestArgumentCaptor.getValue().getSessionId()).isEqualTo(sessionCaptor.getValue());
+        StepVerifier.create(signUp)
+                .assertNext(session -> assertThat(session).isEqualTo(signUpSession))
+                .verifyComplete();
+    }
+
+    @Test
     public void shouldThrowInvalidRequestExceptionForInvalidDeviceType() {
         var producer = userService.sendOtp(userSignUpEnquiry().build());
 
@@ -183,7 +201,7 @@ class UserServiceTest {
     public void shouldReturnTokenReceivedFromHealthAccountService() {
         var sessionId = string();
         var otp = string();
-        var mobileNumber = "+91-8888888888";
+        var mobileNumber = "+91-123456789";
 
         ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
@@ -208,6 +226,39 @@ class UserServiceTest {
         assertEquals(sessionId, removeMatchingAttemptsArgument.getSessionId());
         assertEquals("MOBILE", removeMatchingAttemptsArgument.getIdentifierType());
         assertEquals(mobileNumber, removeMatchingAttemptsArgument.getIdentifierValue());
+        assertEquals(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION, removeMatchingAttemptsArgument.getAction());
+    }
+
+    @Test
+    public void shouldReturnCreatedTokenAfterVerifyingFromOTPService() {
+        var sessionId = string();
+        var otp = string();
+        var token = string();
+        var whiteListedMobileNumber = "+91-8888888888";
+
+        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
+        OtpVerification otpVerification = new OtpVerification(sessionId, otp);
+        when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
+        when(signupService.generateToken(sessionId))
+                .thenReturn(Mono.just(new Token(token)));
+        when(signupService.getMobileNumber(eq(sessionId))).thenReturn(Mono.just(whiteListedMobileNumber));
+        when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
+        when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
+        StepVerifier.create(userService.verifyOtpForRegistration(otpVerification))
+                .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
+                .verifyComplete();
+
+        var capturedAttempts = argument.getAllValues();
+        var validateOTPSubmissionArgument = capturedAttempts.get(0);
+        assertEquals(sessionId, validateOTPSubmissionArgument.getSessionId());
+        assertEquals("MOBILE", validateOTPSubmissionArgument.getIdentifierType());
+        assertEquals(whiteListedMobileNumber, validateOTPSubmissionArgument.getIdentifierValue());
+        assertEquals(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION, validateOTPSubmissionArgument.getAction());
+
+        var removeMatchingAttemptsArgument = capturedAttempts.get(1);
+        assertEquals(sessionId, removeMatchingAttemptsArgument.getSessionId());
+        assertEquals("MOBILE", removeMatchingAttemptsArgument.getIdentifierType());
+        assertEquals(whiteListedMobileNumber, removeMatchingAttemptsArgument.getIdentifierValue());
         assertEquals(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION, removeMatchingAttemptsArgument.getAction());
     }
 

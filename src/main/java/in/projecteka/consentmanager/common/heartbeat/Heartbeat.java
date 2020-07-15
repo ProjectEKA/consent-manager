@@ -25,7 +25,7 @@ import java.util.concurrent.TimeoutException;
 
 @AllArgsConstructor
 public class Heartbeat {
-    public static final String CACHE_METHOD_NAME = "guava";
+    public static final String REDIS_CACHE = "redis";
     private final IdentityServiceProperties identityServiceProperties;
     private final DbOptions dbOptions;
     private final RabbitmqOptions rabbitmqOptions;
@@ -54,9 +54,9 @@ public class Heartbeat {
     }
 
     private boolean isRedisUp() throws IOException {
-        if (cacheMethodProperty.getMethodName().equals(CACHE_METHOD_NAME))
-            return true;
-        return checkConnection(redisOptions.getHost(), redisOptions.getPort());
+        if (cacheMethodProperty.getMethodName().equalsIgnoreCase(REDIS_CACHE))
+            return checkConnection(redisOptions.getHost(), redisOptions.getPort());
+        return true;
     }
 
     private boolean isRabbitMQUp() throws IOException, TimeoutException {

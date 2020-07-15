@@ -76,16 +76,15 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static java.util.List.of;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyString;
-
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient(timeout = "6000")
 @ContextConfiguration(initializers = LinkUserJourneyTest.ContextInitializer.class)
-public class LinkUserJourneyTest {
+class LinkUserJourneyTest {
     private static final MockWebServer clientRegistryServer = new MockWebServer();
     private static final MockWebServer hipServer = new MockWebServer();
     private static final MockWebServer userServer = new MockWebServer();
@@ -134,11 +133,11 @@ public class LinkUserJourneyTest {
 
     @MockBean
     @Qualifier("linkResults")
-    CacheAdapter<String,String> linkResults;
+    CacheAdapter<String, String> linkResults;
 
     @MockBean
     @Qualifier("cacheForReplayAttack")
-    CacheAdapter<String,String> cacheForReplayAttack;
+    CacheAdapter<String, String> cacheForReplayAttack;
 
     @MockBean
     private LinkServiceClient linkServiceClient;
@@ -150,7 +149,7 @@ public class LinkUserJourneyTest {
     private ServiceAuthentication serviceAuthentication;
 
     @AfterAll
-    public static void tearDown() throws IOException {
+    static void tearDown() throws IOException {
         clientRegistryServer.shutdown();
         hipServer.shutdown();
         userServer.shutdown();
@@ -159,12 +158,12 @@ public class LinkUserJourneyTest {
     }
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.initMocks(this);
     }
 
     @Test
-    public void shouldReturnLinkedCareContexts() throws IOException {
+    void shouldReturnLinkedCareContexts() throws IOException {
         var token = string();
         var patientId = "5@ncg";
         var links = Links.builder()
@@ -204,7 +203,7 @@ public class LinkUserJourneyTest {
 
 
     @Test
-    public void shouldConfirmLinkCareContexts() throws IOException {
+    void shouldConfirmLinkCareContexts() throws IOException {
         var token = string();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
         clientRegistryServer.setDispatcher(dispatcher);
@@ -263,7 +262,7 @@ public class LinkUserJourneyTest {
     }
 
     @Test
-    public void shouldReturnInvalidResponseForConfirmLinkCareContexts() throws IOException {
+    void shouldReturnInvalidResponseForConfirmLinkCareContexts() throws IOException {
         var token = string();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
         clientRegistryServer.setDispatcher(dispatcher);
@@ -305,7 +304,7 @@ public class LinkUserJourneyTest {
     }
 
     @Test
-    public void shouldReturnGatewayTimeOutForConfirmLinkCareContexts() throws IOException {
+    void shouldReturnGatewayTimeOutForConfirmLinkCareContexts() throws IOException {
         var token = string();
         clientRegistryServer.setDispatcher(dispatcher);
         gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
@@ -319,7 +318,7 @@ public class LinkUserJourneyTest {
 
         when(linkResults.get(any())).thenReturn(Mono.empty());
         var errorResponse = new ErrorRepresentation(
-                new Error(ErrorCode.NO_RESULT_FROM_GATEWAY,"Didn't receive any result from Gateway"));
+                new Error(ErrorCode.NO_RESULT_FROM_GATEWAY, "Didn't receive any result from Gateway"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
 
         webTestClient
@@ -336,7 +335,7 @@ public class LinkUserJourneyTest {
                 .json(errorResponseJson);
     }
 
-    public static class ContextInitializer
+    static class ContextInitializer
             implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(ConfigurableApplicationContext applicationContext) {
@@ -379,19 +378,19 @@ public class LinkUserJourneyTest {
     };
 
     @Test
-    public void onLinkCareContexts() {
+    void onLinkCareContexts() {
         var token = string();
         var patientLinkReferenceResult = patientLinkReferenceResult()
-                                         .requestId(UUID.randomUUID())
-                                         .timestamp(Instant.now().plusSeconds(60L).toString())
-                                         .build();
+                .requestId(UUID.randomUUID())
+                .timestamp(Instant.now().plusSeconds(60L).toString())
+                .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-
+        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
-        when(cacheForReplayAttack.put(anyString(),anyString())).thenReturn(Mono.empty());
-        when(linkResults.put(anyString(),anyString())).thenReturn(Mono.empty());
+        when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
+        when(linkResults.put(anyString(), anyString())).thenReturn(Mono.empty());
 
         webTestClient.post()
                 .uri(PATH_LINK_ON_INIT)
@@ -404,12 +403,12 @@ public class LinkUserJourneyTest {
     }
 
     @Test
-    public void shouldFailWithTwoManyRequestsErrorForInvalidRequest() {
+    void shouldFailWithTwoManyRequestsErrorForInvalidRequest() {
         var token = string();
         var patientLinkReferenceResult = patientLinkReferenceResult()
-                                         .requestId(UUID.randomUUID())
-                                         .timestamp(Instant.now().toString())
-                                         .build();
+                .requestId(UUID.randomUUID())
+                .timestamp(Instant.now().toString())
+                .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
@@ -428,7 +427,7 @@ public class LinkUserJourneyTest {
     }
 
     @Test
-    public void shouldFailOnLinkCareContextsWhenRequestIdIsNotGiven() throws Exception {
+    void shouldFailOnLinkCareContextsWhenRequestIdIsNotGiven() throws Exception {
         var token = string();
         var gatewayResponse = GatewayResponse.builder()
                 .requestId(null)
@@ -439,7 +438,7 @@ public class LinkUserJourneyTest {
                 .timestamp(Instant.now().plusSeconds(60L).toString())
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-
+        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
@@ -456,7 +455,7 @@ public class LinkUserJourneyTest {
     }
 
     @Test
-    public void shouldFailOnLinkCareContexts() throws Exception {
+    void shouldFailOnLinkCareContexts() throws Exception {
         var token = string();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
@@ -474,7 +473,7 @@ public class LinkUserJourneyTest {
     }
 
     @Test
-    public void shouldGetPatientLinkReference() throws IOException {
+    void shouldGetPatientLinkReference() throws IOException {
         var token = string();
         var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
         var linkReferenceRequest = TestBuilders.linkReferenceRequest().build();
@@ -501,7 +500,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri(Constants.PATH_LINK_INIT)
+                .uri(Constants.APP_PATH_LINK_INIT)
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkReferenceRequest)
@@ -514,7 +513,7 @@ public class LinkUserJourneyTest {
     }
 
     @Test
-    public void shouldFailPatientLinkReference() throws IOException {
+    void shouldFailPatientLinkReference() throws IOException {
         var token = string();
         var patientLinkReferenceRequest = patientLinkReferenceRequest().build();
         var linkReferenceRequest = TestBuilders.linkReferenceRequest().build();
@@ -535,7 +534,7 @@ public class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri(Constants.PATH_LINK_INIT)
+                .uri(Constants.APP_PATH_LINK_INIT)
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkReferenceRequest)

@@ -72,7 +72,7 @@ import static org.mockito.Mockito.when;
 @AutoConfigureWebTestClient
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(initializers = ConsentArtefactUserJourneyTest.PropertyInitializer.class)
-public class ConsentArtefactUserJourneyTest {
+class ConsentArtefactUserJourneyTest {
 
     @Autowired
     private WebTestClient webTestClient;
@@ -141,12 +141,12 @@ public class ConsentArtefactUserJourneyTest {
     private static final MockWebServer identityServer = new MockWebServer();
 
     @AfterAll
-    public static void tearDown() throws IOException {
+    static void tearDown() throws IOException {
         identityServer.shutdown();
     }
 
     @Test
-    public void shouldListConsentArtifacts() throws ParseException {
+    void shouldListConsentArtifacts() throws ParseException {
         var consentArtefact = consentArtefactRepresentation().build();
         var token = string();
         var patientId = consentArtefact.getConsentDetail().getPatient().getId();
@@ -172,7 +172,7 @@ public class ConsentArtefactUserJourneyTest {
     }
 
     @Test
-    public void shouldThrowConsentArtifactNotFound() throws JsonProcessingException {
+    void shouldThrowConsentArtifactNotFound() throws JsonProcessingException {
         var token = string();
         var consentArtefact = consentArtefactRepresentation().build();
         var patientId = consentArtefact.getConsentDetail().getPatient().getId();
@@ -197,7 +197,7 @@ public class ConsentArtefactUserJourneyTest {
     }
 
     @Test
-    public void shouldThrowInvalidRequester() throws JsonProcessingException {
+    void shouldThrowInvalidRequester() throws JsonProcessingException {
         var token = string();
         var anotherUser = string();
         var consentArtefact = consentArtefactRepresentation().build();
@@ -223,7 +223,7 @@ public class ConsentArtefactUserJourneyTest {
     }
 
     @Test
-    public void shouldRevokeConsentArtefact() {
+    void shouldRevokeConsentArtefact() {
         var token = string();
         var consentRepresentation = consentRepresentation().status(ConsentStatus.GRANTED).build();
         var consentRequestId = consentRepresentation.getConsentRequestId();
@@ -258,7 +258,7 @@ public class ConsentArtefactUserJourneyTest {
     }
 
     @Test
-    public void shouldNotRevokeConsentArtefactWhenItIsNotInGrantedState() throws JsonProcessingException {
+    void shouldNotRevokeConsentArtefactWhenItIsNotInGrantedState() throws JsonProcessingException {
         var token = string();
         var scope = "consent.revoke";
         var consentRepresentation = consentRepresentation().status(ConsentStatus.REVOKED).build();
@@ -345,7 +345,7 @@ public class ConsentArtefactUserJourneyTest {
                 .value(ConsentArtefactResponse::getOffset, Matchers.is(0));
     }
 
-    public static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+    static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(ConfigurableApplicationContext applicationContext) {
             TestPropertyValues values = TestPropertyValues.of(
@@ -359,8 +359,8 @@ public class ConsentArtefactUserJourneyTest {
         var token = string();
         var consentArtefact = consentArtefactRepresentation().build();
         var fetchRequest = fetchRequest().consentId(consentArtefact.getConsentDetail().getConsentId())
-                                         .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
-                                         .build();
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
+                .build();
         consentArtefact.getConsentDetail().getPatient().setId("test-user@ncg");
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
         when(serviceAuthentication.authenticate()).thenReturn(Mono.empty());

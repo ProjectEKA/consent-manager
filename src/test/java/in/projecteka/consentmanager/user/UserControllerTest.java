@@ -6,9 +6,9 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConceptValidator;
-import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
@@ -110,7 +110,7 @@ class UserControllerTest {
     private RequestValidator validator;
 
     @Test
-    public void shouldReturnTemporarySessionIfOtpRequestIsSuccessful() {
+    void shouldReturnTemporarySessionIfOtpRequestIsSuccessful() {
         var userSignupEnquiry = new UserSignUpEnquiry("MOBILE", string());
         when(userService.sendOtp(any())).thenReturn(just(new SignUpSession(string())));
 
@@ -124,7 +124,7 @@ class UserControllerTest {
     }
 
     @Test
-    public void shouldReturnTemporarySessionIfOtpPermitRequestIsSuccessful() {
+    void shouldReturnTemporarySessionIfOtpPermitRequestIsSuccessful() {
         var otpVerification = new OtpVerification(string(), string());
         Token token = new Token(string());
 
@@ -139,25 +139,9 @@ class UserControllerTest {
         Mockito.verify(userService, times(1)).verifyOtpForRegistration(otpVerification);
     }
 
-    @Test
-    public void returnUserForCentralRegistryAuthenticatedSystem() {
-        var username = string();
-        var token = string();
-        var sessionId = string();
-        when(gatewayTokenVerifier.verify(token)).thenReturn(just(new ServiceCaller(username, List.of())));
-        when(userService.userWith(username)).thenReturn(just(user().build()));
-
-        webClient.get()
-                .uri(format("/users/%s", username))
-                .accept(MediaType.APPLICATION_JSON)
-                .header(AUTHORIZATION, token)
-                .exchange()
-                .expectStatus()
-                .isOk();
-    }
 
     @Test
-    public void returnUser() {
+    void returnUser() {
         var username = string();
         var token = string();
         var sessionId = string();
@@ -174,12 +158,12 @@ class UserControllerTest {
     }
 
     @Test
-    public void returnPatientResponseWhenUserFound() {
+    void returnPatientResponseWhenUserFound() {
         var token = string();
         var patientRequest = patientRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-
-        when(validator.validate(anyString(),anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(userService.user(patientRequest.getQuery().getPatient().getId(),
                 patientRequest.getQuery().getRequester(),
@@ -197,12 +181,12 @@ class UserControllerTest {
     }
 
     @Test
-    public void shouldFailWithTooManyRequestsErrorForInvalidRequest() {
+    void shouldFailWithTooManyRequestsErrorForInvalidRequest() {
         var token = string();
         var patientRequest = patientRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(validator.validate(anyString(),anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
 
         webClient.post()

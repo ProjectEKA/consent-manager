@@ -42,6 +42,7 @@ consentmanager:
       - MOBILE
     expiryInMinutes: ${OTP_EXPIRY_IN_MINUTES}
   healthaccountservice:
+      usingSSL: ${Health_Account_Service_Uses_SSL}
       url: ${Health_Account_Service_Url}
       identifiers:
         - MOBILE

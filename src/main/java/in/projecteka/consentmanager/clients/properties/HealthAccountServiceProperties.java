@@ -12,7 +12,10 @@ import java.util.List;
 @ConstructorBinding
 @Getter
 public class HealthAccountServiceProperties {
+    private final boolean usingSSL;
     private final String url;
     private final List<String> identifiers;
     private final int expiryInMinutes;
+
+
 }

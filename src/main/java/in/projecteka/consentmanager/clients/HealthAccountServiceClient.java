@@ -24,14 +24,12 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 public class HealthAccountServiceClient {
     private final WebClient webClient;
-    private final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     private final String OTP_REQUEST_FOR_MOBILE_PATH = "/v1/ha/generate_mobile_otp";
     private final String OTP_VERIFY_FOR_MOBILE_PATH = "/v1/ha/verify_mobile_otp";
 
     public HealthAccountServiceClient(WebClient.Builder webClient, String baseUrl) {
-        ReactorClientHttpConnector connector = sslIgnoreConnector();
-        this.webClient = webClient.clientConnector(connector).baseUrl(baseUrl).build();
+        this.webClient = webClient.baseUrl(baseUrl).build();
     }
 
     public Mono<OtpRequestResponse> send(OtpRequest otpRequest) {
@@ -63,18 +61,4 @@ public class HealthAccountServiceClient {
                 .bodyToMono(HealthAccountServiceTokenResponse.class);
     }
 
-    private ReactorClientHttpConnector sslIgnoreConnector() {
-        HttpClient httpClient = null;
-        try {
-            SslContext sslContext = SslContextBuilder
-                    .forClient()
-                    .trustManager(InsecureTrustManagerFactory.INSTANCE)
-                    .build();
-            httpClient = HttpClient.create().secure(t -> t.sslContext(sslContext) );
-        } catch (SSLException e) {
-            e.printStackTrace();
-        }
-
-        return new ReactorClientHttpConnector(httpClient);
-    }
 }

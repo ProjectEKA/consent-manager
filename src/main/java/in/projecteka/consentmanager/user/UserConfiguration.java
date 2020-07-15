@@ -14,14 +14,20 @@ import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import io.lettuce.core.RedisClient;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
+import javax.net.ssl.SSLException;
 import java.security.PrivateKey;
 import java.util.concurrent.TimeUnit;
 
@@ -61,6 +67,21 @@ public class UserConfiguration {
     }
 
     @Bean
+    public ReactorClientHttpConnector reactorClientHttpConnector() {
+        HttpClient httpClient = null;
+        try {
+            SslContext sslContext = SslContextBuilder
+                    .forClient()
+                    .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                    .build();
+            httpClient = HttpClient.create().secure(t -> t.sslContext(sslContext) );
+        } catch (SSLException e) {
+            e.printStackTrace();
+        }
+        return new ReactorClientHttpConnector(httpClient);
+    }
+
+    @Bean
     public OtpServiceClient otpServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                              OtpServiceProperties otpServiceProperties) {
         return new OtpServiceClient(builder, otpServiceProperties.getUrl());
@@ -69,6 +90,9 @@ public class UserConfiguration {
     @Bean
     public HealthAccountServiceClient healthAccountServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                        HealthAccountServiceProperties healthAccountServiceProperties) {
+        if (healthAccountServiceProperties.isUsingSSL()){
+            builder.clientConnector(reactorClientHttpConnector());
+        }
         return new HealthAccountServiceClient(builder, healthAccountServiceProperties.getUrl());
     }
 

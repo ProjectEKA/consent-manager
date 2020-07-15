@@ -22,6 +22,7 @@ consentmanager:
       - MOBILE
     expiryInMinutes: 5
   healthaccountservice:
+    usingSSL: true
     url: http://localhost:5000
     identifiers:
       - MOBILE

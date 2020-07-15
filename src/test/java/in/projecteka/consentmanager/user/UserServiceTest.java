@@ -134,7 +134,7 @@ class UserServiceTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"), 5);
-        var healthAccountServiceProperties = new HealthAccountServiceProperties("", Collections.singletonList("MOBILE"), 5);
+        var healthAccountServiceProperties = new HealthAccountServiceProperties(false, "", Collections.singletonList("MOBILE"), 5);
 
         userService = new UserService(
                 userRepository,
@@ -270,7 +270,9 @@ class UserServiceTest {
     })
     public void shouldThrowInvalidRequestExceptionForInvalidOtpValue(
             @ConvertWith(NullableConverter.class) String value) {
-        OtpVerification otpVerification = new OtpVerification(string(), value);
+        String sessionId = string();
+        OtpVerification otpVerification = new OtpVerification(sessionId, value);
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just("12345"));
 
         var producer = userService.verifyOtpForRegistration(otpVerification);
 
@@ -286,6 +288,7 @@ class UserServiceTest {
     public void shouldThrowInvalidRequestExceptionForInvalidOtpSessionId(
             @ConvertWith(NullableConverter.class) String sessionId) {
         OtpVerification otpVerification = new OtpVerification(sessionId, string());
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just("12345"));
 
         var producer = userService.verifyOtpForRegistration(otpVerification);
 

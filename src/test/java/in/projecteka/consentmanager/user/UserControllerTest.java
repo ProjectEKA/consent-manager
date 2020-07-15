@@ -6,9 +6,9 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConceptValidator;
-import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
@@ -139,22 +139,6 @@ class UserControllerTest {
         Mockito.verify(userService, times(1)).verifyOtpForRegistration(otpVerification);
     }
 
-    @Test
-    void returnUserForCentralRegistryAuthenticatedSystem() {
-        var username = string();
-        var token = string();
-        var sessionId = string();
-        when(gatewayTokenVerifier.verify(token)).thenReturn(just(new ServiceCaller(username, List.of())));
-        when(userService.userWith(username)).thenReturn(just(user().build()));
-
-        webClient.get()
-                .uri(format("/users/%s", username))
-                .accept(MediaType.APPLICATION_JSON)
-                .header(AUTHORIZATION, token)
-                .exchange()
-                .expectStatus()
-                .isOk();
-    }
 
     @Test
     void returnUser() {
@@ -179,7 +163,7 @@ class UserControllerTest {
         var patientRequest = patientRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
         when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
-        when(validator.validate(anyString(),anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(userService.user(patientRequest.getQuery().getPatient().getId(),
                 patientRequest.getQuery().getRequester(),
@@ -202,7 +186,7 @@ class UserControllerTest {
         var patientRequest = patientRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(validator.validate(anyString(),anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
 
         webClient.post()

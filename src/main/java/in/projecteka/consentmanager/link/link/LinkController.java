@@ -43,7 +43,7 @@ public class LinkController {
                 .flatMap(link::getLinkedCareContexts);
     }
 
-    @GetMapping(Constants.APP_PATH_INTERNAL_GET_LINKED_CARECONTEXTS)
+    @GetMapping(Constants.APP_PATH_INTERNAL_GET_LINKED_CARE_CONTEXTS)
     public Mono<PatientLinksResponse> getLinkedCareContextInternal(@PathVariable String username) {
         return link.getLinkedCareContexts(username);
     }
@@ -95,7 +95,7 @@ public class LinkController {
                                 confirmationResult.getTimestamp())));
     }
 
-    @PostMapping(Constants.PATH_LINK_INIT)
+    @PostMapping(Constants.APP_PATH_LINK_INIT)
     public Mono<PatientLinkReferenceResponse> linkPatientCareContexts(
             @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
         return ReactiveSecurityContextHolder.getContext()

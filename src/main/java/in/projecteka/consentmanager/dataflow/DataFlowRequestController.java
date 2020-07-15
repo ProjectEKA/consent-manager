@@ -29,6 +29,7 @@ public class DataFlowRequestController {
     private final DataFlowRequester dataFlowRequester;
     private final RequestValidator validator;
 
+    @Deprecated
     @PostMapping("/health-information/request")
     public Mono<DataFlowRequestResponse> requestHealthInformation(@RequestBody DataFlowRequest dataFlowRequest) {
         return ReactiveSecurityContextHolder.getContext()

@@ -500,7 +500,7 @@ class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri(Constants.PATH_LINK_INIT)
+                .uri(Constants.APP_PATH_LINK_INIT)
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkReferenceRequest)
@@ -534,7 +534,7 @@ class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri(Constants.PATH_LINK_INIT)
+                .uri(Constants.APP_PATH_LINK_INIT)
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(patientLinkReferenceRequest)

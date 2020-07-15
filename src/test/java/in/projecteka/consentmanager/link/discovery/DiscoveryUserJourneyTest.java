@@ -242,7 +242,7 @@ class DiscoveryUserJourneyTest {
                 new Error(ErrorCode.NO_RESULT_FROM_GATEWAY, "Didn't receive any result from Gateway"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
-                .uri(Constants.PATH_CARE_CONTEXTS_DISCOVER)
+                .uri(Constants.APP_PATH_CARE_CONTEXTS_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -283,7 +283,7 @@ class DiscoveryUserJourneyTest {
         when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         webTestClient.post()
-                .uri(Constants.PATH_CARE_CONTEXTS_DISCOVER)
+                .uri(Constants.APP_PATH_CARE_CONTEXTS_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -324,7 +324,7 @@ class DiscoveryUserJourneyTest {
                 new Error(ErrorCode.NO_PATIENT_FOUND, "Could not find patient information"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
-                .uri(Constants.PATH_CARE_CONTEXTS_DISCOVER)
+                .uri(Constants.APP_PATH_CARE_CONTEXTS_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -361,7 +361,7 @@ class DiscoveryUserJourneyTest {
                 new Error(ErrorCode.UNPROCESSABLE_RESPONSE_FROM_GATEWAY, "Could not process response from HIP"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
-                .uri(Constants.PATH_CARE_CONTEXTS_DISCOVER)
+                .uri(Constants.APP_PATH_CARE_CONTEXTS_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)

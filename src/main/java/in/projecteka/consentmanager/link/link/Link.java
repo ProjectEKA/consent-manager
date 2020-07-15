@@ -47,8 +47,9 @@ public class Link {
     private final LinkServiceProperties serviceProperties;
     private final CacheAdapter<String, String> linkResults;
 
-    public Mono<PatientLinkReferenceResponse> patientCareContexts(String patientId,
-                                                                  PatientLinkReferenceRequest patientLinkReferenceRequest) {
+    public Mono<PatientLinkReferenceResponse> patientCareContexts(
+            String patientId,
+            PatientLinkReferenceRequest patientLinkReferenceRequest) {
         Patient patient = toHIPPatient(patientId, patientLinkReferenceRequest.getPatient());
         var linkReferenceRequest = new in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest(
                 patientLinkReferenceRequest.getRequestId().toString(),
@@ -194,5 +195,4 @@ public class Link {
         }
         return null;
     }
-
 }

@@ -21,7 +21,7 @@ import reactor.core.publisher.Mono;
 import javax.validation.Valid;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_DISCOVER;
+import static in.projecteka.consentmanager.link.Constants.APP_PATH_CARE_CONTEXTS_DISCOVER;
 import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 
 @RestController
@@ -44,8 +44,7 @@ public class DiscoveryController {
         return discovery.providerBy(providerId);
     }
 
-
-    @PostMapping(PATH_CARE_CONTEXTS_DISCOVER)
+    @PostMapping(APP_PATH_CARE_CONTEXTS_DISCOVER)
     public Mono<DiscoveryResponse> discoverPatientCareContexts(@RequestBody @Valid DiscoveryRequest discoveryRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())

@@ -44,6 +44,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.USERNAME_OR_P
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUEST;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.GATEWAY_TIMEOUT;
@@ -67,6 +68,11 @@ public class ClientError extends Throwable {
     public ClientError(HttpStatus httpStatus, ErrorRepresentation errorRepresentation) {
         this.httpStatus = httpStatus;
         error = errorRepresentation;
+    }
+
+    public static ClientError tooManyRequests() {
+        return new ClientError(TOO_MANY_REQUESTS, new ErrorRepresentation(
+                new Error(INVALID_REQUEST, "Too many requests from gateway")));
     }
 
     public ErrorCode getErrorCode(){

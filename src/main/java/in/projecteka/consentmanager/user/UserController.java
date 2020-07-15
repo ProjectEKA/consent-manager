@@ -57,9 +57,4 @@ public class UserController {
     public Mono<User> internalUserWith(@PathVariable String userName) {
         return userService.userWith(userName);
     }
-
-//    @PostMapping(Constants.APP_PATH_INTERNAL_GET_CARE_CONTEXT)
-//    public Mono<List<PatientCareContext>> internalGetCareContextFor(@RequestBody PatientCareContextRequest patientCareContextRequest){
-//        return userService.getAllLinkedCareContextFor(patientCareContextRequest);
-//    }
 }

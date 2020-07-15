@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.consent.model.*;
+import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,9 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.CONSENT_REQUEST_QUEUE;
@@ -61,12 +64,16 @@ public class ConsentRequestNotificationListener {
     }
 
     private void processConsentRequest(ConsentRequest consentRequest){
-        if (isAutoApproveConsentRequest(consentRequest)){
-            autoApproveFor(consentRequest);
-        } else {
-            createNotificationMessage(consentRequest)
-                    .flatMap(this::notifyUserWith)
-                    .block();
+        try{
+            if (isAutoApproveConsentRequest(consentRequest)){
+                autoApproveFor(consentRequest).block();
+            } else {
+                createNotificationMessage(consentRequest)
+                        .flatMap(this::notifyUserWith)
+                        .block();
+            }
+        } catch (Exception exception){
+            logger.error(exception.getMessage());
         }
     }
 
@@ -97,14 +104,32 @@ public class ConsentRequestNotificationListener {
     }
 
     private Mono<Void> autoApproveFor(ConsentRequest consentRequest) {
-        // TODO:: Perform the check Here
-         patientServiceClient.retrievePatientLinks(consentRequest.getDetail().getPatient().getId())
-                .flatMap(linkedCareContexts -> {
-                    System.out.println(linkedCareContexts);
-                    return null;
-                }).block();
-//         consentManager.approveConsent(consentRequest.getDetail().getPatient().getId(),
-//                consentRequest.getId().toString(), null);
-        return Mono.empty();
+        List<GrantedContext> grantedContexts = new ArrayList<>();
+        List<GrantedConsent> grantedConsents = new ArrayList<>();
+        return patientServiceClient.getLinkedCareContextFor(consentRequest.getDetail().getPatient().getId())
+                .map(patientLinksResponse -> patientLinksResponse.getPatient().getLinks()
+                        .stream()
+                        .filter(cc -> cc.getHip().getId().equals("10000005"))
+                        .collect(Collectors.toList()))
+                 .flatMap(hipLinks -> {
+                     hipLinks.forEach(link -> {
+                         var patientRefNumber = link.getPatientRepresentations().getReferenceNumber();
+                         link.getPatientRepresentations().getCareContexts().forEach(careContext -> {
+                             grantedContexts.add(GrantedContext.builder()
+                                     .patientReference(patientRefNumber)
+                                     .careContextReference(careContext.getReferenceNumber())
+                                     .build());
+                         });
+                     });
+                     grantedConsents.add(GrantedConsent.builder()
+                             .careContexts(grantedContexts)
+                             .hip(consentRequest.getDetail().getHip())
+                             .hiTypes(consentRequest.getDetail().getHiTypes())
+                             .permission(consentRequest.getDetail().getPermission())
+                             .build());
+                     return consentManager.approveConsent(consentRequest.getDetail().getPatient().getId(),
+                             consentRequest.getId().toString(),
+                             grantedConsents);
+                 }).then();
     }
 }

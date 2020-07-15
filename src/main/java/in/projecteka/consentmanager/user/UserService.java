@@ -327,10 +327,6 @@ public class UserService {
                 .flatMap(this::getDistinctUser);
     }
 
-//    public Mono<List<PatientCareContext>> getAllLinkedCareContextFor(PatientCareContextRequest patientCareContextRequest){
-//
-//    }
-
     private Mono<User> getDistinctUser(List<User> rows) {
         return rows.size() == 1 ? Mono.just(rows.get(0)) : Mono.empty();
     }

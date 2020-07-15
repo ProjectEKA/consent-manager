@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.LinkedCareContexts;
+import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -30,5 +31,19 @@ public class PatientServiceClient {
                                         clientResponse -> Mono.error(ClientError.unAuthorized()))
                                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                                 .bodyToMono(LinkedCareContexts.class));
+    }
+
+    public Mono<PatientLinksResponse> getLinkedCareContextFor(String username) {
+        return tokenGenerator.get()
+                .flatMap(authorization ->
+                        webClientBuilder
+                                .get()
+                                .uri(String.format(INTERNAL_PATH_PATIENT_LINKS, baseUrl, username))
+                                .header(AUTHORIZATION, authorization)
+                                .retrieve()
+                                .onStatus(httpStatus -> httpStatus.value() == 401,
+                                        clientResponse -> Mono.error(ClientError.unAuthorized()))
+                                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                                .bodyToMono(PatientLinksResponse.class));
     }
 }

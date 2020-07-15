@@ -72,7 +72,7 @@ services:
       - hiu-db-setup
 
   monitor-db-setup:
-    image: projecteka/monior-db-initializer
+    image: projecteka/monitor-db-initializer
     container_name: monitor-db-setup
     environment:
       - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/gateway -Djdbc.username=postgres -Djdbc.password=password'

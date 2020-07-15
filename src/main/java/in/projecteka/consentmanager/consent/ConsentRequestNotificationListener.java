@@ -52,7 +52,7 @@ public class ConsentRequestNotificationListener {
                 logger.info("Received message for Request id : {}", consentRequest.getId());
                 processConsentRequest(consentRequest);
             } catch (Exception e) {
-                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
             }
         };
         mlc.setupMessageListener(messageListener);
@@ -63,21 +63,21 @@ public class ConsentRequestNotificationListener {
         return consentNotificationClient.send(notification);
     }
 
-    private void processConsentRequest(ConsentRequest consentRequest){
-        try{
-            if (isAutoApproveConsentRequest(consentRequest)){
-                autoApproveFor(consentRequest).block();
+    private void processConsentRequest(ConsentRequest consentRequest) {
+        try {
+            if (isAutoApproveConsentRequest(consentRequest)) {
+                autoApproveFor(consentRequest).subscribe();
             } else {
                 createNotificationMessage(consentRequest)
                         .flatMap(this::notifyUserWith)
                         .block();
             }
-        } catch (Exception exception){
+        } catch (Exception exception) {
             logger.error(exception.getMessage());
         }
     }
 
-    private boolean isAutoApproveConsentRequest(ConsentRequest consentRequest){
+    private boolean isAutoApproveConsentRequest(ConsentRequest consentRequest) {
         return true;
     }
 
@@ -106,30 +106,25 @@ public class ConsentRequestNotificationListener {
     private Mono<Void> autoApproveFor(ConsentRequest consentRequest) {
         List<GrantedContext> grantedContexts = new ArrayList<>();
         List<GrantedConsent> grantedConsents = new ArrayList<>();
-        return patientServiceClient.getLinkedCareContextFor(consentRequest.getDetail().getPatient().getId())
-                .map(patientLinksResponse -> patientLinksResponse.getPatient().getLinks()
-                        .stream()
-                        .filter(cc -> cc.getHip().getId().equals("10000005"))
-                        .collect(Collectors.toList()))
-                 .flatMap(hipLinks -> {
-                     hipLinks.forEach(link -> {
-                         var patientRefNumber = link.getPatientRepresentations().getReferenceNumber();
-                         link.getPatientRepresentations().getCareContexts().forEach(careContext -> {
-                             grantedContexts.add(GrantedContext.builder()
-                                     .patientReference(patientRefNumber)
-                                     .careContextReference(careContext.getReferenceNumber())
-                                     .build());
-                         });
-                     });
-                     grantedConsents.add(GrantedConsent.builder()
-                             .careContexts(grantedContexts)
-                             .hip(consentRequest.getDetail().getHip())
-                             .hiTypes(consentRequest.getDetail().getHiTypes())
-                             .permission(consentRequest.getDetail().getPermission())
-                             .build());
-                     return consentManager.approveConsent(consentRequest.getDetail().getPatient().getId(),
-                             consentRequest.getId().toString(),
-                             grantedConsents);
-                 }).then();
+        return patientServiceClient.retrievePatientLinks(consentRequest.getDetail().getPatient().getId())
+                .map(linkedCareContexts -> linkedCareContexts.getCareContext(consentRequest.getDetail().getHIPId().get()))
+                .flatMap(linkedCareContexts -> {
+                    linkedCareContexts.forEach(careContext -> {
+                        grantedContexts.add(GrantedContext.builder()
+                                .patientReference(careContext.getPatientRefNo())
+                                .careContextReference(careContext.getCareContextRefNo())
+                                .build());
+                    });
+
+                    grantedConsents.add(GrantedConsent.builder()
+                            .careContexts(grantedContexts)
+                            .hip(HIPReference.builder().id(consentRequest.getDetail().getHIPId().get()).build())
+                            .hiTypes(consentRequest.getDetail().getHiTypes())
+                            .permission(consentRequest.getDetail().getPermission())
+                            .build());
+                    return consentManager.approveConsent(consentRequest.getDetail().getPatient().getId(),
+                            consentRequest.getId().toString(),
+                            grantedConsents);
+                }).then();
     }
 }

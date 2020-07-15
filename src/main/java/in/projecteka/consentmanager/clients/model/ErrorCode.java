@@ -52,7 +52,8 @@ public enum ErrorCode {
     REFRESH_TOKEN_INCORRECT(1403),
     INVALID_RESP_REQUEST_ID(1506),
     SERVICE_DOWN(1503),
-    DISCOVERY_REQUEST_NOT_FOUND(1512); /*please resume codes from the line above, we will put the codes in order later
+    DISCOVERY_REQUEST_NOT_FOUND(1512),
+    INVALID_REQUEST(1513); /*please resume codes from the line above, we will put the codes in order later
     and in ranges*/
 
     private final int value;

@@ -3,20 +3,10 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
-import in.projecteka.consentmanager.user.model.OtpVerification;
-import in.projecteka.consentmanager.user.model.PatientRequest;
-import in.projecteka.consentmanager.user.model.SignUpSession;
-import in.projecteka.consentmanager.user.model.Token;
-import in.projecteka.consentmanager.user.model.User;
-import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.consentmanager.user.model.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
@@ -67,4 +57,9 @@ public class UserController {
     public Mono<User> internalUserWith(@PathVariable String userName) {
         return userService.userWith(userName);
     }
+
+//    @PostMapping(Constants.APP_PATH_INTERNAL_GET_CARE_CONTEXT)
+//    public Mono<List<PatientCareContext>> internalGetCareContextFor(@RequestBody PatientCareContextRequest patientCareContextRequest){
+//        return userService.getAllLinkedCareContextFor(patientCareContextRequest);
+//    }
 }

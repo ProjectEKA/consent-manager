@@ -123,10 +123,17 @@ public class ConsentManager {
                 .flatMap(val -> validatePatient(requestedDetail.getPatient().getId())
                         .then(validatePurpose(requestedDetail.getPurpose()))
                         .then(validateHiTypes(requestedDetail.getHiTypes()))
-                        .then(validateHIPAndHIU(requestedDetail)))
-                .flatMap(r -> Mono.defer(() -> saveConsentRequest(requestedDetail, requestId)));
+                        .then(validateHIPAndHIU(requestedDetail))
+                        .then(saveConsentRequest(requestedDetail, requestId))
+                        .then(broadcastConsentRequest(requestedDetail, requestId)));
     }
 
+    private Mono<Void> broadcastConsentRequest(RequestedDetail requestedDetail, UUID requestId){
+        return postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
+                .detail(requestedDetail)
+                .id(requestId)
+                .build());
+    }
     private Mono<Void> saveConsentRequest(RequestedDetail requestedDetail, UUID requestId) {
         ConsentRequestId request = ConsentRequestId.builder()
                 .id(requestId)

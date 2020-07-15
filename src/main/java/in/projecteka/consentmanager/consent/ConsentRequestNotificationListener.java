@@ -4,14 +4,9 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.consent.model.Action;
-import in.projecteka.consentmanager.consent.model.Communication;
-import in.projecteka.consentmanager.consent.model.CommunicationType;
-import in.projecteka.consentmanager.consent.model.ConsentRequest;
-import in.projecteka.consentmanager.consent.model.Content;
-import in.projecteka.consentmanager.consent.model.HIType;
-import in.projecteka.consentmanager.consent.model.Notification;
+import in.projecteka.consentmanager.consent.model.*;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +31,8 @@ public class ConsentRequestNotificationListener {
     private final OtpServiceClient consentNotificationClient;
     private final UserServiceClient userServiceClient;
     private final ConsentServiceProperties consentServiceProperties;
+    private final ConsentManager consentManager;
+    private final PatientServiceClient patientServiceClient;
 
     @PostConstruct
     public void subscribe() throws ClientError {
@@ -50,9 +47,7 @@ public class ConsentRequestNotificationListener {
             try {
                 ConsentRequest consentRequest = (ConsentRequest) converter.fromMessage(message);
                 logger.info("Received message for Request id : {}", consentRequest.getId());
-                createNotificationMessage(consentRequest)
-                        .flatMap(this::notifyUserWith)
-                        .block();
+                processConsentRequest(consentRequest);
             } catch (Exception e) {
                 throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
             }
@@ -63,6 +58,20 @@ public class ConsentRequestNotificationListener {
 
     public Mono<Void> notifyUserWith(Notification notification) {
         return consentNotificationClient.send(notification);
+    }
+
+    private void processConsentRequest(ConsentRequest consentRequest){
+        if (isAutoApproveConsentRequest(consentRequest)){
+            autoApproveFor(consentRequest);
+        } else {
+            createNotificationMessage(consentRequest)
+                    .flatMap(this::notifyUserWith)
+                    .block();
+        }
+    }
+
+    private boolean isAutoApproveConsentRequest(ConsentRequest consentRequest){
+        return true;
     }
 
     private Mono<Notification> createNotificationMessage(ConsentRequest consentRequest) {
@@ -85,5 +94,17 @@ public class ConsentRequestNotificationListener {
                                         consentRequest.getId()))
                                 .build())
                         .build());
+    }
+
+    private Mono<Void> autoApproveFor(ConsentRequest consentRequest) {
+        // TODO:: Perform the check Here
+         patientServiceClient.retrievePatientLinks(consentRequest.getDetail().getPatient().getId())
+                .flatMap(linkedCareContexts -> {
+                    System.out.println(linkedCareContexts);
+                    return null;
+                }).block();
+//         consentManager.approveConsent(consentRequest.getDetail().getPatient().getId(),
+//                consentRequest.getId().toString(), null);
+        return Mono.empty();
     }
 }

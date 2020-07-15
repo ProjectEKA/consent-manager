@@ -5,11 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
-import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
-import in.projecteka.consentmanager.clients.ConsentManagerClient;
-import in.projecteka.consentmanager.clients.OtpServiceClient;
-import in.projecteka.consentmanager.clients.PatientServiceClient;
-import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.*;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
@@ -173,7 +169,9 @@ public class ConsentConfiguration {
             ConsentServiceProperties consentServiceProperties,
             IdentityService identityService,
             GatewayServiceProperties gatewayServiceProperties,
-            ServiceAuthentication serviceAuthentication) {
+            ServiceAuthentication serviceAuthentication,
+            ConsentManager consentManager,
+            LinkServiceProperties linkServiceProperties) {
         return new ConsentRequestNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
@@ -184,7 +182,11 @@ public class ConsentConfiguration {
                         identityService::authenticate,
                         gatewayServiceProperties,
                         serviceAuthentication),
-                consentServiceProperties);
+                consentServiceProperties,
+                consentManager,
+                new PatientServiceClient(builder.build(),
+                        identityService::authenticate,
+                        linkServiceProperties.getUrl()));
     }
 
     @SneakyThrows

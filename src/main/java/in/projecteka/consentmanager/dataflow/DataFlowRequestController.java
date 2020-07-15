@@ -1,5 +1,7 @@
 package in.projecteka.consentmanager.dataflow;
 
+import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
@@ -15,9 +17,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
 import javax.validation.Valid;
 
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
 
@@ -25,7 +27,9 @@ import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORM
 @AllArgsConstructor
 public class DataFlowRequestController {
     private final DataFlowRequester dataFlowRequester;
+    private final RequestValidator validator;
 
+    @Deprecated
     @PostMapping("/health-information/request")
     public Mono<DataFlowRequestResponse> requestHealthInformation(@RequestBody DataFlowRequest dataFlowRequest) {
         return ReactiveSecurityContextHolder.getContext()
@@ -36,24 +40,42 @@ public class DataFlowRequestController {
     @PostMapping(PATH_HEALTH_INFORMATION_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> requestHealthInformationV1(@Valid @RequestBody GatewayDataFlowRequest dataFlowRequest) {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
-                .doOnSuccess(requester -> Mono.defer(() -> dataFlowRequester.requestHealthDataInfo(dataFlowRequest)).subscribe())
-                .then();
+        return Mono.just(dataFlowRequest)
+                .filterWhen(req -> validator.validate(req.getRequestId().toString(), req.getTimestamp().toString()))
+                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .flatMap(req -> ReactiveSecurityContextHolder.getContext()
+                        .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
+                        .doOnSuccess(requester -> Mono.defer(() ->
+                                validator.put(req.getRequestId().toString(), req.getTimestamp().toString())
+                                        .then(dataFlowRequester.requestHealthDataInfo(dataFlowRequest))).subscribe())
+                        .then());
     }
 
     @PostMapping(PATH_HEALTH_INFORMATION_ON_REQUEST)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public Mono<Void> onRequestHealthInformationV1(@RequestBody @Valid HealthInformationResponse healthInformationResponse) {
-        return dataFlowRequester.updateDataflowRequestStatus(healthInformationResponse);
+    public Mono<Void> onRequestHealthInformationV1(
+            @RequestBody @Valid HealthInformationResponse healthInformationResponse) {
+        return Mono.just(healthInformationResponse)
+                .filterWhen(res -> validator.validate(res.getRequestId().toString(), res.getTimestamp().toString()))
+                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .flatMap(res -> validator.put(
+                        healthInformationResponse.getRequestId().toString(),
+                        healthInformationResponse.getTimestamp().toString())
+                        .then(dataFlowRequester.updateDataflowRequestStatus(healthInformationResponse)));
     }
 
     @PostMapping(PATH_HEALTH_INFORMATION_NOTIFY)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> healthInformationNotify(@RequestBody HealthInfoNotificationRequest notificationRequest) {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
-                .doOnSuccess(requester -> Mono.defer(() -> dataFlowRequester.notifyHealthInformationStatus(notificationRequest)).subscribe())
-                .then();
+        return Mono.just(notificationRequest)
+                .filterWhen(req -> validator.validate(req.getRequestId().toString(), req.getTimestamp().toString()))
+                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .flatMap(req -> ReactiveSecurityContextHolder.getContext()
+                        .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
+                        .doOnSuccess(requester -> Mono.defer(() ->
+                                validator.put(req.getRequestId().toString(), req.getTimestamp().toString())
+                                        .then(dataFlowRequester.notifyHealthInformationStatus(notificationRequest)))
+                                .subscribe())
+                        .then());
     }
 }

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -13,6 +14,6 @@ import java.util.UUID;
 @Builder
 public class FetchRequest {
     private UUID requestId;
-    private String timestamp;
+    private LocalDateTime timestamp;
     private String consentId;
 }

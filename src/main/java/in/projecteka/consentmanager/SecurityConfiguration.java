@@ -39,17 +39,17 @@ import static in.projecteka.consentmanager.common.Constants.PATH_HEARTBEAT;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
-import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
-import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
+import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
+import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
+import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
-import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
-import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static java.util.stream.Collectors.toList;
 
 @Configuration
@@ -66,19 +66,20 @@ public class SecurityConfiguration {
             PATH_LINK_ON_INIT,
             PATH_LINK_ON_CONFIRM,
             PATH_HEALTH_INFORMATION_ON_REQUEST,
-            PATH_LINK_ON_CONFIRM,
             PATH_HEALTH_INFORMATION_REQUEST,
             PATH_HEALTH_INFORMATION_NOTIFY,
             PATH_HIP_CONSENT_ON_NOTIFY
     };
 
     static {
+        // Deprecated
         SERVICE_ONLY_URLS.add(Map.entry("/users/**", HttpMethod.GET));
         SERVICE_ONLY_URLS.add(Map.entry("/consents/**", HttpMethod.GET));
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/notification", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/request", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/consent-requests", HttpMethod.POST));
-
+        // Deprecated
+        
         SERVICE_ONLY_URLS.add(Map.entry(PATH_CONSENT_REQUESTS_INIT, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_CARE_CONTEXTS_ON_DISCOVER, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_LINK_ON_INIT, HttpMethod.POST));
@@ -112,23 +113,23 @@ public class SecurityConfiguration {
             ServerSecurityContextRepository securityContextRepository) {
 
         final String[] allowedListUrls = {"/**.json",
-                "/ValueSet/**.json",
-                "/patients/generateotp",
-                "/patients/verifyotp",
-                "/patients/profile/loginmode",
-                "/patients/profile/recovery-init",
-                "/patients/profile/recovery-confirm",
-                "/users/verify",
-                "/users/permit",
-                "/otpsession/verify",
-                "/otpsession/permit",
-                "/sessions",
-                PATH_HEARTBEAT,
-                "/**.html",
-                "/**.js",
-                "/**.yaml",
-                "/**.css",
-                "/**.png"};
+                                          "/ValueSet/**.json",
+                                          "/patients/generateotp",
+                                          "/patients/verifyotp",
+                                          "/patients/profile/loginmode",
+                                          "/patients/profile/recovery-init",
+                                          "/patients/profile/recovery-confirm",
+                                          "/users/verify",
+                                          "/users/permit",
+                                          "/otpsession/verify",
+                                          "/otpsession/permit",
+                                          "/sessions",
+                                          PATH_HEARTBEAT,
+                                          "/**.html",
+                                          "/**.js",
+                                          "/**.yaml",
+                                          "/**.css",
+                                          "/**.png"};
         httpSecurity.authorizeExchange().pathMatchers(allowedListUrls).permitAll();
         httpSecurity.httpBasic().disable().formLogin().disable().csrf().disable().logout().disable();
         httpSecurity
@@ -234,7 +235,7 @@ public class SecurityConfiguration {
                     .map(caller -> new UsernamePasswordAuthenticationToken(
                             caller,
                             token,
-                            new ArrayList<SimpleGrantedAuthority>()))
+                            new ArrayList<>()))
                     .map(SecurityContextImpl::new);
         }
 
@@ -266,7 +267,7 @@ public class SecurityConfiguration {
                     .map(caller -> new UsernamePasswordAuthenticationToken(
                             caller,
                             authToken,
-                            new ArrayList<SimpleGrantedAuthority>()))
+                            new ArrayList<>()))
                     .map(SecurityContextImpl::new);
         }
 
@@ -280,7 +281,7 @@ public class SecurityConfiguration {
                     .flatMap(token -> Mono.just(new UsernamePasswordAuthenticationToken(
                             token,
                             token,
-                            new ArrayList<SimpleGrantedAuthority>()))
+                            new ArrayList<>()))
                             .map(SecurityContextImpl::new));
         }
 
@@ -297,7 +298,7 @@ public class SecurityConfiguration {
             var auth = new UsernamePasswordAuthenticationToken(
                     authentication.getPrincipal(),
                     token,
-                    new ArrayList<SimpleGrantedAuthority>());
+                    new ArrayList<>());
             return Mono.just(auth);
         }
     }

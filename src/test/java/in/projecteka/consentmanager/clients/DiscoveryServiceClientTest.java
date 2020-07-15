@@ -26,7 +26,7 @@ import static in.projecteka.consentmanager.clients.TestBuilders.string;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-public class DiscoveryServiceClientTest {
+class DiscoveryServiceClientTest {
     @Captor
     private ArgumentCaptor<ClientRequest> captor;
     private DiscoveryServiceClient discoveryServiceClient;
@@ -44,7 +44,7 @@ public class DiscoveryServiceClientTest {
     }
 
     @Test
-    public void shouldPostDiscoverPatientRequestToGateway() throws IOException {
+    void shouldPostDiscoverPatientRequestToGateway() throws IOException {
         when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(
                 ClientResponse.create(HttpStatus.ACCEPTED)
                         .header("Content-Type", "application/json")

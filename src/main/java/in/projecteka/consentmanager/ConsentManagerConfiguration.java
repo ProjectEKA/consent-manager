@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
@@ -100,6 +101,18 @@ public class ConsentManagerConfiguration {
     @Bean({"accessToken"})
     public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
         return new RedisCacheAdapter(redisClient, 5);
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @Bean({"cacheForReplayAttack"})
+    public CacheAdapter<String, String> createLoadingCacheAdapterForReplayAttack() {
+        return new LoadingCacheAdapter(createSessionCache(10));
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"cacheForReplayAttack"})
+    public CacheAdapter<String, String> createRedisCacheAdapterForReplayAttack(RedisClient redisClient) {
+        return new RedisCacheAdapter(redisClient, 10);
     }
 
     @Bean
@@ -220,6 +233,11 @@ public class ConsentManagerConfiguration {
     public GatewayTokenVerifier centralRegistryTokenVerifier(
             @Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
         return new GatewayTokenVerifier(jwkSet);
+    }
+
+    @Bean
+    public RequestValidator requestValidator(@Qualifier("cacheForReplayAttack") CacheAdapter<String, String> cacheForReplayAttack) {
+        return new RequestValidator(cacheForReplayAttack);
     }
 
     @Bean

@@ -1,21 +1,13 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.clients.model.OtpRequestResponse;
-import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.HealthAccountServiceTokenResponse;
-import in.projecteka.consentmanager.user.UserService;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.clients.model.OtpRequestResponse;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
 
-import javax.net.ssl.SSLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,7 +26,7 @@ public class HealthAccountServiceClient {
 
     public Mono<OtpRequestResponse> send(OtpRequest otpRequest) {
         HashMap<String, String> requestBody = new HashMap<>();
-        requestBody.put("mobile", otpRequest.getCommunication().getValue());
+        requestBody.put("mobile", removeCountryCodeIfPresent(otpRequest));
 
         return webClient
                 .post()
@@ -57,8 +49,18 @@ public class HealthAccountServiceClient {
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .body(Mono.just(requestBody), Map.class)
                 .retrieve()
+                .onStatus(httpStatus -> httpStatus.value() == 401, clientResponse -> Mono.error(ClientError.invalidOtp()))
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(HealthAccountServiceTokenResponse.class);
+    }
+
+    private String removeCountryCodeIfPresent(OtpRequest otpRequest) {
+        String countryCode = "+91-";
+        String mobileNumber = otpRequest.getCommunication().getValue();
+        if (StringUtils.startsWithIgnoreCase(mobileNumber, countryCode)) {
+            return StringUtils.replace(mobileNumber, countryCode, "");
+        }
+        return mobileNumber;
     }
 
 }

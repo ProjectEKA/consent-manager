@@ -1,7 +1,7 @@
 podTemplate(containers: [
     containerTemplate(
       name: 'helm3',
-      image: 'projecteka/helm3:324',
+      image: 'vlasovatgmailcom/helm3-kubectl:latest',
       resourceRequestCpu: '100m',
       resourceLimitCpu: '300m',
       resourceRequestMemory: '300Mi',

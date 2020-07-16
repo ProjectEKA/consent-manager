@@ -597,7 +597,6 @@ class ConsentRequestUserJourneyTest {
                 .purpose(new ConsentPurpose())
                 .patient(PatientReference.builder().build())
                 .permission(permission)
-                .hipId(string())
                 .hiu(HIUReference.builder().build())
                 .hip(HIPReference.builder().build())
                 .hiTypes(HIType.values())

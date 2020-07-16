@@ -43,6 +43,8 @@ consentmanager:
     expiryInMinutes: ${OTP_EXPIRY_IN_MINUTES}
   jwt:
     secret: ${JWT_SECRET}
+  authorization:
+    header: ${AUTHORIZATION_HEADER:Authorization}
   keycloak:
     baseUrl: ${KEY_CLOAK_URL}
     clientId: ${KEY_CLOAK_CONSENT_CLIENT_ID}

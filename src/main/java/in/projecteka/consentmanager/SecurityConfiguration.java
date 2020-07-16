@@ -12,9 +12,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -51,6 +51,7 @@ import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
 import static java.util.stream.Collectors.toList;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -79,7 +80,7 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/request", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/consent-requests", HttpMethod.POST));
         // Deprecated
-        
+
         SERVICE_ONLY_URLS.add(Map.entry(PATH_CONSENT_REQUESTS_INIT, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_CARE_CONTEXTS_ON_DISCOVER, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_LINK_ON_INIT, HttpMethod.POST));
@@ -161,14 +162,17 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public SecurityContextRepository contextRepository(SignUpService signupService,
-                                                       Authenticator authenticator,
-                                                       PinVerificationTokenService pinVerificationTokenService,
-                                                       GatewayTokenVerifier gatewayTokenVerifier) {
+    public SecurityContextRepository contextRepository(
+            SignUpService signupService,
+            Authenticator authenticator,
+            PinVerificationTokenService pinVerificationTokenService,
+            GatewayTokenVerifier gatewayTokenVerifier,
+            @Value("${consentmanager.authorization.header}") String authorizationHeader) {
         return new SecurityContextRepository(signupService,
                 authenticator,
                 pinVerificationTokenService,
-                gatewayTokenVerifier);
+                gatewayTokenVerifier,
+                authorizationHeader);
     }
 
     @RequiredArgsConstructor
@@ -186,6 +190,7 @@ public class SecurityConfiguration {
         private final Authenticator identityServiceClient;
         private final PinVerificationTokenService pinVerificationTokenService;
         private final GatewayTokenVerifier gatewayTokenVerifier;
+        private final String authorizationHeader;
 
         @Override
         public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {
@@ -194,12 +199,17 @@ public class SecurityConfiguration {
 
         @Override
         public Mono<SecurityContext> load(ServerWebExchange exchange) {
-            var token = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            String requestPath = exchange.getRequest().getPath().toString();
+            HttpMethod requestMethod = exchange.getRequest().getMethod();
+
+            if (isGatewayAuthenticationOnly(requestPath, requestMethod)) {
+                return checkGateway(exchange.getRequest().getHeaders().getFirst(AUTHORIZATION));
+            }
+
+            var token = exchange.getRequest().getHeaders().getFirst(authorizationHeader);
             if (isEmpty(token)) {
                 return Mono.empty();
             }
-            String requestPath = exchange.getRequest().getPath().toString();
-            HttpMethod requestMethod = exchange.getRequest().getMethod();
             if (isSignUpRequest(requestPath, requestMethod)) {
                 return checkSignUp(token);
             }
@@ -210,16 +220,12 @@ public class SecurityConfiguration {
                 }
                 return validatePinVerificationRequest(token, validScope.get());
             }
-            if (isCentralRegistryAuthenticatedOnlyRequest(
-                    requestPath,
-                    requestMethod)) {
-                return checkCentralRegistry(token);
-            }
             return check(token);
         }
 
-        private Mono<SecurityContext> checkCentralRegistry(String token) {
-            return gatewayTokenVerifier.verify(token)
+        private Mono<SecurityContext> checkGateway(String token) {
+            return Mono.justOrEmpty(token)
+                    .flatMap(gatewayTokenVerifier::verify)
                     .map(serviceCaller -> {
                         var authorities = serviceCaller.getRoles()
                                 .stream()
@@ -239,7 +245,7 @@ public class SecurityConfiguration {
                     .map(SecurityContextImpl::new);
         }
 
-        private boolean isCentralRegistryAuthenticatedOnlyRequest(String url, HttpMethod method) {
+        private boolean isGatewayAuthenticationOnly(String url, HttpMethod method) {
             AntPathMatcher antPathMatcher = new AntPathMatcher();
             return SERVICE_ONLY_URLS.stream()
                     .anyMatch(pattern ->

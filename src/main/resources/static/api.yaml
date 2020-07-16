@@ -2946,7 +2946,7 @@ components:
         token:
           type: string
           description: JWT Token
-        health-id:
+        healthId:
           type: string
           example: 12345 12345 12345
 
@@ -2958,7 +2958,7 @@ components:
           example: abc@ndhm
         password:
           type: string
-        health-id:
+        healthId:
           type: string
           example: 12345 12345 12345
       required:

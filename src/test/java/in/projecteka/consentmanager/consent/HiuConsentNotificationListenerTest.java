@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.consent;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;

@@ -76,7 +76,7 @@ consentmanager:
     # In milliseconds
     retryInterval: ${LISTENERS_RETRY_INTERVAL}
   nhsproperties:
-    hiuid: ${NHS_HIU_ID}
+    hiuid: ${NHS_HIU_ID:12342345}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}

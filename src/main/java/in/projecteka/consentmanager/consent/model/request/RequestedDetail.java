@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.consent.model.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import in.projecteka.consentmanager.consent.model.ConsentPermission;
 import in.projecteka.consentmanager.consent.model.ConsentPurpose;
 import in.projecteka.consentmanager.consent.model.HIPReference;
@@ -37,10 +36,6 @@ public class RequestedDetail {
 	@Valid
 	private HIPReference hip;
 
-	@JsonProperty
-	@Valid
-	private String  hipId;
-
 	@Valid
 	@NotNull(message = "HIU is not specified.")
 	private HIUReference hiu;
@@ -60,9 +55,6 @@ public class RequestedDetail {
 	private String consentNotificationUrl;
 
 	public Optional<String> getHIPId() {
-		if(hipId !=null){
-			return Optional.of(hipId);
-		}
 		return Optional.ofNullable(hip).map(HIPReference::getId);
 	}
 

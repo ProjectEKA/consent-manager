@@ -60,34 +60,41 @@ podTemplate(containers: [
                 sh 'helm repo update'
             }
         }
-        stage('Build Image'){
-            container('docker'){
-
-              withCredentials([usernamePassword(credentialsId: 'docker-login', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                sh 'docker login --username="${USERNAME}" --password="${PASSWORD}"'
-                sh "docker build -t ${REPOSITORY_URI}:${BUILD_NUMBER} ."
-                sh 'docker image ls'
-              }
-
-            }
-        }
-
         stage('Push Image'){
             container('docker'){
-              withCredentials([usernamePassword(credentialsId: 'docker-login', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                 sh 'docker image ls'
-                sh "docker push ${REPOSITORY_URI}:${BUILD_NUMBER}"
+                sh "docker pull ${REPOSITORY_URI}:92f47fd"
               }
             }
         }
-
-        stage('Deploy Image to k8s'){
-            container('helm'){
-                sh 'helm list'
-                sh "helm lint ./${HELM_CHART_DIRECTORY}"
-                sh "helm upgrade --wait --timeout 60 ${HELM_APP_NAME} ./${HELM_CHART_DIRECTORY}"
-                sh "helm list | grep ${HELM_APP_NAME}"
-            }
-        }
+//         stage('Build Image'){
+//             container('docker'){
+//
+//               withCredentials([usernamePassword(credentialsId: 'docker-login', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+//                 sh 'docker login --username="${USERNAME}" --password="${PASSWORD}"'
+//                 sh "docker build -t ${REPOSITORY_URI}:${BUILD_NUMBER} ."
+//                 sh 'docker image ls'
+//               }
+//
+//             }
+//         }
+//
+//         stage('Push Image'){
+//             container('docker'){
+//               withCredentials([usernamePassword(credentialsId: 'docker-login', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+//                 sh 'docker image ls'
+//                 sh "docker push ${REPOSITORY_URI}:${BUILD_NUMBER}"
+//               }
+//             }
+//         }
+//
+//         stage('Deploy Image to k8s'){
+//             container('helm'){
+//                 sh 'helm list'
+//                 sh "helm lint ./${HELM_CHART_DIRECTORY}"
+//                 sh "helm upgrade --wait --timeout 60 ${HELM_APP_NAME} ./${HELM_CHART_DIRECTORY}"
+//                 sh "helm list | grep ${HELM_APP_NAME}"
+//             }
+//         }
     }
 }

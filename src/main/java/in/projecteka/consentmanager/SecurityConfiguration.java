@@ -204,7 +204,10 @@ public class SecurityConfiguration {
 
             if (isGatewayAuthenticationOnly(requestPath, requestMethod)) {
                 var token = exchange.getRequest().getHeaders().getFirst(AUTHORIZATION);
-                return checkCentralRegistry(token);
+                if (isEmpty(token)) {
+                    return Mono.empty();
+                }
+                return checkGateway(token);
             }
 
             var token = exchange.getRequest().getHeaders().getFirst(authorizationHeader);
@@ -224,7 +227,7 @@ public class SecurityConfiguration {
             return check(token);
         }
 
-        private Mono<SecurityContext> checkCentralRegistry(String token) {
+        private Mono<SecurityContext> checkGateway(String token) {
             return gatewayTokenVerifier.verify(token)
                     .map(serviceCaller -> {
                         var authorities = serviceCaller.getRoles()

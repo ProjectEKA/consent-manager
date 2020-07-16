@@ -6,7 +6,8 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class NhsPolicyCheck implements PolicyCheck<ConsentRequest> {
     @Override
-    public void checkPolicyFor(ConsentRequest consent) {
-
+    public boolean checkPolicyFor(ConsentRequest consent, String hiuId) {
+        return (consent.getDetail().getPatient().getId().equals(consent.getDetail().getRequester().getName()) &&
+                consent.getDetail().getHiu().getId().equals(hiuId));
     }
 }

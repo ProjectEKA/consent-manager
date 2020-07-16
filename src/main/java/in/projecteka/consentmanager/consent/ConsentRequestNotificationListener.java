@@ -6,8 +6,17 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.consent.model.*;
+import in.projecteka.consentmanager.consent.model.Action;
+import in.projecteka.consentmanager.consent.model.Communication;
+import in.projecteka.consentmanager.consent.model.CommunicationType;
+import in.projecteka.consentmanager.consent.model.ConsentRequest;
+import in.projecteka.consentmanager.consent.model.Content;
+import in.projecteka.consentmanager.consent.model.GrantedContext;
+import in.projecteka.consentmanager.consent.model.HIPReference;
+import in.projecteka.consentmanager.consent.model.HIType;
+import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
+import in.projecteka.consentmanager.consent.policies.NhsPolicyCheck;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +45,7 @@ public class ConsentRequestNotificationListener {
     private final ConsentServiceProperties consentServiceProperties;
     private final ConsentManager consentManager;
     private final PatientServiceClient patientServiceClient;
+    private final NHSProperties nhsProperties;
 
     @PostConstruct
     public void subscribe() throws ClientError {
@@ -78,7 +88,7 @@ public class ConsentRequestNotificationListener {
     }
 
     private boolean isAutoApproveConsentRequest(ConsentRequest consentRequest) {
-        return true;
+        return new NhsPolicyCheck().checkPolicyFor(consentRequest, nhsProperties.getHiuId());
     }
 
     private Mono<Notification> createNotificationMessage(ConsentRequest consentRequest) {

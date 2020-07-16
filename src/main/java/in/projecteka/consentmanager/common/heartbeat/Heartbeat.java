@@ -25,14 +25,16 @@ import java.util.concurrent.TimeoutException;
 
 @AllArgsConstructor
 public class Heartbeat {
+    public static final String REDIS_CACHE = "redis";
     private final IdentityServiceProperties identityServiceProperties;
     private final DbOptions dbOptions;
     private final RabbitmqOptions rabbitmqOptions;
     private final RedisOptions redisOptions;
+    private final CacheMethodProperty cacheMethodProperty;
 
     public Mono<HeartbeatResponse> getStatus() {
         try {
-            return isPostgresUp() && isKeycloakUp() && isRabbitMQUp() && isRedisUp()
+            return isPostgresUp() && isKeycloakUp() && isRabbitMQUp() && isCacheUp()
                     ? Mono.just(HeartbeatResponse.builder()
                     .timeStamp(Instant.now().toString())
                     .status(Status.UP)
@@ -51,8 +53,10 @@ public class Heartbeat {
         }
     }
 
-    private boolean isRedisUp() throws IOException {
-        return checkConnection(redisOptions.getHost(), redisOptions.getPort());
+    private boolean isCacheUp() throws IOException {
+        if (cacheMethodProperty.getMethodName().equalsIgnoreCase(REDIS_CACHE))
+            return checkConnection(redisOptions.getHost(), redisOptions.getPort());
+        return true;
     }
 
     private boolean isRabbitMQUp() throws IOException, TimeoutException {

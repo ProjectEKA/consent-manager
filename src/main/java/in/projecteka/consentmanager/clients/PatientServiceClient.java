@@ -1,15 +1,11 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.LinkedCareContexts;
-import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-
 import java.util.function.Supplier;
-
-import static com.google.common.net.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
 public class PatientServiceClient {

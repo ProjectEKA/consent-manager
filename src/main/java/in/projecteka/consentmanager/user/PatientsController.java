@@ -6,28 +6,7 @@ import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
-import in.projecteka.consentmanager.user.model.ChangePinRequest;
-import in.projecteka.consentmanager.user.model.CreatePinRequest;
-import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
-import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
-import in.projecteka.consentmanager.user.model.Identifier;
-import in.projecteka.consentmanager.user.model.IdentifierGroup;
-import in.projecteka.consentmanager.user.model.IdentifierType;
-import in.projecteka.consentmanager.user.model.InitiateCmIdRecoveryRequest;
-import in.projecteka.consentmanager.user.model.LoginModeResponse;
-import in.projecteka.consentmanager.user.model.OtpAttempt;
-import in.projecteka.consentmanager.user.model.OtpMediumType;
-import in.projecteka.consentmanager.user.model.OtpVerification;
-import in.projecteka.consentmanager.user.model.Profile;
-import in.projecteka.consentmanager.user.model.RecoverCmIdResponse;
-import in.projecteka.consentmanager.user.model.SendOtpAction;
-import in.projecteka.consentmanager.user.model.SignUpRequest;
-import in.projecteka.consentmanager.user.model.SignUpResponse;
-import in.projecteka.consentmanager.user.model.Token;
-import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
-import in.projecteka.consentmanager.user.model.UpdateUserRequest;
-import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
-import in.projecteka.consentmanager.user.model.ValidatePinRequest;
+import in.projecteka.consentmanager.user.model.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -105,11 +84,48 @@ public class PatientsController {
                                        @RequestHeader(name = "Authorization") String token) {
         var signUpRequests = SignUpRequestValidator.validate(request);
         return signUpRequests.isValid()
-                ? Mono.justOrEmpty(signupService.sessionFrom(token))
+                ? Mono.justOrEmpty(signupService.txnIdFrom(token))
                 .flatMap(txnId->hasSignupService.createHASAccount(request, token,txnId))
                 : Mono.error(new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_REQUESTER,
                         signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));
+    }
+
+    @PostMapping("/v1/ha/create_account_verified_mobile_token")
+    public Mono<HASSignUpResponse> signUPHAS(@RequestBody HASSignupRequest hasSignupRequest) {
+        var response = HASSignUpResponse.builder()
+                .firstName("hina")
+                .middleName("")
+                .lastName("patel")
+                .dayOfBirth(1)
+                .monthOfBirth(1)
+                .yearOfBirth(2020)
+                .healthId("tempId")
+                .name("hina patel")
+                .gender("F")
+                .token("tempToken")
+                .stateCode("01")
+                .districtCode("02")
+                .build();
+
+        return Mono.just(response);
+    }
+
+    @PostMapping ("v1/ha/account_update")
+    public Mono<Void> dummy() {
+       return Mono.empty();
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("/profile/update-login-details")
+    public Mono<Session> create(@RequestBody UpdateLoginDetailsRequest request,
+                                       @RequestHeader(name = "Authorization") String token) {
+        var loginRequests = SignUpRequestValidator.validateLoginDetails(request, userService.getUserIdSuffix());
+        return loginRequests.isValid()
+                ? hasSignupService.updateHASLoginDetails(request, token)
+                : Mono.error(new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(INVALID_REQUESTER,
+                        loginRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));
     }
 
     @PostMapping(Constants.APP_PATH_GENERATE_OTP)

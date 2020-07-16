@@ -19,4 +19,5 @@ public class HASSignupRequest {
     private final Integer monthOfBirth;
     private final Integer yearOfBirth;
     private final String token;
+    private final String txnId;
 }

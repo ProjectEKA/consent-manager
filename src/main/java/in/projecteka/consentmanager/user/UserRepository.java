@@ -1,11 +1,7 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.common.DbOperationError;
-import in.projecteka.consentmanager.user.model.DateOfBirth;
-import in.projecteka.consentmanager.user.model.Gender;
-import in.projecteka.consentmanager.user.model.HealthAccountUser;
-import in.projecteka.consentmanager.user.model.PatientName;
-import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.consentmanager.user.model.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
@@ -20,7 +16,7 @@ public class UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
     private static final String INSERT_PATIENT = "Insert into patient(health_id, " +
             "first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number)" +
-            " values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);";
+            " values($1, $2, $3, $4, $5, $6, $7, $8, $9);";
 
     private static final String SELECT_PATIENT = "select id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers " +
             "from patient where id = $1";
@@ -29,6 +25,8 @@ public class UserRepository {
             " where gender = $1 and phone_number = $2";
 
     private final static String DELETE_PATIENT = "DELETE FROM patient WHERE id=$1";
+
+    private final String UPDATE_CM_ID = "Update patient set id=$1 where health_id=$2";
 
     private final PgPool dbClient;
 
@@ -150,4 +148,9 @@ public class UserRepository {
                         }));
     }
 
+    public Mono<Void> updateCMId(String healthId, String cmId) {
+        Tuple userDetails = Tuple.of(healthId,cmId);
+        System.out.println("UPDATE CM_ID : came ------> \n");
+        return doOperation(UPDATE_CM_ID, userDetails);
+    }
 }

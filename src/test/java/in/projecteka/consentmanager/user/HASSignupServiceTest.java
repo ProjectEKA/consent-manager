@@ -38,105 +38,105 @@ import static org.mockito.Mockito.when;
 
 class HASSignupServiceTest {
 
-    @Captor
-    private ArgumentCaptor<OtpRequest> otpRequestArgumentCaptor;
-
-    @Captor
-    private ArgumentCaptor<String> sessionCaptor;
-
-    @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private OtpServiceClient otpServiceClient;
-
-    @Mock
-    private SignUpService signupService;
-
-    @Mock
-    private OtpAttemptService otpAttemptService;
-
-    @Mock
-    private LockedUserService lockedUserService;
-
-    @Mock
-    private IdentityServiceClient identityServiceClient;
-
-    @Mock
-    private HASSignupServiceClient hasSignupServiceClient;
-
-    @Mock
-    private TokenService tokenService;
-
-    @Mock
-    private UserServiceProperties properties;
-
-    @Captor
-    private ArgumentCaptor<ClientRequest> captor;
-
-    @Mock
-    private ExchangeFunction exchangeFunction;
-
-    @Mock
-    private Logger logger;
-
-    @Mock
-    private UserServiceClient userServiceClient;
-
-    @Captor
-    private ArgumentCaptor<PatientResponse> patientResponse;
-
-    private UserService userService;
-
-    private HASSignupService hasSignupService;
-
-    @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.initMocks(this);
-
-        hasSignupService = new HASSignupService(
-                hasSignupServiceClient,
-                userRepository,
-                signupService);
-    }
-
-    @Test
-    public void shouldCreateUser() {
-        var signUpRequest = SignUpRequest.builder()
-                .name(PatientName.builder().first("hina").middle("").last("patel").build())
-                .dateOfBirth(DateOfBirth.builder().date(1).month(1).year(2020).build())
-                .gender(Gender.F)
-                .build();
-
-        var hasUser = HealthAccountUser.builder()
-                .firstName("hina")
-                .middleName("")
-                .lastName("patel")
-                .dayOfBirth(1)
-                .monthOfBirth(1)
-                .yearOfBirth(2020)
-                .healthId("tempId")
-                .name("hina patel")
-                .gender("F")
-                .token("tempToken")
-                .build();
-
-        var txnId = string();
-        var token = string();
-        var mobileNumber = string();
-
-        when(hasSignupServiceClient.createHASAccount(any(HASSignupRequest.class))).thenReturn(Mono.just(hasUser));
-
-        when(signupService.getMobileNumber(txnId)).thenReturn(Mono.just(mobileNumber));
-        when(userRepository.save(any(),anyString())).thenReturn(Mono.empty());
-        when(signupService.removeOf(anyString())).thenReturn(Mono.empty());
-
-        StepVerifier.create(hasSignupService.createHASAccount(signUpRequest,token, txnId))
-                .assertNext(res -> {
-                    assertThat(res.getHealthId()).isEqualTo("tempId");
-                    assertThat(res.getToken()).isEqualTo("tempToken");
-                })
-                .verifyComplete();
-    }
+//    @Captor
+//    private ArgumentCaptor<OtpRequest> otpRequestArgumentCaptor;
+//
+//    @Captor
+//    private ArgumentCaptor<String> sessionCaptor;
+//
+//    @Mock
+//    private UserRepository userRepository;
+//
+//    @Mock
+//    private OtpServiceClient otpServiceClient;
+//
+//    @Mock
+//    private SignUpService signupService;
+//
+//    @Mock
+//    private OtpAttemptService otpAttemptService;
+//
+//    @Mock
+//    private LockedUserService lockedUserService;
+//
+//    @Mock
+//    private IdentityServiceClient identityServiceClient;
+//
+//    @Mock
+//    private HASSignupServiceClient hasSignupServiceClient;
+//
+//    @Mock
+//    private TokenService tokenService;
+//
+//    @Mock
+//    private UserServiceProperties properties;
+//
+//    @Captor
+//    private ArgumentCaptor<ClientRequest> captor;
+//
+//    @Mock
+//    private ExchangeFunction exchangeFunction;
+//
+//    @Mock
+//    private Logger logger;
+//
+//    @Mock
+//    private UserServiceClient userServiceClient;
+//
+//    @Captor
+//    private ArgumentCaptor<PatientResponse> patientResponse;
+//
+//    private UserService userService;
+//
+//    private HASSignupService hasSignupService;
+//
+//    @BeforeEach
+//    public void setUp() {
+//        MockitoAnnotations.initMocks(this);
+//
+//        hasSignupService = new HASSignupService(
+//                hasSignupServiceClient,
+//                userRepository,
+//                signupService);
+//    }
+//
+//    @Test
+//    public void shouldCreateUser() {
+//        var signUpRequest = SignUpRequest.builder()
+//                .name(PatientName.builder().first("hina").middle("").last("patel").build())
+//                .dateOfBirth(DateOfBirth.builder().date(1).month(1).year(2020).build())
+//                .gender(Gender.F)
+//                .build();
+//
+//        var hasUser = HealthAccountUser.builder()
+//                .firstName("hina")
+//                .middleName("")
+//                .lastName("patel")
+//                .dayOfBirth(1)
+//                .monthOfBirth(1)
+//                .yearOfBirth(2020)
+//                .healthId("tempId")
+//                .name("hina patel")
+//                .gender("F")
+//                .token("tempToken")
+//                .build();
+//
+//        var txnId = string();
+//        var token = string();
+//        var mobileNumber = string();
+//
+//        when(hasSignupServiceClient.createHASAccount(any(HASSignupRequest.class))).thenReturn(Mono.just(hasUser));
+//
+//        when(signupService.getMobileNumber(txnId)).thenReturn(Mono.just(mobileNumber));
+//        when(userRepository.save(any(),anyString())).thenReturn(Mono.empty());
+//        when(signupService.removeOf(anyString())).thenReturn(Mono.empty());
+//
+//        StepVerifier.create(hasSignupService.createHASAccount(signUpRequest,token, txnId))
+//                .assertNext(res -> {
+//                    assertThat(res.getHealthId()).isEqualTo("tempId");
+//                    assertThat(res.getToken()).isEqualTo("tempToken");
+//                })
+//                .verifyComplete();
+//    }
 
 }

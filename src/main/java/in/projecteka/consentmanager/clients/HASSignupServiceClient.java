@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
 import in.projecteka.consentmanager.user.model.HealthAccountUser;
+import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -29,5 +30,18 @@ public class HASSignupServiceClient {
                 .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(HealthAccountUser.class);
+    }
+
+    public Mono<Void> updateHASAccount(UpdateHASUserRequest request) {
+        return webClient
+                .post()
+                .uri(uriBuilder -> uriBuilder.path("patients/v1/ha/account_update").build())
+                .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                .body(Mono.just(request), HASSignupRequest.class)
+                .accept(APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .toBodilessEntity()
+                .then();
     }
 }

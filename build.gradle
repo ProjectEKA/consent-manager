@@ -71,6 +71,7 @@ dependencies {
     implementation 'org.passay:passay:1.6.0'
     implementation 'io.lettuce:lettuce-core:5.3.1.RELEASE'
     implementation 'net.logstash.logback:logstash-logback-encoder:6.4'
+    implementation 'com.auth0:java-jwt:3.10.3'
 }
 
 test {

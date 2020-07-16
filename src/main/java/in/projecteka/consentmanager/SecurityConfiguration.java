@@ -124,6 +124,8 @@ public class SecurityConfiguration {
                 "/otpsession/permit",
                 "/sessions",
                 PATH_HEARTBEAT,
+                "/patients/v1/ha/create_account_verified_mobile_token",
+                "/patients/profile/update-login-details",
                 "/**.html",
                 "/**.js",
                 "/**.yaml",

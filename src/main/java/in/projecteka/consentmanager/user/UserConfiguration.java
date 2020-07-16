@@ -174,15 +174,21 @@ public class UserConfiguration {
     }
 
     @Bean
-    public HASSignupServiceClient hasSignupServiceClient(@Qualifier("customBuilder") WebClient.Builder builder) {
-        return new HASSignupServiceClient(builder, "http://localhost:8090");
+    public HASSignupServiceClient hasSignupServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
+                                                         HealthAccountServiceProperties healthAccountServiceProperties) {
+        return new HASSignupServiceClient(builder, healthAccountServiceProperties.getUrl());
     }
 
     @Bean
     public HASSignupService hasSignupService(HASSignupServiceClient hasSignupServiceClient,
                                              UserRepository userRepository,
-                                             SignUpService signUpService) {
-        return new HASSignupService(hasSignupServiceClient,userRepository,signUpService);
+                                             SignUpService signUpService,
+                                             UserService userService,
+                                             TokenService tokenService,
+                                             IdentityServiceClient identityServiceClient,
+                                             SessionService sessionService) {
+        return new HASSignupService(hasSignupServiceClient,userRepository,signUpService,
+                 userService, tokenService, identityServiceClient, sessionService);
     }
 
     @Bean

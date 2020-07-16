@@ -317,7 +317,7 @@ public class UserService {
                 .switchIfEmpty(Mono.just(LoginModeResponse.builder().loginMode(LoginMode.OTP).build()));
     }
 
-    private Mono<Object> userExistsWith(String username) {
+    public Mono<Object> userExistsWith(String username) {
         return userRepository.userWith(username)
                 .flatMap(patient -> {
                     logger.error(format("Patient with %s already exists", patient.getIdentifier()));

@@ -1,5 +1,10 @@
 package in.projecteka.consentmanager.user;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.exception.InvalidSessionException;
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
@@ -18,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
+import java.security.PublicKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +63,7 @@ public class SignUpService {
 
     public Mono<Boolean> validateToken(String token) {
         try {
-            var session = sessionFrom(token);
+            var session = txnIdFrom(token);
             return verifiedSessions.
                     getIfPresent(session)
                     .flatMap(s -> Mono.just(true))
@@ -66,6 +72,10 @@ public class SignUpService {
             logger.error(e.getMessage(), e);
             return Mono.just(false);
         }
+    }
+
+    public String txnIdFrom(String token) {
+       return JWT.decode(token).getClaim("txnId").asString();
     }
 
     public Mono<Token> generateToken(String sessionId) {

@@ -1,14 +1,7 @@
 package in.projecteka.consentmanager.user;
 
 import com.google.common.base.Strings;
-import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
-import in.projecteka.consentmanager.user.model.DateOfBirth;
-import in.projecteka.consentmanager.user.model.Gender;
-import in.projecteka.consentmanager.user.model.Identifier;
-import in.projecteka.consentmanager.user.model.IdentifierType;
-import in.projecteka.consentmanager.user.model.PatientName;
-import in.projecteka.consentmanager.user.model.SignUpIdentifier;
-import in.projecteka.consentmanager.user.model.SignUpRequest;
+import in.projecteka.consentmanager.user.model.*;
 import io.vavr.collection.CharSeq;
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
@@ -51,6 +44,19 @@ public class SignUpRequestValidator {
                                     .gender(gender)
                                     .dateOfBirth(dateOfBirth)
                                     .build()
+                );
+    }
+
+    public static Validation<Seq<String>, UpdateLoginDetailsRequest> validateLoginDetails(UpdateLoginDetailsRequest updateLoginDetailsRequest, String cmSuffix) {
+        return Validation.combine(
+                validateUserName(updateLoginDetailsRequest.getCmId(), cmSuffix),
+                validatePassword(updateLoginDetailsRequest.getPassword()))
+                .ap((cmId, password) ->
+                        UpdateLoginDetailsRequest.builder()
+                                .cmId(cmId)
+                                .password(password)
+                                .healthId(updateLoginDetailsRequest.getHealthId())
+                                .build()
                 );
     }
 

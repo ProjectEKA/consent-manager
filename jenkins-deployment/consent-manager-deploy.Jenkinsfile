@@ -87,7 +87,7 @@ podTemplate(containers: [
 //                                 namespace: 'nha-app-demo1'
                  ]) {
                     sh 'kubectl config view'
-                    sh 'kubectl get pods'
+                    sh 'kubectl get pods -n nha-demo-app1'
                     sh 'helm lint ./${HELM_CHART_DIRECTORY}'
                 }
             }

@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.user.model.*;
 import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
@@ -20,6 +21,7 @@ public class HASSignupService {
     private final TokenService tokenService;
     private final IdentityServiceClient identityServiceClient;
     private final SessionService sessionService;
+    private final BCryptPasswordEncoder passwordEncoder;
 
 
     public Mono<SignUpResponse> createHASAccount(SignUpRequest signUpRequest, String token, String txnId) {
@@ -79,6 +81,6 @@ public class HASSignupService {
     }
 
     private String encryptPassword(String password) {
-        return "";
+        return passwordEncoder.encode(password);
     }
 }

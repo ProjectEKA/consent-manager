@@ -186,9 +186,10 @@ public class UserConfiguration {
                                              UserService userService,
                                              TokenService tokenService,
                                              IdentityServiceClient identityServiceClient,
-                                             SessionService sessionService) {
+                                             SessionService sessionService,
+                                             BCryptPasswordEncoder bCryptPasswordEncoder) {
         return new HASSignupService(hasSignupServiceClient,userRepository,signUpService,
-                 userService, tokenService, identityServiceClient, sessionService);
+                 userService, tokenService, identityServiceClient, sessionService, bCryptPasswordEncoder);
     }
 
     @Bean

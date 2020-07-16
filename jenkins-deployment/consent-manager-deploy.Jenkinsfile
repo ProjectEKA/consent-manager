@@ -1,27 +1,7 @@
 podTemplate(containers: [
     containerTemplate(
-      name: 'docker',
-      image: 'docker',
-      command: 'cat',
-      resourceRequestCpu: '100m',
-      resourceLimitCpu: '300m',
-      resourceRequestMemory: '300Mi',
-      resourceLimitMemory: '500Mi',
-      ttyEnabled: true
-    ),
-    containerTemplate(
-      name: 'kubectl',
-      image: 'amaceog/kubectl',
-      resourceRequestCpu: '100m',
-      resourceLimitCpu: '300m',
-      resourceRequestMemory: '300Mi',
-      resourceLimitMemory: '500Mi',
-      ttyEnabled: true,
-      command: 'cat'
-    ),
-    containerTemplate(
-      name: 'helm',
-      image: 'alpine/helm:2.14.0',
+      name: 'helm3',
+      image: 'projecteka/helm3:3.2.4',
       resourceRequestCpu: '100m',
       resourceLimitCpu: '300m',
       resourceRequestMemory: '300Mi',
@@ -89,13 +69,16 @@ podTemplate(containers: [
 //         }
 //
         stage('Deploy Image to k8s'){
-            container('helm'){
-                sh 'helm init --upgrade'
-                sh 'helm list'
-//                 sh "helm lint ./${HELM_CHART_DIRECTORY}"
-                sh "helm upgrade --wait --timeout 60 ${HELM_APP_NAME} ./${HELM_CHART_DIRECTORY} --dry-run"
-//                 sh "helm list | grep ${HELM_APP_NAME}"
+            withCredentials([string(credentialsId: 'kube_config_sandbox_cluster', variable: 'KUBECONFIG')]) {
+                container('helm'){
+                //                 sh 'helm init --upgrade'
+                    sh 'helm list'
+                    sh "helm lint ./${HELM_CHART_DIRECTORY}"
+                //                 sh "helm upgrade --wait --timeout 60 ${HELM_APP_NAME} ./${HELM_CHART_DIRECTORY} --dry-run"
+                //                 sh "helm list | grep ${HELM_APP_NAME}"
+                }
             }
+
         }
     }
 }

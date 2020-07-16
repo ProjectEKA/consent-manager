@@ -117,7 +117,7 @@ public class ConsentRequestNotificationListener {
         List<GrantedContext> grantedContexts = new ArrayList<>();
         List<GrantedConsent> grantedConsents = new ArrayList<>();
         return patientServiceClient.retrievePatientLinks(consentRequest.getDetail().getPatient().getId())
-                .map(linkedCareContexts -> linkedCareContexts.getCareContext(consentRequest.getDetail().getHIPId().get()))
+                .map(linkedCareContexts -> linkedCareContexts.getCareContext(consentRequest.getDetail().getHip().getId()))
                 .flatMap(linkedCareContexts -> {
                     linkedCareContexts.forEach(careContext -> {
                         grantedContexts.add(GrantedContext.builder()
@@ -128,7 +128,7 @@ public class ConsentRequestNotificationListener {
 
                     grantedConsents.add(GrantedConsent.builder()
                             .careContexts(grantedContexts)
-                            .hip(HIPReference.builder().id(consentRequest.getDetail().getHIPId().get()).build())
+                            .hip(consentRequest.getDetail().getHip())
                             .hiTypes(consentRequest.getDetail().getHiTypes())
                             .permission(consentRequest.getDetail().getPermission())
                             .build());

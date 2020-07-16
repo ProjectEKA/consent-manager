@@ -59,7 +59,6 @@ podTemplate(containers: [
             container('helm') {
                 sh 'helm init --client-only --skip-refresh'
                 sh 'helm repo update'
-                sh 'echo $KUBECONFIG'
             }
         }
         stage('Pull Image'){
@@ -89,13 +88,13 @@ podTemplate(containers: [
 //             }
 //         }
 //
-//         stage('Deploy Image to k8s'){
-//             container('helm'){
-//                 sh 'helm list'
-//                 sh "helm lint ./${HELM_CHART_DIRECTORY}"
-//                 sh "helm upgrade --wait --timeout 60 ${HELM_APP_NAME} ./${HELM_CHART_DIRECTORY}"
-//                 sh "helm list | grep ${HELM_APP_NAME}"
-//             }
-//         }
+        stage('Deploy Image to k8s'){
+            container('helm'){
+                sh 'helm list'
+                sh "helm lint ./${HELM_CHART_DIRECTORY}"
+                sh "helm upgrade --wait --timeout 60 ${HELM_APP_NAME} ./${HELM_CHART_DIRECTORY}"
+                sh "helm list | grep ${HELM_APP_NAME}"
+            }
+        }
     }
 }

@@ -45,28 +45,28 @@ podTemplate(containers: [
         stage('Get latest version of code') {
           checkout scm
         }
-        stage('Check running containers') {
-            container('docker') {
-                sh 'hostname'
-                sh 'hostname -i'
-                sh 'docker ps'
-                sh 'ls'
-            }
-            container('kubectl') {
-                sh 'kubectl get pods -n default'
-                sh 'kubectl config view'
-            }
-            container('helm') {
-                sh 'helm init --client-only --skip-refresh'
-                sh 'helm repo update'
-            }
-        }
-        stage('Pull Image'){
-            container('docker'){
-                sh 'docker image ls'
-                sh "docker pull ${REPOSITORY_URI}:92f47fd"
-            }
-        }
+//         stage('Check running containers') {
+//             container('docker') {
+//                 sh 'hostname'
+//                 sh 'hostname -i'
+//                 sh 'docker ps'
+//                 sh 'ls'
+//             }
+//             container('kubectl') {
+//                 sh 'kubectl get pods -n default'
+//                 sh 'kubectl config view'
+//             }
+//             container('helm') {
+//                 sh 'helm init --client-only --skip-refresh'
+//                 sh 'helm repo update'
+//             }
+//         }
+//         stage('Pull Image'){
+//             container('docker'){
+//                 sh 'docker image ls'
+//                 sh "docker pull ${REPOSITORY_URI}:92f47fd"
+//             }
+//         }
 //         stage('Build Image'){
 //             container('docker'){
 //
@@ -92,8 +92,8 @@ podTemplate(containers: [
             container('helm'){
                 sh 'helm list'
                 sh "helm lint ./${HELM_CHART_DIRECTORY}"
-                sh "helm upgrade --wait --timeout 60 ${HELM_APP_NAME} ./${HELM_CHART_DIRECTORY}"
-                sh "helm list | grep ${HELM_APP_NAME}"
+//                 sh "helm upgrade --wait --timeout 60 ${HELM_APP_NAME} ./${HELM_CHART_DIRECTORY}"
+//                 sh "helm list | grep ${HELM_APP_NAME}"
             }
         }
     }

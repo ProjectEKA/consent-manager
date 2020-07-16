@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
+import in.projecteka.consentmanager.user.model.HealthAccountUser;
 import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.consentmanager.user.model.User;
 import io.vertx.core.json.JsonArray;
@@ -17,8 +18,8 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 public class UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
-    private static final String INSERT_PATIENT = "Insert into patient(id, " +
-            "first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers)" +
+    private static final String INSERT_PATIENT = "Insert into patient(health_id, " +
+            "first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number)" +
             " values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);";
 
     private static final String SELECT_PATIENT = "select id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers " +
@@ -83,6 +84,19 @@ public class UserRepository {
                 user.getDateOfBirth().getYear(),
                 user.getPhone(),
                 user.getUnverifiedIdentifiers());
+        return doOperation(INSERT_PATIENT, userDetails);
+    }
+
+    public Mono<Void> save(HealthAccountUser user, String mobileNumber) {
+        Tuple userDetails = Tuple.of(user.getHealthId(),
+                user.getFirstName(),
+                user.getMiddleName(),
+                user.getLastName(),
+                user.getGender(),
+                user.getDayOfBirth(),
+                user.getMonthOfBirth(),
+                user.getYearOfBirth(),
+                mobileNumber);
         return doOperation(INSERT_PATIENT, userDetails);
     }
 

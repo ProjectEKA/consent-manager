@@ -40,23 +40,16 @@ public class SignUpRequestValidator {
     private static final String VALID_NAME_CHARS = "[a-zA-Z ]";
     private static final List<IdentifierType> UniqueIdentifiers = List.of(IdentifierType.ABPMJAYID);
 
-    public static Validation<Seq<String>, CoreSignUpRequest> validate(SignUpRequest signUpRequest,
-                                                                      String userIdSuffix) {
+    public static Validation<Seq<String>, CoreSignUpRequest> validate(SignUpRequest signUpRequest) {
         return Validation.combine(
                 validateName(signUpRequest.getName()),
                 validate(signUpRequest.getGender()),
-                validateUserName(signUpRequest.getUsername(), userIdSuffix),
-                validatePassword(signUpRequest.getPassword()),
-                validateDateOfBirth(signUpRequest.getDateOfBirth()),
-                validateUnVerifiedIdentifiers(signUpRequest.getUnverifiedIdentifiers()))
-                .ap((name, gender, username, password, dateOfBirth, unverifiedIdentifiers) ->
+                validateDateOfBirth(signUpRequest.getDateOfBirth()))
+                .ap((name, gender, dateOfBirth) ->
                          CoreSignUpRequest.builder()
                                     .name(name)
                                     .gender(gender)
-                                    .username(username)
-                                    .password(password)
                                     .dateOfBirth(dateOfBirth)
-                                    .unverifiedIdentifiers(unverifiedIdentifiers)
                                     .build()
                 );
     }

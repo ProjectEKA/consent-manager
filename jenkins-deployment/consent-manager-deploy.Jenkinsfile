@@ -54,13 +54,15 @@ podTemplate(containers: [
             }
             container('kubectl') {
                 sh 'kubectl get pods -n default'
+                sh 'echo $KUBECONFIG'
+                sh 'kubectl config view'
             }
             container('helm') {
                 sh 'helm init --client-only --skip-refresh'
                 sh 'helm repo update'
             }
         }
-        stage('Push Image'){
+        stage('Pull Image'){
             container('docker'){
                 sh 'docker image ls'
                 sh "docker pull ${REPOSITORY_URI}:92f47fd"

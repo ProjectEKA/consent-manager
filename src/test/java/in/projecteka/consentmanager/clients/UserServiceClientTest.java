@@ -26,6 +26,7 @@ import static in.projecteka.consentmanager.clients.TestBuilders.string;
 import static in.projecteka.consentmanager.clients.TestBuilders.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 class UserServiceClientTest {
     @Captor
@@ -42,23 +43,24 @@ class UserServiceClientTest {
     void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        var serviceProperties = new GatewayServiceProperties("http://example.com", 1000,false, "", "", "");
+        var serviceProperties = new GatewayServiceProperties("http://example.com", 1000, false, "", "", "");
         token = string();
         userServiceClient = new UserServiceClient(webClientBuilder.build(),
                 "http://user-service/",
                 () -> Mono.just(token),
                 serviceProperties,
-                serviceAuthentication);
+                serviceAuthentication,
+                AUTHORIZATION);
     }
 
     @Test
     void shouldGetUser() throws IOException {
         User user = user().name(PatientName.builder()
-                                .first("first name")
-                                .middle("")
-                                .last("")
-                                .build())
-                    .build();
+                .first("first name")
+                .middle("")
+                .last("")
+                .build())
+                .build();
         String patientResponseBody = new ObjectMapper().writeValueAsString(user);
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)

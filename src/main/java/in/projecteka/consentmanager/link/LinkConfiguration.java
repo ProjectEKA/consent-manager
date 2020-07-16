@@ -22,6 +22,7 @@ import in.projecteka.consentmanager.user.UserServiceProperties;
 import io.lettuce.core.RedisClient;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -67,16 +68,19 @@ public class LinkConfiguration {
     }
 
     @Bean
-    public UserServiceClient userServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
-                                               UserServiceProperties userServiceProperties,
-                                               IdentityService identityService,
-                                               GatewayServiceProperties gatewayServiceProperties,
-                                               ServiceAuthentication serviceAuthentication) {
+    public UserServiceClient userServiceClient(
+            @Qualifier("customBuilder") WebClient.Builder builder,
+            UserServiceProperties userServiceProperties,
+            IdentityService identityService,
+            GatewayServiceProperties gatewayServiceProperties,
+            ServiceAuthentication serviceAuthentication,
+            @Value("${consentmanager.authorization.header}") String authorizationHeader) {
         return new UserServiceClient(builder.build(),
                 userServiceProperties.getUrl(),
                 identityService::authenticate,
                 gatewayServiceProperties,
-                serviceAuthentication);
+                serviceAuthentication,
+                authorizationHeader);
     }
 
     @Bean

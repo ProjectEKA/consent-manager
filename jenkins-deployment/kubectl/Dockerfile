@@ -10,8 +10,3 @@ RUN wget -q https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz -O - | t
 FROM bitnami/kubectl:latest
 
 COPY --from=build /usr/local/bin/helm /usr/bin/helm
-
-WORKDIR /app
-
-ENTRYPOINT ["helm"]
-CMD ["-h"]

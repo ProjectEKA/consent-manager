@@ -54,12 +54,12 @@ podTemplate(containers: [
             }
             container('kubectl') {
                 sh 'kubectl get pods -n default'
-                sh 'echo $KUBECONFIG'
                 sh 'kubectl config view'
             }
             container('helm') {
                 sh 'helm init --client-only --skip-refresh'
                 sh 'helm repo update'
+                sh 'echo $KUBECONFIG'
             }
         }
         stage('Pull Image'){

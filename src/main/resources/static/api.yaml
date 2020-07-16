@@ -1284,6 +1284,79 @@ paths:
       responses:
         '201':
           description: Profile created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePatientResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/CreatePatientResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Invalid/expired token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patients/profile/update-login-details:
+    post:
+      tags:
+        - account
+      summary: Create Account
+      description: Updates CM Id for respective health-id and updates password on HAS.
+      parameters:
+        - name: Authorization
+          description: Token received after creating new account.
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLoginDetailsRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/UpdateLoginDetailsRequest'
+      responses:
+        '200':
+          description: Login details updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateLoginDetailsResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/UpdateLoginDetailsResponse'
         '400':
           description: >
             **Causes:**
@@ -2830,11 +2903,6 @@ components:
       properties:
         name:
           $ref: '#/components/schemas/PatientName'
-        username:
-          type: string
-          example: raj.sharma@ncg
-        password:
-          type: string
         dateOfBirth:
           $ref: '#/components/schemas/DateOfBirth'
         gender:
@@ -2872,6 +2940,39 @@ components:
           example: 01
       required:
         - year
+    CreatePatientResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT Token
+        healthId:
+          type: string
+          example: 12345 12345 12345
+
+    UpdateLoginDetailsRequest:
+      type: object
+      properties:
+        cmId:
+          type: string
+          example: abc@ndhm
+        password:
+          type: string
+        healthId:
+          type: string
+          example: 12345 12345 12345
+      required:
+        - cmId
+        - health-id
+        - password
+
+    UpdateLoginDetailsResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT Token
+
     RecoverCmIdRequest:
       type: object
       properties:

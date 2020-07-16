@@ -203,11 +203,7 @@ public class SecurityConfiguration {
             HttpMethod requestMethod = exchange.getRequest().getMethod();
 
             if (isGatewayAuthenticationOnly(requestPath, requestMethod)) {
-                var token = exchange.getRequest().getHeaders().getFirst(AUTHORIZATION);
-                if (isEmpty(token)) {
-                    return Mono.empty();
-                }
-                return checkGateway(token);
+                return checkGateway(exchange.getRequest().getHeaders().getFirst(AUTHORIZATION));
             }
 
             var token = exchange.getRequest().getHeaders().getFirst(authorizationHeader);
@@ -228,7 +224,8 @@ public class SecurityConfiguration {
         }
 
         private Mono<SecurityContext> checkGateway(String token) {
-            return gatewayTokenVerifier.verify(token)
+            return Mono.justOrEmpty(token)
+                    .flatMap(gatewayTokenVerifier::verify)
                     .map(serviceCaller -> {
                         var authorities = serviceCaller.getRoles()
                                 .stream()

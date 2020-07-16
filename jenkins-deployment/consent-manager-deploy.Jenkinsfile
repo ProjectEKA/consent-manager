@@ -64,7 +64,6 @@ podTemplate(containers: [
             container('docker'){
                 sh 'docker image ls'
                 sh "docker pull ${REPOSITORY_URI}:92f47fd"
-              }
             }
         }
 //         stage('Build Image'){

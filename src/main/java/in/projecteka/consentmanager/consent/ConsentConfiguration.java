@@ -25,6 +25,7 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -59,31 +60,37 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    public ConsentManager consentRequestService(@Qualifier("customBuilder") WebClient.Builder builder,
-                                                ConsentRequestRepository repository,
-                                                UserServiceProperties userServiceProperties,
-                                                ConsentArtefactRepository consentArtefactRepository,
-                                                KeyPair keyPair,
-                                                ConsentNotificationPublisher consentNotificationPublisher,
-                                                ServiceAuthentication serviceAuthentication,
-                                                CentralRegistry centralRegistry,
-                                                PostConsentRequest postConsentRequest,
-                                                LinkServiceProperties linkServiceProperties,
-                                                IdentityService identityService,
-                                                ConceptValidator conceptValidator,
-                                                GatewayServiceProperties gatewayServiceProperties) {
+    public ConsentManager consentRequestService(
+            @Qualifier("customBuilder") WebClient.Builder builder,
+            ConsentRequestRepository repository,
+            UserServiceProperties userServiceProperties,
+            ConsentArtefactRepository consentArtefactRepository,
+            KeyPair keyPair,
+            ConsentNotificationPublisher consentNotificationPublisher,
+            ServiceAuthentication serviceAuthentication,
+            CentralRegistry centralRegistry,
+            PostConsentRequest postConsentRequest,
+            LinkServiceProperties linkServiceProperties,
+            IdentityService identityService,
+            ConceptValidator conceptValidator,
+            GatewayServiceProperties gatewayServiceProperties,
+            @Value("${consentmanager.authorization.header}") String authorizationHeader) {
         return new ConsentManager(
                 new UserServiceClient(builder.build(), userServiceProperties.getUrl(),
                         identityService::authenticate,
                         gatewayServiceProperties,
-                        serviceAuthentication),
+                        serviceAuthentication,
+                        authorizationHeader),
                 repository,
                 consentArtefactRepository,
                 keyPair,
                 consentNotificationPublisher,
                 centralRegistry,
                 postConsentRequest,
-                new PatientServiceClient(builder.build(), identityService::authenticate, linkServiceProperties.getUrl()),
+                new PatientServiceClient(builder.build(),
+                        identityService::authenticate,
+                        linkServiceProperties.getUrl(),
+                        authorizationHeader),
                 new CMProperties(gatewayServiceProperties.getClientId()),
                 conceptValidator,
                 new ConsentArtefactQueryGenerator(),
@@ -176,7 +183,8 @@ public class ConsentConfiguration {
             ServiceAuthentication serviceAuthentication,
             ConsentManager consentManager,
             LinkServiceProperties linkServiceProperties,
-            NHSProperties nhsProperties) {
+            NHSProperties nhsProperties,
+            @Value("${consentmanager.authorization.header}") String authorizationHeader) {
         return new ConsentRequestNotificationListener(
                 messageListenerContainerFactory,
                 destinationsConfig,
@@ -186,14 +194,15 @@ public class ConsentConfiguration {
                         userServiceProperties.getUrl(),
                         identityService::authenticate,
                         gatewayServiceProperties,
-                        serviceAuthentication),
+                        serviceAuthentication,
+                        authorizationHeader),
                 consentServiceProperties,
                 consentManager,
                 new PatientServiceClient(builder.build(),
                         identityService::authenticate,
-                        linkServiceProperties.getUrl()),
+                        linkServiceProperties.getUrl(),
+                        authorizationHeader),
                 nhsProperties);
-
     }
 
     @SneakyThrows

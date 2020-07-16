@@ -20,6 +20,7 @@ import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisOptions;
+import in.projecteka.consentmanager.common.heartbeat.CacheMethodProperty;
 import in.projecteka.consentmanager.common.heartbeat.Heartbeat;
 import in.projecteka.consentmanager.common.heartbeat.RabbitmqOptions;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
@@ -244,8 +245,9 @@ public class ConsentManagerConfiguration {
     public Heartbeat heartbeat(IdentityServiceProperties identityServiceProperties,
                                DbOptions dbOptions,
                                RabbitmqOptions rabbitmqOptions,
-                               RedisOptions redisOptions) {
-        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions, redisOptions);
+                               RedisOptions redisOptions,
+                               CacheMethodProperty cacheMethodProperty) {
+        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions, redisOptions, cacheMethodProperty);
     }
 
     @Bean

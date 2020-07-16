@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.function.Supplier;
 
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static com.google.common.net.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
 public class PatientServiceClient {
@@ -18,6 +18,7 @@ public class PatientServiceClient {
     private final WebClient webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
     private final String baseUrl;
+    private final String authorizationHeader;
 
     public Mono<LinkedCareContexts> retrievePatientLinks(String username) {
         return tokenGenerator.get()
@@ -25,25 +26,11 @@ public class PatientServiceClient {
                         webClientBuilder
                                 .get()
                                 .uri(String.format(INTERNAL_PATH_PATIENT_LINKS, baseUrl, username))
-                                .header(AUTHORIZATION, authorization)
+                                .header(authorizationHeader, authorization)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,
                                         clientResponse -> Mono.error(ClientError.unAuthorized()))
                                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                                 .bodyToMono(LinkedCareContexts.class));
-    }
-
-    public Mono<PatientLinksResponse> getLinkedCareContextFor(String username) {
-        return tokenGenerator.get()
-                .flatMap(authorization ->
-                        webClientBuilder
-                                .get()
-                                .uri(String.format(INTERNAL_PATH_PATIENT_LINKS, baseUrl, username))
-                                .header(AUTHORIZATION, authorization)
-                                .retrieve()
-                                .onStatus(httpStatus -> httpStatus.value() == 401,
-                                        clientResponse -> Mono.error(ClientError.unAuthorized()))
-                                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
-                                .bodyToMono(PatientLinksResponse.class));
     }
 }

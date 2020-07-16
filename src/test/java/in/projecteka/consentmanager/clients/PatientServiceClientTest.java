@@ -15,12 +15,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.io.IOException;
 import java.util.Collections;
 
 import static in.projecteka.consentmanager.clients.TestBuilders.string;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 class PatientServiceClientTest {
     @Captor
@@ -36,11 +36,12 @@ class PatientServiceClientTest {
                 .exchangeFunction(exchangeFunction);
         LinkServiceProperties serviceProperties = new LinkServiceProperties("http://user-service/", 1000);
         patientServiceClient = new PatientServiceClient(webClientBuilder.build(),
-                () -> Mono.just(string()), serviceProperties.getUrl());
+                () -> Mono.just(string()), serviceProperties.getUrl(),
+                AUTHORIZATION);
     }
 
     @Test
-    void shouldGetCareContexts() throws IOException, InterruptedException {
+    void shouldGetCareContexts() {
         String patientLinkJson = "{\n" +
                 "  \"patient\": {\n" +
                 "    \"id\": \"string\",\n" +
@@ -64,8 +65,6 @@ class PatientServiceClientTest {
                 "    ]\n" +
                 "  }\n" +
                 "}";
-
-
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
                         .header("Content-Type", "application/json")

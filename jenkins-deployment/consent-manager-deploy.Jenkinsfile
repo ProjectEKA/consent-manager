@@ -31,6 +31,7 @@ podTemplate(containers: [
                     sh 'kubectl config view'
                     sh 'kubectl get pods -n nha-app-demo1'
                     sh 'ls -al'
+                    sh 'echo "${HELM_CHART_DIRECTORY}"'
                     sh "helm lint ./${HELM_CHART_DIRECTORY}"
                 }
             }

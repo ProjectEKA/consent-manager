@@ -187,7 +187,6 @@ public class UserRepository {
 
     public Mono<Void> updateCMId(String healthId, String cmId) {
         Tuple userDetails = Tuple.of(cmId, healthId);
-        System.out.println("UPDATE CM_ID : came ------> \n");
         return doOperation(UPDATE_CM_ID, userDetails);
     }
 }

@@ -35,7 +35,7 @@ public class HASSignupServiceClient {
     public Mono<Void> updateHASAccount(UpdateHASUserRequest request) {
         return webClient
                 .post()
-                .uri(uriBuilder -> uriBuilder.path("patients/v1/ha/account_update").build())
+                .uri(uriBuilder -> uriBuilder.path("/patients/v1/ha/account_update").build())
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .body(Mono.just(request), UpdateHASUserRequest.class)
                 .accept(APPLICATION_JSON)

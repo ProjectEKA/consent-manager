@@ -35,10 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static in.projecteka.consentmanager.common.Constants.PATH_HEARTBEAT;
-import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
-import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
-import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
+import static in.projecteka.consentmanager.common.Constants.*;
 import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
@@ -125,7 +122,7 @@ public class SecurityConfiguration {
                 "/sessions",
                 PATH_HEARTBEAT,
                 "/patients/v1/ha/create_account_verified_mobile_token",
-                "/patients/profile/update-login-details",
+                PATIENTS_PROFILE_UPDATE_LOGIN_DETAILS,
                 "/patients/v1/ha/account_update",
                 "/**.html",
                 "/**.js",
@@ -204,6 +201,9 @@ public class SecurityConfiguration {
             HttpMethod requestMethod = exchange.getRequest().getMethod();
             if (isSignUpRequest(requestPath, requestMethod)) {
                 return checkSignUp(token);
+            }
+            if(isUpdateLoginDetailsRequest(requestPath,requestMethod)) {
+                return Mono.empty();
             }
             if (isPinVerificationRequest(requestPath, requestMethod)) {
                 Optional<String> validScope = getScope(requestPath, requestMethod);
@@ -290,6 +290,10 @@ public class SecurityConfiguration {
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
             return (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
                     (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod));
+        }
+
+        private boolean isUpdateLoginDetailsRequest(String url, HttpMethod httpMethod) {
+            return ((PATIENTS_PROFILE_UPDATE_LOGIN_DETAILS).equals(url) && HttpMethod.POST.equals(httpMethod));
         }
     }
 

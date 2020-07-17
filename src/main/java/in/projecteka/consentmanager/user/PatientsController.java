@@ -85,14 +85,14 @@ public class PatientsController {
         var signUpRequests = SignUpRequestValidator.validate(request);
         return signUpRequests.isValid()
                 ? Mono.justOrEmpty(signupService.txnIdFrom(token))
-                .flatMap(txnId->hasSignupService.createHASAccount(request, token,txnId))
+                .flatMap(txnId->hasSignupService.createHASAccount(request, token, txnId))
                 : Mono.error(new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_REQUESTER,
                         signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));
     }
 
     @PostMapping("/v1/ha/create_account_verified_mobile_token")
-    public Mono<HASSignUpResponse> signUPHAS(@RequestBody HASSignupRequest hasSignupRequest) {
+    public Mono<HASSignUpResponse> signUPHASDummy(@RequestBody HASSignupRequest hasSignupRequest) {
         var response = HASSignUpResponse.builder()
                 .firstName("hina")
                 .middleName("")
@@ -111,12 +111,11 @@ public class PatientsController {
         return Mono.just(response);
     }
 
-    @PostMapping ("v1/ha/account_update")
-    public Mono<Void> dummy() {
+    @PostMapping ("/v1/ha/account_update")
+    public Mono<Void> updateHASAccountDummy() {
        return Mono.empty();
     }
 
-    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/profile/update-login-details")
     public Mono<Session> updateLoginDetails(@RequestBody UpdateLoginDetailsRequest request,
                                             @RequestHeader(name = "Authorization") String token) {

@@ -59,9 +59,9 @@ public class HASSignupService {
     public Mono<Session> updateHASLoginDetails(UpdateLoginDetailsRequest request, String token) {
         var updateHASLoginDetails = createUpdateHASUserRequest(request, token);
         return userService.userExistsWith(request.getCmId())
-                .switchIfEmpty(hasSignupServiceClient.updateHASAccount(updateHASLoginDetails))
+                .switchIfEmpty(Mono.defer(() -> hasSignupServiceClient.updateHASAccount(updateHASLoginDetails)))
                 .then(Mono.defer(() -> userRepository.updateCMId(request.getHealthId(), request.getCmId())))
-                .then(userRepository.getNameByHealthId(request.getHealthId()))
+                .then(Mono.defer(() -> userRepository.getNameByHealthId(request.getHealthId())))
                 .flatMap(patientName -> Mono.just(new KeycloakUser(patientName.createFullName(),
                         request.getCmId(),
                         Collections.singletonList(new UserCredential(request.getPassword())),
@@ -73,10 +73,10 @@ public class HASSignupService {
                             userRepository.updateCMId(request.getHealthId(), null);
                             return Mono.error(ClientError.userAlreadyExists(keycloakUser.getUsername()));
                         }))
-                .then(sessionService.forNew(SessionRequest.builder().grantType(GrantType.PASSWORD)
+                .then(Mono.defer(() -> sessionService.forNew(SessionRequest.builder().grantType(GrantType.PASSWORD)
                         .username(request.getCmId())
                         .password(request.getPassword())
-                        .build()));
+                        .build())));
     }
 
     private UpdateHASUserRequest createUpdateHASUserRequest(UpdateLoginDetailsRequest request, String token) {

@@ -1,7 +1,15 @@
 package in.projecteka.consentmanager.user;
 
 import com.google.common.base.Strings;
-import in.projecteka.consentmanager.user.model.*;
+import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.DateOfBirth;
+import in.projecteka.consentmanager.user.model.Gender;
+import in.projecteka.consentmanager.user.model.Identifier;
+import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.PatientName;
+import in.projecteka.consentmanager.user.model.SignUpIdentifier;
+import in.projecteka.consentmanager.user.model.SignUpRequest;
+import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
 import io.vavr.collection.CharSeq;
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;

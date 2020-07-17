@@ -17,7 +17,11 @@ import reactor.core.publisher.Mono;
 
 import java.util.function.Function;
 
-import static in.projecteka.consentmanager.clients.ClientError.*;
+import static in.projecteka.consentmanager.clients.ClientError.invalidOtp;
+import static in.projecteka.consentmanager.clients.ClientError.networkServiceCallFailed;
+import static in.projecteka.consentmanager.clients.ClientError.otpExpired;
+import static in.projecteka.consentmanager.clients.ClientError.unknownUnauthroziedError;
+import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
 import static java.lang.String.format;
 
 public class IdentityServiceClient {

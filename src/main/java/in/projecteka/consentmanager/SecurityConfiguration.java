@@ -35,7 +35,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static in.projecteka.consentmanager.common.Constants.*;
+
+import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
+import static in.projecteka.consentmanager.common.Constants.PATH_HEARTBEAT;
+import static in.projecteka.consentmanager.common.Constants.PATIENTS_PROFILE_UPDATE_LOGIN_DETAILS;
+import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
+import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
 import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;

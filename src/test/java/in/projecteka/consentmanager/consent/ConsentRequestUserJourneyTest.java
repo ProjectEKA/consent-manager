@@ -21,10 +21,12 @@ import in.projecteka.consentmanager.consent.model.HIType;
 import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.Requester;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
+import in.projecteka.consentmanager.consent.policies.NhsPolicyCheck;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -68,6 +70,7 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -615,7 +618,8 @@ class ConsentRequestUserJourneyTest {
         when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
         when(consentManagerClient.sendInitResponseToGateway(any(), eq(HIUId)))
                 .thenReturn(Mono.empty());
-
+        when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
+                .thenReturn(Mono.empty());
         load(clientRegistryServer, session);
         load(clientRegistryServer, session);
         load(clientRegistryServer, session);
@@ -637,6 +641,31 @@ class ConsentRequestUserJourneyTest {
                 .expectStatus()
                 .isAccepted();
     }
+
+    @Test
+    void shouldReturnTrueOnPolicyCheck(){
+        var hiuId = "10000002";
+        var patientName = "xyz@xyz";
+        var requestedDetail = RequestedDetail.builder()
+                                .hiu(HIUReference.builder().id(hiuId).build())
+                                .patient(PatientReference.builder().id(patientName).build())
+                                .requester(Requester.builder().name(patientName).build())
+                                .build();
+        assertEquals(new NhsPolicyCheck().checkPolicyFor(ConsentRequest.builder().detail(requestedDetail).build(), hiuId),true);
+    }
+
+    @Test
+    void shouldReturnFalseOnPolicyCheck(){
+        var hiuId = string();
+        var patientName = "xyz@xyz";
+        var requestedDetail = RequestedDetail.builder()
+                .hiu(HIUReference.builder().id(hiuId).build())
+                .patient(PatientReference.builder().id(patientName).build())
+                .requester(Requester.builder().name(hiuId).build())
+                .build();
+        assertEquals(new NhsPolicyCheck().checkPolicyFor(ConsentRequest.builder().detail(requestedDetail).build(), hiuId),false);
+    }
+
 
     static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override

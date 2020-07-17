@@ -4,14 +4,19 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.consent.model.Action;
 import in.projecteka.consentmanager.consent.model.Communication;
 import in.projecteka.consentmanager.consent.model.CommunicationType;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.Content;
+import in.projecteka.consentmanager.consent.model.GrantedContext;
+import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIType;
 import in.projecteka.consentmanager.consent.model.Notification;
+import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
+import in.projecteka.consentmanager.consent.policies.NhsPolicyCheck;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +27,9 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.CONSENT_REQUEST_QUEUE;
@@ -36,6 +43,9 @@ public class ConsentRequestNotificationListener {
     private final OtpServiceClient consentNotificationClient;
     private final UserServiceClient userServiceClient;
     private final ConsentServiceProperties consentServiceProperties;
+    private final ConsentManager consentManager;
+    private final PatientServiceClient patientServiceClient;
+    private final NHSProperties nhsProperties;
 
     @PostConstruct
     public void subscribe() throws ClientError {
@@ -50,11 +60,9 @@ public class ConsentRequestNotificationListener {
             try {
                 ConsentRequest consentRequest = (ConsentRequest) converter.fromMessage(message);
                 logger.info("Received message for Request id : {}", consentRequest.getId());
-                createNotificationMessage(consentRequest)
-                        .flatMap(this::notifyUserWith)
-                        .block();
+                processConsentRequest(consentRequest);
             } catch (Exception e) {
-                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
             }
         };
         mlc.setupMessageListener(messageListener);
@@ -63,6 +71,24 @@ public class ConsentRequestNotificationListener {
 
     public Mono<Void> notifyUserWith(Notification notification) {
         return consentNotificationClient.send(notification);
+    }
+
+    private void processConsentRequest(ConsentRequest consentRequest) {
+        try {
+            if (isAutoApproveConsentRequest(consentRequest)) {
+                autoApproveFor(consentRequest).subscribe();
+            } else {
+                createNotificationMessage(consentRequest)
+                        .flatMap(this::notifyUserWith)
+                        .block();
+            }
+        } catch (Exception exception) {
+            logger.error(exception.getMessage());
+        }
+    }
+
+    private boolean isAutoApproveConsentRequest(ConsentRequest consentRequest) {
+        return new NhsPolicyCheck().checkPolicyFor(consentRequest, nhsProperties.getHiuId());
     }
 
     private Mono<Notification> createNotificationMessage(ConsentRequest consentRequest) {
@@ -85,5 +111,30 @@ public class ConsentRequestNotificationListener {
                                         consentRequest.getId()))
                                 .build())
                         .build());
+    }
+
+    private Mono<Void> autoApproveFor(ConsentRequest consentRequest) {
+        List<GrantedContext> grantedContexts = new ArrayList<>();
+        List<GrantedConsent> grantedConsents = new ArrayList<>();
+        return patientServiceClient.retrievePatientLinks(consentRequest.getDetail().getPatient().getId())
+                .map(linkedCareContexts -> linkedCareContexts.getCareContext(consentRequest.getDetail().getHip().getId()))
+                .flatMap(linkedCareContexts -> {
+                    linkedCareContexts.forEach(careContext -> {
+                        grantedContexts.add(GrantedContext.builder()
+                                .patientReference(careContext.getPatientRefNo())
+                                .careContextReference(careContext.getCareContextRefNo())
+                                .build());
+                    });
+
+                    grantedConsents.add(GrantedConsent.builder()
+                            .careContexts(grantedContexts)
+                            .hip(consentRequest.getDetail().getHip())
+                            .hiTypes(consentRequest.getDetail().getHiTypes())
+                            .permission(consentRequest.getDetail().getPermission())
+                            .build());
+                    return consentManager.approveConsent(consentRequest.getDetail().getPatient().getId(),
+                            consentRequest.getId().toString(),
+                            grantedConsents);
+                }).then();
     }
 }

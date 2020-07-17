@@ -181,6 +181,9 @@ public class ConsentConfiguration {
             IdentityService identityService,
             GatewayServiceProperties gatewayServiceProperties,
             ServiceAuthentication serviceAuthentication,
+            ConsentManager consentManager,
+            LinkServiceProperties linkServiceProperties,
+            NHSProperties nhsProperties,
             @Value("${consentmanager.authorization.header}") String authorizationHeader) {
         return new ConsentRequestNotificationListener(
                 messageListenerContainerFactory,
@@ -193,7 +196,13 @@ public class ConsentConfiguration {
                         gatewayServiceProperties,
                         serviceAuthentication,
                         authorizationHeader),
-                consentServiceProperties);
+                consentServiceProperties,
+                consentManager,
+                new PatientServiceClient(builder.build(),
+                        identityService::authenticate,
+                        linkServiceProperties.getUrl(),
+                        authorizationHeader),
+                nhsProperties);
     }
 
     @SneakyThrows

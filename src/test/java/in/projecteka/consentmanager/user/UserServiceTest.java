@@ -69,6 +69,7 @@ import static in.projecteka.consentmanager.user.TestBuilders.updatePasswordReque
 import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
 import static in.projecteka.consentmanager.user.model.Requester.HIU;
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -133,7 +134,7 @@ class UserServiceTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"), 5);
+        var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"), 5, asList("+91-8888888888", "+91-9999999999"));
         var healthAccountServiceProperties = new HealthAccountServiceProperties(false, "", Collections.singletonList("MOBILE"), 5);
 
         userService = new UserService(

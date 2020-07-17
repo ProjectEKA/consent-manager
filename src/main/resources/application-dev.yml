@@ -41,8 +41,11 @@ consentmanager:
     identifiers:
       - MOBILE
     expiryInMinutes: 5
+    allowListNumbers:
+      - "+91-8888888888"
+      - "+91-9999999999"
   healthaccountservice:
-    usingSSL: true
+    usingUnsecureSSL: true
     url: http://localhost:5000
     identifiers:
       - MOBILE

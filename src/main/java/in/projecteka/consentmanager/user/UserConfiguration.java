@@ -90,7 +90,7 @@ public class UserConfiguration {
     @Bean
     public HealthAccountServiceClient healthAccountServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                        HealthAccountServiceProperties healthAccountServiceProperties) {
-        if (healthAccountServiceProperties.isUsingSSL()){
+        if (healthAccountServiceProperties.isUsingUnsecureSSL()){
             builder.clientConnector(reactorClientHttpConnector());
         }
         return new HealthAccountServiceClient(builder, healthAccountServiceProperties.getUrl());

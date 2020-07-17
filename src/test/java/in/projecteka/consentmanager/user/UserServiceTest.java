@@ -173,12 +173,12 @@ class UserServiceTest {
 
     @Test
     public void shouldSendOTPRequestToOTPService() {
-        var whitelistedMobileNumber = "+91-8888888888";
-        var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", whitelistedMobileNumber);
+        var allowListedMobileNumber = "+91-8888888888";
+        var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", allowListedMobileNumber);
         var sessionId = string();
         var signUpSession = new SignUpSession(sessionId);
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
-        when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq(whitelistedMobileNumber)))
+        when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq(allowListedMobileNumber)))
                 .thenReturn(Mono.just(signUpSession));
         when(otpAttemptService.validateOTPRequest(userSignUpEnquiry.getIdentifierType(), userSignUpEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_REGISTRATION)).thenReturn(Mono.empty());
 
@@ -234,14 +234,14 @@ class UserServiceTest {
         var sessionId = string();
         var otp = string();
         var token = string();
-        var whiteListedMobileNumber = "+91-8888888888";
+        var allowListedMobileNumber = "+91-8888888888";
 
         ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
         when(signupService.generateToken(sessionId))
                 .thenReturn(Mono.just(new Token(token)));
-        when(signupService.getMobileNumber(eq(sessionId))).thenReturn(Mono.just(whiteListedMobileNumber));
+        when(signupService.getMobileNumber(eq(sessionId))).thenReturn(Mono.just(allowListedMobileNumber));
         when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
         when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
         StepVerifier.create(userService.verifyOtpForRegistration(otpVerification))
@@ -252,13 +252,13 @@ class UserServiceTest {
         var validateOTPSubmissionArgument = capturedAttempts.get(0);
         assertEquals(sessionId, validateOTPSubmissionArgument.getSessionId());
         assertEquals("MOBILE", validateOTPSubmissionArgument.getIdentifierType());
-        assertEquals(whiteListedMobileNumber, validateOTPSubmissionArgument.getIdentifierValue());
+        assertEquals(allowListedMobileNumber, validateOTPSubmissionArgument.getIdentifierValue());
         assertEquals(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION, validateOTPSubmissionArgument.getAction());
 
         var removeMatchingAttemptsArgument = capturedAttempts.get(1);
         assertEquals(sessionId, removeMatchingAttemptsArgument.getSessionId());
         assertEquals("MOBILE", removeMatchingAttemptsArgument.getIdentifierType());
-        assertEquals(whiteListedMobileNumber, removeMatchingAttemptsArgument.getIdentifierValue());
+        assertEquals(allowListedMobileNumber, removeMatchingAttemptsArgument.getIdentifierValue());
         assertEquals(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION, removeMatchingAttemptsArgument.getAction());
     }
 

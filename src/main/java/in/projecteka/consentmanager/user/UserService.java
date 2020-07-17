@@ -52,7 +52,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.ArrayList;
 
 import static in.projecteka.consentmanager.clients.ClientError.failedToFetchUserCredentials;
 import static in.projecteka.consentmanager.clients.ClientError.from;
@@ -64,12 +63,6 @@ import static java.lang.String.format;
 
 @AllArgsConstructor
 public class UserService {
-    private static final List<String>WHITELISTED_NUMBERS = new ArrayList<>() {
-        {
-            add("+91-8888888888");
-            add("+91-9999999999");
-        }
-    };
     public static final String INVALID_REQUEST_BODY = "invalid.request.body";
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
@@ -377,13 +370,13 @@ public class UserService {
     }
 
     public Mono<SignUpSession> sendOtp(UserSignUpEnquiry request) {
-        if (isWhiteListedNumber(request.getIdentifier()))
+        if (isNumberFromAllowedList(request.getIdentifier()))
             return sendOtpFromOTPService(request);
         return sendOtpFromHealthAccountService(request);
     }
 
-    private boolean isWhiteListedNumber(String mobileNumber) {
-        return WHITELISTED_NUMBERS.stream().anyMatch(number ->
+    private boolean isNumberFromAllowedList(String mobileNumber) {
+        return otpServiceProperties.allowListNumbers().stream().anyMatch(number ->
                 number.equals(mobileNumber));
     }
 
@@ -402,7 +395,7 @@ public class UserService {
     public Mono<Token> verifyOtpForRegistration(OtpVerification otpVerification) {
         return signupService.getMobileNumber(otpVerification.getSessionId())
                 .flatMap(mobile -> {
-                    if (isWhiteListedNumber(mobile))
+                    if (isNumberFromAllowedList(mobile))
                         return verifyOtpFromOTPService(otpVerification);
                     return verifyOtpFromHealthAccountService(otpVerification);
                 });

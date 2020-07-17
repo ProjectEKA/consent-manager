@@ -9,6 +9,7 @@ import lombok.Value;
 import org.springframework.util.StringUtils;
 
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Value
@@ -17,7 +18,7 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DiscoveryResult {
     private UUID requestId;
-    private String timestamp;
+    private LocalDateTime timestamp;
     private UUID transactionId;
     private Patient patient;
     private RespError error;

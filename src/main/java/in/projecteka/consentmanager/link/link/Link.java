@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.link.link;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.ErrorMap;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
@@ -25,7 +24,6 @@ import in.projecteka.consentmanager.link.link.model.TokenConfirmation;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -34,9 +32,11 @@ import java.time.ZoneOffset;
 import java.util.Objects;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.clients.ErrorMap.toCmError;
 import static in.projecteka.consentmanager.common.CustomScheduler.scheduleThis;
 import static in.projecteka.consentmanager.common.Serializer.tryTo;
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @AllArgsConstructor
 public class Link {
@@ -47,8 +47,9 @@ public class Link {
     private final LinkServiceProperties serviceProperties;
     private final CacheAdapter<String, String> linkResults;
 
-    public Mono<PatientLinkReferenceResponse> patientCareContexts(String patientId,
-                                                                  PatientLinkReferenceRequest patientLinkReferenceRequest) {
+    public Mono<PatientLinkReferenceResponse> patientCareContexts(
+            String patientId,
+            PatientLinkReferenceRequest patientLinkReferenceRequest) {
         Patient patient = toHIPPatient(patientId, patientLinkReferenceRequest.getPatient());
         var linkReferenceRequest = new in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest(
                 patientLinkReferenceRequest.getRequestId().toString(),
@@ -87,7 +88,8 @@ public class Link {
                                 .flatMap(linkReferenceResult -> {
                                     if (linkReferenceResult.getError() != null) {
                                         logger.error("[Link] Link initiation resulted in error {}", linkReferenceResult.getError());
-                                        return Mono.error(new ClientError(HttpStatus.BAD_REQUEST, cmErrorRepresentation(linkReferenceResult.getError())));
+                                        return Mono.error(new ClientError(BAD_REQUEST,
+                                                cmErrorRepresentation(linkReferenceResult.getError())));
                                     }
                                     return linkRepository.insert(linkReferenceResult, hipId, requestId)
                                             .thenReturn(PatientLinkReferenceResponse.builder()
@@ -145,7 +147,7 @@ public class Link {
                 .flatMap(confirmationResult -> {
                     if (confirmationResult.getError() != null) {
                         logger.error("[Link] Link confirmation resulted in error {}", confirmationResult.getError());
-                        return Mono.error(new ClientError(HttpStatus.BAD_REQUEST, cmErrorRepresentation(confirmationResult.getError())));
+                        return Mono.error(new ClientError(BAD_REQUEST, cmErrorRepresentation(confirmationResult.getError())));
                     }
                     if (confirmationResult.getPatient() == null) {
                         logger.error("[Link] Link confirmation should have returned linked care context details or error caused." +
@@ -160,7 +162,7 @@ public class Link {
     }
 
     private ErrorRepresentation cmErrorRepresentation(RespError respError) {
-        Error error = Error.builder().code(ErrorMap.toCmError(respError.getCode())).message(respError.getMessage()).build();
+        Error error = Error.builder().code(toCmError(respError.getCode())).message(respError.getMessage()).build();
         return ErrorRepresentation.builder().error(error).build();
     }
 
@@ -194,5 +196,4 @@ public class Link {
         }
         return null;
     }
-
 }

@@ -14,11 +14,13 @@ import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisOptions;
+import in.projecteka.consentmanager.common.heartbeat.CacheMethodProperty;
 import in.projecteka.consentmanager.common.heartbeat.Heartbeat;
 import in.projecteka.consentmanager.common.heartbeat.RabbitmqOptions;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
@@ -100,6 +102,18 @@ public class ConsentManagerConfiguration {
     @Bean({"accessToken"})
     public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
         return new RedisCacheAdapter(redisClient, 5);
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @Bean({"cacheForReplayAttack"})
+    public CacheAdapter<String, String> createLoadingCacheAdapterForReplayAttack() {
+        return new LoadingCacheAdapter(createSessionCache(10));
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"cacheForReplayAttack"})
+    public CacheAdapter<String, String> createRedisCacheAdapterForReplayAttack(RedisClient redisClient) {
+        return new RedisCacheAdapter(redisClient, 10);
     }
 
     @Bean
@@ -223,11 +237,17 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
+    public RequestValidator requestValidator(@Qualifier("cacheForReplayAttack") CacheAdapter<String, String> cacheForReplayAttack) {
+        return new RequestValidator(cacheForReplayAttack);
+    }
+
+    @Bean
     public Heartbeat heartbeat(IdentityServiceProperties identityServiceProperties,
                                DbOptions dbOptions,
                                RabbitmqOptions rabbitmqOptions,
-                               RedisOptions redisOptions) {
-        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions, redisOptions);
+                               RedisOptions redisOptions,
+                               CacheMethodProperty cacheMethodProperty) {
+        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions, redisOptions, cacheMethodProperty);
     }
 
     @Bean

@@ -12,9 +12,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,22 +35,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static in.projecteka.consentmanager.clients.ClientError.unAuthorized;
 import static in.projecteka.consentmanager.common.Constants.PATH_HEARTBEAT;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
-import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
-import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
+import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
+import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
+import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
-import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
-import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Stream.of;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static reactor.core.publisher.Mono.empty;
+import static reactor.core.publisher.Mono.error;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -66,18 +71,19 @@ public class SecurityConfiguration {
             PATH_LINK_ON_INIT,
             PATH_LINK_ON_CONFIRM,
             PATH_HEALTH_INFORMATION_ON_REQUEST,
-            PATH_LINK_ON_CONFIRM,
             PATH_HEALTH_INFORMATION_REQUEST,
             PATH_HEALTH_INFORMATION_NOTIFY,
             PATH_HIP_CONSENT_ON_NOTIFY
     };
 
     static {
+        // Deprecated
         SERVICE_ONLY_URLS.add(Map.entry("/users/**", HttpMethod.GET));
         SERVICE_ONLY_URLS.add(Map.entry("/consents/**", HttpMethod.GET));
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/notification", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/health-information/request", HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry("/consent-requests", HttpMethod.POST));
+        // Deprecated
 
         SERVICE_ONLY_URLS.add(Map.entry(PATH_CONSENT_REQUESTS_INIT, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_CARE_CONTEXTS_ON_DISCOVER, HttpMethod.POST));
@@ -105,31 +111,31 @@ public class SecurityConfiguration {
         PIN_VERIFICATION_MATCHERS.add(changePinMatcher);
     }
 
+    private static final String[] ALLOWED_LIST_URLS = new String[]{"/**.json",
+                                                                   "/ValueSet/**.json",
+                                                                   "/patients/generateotp",
+                                                                   "/patients/verifyotp",
+                                                                   "/patients/profile/loginmode",
+                                                                   "/patients/profile/recovery-init",
+                                                                   "/patients/profile/recovery-confirm",
+                                                                   "/users/verify",
+                                                                   "/users/permit",
+                                                                   "/otpsession/verify",
+                                                                   "/otpsession/permit",
+                                                                   "/sessions",
+                                                                   PATH_HEARTBEAT,
+                                                                   "/**.html",
+                                                                   "/**.js",
+                                                                   "/**.yaml",
+                                                                   "/**.css",
+                                                                   "/**.png"};
+
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity httpSecurity,
             ReactiveAuthenticationManager authenticationManager,
             ServerSecurityContextRepository securityContextRepository) {
-
-        final String[] allowedListUrls = {"/**.json",
-                "/ValueSet/**.json",
-                "/patients/generateotp",
-                "/patients/verifyotp",
-                "/patients/profile/loginmode",
-                "/patients/profile/recovery-init",
-                "/patients/profile/recovery-confirm",
-                "/users/verify",
-                "/users/permit",
-                "/otpsession/verify",
-                "/otpsession/permit",
-                "/sessions",
-                PATH_HEARTBEAT,
-                "/**.html",
-                "/**.js",
-                "/**.yaml",
-                "/**.css",
-                "/**.png"};
-        httpSecurity.authorizeExchange().pathMatchers(allowedListUrls).permitAll();
+        httpSecurity.authorizeExchange().pathMatchers(ALLOWED_LIST_URLS).permitAll();
         httpSecurity.httpBasic().disable().formLogin().disable().csrf().disable().logout().disable();
         httpSecurity
                 .authorizeExchange()
@@ -160,14 +166,17 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public SecurityContextRepository contextRepository(SignUpService signupService,
-                                                       Authenticator authenticator,
-                                                       PinVerificationTokenService pinVerificationTokenService,
-                                                       GatewayTokenVerifier gatewayTokenVerifier) {
+    public SecurityContextRepository contextRepository(
+            SignUpService signupService,
+            Authenticator authenticator,
+            PinVerificationTokenService pinVerificationTokenService,
+            GatewayTokenVerifier gatewayTokenVerifier,
+            @Value("${consentmanager.authorization.header}") String authorizationHeader) {
         return new SecurityContextRepository(signupService,
                 authenticator,
                 pinVerificationTokenService,
-                gatewayTokenVerifier);
+                gatewayTokenVerifier,
+                authorizationHeader);
     }
 
     @RequiredArgsConstructor
@@ -185,6 +194,7 @@ public class SecurityConfiguration {
         private final Authenticator identityServiceClient;
         private final PinVerificationTokenService pinVerificationTokenService;
         private final GatewayTokenVerifier gatewayTokenVerifier;
+        private final String authorizationHeader;
 
         @Override
         public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {
@@ -193,32 +203,37 @@ public class SecurityConfiguration {
 
         @Override
         public Mono<SecurityContext> load(ServerWebExchange exchange) {
-            var token = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-            if (isEmpty(token)) {
-                return Mono.empty();
+            var requestPath = exchange.getRequest().getPath().toString();
+            if (isAllowedList(requestPath)) {
+                return empty();
             }
-            String requestPath = exchange.getRequest().getPath().toString();
-            HttpMethod requestMethod = exchange.getRequest().getMethod();
+
+            var requestMethod = exchange.getRequest().getMethod();
+            if (isGatewayAuthenticationOnly(requestPath, requestMethod)) {
+                return checkGateway(exchange.getRequest().getHeaders().getFirst(AUTHORIZATION))
+                        .switchIfEmpty(error(unAuthorized()));
+            }
+
+            var token = exchange.getRequest().getHeaders().getFirst(authorizationHeader);
+            if (isEmpty(token)) {
+                return error(unAuthorized());
+            }
             if (isSignUpRequest(requestPath, requestMethod)) {
-                return checkSignUp(token);
+                return checkSignUp(token).switchIfEmpty(error(unAuthorized()));
             }
             if (isPinVerificationRequest(requestPath, requestMethod)) {
                 Optional<String> validScope = getScope(requestPath, requestMethod);
                 if (validScope.isEmpty()) {
-                    return Mono.empty();//TODO handle better?
+                    return empty();//TODO handle better?
                 }
-                return validatePinVerificationRequest(token, validScope.get());
+                return validatePinVerificationRequest(token, validScope.get()).switchIfEmpty(error(unAuthorized()));
             }
-            if (isCentralRegistryAuthenticatedOnlyRequest(
-                    requestPath,
-                    requestMethod)) {
-                return checkCentralRegistry(token);
-            }
-            return check(token);
+            return check(token).switchIfEmpty(error(unAuthorized()));
         }
 
-        private Mono<SecurityContext> checkCentralRegistry(String token) {
-            return gatewayTokenVerifier.verify(token)
+        private Mono<SecurityContext> checkGateway(String token) {
+            return Mono.justOrEmpty(token)
+                    .flatMap(gatewayTokenVerifier::verify)
                     .map(serviceCaller -> {
                         var authorities = serviceCaller.getRoles()
                                 .stream()
@@ -234,11 +249,17 @@ public class SecurityConfiguration {
                     .map(caller -> new UsernamePasswordAuthenticationToken(
                             caller,
                             token,
-                            new ArrayList<SimpleGrantedAuthority>()))
+                            new ArrayList<>()))
                     .map(SecurityContextImpl::new);
         }
 
-        private boolean isCentralRegistryAuthenticatedOnlyRequest(String url, HttpMethod method) {
+        private boolean isAllowedList(String url) {
+            AntPathMatcher antPathMatcher = new AntPathMatcher();
+            return of(ALLOWED_LIST_URLS)
+                    .anyMatch(pattern -> antPathMatcher.match(pattern, url));
+        }
+
+        private boolean isGatewayAuthenticationOnly(String url, HttpMethod method) {
             AntPathMatcher antPathMatcher = new AntPathMatcher();
             return SERVICE_ONLY_URLS.stream()
                     .anyMatch(pattern ->
@@ -266,7 +287,7 @@ public class SecurityConfiguration {
                     .map(caller -> new UsernamePasswordAuthenticationToken(
                             caller,
                             authToken,
-                            new ArrayList<SimpleGrantedAuthority>()))
+                            new ArrayList<>()))
                     .map(SecurityContextImpl::new);
         }
 
@@ -280,7 +301,7 @@ public class SecurityConfiguration {
                     .flatMap(token -> Mono.just(new UsernamePasswordAuthenticationToken(
                             token,
                             token,
-                            new ArrayList<SimpleGrantedAuthority>()))
+                            new ArrayList<>()))
                             .map(SecurityContextImpl::new));
         }
 
@@ -297,7 +318,7 @@ public class SecurityConfiguration {
             var auth = new UsernamePasswordAuthenticationToken(
                     authentication.getPrincipal(),
                     token,
-                    new ArrayList<SimpleGrantedAuthority>());
+                    new ArrayList<>());
             return Mono.just(auth);
         }
     }

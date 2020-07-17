@@ -2,7 +2,7 @@ plugins {
     id 'org.springframework.boot' version '2.3.1.RELEASE'
     id 'io.spring.dependency-management' version '1.0.9.RELEASE'
     id 'java'
-    id 'com.avast.gradle.docker-compose' version '0.12.1'
+    id 'com.avast.gradle.docker-compose' version '0.13.0'
     id "org.sonarqube" version "3.0"
     id 'jacoco'
 }
@@ -59,8 +59,8 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     implementation 'org.jeasy:easy-random-core:4.2.0'
-    testImplementation "com.squareup.okhttp3:okhttp:4.7.2"
-    testImplementation "com.squareup.okhttp3:mockwebserver:4.7.2"
+    testImplementation "com.squareup.okhttp3:okhttp:4.8.0"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.8.0"
     implementation 'com.google.guava:guava:29.0-jre'
     implementation 'io.jsonwebtoken:jjwt:0.9.1'
     implementation 'javax.xml.bind:jaxb-api:2.3.1'

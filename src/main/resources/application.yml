@@ -50,6 +50,8 @@ consentmanager:
       expiryInMinutes: ${OTP_EXPIRY_IN_MINUTES}
   jwt:
     secret: ${JWT_SECRET}
+  authorization:
+    header: ${AUTHORIZATION_HEADER:Authorization}
   keycloak:
     baseUrl: ${KEY_CLOAK_URL}
     clientId: ${KEY_CLOAK_CONSENT_CLIENT_ID}
@@ -82,6 +84,8 @@ consentmanager:
     maximumRetries: ${LISTENERS_MAXIMUM_RETRIES}
     # In milliseconds
     retryInterval: ${LISTENERS_RETRY_INTERVAL}
+  nhsproperties:
+    hiuid: ${NHS_HIU_ID:12342345}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}

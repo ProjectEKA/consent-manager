@@ -1,7 +1,12 @@
 package in.projecteka.consentmanager.user;
 
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.DbOperationError;
-import in.projecteka.consentmanager.user.model.*;
+import in.projecteka.consentmanager.user.model.DateOfBirth;
+import in.projecteka.consentmanager.user.model.Gender;
+import in.projecteka.consentmanager.user.model.HealthAccountUser;
+import in.projecteka.consentmanager.user.model.PatientName;
+import in.projecteka.consentmanager.user.model.User;
 import io.vertx.core.json.JsonArray;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
@@ -20,6 +25,8 @@ public class UserRepository {
 
     private static final String SELECT_PATIENT = "select id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers " +
             "from patient where id = $1";
+
+    private static final String SELECT_NAME_BY_HEALTH_ID = "select first_name, middle_name, last_name from patient where health_id = $1";
 
     private static final String SELECT_PATIENT_BY_GENDER_MOB = "select id, first_name, middle_name, last_name, date_of_birth, month_of_birth, year_of_birth, unverified_identifiers from patient" +
             " where gender = $1 and phone_number = $2";
@@ -148,8 +155,38 @@ public class UserRepository {
                         }));
     }
 
+    public Mono<PatientName> getNameByHealthId(String healthId) {
+
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_NAME_BY_HEALTH_ID)
+                .execute(Tuple.of(healthId),
+                        handler -> {
+                            if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
+                                monoSink.error(new DbOperationError());
+                                return;
+                            }
+                            var patientIterator = handler.result().iterator();
+                            if (!patientIterator.hasNext()) {
+                                monoSink.error(ClientError.userNotFound());
+                                return;
+                            }
+                            var patientRow = patientIterator.next();
+                            try {
+                                var patientName = PatientName.builder()
+                                        .first(patientRow.getString("first_name"))
+                                        .middle(patientRow.getString("middle_name"))
+                                        .last(patientRow.getString("last_name"))
+                                        .build();
+                                monoSink.success(patientName);
+                            } catch (Exception exc) {
+                                logger.error(exc.getMessage(), exc);
+                                monoSink.success();
+                            }
+                        }));
+    }
+
     public Mono<Void> updateCMId(String healthId, String cmId) {
-        Tuple userDetails = Tuple.of(healthId,cmId);
+        Tuple userDetails = Tuple.of(cmId, healthId);
         System.out.println("UPDATE CM_ID : came ------> \n");
         return doOperation(UPDATE_CM_ID, userDetails);
     }

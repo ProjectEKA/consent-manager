@@ -1,15 +1,9 @@
 package in.projecteka.consentmanager.user;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.exception.InvalidSessionException;
-import in.projecteka.consentmanager.user.model.HASSignupRequest;
 import in.projecteka.consentmanager.user.model.SendOtpAction;
-import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import io.jsonwebtoken.Claims;
@@ -23,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
-import java.security.PublicKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;

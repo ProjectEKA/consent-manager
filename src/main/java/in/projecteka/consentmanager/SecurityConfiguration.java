@@ -126,6 +126,7 @@ public class SecurityConfiguration {
                 PATH_HEARTBEAT,
                 "/patients/v1/ha/create_account_verified_mobile_token",
                 "/patients/profile/update-login-details",
+                "/patients/v1/ha/account_update",
                 "/**.html",
                 "/**.js",
                 "/**.yaml",

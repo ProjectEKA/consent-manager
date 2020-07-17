@@ -118,8 +118,8 @@ public class PatientsController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/profile/update-login-details")
-    public Mono<Session> create(@RequestBody UpdateLoginDetailsRequest request,
-                                       @RequestHeader(name = "Authorization") String token) {
+    public Mono<Session> updateLoginDetails(@RequestBody UpdateLoginDetailsRequest request,
+                                            @RequestHeader(name = "Authorization") String token) {
         var loginRequests = SignUpRequestValidator.validateLoginDetails(request, userService.getUserIdSuffix());
         return loginRequests.isValid()
                 ? hasSignupService.updateHASLoginDetails(request, token)

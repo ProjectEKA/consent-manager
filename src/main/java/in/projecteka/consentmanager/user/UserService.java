@@ -1,14 +1,17 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.HealthAccountServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.consentmanager.clients.model.HealthAccountServiceTokenResponse;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.clients.properties.HealthAccountServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.consent.model.Action;
 import in.projecteka.consentmanager.consent.model.Communication;
@@ -65,6 +68,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final OtpServiceProperties otpServiceProperties;
     private final OtpServiceClient otpServiceClient;
+    private final HealthAccountServiceProperties healthAccountServiceProperties;
+    private final HealthAccountServiceClient healthAccountServiceClient;
     private final SignUpService signupService;
     private final IdentityServiceClient identityServiceClient;
     private final TokenService tokenService;
@@ -116,21 +121,25 @@ public class UserService {
                 .subscribe();
     }
 
-    public Mono<SignUpSession> sendOtp(UserSignUpEnquiry userSignupEnquiry) {
+    public Mono<SignUpSession> sendOtpFromHealthAccountService(UserSignUpEnquiry userSignupEnquiry) {
         return getOtpRequest(userSignupEnquiry)
                 .map(otpRequest -> otpAttemptService
                         .validateOTPRequest(userSignupEnquiry.getIdentifierType(),
                                 userSignupEnquiry.getIdentifier(),
                                 OtpAttempt.Action.OTP_REQUEST_REGISTRATION)
-                        .then(otpServiceClient.send(otpRequest))
-                        .then(signupService.cacheAndSendSession(otpRequest.getSessionId(),
-                                otpRequest.getCommunication().getValue())))
+                        .then(healthAccountServiceClient.send(otpRequest))
+                        .flatMap(otpRequestResponse -> signupService.cacheAndSendSession(
+                                otpRequestResponse.getTransactionId(),
+                                otpRequest.getCommunication().getValue())
+                        )
+                )
                 .orElse(Mono.error(new InvalidRequestException("invalid.identifier.type")));
     }
 
     private Optional<OtpRequest> getOtpRequest(UserSignUpEnquiry userSignupEnquiry) {
         String identifierType = userSignupEnquiry.getIdentifierType().toUpperCase();
-        if (!otpServiceProperties.getIdentifiers().contains(identifierType)) {
+        if ((!healthAccountServiceProperties.getIdentifiers().contains(identifierType)) &&
+                (!otpServiceProperties.getIdentifiers().contains(identifierType))) {
             return Optional.empty();
         }
         var communication = new OtpCommunicationData(userSignupEnquiry.getIdentifierType(),
@@ -154,6 +163,17 @@ public class UserService {
                 .orElse(Mono.error(new InvalidRequestException("invalid.identifier.type")));
     }
 
+    private Mono<HealthAccountServiceTokenResponse> validateAndVerifyOtpFromHealthAccountService(OtpVerification otpVerification, OtpAttempt attempt) {
+        Mono<HealthAccountServiceTokenResponse> verifyOtp = otpAttemptService.validateOTPSubmission(attempt)
+                .then(healthAccountServiceClient.verifyOtp(otpVerification.getSessionId(), otpVerification.getValue()));
+
+        return verifyOtp
+                .onErrorResume(ClientError.class, error -> otpAttemptService.handleInvalidOTPError(error, attempt))
+                .then(otpAttemptService.removeMatchingAttempts(attempt))
+                .then(verifyOtp);
+    }
+
+    //TODO: Below should be removed once we have replaced all OTP mechaninsm with HAS
     private Mono<Void> validateAndVerifyOtp(OtpVerification otpVerification, OtpAttempt attempt) {
         return otpAttemptService.validateOTPSubmission(attempt)
                 .then(otpServiceClient.verify(otpVerification.getSessionId(), otpVerification.getValue()))
@@ -161,7 +181,7 @@ public class UserService {
                 .then(otpAttemptService.removeMatchingAttempts(attempt));
     }
 
-    public Mono<Token> verifyOtpForRegistration(OtpVerification otpVerification) {
+    public Mono<Token> verifyOtpFromHealthAccountService(OtpVerification otpVerification) {
         if (!validateOtpVerification(otpVerification)) {
             return Mono.error(new InvalidRequestException(INVALID_REQUEST_BODY));
         }
@@ -173,8 +193,9 @@ public class UserService {
                             .identifierType(MOBILE.name())
                             .identifierValue(mobileNumber)
                             .action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION);
-                    return validateAndVerifyOtp(otpVerification, builder.build())
-                            .then(signupService.generateToken(otpVerification.getSessionId()));
+
+                    return validateAndVerifyOtpFromHealthAccountService(otpVerification, builder.build())
+                            .flatMap(tokenResponse -> Mono.just(new Token(tokenResponse.getToken())));
                 });
     }
 
@@ -346,5 +367,54 @@ public class UserService {
 
     private Mono<User> getDistinctUser(List<User> rows) {
         return rows.size() == 1 ? Mono.just(rows.get(0)) : Mono.empty();
+    }
+
+    public Mono<SignUpSession> sendOtp(UserSignUpEnquiry request) {
+        if (isNumberFromAllowedList(request.getIdentifier()))
+            return sendOtpFromOTPService(request);
+        return sendOtpFromHealthAccountService(request);
+    }
+
+    private boolean isNumberFromAllowedList(String mobileNumber) {
+        return otpServiceProperties.allowListNumbers().stream().anyMatch(number ->
+                number.equals(mobileNumber));
+    }
+
+    private Mono<SignUpSession> sendOtpFromOTPService(UserSignUpEnquiry userSignupEnquiry) {
+        return getOtpRequest(userSignupEnquiry)
+                .map(otpRequest -> otpAttemptService
+                        .validateOTPRequest(userSignupEnquiry.getIdentifierType(),
+                                userSignupEnquiry.getIdentifier(),
+                                OtpAttempt.Action.OTP_REQUEST_REGISTRATION)
+                        .then(otpServiceClient.send(otpRequest))
+                        .then(signupService.cacheAndSendSession(otpRequest.getSessionId(),
+                                otpRequest.getCommunication().getValue())))
+                .orElse(Mono.error(new InvalidRequestException("invalid.identifier.type")));
+    }
+
+    public Mono<Token> verifyOtpForRegistration(OtpVerification otpVerification) {
+        return signupService.getMobileNumber(otpVerification.getSessionId())
+                .flatMap(mobile -> {
+                    if (isNumberFromAllowedList(mobile))
+                        return verifyOtpFromOTPService(otpVerification);
+                    return verifyOtpFromHealthAccountService(otpVerification);
+                });
+    }
+
+    private Mono<Token> verifyOtpFromOTPService(OtpVerification otpVerification) {
+        if (!validateOtpVerification(otpVerification)) {
+            return Mono.error(new InvalidRequestException(INVALID_REQUEST_BODY));
+        }
+        return signupService.getMobileNumber(otpVerification.getSessionId())
+                .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
+                .flatMap(mobileNumber -> {
+                    OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
+                            .sessionId(otpVerification.getSessionId())
+                            .identifierType(MOBILE.name())
+                            .identifierValue(mobileNumber)
+                            .action(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION);
+                    return validateAndVerifyOtp(otpVerification, builder.build())
+                            .then(signupService.generateToken(otpVerification.getSessionId()));
+                });
     }
 }

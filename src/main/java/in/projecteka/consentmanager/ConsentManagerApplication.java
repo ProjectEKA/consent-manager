@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager;
 
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
+import in.projecteka.consentmanager.clients.properties.HealthAccountServiceProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
@@ -26,6 +27,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
                                 DbOptions.class,
                                 DataFlowConsentManagerProperties.class,
                                 OtpServiceProperties.class,
+                                HealthAccountServiceProperties.class,
                                 IdentityServiceProperties.class,
                                 LinkServiceProperties.class,
                                 UserServiceProperties.class,

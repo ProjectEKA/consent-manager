@@ -2,14 +2,19 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.HealthAccountServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.consentmanager.clients.model.HealthAccountServiceTokenResponse;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
+import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.clients.model.OtpRequestResponse;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.clients.properties.HealthAccountServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
@@ -88,6 +93,9 @@ class UserServiceTest {
     private OtpServiceClient otpServiceClient;
 
     @Mock
+    private HealthAccountServiceClient healthAccountServiceClient;
+
+    @Mock
     private SignUpService signupService;
 
     @Mock
@@ -126,10 +134,14 @@ class UserServiceTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"), 5);
+        var healthAccountServiceProperties = new HealthAccountServiceProperties(false, "", Collections.singletonList("MOBILE"), 5);
+
         userService = new UserService(
                 userRepository,
                 otpServiceProperties,
                 otpServiceClient,
+                healthAccountServiceProperties,
+                healthAccountServiceClient,
                 signupService,
                 identityServiceClient,
                 tokenService,
@@ -140,12 +152,33 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldReturnTemporarySessionReceivedFromClient() {
+    public void shouldSendOTPRequestToHealthAccountService() {
         var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", "+91-9788888");
         var sessionId = string();
         var signUpSession = new SignUpSession(sessionId);
+        OtpCommunicationData data = new OtpCommunicationData("MOBILE", "+91-9788888");
+
+        when(otpAttemptService.validateOTPRequest(userSignUpEnquiry.getIdentifierType(), userSignUpEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_REGISTRATION)).thenReturn(Mono.empty());
+        when(healthAccountServiceClient.send(any(OtpRequest.class))).thenReturn(Mono.just(new OtpRequestResponse("txnID")));
+        when(signupService.cacheAndSendSession("txnID", "+91-9788888")).thenReturn(Mono.just(signUpSession));
+
+        Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
+
+        verify(healthAccountServiceClient, times(1)).send(otpRequestArgumentCaptor.capture());
+        assertThat(otpRequestArgumentCaptor.getValue().getCommunication().getValue()).isEqualTo("+91-9788888");
+        StepVerifier.create(signUp)
+                .assertNext(session -> assertThat(session).isEqualTo(signUpSession))
+                .verifyComplete();
+    }
+
+    @Test
+    public void shouldSendOTPRequestToOTPService() {
+        var allowListedMobileNumber = "+91-8888888888";
+        var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", allowListedMobileNumber);
+        var sessionId = string();
+        var signUpSession = new SignUpSession(sessionId);
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
-        when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq("+91-9788888")))
+        when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq(allowListedMobileNumber)))
                 .thenReturn(Mono.just(signUpSession));
         when(otpAttemptService.validateOTPRequest(userSignUpEnquiry.getIdentifierType(), userSignUpEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_REGISTRATION)).thenReturn(Mono.empty());
 
@@ -165,22 +198,21 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldReturnTokenReceivedFromClient() {
+    public void shouldReturnTokenReceivedFromHealthAccountService() {
         var sessionId = string();
         var otp = string();
-        var token = string();
-        var mobileNumber = "+91-8888888888";
+        var mobileNumber = "+91-123456789";
 
         ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
-        when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
-        when(signupService.generateToken(sessionId))
-                .thenReturn(Mono.just(new Token(token)));
+        when(healthAccountServiceClient.verifyOtp(eq(sessionId), eq(otp))).thenReturn(Mono.just(new HealthAccountServiceTokenResponse("token")));
+
         when(signupService.getMobileNumber(eq(sessionId))).thenReturn(Mono.just(mobileNumber));
         when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
         when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
+
         StepVerifier.create(userService.verifyOtpForRegistration(otpVerification))
-                .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
+                .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo("token"))
                 .verifyComplete();
 
         var capturedAttempts = argument.getAllValues();
@@ -197,6 +229,39 @@ class UserServiceTest {
         assertEquals(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION, removeMatchingAttemptsArgument.getAction());
     }
 
+    @Test
+    public void shouldReturnCreatedTokenAfterVerifyingFromOTPService() {
+        var sessionId = string();
+        var otp = string();
+        var token = string();
+        var allowListedMobileNumber = "+91-8888888888";
+
+        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
+        OtpVerification otpVerification = new OtpVerification(sessionId, otp);
+        when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
+        when(signupService.generateToken(sessionId))
+                .thenReturn(Mono.just(new Token(token)));
+        when(signupService.getMobileNumber(eq(sessionId))).thenReturn(Mono.just(allowListedMobileNumber));
+        when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
+        when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
+        StepVerifier.create(userService.verifyOtpForRegistration(otpVerification))
+                .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
+                .verifyComplete();
+
+        var capturedAttempts = argument.getAllValues();
+        var validateOTPSubmissionArgument = capturedAttempts.get(0);
+        assertEquals(sessionId, validateOTPSubmissionArgument.getSessionId());
+        assertEquals("MOBILE", validateOTPSubmissionArgument.getIdentifierType());
+        assertEquals(allowListedMobileNumber, validateOTPSubmissionArgument.getIdentifierValue());
+        assertEquals(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION, validateOTPSubmissionArgument.getAction());
+
+        var removeMatchingAttemptsArgument = capturedAttempts.get(1);
+        assertEquals(sessionId, removeMatchingAttemptsArgument.getSessionId());
+        assertEquals("MOBILE", removeMatchingAttemptsArgument.getIdentifierType());
+        assertEquals(allowListedMobileNumber, removeMatchingAttemptsArgument.getIdentifierValue());
+        assertEquals(OtpAttempt.Action.OTP_SUBMIT_REGISTRATION, removeMatchingAttemptsArgument.getAction());
+    }
+
     @ParameterizedTest(name = "Invalid values")
     @CsvSource({
             ",",
@@ -205,7 +270,9 @@ class UserServiceTest {
     })
     public void shouldThrowInvalidRequestExceptionForInvalidOtpValue(
             @ConvertWith(NullableConverter.class) String value) {
-        OtpVerification otpVerification = new OtpVerification(string(), value);
+        String sessionId = string();
+        OtpVerification otpVerification = new OtpVerification(sessionId, value);
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just("12345"));
 
         var producer = userService.verifyOtpForRegistration(otpVerification);
 
@@ -221,6 +288,7 @@ class UserServiceTest {
     public void shouldThrowInvalidRequestExceptionForInvalidOtpSessionId(
             @ConvertWith(NullableConverter.class) String sessionId) {
         OtpVerification otpVerification = new OtpVerification(sessionId, string());
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just("12345"));
 
         var producer = userService.verifyOtpForRegistration(otpVerification);
 

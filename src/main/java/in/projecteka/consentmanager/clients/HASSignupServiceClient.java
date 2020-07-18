@@ -30,6 +30,7 @@ public class HASSignupServiceClient {
                 .body(Mono.just(request), HASSignupRequest.class)
                 .accept(APPLICATION_JSON)
                 .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(ClientError.unAuthorized()))
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(HealthAccountUser.class);
     }

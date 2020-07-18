@@ -132,6 +132,26 @@ class HASSignupServiceTest {
     }
 
     @Test
+    public void shouldThrowErrorWhenTokenIsInvalid() {
+        var signUpRequest = SignUpRequest.builder()
+                .name(PatientName.builder().first("hina").middle("").last("patel").build())
+                .dateOfBirth(DateOfBirth.builder().date(1).month(1).year(2020).build())
+                .gender(Gender.F)
+                .build();
+
+        var txnId = string();
+        var token = string();
+
+        when(hasSignupServiceClient.createHASAccount(any(HASSignupRequest.class)))
+                .thenReturn(Mono.error(ClientError.unAuthorized()));
+
+        StepVerifier.create(hasSignupService.createHASAccount(signUpRequest,token, txnId))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is4xxClientError())
+                .verify();
+    }
+
+    @Test
     public void shouldUpdateLoginDetails() {
         var updateLoginRequestDetails = UpdateLoginDetailsRequest.builder().cmId("hinapatel456@ncg")
                 .healthId("12345-12345-12345")

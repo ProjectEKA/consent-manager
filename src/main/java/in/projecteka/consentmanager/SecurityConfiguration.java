@@ -38,7 +38,6 @@ import java.util.Optional;
 import static in.projecteka.consentmanager.clients.ClientError.unAuthorized;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
 import static in.projecteka.consentmanager.common.Constants.PATH_HEARTBEAT;
-import static in.projecteka.consentmanager.common.Constants.PATIENTS_PROFILE_UPDATE_LOGIN_DETAILS;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
@@ -125,9 +124,9 @@ public class SecurityConfiguration {
                                                                    "/otpsession/permit",
                                                                    "/sessions",
                                                                    PATH_HEARTBEAT,
-                                                                   "/patients/v1/ha/create_account_verified_mobile_token",
-                                                                   PATIENTS_PROFILE_UPDATE_LOGIN_DETAILS,
-                                                                   "/patients/v1/ha/account_update",
+                                                                   "/patients/profile/update-login-details",
+                                                                   "/patients/ha/mock/create_account_verified_mobile_token",
+                                                                   "/patients/ha/mock/account_update",
                                                                    "/**.html",
                                                                    "/**.js",
                                                                    "/**.yaml",
@@ -227,6 +226,7 @@ public class SecurityConfiguration {
                 return checkSignUp(token).switchIfEmpty(error(unAuthorized()));
             }
             if(isUpdateLoginDetailsRequest(requestPath,requestMethod)) {
+                // Token will be verified by HAS
                 return Mono.empty();
             }
             if (isPinVerificationRequest(requestPath, requestMethod)) {
@@ -319,7 +319,7 @@ public class SecurityConfiguration {
         }
 
         private boolean isUpdateLoginDetailsRequest(String url, HttpMethod httpMethod) {
-            return ((PATIENTS_PROFILE_UPDATE_LOGIN_DETAILS).equals(url) && HttpMethod.POST.equals(httpMethod));
+            return (("/patients/profile/update-login-details").equals(url) && HttpMethod.POST.equals(httpMethod));
         }
     }
 

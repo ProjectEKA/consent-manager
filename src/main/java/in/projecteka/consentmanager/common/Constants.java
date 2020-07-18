@@ -16,7 +16,6 @@ public class Constants {
     public static final String CURRENT_VERSION = "/" + API_VERSION;
 
     public static final String PATH_HEARTBEAT = CURRENT_VERSION + "/heartbeat";
-    public static final String PATIENTS_PROFILE_UPDATE_LOGIN_DETAILS = "/patients/profile/update-login-details";
 
     //Gateway API paths
     public static final String PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH = "%s/links/link/confirm";

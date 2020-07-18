@@ -22,7 +22,10 @@ public class Constants {
     public static final String APP_PATH_USER_SIGN_UP_ENQUIRY = "/users/verify";
     public static final String APP_PATH_INTERNAL_FIND_USER_BY_USERNAME = "/internal/users/{userName}";
     public static final String APP_PATH_INTERNAL_GET_CARE_CONTEXT = "/internal/users/care-contexts";
+    public static final String APP_PATH_PROFILE_UPDATE_LOGIN_DETAILS = "/profile/update-login-details";
 
     //HAS apis
-    public static final String V1_HA_CREATE_ACCOUNT_VERIFIED_MOBILE_TOKEN = "/v1/ha/create_account_verified_mobile_token";
+    public static final String HAS_CREATE_ACCOUNT_VERIFIED_MOBILE_TOKEN = "/v1/ha/create_account_verified_mobile_token";
+    //TODO : Change the URL with HAS one
+    public static final String HAS_ACCOUNT_UPDATE = "/patients/ha/mock/account_update";
 }

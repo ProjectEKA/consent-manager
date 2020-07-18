@@ -60,7 +60,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static in.projecteka.consentmanager.common.Constants.PATIENTS_PROFILE_UPDATE_LOGIN_DETAILS;
 import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.patientName;
@@ -207,7 +206,7 @@ public class PatientControllerTest {
         when(userService.getUserIdSuffix()).thenReturn("@ncg");
 
         webClient.post()
-                .uri(PATIENTS_PROFILE_UPDATE_LOGIN_DETAILS)
+                .uri("/patients/profile/update-login-details")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .body(BodyInserters.fromValue(updateLoginRequest))

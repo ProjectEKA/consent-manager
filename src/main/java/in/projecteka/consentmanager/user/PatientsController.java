@@ -115,32 +115,7 @@ public class PatientsController {
                         signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));
     }
 
-    @PostMapping("/v1/ha/create_account_verified_mobile_token")
-    public Mono<HASSignUpResponse> signUPHASDummy(@RequestBody HASSignupRequest hasSignupRequest) {
-        var response = HASSignUpResponse.builder()
-                .firstName("hina")
-                .middleName("")
-                .lastName("patel")
-                .dayOfBirth(1)
-                .monthOfBirth(1)
-                .yearOfBirth(2020)
-                .healthId("tempId")
-                .name("hina patel")
-                .gender("F")
-                .token("tempToken")
-                .stateCode("01")
-                .districtCode("02")
-                .build();
-
-        return Mono.just(response);
-    }
-
-    @PostMapping ("/v1/ha/account_update")
-    public Mono<Void> updateHASAccountDummy() {
-       return Mono.empty();
-    }
-
-    @PostMapping("/profile/update-login-details")
+    @PostMapping(Constants.APP_PATH_PROFILE_UPDATE_LOGIN_DETAILS)
     public Mono<Session> updateLoginDetails(@RequestBody UpdateLoginDetailsRequest request,
                                             @RequestHeader(name = "Authorization") String token) {
         var loginRequests = SignUpRequestValidator.validateLoginDetails(request, userService.getUserIdSuffix());
@@ -303,5 +278,32 @@ public class PatientsController {
     @PostMapping(Constants.APP_PATH_PROFILE_RECOVERY_CONFIRM)
     public Mono<RecoverCmIdResponse> verifyOtpAndRecoverCmId(@RequestBody OtpVerification request) {
         return userService.verifyOtpForRecoverCmId(request);
+    }
+
+    //TODO : To be removed when HAS API is stable
+    @PostMapping("/ha/mock/create_account_verified_mobile_token")
+    public Mono<HASSignUpResponse> signUPHASDummy(@RequestBody HASSignupRequest hasSignupRequest) {
+        var response = HASSignUpResponse.builder()
+                .firstName("hina")
+                .middleName("")
+                .lastName("patel")
+                .dayOfBirth(1)
+                .monthOfBirth(1)
+                .yearOfBirth(2020)
+                .healthId("tempId")
+                .name("hina patel")
+                .gender("F")
+                .token("tempToken")
+                .stateCode("01")
+                .districtCode("02")
+                .build();
+
+        return Mono.just(response);
+    }
+
+    //TODO : To be removed when HAS API is stable
+    @PostMapping ("/ha/mock/account_update")
+    public Mono<Void> updateHASAccountDummy() {
+        return Mono.empty();
     }
 }

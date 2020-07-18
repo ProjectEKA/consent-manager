@@ -43,7 +43,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-public class DataFlowRequesterTest {
+class DataFlowRequesterTest {
     @Mock
     private DataFlowRequestRepository dataFlowRequestRepository;
 
@@ -100,7 +100,7 @@ public class DataFlowRequesterTest {
     }
 
     @Test
-    public void shouldThrowInvalidHIU() {
+    void shouldThrowInvalidHIU() {
         in.projecteka.consentmanager.dataflow.model.DataFlowRequest request = dataFlowRequest().build();
         ConsentArtefactRepresentation consentArtefactRepresentation = consentArtefactRepresentation().build();
 
@@ -110,7 +110,8 @@ public class DataFlowRequesterTest {
                 any(in.projecteka.consentmanager.dataflow.model.DataFlowRequest.class))).thenReturn(Mono.empty());
 
         StepVerifier.create(dataFlowRequester.requestHealthData(request))
-                .expectErrorMatches(e -> (e instanceof ClientError) && ((ClientError) e).getHttpStatus().is4xxClientError());
+                .expectErrorMatches(e -> (e instanceof ClientError) && ((ClientError) e).getHttpStatus().is4xxClientError())
+                .verify();
     }
 
     @Test
@@ -132,7 +133,7 @@ public class DataFlowRequesterTest {
     }
 
     @Test
-    void shouldUpdateHealtInfoStatus() {
+    void shouldUpdateHealthInfoStatus() {
         var healthInformationResponse = healthInformationResponseBuilder().build();
 
         when(dataFlowRequestRepository.updateDataFlowRequestStatus(healthInformationResponse.getHiRequest().getTransactionId(),

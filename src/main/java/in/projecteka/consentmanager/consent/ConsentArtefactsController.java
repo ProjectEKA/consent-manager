@@ -1,6 +1,8 @@
 package in.projecteka.consentmanager.consent;
 
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.model.FetchRequest;
@@ -35,6 +37,8 @@ public class ConsentArtefactsController {
     private final ConsentManager consentManager;
     private final CacheAdapter<String, String> usedTokens;
     private final ConsentServiceProperties serviceProperties;
+    private final CacheAdapter<String, String> cacheForReplayAttack;
+    private final RequestValidator validator;
 
     @GetMapping(value = Constants.APP_PATH_GET_CONSENT)
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(@PathVariable(value = "consentId") String consentId) {
@@ -87,18 +91,30 @@ public class ConsentArtefactsController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PostMapping(value = PATH_CONSENTS_FETCH)
     public Mono<Void> fetchConsent(@RequestBody FetchRequest fetchRequest) {
-      return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
-                .doOnSuccess(requester -> {
-                    Mono.defer(() -> consentManager.getConsent(fetchRequest.getConsentId(), fetchRequest.getRequestId())).subscribe();
-                })
-                .then();
+      return Mono.just(fetchRequest)
+              .filterWhen(req ->
+                      validator.validate(fetchRequest.getRequestId().toString(),fetchRequest.getTimestamp().toString()))
+              .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+              .flatMap(validatedRequest -> ReactiveSecurityContextHolder.getContext()
+                      .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
+                      .doOnSuccess(requester -> Mono.defer(() -> {
+                          cacheForReplayAttack.put(
+                                  fetchRequest.getRequestId().toString(),fetchRequest.getTimestamp().toString());
+                          return consentManager.getConsent(fetchRequest.getConsentId(), fetchRequest.getRequestId());
+                      }).subscribe())
+                      .then());
     }
 
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PostMapping(value = PATH_HIP_CONSENT_ON_NOTIFY)
     public Mono<Void> hipOnNotify(@RequestBody HIPCosentNotificationAcknowledgment acknowledgment) {
-        return consentManager.updateConsentNotification(acknowledgment);
+        return Mono.just(acknowledgment)
+                .filterWhen(req ->
+                        validator.validate(acknowledgment.getRequestId().toString()
+                                ,acknowledgment.getTimestamp().toString()))
+                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .flatMap(validatedRequest -> consentManager.updateConsentNotification(acknowledgment)
+                        .then(cacheForReplayAttack.put(acknowledgment.getRequestId().toString(),acknowledgment.getTimestamp().toString())));
     }
 
     private int getPageSize(int limit) {

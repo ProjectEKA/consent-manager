@@ -7,8 +7,10 @@ import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.ListenerProperties;
 import in.projecteka.consentmanager.common.cache.RedisOptions;
+import in.projecteka.consentmanager.common.heartbeat.CacheMethodProperty;
 import in.projecteka.consentmanager.common.heartbeat.RabbitmqOptions;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
+import in.projecteka.consentmanager.consent.NHSProperties;
 import in.projecteka.consentmanager.dataflow.DataFlowConsentManagerProperties;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.user.JWTProperties;
@@ -37,7 +39,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
                                 RedisOptions.class,
                                 ListenerProperties.class,
                                 GatewayServiceProperties.class,
-                                RabbitmqOptions.class
+                                RabbitmqOptions.class,
+                                NHSProperties.class,
+                                CacheMethodProperty.class
                               })
 public class ConsentManagerApplication {
 

@@ -80,7 +80,7 @@ public class ConsentManagerClient {
                                 .uri(gatewayServiceProperties.getBaseUrl() + CONSENT_FETCH_URL_PATH)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header(AUTHORIZATION, token)
-                                .header("X-HIU-ID", hiuId)
+                                .header(HDR_HIU_ID, hiuId)
                                 .bodyValue(consentArtefactResult)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 400,

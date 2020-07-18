@@ -21,6 +21,7 @@ public class Constants {
     public static final String APP_PATH_FIND_BY_USER_NAME = "/users/{userName}";
     public static final String APP_PATH_USER_SIGN_UP_ENQUIRY = "/users/verify";
     public static final String APP_PATH_INTERNAL_FIND_USER_BY_USERNAME = "/internal/users/{userName}";
+    public static final String APP_PATH_INTERNAL_GET_CARE_CONTEXT = "/internal/users/care-contexts";
 
     //HAS apis
     public static final String V1_HA_CREATE_ACCOUNT_VERIFIED_MOBILE_TOKEN = "/v1/ha/create_account_verified_mobile_token";

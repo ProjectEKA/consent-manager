@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.consent;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
@@ -24,7 +23,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 
-import static in.projecteka.consentmanager.ConsentManagerConfiguration.*;
+import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static org.mockito.ArgumentMatchers.any;

@@ -74,6 +74,8 @@ consentmanager:
     clientId: ncg
     clientSecret: ${GATEWAY_CLIENTSECRET}
     jwkUrl: http://localhost:8000/v0.5/certs
+  nhsproperties:
+    hiuId: 10000002
 spring:
   rabbitmq:
     host: localhost

@@ -81,6 +81,8 @@ consentmanager:
   listeners:
     maximumRetries: 3
     retryInterval: 10000
+  nhsproperties:
+    hiuid: 10000002
 spring:
   rabbitmq:
     host: localhost

@@ -125,7 +125,6 @@ public class SecurityConfiguration {
                                                                    "/sessions",
                                                                    PATH_HEARTBEAT,
                                                                    "/patients/profile/update-login-details",
-                                                                   "/patients/ha/mock/create_account_verified_mobile_token",
                                                                    "/patients/ha/mock/account_update",
                                                                    "/**.html",
                                                                    "/**.js",

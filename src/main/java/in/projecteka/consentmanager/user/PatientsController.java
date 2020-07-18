@@ -209,9 +209,9 @@ public class PatientsController {
         var updateUserRequests = SignUpRequestValidator.validatePassword(request.getPassword());
         return updateUserRequests.isValid()
                 ? Mono.justOrEmpty(signupService.sessionFrom(token))
-                .flatMap(sessionId -> userService.update(request, sessionId)
-                        .zipWith(Mono.just(sessionId))
-                        .flatMap(tuple -> signupService.removeOf(tuple.getT2()).thenReturn(tuple.getT1())))
+                        .flatMap(sessionId -> userService.update(request, sessionId)
+                                .zipWith(Mono.just(sessionId))
+                                .flatMap(tuple -> signupService.removeOf(tuple.getT2()).thenReturn(tuple.getT1())))
                 : Mono.error(invalidRequester(updateUserRequests.getError()));
     }
 
@@ -220,10 +220,10 @@ public class PatientsController {
         var updatePasswordRequest = SignUpRequestValidator.validatePassword(request.getNewPassword());
         return updatePasswordRequest.isValid()
                 ? ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .map(Caller::getUsername)
-                .flatMap(lockedUserService::validateLogin)
-                .flatMap(userName -> Mono.defer(() -> userService.updatePassword(request, userName)))
+                        .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                        .map(Caller::getUsername)
+                        .flatMap(lockedUserService::validateLogin)
+                        .flatMap(userName -> Mono.defer(() -> userService.updatePassword(request, userName)))
                 : Mono.error(invalidRequester(updatePasswordRequest.getError()));
     }
 
@@ -281,28 +281,7 @@ public class PatientsController {
     }
 
     //TODO : To be removed when HAS API is stable
-    @PostMapping("/ha/mock/create_account_verified_mobile_token")
-    public Mono<HASSignUpResponse> signUPHASDummy(@RequestBody HASSignupRequest hasSignupRequest) {
-        var response = HASSignUpResponse.builder()
-                .firstName("hina")
-                .middleName("")
-                .lastName("patel")
-                .dayOfBirth(1)
-                .monthOfBirth(1)
-                .yearOfBirth(2020)
-                .healthId("tempId")
-                .name("hina patel")
-                .gender("F")
-                .token("tempToken")
-                .stateCode("01")
-                .districtCode("02")
-                .build();
-
-        return Mono.just(response);
-    }
-
-    //TODO : To be removed when HAS API is stable
-    @PostMapping ("/ha/mock/account_update")
+    @PostMapping("/ha/mock/account_update")
     public Mono<Void> updateHASAccountDummy() {
         return Mono.empty();
     }

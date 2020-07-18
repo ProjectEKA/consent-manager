@@ -183,13 +183,17 @@ public class UserConfiguration {
     public HASSignupService hasSignupService(HASSignupServiceClient hasSignupServiceClient,
                                              UserRepository userRepository,
                                              SignUpService signUpService,
-                                             UserService userService,
                                              TokenService tokenService,
                                              IdentityServiceClient identityServiceClient,
                                              SessionService sessionService,
                                              BCryptPasswordEncoder bCryptPasswordEncoder) {
-        return new HASSignupService(hasSignupServiceClient,userRepository,signUpService,
-                 userService, tokenService, identityServiceClient, sessionService, bCryptPasswordEncoder);
+        return new HASSignupService(hasSignupServiceClient,
+                userRepository,
+                signUpService,
+                tokenService,
+                identityServiceClient,
+                sessionService,
+                bCryptPasswordEncoder);
     }
 
     @Bean

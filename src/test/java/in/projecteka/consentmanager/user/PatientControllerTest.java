@@ -55,6 +55,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -131,7 +132,7 @@ public class PatientControllerTest {
     private ConceptValidator conceptValidator;
 
     @Test
-    public void createUser() {
+    public void createUser() throws ParseException {
         var signUpRequest = signUpRequest()
                 .name(patientName().first("Alan").build())
                 .dateOfBirth(dateOfBirth().date(1).month(11).year(1998).build())
@@ -154,7 +155,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void returnBadRequestForUserCreation() {
+    public void returnBadRequestForUserCreation() throws ParseException {
         var signUpRequest = signUpRequest()
                 .name(patientName().first("Alan").build())
                 .dateOfBirth(dateOfBirth().date(LocalDate.now().getDayOfMonth() + 1).build()).build();

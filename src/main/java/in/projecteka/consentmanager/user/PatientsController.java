@@ -22,15 +22,13 @@ import in.projecteka.consentmanager.user.model.Profile;
 import in.projecteka.consentmanager.user.model.RecoverCmIdResponse;
 import in.projecteka.consentmanager.user.model.SendOtpAction;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
+import in.projecteka.consentmanager.user.model.SignUpResponse;
 import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
 import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.ValidatePinRequest;
-import in.projecteka.consentmanager.user.model.SignUpResponse;
-import in.projecteka.consentmanager.user.model.HASSignUpResponse;
-import in.projecteka.consentmanager.user.model.HASSignupRequest;
-import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -46,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
+import java.text.ParseException;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -105,11 +104,11 @@ public class PatientsController {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/profile")
     public Mono<SignUpResponse> create(@RequestBody SignUpRequest request,
-                                       @RequestHeader(name = "Authorization") String token) {
+                                       @RequestHeader(name = "Authorization") String token) throws ParseException {
         var signUpRequests = SignUpRequestValidator.validate(request);
         return signUpRequests.isValid()
                 ? Mono.justOrEmpty(signupService.txnIdFrom(token))
-                .flatMap(txnId->hasSignupService.createHASAccount(request, token, txnId))
+                .flatMap(txnId -> hasSignupService.createHASAccount(request, token, txnId))
                 : Mono.error(new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_REQUESTER,
                         signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));

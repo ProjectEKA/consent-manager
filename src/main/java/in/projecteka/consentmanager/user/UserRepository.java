@@ -167,7 +167,7 @@ public class UserRepository {
                             }
                             var patientIterator = handler.result().iterator();
                             if (!patientIterator.hasNext()) {
-                                monoSink.error(ClientError.userNotFound());
+                                monoSink.success();
                                 return;
                             }
                             var patientRow = patientIterator.next();

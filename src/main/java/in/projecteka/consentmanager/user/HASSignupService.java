@@ -19,17 +19,17 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 
+import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
+
 @AllArgsConstructor
 public class HASSignupService {
     private final HASSignupServiceClient hasSignupServiceClient;
     private final UserRepository userRepository;
     private final SignUpService signUpService;
-    private final UserService userService;
     private final TokenService tokenService;
     private final IdentityServiceClient identityServiceClient;
     private final SessionService sessionService;
     private final BCryptPasswordEncoder passwordEncoder;
-
 
     public Mono<SignUpResponse> createHASAccount(SignUpRequest signUpRequest, String token, String txnId) {
         var signupRequest = createHASSignupRequest(signUpRequest, token, txnId);
@@ -58,10 +58,12 @@ public class HASSignupService {
 
     public Mono<Session> updateHASLoginDetails(UpdateLoginDetailsRequest request, String token) {
         var updateHASLoginDetails = createUpdateHASUserRequest(request, token);
-        return userService.userExistsWith(request.getCmId())
+        return userRepository.userWith(request.getCmId())
+                .flatMap(patient -> Mono.error(userAlreadyExists(patient.getIdentifier())))
                 .switchIfEmpty(Mono.defer(() -> hasSignupServiceClient.updateHASAccount(updateHASLoginDetails)))
                 .then(Mono.defer(() -> userRepository.updateCMId(request.getHealthId(), request.getCmId())))
                 .then(Mono.defer(() -> userRepository.getNameByHealthId(request.getHealthId())))
+                .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.userNotFound())))
                 .flatMap(patientName -> Mono.just(new KeycloakUser(patientName.createFullName(),
                         request.getCmId(),
                         Collections.singletonList(new UserCredential(request.getPassword())),

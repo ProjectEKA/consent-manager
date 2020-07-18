@@ -10,8 +10,8 @@ import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
 import in.projecteka.consentmanager.user.model.HealthAccountUser;
 import in.projecteka.consentmanager.user.model.PatientName;
-import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.SessionRequest;
+import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +24,7 @@ import reactor.test.StepVerifier;
 
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -39,9 +40,6 @@ class HASSignupServiceTest {
 
     @Mock
     private HASSignupServiceClient hasSignupServiceClient;
-
-    @Mock
-    private UserService userService;
 
     @Mock
     private TokenService tokenService;
@@ -65,7 +63,6 @@ class HASSignupServiceTest {
                 hasSignupServiceClient,
                 userRepository,
                 signupService,
-                userService,
                 tokenService,
                 identityServiceClient,
                 sessionService,
@@ -161,7 +158,7 @@ class HASSignupServiceTest {
         var patientName = PatientName.builder().first("hina").middle("").last("patel").build();
         var session = session().build();
 
-        when(userService.userExistsWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
+        when(userRepository.userWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
         when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class))).thenReturn(Mono.empty());
         when(userRepository.updateCMId(anyString(),anyString()))
                 .thenReturn(Mono.empty());
@@ -187,9 +184,10 @@ class HASSignupServiceTest {
                 .password("Test@1243")
                 .build();
         var token = string();
+        var user = user().build();
 
-        when(userService.userExistsWith(anyString()))
-                .thenReturn(Mono.error(ClientError.userAlreadyExists(anyString())));
+        when(userRepository.userWith(anyString()))
+                .thenReturn(Mono.just(user));
 
         StepVerifier.create(hasSignupService.updateHASLoginDetails(updateLoginRequestDetails,token))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
@@ -205,7 +203,7 @@ class HASSignupServiceTest {
                 .build();
         var token = string();
 
-        when(userService.userExistsWith(anyString())).thenReturn(Mono.empty());
+        when(userRepository.userWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
         when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class)))
                 .thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
 
@@ -223,12 +221,12 @@ class HASSignupServiceTest {
                 .build();
         var token = string();
 
-        when(userService.userExistsWith(anyString())).thenReturn(Mono.empty());
+        when(userRepository.userWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
         when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class))).thenReturn(Mono.empty());
         when(userRepository.updateCMId(anyString(),anyString()))
                 .thenReturn(Mono.empty());
         when(userRepository.getNameByHealthId(updateLoginRequestDetails.getHealthId()))
-                .thenReturn(Mono.error(ClientError.userNotFound()));
+                .thenReturn(Mono.empty());
 
         StepVerifier.create(hasSignupService.updateHASLoginDetails(updateLoginRequestDetails,token))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
@@ -247,11 +245,11 @@ class HASSignupServiceTest {
         var session = session().build();
 
 
-        when(userService.userExistsWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
+        when(userRepository.userWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
         when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class))).thenReturn(Mono.empty());
         when(userRepository.updateCMId(anyString(),anyString()))
                 .thenReturn(Mono.empty());
-        when(userRepository.getNameByHealthId(updateLoginRequestDetails.getHealthId()))
+        when(userRepository.getNameByHealthId(anyString()))
                 .thenReturn(Mono.just(patientName));
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(session));
         when(identityServiceClient.createUser(any(Session.class),any(KeycloakUser.class)))
@@ -274,7 +272,7 @@ class HASSignupServiceTest {
         var session = session().build();
 
 
-        when(userService.userExistsWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
+        when(userRepository.userWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
         when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class))).thenReturn(Mono.empty());
         when(userRepository.updateCMId(anyString(),anyString()))
                 .thenReturn(Mono.empty());

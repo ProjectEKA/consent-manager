@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.user;
 
-import com.auth0.jwt.JWT;
+import com.nimbusds.jwt.JWTParser;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.exception.InvalidSessionException;
 import in.projecteka.consentmanager.user.model.SendOtpAction;
@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
+import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -61,14 +62,14 @@ public class SignUpService {
                     getIfPresent(session)
                     .flatMap(s -> Mono.just(true))
                     .switchIfEmpty(Mono.just(false));
-        } catch (ExpiredJwtException | MalformedJwtException | SignatureException | IllegalArgumentException e) {
+        } catch (ExpiredJwtException | MalformedJwtException | SignatureException | IllegalArgumentException | ParseException e) {
             logger.error(e.getMessage(), e);
             return Mono.just(false);
         }
     }
 
-    public String txnIdFrom(String token) {
-       return JWT.decode(token).getClaim("txnId").asString();
+    public String txnIdFrom(String token) throws ParseException {
+        return JWTParser.parse(token).getJWTClaimsSet().getClaim("txnId").toString();
     }
 
     public Mono<Token> generateToken(String sessionId) {

@@ -26,6 +26,5 @@ public class Constants {
 
     //HAS apis
     public static final String HAS_CREATE_ACCOUNT_VERIFIED_MOBILE_TOKEN = "/v1/ha/create_account_verified_mobile_token";
-    //TODO : Change the URL with HAS one
-    public static final String HAS_ACCOUNT_UPDATE = "/patients/ha/mock/account_update";
+    public static final String HAS_ACCOUNT_UPDATE = "/v1/ha/update_account";
 }

@@ -279,10 +279,4 @@ public class PatientsController {
     public Mono<RecoverCmIdResponse> verifyOtpAndRecoverCmId(@RequestBody OtpVerification request) {
         return userService.verifyOtpForRecoverCmId(request);
     }
-
-    //TODO : To be removed when HAS API is stable
-    @PostMapping("/ha/mock/account_update")
-    public Mono<Void> updateHASAccountDummy() {
-        return Mono.empty();
-    }
 }

@@ -151,7 +151,7 @@ class HASSignupServiceTest {
 
     @Test
     public void shouldUpdateLoginDetails() {
-        var updateLoginRequestDetails = UpdateLoginDetailsRequest.builder().cmId("hinapatel456@ncg")
+        var updateLoginRequestDetails = UpdateLoginDetailsRequest.builder().cmId("hinapatel456@pmjay")
                 .healthId("12345-12345-12345")
                 .password("Test@1243")
                 .build();
@@ -180,7 +180,7 @@ class HASSignupServiceTest {
 
     @Test
     public void shouldThrowErrorWhenUserAlreadyExists() {
-        var updateLoginRequestDetails = UpdateLoginDetailsRequest.builder().cmId("hinapatel456@ncg")
+        var updateLoginRequestDetails = UpdateLoginDetailsRequest.builder().cmId("hinapatel456@pmjay")
                 .healthId("12345-12345-12345")
                 .password("Test@1243")
                 .build();
@@ -198,7 +198,7 @@ class HASSignupServiceTest {
 
     @Test
     public void shouldThrowErrorWhenUnableToUpdatePasswordOnHAS() {
-        var updateLoginRequestDetails = UpdateLoginDetailsRequest.builder().cmId("hinapatel456@ncg")
+        var updateLoginRequestDetails = UpdateLoginDetailsRequest.builder().cmId("hinapatel456@pmjay")
                 .healthId("12345-12345-12345")
                 .password("Test@1243")
                 .build();
@@ -216,7 +216,7 @@ class HASSignupServiceTest {
 
     @Test
     public void shouldThrowErrorWhenHealthIdNotFound() {
-        var updateLoginRequestDetails = UpdateLoginDetailsRequest.builder().cmId("hinapatel456@ncg")
+        var updateLoginRequestDetails = UpdateLoginDetailsRequest.builder().cmId("hinapatel456@pmjay")
                 .healthId("12345-12345-12345")
                 .password("Test@1243")
                 .build();
@@ -237,7 +237,7 @@ class HASSignupServiceTest {
 
     @Test
     public void shouldThrowErrorWhenUserNameOrPasswordIsInvalid() {
-        var updateLoginRequestDetails = UpdateLoginDetailsRequest.builder().cmId("hinapatel456@ncg")
+        var updateLoginRequestDetails = UpdateLoginDetailsRequest.builder().cmId("hinapatel456@pmjay")
                 .healthId("12345-12345-12345")
                 .password("Test@1243")
                 .build();

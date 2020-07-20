@@ -126,7 +126,6 @@ public class SecurityConfiguration {
                                                                    "/sessions",
                                                                    PATH_HEARTBEAT,
                                                                    "/patients/profile/update-login-details",
-                                                                   HAS_ACCOUNT_UPDATE,
                                                                    "/**.html",
                                                                    "/**.js",
                                                                    "/**.yaml",

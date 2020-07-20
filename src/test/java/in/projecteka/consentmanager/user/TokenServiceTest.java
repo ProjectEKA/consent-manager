@@ -51,4 +51,16 @@ class TokenServiceTest {
                 .assertNext(s -> assertThat(s).isEqualTo(session))
                 .verifyComplete();
     }
+
+    @Test
+    void shouldReturnRefreshTokenForUser() {
+        Session session = new Session("accessToken", 2, 2, "refreshToken", "login");
+        when(identityServiceClient.getToken(any())).thenReturn(Mono.just(session));
+        TokenService tokenService = new TokenService(keyCloakProperties, identityServiceClient, userRepository);
+
+
+        StepVerifier.create(tokenService.tokenForRefreshToken("userName","refereshToken"))
+                .assertNext(s -> assertThat(s).isEqualTo(session))
+                .verifyComplete();
+    }
 }

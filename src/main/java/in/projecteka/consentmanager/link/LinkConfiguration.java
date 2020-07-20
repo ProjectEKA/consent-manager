@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
@@ -20,6 +21,8 @@ import in.projecteka.consentmanager.link.link.LinkRepository;
 import in.projecteka.consentmanager.user.UserServiceProperties;
 import io.lettuce.core.RedisClient;
 import io.vertx.pgclient.PgPool;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,32 +44,43 @@ public class LinkConfiguration {
     }
 
     @Bean
-    public Link link(WebClient.Builder builder,
+    public Link link(@Qualifier("customBuilder") WebClient.Builder builder,
                      LinkRepository linkRepository,
-                     CentralRegistry centralRegistry,
                      GatewayServiceProperties gatewayServiceProperties,
                      LinkServiceProperties serviceProperties,
-                     CacheAdapter<String, String> linkResults) {
+                     CacheAdapter<String, String> linkResults,
+                     ServiceAuthentication serviceAuthentication) {
         return new Link(
-                new LinkServiceClient(builder, centralRegistry, gatewayServiceProperties),
+                new LinkServiceClient(builder.build(), serviceAuthentication, gatewayServiceProperties),
                 linkRepository,
-                centralRegistry,
+                serviceAuthentication,
                 serviceProperties,
                 linkResults);
-     }
-
-    @Bean
-    public DiscoveryServiceClient discoveryServiceClient(WebClient.Builder builder,
-                                                         CentralRegistry centralRegistry,
-                                                         GatewayServiceProperties gatewayServiceProperties) {
-        return new DiscoveryServiceClient(builder, centralRegistry::authenticate, gatewayServiceProperties);
     }
 
     @Bean
-    public UserServiceClient userServiceClient(WebClient.Builder builder,
-                                               UserServiceProperties userServiceProperties,
-                                               IdentityService identityService) {
-        return new UserServiceClient(builder, userServiceProperties.getUrl(), identityService::authenticate);
+    public DiscoveryServiceClient discoveryServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
+                                                         ServiceAuthentication serviceAuthentication,
+                                                         GatewayServiceProperties gatewayServiceProperties) {
+        return new DiscoveryServiceClient(builder.build(),
+                serviceAuthentication::authenticate,
+                gatewayServiceProperties);
+    }
+
+    @Bean
+    public UserServiceClient userServiceClient(
+            @Qualifier("customBuilder") WebClient.Builder builder,
+            UserServiceProperties userServiceProperties,
+            IdentityService identityService,
+            GatewayServiceProperties gatewayServiceProperties,
+            ServiceAuthentication serviceAuthentication,
+            @Value("${consentmanager.authorization.header}") String authorizationHeader) {
+        return new UserServiceClient(builder.build(),
+                userServiceProperties.getUrl(),
+                identityService::authenticate,
+                gatewayServiceProperties,
+                serviceAuthentication,
+                authorizationHeader);
     }
 
     @Bean
@@ -76,7 +90,12 @@ public class LinkConfiguration {
                                UserServiceClient userServiceClient,
                                LinkServiceProperties linkServiceProperties,
                                CacheAdapter<String, String> linkResults) {
-        return new Discovery(userServiceClient, discoveryServiceClient, discoveryRepository, centralRegistry, linkServiceProperties, linkResults);
+        return new Discovery(userServiceClient,
+                discoveryServiceClient,
+                discoveryRepository,
+                centralRegistry,
+                linkServiceProperties,
+                linkResults);
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)

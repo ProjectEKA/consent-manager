@@ -116,9 +116,7 @@
 								"id": "51c7be74-e15f-4ee1-8a73-10d001796a21",
 								"exec": [
 									"pm.test(\"Update auth creation token\", function () {",
-									"    var jsonData = pm.response.json();",
 									"    var request = JSON.parse(pm.request.body.raw);",
-									"    pm.environment.set(\"AUTHORIZATION\", \"bearer \" + jsonData.accessToken);",
 									"    pm.environment.set(\"USERNAME\", request.username);",
 									"    pm.environment.set(\"PASSWORD\", request.password);",
 									"});"
@@ -170,7 +168,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\"name\": \"John Doe\",\n\"username\": \"{{lowerfirstname}}.{{lowerlastname}}@ncg\",\n\"password\": \"{{$randomPassword}}#\",\n\"yearOfBirth\": 1966,\n\"gender\": \"M\"\n}",
+							"raw": "{\n\t\"name\":{\n\t\t\"first\": \"Hina\", \n\t\t\"last\": \"Patel\", \n\t\t\"middle\": \"\"\n },\n\t\"username\": \"{{lowerfirstname}}.{{lowerlastname}}@ncg\",\n\t\"password\": \"{{$randomPassword}}#\",\n\t\"dateOfBirth\":{ \n\t\t\"date\": 12, \n\t\t\"month\":12, \n\t\t\"year\":1979\n},\n\t\"gender\": \"F\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -294,14 +292,14 @@
 							"raw": "{\n    \"requestId\": \"{{$guid}}\",\n    \"hip\": {\n        \"id\": \"10000005\"\n    }\n}"
 						},
 						"url": {
-							"raw": "{{CM_HOST}}/patients/discover/carecontexts",
+							"raw": "{{CM_HOST}}/v1/care-contexts/discover",
 							"host": [
 								"{{CM_HOST}}"
 							],
 							"path": [
-								"patients",
-								"discover",
-								"carecontexts"
+								"v1",
+								"care-contexts",
+								"discover"
 							]
 						}
 					},
@@ -355,14 +353,15 @@
 							}
 						},
 						"url": {
-							"raw": "{{CM_HOST}}/patients/link/",
+							"raw": "{{CM_HOST}}/v1/links/link/init",
 							"host": [
 								"{{CM_HOST}}"
 							],
 							"path": [
-								"patients",
+								"v1",
+								"links",
 								"link",
-								""
+								"init"
 							]
 						}
 					},
@@ -395,13 +394,15 @@
 							"raw": "{\n\t\"token\": \"666666\"\n}"
 						},
 						"url": {
-							"raw": "{{CM_HOST}}/patients/link/{{LINK_REF_NUMBER}}",
+							"raw": "{{CM_HOST}}/v1/links/link/confirm/{{LINK_REF_NUMBER}}",
 							"host": [
 								"{{CM_HOST}}"
 							],
 							"path": [
-								"patients",
+								"v1",
+								"links",
 								"link",
+								"confirm",
 								"{{LINK_REF_NUMBER}}"
 							]
 						}
@@ -444,7 +445,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{CM_HOST}}/consent-requests?status=REVOKED&limit=-1&offset=0",
+							"raw": "{{CM_HOST}}/consent-requests?status=ALL&limit=5&offset=0",
 							"host": [
 								"{{CM_HOST}}"
 							],
@@ -454,11 +455,11 @@
 							"query": [
 								{
 									"key": "status",
-									"value": "REVOKED"
+									"value": "ALL"
 								},
 								{
 									"key": "limit",
-									"value": "-1"
+									"value": "5"
 								},
 								{
 									"key": "offset",
@@ -578,7 +579,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"consents\": [\n        {\n            \"hip\": {\n                \"id\": \"10000004\",\n                \"name\": \"Max Health Care\"\n            },\n            \"hiTypes\": [\n            \t\"Observation\"\n                ],\n            \"careContexts\": [\n                {\n                    \"patientReference\": \"{{PATIENT_REF_NUMBER}}\",\n                    \"careContextReference\": \"{{CARE_CONTEXT1_NUMBER}}\"\n                }\n            ],\n            \"permission\": {\n                \"accessMode\": \"VIEW\",\n                \"dateRange\": {\n                    \"from\": \"2020-01-16T08:47:48.000+0000\",\n                    \"to\": \"2020-04-29T08:47:48.000+0000\"\n                },\n                \"dataEraseAt\": \"2020-05-29T08:47:48.000+0000\",\n                \"frequency\": {\n                    \"unit\": \"HOUR\",\n                    \"value\": 1,\n                    \"repeats\": 0\n                }\n            }\n        }\n    ]\n}",
+							"raw": "{\n    \"consents\": [\n        {\n            \"hip\": {\n                \"id\": \"10000004\",\n                \"name\": \"Max Health Care\"\n            },\n            \"hiTypes\": [\n            \t\"Observation\"\n                ],\n            \"careContexts\": [\n                {\n                    \"patientReference\": \"{{PATIENT_REF_NUMBER}}\",\n                    \"careContextReference\": \"{{CARE_CONTEXT1_NUMBER}}\"\n                }\n            ],\n            \"permission\": {\n                \"accessMode\": \"VIEW\",\n                \"dateRange\": {\n                    \"from\": \"2018-01-11T11:06:32.760Z\",\n                    \"to\": \"2020-02-11T11:06:32.760Z\"\n                },\n                \"dataEraseAt\": \"2020-07-30T11:06:32.760Z\",\n                \"frequency\": {\n                    \"unit\": \"HOUR\",\n                    \"value\": 1,\n                    \"repeats\": 0\n                }\n            }\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1058,7 +1059,349 @@
 						}
 					},
 					"response": []
+				},
+
+				{
+					"name": "Generate OTP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "de2af3fb-8122-442d-bf31-316203732c5d",
+								"exec": [
+									"pm.test(\"Update session token for generate otp\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"GENERATE_OTP_SESSION_ID\", jsonData.sessionId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{CM_HOST}}/patients/generateotp",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"generateotp"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n \"username\": \"{{USERNAME}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				},
+
+				{
+					"name": "Verify OTP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "de2af3fb-8122-442d-bf31-316203732c5d",
+								"exec": [
+									"pm.test(\"Update user creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"VERIFY_OTP_TEMP_TOKEN\", jsonData.temporaryToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"sessionId\": \"{{GENERATE_OTP_SESSION_ID}}\",\n\t\"value\": \"666666\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/verifyotp",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"verifyotp"
+							]
+						}
+					},
+					"response": []
+				},
+
+				{
+					"name": "Reset password",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "7b472baa-bf1e-4dfc-a29d-323431dce9a1",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "62056aa2-1cea-4719-814d-071315c3de8f",
+								"exec": [
+									"pm.test(\"Update user creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"AUTHORIZATION\", \"bearer \" + jsonData.accessToken);",
+									"    pm.environment.set(\"REFRESH_TOKEN\", jsonData.refreshToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{VERIFY_OTP_TEMP_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/profile/reset-password",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"profile",
+								"reset-password"
+							]
+						}
+					},
+					"response": []
+				},
+
+				{
+					"name": "Update password",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "7b472baa-bf1e-4dfc-a29d-323431dce9a1",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "62056aa2-1cea-4719-814d-071315c3de8f",
+								"exec": [
+									"pm.test(\"Update user creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"AUTHORIZATION\", \"bearer \" + jsonData.accessToken);",
+									"    pm.environment.set(\"REFRESH_TOKEN\", jsonData.refreshToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"oldPassword\": \"password\",\n\t\"newPassword\":  \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/profile/update-password",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"profile",
+								"update-password"
+							]
+						}
+					},
+					"response": []
+				},
+
+				{
+					"name": "Change pin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{PIN_AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"pin\": \"6666\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/change-pin",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"change-pin"
+							]
+						}
+					},
+					"response": []
+				},
+
+				{
+					"name": "Recovery init for CM Id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "de2af3fb-8122-442d-bf31-316203732c5d",
+								"exec": [
+									"pm.test(\"Update session token for generate otp\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"RECOVERY_SESSION_ID\", jsonData.sessionId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{CM_HOST}}/patients/profile/recovery-init",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"profile",
+								"recovery-init"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"name\": \"Hina Patel\",\n\"gender\": \"F\",\n\"yearOfBirth\": 1979,\n\"verifiedIdentifiers\": [\n{\n\"type\": \"MOBILE\",\n\"value\": \"+91-8888888888\"\n}\n],\n\"unverifiedIdentifiers\": []\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				},
+
+				{
+					"name": "Recovery confirm for CM Id",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"sessionId\": \"{{RECOVERY_SESSION_ID}}\",\n\t\"value\": \"666666\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/profile/recovery-confirm",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"profile",
+								"recovery-confirm"
+							]
+						}
+					},
+					"response": []
 				}
+
 			],
 			"protocolProfileBehavior": {}
 		},
@@ -1274,11 +1617,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{HIU_HOST}}/patients/Shreya@ncg",
+							"raw": "{{HIU_HOST}}/v1/patients/Shreya@ncg",
 							"host": [
 								"{{HIU_HOST}}"
 							],
 							"path": [
+								"v1",
 								"patients",
 								"Shreya@ncg"
 							]
@@ -1316,11 +1660,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{HIU_HOST}}/consent-requests",
+							"raw": "{{HIU_HOST}}/v1/hiu/consent-requests",
 							"host": [
 								"{{HIU_HOST}}"
 							],
 							"path": [
+								"v1",
+								"hiu",
 								"consent-requests"
 							]
 						}
@@ -1361,7 +1707,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"{{USERNAME}}\"\n    },\n    \"purpose\": {\n      \"code\": \"Encounter\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"permission\": {\n      \"dateRange\": {\n        \"from\": \"2020-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataEraseAt\": \"2020-04-30T11:06:32.760Z\"\n    }\n  }\n}",
+							"raw": "{\n  \"consent\": {\n    \"patient\": {\n      \"id\": \"{{USERNAME}}\"\n    },\n    \"purpose\": {\n      \"code\": \"PUBHLTH\"\n    },\n    \"hiTypes\": [\n      \"Condition\"\n    ],\n    \"permission\": {\n      \"dateRange\": {\n        \"from\": \"2018-01-11T11:06:32.760Z\",\n        \"to\": \"2020-02-11T11:06:32.760Z\"\n      },\n      \"dataEraseAt\": \"2020-07-30T11:06:32.760Z\"\n    }\n  }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1369,11 +1715,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{HIU_HOST}}/consent-requests",
+							"raw": "{{HIU_HOST}}/v1/hiu/consent-requests",
 							"host": [
 								"{{HIU_HOST}}"
 							],
 							"path": [
+								"v1",
+								"hiu",
 								"consent-requests"
 							]
 						}
@@ -1481,6 +1829,54 @@
 							"path": [
 								"consent",
 								"notification"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "51c7be74-e15f-4ee1-8a73-10d001796a21",
+								"exec": [
+									"pm.test(\"Update password\", function () {",
+									"    var request = JSON.parse(pm.request.body.raw);",
+									"    pm.environment.set(\"HIU_PASSWORD\", request.newPassword);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{HIU_AUTHORIZATION}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"oldPassword\": \"{{HIU_PASSWORD}}\",\n  \"newPassword\": \"Password@1\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HIU_HOST}}/users/password",
+							"host": [
+								"{{HIU_HOST}}"
+							],
+							"path": [
+								"users",
+								"password"
 							]
 						}
 					},

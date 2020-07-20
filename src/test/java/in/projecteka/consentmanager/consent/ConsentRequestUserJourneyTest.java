@@ -8,7 +8,9 @@ import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.RequestValidator;
+import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.model.AccessPeriod;
 import in.projecteka.consentmanager.consent.model.ConsentPermission;
 import in.projecteka.consentmanager.consent.model.ConsentPurpose;
@@ -19,10 +21,12 @@ import in.projecteka.consentmanager.consent.model.HIType;
 import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.Requester;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
+import in.projecteka.consentmanager.consent.policies.NhsPolicyCheck;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -49,11 +53,13 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static com.google.common.net.HttpHeaders.AUTHORIZATION;
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequest;
@@ -64,6 +70,7 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -71,12 +78,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 @ExtendWith(SpringExtension.class)
-@AutoConfigureWebTestClient(timeout = "6000")
+@AutoConfigureWebTestClient
 @ContextConfiguration(initializers = ConsentRequestUserJourneyTest.PropertyInitializer.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class ConsentRequestUserJourneyTest {
+class ConsentRequestUserJourneyTest {
     @Autowired
     private WebTestClient webTestClient;
 
@@ -125,10 +131,13 @@ public class ConsentRequestUserJourneyTest {
     private Authenticator authenticator;
 
     @MockBean
-    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+    private GatewayTokenVerifier gatewayTokenVerifier;
 
     @MockBean
     private ConceptValidator conceptValidator;
+
+    @MockBean
+    private RequestValidator validator;
 
     @MockBean
     private ConsentManagerClient consentManagerClient;
@@ -174,7 +183,7 @@ public class ConsentRequestUserJourneyTest {
             "}";
 
     @AfterAll
-    public static void tearDown() throws IOException {
+    static void tearDown() throws IOException {
         clientRegistryServer.shutdown();
         userServer.shutdown();
         identityServer.shutdown();
@@ -223,11 +232,11 @@ public class ConsentRequestUserJourneyTest {
             "        }";
 
     @Test
-    public void shouldAcceptConsentRequest() {
+    void shouldAcceptConsentRequest() {
         var authToken = string();
         var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
-        when(centralRegistryTokenVerifier.verify(authToken))
-                .thenReturn(Mono.just(new Caller("MAX-ID", true)));
+        when(gatewayTokenVerifier.verify(authToken))
+                .thenReturn(Mono.just(new ServiceCaller("MAX-ID", List.of())));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
@@ -300,7 +309,7 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldGetConsentRequests() {
+    void shouldGetConsentRequests() {
         var token = string();
         List<ConsentRequestDetail> requests = new ArrayList<>();
         ListResult<List<ConsentRequestDetail>> result = new ListResult<>(requests, 0);
@@ -322,7 +331,7 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldGetConsentRequestsForStatus() {
+    void shouldGetConsentRequestsForStatus() {
         var token = string();
         List<ConsentRequestDetail> requests = new ArrayList<>();
         ConsentRequestDetail detail = ConsentRequestDetail.builder().build();
@@ -349,14 +358,14 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldSendNotificationMessage() {
+    void shouldSendNotificationMessage() {
         var notificationMessage = notificationMessage().build();
         consentRequestNotificationListener.notifyUserWith(notificationMessage);
         verify(consentRequestNotificationListener).notifyUserWith(notificationMessage);
     }
 
     @Test
-    public void shouldApproveConsentGrant() throws JsonProcessingException {
+    void shouldApproveConsentGrant() throws JsonProcessingException {
         var token = string();
         String patientId = "ashok.kumar@ncg";
         var consentRequestDetail = OBJECT_MAPPER.readValue(requestedConsentJson, ConsentRequestDetail.class);
@@ -413,7 +422,7 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldNotApproveConsentGrantForInvalidCareContext() throws JsonProcessingException {
+    void shouldNotApproveConsentGrantForInvalidCareContext() throws JsonProcessingException {
         var token = string();
         var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
@@ -476,7 +485,7 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldDenyConsentRequest() {
+    void shouldDenyConsentRequest() {
         var token = string();
         var requestId = string();
         var patientId = string();
@@ -501,9 +510,9 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldThrowErrorForInvalidPurposeInConsentRequest() {
+    void shouldThrowErrorForInvalidPurposeInConsentRequest() {
         var authToken = string();
-        when(centralRegistryTokenVerifier.verify(authToken)).thenReturn(Mono.just(new Caller("MAX-ID", true)));
+        when(gatewayTokenVerifier.verify(authToken)).thenReturn(Mono.just(new ServiceCaller("MAX-ID", List.of())));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
                 .thenReturn(Mono.empty());
@@ -576,7 +585,7 @@ public class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    public void shouldAcceptInitConsentRequest() {
+    void shouldAcceptInitConsentRequest() {
         var authToken = string();
         var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         String HIUId = "MAX-ID";
@@ -593,19 +602,24 @@ public class ConsentRequestUserJourneyTest {
                 .hiTypes(HIType.values())
                 .build();
         in.projecteka.consentmanager.consent.model.request.ConsentRequest consentRequest = consentRequest()
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
                 .consent(requestedDetail)
                 .build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
         when(authenticator.verify(authToken)).thenReturn(Mono.just(new Caller("user-id", false)));
-        when(centralRegistryTokenVerifier.verify(authToken))
-                .thenReturn(Mono.just(new Caller("TEST_USERNAME", true)));
+        when(gatewayTokenVerifier.verify(authToken))
+                .thenReturn(Mono.just(caller));
+        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(repository.requestOf(anyString())).thenReturn(Mono.empty());
         when(conceptValidator.validatePurpose(any())).thenReturn(Mono.just(true));
         when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
         when(consentManagerClient.sendInitResponseToGateway(any(), eq(HIUId)))
                 .thenReturn(Mono.empty());
-
+        when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
+                .thenReturn(Mono.empty());
         load(clientRegistryServer, session);
         load(clientRegistryServer, session);
         load(clientRegistryServer, session);
@@ -617,7 +631,7 @@ public class ConsentRequestUserJourneyTest {
         gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
 
         webTestClient.post()
-                .uri("/v1/consent-requests/init")
+                .uri(Constants.PATH_CONSENT_REQUESTS_INIT)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, authToken)
@@ -628,7 +642,32 @@ public class ConsentRequestUserJourneyTest {
                 .isAccepted();
     }
 
-    public static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+    @Test
+    void shouldReturnTrueOnPolicyCheck(){
+        var hiuId = "10000002";
+        var patientName = "xyz@xyz";
+        var requestedDetail = RequestedDetail.builder()
+                                .hiu(HIUReference.builder().id(hiuId).build())
+                                .patient(PatientReference.builder().id(patientName).build())
+                                .requester(Requester.builder().name(patientName).build())
+                                .build();
+        assertEquals(new NhsPolicyCheck().checkPolicyFor(ConsentRequest.builder().detail(requestedDetail).build(), hiuId),true);
+    }
+
+    @Test
+    void shouldReturnFalseOnPolicyCheck(){
+        var hiuId = string();
+        var patientName = "xyz@xyz";
+        var requestedDetail = RequestedDetail.builder()
+                .hiu(HIUReference.builder().id(hiuId).build())
+                .patient(PatientReference.builder().id(patientName).build())
+                .requester(Requester.builder().name(hiuId).build())
+                .build();
+        assertEquals(new NhsPolicyCheck().checkPolicyFor(ConsentRequest.builder().detail(requestedDetail).build(), hiuId),false);
+    }
+
+
+    static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(ConfigurableApplicationContext applicationContext) {
             TestPropertyValues values = TestPropertyValues.of(

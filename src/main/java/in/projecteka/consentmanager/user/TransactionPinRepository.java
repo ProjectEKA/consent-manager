@@ -6,6 +6,8 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
@@ -14,6 +16,9 @@ import java.util.UUID;
 
 @AllArgsConstructor
 public class TransactionPinRepository {
+
+    private static final Logger logger = LoggerFactory.getLogger(TransactionPinRepository.class);
+
     private static final String INSERT_TRANSACTION_PIN = "INSERT INTO " +
             "transaction_pin (pin, patient_id) VALUES ($1, $2)";
     private static final String SELECT_TRANSACTION_PIN_BY_PATIENT;
@@ -33,6 +38,7 @@ public class TransactionPinRepository {
                 .execute(Tuple.of(transactionPin.getPin(), transactionPin.getPatientId()),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(ClientError.failedToCreateTransactionPin());
                                 return;
                             }
@@ -53,12 +59,14 @@ public class TransactionPinRepository {
                 .execute(Tuple.of(patientId),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(ClientError.failedToFetchTransactionPin());
                                 return;
                             }
                             var transactionPinIterator = handler.result().iterator();
                             if (!transactionPinIterator.hasNext()) {
                                 monoSink.success(Optional.empty());
+                                return;
                             }
                             monoSink.success(transactionPinFrom(transactionPinIterator.next()));
                         }));
@@ -77,6 +85,7 @@ public class TransactionPinRepository {
                 .execute(Tuple.of(requestId.toString(), patientId),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(ClientError.failedToUpdateTransactionPin());
                                 return;
                             }
@@ -89,6 +98,7 @@ public class TransactionPinRepository {
                 .execute(Tuple.of(patientId,pin),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(ClientError.failedToEditTransactionPin());
                                 return;
                             }

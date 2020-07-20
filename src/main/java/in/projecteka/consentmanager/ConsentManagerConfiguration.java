@@ -1,20 +1,28 @@
 package in.projecteka.consentmanager;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
+import in.projecteka.consentmanager.clients.ServiceAuthenticationClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.RequestValidator;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisOptions;
+import in.projecteka.consentmanager.common.heartbeat.CacheMethodProperty;
+import in.projecteka.consentmanager.common.heartbeat.Heartbeat;
+import in.projecteka.consentmanager.common.heartbeat.RabbitmqOptions;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
@@ -24,14 +32,6 @@ import io.lettuce.core.RedisURI;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
-import org.springframework.amqp.core.AmqpAdmin;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Exchange;
-import org.springframework.amqp.core.ExchangeBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
@@ -40,8 +40,15 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.client.reactive.ClientHttpConnector;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.ServerCodecConfigurer;
+import org.springframework.http.codec.json.Jackson2JsonDecoder;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 
 import java.io.IOException;
 import java.net.URL;
@@ -60,9 +67,8 @@ public class ConsentManagerConfiguration {
     public static final String HIP_CONSENT_NOTIFICATION_QUEUE = "hip-consent-notification-queue";
     public static final String HIP_DATA_FLOW_REQUEST_QUEUE = "hip-data-flow-request-queue";
     public static final String CONSENT_REQUEST_QUEUE = "consent-request-queue";
-    public static final String DEAD_LETTER_QUEUE = "cm-dead-letter-queue";
-    private static final String CM_DEAD_LETTER_EXCHANGE = "cm-dead-letter-exchange";
-    private static final String CM_DEAD_LETTER_ROUTING_KEY = "cm-dead-letter";
+    public static final String PARKING_EXCHANGE = "parking.exchange";
+    public static final String EXCHANGE = "exchange";
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"accessToken"})
@@ -98,15 +104,39 @@ public class ConsentManagerConfiguration {
         return new RedisCacheAdapter(redisClient, 5);
     }
 
-    @Bean
-    public CentralRegistry centralRegistry(ClientRegistryClient clientRegistryClient,
-                                           ClientRegistryProperties clientRegistryProperties,
-                                           CacheAdapter<String, String> accessToken) {
-        return new CentralRegistry(clientRegistryClient, clientRegistryProperties, accessToken);
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @Bean({"cacheForReplayAttack"})
+    public CacheAdapter<String, String> createLoadingCacheAdapterForReplayAttack() {
+        return new LoadingCacheAdapter(createSessionCache(10));
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"cacheForReplayAttack"})
+    public CacheAdapter<String, String> createRedisCacheAdapterForReplayAttack(RedisClient redisClient) {
+        return new RedisCacheAdapter(redisClient, 10);
     }
 
     @Bean
-    public ClientRegistryClient clientRegistryClient(WebClient.Builder builder,
+    public CentralRegistry centralRegistry(ClientRegistryClient clientRegistryClient) {
+        return new CentralRegistry(clientRegistryClient);
+    }
+
+    @Bean
+    public ServiceAuthenticationClient serviceAuthenticationClient(
+            @Qualifier("customBuilder") WebClient.Builder webClientBuilder,
+            GatewayServiceProperties gatewayServiceProperties) {
+        return new ServiceAuthenticationClient(webClientBuilder, gatewayServiceProperties.getBaseUrl());
+    }
+
+    @Bean
+    public ServiceAuthentication serviceAuthentication(ServiceAuthenticationClient serviceAuthenticationClient,
+                                                       GatewayServiceProperties gatewayServiceProperties,
+                                                       CacheAdapter<String, String> accessToken) {
+        return new ServiceAuthentication(serviceAuthenticationClient, gatewayServiceProperties, accessToken);
+    }
+
+    @Bean
+    public ClientRegistryClient clientRegistryClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                      ClientRegistryProperties clientRegistryProperties) {
         return new ClientRegistryClient(builder, clientRegistryProperties.getUrl());
     }
@@ -146,46 +176,17 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public DestinationsConfig destinationsConfig(AmqpAdmin amqpAdmin) {
+    public DestinationsConfig destinationsConfig() {
         HashMap<String, DestinationsConfig.DestinationInfo> queues = new HashMap<>();
-        queues.put(CONSENT_REQUEST_QUEUE, new DestinationsConfig.DestinationInfo("exchange", CONSENT_REQUEST_QUEUE));
+        queues.put(CONSENT_REQUEST_QUEUE,
+                new DestinationsConfig.DestinationInfo(EXCHANGE, CONSENT_REQUEST_QUEUE));
         queues.put(HIU_CONSENT_NOTIFICATION_QUEUE,
-                new DestinationsConfig.DestinationInfo("exchange", HIU_CONSENT_NOTIFICATION_QUEUE));
+                new DestinationsConfig.DestinationInfo(EXCHANGE, HIU_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_CONSENT_NOTIFICATION_QUEUE,
-                new DestinationsConfig.DestinationInfo("exchange", HIP_CONSENT_NOTIFICATION_QUEUE));
+                new DestinationsConfig.DestinationInfo(EXCHANGE, HIP_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_DATA_FLOW_REQUEST_QUEUE,
-                new DestinationsConfig.DestinationInfo("exchange", HIP_DATA_FLOW_REQUEST_QUEUE));
-
-        Queue deadLetterQueue = QueueBuilder.durable(DEAD_LETTER_QUEUE).build();
-        Binding with = BindingBuilder
-                .bind(deadLetterQueue)
-                .to(new DirectExchange(CM_DEAD_LETTER_EXCHANGE))
-                .with(CM_DEAD_LETTER_ROUTING_KEY);
-        amqpAdmin.declareQueue(deadLetterQueue);
-        amqpAdmin.declareExchange(new DirectExchange(CM_DEAD_LETTER_EXCHANGE));
-        amqpAdmin.declareBinding(with);
-
-        DestinationsConfig destinationsConfig = new DestinationsConfig(queues, null);
-        destinationsConfig.getQueues()
-                .forEach((key, destination) -> {
-                    Exchange ex = ExchangeBuilder.directExchange(
-                            destination.getExchange())
-                            .durable(true)
-                            .build();
-                    amqpAdmin.declareExchange(ex);
-                    Queue q = QueueBuilder.durable(
-                            destination.getRoutingKey())
-                            .deadLetterExchange(CM_DEAD_LETTER_EXCHANGE)
-                            .deadLetterRoutingKey(CM_DEAD_LETTER_ROUTING_KEY)
-                            .build();
-                    amqpAdmin.declareQueue(q);
-                    Binding b = BindingBuilder.bind(q)
-                            .to(ex)
-                            .with(destination.getRoutingKey())
-                            .noargs();
-                    amqpAdmin.declareBinding(b);
-                });
-        return destinationsConfig;
+                new DestinationsConfig.DestinationInfo(EXCHANGE, HIP_DATA_FLOW_REQUEST_QUEUE));
+        return new DestinationsConfig(queues);
     }
 
     @Bean
@@ -218,8 +219,9 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean("centralRegistryJWKSet")
-    public JWKSet jwkSet(ClientRegistryProperties clientRegistryProperties) throws IOException, ParseException {
-        return JWKSet.load(new URL(clientRegistryProperties.getJwkUrl()));
+    public JWKSet jwkSet(GatewayServiceProperties gatewayServiceProperties)
+            throws IOException, ParseException {
+        return JWKSet.load(new URL(gatewayServiceProperties.getJwkUrl()));
     }
 
     @Bean("identityServiceJWKSet")
@@ -229,7 +231,47 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public CentralRegistryTokenVerifier centralRegistryTokenVerifier(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
-        return new CentralRegistryTokenVerifier(jwkSet);
+    public GatewayTokenVerifier centralRegistryTokenVerifier(
+            @Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
+        return new GatewayTokenVerifier(jwkSet);
+    }
+
+    @Bean
+    public RequestValidator requestValidator(@Qualifier("cacheForReplayAttack") CacheAdapter<String, String> cacheForReplayAttack) {
+        return new RequestValidator(cacheForReplayAttack);
+    }
+
+    @Bean
+    public Heartbeat heartbeat(IdentityServiceProperties identityServiceProperties,
+                               DbOptions dbOptions,
+                               RabbitmqOptions rabbitmqOptions,
+                               RedisOptions redisOptions,
+                               CacheMethodProperty cacheMethodProperty) {
+        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions, redisOptions, cacheMethodProperty);
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "webclient.keepalive", havingValue = "false")
+    public ClientHttpConnector clientHttpConnector() {
+        return new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.newConnection()));
+    }
+
+    @Bean("customBuilder")
+    public WebClient.Builder webClient(final ClientHttpConnector clientHttpConnector, ObjectMapper objectMapper) {
+        return WebClient
+                .builder()
+                .exchangeStrategies(exchangeStrategies(objectMapper))
+                .clientConnector(clientHttpConnector);
+    }
+
+    private ExchangeStrategies exchangeStrategies(ObjectMapper objectMapper) {
+        var encoder = new Jackson2JsonEncoder(objectMapper);
+        var decoder = new Jackson2JsonDecoder(objectMapper);
+        return ExchangeStrategies
+                .builder()
+                .codecs(configurer -> {
+                    configurer.defaultCodecs().jackson2JsonEncoder(encoder);
+                    configurer.defaultCodecs().jackson2JsonDecoder(decoder);
+                }).build();
     }
 }

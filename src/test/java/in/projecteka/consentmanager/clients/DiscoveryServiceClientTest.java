@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.clients;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,19 +16,17 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.io.IOException;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.clients.TestBuilders.careContext;
 import static in.projecteka.consentmanager.clients.TestBuilders.patientInRequest;
-import static in.projecteka.consentmanager.clients.TestBuilders.patientInResponse;
 import static in.projecteka.consentmanager.clients.TestBuilders.patientRequest;
-import static in.projecteka.consentmanager.clients.TestBuilders.patientResponse;
 import static in.projecteka.consentmanager.clients.TestBuilders.string;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-public class DiscoveryServiceClientTest {
+class DiscoveryServiceClientTest {
     @Captor
     private ArgumentCaptor<ClientRequest> captor;
     private DiscoveryServiceClient discoveryServiceClient;
@@ -40,38 +37,28 @@ public class DiscoveryServiceClientTest {
     public void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        GatewayServiceProperties serviceProperties = new GatewayServiceProperties("http://example.com", 1000);
-        discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder, () -> Mono.just(string()), serviceProperties);
+        var serviceProperties = new GatewayServiceProperties("http://ncg-gateway.com/v1", 1000, false, "", "", "");
+        discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder.build(),
+                () -> Mono.just(string()),
+                serviceProperties);
     }
 
     @Test
-    public void shouldDiscoverPatients() throws IOException {
-        var expectedPatient = patientInResponse()
-                .display("Patient Name")
-                .careContexts(List.of(careContext().display("Care context 1").build()))
-                .build();
-        var patientResponse = patientResponse().patient(expectedPatient).build();
-        var patientResponseBody = new ObjectMapper().writeValueAsString(patientResponse);
+    void shouldPostDiscoverPatientRequestToGateway() throws IOException {
         when(exchangeFunction.exchange(captor.capture())).thenReturn(Mono.just(
-                ClientResponse.create(HttpStatus.OK)
+                ClientResponse.create(HttpStatus.ACCEPTED)
                         .header("Content-Type", "application/json")
-                        .body(patientResponseBody)
                         .build()));
         var patientRequest = patientRequest()
                 .patient(patientInRequest().build())
                 .requestId(UUID.randomUUID())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
 
-        StepVerifier.create(discoveryServiceClient.patientFor(patientRequest, "http://hip-url/", "hipId"))
-                .assertNext(response -> {
-                    assertThat(response.getPatient().getDisplay()).isEqualTo(expectedPatient.getDisplay());
-                    assertThat(response.getPatient().getReferenceNumber())
-                            .isEqualTo(expectedPatient.getReferenceNumber());
-                    assertThat(response.getPatient().getMatchedBy()).isEqualTo(expectedPatient.getMatchedBy());
-                    assertThat(response.getPatient().getCareContexts().get(0).getDisplay())
-                            .isEqualTo(expectedPatient.getCareContexts().get(0).getDisplay());
-                })
+        StepVerifier.create(
+                discoveryServiceClient.requestPatientFor(patientRequest, "hipId"))
+                .assertNext(response -> assertThat(response).isTrue())
                 .verifyComplete();
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://hip-url/patients/discover/carecontexts");
+        assertThat(captor.getValue().url().toString()).hasToString("http://ncg-gateway.com/v1/care-contexts/discover");
     }
 }

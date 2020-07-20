@@ -3,18 +3,18 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
-import in.projecteka.consentmanager.consent.model.ConsentExpiry;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
-import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPReference;
+import in.projecteka.consentmanager.consent.model.HIUReference;
 import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
@@ -22,16 +22,13 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 
 @AllArgsConstructor
 public class ConsentScheduler {
-    private static final Logger logger = LoggerFactory.getLogger(ConsentScheduler.class);
-    private final ConsentRequestRepository consentRequestRepository;
     private final ConsentArtefactRepository consentArtefactRepository;
     private final ConsentNotificationPublisher consentNotificationPublisher;
 
-//    @Scheduled(cron = "${consentmanager.scheduler.consentExpiryCronExpr}")
-//    @Async
+    @Scheduled(cron = "${consentmanager.scheduler.consentExpiryCronExpr}")
+    @Async
     public void processExpiredConsents() {
-        List<ConsentExpiry> consentExpiries = consentArtefactRepository.getConsentArtefacts(GRANTED).
-                collectList().block();
+        var consentExpiries = consentArtefactRepository.getConsentArtefacts(GRANTED).collectList().block();
         if (consentExpiries != null) {
             consentExpiries.forEach(consentExpiry -> {
                 if (isConsentExpired(consentExpiry.getConsentExpiryDate())) {
@@ -39,14 +36,7 @@ public class ConsentScheduler {
                             consentExpiry.getConsentId(),
                             consentExpiry.getPatientId()).block();
                     if (consentRepresentation != null) {
-                        ConsentRequestDetail consentRequestDetail = consentRequestRepository.requestOf(
-                                consentRepresentation.getConsentRequestId(),
-                                GRANTED.toString(),
-                                consentRepresentation.getConsentDetail().getPatient().getId()).block();
-                        updateAndBroadcastConsentExpiry(
-                                consentExpiry.getConsentId(),
-                                consentRepresentation,
-                                consentRequestDetail);
+                        updateAndBroadcastConsentExpiry(consentExpiry.getConsentId(), consentRepresentation);
                     }
                 }
             });
@@ -54,7 +44,7 @@ public class ConsentScheduler {
     }
 
     private boolean isConsentExpired(LocalDateTime dateExpiryAt) {
-        return dateExpiryAt.isBefore(LocalDateTime.now());
+        return dateExpiryAt.isBefore(LocalDateTime.now(ZoneOffset.UTC));
     }
 
     private Mono<ConsentRepresentation> getConsentRepresentation(String consentId, String requesterId) {
@@ -80,22 +70,24 @@ public class ConsentScheduler {
         return consentRepresentation.getStatus().equals(GRANTED);
     }
 
-    private void updateAndBroadcastConsentExpiry(String consentId, ConsentRepresentation consentRepresentation,
-                                                 ConsentRequestDetail consentRequestDetail) {
+    private void updateAndBroadcastConsentExpiry(String consentId, ConsentRepresentation consentRepresentation) {
         consentArtefactRepository.updateConsentArtefactStatus(consentId, EXPIRED).block();
         broadcastConsentArtefacts(
-                consentRequestDetail.getConsentNotificationUrl(),
                 consentRepresentation.getConsentRequestId(),
                 consentRepresentation.getDateModified(),
                 consentId,
                 consentRepresentation.getConsentDetail().getHip(),
-                consentRepresentation.getConsentDetail().getCreatedAt()).block();
+                consentRepresentation.getConsentDetail().getCreatedAt(),
+                consentRepresentation.getConsentDetail().getHiu()).block();
 
     }
 
-    private Mono<Void> broadcastConsentArtefacts(String hiuConsentNotificationUrl,
-                                                 String requestId,
-                                                 LocalDateTime lastUpdated, String consentId, HIPReference hip, LocalDateTime createdAt) {
+    private Mono<Void> broadcastConsentArtefacts(String requestId,
+                                                 LocalDateTime lastUpdated,
+                                                 String consentId,
+                                                 HIPReference hip,
+                                                 LocalDateTime createdAt,
+                                                 HIUReference hiuReference) {
         HIPConsentArtefactRepresentation hipConsentArtefactRepresentation = HIPConsentArtefactRepresentation
                 .builder()
                 .status(EXPIRED)
@@ -114,7 +106,7 @@ public class ConsentScheduler {
                 .timestamp(lastUpdated)
                 .consentRequestId(requestId)
                 .consentArtefacts(List.of(hipConsentArtefactRepresentation))
-                .hiuConsentNotificationUrl(hiuConsentNotificationUrl)
+                .hiuId(hiuReference.getId())
                 .build();
         return consentNotificationPublisher.publish(message);
     }

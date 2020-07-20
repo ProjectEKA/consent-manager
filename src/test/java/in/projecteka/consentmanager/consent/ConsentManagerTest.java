@@ -10,11 +10,13 @@ import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
+import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import in.projecteka.consentmanager.consent.model.ConsentPurpose;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIType;
@@ -49,6 +51,7 @@ import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactR
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.hipConsentArtefactRepresentation;
+import static in.projecteka.consentmanager.consent.TestBuilders.hipConsentNotificationAcknowledgement;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
@@ -99,6 +102,9 @@ class ConsentManagerTest {
 
     @Captor
     private ArgumentCaptor<ConsentArtefactResult> consentArtefactResponsecaptor;
+
+    @Captor
+    private ArgumentCaptor<ConsentArtefactsMessage> consentArtefactsMessageArgumentCaptor;
 
     @BeforeEach
     public void setUp() throws JOSEException {
@@ -290,10 +296,13 @@ class ConsentManagerTest {
         when(repository.requestOf(consentRequestId, GRANTED.toString(), patientId))
                 .thenReturn(Mono.just(consentRequestDetail));
         when(consentArtefactRepository.updateStatus(consentId, consentRequestId, REVOKED)).thenReturn(Mono.empty());
-        when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
+        when(consentNotificationPublisher.publish(consentArtefactsMessageArgumentCaptor.capture())).thenReturn(Mono.empty());
 
         StepVerifier.create(consentManager.revoke(revokeRequest, patientId))
                 .verifyComplete();
+        assertThat(consentArtefactsMessageArgumentCaptor.getValue().getConsentArtefacts().get(0).getConsentDetail()).isNotNull();
+        assertThat(consentArtefactsMessageArgumentCaptor.getValue().getConsentArtefacts().get(0).getSignature()).isNotNull();
+        assertThat(consentArtefactsMessageArgumentCaptor.getValue().getConsentArtefacts().get(0).getConsentId()).isNotNull();
     }
 
     @Test
@@ -407,36 +416,15 @@ class ConsentManagerTest {
     @Test
     void CallGatewayWhenConsentArtefactNotFound() {
         var consentId = string();
-        var requestId = UUID.randomUUID();
-        var requesterId = string();
+        // It will be empty because CM does not know which HIU id made this request
+        String requesterId = "";
         when(consentArtefactRepository.getConsentArtefact(consentId)).thenReturn(Mono.empty());
         when(consentManagerClient.sendConsentArtefactResponseToGateway(consentArtefactResponsecaptor.capture(),
                 eq(requesterId))).thenReturn(Mono.empty());
 
-        var consentProducer = consentManager.getConsent(consentId, requestId, requesterId);
+        var consentProducer = consentManager.getConsent(consentId, UUID.randomUUID());
 
-        StepVerifier.create(consentProducer)
-                .verifyComplete();
-        assertThat(consentArtefactResponsecaptor.getValue().getConsent()).isNull();
-        assertThat(consentArtefactResponsecaptor.getValue().getError()).isNotNull();
-    }
-
-    @Test
-    void callGatewayWithForbiddenErrorMessageWhenConsentRequesterIdDoesntMatch() {
-        var consentId = string();
-        var requestId = UUID.randomUUID();
-        var callerHIUId = string();
-        var actualHIUId = string();
-        var consentArtefact = consentArtefactRepresentation().consentDetail(
-                consentArtefact().hiu(new HIUReference(actualHIUId)).build()).build();
-        when(consentArtefactRepository.getConsentArtefact(consentId)).thenReturn(Mono.just(consentArtefact));
-        when(consentManagerClient.sendConsentArtefactResponseToGateway(consentArtefactResponsecaptor.capture(),
-                eq(callerHIUId))).thenReturn(Mono.empty());
-
-        var consentProducer = consentManager.getConsent(consentId, requestId, callerHIUId);
-
-        StepVerifier.create(consentProducer)
-                .verifyComplete();
+        StepVerifier.create(consentProducer).verifyComplete();
         assertThat(consentArtefactResponsecaptor.getValue().getConsent()).isNull();
         assertThat(consentArtefactResponsecaptor.getValue().getError()).isNotNull();
     }
@@ -454,11 +442,28 @@ class ConsentManagerTest {
         when(consentManagerClient.sendConsentArtefactResponseToGateway(consentArtefactResponsecaptor.capture(),
                 eq(callerHIUId))).thenReturn(Mono.empty());
 
-        var consentProducer = consentManager.getConsent(consentId, requestId, callerHIUId);
+        var consentProducer = consentManager.getConsent(consentId, requestId);
 
         StepVerifier.create(consentProducer)
                 .verifyComplete();
         assertThat(consentArtefactResponsecaptor.getValue().getConsent()).isNotNull();
         assertThat(consentArtefactResponsecaptor.getValue().getError()).isNull();
+    }
+
+    @Test
+    void shouldUpdateConsentNotificationStatus() {
+        var acknowledgement = hipConsentNotificationAcknowledgement().error(null).build();
+        when(consentArtefactRepository.updateConsentNotification(
+                acknowledgement.getAcknowledgement().getConsentId(),
+                ConsentNotificationStatus.ACKNOWLEDGED,
+                ConsentNotificationReceiver.HIP)).thenReturn(Mono.empty());
+
+        StepVerifier.create(consentManager.updateConsentNotification(acknowledgement))
+                .verifyComplete();
+
+        verify(consentArtefactRepository, times(1)).updateConsentNotification(
+                acknowledgement.getAcknowledgement().getConsentId(),
+                ConsentNotificationStatus.ACKNOWLEDGED,
+                ConsentNotificationReceiver.HIP);
     }
 }

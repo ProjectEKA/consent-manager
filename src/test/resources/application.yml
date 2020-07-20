@@ -2,6 +2,9 @@ server:
   port: 8000
 consentmanager:
   cacheMethod: guava
+  consentservice:
+    purposeOfUseDefUrl: classpath:/static/ValueSet/purpose-of-use.json
+    hiTypesDefUrl: classpath:/static/ValueSet/health-info-type.json
   scheduler:
     consentExpiryCronExpr: "0 */1 * ? * *"
     consentRequestExpiryCronExpr: '0 0 0/12 ? * *'
@@ -11,6 +14,8 @@ consentmanager:
     url: http://client-registry/
   userservice:
     url: http://user-registry/
+  authorization:
+    header: Authorization
   db:
     host: localhost
     port: 5432

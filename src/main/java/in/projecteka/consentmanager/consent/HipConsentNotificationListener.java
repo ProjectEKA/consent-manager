@@ -2,14 +2,13 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
-import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
@@ -17,9 +16,13 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSENT_NOTIFICATION_QUEUE;
-import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
 
 @AllArgsConstructor
 public class HipConsentNotificationListener {
@@ -28,17 +31,13 @@ public class HipConsentNotificationListener {
     private final DestinationsConfig destinationsConfig;
     private final Jackson2JsonMessageConverter converter;
     private final ConsentArtefactNotifier consentArtefactNotifier;
-    private final CentralRegistry centralRegistry;
+    private final ConsentArtefactRepository consentArtefactRepository;
 
     @PostConstruct
-    public void subscribe() throws ClientError {
+    public void subscribe() {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig
                 .getQueues()
                 .get(HIP_CONSENT_NOTIFICATION_QUEUE);
-        if (destinationInfo == null) {
-            logger.error(HIP_CONSENT_NOTIFICATION_QUEUE + " not found");
-            throw queueNotFound();
-        }
 
         MessageListenerContainer mlc = messageListenerContainerFactory
                 .createMessageListenerContainer(destinationInfo.getRoutingKey());
@@ -50,9 +49,9 @@ public class HipConsentNotificationListener {
                 logger.info("Received notify consent to hip for consent artefact: {}",
                         consentArtefact.getConsentId());
 
-                sendConsentArtefact(consentArtefact);
+                sendConsentArtefactToHIP(consentArtefact).block();
             } catch (Exception e) {
-                throw new AmqpRejectAndDontRequeueException(e.getMessage(),e);
+                throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
             }
         };
         mlc.setupMessageListener(messageListener);
@@ -60,18 +59,44 @@ public class HipConsentNotificationListener {
         mlc.start();
     }
 
-    private void sendConsentArtefact(HIPConsentArtefactRepresentation consentArtefact) {
-        String hipId = consentArtefact.getConsentDetail().getHip().getId();
-        getProviderUrl(hipId)
-                .flatMap(providerUrl -> sendArtefactTo(consentArtefact, providerUrl))
-                .block();
+
+    private Mono<Void> sendConsentArtefactToHIP(HIPConsentArtefactRepresentation consentArtefact) {
+        try {
+            String hipId = consentArtefact.getConsentDetail().getHip().getId();
+            HIPNotificationRequest notificationRequest = hipNotificationRequest(consentArtefact);
+
+            if (consentArtefact.getStatus() == REVOKED) {
+                return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId)
+                        .then(consentArtefactRepository.saveConsentNotification(
+                                consentArtefact.getConsentId(),
+                                ConsentNotificationStatus.SENT,
+                                ConsentNotificationReceiver.HIP));
+            }
+            return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            return Mono.empty();
+        }
     }
 
-    private Mono<Void> sendArtefactTo(HIPConsentArtefactRepresentation consentArtefact, String providerUrl) {
-        return consentArtefactNotifier.sendConsentArtefactTo(consentArtefact, providerUrl);
-    }
+    private HIPNotificationRequest hipNotificationRequest(HIPConsentArtefactRepresentation consentArtefact) {
+        var requestId = UUID.randomUUID();
+        var timestamp = LocalDateTime.now(ZoneOffset.UTC);
 
-    private Mono<String> getProviderUrl(String hipId) {
-        return centralRegistry.providerWith(hipId).flatMap(provider -> Mono.just(provider.getProviderUrl()));
+        if (consentArtefact.getStatus() == EXPIRED || consentArtefact.getStatus() == REVOKED) {
+            return HIPNotificationRequest.builder()
+                    .requestId(requestId)
+                    .timestamp(timestamp)
+                    .notification(HIPConsentArtefactRepresentation.builder()
+                            .status(consentArtefact.getStatus())
+                            .consentId(consentArtefact.getConsentId())
+                            .build())
+                    .build();
+        }
+        return HIPNotificationRequest.builder()
+                .notification(consentArtefact)
+                .requestId(requestId)
+                .timestamp(timestamp)
+                .build();
     }
 }

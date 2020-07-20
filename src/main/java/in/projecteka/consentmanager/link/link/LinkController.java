@@ -1,10 +1,13 @@
 package in.projecteka.consentmanager.link.link;
 
+import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.common.Caller;
+import in.projecteka.consentmanager.common.RequestValidator;
+import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
@@ -18,35 +21,21 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
+import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
+import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
+
 
 @RestController
 @AllArgsConstructor
 public class LinkController {
-
+    private final RequestValidator validator;
     private final Link link;
 
-    /**
-     * @deprecated
-     */
-    @Deprecated
-    @PostMapping("/patients/link")
-    public Mono<PatientLinkReferenceResponse> linkCareContexts(
-            @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller -> link.patientWith(caller.getUsername(), patientLinkReferenceRequest));
-    }
-
-    @Deprecated
-    @PostMapping("/patients/link/{linkRefNumber}")
-    public Mono<PatientLinkResponse> verifyToken(@PathVariable("linkRefNumber") String linkRefNumber,
-                                                 @RequestBody PatientLinkRequest patientLinkRequest) {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                .flatMap(caller -> link.verifyToken(linkRefNumber, patientLinkRequest, caller.getUsername()));
-    }
-
-    @GetMapping("/patients/links")
+    @GetMapping(Constants.APP_PATH_GET_PATIENTS_LINKS)
     public Mono<PatientLinksResponse> getLinkedCareContexts() {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
@@ -54,24 +43,32 @@ public class LinkController {
                 .flatMap(link::getLinkedCareContexts);
     }
 
-    @GetMapping("internal/patients/{username}/links")
+    @GetMapping(Constants.APP_PATH_INTERNAL_GET_LINKED_CARE_CONTEXTS)
     public Mono<PatientLinksResponse> getLinkedCareContextInternal(@PathVariable String username) {
         return link.getLinkedCareContexts(username);
     }
 
-    @PostMapping("/v1/links/link/on-init")
+    @PostMapping(PATH_LINK_ON_INIT)
     public Mono<Void> onLinkCareContexts(@RequestBody PatientLinkReferenceResult patientLinkReferenceResult) {
-        return link.onLinkCareContexts(patientLinkReferenceResult);
+        return Mono.just(patientLinkReferenceResult)
+                .filterWhen(res -> validator.validate(patientLinkReferenceResult.getRequestId().toString(),
+                        convertTimestampToLocalDateTimeUTC(patientLinkReferenceResult.getTimestamp()).toString()))
+                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .flatMap(res ->
+                        validator.put(patientLinkReferenceResult.getRequestId().toString(),
+                                patientLinkReferenceResult.getTimestamp())
+                                .then(link.onLinkCareContexts(patientLinkReferenceResult)));
     }
 
     /**
      * This API is intended for a CM App.
      * e.g. a mobile app or from other channels
+     *
      * @param linkRefNumber
      * @param patientLinkRequest
      * @return
      */
-    @PostMapping("/v1/links/link/confirm/{linkRefNumber}")
+    @PostMapping(in.projecteka.consentmanager.link.Constants.APP_PATH_CONFIRM_LINK_REF_NUMBER)
     public Mono<PatientLinkResponse> confirmLink(
             @PathVariable("linkRefNumber") String linkRefNumber,
             @RequestBody PatientLinkRequest patientLinkRequest) {
@@ -83,20 +80,30 @@ public class LinkController {
 
     /**
      * HIP->Gateway Callback API for /links/link/confirm
+     *
      * @param confirmationResult
      * @return
      */
-    @PostMapping("/v1/links/link/on-confirm")
+    @PostMapping(PATH_LINK_ON_CONFIRM)
     public Mono<Void> onConfirmLink(@RequestBody @Valid LinkConfirmationResult confirmationResult) {
-        return link.onConfirmLink(confirmationResult);
+        return Mono.just(confirmationResult)
+                .filterWhen(req -> validator.validate(confirmationResult.getRequestId().toString()
+                        , convertTimestampToLocalDateTimeUTC(confirmationResult.getTimestamp()).toString()))
+                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .flatMap(discard -> link.onConfirmLink(confirmationResult)
+                        .then(validator.put(confirmationResult.getRequestId().toString(),
+                                confirmationResult.getTimestamp())));
     }
 
-    @PostMapping("/v1/links/link/init")
+    @PostMapping(Constants.APP_PATH_LINK_INIT)
     public Mono<PatientLinkReferenceResponse> linkPatientCareContexts(
-            @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest
-    ) {
+            @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .flatMap(caller -> link.patientCareContexts(caller.getUsername(), patientLinkReferenceRequest));
+    }
+
+    private LocalDateTime convertTimestampToLocalDateTimeUTC(String timestamp) {
+        return LocalDateTime.ofInstant(Instant.parse(timestamp), ZoneOffset.UTC);
     }
 }

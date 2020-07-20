@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.Query;
+import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import io.vertx.core.AsyncResult;
 import io.vertx.pgclient.PgPool;
@@ -17,10 +18,13 @@ import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.StreamSupport;
@@ -29,6 +33,9 @@ import static in.projecteka.consentmanager.common.Serializer.to;
 
 @AllArgsConstructor
 public class ConsentArtefactRepository {
+
+    private final static Logger logger = LoggerFactory.getLogger(ConsentArtefactRepository.class);
+
     public static final String CONSENT_ARTEFACT = "consent_artefact";
     public static final String STATUS = "status";
     public static final String CONSENT_REQUEST_ID = "consent_request_id";
@@ -51,6 +58,11 @@ public class ConsentArtefactRepository {
             "date_modified=$2 WHERE consent_artefact_id=$3";
     private static final String SELECT_CONSENT_ARTEFACTS_COUNT = "SELECT COUNT(*) FROM consent_artefact " +
             "WHERE patient_id=$1 AND (status=$2 OR $2 IS NULL)";
+    private static final String SAVE_CONSENT_NOTIFICATION = "INSERT INTO consent_notification (consent_id, " +
+            "status, receiver) VALUES ($1, $2, $3)";
+    private static final String UPDATE_CONSENT_NOTIFICATION = "UPDATE consent_notification SET status = $1 " +
+            "WHERE consent_id = $2 AND receiver = $3";
+
     private static final String FAILED_TO_RETRIEVE_CA = "Failed to retrieve Consent Artifact.";
     private static final String FAILED_TO_SAVE_CONSENT_ARTEFACT = "Failed to save consent artefact";
 
@@ -85,6 +97,7 @@ public class ConsentArtefactRepository {
                 .execute(Tuple.of(consentId),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(new RuntimeException(FAILED_TO_RETRIEVE_CA, handler.cause()));
                                 return;
                             }
@@ -103,6 +116,7 @@ public class ConsentArtefactRepository {
                 .execute(Tuple.of(consentId),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(new RuntimeException(FAILED_TO_RETRIEVE_CA, handler.cause()));
                                 return;
                             }
@@ -129,6 +143,7 @@ public class ConsentArtefactRepository {
                 .execute(Tuple.of(consentRequestId),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 fluxSink.error(new Exception("Failed to get consent id from consent request Id"));
                             } else {
                                 StreamSupport.stream(handler.result().spliterator(), false)
@@ -147,6 +162,7 @@ public class ConsentArtefactRepository {
                     dbClient.preparedQuery(SELECT_CONSENT_ARTEFACTS_COUNT)
                             .execute(Tuple.of(username, status), counter -> {
                                 if (counter.failed()) {
+                                    logger.error(counter.cause().getMessage(), counter.cause());
                                     monoSink.error(new DbOperationError());
                                     return;
                                 }
@@ -174,6 +190,7 @@ public class ConsentArtefactRepository {
                 .execute(Tuple.of(consentStatus.toString()),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 fluxSink.error(new Exception("Failed to get GRANTED consents"));
                                 return;
                             }
@@ -183,12 +200,16 @@ public class ConsentArtefactRepository {
                                     fluxSink.next(ConsentExpiry.builder()
                                             .consentId(row.getString("consent_artefact_id"))
                                             .patientId(row.getString("patient_id"))
-                                            .consentExpiryDate(row.getLocalDateTime("consent_expiry_date"))
+                                            .consentExpiryDate(toDate(row.getString("consent_expiry_date")))
                                             .build());
                                 });
                             }
                             fluxSink.complete();
                         }));
+    }
+
+    private LocalDateTime toDate(String timestamp) {
+        return LocalDateTime.parse(timestamp, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
     public Mono<Void> updateStatus(String consentId, String consentRequestId, ConsentStatus status) {
@@ -210,6 +231,7 @@ public class ConsentArtefactRepository {
                         consentId),
                         updateHandler -> {
                             if (updateHandler.failed()) {
+                                logger.error(updateHandler.cause().getMessage(), updateHandler.cause());
                                 monoSink.error(new Exception("Failed to update consent artefact status"));
                                 return;
                             }
@@ -222,6 +244,7 @@ public class ConsentArtefactRepository {
                 .execute(Tuple.of(consentId),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(new RuntimeException(FAILED_TO_RETRIEVE_CA, handler.cause()));
                                 return;
                             }
@@ -244,16 +267,38 @@ public class ConsentArtefactRepository {
                         }));
     }
 
+    public Mono<Void> saveConsentNotification(String consentId, ConsentNotificationStatus status, ConsentNotificationReceiver receiver) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(SAVE_CONSENT_NOTIFICATION)
+                .execute(Tuple.of(consentId, status.name(), receiver.name()),
+                        updateHandler -> {
+                            if (updateHandler.failed()) {
+                                logger.error(updateHandler.cause().getMessage(), updateHandler.cause());
+                                monoSink.error(new Exception("Failed to save consent notification"));
+                                return;
+                            }
+                            monoSink.success();
+                        }));
+    }
+
+    public Mono<Void> updateConsentNotification(String consentId, ConsentNotificationStatus status, ConsentNotificationReceiver receiver) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(UPDATE_CONSENT_NOTIFICATION)
+                .execute(Tuple.of(status.name(), consentId, receiver.name()),
+                        updateHandler -> {
+                            if (updateHandler.failed()) {
+                                logger.error(updateHandler.cause().getMessage(), updateHandler.cause());
+                                monoSink.error(new Exception("Failed to update consent notification status"));
+                                return;
+                            }
+                            monoSink.success();
+                        }));
+    }
+
     private List<Query> getUpdateQueries(String consentId, String consentRequestId, ConsentStatus status) {
-        Query consentRequestUpdate = new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
-                Tuple.of(status.toString(),
-                        LocalDateTime.now(),
-                        consentRequestId));
         Query consentArtefactUpdate = new Query(UPDATE_CONSENT_ARTEFACT_STATUS_QUERY,
                 Tuple.of(status.toString(),
                         LocalDateTime.now(),
                         consentId));
-        return List.of(consentRequestUpdate, consentArtefactUpdate);
+        return List.of(consentArtefactUpdate);
     }
 
     private ConsentArtefactRepresentation getConsentArtefactRepresentation(Row row) {

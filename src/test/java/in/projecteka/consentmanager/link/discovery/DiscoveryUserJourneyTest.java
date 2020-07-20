@@ -13,13 +13,16 @@ import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.RequestValidator;
+import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
@@ -47,11 +50,16 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -63,7 +71,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient(timeout = "6000")
 @ContextConfiguration(initializers = DiscoveryUserJourneyTest.ContextInitializer.class)
-public class DiscoveryUserJourneyTest {
+class DiscoveryUserJourneyTest {
     private static final MockWebServer clientRegistryServer = new MockWebServer();
 
     @SuppressWarnings("unused")
@@ -112,22 +120,29 @@ public class DiscoveryUserJourneyTest {
 
     @MockBean
     @Qualifier("discoveryResults")
-    CacheAdapter<String,String> discoveryResults;
+    CacheAdapter<String, String> discoveryResults;
+
+    @MockBean
+    @Qualifier("cacheForReplayAttack")
+    CacheAdapter<String, String> cacheForReplayAttack;
 
     @SuppressWarnings("unused")
     @MockBean
     private ConceptValidator conceptValidator;
 
     @MockBean
-    private CentralRegistryTokenVerifier centralRegistryTokenVerifier;
+    private RequestValidator validator;
+
+    @MockBean
+    private GatewayTokenVerifier gatewayTokenVerifier;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.initMocks(this);
     }
 
     @AfterAll
-    public static void tearDown() throws IOException {
+    static void tearDown() throws IOException {
         providerServer.shutdown();
         clientRegistryServer.shutdown();
     }
@@ -165,23 +180,18 @@ public class DiscoveryUserJourneyTest {
     }
 
     @Test
-    public void shouldGetProviderById() throws IOException {
+    void shouldGetProviderById() throws IOException {
         var providers = new ObjectMapper().readValue(
                 Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource("providerById.json")),
                 new TypeReference<JsonNode>() {
                 });
         var token = string();
-
         var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"ff\"}";
         String providerId = "12345";
 
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(
                 "consent-manager-service", true)));
         clientRegistryServer.enqueue(new MockResponse()
-                .setHeader("Content-Type", "application/json")
-                .setBody(session));
-
-        providerServer.enqueue(new MockResponse()
                 .setHeader("Content-Type", "application/json")
                 .setBody(session));
         providerServer.enqueue(new MockResponse()
@@ -202,7 +212,7 @@ public class DiscoveryUserJourneyTest {
                 .jsonPath("$.type").isEqualTo("prov");
     }
 
-    public static class ContextInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+    static class ContextInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(ConfigurableApplicationContext applicationContext) {
             TestPropertyValues values = TestPropertyValues.of(
@@ -212,11 +222,11 @@ public class DiscoveryUserJourneyTest {
     }
 
     @Test
-    public void shouldGetGatewayTimeoutForDiscoverCareContext() throws Exception {
+    void shouldGetGatewayTimeoutForDiscoverCareContext() throws Exception {
         var token = string();
         String requestId = "cecd3ed2-a7ea-406e-90f2-b51aa78741b9";
         String patientDiscoveryRequest = "{\n" +
-                "  \"requestId\": \""+ requestId + "\",\n" +
+                "  \"requestId\": \"" + requestId + "\",\n" +
                 "  \"hip\": {\n" +
                 "    \"id\": \"12345\"\n" +
                 "  }\n" +
@@ -229,10 +239,10 @@ public class DiscoveryUserJourneyTest {
         when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.empty());
         var errorResponse = new ErrorRepresentation(
-                new Error(ErrorCode.NO_RESULT_FROM_GATEWAY,"Didn't receive any result from Gateway"));
+                new Error(ErrorCode.NO_RESULT_FROM_GATEWAY, "Didn't receive any result from Gateway"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
-                .uri("/v1/care-contexts/discover")
+                .uri(Constants.APP_PATH_CARE_CONTEXTS_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -244,11 +254,11 @@ public class DiscoveryUserJourneyTest {
     }
 
     @Test
-    public void shouldDiscoverCareContext() throws Exception {
+    void shouldDiscoverCareContext() throws Exception {
         var token = string();
         String requestId = "cecd3ed2-a7ea-406e-90f2-b51aa78741b9";
         String patientDiscoveryRequest = "{\n" +
-                "  \"requestId\": \""+ requestId + "\",\n" +
+                "  \"requestId\": \"" + requestId + "\",\n" +
                 "  \"hip\": {\n" +
                 "    \"id\": \"12345\"\n" +
                 "  }\n" +
@@ -273,7 +283,7 @@ public class DiscoveryUserJourneyTest {
         when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         webTestClient.post()
-                .uri("/v1/care-contexts/discover")
+                .uri(Constants.APP_PATH_CARE_CONTEXTS_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -285,11 +295,11 @@ public class DiscoveryUserJourneyTest {
     }
 
     @Test
-    public void shouldFailDiscoverCareContext() throws Exception {
+    void shouldFailDiscoverCareContext() throws Exception {
         var token = string();
         String requestId = "cecd3ed2-a7ea-406e-90f2-b51aa78741b9";
         String patientDiscoveryRequest = "{\n" +
-                "  \"requestId\": \""+ requestId + "\",\n" +
+                "  \"requestId\": \"" + requestId + "\",\n" +
                 "  \"hip\": {\n" +
                 "    \"id\": \"12345\"\n" +
                 "  }\n" +
@@ -299,7 +309,7 @@ public class DiscoveryUserJourneyTest {
                 "  \"transactionId\": \"2b7778a0-9eb7-4ed4-8693-ed8be2eac9d2\",\n" +
                 "  \"patient\": null,\n" +
                 "  \"error\": {\n" +
-                "    \"code\": 1000,\n" +
+                "    \"code\": 3404,\n" +
                 "    \"message\": \"Could not find patient information\"\n" +
                 "  }\n" +
                 "}";
@@ -311,10 +321,10 @@ public class DiscoveryUserJourneyTest {
         when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         var errorResponse = new ErrorRepresentation(
-                new Error(ErrorCode.NO_PATIENT_FOUND,"Could not find patient information"));
+                new Error(ErrorCode.NO_PATIENT_FOUND, "Could not find patient information"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
-                .uri("/v1/care-contexts/discover")
+                .uri(Constants.APP_PATH_CARE_CONTEXTS_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -326,11 +336,11 @@ public class DiscoveryUserJourneyTest {
     }
 
     @Test
-    public void shouldFailDiscoverCareContextForZeroPatientResponse() throws Exception {
+    void shouldFailDiscoverCareContextForZeroPatientResponse() throws Exception {
         var token = string();
         String requestId = "cecd3ed2-a7ea-406e-90f2-b51aa78741b9";
         String patientDiscoveryRequest = "{\n" +
-                "  \"requestId\": \""+ requestId + "\",\n" +
+                "  \"requestId\": \"" + requestId + "\",\n" +
                 "  \"hip\": {\n" +
                 "    \"id\": \"12345\"\n" +
                 "  }\n" +
@@ -348,10 +358,10 @@ public class DiscoveryUserJourneyTest {
         when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
         var errorResponse = new ErrorRepresentation(
-                new Error(ErrorCode.UNPROCESSABLE_RESPONSE_FROM_GATEWAY,"Could not process response from HIP"));
+                new Error(ErrorCode.UNPROCESSABLE_RESPONSE_FROM_GATEWAY, "Could not process response from HIP"));
         var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
         webTestClient.post()
-                .uri("/v1/care-contexts/discover")
+                .uri(Constants.APP_PATH_CARE_CONTEXTS_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -363,12 +373,18 @@ public class DiscoveryUserJourneyTest {
     }
 
     @Test
-    public void onDiscoverPatientCareContexts() {
+    void onDiscoverPatientCareContexts() {
         var token = string();
         var patientDiscoveryResult = TestBuilders.discoveryResult().build();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", true)));
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+        when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
+        when(discoveryResults.put(anyString(), anyString())).thenReturn(Mono.empty());
+
         webTestClient.post()
-                .uri("/v1/care-contexts/on-discover")
+                .uri(PATH_CARE_CONTEXTS_ON_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -378,7 +394,27 @@ public class DiscoveryUserJourneyTest {
     }
 
     @Test
-    public void shouldFailWhenRequestIdIsNotGiven() throws Exception {
+    void shouldFailWithTwoManyRequestsErrorForInvalidRequest() {
+        var token = string();
+        var patientDiscoveryResult = TestBuilders.discoveryResult().build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+
+        webTestClient.post()
+                .uri(PATH_CARE_CONTEXTS_ON_DISCOVER)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .bodyValue(patientDiscoveryResult)
+                .exchange()
+                .expectStatus()
+                .is4xxClientError();
+    }
+
+    @Test
+    void shouldFailWhenRequestIdIsNotGiven() throws Exception {
         var token = string();
         var gatewayResponse = GatewayResponse.builder()
                 .requestId(null)
@@ -388,13 +424,20 @@ public class DiscoveryUserJourneyTest {
                 .message("Could not identify a unique patient. Need more information.")
                 .build();
         var patientDiscoveryResult = DiscoveryResult.builder()
+                .requestId(UUID.randomUUID())
                 .patient(null)
                 .error(error)
                 .resp(gatewayResponse)
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
                 .build();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", true)));
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+        when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
+
         webTestClient.post()
-                .uri("/v1/care-contexts/on-discover")
+                .uri(PATH_CARE_CONTEXTS_ON_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
@@ -404,16 +447,17 @@ public class DiscoveryUserJourneyTest {
     }
 
     @Test
-    public void shouldFailOnDiscoverPatientCareContexts() throws Exception {
+    void shouldFailOnDiscoverPatientCareContexts() throws Exception {
         var token = string();
-        when(centralRegistryTokenVerifier.verify(token)).thenReturn(Mono.just(new Caller("test-user-id", true)));
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
+
         webTestClient.post()
-                .uri("/v1/care-contexts/on-discover")
+                .uri(PATH_CARE_CONTEXTS_ON_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .exchange()
                 .expectStatus().isBadRequest();
     }
-
 }

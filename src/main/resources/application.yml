@@ -13,13 +13,14 @@ consentmanager:
     consentExpiryCronExpr: ${CONSENT_EXPIRY_CRON_EXPRESSION}
     consentRequestExpiryCronExpr: ${CONSENT_REQUEST_EXPIRY_CRON_EXPRESSION}
   clientregistry:
-    XAuthToken: ${Auth_Token}
-    clientId: ${CENTRAL_REGISTRY_ID}
     url: ${Client_Registry_Url}
-    jwkUrl: ${CENTRAL_REGISTRY_JWK_URL}
   gatewayservice:
     baseUrl: ${GATEWAY_BASE_URL}
     requestTimeout: ${GATEWAY_REQUEST_TIMEOUT}
+    enabled: ${GATEWAY_ENABLED}
+    clientSecret: ${GATEWAY_CLIENT_SECRET}
+    clientId: ${GATEWAY_CLIENT_ID}
+    jwkUrl: ${CENTRAL_REGISTRY_JWK_URL}
   userservice:
     url: ${User_Service_Url}
     transactionPinDigitSize: ${TRANSACTION_PIN_DIGIT_SIZE}
@@ -42,6 +43,8 @@ consentmanager:
     expiryInMinutes: ${OTP_EXPIRY_IN_MINUTES}
   jwt:
     secret: ${JWT_SECRET}
+  authorization:
+    header: ${AUTHORIZATION_HEADER:Authorization}
   keycloak:
     baseUrl: ${KEY_CLOAK_URL}
     clientId: ${KEY_CLOAK_CONSENT_CLIENT_ID}
@@ -52,7 +55,7 @@ consentmanager:
     issuer: ${KEY_CLOAK_TOKEN_ISSUER}
   db:
     host: ${POSTGRES_HOST}
-    port: 5432
+    port: ${POSTGRES_PORT:5432}
     schema: ${CONSENT_MANAGER_DB_NAME}
     user: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
@@ -70,7 +73,17 @@ consentmanager:
     host: ${REDIS_HOST}
     port: 6379
     password: ${REDIS_PASSWORD}
+  listeners:
+    maximumRetries: ${LISTENERS_MAXIMUM_RETRIES}
+    # In milliseconds
+    retryInterval: ${LISTENERS_RETRY_INTERVAL}
+  nhsproperties:
+    hiuid: ${NHS_HIU_ID:12342345}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}
     port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+webclient:
+  keepAlive: ${CM_KEEP_ALIVE:true}

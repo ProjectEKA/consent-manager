@@ -70,6 +70,7 @@ public class ConsentRequestRepository {
                                 new JsonObject(from(requestedDetail))),
                                 handler -> {
                                     if (handler.failed()) {
+                                        logger.error(handler.cause().getMessage(), handler.cause());
                                         monoSink.error(new Exception(FAILED_TO_SAVE_CONSENT_REQUEST));
                                         return;
                                     }
@@ -88,7 +89,9 @@ public class ConsentRequestRepository {
                             dbClient.preparedQuery(SELECT_CONSENT_REQUEST_COUNT)
                                     .execute(Tuple.of(patientId, status, GRANTED.toString()), counter -> {
                                                 if (handler.failed()) {
+                                                    logger.error(handler.cause().getMessage(), handler.cause());
                                                     monoSink.error(new DbOperationError());
+                                                    return;
                                                 }
                                                 Integer count = counter.result().iterator()
                                                         .next().getInteger("count");
@@ -126,7 +129,7 @@ public class ConsentRequestRepository {
     private Handler<AsyncResult<RowSet<Row>>> consentRequestHandler(MonoSink<ConsentRequestDetail> monoSink) {
         return handler -> {
             if (handler.failed()) {
-                logger.error(handler.cause().getMessage());
+                logger.error(handler.cause().getMessage(), handler.cause());
                 monoSink.error(new RuntimeException(UNKNOWN_ERROR_OCCURRED));
                 return;
             }
@@ -164,6 +167,7 @@ public class ConsentRequestRepository {
                         updateHandler -> {
                             if (updateHandler.failed()) {
                                 monoSink.error(new Exception("Failed to update status"));
+                                return;
                             }
                             monoSink.success();
                         }));
@@ -178,6 +182,7 @@ public class ConsentRequestRepository {
                 .execute(Tuple.of(status.toString()),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 fluxSink.error(new Exception(FAILED_TO_GET_CONSENT_REQUEST_BY_STATUS));
                                 return;
                             }

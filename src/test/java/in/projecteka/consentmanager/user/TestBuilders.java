@@ -1,13 +1,7 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.model.Session;
-import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
-import in.projecteka.consentmanager.user.model.LockedUser;
-import in.projecteka.consentmanager.user.model.SessionRequest;
-import in.projecteka.consentmanager.user.model.SignUpRequest;
-import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
-import in.projecteka.consentmanager.user.model.User;
-import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.consentmanager.user.model.*;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 import org.jeasy.random.FieldPredicates;
@@ -56,5 +50,25 @@ public class TestBuilders {
 
     public static UpdatePasswordRequest.UpdatePasswordRequestBuilder updatePasswordRequest() {
         return easyRandom.nextObject(UpdatePasswordRequest.UpdatePasswordRequestBuilder.class);
+    }
+
+    public static RequesterDetail.RequesterDetailBuilder requester() {
+        return easyRandom.nextObject(RequesterDetail.RequesterDetailBuilder.class);
+    }
+
+    public static PatientResponse.PatientResponseBuilder patient() {
+        return easyRandom.nextObject(PatientResponse.PatientResponseBuilder.class);
+    }
+
+    public static PatientRequest.PatientRequestBuilder patientRequest() {
+        return easyRandom.nextObject(PatientRequest.PatientRequestBuilder.class);
+    }
+
+    public static PatientName.PatientNameBuilder patientName(){
+        return easyRandom.nextObject(PatientName.PatientNameBuilder.class);
+    }
+
+    public static DateOfBirth.DateOfBirthBuilder dateOfBirth(){
+        return easyRandom.nextObject(DateOfBirth.DateOfBirthBuilder.class);
     }
 }

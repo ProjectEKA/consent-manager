@@ -5,6 +5,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -34,7 +35,8 @@ public class UserConfiguration {
                                    TokenService tokenService,
                                    UserServiceProperties userServiceProperties,
                                    OtpAttemptService otpAttemptService,
-                                   LockedUserService lockedUserService) {
+                                   LockedUserService lockedUserService,
+                                   UserServiceClient userServiceClient) {
         return new UserService(userRepository,
                 otpServiceProperties,
                 otpServiceClient,
@@ -43,7 +45,8 @@ public class UserConfiguration {
                 tokenService,
                 userServiceProperties,
                 otpAttemptService,
-                lockedUserService);
+                lockedUserService,
+                userServiceClient);
     }
 
     @Bean
@@ -52,13 +55,13 @@ public class UserConfiguration {
     }
 
     @Bean
-    public OtpServiceClient otpServiceClient(WebClient.Builder builder,
+    public OtpServiceClient otpServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                              OtpServiceProperties otpServiceProperties) {
         return new OtpServiceClient(builder, otpServiceProperties.getUrl());
     }
 
     @Bean
-    public IdentityServiceClient keycloakClient(WebClient.Builder builder,
+    public IdentityServiceClient keycloakClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                 IdentityServiceProperties identityServiceProperties) {
         return new IdentityServiceClient(builder, identityServiceProperties);
     }
@@ -75,7 +78,7 @@ public class UserConfiguration {
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens", "usedTokens"})
+    @Bean({"unverifiedSessions", "verifiedSessions", "blockListedTokens", "usedTokens"})
     public CacheAdapter<String, String> createLoadingCacheAdapter() {
         return new LoadingCacheAdapter(createSessionCache(5));
     }
@@ -98,7 +101,7 @@ public class UserConfiguration {
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
-    @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens", "usedTokens"})
+    @Bean({"unverifiedSessions", "verifiedSessions", "blockListedTokens", "usedTokens"})
     public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
         return new RedisCacheAdapter(redisClient, 5);
     }
@@ -116,14 +119,21 @@ public class UserConfiguration {
 
     @Bean
     public SessionService sessionService(TokenService tokenService,
-                                         CacheAdapter<String, String> blacklistedTokens,
+                                         CacheAdapter<String, String> blockListedTokens,
                                          CacheAdapter<String, String> unverifiedSessions,
                                          LockedUserService lockedUserService,
                                          UserRepository userRepository,
                                          OtpServiceClient otpServiceClient,
                                          OtpServiceProperties otpServiceProperties,
                                          OtpAttemptService otpAttemptService) {
-        return new SessionService(tokenService, blacklistedTokens, unverifiedSessions, lockedUserService, userRepository, otpServiceClient, otpServiceProperties, otpAttemptService);
+        return new SessionService(tokenService,
+                blockListedTokens,
+                unverifiedSessions,
+                lockedUserService,
+                userRepository,
+                otpServiceClient,
+                otpServiceProperties,
+                otpAttemptService);
     }
 
     @Bean

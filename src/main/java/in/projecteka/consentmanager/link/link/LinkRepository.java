@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.common.DbOperation;
@@ -14,6 +13,8 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import lombok.SneakyThrows;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import javax.validation.constraints.NotNull;
@@ -27,6 +28,8 @@ import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.to;
 
 public class LinkRepository {
+
+    private static final Logger logger = LoggerFactory.getLogger(LinkRepository.class);
 
     private static final String SELECT_LINKED_CARE_CONTEXTS = "SELECT hip_id, patient FROM link WHERE " +
             "consent_manager_user_id=$1";
@@ -48,22 +51,6 @@ public class LinkRepository {
     }
 
     @SneakyThrows
-    public Mono<Void> insertToLinkReference(PatientLinkReferenceResponse patientLinkReferenceResponse,
-                                            String hipId,
-                                            UUID requestId) {
-        return Mono.create(monoSink ->
-                dbClient.preparedQuery(INSERT_TO_LINK_REFERENCE)
-                        .execute(Tuple.of(new JsonObject(from(patientLinkReferenceResponse)), hipId, requestId.toString()),
-                                handler -> {
-                                    if (handler.failed()) {
-                                        monoSink.error(new DbOperationError());
-                                        return;
-                                    }
-                                    monoSink.success();
-                                }));
-    }
-
-    @SneakyThrows
     public Mono<Void> insert(PatientLinkReferenceResult linkReferenceResult,
                              String hipId,
                              UUID requestId) {
@@ -72,6 +59,7 @@ public class LinkRepository {
                         .execute(Tuple.of(new JsonObject(from(linkReferenceResult)), hipId, requestId.toString()),
                                 handler -> {
                                     if (handler.failed()) {
+                                        logger.error(handler.cause().getMessage(), handler.cause());
                                         monoSink.error(new DbOperationError());
                                         return;
                                     }
@@ -97,6 +85,7 @@ public class LinkRepository {
                 .execute(parameters,
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(new DbOperationError());
                                 return;
                             }
@@ -115,6 +104,7 @@ public class LinkRepository {
                 .execute(Tuple.of(hipId, consentManagerUserId, linkRefNumber, new JsonObject(from(patient))),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(new DbOperationError());
                                 return;
                             }
@@ -127,6 +117,7 @@ public class LinkRepository {
                 .execute(Tuple.of(patientId),
                         handler -> {
                             if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
                                 monoSink.error(new DbOperationError());
                                 return;
                             }

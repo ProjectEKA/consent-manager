@@ -4,6 +4,8 @@ import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
@@ -11,6 +13,7 @@ import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
+import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
@@ -18,6 +21,8 @@ import in.projecteka.consentmanager.user.model.InitiateCmIdRecoveryRequest;
 import in.projecteka.consentmanager.user.model.LoginMode;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.PatientName;
+import in.projecteka.consentmanager.user.model.PatientResponse;
 import in.projecteka.consentmanager.user.model.SendOtpAction;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
@@ -49,13 +54,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
+import static in.projecteka.consentmanager.user.TestBuilders.requester;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.updatePasswordRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
+import static in.projecteka.consentmanager.user.model.Requester.HIU;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -106,6 +114,12 @@ class UserServiceTest {
     @Mock
     private Logger logger;
 
+    @Mock
+    private UserServiceClient userServiceClient;
+
+    @Captor
+    private ArgumentCaptor<PatientResponse> patientResponse;
+
     private UserService userService;
 
     @BeforeEach
@@ -121,7 +135,8 @@ class UserServiceTest {
                 tokenService,
                 properties,
                 otpAttemptService,
-                lockedUserService);
+                lockedUserService,
+                userServiceClient);
     }
 
     @Test
@@ -263,8 +278,12 @@ class UserServiceTest {
 
     @Test
     public void shouldCreateUser() {
-        var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.now().getYear()).build();
-        var userToken = session().build();
+        var signUpRequest = coreSignUpRequest()
+                            .dateOfBirth(DateOfBirth.builder()
+                                    .month(LocalDate.now().getMonthValue())
+                                    .year(LocalDate.now().getYear())
+                                    .build())
+                            .build();
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
@@ -272,16 +291,19 @@ class UserServiceTest {
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 
         StepVerifier.create(userService.create(signUpRequest, sessionId))
-                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
                 .verifyComplete();
     }
 
     @Test
     public void shouldReturnUserAlreadyExistsError() {
-        var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
+        var signUpRequest = coreSignUpRequest()
+                                .dateOfBirth(DateOfBirth.builder()
+                                        .month(LocalDate.now().getMonthValue())
+                                        .year(LocalDate.MIN.getYear())
+                                        .build())
+                            .build();
         var sessionId = string();
         var user = user().identifier(signUpRequest.getUsername()).build();
         when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(string()));
@@ -298,8 +320,15 @@ class UserServiceTest {
 
     @Test
     public void shouldCreateUserWhenYOBIsNull() {
-        var signUpRequest = coreSignUpRequest().name("apoorva g a").yearOfBirth(null).build();
-        var userToken = session().build();
+        var signUpRequest = coreSignUpRequest()
+                            .name(
+                                PatientName.builder()
+                                        .first("apoorva")
+                                        .middle("g")
+                                        .last("a")
+                                        .build())
+                            .dateOfBirth(null)
+                            .build();
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
@@ -307,16 +336,19 @@ class UserServiceTest {
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.just(userToken));
 
         StepVerifier.create(userService.create(signUpRequest, sessionId))
-                .assertNext(response -> assertThat(response.getAccessToken()).isEqualTo(userToken.getAccessToken()))
                 .verifyComplete();
     }
 
     @Test
     public void shouldNotCreateUserWhenIDPClientFails() {
-        var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
+        var signUpRequest = coreSignUpRequest()
+                                .dateOfBirth(DateOfBirth.builder()
+                                        .month(LocalDate.now().getMonthValue())
+                                        .year(LocalDate.MIN.getYear())
+                                        .build())
+                            .build();
         var mobileNumber = string();
         var user = User.from(signUpRequest, mobileNumber);
         var identifier = user.getIdentifier();
@@ -326,7 +358,6 @@ class UserServiceTest {
         when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.empty());
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
         when(identityServiceClient.createUser(any(), any()))
                 .thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
@@ -340,7 +371,12 @@ class UserServiceTest {
 
     @Test
     void shouldNotCreateUserWhenPersistingToDbFails() {
-        var signUpRequest = coreSignUpRequest().yearOfBirth(LocalDate.MIN.getYear()).build();
+        var signUpRequest = coreSignUpRequest()
+                                .dateOfBirth(DateOfBirth.builder()
+                                        .month(LocalDate.now().getMonthValue())
+                                        .year(LocalDate.MIN.getYear())
+                                        .build())
+                            .build();
         var mobileNumber = string();
         var user = User.from(signUpRequest, mobileNumber);
         var identifier = user.getIdentifier();
@@ -350,11 +386,10 @@ class UserServiceTest {
         when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.error(new DbOperationError()));
-        when(tokenService.tokenForUser(any(), any())).thenReturn(Mono.empty());
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.delete(identifier)).thenReturn(Mono.empty());
-
+      
         var publisher = userService.create(signUpRequest, sessionId);
 
         StepVerifier.create(publisher)
@@ -563,26 +598,26 @@ class UserServiceTest {
 
     @Test
     void shouldReturnCMIdForSingleMatchingRecordForInitiateRecoverCMId() {
-        String name = "abc";
+        PatientName name = PatientName.builder().first("abc").middle(null).last(null).build();
         Gender gender = Gender.F;
-        Integer yearOfBirth = 1999;
+        DateOfBirth dateOfBirth = DateOfBirth.builder().year(1999).build();
         String verifiedIdentifierValue = "+91-8888888888";
         String unverifiedIdentifierValue = "P1234ABCD";
         var verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
         var unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        var request = new InitiateCmIdRecoveryRequest(name, gender, yearOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
+        var request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
         var unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type", "ABPMJAYID").put("value", unverifiedIdentifierValue));
-        var recoverCmIdRows = new ArrayList<>(Collections.singletonList(User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build()));
+        var recoverCmIdRows = new ArrayList<>(Collections.singletonList(User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(name).dateOfBirth(dateOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build()));
 
         when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(Flux.fromIterable(recoverCmIdRows));
 
         StepVerifier.create(userService.getPatientByDetails(request))
                 .assertNext(response -> {
                     assertThat(response.getIdentifier()).isEqualTo(cmId);
-                    assertThat(response.getName()).isEqualTo(name);
+                    assertThat(response.getName().createFullName()).isEqualTo(name.createFullName());
                     assertThat(response.getPhone()).isEqualTo(verifiedIdentifierValue);
-                    assertThat(response.getYearOfBirth()).isEqualTo(yearOfBirth);
+                    assertThat(response.getDateOfBirth().getYear()).isEqualTo(dateOfBirth.getYear());
                 })
                 .verifyComplete();
         verify(userRepository, times(1)).getUserBy(gender, verifiedIdentifierValue);
@@ -590,17 +625,17 @@ class UserServiceTest {
 
     @Test
     void shouldReturnEmptyMonoForMultipleMatchingRecordsForInitiateRecoverCMId() {
-        String name = "abc";
+        PatientName name = PatientName.builder().first("abc").middle("").last(null).build();
         Gender gender = Gender.F;
-        Integer yearOfBirth = 1999;
+        DateOfBirth dateOfBirth = DateOfBirth.builder().year(1999).build();
         String verifiedIdentifierValue = "+91-8888888888";
         String unverifiedIdentifierValue = "P1234ABCD";
         var verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
         var unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        var request = new InitiateCmIdRecoveryRequest(name, gender, yearOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
+        var request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type", "ABPMJAYID").put("value", unverifiedIdentifierValue));
-        User recoverCmIdRow = User.builder().identifier(cmId).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        User recoverCmIdRow = User.builder().identifier(cmId).name(name).dateOfBirth(dateOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
         var recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow, recoverCmIdRow));
 
         when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(Flux.fromIterable(recoverCmIdRows));
@@ -612,17 +647,17 @@ class UserServiceTest {
 
     @Test
     void shouldThrowAnErrorWhenNoMatchingRecordFoundAndPMJAYIdIsNullInRecordsForInitiateRecoverCMId() {
-        String name = "abc";
+        PatientName name = PatientName.builder().first("abc").middle("").last(null).build();
         Gender gender = Gender.F;
-        Integer yearOfBirth = 1999;
+        DateOfBirth dateOfBirth = DateOfBirth.builder().year(1999).build();
         String verifiedIdentifierValue = "+91-8888888888";
         String unverifiedIdentifierValue = "P1234ABCD";
         ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue)));
         ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
-        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, yearOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
         JsonArray unverifiedIdentifiersResponse = null;
-        User recoverCmIdRow = User.builder().identifier(cmId).name(name).yearOfBirth(yearOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        User recoverCmIdRow = User.builder().identifier(cmId).name(name).dateOfBirth(dateOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
         ArrayList<User> recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow));
 
         when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(Flux.fromIterable(recoverCmIdRows));
@@ -669,5 +704,49 @@ class UserServiceTest {
         var producer = userService.verifyOtpForRecoverCmId(otpVerification);
 
         StepVerifier.create(producer).verifyError(InvalidRequestException.class);
+    }
+
+    @Test
+    void callGateWayWhenUserNotFound() {
+        var userName = string();
+        var requester = requester().type(HIU).build();
+        var requestId = UUID.randomUUID();
+        when(userRepository.userWith(any())).thenReturn(Mono.empty());
+        when(userServiceClient.sendPatientResponseToGateWay(patientResponse.capture(),
+                eq("X-HIU-ID"),
+                eq(requester.getId())))
+                .thenReturn(Mono.empty());
+
+        var patientProducer = userService.user(userName, requester, requestId);
+
+        StepVerifier.create(patientProducer)
+                .verifyComplete();
+        verify(userRepository, times(1)).userWith(any());
+        verify(userServiceClient, times(1)).sendPatientResponseToGateWay(any(), any(), any());
+        assertThat(patientResponse.getValue().getError()).isNotNull();
+        assertThat(patientResponse.getValue().getError().getCode()).isEqualTo(ErrorCode.USER_NOT_FOUND.getValue());
+        assertThat(patientResponse.getValue().getPatient()).isNull();
+    }
+
+    @Test
+    void callGateWayWhenUserFound() {
+        var userName = string();
+        var requester = requester().type(HIU).build();
+        var requestId = UUID.randomUUID();
+        var user = user().build();
+        when(userRepository.userWith(any())).thenReturn(Mono.just(user));
+        when(userServiceClient.sendPatientResponseToGateWay(patientResponse.capture(),
+                eq("X-HIU-ID"),
+                eq(requester.getId())))
+                .thenReturn(Mono.empty());
+
+        var patientProducer = userService.user(userName, requester, requestId);
+
+        StepVerifier.create(patientProducer)
+                .verifyComplete();
+        verify(userRepository, times(1)).userWith(any());
+        verify(userServiceClient, times(1)).sendPatientResponseToGateWay(any(), any(), any());
+        assertThat(patientResponse.getValue().getError()).isNull();
+        assertThat(patientResponse.getValue().getPatient()).isNotNull();
     }
 }

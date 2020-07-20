@@ -66,7 +66,7 @@ public class PatientsController {
     private final LockedUserService lockedUserService;
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PostMapping("/pin")
+    @PostMapping(Constants.APP_PATH_CREATE_PIN)
     public Mono<Void> pin(@RequestBody CreatePinRequest createPinRequest) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
@@ -74,7 +74,7 @@ public class PatientsController {
                 .flatMap(userName -> transactionPinService.createPinFor(userName, createPinRequest.getPin()));
     }
 
-    @GetMapping("/me")
+    @GetMapping(Constants.APP_PATH_GET_PROFILE)
     public Mono<Profile> profileFor() {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
@@ -82,12 +82,12 @@ public class PatientsController {
                 .flatMap(profileService::profileFor);
     }
 
-    @GetMapping("/profile/loginmode")
+    @GetMapping(Constants.APP_PATH_GET_PROFILE_LOGINMODE)
     public Mono<LoginModeResponse> fetchLoginMode(@RequestParam String userName) {
         return userService.getLoginMode(userName);
     }
 
-    @PostMapping("/verify-pin")
+    @PostMapping(Constants.APP_PATH_VERIFY_PIN)
     public Mono<Token> validatePin(@Valid @RequestBody ValidatePinRequest request) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
@@ -97,21 +97,21 @@ public class PatientsController {
                         request.getScope()));
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/profile")
-    public Mono<Session> create(@RequestBody SignUpRequest request,
-                                @RequestHeader(name = "Authorization") String token) {
+    public Mono<Void> create(@RequestBody SignUpRequest request,
+                             @RequestHeader(name = "Authorization") String token) {
         var signUpRequests = SignUpRequestValidator.validate(request, userService.getUserIdSuffix());
         return signUpRequests.isValid()
                ? Mono.justOrEmpty(signupService.sessionFrom(token))
                        .flatMap(sessionId -> userService.create(signUpRequests.get(), sessionId)
-                               .zipWith(Mono.just(sessionId))
-                               .flatMap(tuple -> signupService.removeOf(tuple.getT2()).thenReturn(tuple.getT1())))
+                               .then(signupService.removeOf(sessionId)))
                : Mono.error(new ClientError(BAD_REQUEST,
                        new ErrorRepresentation(new Error(INVALID_REQUESTER,
                                signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));
     }
 
-    @PostMapping("/generateotp")
+    @PostMapping(Constants.APP_PATH_GENERATE_OTP)
     @ResponseStatus(CREATED)
     public Mono<GenerateOtpResponse> generateOtp(@RequestBody GenerateOtpRequest request) {
         return profileService.profileFor(request.getUsername())
@@ -125,7 +125,7 @@ public class PatientsController {
                 .switchIfEmpty(Mono.error(ClientError.failedToGenerateOtp()));
     }
 
-    @PostMapping("/verifyotp")
+    @PostMapping(Constants.APP_PATH_VERIFY_OTP)
     public Mono<Token> verifyOtp(@RequestBody OtpVerification request) {
         return userService.verifyOtpForForgetPassword(request);
     }
@@ -200,7 +200,7 @@ public class PatientsController {
                : Mono.error(invalidRequester(updateUserRequests.getError()));
     }
 
-    @PutMapping("/profile/update-password")
+    @PutMapping(Constants.APP_PATH_UPDATE_PROFILE_PASSWORD)
     public Mono<Session> updatePassword(@RequestBody UpdatePasswordRequest request) {
         var updatePasswordRequest = SignUpRequestValidator.validatePassword(request.getNewPassword());
         return updatePasswordRequest.isValid()
@@ -212,7 +212,7 @@ public class PatientsController {
                : Mono.error(invalidRequester(updatePasswordRequest.getError()));
     }
 
-    @PostMapping("/change-pin")
+    @PostMapping(Constants.APP_PATH_CHANGE_PIN)
     public Mono<Void> changeTransactionPin(@RequestBody ChangePinRequest request) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
@@ -222,7 +222,7 @@ public class PatientsController {
                                 .switchIfEmpty(Mono.defer(() -> usedTokens.put(caller.getSessionId(), ""))));
     }
 
-    @PostMapping("/profile/recovery-init")
+    @PostMapping(Constants.APP_PATH_PROFILE_RECOVERY_INIT)
     public Mono<GenerateOtpResponse> initiateCmIdRecovery(@RequestBody InitiateCmIdRecoveryRequest request) {
         return isValidRecoveryRequest(request)
                 .switchIfEmpty(Mono.error(ClientError.invalidRecoveryRequest()))
@@ -260,7 +260,7 @@ public class PatientsController {
                : Mono.just(request);
     }
 
-    @PostMapping("/profile/recovery-confirm")
+    @PostMapping(Constants.APP_PATH_PROFILE_RECOVERY_CONFIRM)
     public Mono<RecoverCmIdResponse> verifyOtpAndRecoverCmId(@RequestBody OtpVerification request) {
         return userService.verifyOtpForRecoverCmId(request);
     }

@@ -29,6 +29,7 @@ import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.ValidatePinRequest;
+import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -115,8 +116,8 @@ public class PatientsController {
     }
 
     @PostMapping(Constants.APP_PATH_PROFILE_UPDATE_LOGIN_DETAILS)
-    public Mono<Session> updateLoginDetails(@RequestBody UpdateLoginDetailsRequest request,
-                                            @RequestHeader(name = "Authorization") String token) {
+    public Mono<UpdateLoginDetailsResponse> updateLoginDetails(@RequestBody UpdateLoginDetailsRequest request,
+                                                               @RequestHeader(name = "Authorization") String token) {
         var loginRequests = SignUpRequestValidator.validateLoginDetails(request, userService.getUserIdSuffix());
         return loginRequests.isValid()
                 ? hasSignupService.updateHASLoginDetails(request, token)

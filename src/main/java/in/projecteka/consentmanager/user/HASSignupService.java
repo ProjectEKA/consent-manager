@@ -4,7 +4,6 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.HASSignupServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
-import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.user.model.GrantType;
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
 import in.projecteka.consentmanager.user.model.SessionRequest;
@@ -13,6 +12,7 @@ import in.projecteka.consentmanager.user.model.SignUpResponse;
 import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
 import in.projecteka.consentmanager.user.model.UserCredential;
+import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import reactor.core.publisher.Mono;
@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 import java.util.Collections;
 
 import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
+import static java.lang.String.format;
 
 @AllArgsConstructor
 public class HASSignupService {
@@ -56,7 +57,7 @@ public class HASSignupService {
                 .build();
     }
 
-    public Mono<Session> updateHASLoginDetails(UpdateLoginDetailsRequest request, String token) {
+    public Mono<UpdateLoginDetailsResponse> updateHASLoginDetails(UpdateLoginDetailsRequest request, String token) {
         var updateHASLoginDetails = createUpdateHASUserRequest(request, token);
         return userRepository.userWith(request.getCmId())
                 .flatMap(patient -> Mono.error(userAlreadyExists(patient.getIdentifier())))
@@ -71,14 +72,18 @@ public class HASSignupService {
                 )))
                 .flatMap(keycloakUser -> tokenService.tokenForAdmin()
                         .flatMap(accessToken -> identityServiceClient.createUser(accessToken, keycloakUser))
-                        .onErrorResume(ClientError.class, error -> {
-                            userRepository.updateCMId(request.getHealthId(), null);
-                            return Mono.error(ClientError.userAlreadyExists(keycloakUser.getUsername()));
-                        }))
+                        .onErrorResume(ClientError.class, error ->
+                                userRepository.updateCMId(request.getHealthId(), null)
+                                        .then(Mono.error(ClientError.userAlreadyExists(keycloakUser.getUsername())))
+                        ))
                 .then(Mono.defer(() -> sessionService.forNew(SessionRequest.builder().grantType(GrantType.PASSWORD)
                         .username(request.getCmId())
                         .password(request.getPassword())
-                        .build())));
+                        .build())))
+                .flatMap(session -> {
+                    String accessToken = format("Bearer %s", session.getAccessToken());
+                    return Mono.just(UpdateLoginDetailsResponse.builder().token(accessToken).build());
+                });
     }
 
     private UpdateHASUserRequest createUpdateHASUserRequest(UpdateLoginDetailsRequest request, String token) {

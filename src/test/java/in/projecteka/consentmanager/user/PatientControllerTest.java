@@ -39,6 +39,7 @@ import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.SignUpResponse;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
+import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
 
 
 import io.vertx.core.json.JsonArray;
@@ -182,9 +183,10 @@ public class PatientControllerTest {
                 .cmId("hinapatel56@ncg")
                 .password("Test@1243").build();
         var token = string();
-        var session = session().build();
+        var updateLoginResponse = UpdateLoginDetailsResponse.builder().token(string()).build();
 
-        when(hasSignupService.updateHASLoginDetails(any(UpdateLoginDetailsRequest.class),anyString())).thenReturn(Mono.just(session));
+        when(hasSignupService.updateHASLoginDetails(any(UpdateLoginDetailsRequest.class),anyString()))
+                .thenReturn(Mono.just(updateLoginResponse));
         when(userService.getUserIdSuffix()).thenReturn("@ncg");
 
         webClient.post()
@@ -201,9 +203,10 @@ public class PatientControllerTest {
                 .cmId("hinapatel56@ncg")
                 .password("Test@1234").build();
         var token = string();
-        var session = session().build();
+        var updateLoginResponse = UpdateLoginDetailsResponse.builder().token(string()).build();
 
-        when(hasSignupService.updateHASLoginDetails(any(UpdateLoginDetailsRequest.class),anyString())).thenReturn(Mono.just(session));
+        when(hasSignupService.updateHASLoginDetails(any(UpdateLoginDetailsRequest.class),anyString()))
+                .thenReturn(Mono.just(updateLoginResponse));
         when(userService.getUserIdSuffix()).thenReturn("@ncg");
 
         webClient.post()

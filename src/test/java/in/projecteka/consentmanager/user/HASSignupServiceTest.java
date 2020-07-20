@@ -25,6 +25,7 @@ import reactor.test.StepVerifier;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
+import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -157,6 +158,7 @@ class HASSignupServiceTest {
         var token = string();
         var patientName = PatientName.builder().first("hina").middle("").last("patel").build();
         var session = session().build();
+        String accessToken = format("Bearer %s", session.getAccessToken());
 
         when(userRepository.userWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
         when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class))).thenReturn(Mono.empty());
@@ -171,8 +173,7 @@ class HASSignupServiceTest {
 
         StepVerifier.create(hasSignupService.updateHASLoginDetails(updateLoginRequestDetails,token))
                 .assertNext(res -> {
-                    assertThat(res.getAccessToken()).isEqualTo(session.getAccessToken());
-                    assertThat(res.getTokenType()).isEqualTo(session.getTokenType());
+                    assertThat(res.getToken()).isEqualTo(accessToken);
                 })
                 .verifyComplete();
     }
@@ -227,33 +228,6 @@ class HASSignupServiceTest {
                 .thenReturn(Mono.empty());
         when(userRepository.getNameByHealthId(updateLoginRequestDetails.getHealthId()))
                 .thenReturn(Mono.empty());
-
-        StepVerifier.create(hasSignupService.updateHASLoginDetails(updateLoginRequestDetails,token))
-                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
-                        ((ClientError) throwable).getHttpStatus().is4xxClientError())
-                .verify();
-    }
-
-    @Test
-    public void shouldThrowErrorWhenCMIdAlreadyExistsInKeycloak() {
-        var updateLoginRequestDetails = UpdateLoginDetailsRequest.builder().cmId("hinapatel456@ncg")
-                .healthId("12345-12345-12345")
-                .password("Test@1243")
-                .build();
-        var token = string();
-        var patientName = PatientName.builder().first("hina").middle("").last("patel").build();
-        var session = session().build();
-
-
-        when(userRepository.userWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
-        when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class))).thenReturn(Mono.empty());
-        when(userRepository.updateCMId(anyString(),anyString()))
-                .thenReturn(Mono.empty());
-        when(userRepository.getNameByHealthId(anyString()))
-                .thenReturn(Mono.just(patientName));
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(session));
-        when(identityServiceClient.createUser(any(Session.class),any(KeycloakUser.class)))
-                .thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
 
         StepVerifier.create(hasSignupService.updateHASLoginDetails(updateLoginRequestDetails,token))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&

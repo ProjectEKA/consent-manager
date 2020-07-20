@@ -11,12 +11,12 @@ import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
-import io.lettuce.core.RedisClient;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -61,10 +61,11 @@ public class UserConfiguration {
     }
 
     @Bean
-    public SignUpService authenticatorService(JWTProperties jwtProperties,
-                                              CacheAdapter<String, String> unverifiedSessions,
-                                              CacheAdapter<String, String> verifiedSessions,
-                                              UserServiceProperties userServiceProperties) {
+    public SignUpService authenticatorService(
+            JWTProperties jwtProperties,
+            @Qualifier("unverifiedSessions") CacheAdapter<String, String> unverifiedSessions,
+            @Qualifier("verifiedSessions") CacheAdapter<String, String> verifiedSessions,
+            UserServiceProperties userServiceProperties) {
         return new SignUpService(jwtProperties,
                 unverifiedSessions,
                 verifiedSessions,
@@ -96,30 +97,34 @@ public class UserConfiguration {
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"unverifiedSessions", "verifiedSessions", "blockListedTokens", "usedTokens"})
-    public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
-        return new RedisCacheAdapter(redisClient, 5);
+    public CacheAdapter<String, String> createRedisCacheAdapter(
+            ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
+        return new RedisCacheAdapter(stringReactiveRedisOperations, 5);
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"dayCache"})
-    public CacheAdapter<String, String> createDayRedisCacheAdapter(RedisClient redisClient) {
-        return new RedisCacheAdapter(redisClient, 24 * 60);
+    public CacheAdapter<String, String> createDayRedisCacheAdapter(
+            ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
+        return new RedisCacheAdapter(stringReactiveRedisOperations, 24 * 60);
     }
 
     @Bean
-    LockedUserService lockedUserService(LockedUsersRepository lockedUsersRepository, LockedServiceProperties lockedServiceProperties) {
+    LockedUserService lockedUserService(LockedUsersRepository lockedUsersRepository,
+                                        LockedServiceProperties lockedServiceProperties) {
         return new LockedUserService(lockedUsersRepository, lockedServiceProperties);
     }
 
     @Bean
-    public SessionService sessionService(TokenService tokenService,
-                                         CacheAdapter<String, String> blockListedTokens,
-                                         CacheAdapter<String, String> unverifiedSessions,
-                                         LockedUserService lockedUserService,
-                                         UserRepository userRepository,
-                                         OtpServiceClient otpServiceClient,
-                                         OtpServiceProperties otpServiceProperties,
-                                         OtpAttemptService otpAttemptService) {
+    public SessionService sessionService(
+            TokenService tokenService,
+            @Qualifier("blockListedTokens") CacheAdapter<String, String> blockListedTokens,
+            @Qualifier("unverifiedSessions") CacheAdapter<String, String> unverifiedSessions,
+            LockedUserService lockedUserService,
+            UserRepository userRepository,
+            OtpServiceClient otpServiceClient,
+            OtpServiceProperties otpServiceProperties,
+            OtpAttemptService otpAttemptService) {
         return new SessionService(tokenService,
                 blockListedTokens,
                 unverifiedSessions,
@@ -145,8 +150,12 @@ public class UserConfiguration {
                                                        BCryptPasswordEncoder encoder,
                                                        @Qualifier("keySigningPrivateKey") PrivateKey privateKey,
                                                        UserServiceProperties userServiceProperties,
-                                                       CacheAdapter<String, String> dayCache) {
-        return new TransactionPinService(transactionPinRepository, encoder, privateKey, userServiceProperties, dayCache);
+                                                       @Qualifier("dayCache") CacheAdapter<String, String> dayCache) {
+        return new TransactionPinService(transactionPinRepository,
+                encoder,
+                privateKey,
+                userServiceProperties,
+                dayCache);
     }
 
     @Bean

@@ -366,7 +366,7 @@ class ConsentArtefactUserJourneyTest {
         when(serviceAuthentication.authenticate()).thenReturn(Mono.empty());
         when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
         when(consentArtefactRepository.getConsentArtefact(fetchRequest.getConsentId()))
                 .thenReturn(Mono.just(consentArtefact));
         when(centralRegistry.providerWith(any())).thenReturn(Mono.just(Provider.builder().name("test-hip").build()));

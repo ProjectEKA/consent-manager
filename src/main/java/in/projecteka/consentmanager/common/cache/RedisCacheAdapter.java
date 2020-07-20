@@ -1,47 +1,24 @@
 package in.projecteka.consentmanager.common.cache;
 
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
+import lombok.AllArgsConstructor;
+import org.springframework.data.redis.core.ReactiveRedisOperations;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import static java.time.Duration.ofMinutes;
 
+@AllArgsConstructor
 public class RedisCacheAdapter implements CacheAdapter<String, String> {
-
-    private final RedisClient redisClient;
-    private StatefulRedisConnection<String, String> statefulConnection;
-    private int expirationInMinutes;
-
-    public RedisCacheAdapter(RedisClient redisClient, int expirationInMinutes) {
-        this.redisClient = redisClient;
-        this.expirationInMinutes = expirationInMinutes;
-    }
-
-    @PostConstruct
-    public void postConstruct() {
-        statefulConnection = redisClient.connect();
-    }
-
-    @PreDestroy
-    public void preDestroy() {
-        statefulConnection.close();
-        redisClient.shutdown();
-    }
+    private final ReactiveRedisOperations<String, String> stringOps;
+    private final int expirationInMinutes;
 
     @Override
     public Mono<String> get(String key) {
-        RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
-        return redisCommands.get(key);
+        return stringOps.opsForValue().get(key);
     }
 
     @Override
     public Mono<Void> put(String key, String value) {
-        RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
-        return redisCommands.set(key, value)
-                .then(redisCommands.expire(key, expirationInMinutes * 60L))
-                .then();
+        return stringOps.opsForValue().set(key, value, ofMinutes(expirationInMinutes)).then();
     }
 
     @Override
@@ -51,21 +28,16 @@ public class RedisCacheAdapter implements CacheAdapter<String, String> {
 
     @Override
     public Mono<Void> invalidate(String key) {
-        RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
-        return redisCommands.expire(key, 0L).then();
+        return stringOps.delete(key).then();
     }
 
     @Override
     public Mono<Boolean> exists(String key) {
-        RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
-        return redisCommands.exists(key).flatMap(existCount -> Mono.just(existCount > 0));
+        return stringOps.hasKey(key);
     }
 
     @Override
     public Mono<Long> increment(String key) {
-        RedisReactiveCommands<String, String> redisCommands = statefulConnection.reactive();
-        return redisCommands.incr(key)
-                .filter(count -> count != 1)
-                .switchIfEmpty(Mono.defer(() -> redisCommands.expire(key, expirationInMinutes * 60L).thenReturn(1L)));
+        return stringOps.opsForValue().increment(key);
     }
 }

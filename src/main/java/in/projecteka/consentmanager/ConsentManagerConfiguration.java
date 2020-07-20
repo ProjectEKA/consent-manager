@@ -21,7 +21,9 @@ import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
+import in.projecteka.consentmanager.common.cache.LoadingCacheGenericAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisLocalDateTimeAdapter;
 import in.projecteka.consentmanager.common.cache.RedisOptions;
 import in.projecteka.consentmanager.common.heartbeat.CacheMethodProperty;
 import in.projecteka.consentmanager.common.heartbeat.Heartbeat;
@@ -31,8 +33,6 @@ import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
 import in.projecteka.consentmanager.user.UserRepository;
 import in.projecteka.consentmanager.user.UserServiceProperties;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
@@ -45,6 +45,14 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.ReactiveRedisOperations;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.ServerCodecConfigurer;
@@ -63,6 +71,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.text.ParseException;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -71,6 +80,7 @@ import static in.projecteka.consentmanager.common.Constants.EXCHANGE;
 import static in.projecteka.consentmanager.common.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.common.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
 import static in.projecteka.consentmanager.common.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.DEFAULT_CACHE_VALUE;
 
 @Configuration
 public class ConsentManagerConfiguration {
@@ -78,10 +88,10 @@ public class ConsentManagerConfiguration {
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"accessToken"})
     public CacheAdapter<String, String> createLoadingCacheAdapterForAccessToken() {
-        return new LoadingCacheAdapter(createSessionCache(5));
+        return new LoadingCacheAdapter(stringStringLoadingCache(5));
     }
 
-    public LoadingCache<String, String> createSessionCache(int duration) {
+    public LoadingCache<String, String> stringStringLoadingCache(int duration) {
         return CacheBuilder
                 .newBuilder()
                 .expireAfterWrite(duration, TimeUnit.MINUTES)
@@ -92,33 +102,22 @@ public class ConsentManagerConfiguration {
                 });
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
-    @Bean
-    public RedisClient getRedisClient(RedisOptions redisOptions) {
-        RedisURI redisUri = RedisURI.Builder.
-                redis(redisOptions.getHost())
-                .withPort(redisOptions.getPort())
-                .withPassword(redisOptions.getPassword())
-                .build();
-        return RedisClient.create(redisUri);
+    public LoadingCache<String, LocalDateTime> stringLocalDateTimeLoadingCache(int duration) {
+        return CacheBuilder
+                .newBuilder()
+                .expireAfterWrite(duration, TimeUnit.MINUTES)
+                .build(new CacheLoader<>() {
+                    public LocalDateTime load(String key) {
+                        return DEFAULT_CACHE_VALUE;
+                    }
+                });
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"accessToken"})
-    public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
-        return new RedisCacheAdapter(redisClient, 5);
-    }
-
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    @Bean({"cacheForReplayAttack"})
-    public CacheAdapter<String, String> createLoadingCacheAdapterForReplayAttack() {
-        return new LoadingCacheAdapter(createSessionCache(10));
-    }
-
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
-    @Bean({"cacheForReplayAttack"})
-    public CacheAdapter<String, String> createRedisCacheAdapterForReplayAttack(RedisClient redisClient) {
-        return new RedisCacheAdapter(redisClient, 10);
+    public CacheAdapter<String, String> createRedisCacheAdapter(
+            ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
+        return new RedisCacheAdapter(stringReactiveRedisOperations, 5);
     }
 
     @Bean
@@ -242,7 +241,7 @@ public class ConsentManagerConfiguration {
 
     @Bean
     public RequestValidator requestValidator(
-            @Qualifier("cacheForReplayAttack") CacheAdapter<String, String> cacheForReplayAttack) {
+            @Qualifier("cacheForReplayAttack") CacheAdapter<String, LocalDateTime> cacheForReplayAttack) {
         return new RequestValidator(cacheForReplayAttack);
     }
 
@@ -300,5 +299,49 @@ public class ConsentManagerConfiguration {
     public OtpServiceClient otpServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                              OtpServiceProperties otpServiceProperties) {
         return new OtpServiceClient(builder, otpServiceProperties.getUrl());
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean
+    ReactiveRedisOperations<String, LocalDateTime> redisOperations(
+            @Qualifier("Lettuce") ReactiveRedisConnectionFactory factory) {
+        Jackson2JsonRedisSerializer<LocalDateTime> serializer = new Jackson2JsonRedisSerializer<>(LocalDateTime.class);
+        RedisSerializationContext.RedisSerializationContextBuilder<String, LocalDateTime> builder =
+                RedisSerializationContext.newSerializationContext(new StringRedisSerializer());
+        RedisSerializationContext<String, LocalDateTime> context = builder.value(serializer).build();
+        return new ReactiveRedisTemplate<>(factory, context);
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean
+    ReactiveRedisOperations<String, String> stringReactiveRedisOperations(
+            @Qualifier("Lettuce") ReactiveRedisConnectionFactory factory) {
+        Jackson2JsonRedisSerializer<String> serializer = new Jackson2JsonRedisSerializer<>(String.class);
+        RedisSerializationContext.RedisSerializationContextBuilder<String, String> builder =
+                RedisSerializationContext.newSerializationContext(new StringRedisSerializer());
+        RedisSerializationContext<String, String> context = builder.value(serializer).build();
+        return new ReactiveRedisTemplate<>(factory, context);
+    }
+
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @Bean({"cacheForReplayAttack"})
+    public CacheAdapter<String, LocalDateTime> stringLocalDateTimeCacheAdapter() {
+        return new LoadingCacheGenericAdapter<>(stringLocalDateTimeLoadingCache(10));
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"cacheForReplayAttack"})
+    public CacheAdapter<String, LocalDateTime> createRedisCacheAdapterForReplayAttack(
+            ReactiveRedisOperations<String, LocalDateTime> localDateTimeOps) {
+        return new RedisLocalDateTimeAdapter(localDateTimeOps, 10);
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean("Lettuce")
+    ReactiveRedisConnectionFactory reactiveRedisConnectionFactory(RedisOptions redisOptions) {
+        var configuration = new RedisStandaloneConfiguration(redisOptions.getHost(), redisOptions.getPort());
+        configuration.setPassword(redisOptions.getPassword());
+        return new LettuceConnectionFactory(configuration);
     }
 }

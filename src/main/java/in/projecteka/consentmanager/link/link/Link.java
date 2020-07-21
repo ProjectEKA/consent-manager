@@ -125,7 +125,7 @@ public class Link {
     public Mono<PatientLinkResponse> verifyLinkToken(String username, PatientLinkRequest patientLinkRequest) {
         UUID requestId = UUID.randomUUID();
         return linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())
-                .onErrorResume(error->Mono.error(ClientError.invalidLinkReference()))
+                .onErrorResume(error -> Mono.error(ClientError.invalidLinkReference()))
                 .flatMap(linkRepository::getHIPIdFromDiscovery)
                 .flatMap(hipId ->
                         confirmAndLinkPatient(patientLinkRequest,

@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.link.discovery;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
@@ -23,6 +22,7 @@ import reactor.test.StepVerifier;
 import java.util.Collections;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResponse;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.identifier;
@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
-public class DiscoveryTest {
+class DiscoveryTest {
 
     @Mock
     CentralRegistry centralRegistry;
@@ -56,15 +56,15 @@ public class DiscoveryTest {
     LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway", 1000);
 
     @Mock
-    CacheAdapter<String,String> discoveryResults;
+    CacheAdapter<String, String> discoveryResults;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         initMocks(this);
     }
 
     @Test
-    public void returnProvidersWithOfficial() {
+    void returnProvidersWithOfficial() {
         var discovery = new Discovery(
                 userServiceClient,
                 discoveryServiceClient,
@@ -91,7 +91,7 @@ public class DiscoveryTest {
 
 
     @Test
-    public void shouldGetRequestAlreadyPresentError() {
+    void shouldGetRequestAlreadyPresentError() {
         String providerId = "1";
         String userName = "1";
         var transactionId = UUID.randomUUID();
@@ -118,7 +118,7 @@ public class DiscoveryTest {
     }
 
     @Test
-    public void returnEmptyProvidersWhenOfficialIdentifierIsUnavailable() {
+    void returnEmptyProvidersWhenOfficialIdentifierIsUnavailable() {
         var discovery = new Discovery(
                 userServiceClient,
                 discoveryServiceClient,
@@ -142,7 +142,7 @@ public class DiscoveryTest {
     }
 
     @Test
-    public void patientForGivenHIPIdAndPatientId() throws JsonProcessingException {
+    void patientForGivenHIPIdAndPatientId() throws JsonProcessingException {
         var hipId = string();
         var transactionId = UUID.randomUUID();
         var requestId = UUID.randomUUID();
@@ -166,7 +166,7 @@ public class DiscoveryTest {
                 .transactionId(transactionId)
                 .resp(gatewayResponse)
                 .build();
-        String discoveryResultInCache = new ObjectMapper().writeValueAsString(discoveryResult);
+        String discoveryResultInCache = OBJECT_MAPPER.writeValueAsString(discoveryResult);
         when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.empty());
         when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
         when(discoveryServiceClient.requestPatientFor(any(), eq(hipId)))

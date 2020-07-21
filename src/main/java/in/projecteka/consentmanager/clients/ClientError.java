@@ -45,6 +45,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUEST;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_PIN_NOT_FOUND;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.GATEWAY_TIMEOUT;
@@ -261,7 +262,7 @@ public class ClientError extends Throwable {
 
     public static ClientError transactionPinNotFound() {
         return new ClientError(NOT_FOUND,
-                new ErrorRepresentation(new Error(TRANSACTION_PIN_IS_ALREADY_CREATED, "Transaction pin not found")));
+                new ErrorRepresentation(new Error(TRANSACTION_PIN_NOT_FOUND, "Transaction pin not found")));
     }
 
     private static ClientError internalServerError(String message) {

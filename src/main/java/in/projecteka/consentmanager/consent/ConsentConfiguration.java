@@ -12,13 +12,11 @@ import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
-import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.common.ListenerProperties;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
-import in.projecteka.consentmanager.user.UserServiceProperties;
 import io.vertx.pgclient.PgPool;
 import lombok.SneakyThrows;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -60,45 +58,54 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    public ConsentManager consentRequestService(
+    public PatientServiceClient patientServiceClient(
             @Qualifier("customBuilder") WebClient.Builder builder,
+            @Value("${consentmanager.authorization.header}") String authorizationHeader,
+            IdentityService identityService,
+            LinkServiceProperties linkServiceProperties) {
+        return new PatientServiceClient(builder.build(),
+                identityService::authenticate,
+                linkServiceProperties.getUrl(),
+                authorizationHeader);
+    }
+
+    @Bean
+    public ConsentManager consentManager(
+            UserServiceClient userServiceClient,
             ConsentRequestRepository repository,
-            UserServiceProperties userServiceProperties,
             ConsentArtefactRepository consentArtefactRepository,
             KeyPair keyPair,
             ConsentNotificationPublisher consentNotificationPublisher,
-            ServiceAuthentication serviceAuthentication,
             CentralRegistry centralRegistry,
             PostConsentRequest postConsentRequest,
-            LinkServiceProperties linkServiceProperties,
-            IdentityService identityService,
             ConceptValidator conceptValidator,
             GatewayServiceProperties gatewayServiceProperties,
-            @Value("${consentmanager.authorization.header}") String authorizationHeader) {
-        return new ConsentManager(
-                new UserServiceClient(builder.build(), userServiceProperties.getUrl(),
-                        identityService::authenticate,
-                        gatewayServiceProperties,
-                        serviceAuthentication,
-                        authorizationHeader),
+            PatientServiceClient patientServiceClient,
+            ConsentManagerClient consentManagerClient) {
+        return new ConsentManager(userServiceClient,
                 repository,
                 consentArtefactRepository,
                 keyPair,
                 consentNotificationPublisher,
                 centralRegistry,
                 postConsentRequest,
-                new PatientServiceClient(builder.build(),
-                        identityService::authenticate,
-                        linkServiceProperties.getUrl(),
-                        authorizationHeader),
+                patientServiceClient,
                 new CMProperties(gatewayServiceProperties.getClientId()),
                 conceptValidator,
                 new ConsentArtefactQueryGenerator(),
-                new ConsentManagerClient(builder,
-                        gatewayServiceProperties.getBaseUrl(),
-                        identityService::authenticate,
-                        gatewayServiceProperties,
-                        serviceAuthentication));
+                consentManagerClient);
+    }
+
+    @Bean
+    public ConsentManagerClient consentManagerClient(@Qualifier("customBuilder") WebClient.Builder builder,
+                                                     ServiceAuthentication serviceAuthentication,
+                                                     IdentityService identityService,
+                                                     GatewayServiceProperties gatewayServiceProperties) {
+        return new ConsentManagerClient(builder,
+                gatewayServiceProperties.getBaseUrl(),
+                identityService::authenticate,
+                gatewayServiceProperties,
+                serviceAuthentication);
     }
 
     @Bean
@@ -140,14 +147,12 @@ public class ConsentConfiguration {
     @Bean
     public HiuConsentNotificationListener hiuNotificationListener(
             MessageListenerContainerFactory messageListenerContainerFactory,
-            DestinationsConfig destinationsConfig,
             Jackson2JsonMessageConverter jackson2JsonMessageConverter,
             ConsentArtefactNotifier consentArtefactNotifier,
             AmqpTemplate amqpTemplate,
             ListenerProperties listenerProperties) {
         return new HiuConsentNotificationListener(
                 messageListenerContainerFactory,
-                destinationsConfig,
                 jackson2JsonMessageConverter,
                 consentArtefactNotifier,
                 amqpTemplate,
@@ -157,13 +162,11 @@ public class ConsentConfiguration {
     @Bean
     public HipConsentNotificationListener hipNotificationListener(
             MessageListenerContainerFactory messageListenerContainerFactory,
-            DestinationsConfig destinationsConfig,
             Jackson2JsonMessageConverter jackson2JsonMessageConverter,
             ConsentArtefactNotifier consentArtefactNotifier,
             ConsentArtefactRepository consentArtefactRepository) {
         return new HipConsentNotificationListener(
                 messageListenerContainerFactory,
-                destinationsConfig,
                 jackson2JsonMessageConverter,
                 consentArtefactNotifier,
                 consentArtefactRepository);
@@ -172,36 +175,21 @@ public class ConsentConfiguration {
     @Bean
     public ConsentRequestNotificationListener consentRequestNotificationListener(
             MessageListenerContainerFactory messageListenerContainerFactory,
-            DestinationsConfig destinationsConfig,
             Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-            @Qualifier("customBuilder") WebClient.Builder builder,
-            OtpServiceProperties otpServiceProperties,
-            UserServiceProperties userServiceProperties,
+            OtpServiceClient otpServiceClient,
             ConsentServiceProperties consentServiceProperties,
-            IdentityService identityService,
-            GatewayServiceProperties gatewayServiceProperties,
-            ServiceAuthentication serviceAuthentication,
             ConsentManager consentManager,
-            LinkServiceProperties linkServiceProperties,
             NHSProperties nhsProperties,
-            @Value("${consentmanager.authorization.header}") String authorizationHeader) {
+            UserServiceClient userServiceClient,
+            PatientServiceClient patientServiceClient) {
         return new ConsentRequestNotificationListener(
                 messageListenerContainerFactory,
-                destinationsConfig,
                 jackson2JsonMessageConverter,
-                new OtpServiceClient(builder, otpServiceProperties.getUrl()),
-                new UserServiceClient(builder.build(),
-                        userServiceProperties.getUrl(),
-                        identityService::authenticate,
-                        gatewayServiceProperties,
-                        serviceAuthentication,
-                        authorizationHeader),
+                otpServiceClient,
+                userServiceClient,
                 consentServiceProperties,
                 consentManager,
-                new PatientServiceClient(builder.build(),
-                        identityService::authenticate,
-                        linkServiceProperties.getUrl(),
-                        authorizationHeader),
+                patientServiceClient,
                 nhsProperties);
     }
 

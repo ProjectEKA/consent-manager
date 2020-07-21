@@ -43,7 +43,7 @@ class UserServiceClientTest {
     void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        var serviceProperties = new GatewayServiceProperties("http://example.com", 1000, false, "", "", "");
+        var serviceProperties = new GatewayServiceProperties("http://example.com", 1000, "", "", "");
         token = string();
         userServiceClient = new UserServiceClient(webClientBuilder.build(),
                 "http://user-service/",

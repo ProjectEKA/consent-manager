@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.CMReference;
@@ -234,6 +235,7 @@ public class ConsentManager {
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
         return validatePatient(patientId)
+                .then(validateDate(grantedConsents).collectList())
                 .then(validateHiTypes(in(grantedConsents)))
                 .then(validateConsentRequest(requestId, patientId))
                 .flatMap(consentRequest -> validateLinkedHips(patientId, grantedConsents)
@@ -245,6 +247,13 @@ public class ConsentManager {
                                                 consentRequest.getLastUpdated(),
                                                 consentRequest.getHiu())
                                                 .thenReturn(consentApprovalResponse(consents)))));
+    }
+
+    private Flux<GrantedConsent> validateDate(List<GrantedConsent> grantedConsents) {
+        return Flux.fromIterable(grantedConsents)
+                .filter(grantedConsent -> grantedConsent.getPermission().getDateRange().getToDate() != null &&
+                        grantedConsent.getPermission().getDateRange().getFromDate() != null)
+                .switchIfEmpty(Flux.error(ClientError.invalidDateRange()));
     }
 
     private Mono<ConsentArtefactRepresentation> updateHipName(

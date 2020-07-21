@@ -22,6 +22,7 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
@@ -83,6 +84,7 @@ class HiuConsentNotificationListenerTest {
                 .consentRequestId("CONSENT_ID")
                 .timestamp(LocalDateTime.now())
                 .hiuId("HIU_ID")
+                .consentArtefacts(List.of())
                 .build();
 
         when(destinationsConfig.getQueues().get(HIU_CONSENT_NOTIFICATION_QUEUE)).thenReturn(destinationInfo);
@@ -115,6 +117,7 @@ class HiuConsentNotificationListenerTest {
                 .consentRequestId("CONSENT_ID")
                 .timestamp(LocalDateTime.now())
                 .hiuId("HIU_ID")
+                .consentArtefacts(List.of())
                 .build();
 
         when(destinationsConfig.getQueues().get(HIU_CONSENT_NOTIFICATION_QUEUE)).thenReturn(destinationInfo);

@@ -3,6 +3,8 @@ package in.projecteka.consentmanager.clients;
 import in.projecteka.consentmanager.clients.model.HealthAccountServiceTokenResponse;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.OtpRequestResponse;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -11,6 +13,7 @@ import reactor.core.publisher.Mono;
 import java.util.HashMap;
 import java.util.Map;
 
+import static in.projecteka.consentmanager.user.Constants.GENERATE_AADHAR_OTP;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -19,6 +22,7 @@ public class HealthAccountServiceClient {
 
     private final String OTP_REQUEST_FOR_MOBILE_PATH = "/v1/ha/generate_mobile_otp";
     private final String OTP_VERIFY_FOR_MOBILE_PATH = "/v1/ha/verify_mobile_otp";
+    private final String OTP_REQUEST_FOR_AADHAR = "/v1/ha/generate_aadhar_otp";
 
     public HealthAccountServiceClient(WebClient.Builder webClient, String baseUrl) {
         this.webClient = webClient.baseUrl(baseUrl).build();
@@ -63,4 +67,15 @@ public class HealthAccountServiceClient {
         return mobileNumber;
     }
 
+    public Mono<GenerateAadharOtpResponse> generateAadharOtp(GenerateAadharOtpRequest request) {
+        return webClient
+                .post()
+                .uri(uriBuilder -> uriBuilder.path(OTP_REQUEST_FOR_AADHAR).build())
+                .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                .body(Mono.just(request), GenerateAadharOtpRequest.class)
+                .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(ClientError.invalidRequester("Invalid Request")))
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .bodyToMono(GenerateAadharOtpResponse.class);
+    }
 }

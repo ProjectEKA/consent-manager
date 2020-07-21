@@ -22,6 +22,8 @@ import in.projecteka.consentmanager.user.filters.ABPMJAYIdFilter;
 import in.projecteka.consentmanager.user.filters.NameFilter;
 import in.projecteka.consentmanager.user.filters.YOBFilter;
 import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
 import in.projecteka.consentmanager.user.model.InitiateCmIdRecoveryRequest;
 import in.projecteka.consentmanager.user.model.LoginMode;
 import in.projecteka.consentmanager.user.model.LoginModeResponse;
@@ -418,5 +420,16 @@ public class UserService {
                     return validateAndVerifyOtp(otpVerification, builder.build())
                             .then(signupService.generateToken(otpVerification.getSessionId()));
                 });
+    }
+
+    public Mono<GenerateAadharOtpResponse> generateAadharOtp(GenerateAadharOtpRequest request) {
+        return isValidAadhar(request.getAadhaar()) ?
+                healthAccountServiceClient.generateAadharOtp(request) :
+                Mono.error(ClientError.invalidRequester("Invalid aadhar number"));
+    }
+
+    private Boolean isValidAadhar(String aadhaar) {
+        String regex = "^\\d{12}$";
+        return aadhaar.matches(regex);
     }
 }

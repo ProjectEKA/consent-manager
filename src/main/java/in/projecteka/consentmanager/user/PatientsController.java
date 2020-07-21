@@ -8,6 +8,8 @@ import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.ChangePinRequest;
 import in.projecteka.consentmanager.user.model.CreatePinRequest;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
 import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
 import in.projecteka.consentmanager.user.model.Identifier;
@@ -277,5 +279,11 @@ public class PatientsController {
     @PostMapping(Constants.APP_PATH_PROFILE_RECOVERY_CONFIRM)
     public Mono<RecoverCmIdResponse> verifyOtpAndRecoverCmId(@RequestBody OtpVerification request) {
         return userService.verifyOtpForRecoverCmId(request);
+    }
+
+    @ResponseStatus(CREATED)
+    @PostMapping(Constants.GENERATE_AADHAR_OTP)
+    public Mono<GenerateAadharOtpResponse> generateAadharOtp(@RequestBody GenerateAadharOtpRequest request) {
+        return userService.generateAadharOtp(request);
     }
 }

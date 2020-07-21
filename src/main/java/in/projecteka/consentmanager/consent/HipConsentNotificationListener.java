@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
@@ -11,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
-import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import reactor.core.publisher.Mono;
 
@@ -20,7 +18,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
 
@@ -28,19 +26,13 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
 public class HipConsentNotificationListener {
     private static final Logger logger = LoggerFactory.getLogger(HipConsentNotificationListener.class);
     private final MessageListenerContainerFactory messageListenerContainerFactory;
-    private final DestinationsConfig destinationsConfig;
     private final Jackson2JsonMessageConverter converter;
     private final ConsentArtefactNotifier consentArtefactNotifier;
     private final ConsentArtefactRepository consentArtefactRepository;
 
     @PostConstruct
     public void subscribe() {
-        DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig
-                .getQueues()
-                .get(HIP_CONSENT_NOTIFICATION_QUEUE);
-
-        MessageListenerContainer mlc = messageListenerContainerFactory
-                .createMessageListenerContainer(destinationInfo.getRoutingKey());
+        var mlc = messageListenerContainerFactory.createMessageListenerContainer(HIP_CONSENT_NOTIFICATION_QUEUE);
 
         MessageListener messageListener = message -> {
             try {

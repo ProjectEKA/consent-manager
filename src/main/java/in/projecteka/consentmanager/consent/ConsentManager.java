@@ -135,10 +135,8 @@ public class ConsentManager {
                 .build());
     }
     private Mono<Void> saveConsentRequest(RequestedDetail requestedDetail, UUID requestId) {
-        ConsentRequestId request = ConsentRequestId.builder()
-                .id(requestId)
-                .build();
-        ConsentRequestResult consentRequestResult = ConsentRequestResult.builder()
+        var request = ConsentRequestId.builder().id(requestId).build();
+        var consentRequestResult = ConsentRequestResult.builder()
                 .requestId(UUID.randomUUID())
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .consentRequest(request)

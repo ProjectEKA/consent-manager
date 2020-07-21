@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.user;
 
+import com.nimbusds.jwt.JWTParser;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.exception.InvalidSessionException;
 import in.projecteka.consentmanager.user.model.SendOtpAction;
@@ -14,8 +15,10 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
+import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -55,7 +58,7 @@ public class SignUpService {
 
     public Mono<Boolean> validateToken(String token) {
         try {
-            var session = sessionFrom(token);
+            var session = getSessionId(token);
             return verifiedSessions.
                     getIfPresent(session)
                     .flatMap(s -> Mono.just(true))
@@ -64,6 +67,23 @@ public class SignUpService {
             logger.error(e.getMessage(), e);
             return Mono.just(false);
         }
+    }
+
+    public String getSessionId(String token) {
+        String healthAccountTxnId = getHealthAccountTxnId(token);
+        if (!StringUtils.isEmpty(healthAccountTxnId))
+            return healthAccountTxnId;
+        else
+            return sessionFrom(token);
+    }
+
+    private String getHealthAccountTxnId(String token) {
+        try {
+            return JWTParser.parse(token).getJWTClaimsSet().getStringClaim("txnId");
+        } catch (ParseException e) {
+            logger.error(e.getMessage(), e);
+        }
+        return null;
     }
 
     public Mono<Token> generateToken(String sessionId) {

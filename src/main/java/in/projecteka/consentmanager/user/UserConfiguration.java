@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.user;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import in.projecteka.consentmanager.clients.HASSignupServiceClient;
 import in.projecteka.consentmanager.clients.HealthAccountServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
@@ -170,6 +171,31 @@ public class UserConfiguration {
                 otpServiceClient,
                 otpServiceProperties,
                 otpAttemptService);
+    }
+
+    @Bean
+    public HASSignupServiceClient hasSignupServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
+                                                         HealthAccountServiceProperties healthAccountServiceProperties) {
+        return new HASSignupServiceClient(builder, healthAccountServiceProperties.getUrl());
+    }
+
+    @Bean
+    public HASSignupService hasSignupService(HASSignupServiceClient hasSignupServiceClient,
+                                             UserRepository userRepository,
+                                             SignUpService signUpService,
+                                             TokenService tokenService,
+                                             IdentityServiceClient identityServiceClient,
+                                             SessionService sessionService,
+                                             OtpServiceProperties otpServiceProperties
+    ) {
+        return new HASSignupService(hasSignupServiceClient,
+                userRepository,
+                signUpService,
+                tokenService,
+                identityServiceClient,
+                sessionService,
+                otpServiceProperties
+                );
     }
 
     @Bean

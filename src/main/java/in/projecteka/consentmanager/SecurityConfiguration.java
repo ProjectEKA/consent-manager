@@ -36,8 +36,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import static in.projecteka.consentmanager.clients.ClientError.unAuthorized;
-import static in.projecteka.consentmanager.common.Constants.PATH_HEARTBEAT;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
+import static in.projecteka.consentmanager.common.Constants.PATH_HEARTBEAT;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
@@ -51,6 +51,7 @@ import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
+import static in.projecteka.consentmanager.user.Constants.HAS_ACCOUNT_UPDATE;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -124,6 +125,7 @@ public class SecurityConfiguration {
                                                                    "/otpsession/permit",
                                                                    "/sessions",
                                                                    PATH_HEARTBEAT,
+                                                                   "/patients/profile/update-login-details",
                                                                    "/**.html",
                                                                    "/**.js",
                                                                    "/**.yaml",
@@ -135,6 +137,7 @@ public class SecurityConfiguration {
             ServerHttpSecurity httpSecurity,
             ReactiveAuthenticationManager authenticationManager,
             ServerSecurityContextRepository securityContextRepository) {
+
         httpSecurity.authorizeExchange().pathMatchers(ALLOWED_LIST_URLS).permitAll();
         httpSecurity.httpBasic().disable().formLogin().disable().csrf().disable().logout().disable();
         httpSecurity
@@ -220,6 +223,10 @@ public class SecurityConfiguration {
             }
             if (isSignUpRequest(requestPath, requestMethod)) {
                 return checkSignUp(token).switchIfEmpty(error(unAuthorized()));
+            }
+            if(isUpdateLoginDetailsRequest(requestPath,requestMethod)) {
+                // Token will be verified by HAS
+                return Mono.empty();
             }
             if (isPinVerificationRequest(requestPath, requestMethod)) {
                 Optional<String> validScope = getScope(requestPath, requestMethod);
@@ -308,6 +315,10 @@ public class SecurityConfiguration {
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
             return (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
                     (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod));
+        }
+
+        private boolean isUpdateLoginDetailsRequest(String url, HttpMethod httpMethod) {
+            return (("/patients/profile/update-login-details").equals(url) && HttpMethod.POST.equals(httpMethod));
         }
     }
 

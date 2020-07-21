@@ -19,7 +19,7 @@ consentmanager:
     transactionPinDigitSize: 4
     transactionPinTokenValidity: 2
     userCreationTokenValidity: 5
-    userIdSuffix: "@ncg"
+    userIdSuffix: "@pmjay"
     maxOtpAttempts: 2
     maxOtpAttemptsPeriodInMin: 1
     otpAttemptsBlockPeriodInMin: 1

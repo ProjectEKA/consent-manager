@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.user.model.IdentifierType;
 import in.projecteka.consentmanager.user.model.SignUpIdentifier;
+import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
@@ -23,13 +24,11 @@ class SignUpRequestValidatorTest {
     @Test
     void returnValidSignUpRequestWithAllFields() {
         var signUpRequest = signUpRequest()
-                .password("aB1 #afasas")
                 .name(patientName().first("Alan").build())
                 .dateOfBirth(dateOfBirth().date(1).month(11).year(1998).build())
-                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
 
         assertThat(requestValidation.isValid()).isTrue();
     }
@@ -37,13 +36,11 @@ class SignUpRequestValidatorTest {
     @Test
     void returnValidSignUpRequestWithOptionalDateOfBirth() {
         var signUpRequest = signUpRequest()
-                .password("aB1#afasas")
                 .name(patientName().first("Alan").build())
                 .dateOfBirth(dateOfBirth().year(null).build())
-                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
 
         assertThat(requestValidation.isValid()).isTrue();
     }
@@ -51,13 +48,11 @@ class SignUpRequestValidatorTest {
     @Test
     void returnInValidSignUpRequestWithFutureYearOfBirth() {
         var signUpRequest = signUpRequest()
-                .password("aB1#afasas")
                 .name(patientName().first("Alan").build())
                 .dateOfBirth(dateOfBirth().date(1).month(11).year(LocalDate.now().getYear() + 1).build())
-                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
 
         assertThat(requestValidation.isValid()).isFalse();
     }
@@ -65,13 +60,11 @@ class SignUpRequestValidatorTest {
     @Test
     void returnInValidSignUpRequestWithEmptyName() {
         var signUpRequest = signUpRequest()
-                .password("aB1#afasas")
                 .name(patientName().first("").build())
                 .dateOfBirth(dateOfBirth().date(1).month(11).year(1987).build())
-                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -81,14 +74,12 @@ class SignUpRequestValidatorTest {
     @Test
     void returnInValidSignUpRequestWithEmptyGender() {
         var signUpRequest = signUpRequest()
-                .password("aB1#afasas")
                 .name(patientName().first("Alan").build())
                 .dateOfBirth(dateOfBirth().date(1).month(11).year(1997).build())
-                .username("usernameWithAlphabetsAnd1@ncg")
                 .gender(null)
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -101,15 +92,11 @@ class SignUpRequestValidatorTest {
             "empty",
             "null"
     })
-    void returnInValidSignUpRequestWithEmptyUser(@ConvertWith(NullableConverter.class) String name) {
-        var signUpRequest = signUpRequest()
-                .password("aB1#afasas")
-                .name(patientName().first("Alan").build())
-                .dateOfBirth(dateOfBirth().date(1).month(11).year(1997).build())
-                .username(name)
-                .build();
+    void returnInValidLoginRequestWithEmptyUser(@ConvertWith(NullableConverter.class) String name) {
+        var updateLoginRequest = UpdateLoginDetailsRequest.builder()
+                .password("Test@1243").healthId("12345-12345-12345").cmId(name).build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+        var requestValidation = SignUpRequestValidator.validateLoginDetails(updateLoginRequest,"@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -122,29 +109,22 @@ class SignUpRequestValidatorTest {
             "username#2e2@ncg",
             "username<>afasfa<script>@ncg"
     })
-    void returnInValidSignUpRequestWithRandomValues(@ConvertWith(NullableConverter.class) String name) {
-        var signUpRequest = signUpRequest()
-                .password("aB1#afasas")
-                .name(patientName().first("Alan").build())
-                .dateOfBirth(dateOfBirth().date(1).month(11).year(1996).build())
-                .username(name)
-                .build();
+    void returnInValidLoginRequestWithRandomValues(@ConvertWith(NullableConverter.class) String name) {
+        var updateLoginRequest = UpdateLoginDetailsRequest.builder()
+                .password("Test@1243").healthId("12345-12345-12345").cmId(name).build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+        var requestValidation = SignUpRequestValidator.validateLoginDetails(updateLoginRequest,"@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
     }
 
     @Test
     void returnInValidSignUpRequestWithUserDoesNotEndWithProvider() {
-        var signUpRequest = signUpRequest()
-                .password("aB1#afasas")
-                .name(patientName().first("abc").build())
-                .dateOfBirth(dateOfBirth().year(1999).build())
-                .username("userDoesNotEndWith")
-                .build();
+        var updateLoginRequest = UpdateLoginDetailsRequest.builder()
+                .password("Test@1243").healthId("12345-12345-12345").cmId("hinapatel45").build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+
+        var requestValidation = SignUpRequestValidator.validateLoginDetails(updateLoginRequest,"@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -158,15 +138,11 @@ class SignUpRequestValidatorTest {
                     "reallyreallyreallyreallyreallyreallyreallyreallyreallyreallyreally" +
                     "reallyreallybiggerusernameWhichIsBiggerThanOneFiftyCharacters@ncg"
     })
-    void returnInValidSignUpRequestWithUserLesserThanMinimumLength(String username) {
-        var signUpRequest = signUpRequest()
-                .password("aB1#afasas")
-                .name(patientName().first("Alan").build())
-                .dateOfBirth(dateOfBirth().date(1).month(11).year(1997).build())
-                .username(username)
-                .build();
+    void returnInValidLoginRequestWithUserLesserThanMinimumLength(String username) {
+        var updateLoginRequest = UpdateLoginDetailsRequest.builder()
+                .password("Test@1243").healthId("12345-12345-12345").cmId(username).build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+        var requestValidation = SignUpRequestValidator.validateLoginDetails(updateLoginRequest,"@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -181,15 +157,11 @@ class SignUpRequestValidatorTest {
             "weakWithout1SpecialCharacters",
             "345aA#afaf"
     })
-    void returnInValidSignUpRequestWithWeak(String password) {
-        var signUpRequest = signUpRequest()
-                .password(password)
-                .name(patientName().first("Alan").build())
-                .dateOfBirth(dateOfBirth().date(1).month(11).year(1997).build())
-                .username("username@ncg")
-                .build();
+    void returnInValidLoginRequestWithWeakPassword(String password) {
+        var updateLoginRequest = UpdateLoginDetailsRequest.builder()
+                .password(password).healthId("12345-12345-12345").cmId("hinapatel3@ncg").build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+        var requestValidation = SignUpRequestValidator.validateLoginDetails(updateLoginRequest,"@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
     }
@@ -200,15 +172,11 @@ class SignUpRequestValidatorTest {
             "empty",
             "null"
     })
-    void returnInValidSignUpRequestWithEmptyPassword(@ConvertWith(NullableConverter.class) String password) {
-        var signUpRequest = signUpRequest()
-                .password(password)
-                .name(patientName().first("Alan").build())
-                .dateOfBirth(dateOfBirth().year(1997).build())
-                .username("username@ncg")
-                .build();
+    void returnInValidLoginRequestWithEmptyPassword(@ConvertWith(NullableConverter.class) String password) {
+        var updateLoginRequest = UpdateLoginDetailsRequest.builder()
+                .password(password).healthId("12345-12345-12345").cmId("hinapatel3@ncg").build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+        var requestValidation = SignUpRequestValidator.validateLoginDetails(updateLoginRequest,"@ncg");
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())
@@ -218,13 +186,11 @@ class SignUpRequestValidatorTest {
     @Test
     void returnInValidSignUpRequestWithYearOfBirthGreaterThan120() {
         var signUpRequest = signUpRequest()
-                .password("aB1 #afasas")
                 .name(patientName().first("Alan").build())
                 .dateOfBirth(dateOfBirth().date(1).month(11).year(LocalDate.now().getYear() - 121).build())
-                .username("usernameWithAlphabetsAnd1@ncg")
                 .build();
 
-        var requestValidation = SignUpRequestValidator.validate(signUpRequest, "@ncg");
+        var requestValidation = SignUpRequestValidator.validate(signUpRequest);
 
         assertThat(requestValidation.isValid()).isFalse();
         assertThat(requestValidation.getError())

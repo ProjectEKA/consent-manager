@@ -13,7 +13,7 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
@@ -36,6 +36,12 @@ import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.consentmanager.user.model.SignUpResponse;
+import in.projecteka.consentmanager.user.model.SignUpRequest;
+import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
+import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
+
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Test;
@@ -50,19 +56,20 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
+import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.patientName;
 import static in.projecteka.consentmanager.user.TestBuilders.dateOfBirth;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -96,6 +103,9 @@ public class PatientControllerTest {
     @MockBean
     private DataFlowBroadcastListener dataFlowBroadcastListener;
 
+    @MockBean
+    private HASSignupService hasSignupService;
+
     @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
@@ -122,20 +132,19 @@ public class PatientControllerTest {
     private ConceptValidator conceptValidator;
 
     @Test
-    public void createUser() {
-        var signUpRequest = coreSignUpRequest()
-                .username("username@ncg")
-                .name(patientName().first("abc").build())
-                .password("@2Abaafasfas")
-                .dateOfBirth(dateOfBirth().year(1998).build())
+    public void createUser() throws ParseException {
+        var signUpRequest = signUpRequest()
+                .name(patientName().first("Alan").build())
+                .dateOfBirth(dateOfBirth().date(1).month(11).year(1998).build())
                 .build();
         var token = string();
-        var sessionId = string();
-        when(signupService.sessionFrom(token)).thenReturn(sessionId);
-        when(userService.create(any(CoreSignUpRequest.class), eq(sessionId))).thenReturn(Mono.empty());
-        when(userService.getUserIdSuffix()).thenReturn("@ncg");
+        var txnId = string();
+        var signUpResponse = SignUpResponse.builder().healthId("12345-12345-12345").token(token).build();
+
+        when(signupService.getSessionId(anyString())).thenReturn(txnId);
         when(signupService.validateToken(token)).thenReturn(Mono.just(true));
-        when(signupService.removeOf(sessionId)).thenReturn(Mono.empty());
+        when(hasSignupService.createHASAccount(any(SignUpRequest.class),anyString()))
+                .thenReturn(Mono.just(signUpResponse));
 
         webClient.post()
                 .uri("/patients/profile")
@@ -146,26 +155,65 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void returnBadRequestForUserCreation() {
-        var signUpRequest = coreSignUpRequest()
-                .name(patientName().first("abc").build())
-                .dateOfBirth(dateOfBirth().date(LocalDate.now().getDayOfMonth() + 1).build())
-                .build();
+    public void returnBadRequestForUserCreation() throws ParseException {
+        var signUpRequest = signUpRequest()
+                .name(patientName().first("Alan").build())
+                .dateOfBirth(dateOfBirth().date(LocalDate.now().getDayOfMonth() + 1).build()).build();
         var token = string();
-        var sessionId = string();
-        when(signupService.sessionFrom(token)).thenReturn(sessionId);
-        when(userService.create(signUpRequest, sessionId)).thenReturn(Mono.empty());
-        when(userService.getUserIdSuffix()).thenReturn("@ncg");
+        var txnId = string();
+        var signUpResponse = SignUpResponse.builder().healthId("12345-12345-12345").token(token).build();
+
+        when(signupService.getSessionId(anyString())).thenReturn(txnId);
         when(signupService.validateToken(token)).thenReturn(Mono.just(true));
+        when(hasSignupService.createHASAccount(any(SignUpRequest.class),anyString()))
+                .thenReturn(Mono.just(signUpResponse));
 
         webClient.post()
                 .uri("/patients/profile")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .body(BodyInserters.fromValue(signUpRequest))
-                .exchange()
-                .expectStatus()
-                .is4xxClientError();
+                .exchange().expectStatus().is4xxClientError();
+    }
+
+    @Test
+    public void shouldUpdateAccountDetails() {
+        var updateLoginRequest = UpdateLoginDetailsRequest.builder().healthId("12345-12345-12345")
+                .cmId("hinapatel56@ncg")
+                .password("Test@1243").build();
+        var token = string();
+        var updateLoginResponse = UpdateLoginDetailsResponse.builder().token(string()).build();
+
+        when(hasSignupService.updateHASLoginDetails(any(UpdateLoginDetailsRequest.class),anyString()))
+                .thenReturn(Mono.just(updateLoginResponse));
+        when(userService.getUserIdSuffix()).thenReturn("@ncg");
+
+        webClient.post()
+                .uri("/patients/profile/update-login-details")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .body(BodyInserters.fromValue(updateLoginRequest))
+                .exchange().expectStatus().isOk();
+    }
+
+    @Test
+    public void returnBadRequestWhenPasswordCriteriaNotMatching() {
+        var updateLoginRequest = UpdateLoginDetailsRequest.builder().healthId("12345-12345-12345")
+                .cmId("hinapatel56@ncg")
+                .password("Test@1234").build();
+        var token = string();
+        var updateLoginResponse = UpdateLoginDetailsResponse.builder().token(string()).build();
+
+        when(hasSignupService.updateHASLoginDetails(any(UpdateLoginDetailsRequest.class),anyString()))
+                .thenReturn(Mono.just(updateLoginResponse));
+        when(userService.getUserIdSuffix()).thenReturn("@ncg");
+
+        webClient.post()
+                .uri("/patients/profile/update-login-details")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .body(BodyInserters.fromValue(updateLoginRequest))
+                .exchange().expectStatus().is4xxClientError();
     }
 
     @Test

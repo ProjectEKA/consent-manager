@@ -5,15 +5,12 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
-import java.util.List;
-
 @Builder
 @Getter
 @AllArgsConstructor
 @EqualsAndHashCode
-public class SignUpRequest {
-    private final PatientName name;
-    private final Gender gender;
-    private final DateOfBirth dateOfBirth;
+public class UpdateHASUserRequest {
+    String healthId;
+    String password;
+    String token;
 }
-

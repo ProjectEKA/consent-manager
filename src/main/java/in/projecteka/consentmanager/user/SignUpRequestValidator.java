@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.user.model.IdentifierType;
 import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.consentmanager.user.model.SignUpIdentifier;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
+import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
 import io.vavr.collection.CharSeq;
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
@@ -40,24 +41,30 @@ public class SignUpRequestValidator {
     private static final String VALID_NAME_CHARS = "[a-zA-Z ]";
     private static final List<IdentifierType> UniqueIdentifiers = List.of(IdentifierType.ABPMJAYID);
 
-    public static Validation<Seq<String>, CoreSignUpRequest> validate(SignUpRequest signUpRequest,
-                                                                      String userIdSuffix) {
+    public static Validation<Seq<String>, CoreSignUpRequest> validate(SignUpRequest signUpRequest) {
         return Validation.combine(
                 validateName(signUpRequest.getName()),
                 validate(signUpRequest.getGender()),
-                validateUserName(signUpRequest.getUsername(), userIdSuffix),
-                validatePassword(signUpRequest.getPassword()),
-                validateDateOfBirth(signUpRequest.getDateOfBirth()),
-                validateUnVerifiedIdentifiers(signUpRequest.getUnverifiedIdentifiers()))
-                .ap((name, gender, username, password, dateOfBirth, unverifiedIdentifiers) ->
+                validateDateOfBirth(signUpRequest.getDateOfBirth()))
+                .ap((name, gender, dateOfBirth) ->
                          CoreSignUpRequest.builder()
                                     .name(name)
                                     .gender(gender)
-                                    .username(username)
-                                    .password(password)
                                     .dateOfBirth(dateOfBirth)
-                                    .unverifiedIdentifiers(unverifiedIdentifiers)
                                     .build()
+                );
+    }
+
+    public static Validation<Seq<String>, UpdateLoginDetailsRequest> validateLoginDetails(UpdateLoginDetailsRequest updateLoginDetailsRequest, String cmSuffix) {
+        return Validation.combine(
+                validateUserName(updateLoginDetailsRequest.getCmId(), cmSuffix),
+                validatePassword(updateLoginDetailsRequest.getPassword()))
+                .ap((cmId, password) ->
+                        UpdateLoginDetailsRequest.builder()
+                                .cmId(cmId)
+                                .password(password)
+                                .healthId(updateLoginDetailsRequest.getHealthId())
+                                .build()
                 );
     }
 

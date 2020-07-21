@@ -13,11 +13,15 @@ import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
+import in.projecteka.consentmanager.user.model.HealthAccountUser;
+import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import lombok.AllArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
 import static java.lang.String.format;
@@ -30,16 +34,32 @@ public class HASSignupService {
     private final TokenService tokenService;
     private final IdentityServiceClient identityServiceClient;
     private final SessionService sessionService;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final OtpServiceProperties otpServiceProperties;
 
-    public Mono<SignUpResponse> createHASAccount(SignUpRequest signUpRequest, String token, String txnId) {
-        var signupRequest = createHASSignupRequest(signUpRequest, token, txnId);
-        return hasSignupServiceClient.createHASAccount(signupRequest)
-                .flatMap(user -> signUpService.getMobileNumber(txnId)
-                        .flatMap(mobileNumber -> userRepository.save(user, mobileNumber))
-                        .then(signUpService.removeOf(txnId))
-                        .thenReturn(SignUpResponse.builder().healthId(user.getHealthId()).token(user.getToken()).build())
-                );
+    public Mono<SignUpResponse> createHASAccount(SignUpRequest signUpRequest, String token) {
+        String sessionId = signUpService.getSessionId(token);
+        return signUpService.getMobileNumber(sessionId)
+                .flatMap(mobileNumber -> {
+                    HASSignupRequest signupRequest = createHASSignupRequest(signUpRequest, token, sessionId);
+                    return createAccount(signupRequest, mobileNumber)
+                            .flatMap(user -> userRepository.save(user, mobileNumber)
+                                    .then(signUpService.removeOf(sessionId))
+                                    .thenReturn(SignUpResponse.builder().healthId(user.getHealthId())
+                                            .token(user.getToken()).build()));
+                });
+    }
+
+    private Mono<HealthAccountUser> createAccount(HASSignupRequest signupRequest, String mobileNumber) {
+        if (!isNumberFromAllowedList(mobileNumber)) {
+            return hasSignupServiceClient.createHASAccount(signupRequest);
+        }
+        return Mono.just(HealthAccountUser.builder().firstName("Demo").lastName("Patient")
+                .healthId(UUID.randomUUID().toString())
+                .gender("F")
+                .dayOfBirth(5)
+                .monthOfBirth(11)
+                .yearOfBirth(1999)
+                .token(UUID.randomUUID().toString()).build());
     }
 
     private HASSignupRequest createHASSignupRequest(SignUpRequest signUpRequest, String token, String txnId) {
@@ -61,7 +81,12 @@ public class HASSignupService {
         var updateHASLoginDetails = createUpdateHASUserRequest(request, token);
         return userRepository.userWith(request.getCmId())
                 .flatMap(patient -> Mono.error(userAlreadyExists(patient.getIdentifier())))
-                .switchIfEmpty(Mono.defer(() -> hasSignupServiceClient.updateHASAccount(updateHASLoginDetails)))
+                .switchIfEmpty(Mono.defer(() -> {
+                    if (isHealthAccountToken(token)) {
+                        return hasSignupServiceClient.updateHASAccount(updateHASLoginDetails);
+                    }
+                    return Mono.empty();
+                }))
                 .then(Mono.defer(() -> userRepository.updateCMId(request.getHealthId(), request.getCmId())))
                 .then(Mono.defer(() -> userRepository.getNameByHealthId(request.getHealthId())))
                 .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.userNotFound())))
@@ -86,15 +111,25 @@ public class HASSignupService {
                 });
     }
 
+    private boolean isHealthAccountToken(String token) {
+        try {
+            UUID.fromString(token);
+            return false;
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
     private UpdateHASUserRequest createUpdateHASUserRequest(UpdateLoginDetailsRequest request, String token) {
         return UpdateHASUserRequest.builder()
                 .healthId(request.getHealthId())
-                .password(encryptPassword(request.getPassword()))
+                .password(request.getPassword())
                 .token(token)
                 .build();
     }
 
-    private String encryptPassword(String password) {
-        return passwordEncoder.encode(password);
+    private boolean isNumberFromAllowedList(String mobileNumber) {
+        return otpServiceProperties.allowListNumbers().stream().anyMatch(number ->
+                number.equals(mobileNumber));
     }
 }

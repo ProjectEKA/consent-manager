@@ -63,7 +63,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static in.projecteka.consentmanager.user.TestBuilders.signUpRequest;
-import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.patientName;
 import static in.projecteka.consentmanager.user.TestBuilders.dateOfBirth;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
@@ -142,9 +141,9 @@ public class PatientControllerTest {
         var txnId = string();
         var signUpResponse = SignUpResponse.builder().healthId("12345-12345-12345").token(token).build();
 
-        when(signupService.txnIdFrom(anyString())).thenReturn(txnId);
+        when(signupService.getSessionId(anyString())).thenReturn(txnId);
         when(signupService.validateToken(token)).thenReturn(Mono.just(true));
-        when(hasSignupService.createHASAccount(any(SignUpRequest.class),anyString(),anyString()))
+        when(hasSignupService.createHASAccount(any(SignUpRequest.class),anyString()))
                 .thenReturn(Mono.just(signUpResponse));
 
         webClient.post()
@@ -164,9 +163,9 @@ public class PatientControllerTest {
         var txnId = string();
         var signUpResponse = SignUpResponse.builder().healthId("12345-12345-12345").token(token).build();
 
-        when(signupService.txnIdFrom(anyString())).thenReturn(txnId);
+        when(signupService.getSessionId(anyString())).thenReturn(txnId);
         when(signupService.validateToken(token)).thenReturn(Mono.just(true));
-        when(hasSignupService.createHASAccount(any(SignUpRequest.class),anyString(),anyString()))
+        when(hasSignupService.createHASAccount(any(SignUpRequest.class),anyString()))
                 .thenReturn(Mono.just(signUpResponse));
 
         webClient.post()

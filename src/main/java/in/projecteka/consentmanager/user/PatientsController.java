@@ -108,8 +108,7 @@ public class PatientsController {
                                        @RequestHeader(name = "Authorization") String token) throws ParseException {
         var signUpRequests = SignUpRequestValidator.validate(request);
         return signUpRequests.isValid()
-                ? Mono.justOrEmpty(signupService.txnIdFrom(token))
-                .flatMap(txnId -> hasSignupService.createHASAccount(request, token, txnId))
+                ? hasSignupService.createHASAccount(request, token)
                 : Mono.error(new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_REQUESTER,
                         signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));

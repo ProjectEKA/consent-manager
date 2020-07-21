@@ -15,6 +15,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
 import java.text.ParseException;
@@ -57,19 +58,32 @@ public class SignUpService {
 
     public Mono<Boolean> validateToken(String token) {
         try {
-            var session = txnIdFrom(token);
+            var session = getSessionId(token);
             return verifiedSessions.
                     getIfPresent(session)
                     .flatMap(s -> Mono.just(true))
                     .switchIfEmpty(Mono.just(false));
-        } catch (ExpiredJwtException | MalformedJwtException | SignatureException | IllegalArgumentException | ParseException e) {
+        } catch (ExpiredJwtException | MalformedJwtException | SignatureException | IllegalArgumentException e) {
             logger.error(e.getMessage(), e);
             return Mono.just(false);
         }
     }
 
-    public String txnIdFrom(String token) throws ParseException {
-        return JWTParser.parse(token).getJWTClaimsSet().getClaim("txnId").toString();
+    public String getSessionId(String token) {
+        String healthAccountTxnId = getHealthAccountTxnId(token);
+        if (!StringUtils.isEmpty(healthAccountTxnId))
+            return healthAccountTxnId;
+        else
+            return sessionFrom(token);
+    }
+
+    private String getHealthAccountTxnId(String token) {
+        try {
+            return JWTParser.parse(token).getJWTClaimsSet().getStringClaim("txnId");
+        } catch (ParseException e) {
+            logger.error(e.getMessage(), e);
+        }
+        return null;
     }
 
     public Mono<Token> generateToken(String sessionId) {

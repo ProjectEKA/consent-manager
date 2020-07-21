@@ -675,6 +675,7 @@ class UserServiceTest {
         var user = new EasyRandom().nextObject(User.class);
         var sessionIdWithAction = SendOtpAction.RECOVER_CM_ID.toString() + sessionId;
         ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
+        ArgumentCaptor<ConsentManagerIdNotification> consentManagerArgumentCaptor = ArgumentCaptor.forClass(ConsentManagerIdNotification.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
         when(signupService.generateToken(new HashMap<>(), sessionId))
@@ -683,6 +684,7 @@ class UserServiceTest {
         when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));
         when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
         when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
+        when(otpServiceClient.send(consentManagerArgumentCaptor.capture())).thenReturn(Mono.empty());
         StepVerifier.create(userService.verifyOtpForRecoverCmId(otpVerification))
                 .assertNext(response -> assertThat(response.getCmId()).isEqualTo(user.getIdentifier()))
                 .verifyComplete();

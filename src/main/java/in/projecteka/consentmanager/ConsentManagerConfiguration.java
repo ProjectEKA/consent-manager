@@ -67,13 +67,13 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import static in.projecteka.consentmanager.common.Constants.CONSENT_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.EXCHANGE;
 import static in.projecteka.consentmanager.common.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.common.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
 import static in.projecteka.consentmanager.common.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
 
 @Configuration
 public class ConsentManagerConfiguration {
-    public static final String EXCHANGE = "exchange";
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"accessToken"})

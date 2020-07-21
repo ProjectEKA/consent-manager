@@ -323,9 +323,10 @@ class DataFlowRequesterUserJourneyTest {
     @Test
     void shouldSendDataRequestToHip() {
         DataRequest dataRequest = dataRequest().build();
+        String hipId = string();
         when(dataFlowRequestRepository.getHipIdFor(dataRequest.getHiRequest().getConsent().getId()))
-                .thenReturn(Mono.just("10000005"));
-        when(dataRequestNotifier.notifyHip(dataRequest, "10000005")).thenReturn(Mono.empty());
+                .thenReturn(Mono.just(hipId));
+        when(dataRequestNotifier.notifyHip(dataRequest, hipId)).thenReturn(Mono.empty());
 
         dataFlowBroadcastListener.configureAndSendDataRequestFor(dataRequest);
 

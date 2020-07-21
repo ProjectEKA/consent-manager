@@ -14,6 +14,7 @@ public class Constants {
     public static final String HIU_CONSENT_NOTIFICATION_QUEUE = "hiu-consent-notification-queue";
     public static final String HIP_DATA_FLOW_REQUEST_QUEUE = "hip-data-flow-request-queue";
     public static final String PARKING_EXCHANGE = "parking.exchange";
+    public static final String EXCHANGE = "exchange";
 
     //Headers
     public static final String HDR_HIP_ID = "X-HIP-ID";
@@ -28,5 +29,6 @@ public class Constants {
     public static final String PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH = "%s/links/link/confirm";
     public static final String PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH = "%s/links/link/init";
 
-    private Constants() {}
+    private Constants() {
+    }
 }

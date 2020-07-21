@@ -1,8 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
@@ -12,7 +10,6 @@ import in.projecteka.consentmanager.consent.model.CommunicationType;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.Content;
 import in.projecteka.consentmanager.consent.model.GrantedContext;
-import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIType;
 import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
@@ -22,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
-import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import reactor.core.publisher.Mono;
 
@@ -32,13 +28,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static in.projecteka.consentmanager.ConsentManagerConfiguration.CONSENT_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.CONSENT_REQUEST_QUEUE;
 
 @AllArgsConstructor
 public class ConsentRequestNotificationListener {
     private static final Logger logger = LoggerFactory.getLogger(ConsentRequestNotificationListener.class);
     private final MessageListenerContainerFactory messageListenerContainerFactory;
-    private final DestinationsConfig destinationsConfig;
     private final Jackson2JsonMessageConverter converter;
     private final OtpServiceClient consentNotificationClient;
     private final UserServiceClient userServiceClient;
@@ -48,14 +43,8 @@ public class ConsentRequestNotificationListener {
     private final NHSProperties nhsProperties;
 
     @PostConstruct
-    public void subscribe() throws ClientError {
-        DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig
-                .getQueues()
-                .get(CONSENT_REQUEST_QUEUE);
-
-        MessageListenerContainer mlc = messageListenerContainerFactory
-                .createMessageListenerContainer(destinationInfo.getRoutingKey());
-
+    public void subscribe() {
+        var mlc = messageListenerContainerFactory.createMessageListenerContainer(CONSENT_REQUEST_QUEUE);
         MessageListener messageListener = message -> {
             try {
                 ConsentRequest consentRequest = (ConsentRequest) converter.fromMessage(message);
@@ -77,11 +66,9 @@ public class ConsentRequestNotificationListener {
         try {
             if (isAutoApproveConsentRequest(consentRequest)) {
                 autoApproveFor(consentRequest).subscribe();
-            } else {
-                createNotificationMessage(consentRequest)
-                        .flatMap(this::notifyUserWith)
-                        .block();
+                return;
             }
+            createNotificationMessage(consentRequest).flatMap(this::notifyUserWith).block();
         } catch (Exception exception) {
             logger.error(exception.getMessage());
         }

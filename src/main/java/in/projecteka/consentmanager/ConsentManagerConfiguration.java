@@ -7,10 +7,13 @@ import com.google.common.cache.LoadingCache;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
+import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.ServiceAuthenticationClient;
+import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
+import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
@@ -27,12 +30,14 @@ import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
 import in.projecteka.consentmanager.user.UserRepository;
+import in.projecteka.consentmanager.user.UserServiceProperties;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
@@ -61,14 +66,14 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import static in.projecteka.consentmanager.common.Constants.CONSENT_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.EXCHANGE;
+import static in.projecteka.consentmanager.common.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
+
 @Configuration
 public class ConsentManagerConfiguration {
-    public static final String HIU_CONSENT_NOTIFICATION_QUEUE = "hiu-consent-notification-queue";
-    public static final String HIP_CONSENT_NOTIFICATION_QUEUE = "hip-consent-notification-queue";
-    public static final String HIP_DATA_FLOW_REQUEST_QUEUE = "hip-data-flow-request-queue";
-    public static final String CONSENT_REQUEST_QUEUE = "consent-request-queue";
-    public static final String PARKING_EXCHANGE = "parking.exchange";
-    public static final String EXCHANGE = "exchange";
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"accessToken"})
@@ -231,13 +236,13 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public GatewayTokenVerifier centralRegistryTokenVerifier(
-            @Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
+    public GatewayTokenVerifier centralRegistryTokenVerifier(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
         return new GatewayTokenVerifier(jwkSet);
     }
 
     @Bean
-    public RequestValidator requestValidator(@Qualifier("cacheForReplayAttack") CacheAdapter<String, String> cacheForReplayAttack) {
+    public RequestValidator requestValidator(
+            @Qualifier("cacheForReplayAttack") CacheAdapter<String, String> cacheForReplayAttack) {
         return new RequestValidator(cacheForReplayAttack);
     }
 
@@ -273,5 +278,27 @@ public class ConsentManagerConfiguration {
                     configurer.defaultCodecs().jackson2JsonEncoder(encoder);
                     configurer.defaultCodecs().jackson2JsonDecoder(decoder);
                 }).build();
+    }
+
+    @Bean
+    public UserServiceClient userServiceClient(
+            @Qualifier("customBuilder") WebClient.Builder builder,
+            UserServiceProperties userServiceProperties,
+            IdentityService identityService,
+            GatewayServiceProperties gatewayServiceProperties,
+            ServiceAuthentication serviceAuthentication,
+            @Value("${consentmanager.authorization.header}") String authorizationHeader) {
+        return new UserServiceClient(builder.build(),
+                userServiceProperties.getUrl(),
+                identityService::authenticate,
+                gatewayServiceProperties,
+                serviceAuthentication,
+                authorizationHeader);
+    }
+
+    @Bean
+    public OtpServiceClient otpServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
+                                             OtpServiceProperties otpServiceProperties) {
+        return new OtpServiceClient(builder, otpServiceProperties.getUrl());
     }
 }

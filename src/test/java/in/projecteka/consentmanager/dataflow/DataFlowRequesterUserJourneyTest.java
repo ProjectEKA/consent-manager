@@ -24,6 +24,7 @@ import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import in.projecteka.consentmanager.dataflow.model.DateRange;
 import in.projecteka.consentmanager.dataflow.model.HIUReference;
+import in.projecteka.consentmanager.dataflow.model.hip.DataRequest;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
@@ -54,9 +55,8 @@ import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
-import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequestMessage;
+import static in.projecteka.consentmanager.dataflow.TestBuilders.dataRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
-import static in.projecteka.consentmanager.dataflow.TestBuilders.provider;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.string;
 import static in.projecteka.consentmanager.dataflow.Utils.toDate;
 import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
@@ -214,7 +214,6 @@ class DataFlowRequesterUserJourneyTest {
                         .setHeader("Content-Type", "application/json")
                         .setBody(consentArtefactRepresentationJson));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
-
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
@@ -242,7 +241,6 @@ class DataFlowRequesterUserJourneyTest {
                         .from(toDate("2020-01-14T08:47:48"))
                         .to(toDate("2020-01-20T08:47:48")).build())
                 .build();
-
         var consentArtefactRepresentation = consentArtefactRepresentation().build();
         consentArtefactRepresentation.getConsentDetail().getPermission().
                 setDateRange(AccessPeriod.builder()
@@ -304,7 +302,6 @@ class DataFlowRequesterUserJourneyTest {
                         .setBody(consentArtefactRepresentationJson));
         var user = "{\"preferred_username\": \"service-account-10000005\"}";
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());
@@ -325,21 +322,15 @@ class DataFlowRequesterUserJourneyTest {
 
     @Test
     void shouldSendDataRequestToHip() {
-        var dataFlowRequestMessage = dataFlowRequestMessage().build();
-        var provider = provider().build();
-        var dataFlowRequest = new in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest(
-                dataFlowRequestMessage.getTransactionId(),
-                dataFlowRequestMessage.getDataFlowRequest().getConsent(),
-                dataFlowRequestMessage.getDataFlowRequest().getDateRange(),
-                dataFlowRequestMessage.getDataFlowRequest().getDataPushUrl(),
-                dataFlowRequestMessage.getDataFlowRequest().getKeyMaterial());
-        when(dataFlowRequestRepository.getHipIdFor(dataFlowRequestMessage.getDataFlowRequest().getConsent().getId()))
-                .thenReturn(Mono.just("10000005"));
-        when(centralRegistry.providerWith("10000005")).thenReturn(Mono.just(provider));
+        DataRequest dataRequest = dataRequest().build();
+        String hipId = string();
+        when(dataFlowRequestRepository.getHipIdFor(dataRequest.getHiRequest().getConsent().getId()))
+                .thenReturn(Mono.just(hipId));
+        when(dataRequestNotifier.notifyHip(dataRequest, hipId)).thenReturn(Mono.empty());
 
-        dataFlowBroadcastListener.configureAndSendDataRequestFor(dataFlowRequest);
+        dataFlowBroadcastListener.configureAndSendDataRequestFor(dataRequest);
 
-        verify(dataFlowBroadcastListener).configureAndSendDataRequestFor(dataFlowRequest);
+        verify(dataFlowBroadcastListener).configureAndSendDataRequestFor(dataRequest);
     }
 
     @Test

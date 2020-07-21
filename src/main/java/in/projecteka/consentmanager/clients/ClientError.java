@@ -45,6 +45,8 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_ALREADY_
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUEST;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_LINK_REFERENCE;
+
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.GATEWAY_TIMEOUT;
@@ -132,6 +134,11 @@ public class ClientError extends Throwable {
     public static ClientError transactionIdNotFound() {
         return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(TRANSACTION_ID_NOT_FOUND, "Failed to get transaction Id")));
+    }
+
+    public static ClientError invalidLinkReference() {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(INVALID_LINK_REFERENCE, "Invalid link reference")));
     }
 
     public static ClientError consentArtefactNotFound() {

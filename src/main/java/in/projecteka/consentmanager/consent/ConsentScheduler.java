@@ -7,12 +7,14 @@ import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPReference;
+import in.projecteka.consentmanager.consent.model.HIUReference;
 import lombok.AllArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
@@ -42,7 +44,7 @@ public class ConsentScheduler {
     }
 
     private boolean isConsentExpired(LocalDateTime dateExpiryAt) {
-        return dateExpiryAt.isBefore(LocalDateTime.now());
+        return dateExpiryAt.isBefore(LocalDateTime.now(ZoneOffset.UTC));
     }
 
     private Mono<ConsentRepresentation> getConsentRepresentation(String consentId, String requesterId) {
@@ -75,7 +77,8 @@ public class ConsentScheduler {
                 consentRepresentation.getDateModified(),
                 consentId,
                 consentRepresentation.getConsentDetail().getHip(),
-                consentRepresentation.getConsentDetail().getCreatedAt()).block();
+                consentRepresentation.getConsentDetail().getCreatedAt(),
+                consentRepresentation.getConsentDetail().getHiu()).block();
 
     }
 
@@ -83,7 +86,8 @@ public class ConsentScheduler {
                                                  LocalDateTime lastUpdated,
                                                  String consentId,
                                                  HIPReference hip,
-                                                 LocalDateTime createdAt) {
+                                                 LocalDateTime createdAt,
+                                                 HIUReference hiuReference) {
         HIPConsentArtefactRepresentation hipConsentArtefactRepresentation = HIPConsentArtefactRepresentation
                 .builder()
                 .status(EXPIRED)
@@ -102,6 +106,7 @@ public class ConsentScheduler {
                 .timestamp(lastUpdated)
                 .consentRequestId(requestId)
                 .consentArtefacts(List.of(hipConsentArtefactRepresentation))
+                .hiuId(hiuReference.getId())
                 .build();
         return consentNotificationPublisher.publish(message);
     }

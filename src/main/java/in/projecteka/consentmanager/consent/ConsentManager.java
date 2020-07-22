@@ -233,7 +233,7 @@ public class ConsentManager {
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
         return validatePatient(patientId)
-                .then(validateDate(grantedConsents))
+                .then(Mono.defer(() -> validateDate(grantedConsents)))
                 .then(validateHiTypes(in(grantedConsents)))
                 .then(validateConsentRequest(requestId, patientId))
                 .flatMap(consentRequest -> validateLinkedHips(patientId, grantedConsents)
@@ -249,19 +249,17 @@ public class ConsentManager {
 
     private Mono<Void> validateDate(List<GrantedConsent> grantedConsents){
         Optional<GrantedConsent> falseValidation = grantedConsents.stream()
-                .filter(grantedConsent -> dateCheckerForNullAndFuture(grantedConsent) == false).findAny();
+                .filter(grantedConsent -> isdateValidatedForNullAndFuture(grantedConsent) == false).findAny();
         if(falseValidation.isPresent())
             return Mono.error(ClientError.invalidDateRange());
         else
             return Mono.empty();
     }
 
-    private Boolean dateCheckerForNullAndFuture(GrantedConsent grantedConsent){
-        if (grantedConsent.getPermission().getDateRange().getFromDate() != null &&
+    private Boolean isdateValidatedForNullAndFuture(GrantedConsent grantedConsent){
+        return grantedConsent.getPermission().getDateRange().getFromDate() != null &&
                 grantedConsent.getPermission().getDateRange().getFromDate().isBefore(LocalDateTime.now()) &&
-                grantedConsent.getPermission().getDateRange().getToDate() != null)
-                return true;
-        return false;
+                grantedConsent.getPermission().getDateRange().getToDate() != null;
     }
 
     private Mono<ConsentArtefactRepresentation> updateHipName(

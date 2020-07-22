@@ -7,7 +7,6 @@ import in.projecteka.consentmanager.user.model.HealthAccountUser;
 import in.projecteka.consentmanager.user.model.UpdateHASAddressRequest;
 import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import in.projecteka.consentmanager.user.model.VerifyAadharOtpRequest;
-import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -24,6 +23,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class HASSignupServiceClient {
 
     private final WebClient webClient;
+    private static final String X_TOKEN_HEADER_NAME = "X-Token";
     private final String OTP_REQUEST_FOR_AADHAR = "/v1/ha/generate_aadhar_otp";
     private final String VERIFY_OTP_FOR_AADHAR  = "/v1/ha/verify_aadhar_otp";
 
@@ -44,10 +44,11 @@ public class HASSignupServiceClient {
                 .bodyToMono(HealthAccountUser.class);
     }
 
-    public Mono<Void> updateHASAccount(UpdateHASUserRequest request) {
+    public Mono<Void> updateHASAccount(UpdateHASUserRequest request, String token) {
         return webClient
                 .post()
                 .uri(uriBuilder -> uriBuilder.path(HAS_ACCOUNT_UPDATE).build())
+                .header(X_TOKEN_HEADER_NAME, token)
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .body(Mono.just(request), UpdateHASUserRequest.class)
                 .accept(APPLICATION_JSON)

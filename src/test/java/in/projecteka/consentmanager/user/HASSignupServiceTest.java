@@ -42,6 +42,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 class HASSignupServiceTest {
@@ -312,7 +313,7 @@ class HASSignupServiceTest {
         var session = session().build();
 
         when(userRepository.userWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
-        when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class))).thenReturn(Mono.empty());
+        when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class), eq(token))).thenReturn(Mono.empty());
         when(userRepository.updateCMId(anyString(), anyString()))
                 .thenReturn(Mono.empty());
         when(userRepository.getPatientByHealthId(updateLoginRequestDetails.getHealthId()))
@@ -350,7 +351,7 @@ class HASSignupServiceTest {
         StepVerifier.create(hasSignupService.updateHASLoginDetails(updateLoginRequestDetails, token))
                 .assertNext(res -> assertThat(res).isEqualTo(loginResponse))
                 .verifyComplete();
-        verify(hasSignupServiceClient, never()).updateHASAccount(any(UpdateHASUserRequest.class));
+        verify(hasSignupServiceClient,never()).updateHASAccount(any(UpdateHASUserRequest.class), eq(token));
     }
 
     @Test
@@ -380,7 +381,7 @@ class HASSignupServiceTest {
         var token = string();
 
         when(userRepository.userWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
-        when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class)))
+        when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class), eq(token)))
                 .thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
 
         StepVerifier.create(hasSignupService.updateHASLoginDetails(updateLoginRequestDetails, token))
@@ -398,7 +399,7 @@ class HASSignupServiceTest {
         var token = string();
 
         when(userRepository.userWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
-        when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class))).thenReturn(Mono.empty());
+        when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class), eq(token))).thenReturn(Mono.empty());
         when(userRepository.updateCMId(anyString(), anyString()))
                 .thenReturn(Mono.empty());
         when(userRepository.getPatientByHealthId(updateLoginRequestDetails.getHealthId()))
@@ -422,7 +423,7 @@ class HASSignupServiceTest {
 
 
         when(userRepository.userWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
-        when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class))).thenReturn(Mono.empty());
+        when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class), eq(token))).thenReturn(Mono.empty());
         when(userRepository.updateCMId(anyString(), anyString()))
                 .thenReturn(Mono.empty());
         when(userRepository.getPatientByHealthId(updateLoginRequestDetails.getHealthId()))

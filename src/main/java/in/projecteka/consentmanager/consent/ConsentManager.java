@@ -58,6 +58,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -232,7 +233,7 @@ public class ConsentManager {
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
         return validatePatient(patientId)
-                .then(validateDate(grantedConsents).collectList())
+                .then(validateDate(grantedConsents))
                 .then(validateHiTypes(in(grantedConsents)))
                 .then(validateConsentRequest(requestId, patientId))
                 .flatMap(consentRequest -> validateLinkedHips(patientId, grantedConsents)
@@ -246,12 +247,21 @@ public class ConsentManager {
                                                 .thenReturn(consentApprovalResponse(consents)))));
     }
 
-    private Flux<GrantedConsent> validateDate(List<GrantedConsent> grantedConsents) {
-        return Flux.fromIterable(grantedConsents)
-                .filter(grantedConsent -> grantedConsent.getPermission().getDateRange().getToDate() != null &&
-                        grantedConsent.getPermission().getDateRange().getFromDate().isBefore(LocalDateTime.now()) &&
-                        grantedConsent.getPermission().getDateRange().getFromDate() != null)
-                .switchIfEmpty(Flux.error(ClientError.invalidDateRange()));
+    private Mono<Void> validateDate(List<GrantedConsent> grantedConsents){
+        Optional<GrantedConsent> falseValidation = grantedConsents.stream()
+                .filter(grantedConsent -> dateCheckerForNullAndFuture(grantedConsent) == false).findAny();
+        if(falseValidation.isPresent())
+            return Mono.error(ClientError.invalidDateRange());
+        else
+            return Mono.empty();
+    }
+
+    private Boolean dateCheckerForNullAndFuture(GrantedConsent grantedConsent){
+        if (grantedConsent.getPermission().getDateRange().getFromDate() != null &&
+                grantedConsent.getPermission().getDateRange().getFromDate().isBefore(LocalDateTime.now()) &&
+                grantedConsent.getPermission().getDateRange().getToDate() != null)
+                return true;
+        return false;
     }
 
     private Mono<ConsentArtefactRepresentation> updateHipName(

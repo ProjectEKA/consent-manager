@@ -9,4 +9,5 @@ import lombok.Getter;
 @Getter
 public class GenerateAadharOtpResponse {
     private final String txnId;
+    private final String token;
 }

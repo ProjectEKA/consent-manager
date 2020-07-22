@@ -49,11 +49,7 @@ import reactor.util.function.Tuples;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static in.projecteka.consentmanager.clients.ClientError.failedToFetchUserCredentials;
 import static in.projecteka.consentmanager.clients.ClientError.from;
@@ -79,6 +75,12 @@ public class UserService {
     private final OtpAttemptService otpAttemptService;
     private final LockedUserService lockedUserService;
     private final UserServiceClient userServiceClient;
+    List<String> whiteListedAadhar = new ArrayList<>();
+
+    {
+        whiteListedAadhar.add("111111111111");
+        whiteListedAadhar.add("222222222222");
+    }
 
     public Mono<User> userWith(String userName) {
         return userRepository.userWith(userName.toLowerCase()).switchIfEmpty(Mono.error(userNotFound()));
@@ -87,7 +89,8 @@ public class UserService {
     public Mono<Void> user(String userName, RequesterDetail requester, UUID requestId) {
         return Mono.defer(() -> {
             findUser(userName, requester.getType().getRoutingKey(), requester.getId(), requestId);
-            return Mono.empty();
+            return
+                    Mono.empty();
         });
     }
 
@@ -422,9 +425,13 @@ public class UserService {
                 });
     }
 
-    public Mono<GenerateAadharOtpResponse> generateAadharOtp(GenerateAadharOtpRequest request) {
+    public Mono<GenerateAadharOtpResponse> generateAadharOtp(GenerateAadharOtpRequest request, String token) {
+        var sessionId = signupService.getSessionId(token);
         return isValidAadhar(request.getAadhaar()) ?
-                healthAccountServiceClient.generateAadharOtp(request) :
+                signupService.getMobileNumber(sessionId)
+                        .filter(this::isNumberFromAllowedList)
+                        .flatMap(bool -> Mono.just(GenerateAadharOtpResponse.builder().txnId(UUID.randomUUID().toString()).token(token).build()))
+                        .switchIfEmpty(healthAccountServiceClient.generateAadharOtp(request)) :
                 Mono.error(ClientError.invalidRequester("Invalid aadhar number"));
     }
 

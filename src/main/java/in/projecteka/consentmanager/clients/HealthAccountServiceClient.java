@@ -68,11 +68,13 @@ public class HealthAccountServiceClient {
     }
 
     public Mono<GenerateAadharOtpResponse> generateAadharOtp(GenerateAadharOtpRequest request) {
+        HashMap<String, String> requestBody = new HashMap<>();
+        requestBody.put("aadhaar", request.getAadhaar());
         return webClient
                 .post()
                 .uri(uriBuilder -> uriBuilder.path(OTP_REQUEST_FOR_AADHAR).build())
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
-                .body(Mono.just(request), GenerateAadharOtpRequest.class)
+                .body(Mono.just(requestBody), Map.class)
                 .retrieve()
                 .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(ClientError.invalidRequester("Invalid Request")))
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))

@@ -283,7 +283,8 @@ public class PatientsController {
 
     @ResponseStatus(CREATED)
     @PostMapping(Constants.GENERATE_AADHAR_OTP)
-    public Mono<GenerateAadharOtpResponse> generateAadharOtp(@RequestBody GenerateAadharOtpRequest request) {
-        return userService.generateAadharOtp(request);
+    public Mono<GenerateAadharOtpResponse> generateAadharOtp(@RequestBody GenerateAadharOtpRequest request,
+                                                             @RequestHeader(name = "Authorization") String token) {
+        return userService.generateAadharOtp(request,token);
     }
 }

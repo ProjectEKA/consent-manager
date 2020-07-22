@@ -6,7 +6,6 @@ import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.DataFlowRequestClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
-import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import io.vertx.pgclient.PgPool;
@@ -27,20 +26,15 @@ public class DataFlowConfiguration {
     }
 
     @Bean
-    public DataFlowBroadcastListener dataFlowBroadcastListener(MessageListenerContainerFactory messageListenerContainerFactory,
-                                                               DestinationsConfig destinationsConfig,
-                                                               Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-                                                               DataRequestNotifier dataRequestNotifier,
-                                                               DataFlowRequestRepository dataFlowRequestRepository,
-                                                               CentralRegistry centralRegistry,
-                                                               GatewayServiceProperties gatewayServiceProperties) {
+    public DataFlowBroadcastListener dataFlowBroadcastListener(
+            MessageListenerContainerFactory messageListenerContainerFactory,
+            Jackson2JsonMessageConverter jackson2JsonMessageConverter,
+            DataRequestNotifier dataRequestNotifier,
+            DataFlowRequestRepository dataFlowRequestRepository) {
         return new DataFlowBroadcastListener(messageListenerContainerFactory,
-                destinationsConfig,
                 jackson2JsonMessageConverter,
                 dataRequestNotifier,
-                dataFlowRequestRepository,
-                centralRegistry,
-                gatewayServiceProperties);
+                dataFlowRequestRepository);
     }
 
     @Bean

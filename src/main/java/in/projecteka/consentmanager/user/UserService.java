@@ -235,7 +235,8 @@ public class UserService {
                             .action(OtpAttempt.Action.OTP_SUBMIT_RECOVER_CM_ID)
                             .cmId(user.getIdentifier());
                     return validateAndVerifyOtp(otpVerification, builder.build())
-                            .then(Mono.just(createNotificationMessage(user, otpVerification.getSessionId()).flatMap(this::notifyUserWith)))
+                            .then(createNotificationMessage(user, otpVerification.getSessionId())
+                                    .flatMap(this::notifyUserWith))
                             .then(Mono.just(RecoverCmIdResponse.builder().cmId(user.getIdentifier()).build()));
                 });
     }

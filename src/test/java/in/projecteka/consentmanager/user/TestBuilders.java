@@ -76,4 +76,16 @@ public class TestBuilders {
     public static DateOfBirth.DateOfBirthBuilder dateOfBirth(){
         return easyRandom.nextObject(DateOfBirth.DateOfBirthBuilder.class);
     }
+
+    public static HASSignupRequest.HASSignupRequestBuilder hasSignupRequest(){
+        return easyRandom.nextObject(HASSignupRequest.HASSignupRequestBuilder.class);
+    }
+
+    public static HealthAccountUser.HealthAccountUserBuilder healthAccountUser(){
+        return easyRandom.nextObject(HealthAccountUser.HealthAccountUserBuilder.class);
+    }
+
+    public static UpdateHASUserRequest.UpdateHASUserRequestBuilder updateHASUserRequestBuilder(){
+        return easyRandom.nextObject(UpdateHASUserRequest.UpdateHASUserRequestBuilder.class);
+    }
 }

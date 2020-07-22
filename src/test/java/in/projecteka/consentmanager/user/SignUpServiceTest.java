@@ -2,7 +2,9 @@ package in.projecteka.consentmanager.user;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import in.projecteka.consentmanager.clients.model.OtpAction;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
+import in.projecteka.consentmanager.clients.model.OtpCreationDetail;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
@@ -51,7 +53,12 @@ class SignUpServiceTest {
         String value = easyRandom.nextObject(String.class);
         OtpCommunicationData communicationData = new OtpCommunicationData("MOBILE", value);
         var sessionId = easyRandom.nextObject(String.class);
-        OtpRequest otpRequest = new OtpRequest(sessionId, communicationData);
+        OtpRequest otpRequest = new OtpRequest(sessionId,
+                communicationData,
+                OtpCreationDetail
+                        .builder()
+                        .systemName("PHR App")
+                        .action(OtpAction.REGISTRATION.toString()).build());
         SignUpSession expectedResponse = new SignUpSession(sessionId);
         when(unverifiedSessions.put(sessionId, otpRequest.getCommunication().getValue())).thenReturn(Mono.empty());
 

@@ -2,13 +2,10 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
-import in.projecteka.consentmanager.clients.model.Meta;
-import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
-import in.projecteka.consentmanager.clients.model.OtpRequest;
-import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.clients.model.*;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidPasswordException;
 import in.projecteka.consentmanager.user.exception.InvalidRefreshTokenException;
 import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
@@ -49,12 +46,14 @@ public class SessionService {
     private final OtpServiceProperties otpServiceProperties;
     private final OtpAttemptService otpAttemptService;
 
+    private final ConsentServiceProperties consentServiceProperties;
+
     public Mono<Session> forNew(SessionRequest request) {
         return credentialsNotEmpty(request)
                 .switchIfEmpty(Mono.defer(() -> lockedUserService.validateLogin(request.getUsername())
                         .then(request.getGrantType() == GrantType.PASSWORD
-                              ? tokenService.tokenForUser(request.getUsername(), request.getPassword())
-                              : tokenService.tokenForRefreshToken(request.getUsername(), request.getRefreshToken()))))
+                                ? tokenService.tokenForUser(request.getUsername(), request.getPassword())
+                                : tokenService.tokenForRefreshToken(request.getUsername(), request.getRefreshToken()))))
                 .flatMap(session -> lockedUserService.removeLockedUser(request.getUsername()).thenReturn(session))
                 .onErrorResume(error ->
                 {
@@ -91,7 +90,7 @@ public class SessionService {
         return userRepository.userWith(otpVerificationRequest.getUsername())
                 .switchIfEmpty(error(ClientError.userNotFound()))
                 .map(user -> new OtpCommunicationData("mobile", user.getPhone()))
-                .map(otpCommunicationData -> new OtpRequest(sessionId, otpCommunicationData))
+                .map(otpCommunicationData -> new OtpRequest(sessionId, otpCommunicationData, OtpCreationDetail.builder().action(OtpAction.REGISTRATION.toString()).systemName(consentServiceProperties.getName()).build()))
                 .flatMap(requestBody ->
                         otpAttemptService.validateOTPRequest(requestBody.getCommunication().getMode(), requestBody.getCommunication().getValue(), OtpAttempt.Action.OTP_REQUEST_LOGIN, otpVerificationRequest.getUsername())
                                 .then(otpServiceClient.send(requestBody)

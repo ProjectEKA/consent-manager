@@ -17,6 +17,7 @@ public class ConsentServiceProperties {
     private final int consentRequestExpiry;
     private final String purposeOfUseDefUrl;
     private final String hiTypesDefUrl;
+    private final String name;
 
     public int getMaxPageSize() {
         return maxPageSize > 0 ? maxPageSize : DEFAULT_MAX_PAGE_SIZE;

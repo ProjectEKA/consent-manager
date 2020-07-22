@@ -4,12 +4,9 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
-import in.projecteka.consentmanager.clients.model.KeycloakUser;
-import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
-import in.projecteka.consentmanager.clients.model.OtpRequest;
-import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.clients.model.*;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.consent.model.Action;
 import in.projecteka.consentmanager.consent.model.Communication;
 import in.projecteka.consentmanager.consent.model.CommunicationType;
@@ -73,6 +70,8 @@ public class UserService {
     private final LockedUserService lockedUserService;
     private final UserServiceClient userServiceClient;
 
+    private final ConsentServiceProperties consentServiceProperties;
+
     public Mono<User> userWith(String userName) {
         return userRepository.userWith(userName.toLowerCase()).switchIfEmpty(Mono.error(userNotFound()));
     }
@@ -117,7 +116,7 @@ public class UserService {
     }
 
     public Mono<SignUpSession> sendOtp(UserSignUpEnquiry userSignupEnquiry) {
-        return getOtpRequest(userSignupEnquiry)
+        return getOtpRequest(userSignupEnquiry, OtpAttempt.Action.OTP_REQUEST_REGISTRATION)
                 .map(otpRequest -> otpAttemptService
                         .validateOTPRequest(userSignupEnquiry.getIdentifierType(),
                                 userSignupEnquiry.getIdentifier(),
@@ -128,14 +127,27 @@ public class UserService {
                 .orElse(Mono.error(new InvalidRequestException("invalid.identifier.type")));
     }
 
-    private Optional<OtpRequest> getOtpRequest(UserSignUpEnquiry userSignupEnquiry) {
+    private Optional<OtpRequest> getOtpRequest(UserSignUpEnquiry userSignupEnquiry, OtpAttempt.Action otpAttmptAction) {
         String identifierType = userSignupEnquiry.getIdentifierType().toUpperCase();
         if (!otpServiceProperties.getIdentifiers().contains(identifierType)) {
             return Optional.empty();
         }
         var communication = new OtpCommunicationData(userSignupEnquiry.getIdentifierType(),
                 userSignupEnquiry.getIdentifier());
-        var otpRequest = new OtpRequest(UUID.randomUUID().toString(), communication);
+
+        var otpRequest = new OtpRequest(UUID.randomUUID().toString(), communication,
+                otpAttmptAction == otpAttmptAction.OTP_REQUEST_REGISTRATION ? OtpCreationDetail
+                        .builder()
+                        .action(OtpAction.REGISTRATION.toString())
+                        .systemName(consentServiceProperties.getName())
+                        .build() :
+                        OtpCreationDetail
+                                .builder()
+                                .action(OtpAction.FORGOT_CM_ID.toString())
+                                .systemName(consentServiceProperties.getName())
+                                .build()
+
+        );
         return Optional.of(otpRequest);
     }
 
@@ -143,7 +155,7 @@ public class UserService {
                                           String userName,
                                           OtpAttempt.Action otpAttemptAction,
                                           SendOtpAction sendOtpAction) {
-        return getOtpRequest(userSignupEnquiry)
+        return getOtpRequest(userSignupEnquiry, otpAttemptAction)
                 .map(otpRequest -> otpAttemptService
                         .validateOTPRequest(userSignupEnquiry.getIdentifierType().toUpperCase(),
                                 userSignupEnquiry.getIdentifier(),

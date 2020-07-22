@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.DbOperationError;
+import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
@@ -117,6 +118,9 @@ class UserServiceTest {
     @Mock
     private UserServiceClient userServiceClient;
 
+    @Mock
+    private ConsentServiceProperties consentServiceProperties;
+
     @Captor
     private ArgumentCaptor<PatientResponse> patientResponse;
 
@@ -136,7 +140,8 @@ class UserServiceTest {
                 properties,
                 otpAttemptService,
                 lockedUserService,
-                userServiceClient);
+                userServiceClient,
+                consentServiceProperties);
     }
 
     @Test
@@ -279,11 +284,11 @@ class UserServiceTest {
     @Test
     public void shouldCreateUser() {
         var signUpRequest = coreSignUpRequest()
-                            .dateOfBirth(DateOfBirth.builder()
-                                    .month(LocalDate.now().getMonthValue())
-                                    .year(LocalDate.now().getYear())
-                                    .build())
-                            .build();
+                .dateOfBirth(DateOfBirth.builder()
+                        .month(LocalDate.now().getMonthValue())
+                        .year(LocalDate.now().getYear())
+                        .build())
+                .build();
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
@@ -299,11 +304,11 @@ class UserServiceTest {
     @Test
     public void shouldReturnUserAlreadyExistsError() {
         var signUpRequest = coreSignUpRequest()
-                                .dateOfBirth(DateOfBirth.builder()
-                                        .month(LocalDate.now().getMonthValue())
-                                        .year(LocalDate.MIN.getYear())
-                                        .build())
-                            .build();
+                .dateOfBirth(DateOfBirth.builder()
+                        .month(LocalDate.now().getMonthValue())
+                        .year(LocalDate.MIN.getYear())
+                        .build())
+                .build();
         var sessionId = string();
         var user = user().identifier(signUpRequest.getUsername()).build();
         when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(string()));
@@ -321,14 +326,14 @@ class UserServiceTest {
     @Test
     public void shouldCreateUserWhenYOBIsNull() {
         var signUpRequest = coreSignUpRequest()
-                            .name(
-                                PatientName.builder()
-                                        .first("apoorva")
-                                        .middle("g")
-                                        .last("a")
-                                        .build())
-                            .dateOfBirth(null)
-                            .build();
+                .name(
+                        PatientName.builder()
+                                .first("apoorva")
+                                .middle("g")
+                                .last("a")
+                                .build())
+                .dateOfBirth(null)
+                .build();
         var sessionId = string();
         var mobileNumber = string();
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
@@ -344,11 +349,11 @@ class UserServiceTest {
     @Test
     public void shouldNotCreateUserWhenIDPClientFails() {
         var signUpRequest = coreSignUpRequest()
-                                .dateOfBirth(DateOfBirth.builder()
-                                        .month(LocalDate.now().getMonthValue())
-                                        .year(LocalDate.MIN.getYear())
-                                        .build())
-                            .build();
+                .dateOfBirth(DateOfBirth.builder()
+                        .month(LocalDate.now().getMonthValue())
+                        .year(LocalDate.MIN.getYear())
+                        .build())
+                .build();
         var mobileNumber = string();
         var user = User.from(signUpRequest, mobileNumber);
         var identifier = user.getIdentifier();
@@ -372,11 +377,11 @@ class UserServiceTest {
     @Test
     void shouldNotCreateUserWhenPersistingToDbFails() {
         var signUpRequest = coreSignUpRequest()
-                                .dateOfBirth(DateOfBirth.builder()
-                                        .month(LocalDate.now().getMonthValue())
-                                        .year(LocalDate.MIN.getYear())
-                                        .build())
-                            .build();
+                .dateOfBirth(DateOfBirth.builder()
+                        .month(LocalDate.now().getMonthValue())
+                        .year(LocalDate.MIN.getYear())
+                        .build())
+                .build();
         var mobileNumber = string();
         var user = User.from(signUpRequest, mobileNumber);
         var identifier = user.getIdentifier();
@@ -389,7 +394,7 @@ class UserServiceTest {
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.delete(identifier)).thenReturn(Mono.empty());
-      
+
         var publisher = userService.create(signUpRequest, sessionId);
 
         StepVerifier.create(publisher)

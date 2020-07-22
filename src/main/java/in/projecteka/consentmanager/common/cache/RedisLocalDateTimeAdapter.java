@@ -30,7 +30,7 @@ public class RedisLocalDateTimeAdapter implements CacheAdapter<String, LocalDate
 
     @Override
     public Mono<Void> invalidate(String key) {
-        return localDateTimeOps.delete(key).then();
+        return localDateTimeOps.expire(key, ofMinutes(0)).then();
     }
 
     @Override

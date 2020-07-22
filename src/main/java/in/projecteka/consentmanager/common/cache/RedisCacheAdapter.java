@@ -28,7 +28,7 @@ public class RedisCacheAdapter implements CacheAdapter<String, String> {
 
     @Override
     public Mono<Void> invalidate(String key) {
-        return stringOps.delete(key).then();
+        return stringOps.expire(key, ofMinutes(0)).then();
     }
 
     @Override

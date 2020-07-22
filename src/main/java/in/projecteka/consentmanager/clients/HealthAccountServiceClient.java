@@ -13,7 +13,6 @@ import reactor.core.publisher.Mono;
 import java.util.HashMap;
 import java.util.Map;
 
-import static in.projecteka.consentmanager.user.Constants.GENERATE_AADHAR_OTP;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -22,7 +21,6 @@ public class HealthAccountServiceClient {
 
     private final String OTP_REQUEST_FOR_MOBILE_PATH = "/v1/ha/generate_mobile_otp";
     private final String OTP_VERIFY_FOR_MOBILE_PATH = "/v1/ha/verify_mobile_otp";
-    private final String OTP_REQUEST_FOR_AADHAR = "/v1/ha/generate_aadhar_otp";
 
     public HealthAccountServiceClient(WebClient.Builder webClient, String baseUrl) {
         this.webClient = webClient.baseUrl(baseUrl).build();
@@ -67,17 +65,5 @@ public class HealthAccountServiceClient {
         return mobileNumber;
     }
 
-    public Mono<GenerateAadharOtpResponse> generateAadharOtp(GenerateAadharOtpRequest request) {
-        HashMap<String, String> requestBody = new HashMap<>();
-        requestBody.put("aadhaar", request.getAadhaar());
-        return webClient
-                .post()
-                .uri(uriBuilder -> uriBuilder.path(OTP_REQUEST_FOR_AADHAR).build())
-                .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
-                .body(Mono.just(requestBody), Map.class)
-                .retrieve()
-                .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(ClientError.invalidRequester("Invalid Request")))
-                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
-                .bodyToMono(GenerateAadharOtpResponse.class);
-    }
+
 }

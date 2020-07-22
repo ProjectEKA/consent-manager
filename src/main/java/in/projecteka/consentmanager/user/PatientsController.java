@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
 import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
+import in.projecteka.consentmanager.user.model.HealthAccountUser;
 import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierGroup;
 import in.projecteka.consentmanager.user.model.IdentifierType;
@@ -32,6 +33,7 @@ import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.ValidatePinRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
+import in.projecteka.consentmanager.user.model.VerifyAadharOtpRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -285,6 +287,13 @@ public class PatientsController {
     @PostMapping(Constants.GENERATE_AADHAR_OTP)
     public Mono<GenerateAadharOtpResponse> generateAadharOtp(@RequestBody GenerateAadharOtpRequest request,
                                                              @RequestHeader(name = "Authorization") String token) {
-        return userService.generateAadharOtp(request,token);
+        return hasSignupService.generateAadharOtp(request,token);
+    }
+
+    @ResponseStatus(CREATED)
+    @PostMapping(Constants.VERIFY_AADHAR_OTP)
+    public Mono<HealthAccountUser> verifyAadharOtp(@RequestBody VerifyAadharOtpRequest request,
+                                                   @RequestHeader(name = "Authorization") String token) {
+        return hasSignupService.verifyAadharOtp(request,token);
     }
 }

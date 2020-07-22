@@ -127,7 +127,7 @@ public class SecurityConfiguration {
                                                                    "/sessions",
                                                                    PATH_HEARTBEAT,
                                                                    "/patients/profile/update-login-details",
-                                                                   GENERATE_AADHAR_OTP,
+                                                                   "/patients/generate-aadhar-otp",
                                                                    "/**.html",
                                                                    "/**.js",
                                                                    "/**.yaml",

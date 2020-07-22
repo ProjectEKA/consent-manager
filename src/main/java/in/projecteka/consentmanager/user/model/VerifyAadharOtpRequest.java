@@ -7,7 +7,7 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 @Getter
-public class GenerateAadharOtpResponse {
+public class VerifyAadharOtpRequest {
     private final String txnID;
-    private final String token;
+    private final String otp;
 }

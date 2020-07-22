@@ -5,6 +5,9 @@ import in.projecteka.consentmanager.clients.HASSignupServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
+import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.GrantType;
@@ -18,6 +21,9 @@ import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
 import in.projecteka.consentmanager.user.model.UserCredential;
+import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
+import in.projecteka.consentmanager.user.model.UserCredential;
+import in.projecteka.consentmanager.user.model.VerifyAadharOtpRequest;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -143,5 +149,36 @@ public class HASSignupService {
     private boolean isNumberFromAllowedList(String mobileNumber) {
         return otpServiceProperties.allowListNumbers().stream().anyMatch(number ->
                 number.equals(mobileNumber));
+    }
+
+    public Mono<GenerateAadharOtpResponse> generateAadharOtp(GenerateAadharOtpRequest request, String token) {
+        var sessionId = signUpService.getSessionId(token);
+        return isValidAadhar(request.getAadhaar()) ?
+                signUpService.getMobileNumber(sessionId)
+                        .filter(this::isNumberFromAllowedList)
+                        .flatMap(bool -> Mono.just(GenerateAadharOtpResponse.builder()
+                                .txnID(UUID.randomUUID().toString())
+                                .token(token)
+                                .build()))
+                        .switchIfEmpty(Mono.defer(() -> hasSignupServiceClient.generateAadharOtp(request)
+                                .flatMap(response -> Mono.just(GenerateAadharOtpResponse.builder()
+                                        .txnID(response.getTxnID())
+                                        .token(token)
+                                        .build())))) :
+                Mono.error(ClientError.invalidRequester("Invalid aadhar number"));
+    }
+
+    private Boolean isValidAadhar(String aadhaar) {
+        String regex = "^\\d{12}$";
+        return aadhaar.matches(regex);
+    }
+
+    public Mono<HealthAccountUser> verifyAadharOtp(VerifyAadharOtpRequest request, String token) {
+        var sessionId = signUpService.getSessionId(token);
+        return signUpService.getMobileNumber(sessionId)
+                .filter(this::isNumberFromAllowedList)
+                .flatMap(res -> createHealthAccountUser())
+                .switchIfEmpty(Mono.defer(() -> hasSignupServiceClient.verifyAadharOtp(request)));
+
     }
 }

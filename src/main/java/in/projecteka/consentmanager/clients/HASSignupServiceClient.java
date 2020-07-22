@@ -1,12 +1,18 @@
 package in.projecteka.consentmanager.clients;
 
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
 import in.projecteka.consentmanager.user.model.HealthAccountUser;
 import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
+import in.projecteka.consentmanager.user.model.VerifyAadharOtpRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static in.projecteka.consentmanager.user.Constants.HAS_ACCOUNT_UPDATE;
 import static in.projecteka.consentmanager.user.Constants.HAS_CREATE_ACCOUNT_VERIFIED_MOBILE_TOKEN;
@@ -17,6 +23,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class HASSignupServiceClient {
 
     private final WebClient webClient;
+    private final String OTP_REQUEST_FOR_AADHAR = "/v1/ha/generate_aadhar_otp";
+    private final String VERIFY_OTP_FOR_AADHAR  = "/v1/ha/verify_aadhar_otp";
 
     public HASSignupServiceClient(WebClient.Builder webClient, String baseUrl) {
         this.webClient = webClient.baseUrl(baseUrl).build();
@@ -46,5 +54,31 @@ public class HASSignupServiceClient {
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .toBodilessEntity()
                 .then();
+    }
+
+    public Mono<GenerateAadharOtpResponse> generateAadharOtp(GenerateAadharOtpRequest request) {
+        HashMap<String, String> requestBody = new HashMap<>();
+        requestBody.put("aadhaar", request.getAadhaar());
+        return webClient
+                .post()
+                .uri(uriBuilder -> uriBuilder.path(OTP_REQUEST_FOR_AADHAR).build())
+                .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                .body(Mono.just(requestBody), Map.class)
+                .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(ClientError.invalidRequester("Invalid Request")))
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .bodyToMono(GenerateAadharOtpResponse.class);
+    }
+
+    public Mono<HealthAccountUser> verifyAadharOtp(VerifyAadharOtpRequest request) {
+        return webClient
+                .post()
+                .uri(uriBuilder -> uriBuilder.path(VERIFY_OTP_FOR_AADHAR).build())
+                .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                .body(Mono.just(request), VerifyAadharOtpRequest.class)
+                .retrieve()
+                .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(ClientError.invalidRequester("Invalid Request")))
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .bodyToMono(HealthAccountUser.class);
     }
 }

@@ -41,6 +41,7 @@ import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.consentmanager.user.model.VerifyAadharOtpRequest;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,12 +76,6 @@ public class UserService {
     private final OtpAttemptService otpAttemptService;
     private final LockedUserService lockedUserService;
     private final UserServiceClient userServiceClient;
-    List<String> whiteListedAadhar = new ArrayList<>();
-
-    {
-        whiteListedAadhar.add("111111111111");
-        whiteListedAadhar.add("222222222222");
-    }
 
     public Mono<User> userWith(String userName) {
         return userRepository.userWith(userName.toLowerCase()).switchIfEmpty(Mono.error(userNotFound()));
@@ -423,20 +418,5 @@ public class UserService {
                     return validateAndVerifyOtp(otpVerification, builder.build())
                             .then(signupService.generateToken(otpVerification.getSessionId()));
                 });
-    }
-
-    public Mono<GenerateAadharOtpResponse> generateAadharOtp(GenerateAadharOtpRequest request, String token) {
-        var sessionId = signupService.getSessionId(token);
-        return isValidAadhar(request.getAadhaar()) ?
-                signupService.getMobileNumber(sessionId)
-                        .filter(this::isNumberFromAllowedList)
-                        .flatMap(bool -> Mono.just(GenerateAadharOtpResponse.builder().txnId(UUID.randomUUID().toString()).token(token).build()))
-                        .switchIfEmpty(healthAccountServiceClient.generateAadharOtp(request)) :
-                Mono.error(ClientError.invalidRequester("Invalid aadhar number"));
-    }
-
-    private Boolean isValidAadhar(String aadhaar) {
-        String regex = "^\\d{12}$";
-        return aadhaar.matches(regex);
     }
 }

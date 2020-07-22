@@ -33,9 +33,9 @@ jobs:
         env:
           IMAGE_NAME: nha20/jas-consent-manager
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        run: docker build -t $IMAGE_NAME:$RELEASE_VERSION .
+        run: docker build -t $IMAGE_NAME:$RELEASE_VERSION -t $IMAGE_NAME:latest .
       - name: Push Docker Image to Registry
         env:
           IMAGE_NAME: nha20/jas-consent-manager
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        run: docker push $IMAGE_NAME:$RELEASE_VERSION
+        run: docker push $IMAGE_NAME

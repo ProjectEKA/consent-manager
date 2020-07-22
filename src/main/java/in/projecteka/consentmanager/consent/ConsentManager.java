@@ -233,7 +233,7 @@ public class ConsentManager {
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
         return validatePatient(patientId)
-                .then(Mono.defer(() -> validateDate(grantedConsents)))
+                .then(validateDate(grantedConsents))
                 .then(validateHiTypes(in(grantedConsents)))
                 .then(validateConsentRequest(requestId, patientId))
                 .flatMap(consentRequest -> validateLinkedHips(patientId, grantedConsents)
@@ -248,9 +248,8 @@ public class ConsentManager {
     }
 
     private Mono<Void> validateDate(List<GrantedConsent> grantedConsents){
-        Optional<GrantedConsent> falseValidation = grantedConsents.stream()
-                .filter(grantedConsent -> isdateValidatedForNullAndFuture(grantedConsent) == false).findAny();
-        if(falseValidation.isPresent())
+        boolean validDates = grantedConsents.stream().allMatch(grantedConsent -> isdateValidatedForNullAndFuture(grantedConsent));
+        if(!validDates)
             return Mono.error(ClientError.invalidDateRange());
         else
             return Mono.empty();

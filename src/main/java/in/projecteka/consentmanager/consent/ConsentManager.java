@@ -58,7 +58,6 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -257,7 +256,7 @@ public class ConsentManager {
 
     private Boolean isdateValidatedForNullAndFuture(GrantedConsent grantedConsent){
         return grantedConsent.getPermission().getDateRange().getFromDate() != null &&
-                grantedConsent.getPermission().getDateRange().getFromDate().isBefore(LocalDateTime.now()) &&
+                grantedConsent.getPermission().getDateRange().getFromDate().isBefore(LocalDateTime.now(ZoneOffset.UTC)) &&
                 grantedConsent.getPermission().getDateRange().getToDate() != null;
     }
 

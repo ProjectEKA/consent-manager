@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.user;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.ClientError;
@@ -14,6 +13,7 @@ import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
@@ -26,7 +26,6 @@ import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpMediumType;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.PatientName;
-import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Profile;
 import in.projecteka.consentmanager.user.model.RecoverCmIdResponse;
 import in.projecteka.consentmanager.user.model.SendOtpAction;
@@ -55,9 +54,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
-import static in.projecteka.consentmanager.user.TestBuilders.patientName;
 import static in.projecteka.consentmanager.user.TestBuilders.dateOfBirth;
+import static in.projecteka.consentmanager.user.TestBuilders.patientName;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
@@ -73,7 +73,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
-public class PatientControllerTest {
+class PatientControllerTest {
 
     @MockBean
     private UserService userService;
@@ -122,7 +122,7 @@ public class PatientControllerTest {
     private ConceptValidator conceptValidator;
 
     @Test
-    public void createUser() {
+    void createUser() {
         var signUpRequest = coreSignUpRequest()
                 .username("username@ncg")
                 .name(patientName().first("abc").build())
@@ -146,7 +146,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void returnBadRequestForUserCreation() {
+    void returnBadRequestForUserCreation() {
         var signUpRequest = coreSignUpRequest()
                 .name(patientName().first("abc").build())
                 .dateOfBirth(dateOfBirth().date(LocalDate.now().getDayOfMonth() + 1).build())
@@ -169,7 +169,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void generateOtp() throws JsonProcessingException {
+    void generateOtp() throws JsonProcessingException {
         GenerateOtpRequest otpRequest = GenerateOtpRequest.builder().username("username@ncg").build();
         List<Identifier> identifiers = new ArrayList<Identifier>();
         Identifier identifier = Identifier.builder()
@@ -190,7 +190,7 @@ public class PatientControllerTest {
                 .otpMediumValue("******9999")
                 .sessionId(signUpSession.getSessionId())
                 .build();
-        var expectedResponseJson = new ObjectMapper().writeValueAsString(expectedResponse);
+        var expectedResponseJson = OBJECT_MAPPER.writeValueAsString(expectedResponse);
 
         when(profileService.profileFor(otpRequest.getUsername())).thenReturn(Mono.just(profile));
         when(userService.sendOtpFor(userSignUpEnquiry, otpRequest.getUsername(), OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD, SendOtpAction.RECOVER_PASSWORD)).thenReturn(Mono.just(signUpSession));
@@ -210,7 +210,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void ShouldReturnErrorWhenCallingGenerateOtpForInvalidUser() {
+    void ShouldReturnErrorWhenCallingGenerateOtpForInvalidUser() {
         GenerateOtpRequest otpRequest = GenerateOtpRequest.builder().username("username@ncg").build();
 
         when(profileService.profileFor(otpRequest.getUsername())).thenReturn(Mono.empty());
@@ -229,7 +229,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void verifyOtp() {
+    void verifyOtp() {
         var otpVerification = new OtpVerification(string(), string());
         Token token = new Token(string());
 
@@ -245,7 +245,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void update() {
+    void update() {
         UpdateUserRequest request = UpdateUserRequest.builder()
                 .password("Test@1324")
                 .build();
@@ -281,7 +281,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void shouldReturnErrorWhenPwdIsInvalidWhileUpdating() {
+    void shouldReturnErrorWhenPwdIsInvalidWhileUpdating() {
         UpdateUserRequest request = UpdateUserRequest.builder()
                 .password("Test123")
                 .build();
@@ -305,7 +305,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void shouldUpdatePasswordSuccessfully() {
+    void shouldUpdatePasswordSuccessfully() {
         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                 .oldPassword("Test@1234")
                 .newPassword("Test@2020")
@@ -337,7 +337,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void shouldThrowAnErrorIfUserIsBlockedInUpdatePassword() {
+    void shouldThrowAnErrorIfUserIsBlockedInUpdatePassword() {
         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                 .oldPassword("Test@1234")
                 .newPassword("Test@2020")
@@ -366,7 +366,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void shouldReturnErrorForInvalidPasswordUpdateRequest() {
+    void shouldReturnErrorForInvalidPasswordUpdateRequest() {
         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                 .oldPassword("Test@1234")
                 .newPassword("Test")
@@ -393,7 +393,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void shouldReturnErrorOnUpdatePasswordFails() {
+    void shouldReturnErrorOnUpdatePasswordFails() {
         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                 .oldPassword("Test@1234")
                 .newPassword("TestPassword@2020")
@@ -421,7 +421,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void shouldReturnErrorIfIncorrectOldPasswordGiven() {
+    void shouldReturnErrorIfIncorrectOldPasswordGiven() {
         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                 .oldPassword("Test@1234")
                 .newPassword("TestPassword@2020")
@@ -449,7 +449,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void fetchLoginMode() {
+    void fetchLoginMode() {
         LoginModeResponse loginModeResponse = LoginModeResponse.builder()
                 .loginMode(LoginMode.CREDENTIAL)
                 .build();
@@ -471,7 +471,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void generateOtpOnGettingSinglePatientRecordForInitiateRecoverCmId() throws JsonProcessingException {
+    void generateOtpOnGettingSinglePatientRecordForInitiateRecoverCmId() throws JsonProcessingException {
         PatientName name = patientName().first("abc").build();
         Gender gender = Gender.F;
         DateOfBirth dateOfBirth = dateOfBirth().year(1998).build();
@@ -498,7 +498,7 @@ public class PatientControllerTest {
                 .otpMediumValue("******9999")
                 .sessionId(signUpSession.getSessionId())
                 .build();
-        var expectedResponseJson = new ObjectMapper().writeValueAsString(expectedResponse);
+        var expectedResponseJson = OBJECT_MAPPER.writeValueAsString(expectedResponse);
 
         when(userService.getPatientByDetails(any())).thenReturn(Mono.just(user));
         when(userService.sendOtpFor(any(),any(),any(),any())).thenReturn(Mono.just(signUpSession));
@@ -517,7 +517,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void shouldThrowAnErrorWhenNoOrMultipleMatchingPatientRecordFoundForInitiateRecoverCmId() throws JsonProcessingException {
+    void shouldThrowAnErrorWhenNoOrMultipleMatchingPatientRecordFoundForInitiateRecoverCmId() throws JsonProcessingException {
         PatientName name = patientName().first("abc").build();
         Gender gender = Gender.F;
         DateOfBirth dateOfBirth = dateOfBirth().year(1998).build();
@@ -582,7 +582,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void shouldThrowAnErrorIfSignUpSessionIsNullForInitiateRecoverCmId() throws JsonProcessingException {
+    void shouldThrowAnErrorIfSignUpSessionIsNullForInitiateRecoverCmId() throws JsonProcessingException {
         PatientName name = patientName().first("abc").build();
         Gender gender = Gender.F;
         DateOfBirth dateOfBirth = dateOfBirth().year(1998).build();
@@ -609,7 +609,7 @@ public class PatientControllerTest {
                 .otpMediumValue("******9999")
                 .sessionId(signUpSession.getSessionId())
                 .build();
-        var expectedResponseJson = new ObjectMapper().writeValueAsString(expectedResponse);
+        var expectedResponseJson = OBJECT_MAPPER.writeValueAsString(expectedResponse);
 
         when(userService.getPatientByDetails(any())).thenReturn(Mono.just(user));
 
@@ -625,7 +625,7 @@ public class PatientControllerTest {
     }
 
     @Test
-    public void verifyOtpForRecoveringCmId() {
+    void verifyOtpForRecoveringCmId() {
         var otpVerification = new OtpVerification(string(), string());
         String cmId = "testUser@ncg";
 

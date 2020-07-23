@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
@@ -11,7 +10,6 @@ import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentati
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -23,15 +21,14 @@ import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
-import static org.mockito.AdditionalMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class HipConsentNotificationListenerTest {
     @Mock
@@ -39,12 +36,6 @@ class HipConsentNotificationListenerTest {
 
     @Mock
     private MessageListenerContainer messageListenerContainer;
-
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    private DestinationsConfig destinationsConfig;
-
-    @Mock
-    private DestinationsConfig.DestinationInfo destinationInfo;
 
     @Mock
     private Jackson2JsonMessageConverter converter;
@@ -62,11 +53,9 @@ class HipConsentNotificationListenerTest {
         MockitoAnnotations.initMocks(this);
         hipConsentNotificationListener = new HipConsentNotificationListener(
                 messageListenerContainerFactory,
-                destinationsConfig,
                 converter,
                 consentArtefactNotifier,
-                consentArtefactRepository
-        );
+                consentArtefactRepository);
     }
 
     @Test
@@ -84,10 +73,8 @@ class HipConsentNotificationListenerTest {
                 .build())
                 .consentId(consentId)
                 .build();
-
-        when(destinationsConfig.getQueues().get(HIP_CONSENT_NOTIFICATION_QUEUE)).thenReturn(destinationInfo);
         when(messageListenerContainerFactory
-                .createMessageListenerContainer(destinationInfo.getRoutingKey())).thenReturn(messageListenerContainer);
+                .createMessageListenerContainer(HIP_CONSENT_NOTIFICATION_QUEUE)).thenReturn(messageListenerContainer);
         doNothing().when(messageListenerContainer).setupMessageListener(messageListenerCaptor.capture());
         when(converter.fromMessage(any())).thenReturn(hipConsentArtefactRepresentation);
         when(consentArtefactNotifier.sendConsentArtefactToHIP(any(), anyString())).thenReturn(Mono.empty());
@@ -105,8 +92,4 @@ class HipConsentNotificationListenerTest {
 
         verify(consentArtefactNotifier).sendConsentArtefactToHIP(any(), anyString());
     }
-
-
-
-
 }

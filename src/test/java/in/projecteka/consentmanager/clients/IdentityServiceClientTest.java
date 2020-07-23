@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.clients;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequest;
@@ -32,6 +31,7 @@ import static in.projecteka.consentmanager.clients.TestBuilders.keycloakCreateUs
 import static in.projecteka.consentmanager.clients.TestBuilders.keycloakProperties;
 import static in.projecteka.consentmanager.clients.TestBuilders.session;
 import static in.projecteka.consentmanager.clients.TestBuilders.string;
+import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -101,8 +101,7 @@ class IdentityServiceClientTest {
         Map<String, String> map = new HashMap<>(2);
         map.put("error", error);
         map.put("error_description", "Invalid Otp");
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.writeValueAsString(map);
+        return OBJECT_MAPPER.writeValueAsString(map);
     }
 
     @Test
@@ -139,7 +138,7 @@ class IdentityServiceClientTest {
         var accessToken = string();
         KeyCloakUserRepresentation keyCloakUserRepresentation = KeyCloakUserRepresentation.builder()
                 .id("userid").build();
-        String getUserResponseBody = new ObjectMapper().writeValueAsString(keyCloakUserRepresentation);
+        String getUserResponseBody = OBJECT_MAPPER.writeValueAsString(keyCloakUserRepresentation);
 
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
@@ -179,7 +178,7 @@ class IdentityServiceClientTest {
         KeyCloakUserPasswordChangeRequest keyCloakUserPasswordChangeRequest = keyCloakUserPasswordChangeRequest()
                 .value(userPwd)
                 .build();
-        String updateUserResponseBody = new ObjectMapper().writeValueAsString(keyCloakUserPasswordChangeRequest);
+        String updateUserResponseBody = OBJECT_MAPPER.writeValueAsString(keyCloakUserPasswordChangeRequest);
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
                         .header("Content-Type", "application/json")
@@ -199,7 +198,7 @@ class IdentityServiceClientTest {
         var keyCloakUserPasswordChangeRequest = keyCloakUserPasswordChangeRequest()
                 .value(userPwd)
                 .build();
-        String updateUserResponseBody = new ObjectMapper().writeValueAsString(keyCloakUserPasswordChangeRequest);
+        String updateUserResponseBody = OBJECT_MAPPER.writeValueAsString(keyCloakUserPasswordChangeRequest);
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(ClientResponse.create(HttpStatus.NOT_FOUND)
                         .header("Content-Type", "application/json")
@@ -261,7 +260,7 @@ class IdentityServiceClientTest {
         var accessToken = string();
         KeyCloakUserCredentialRepresentation keyCreds = KeyCloakUserCredentialRepresentation.builder()
                 .id("credid").build();
-        String getUserResponseBody = new ObjectMapper().writeValueAsString(keyCreds);
+        String getUserResponseBody = OBJECT_MAPPER.writeValueAsString(keyCreds);
 
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)

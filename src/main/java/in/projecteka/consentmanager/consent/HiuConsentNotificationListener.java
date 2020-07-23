@@ -1,12 +1,9 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.common.ListenerProperties;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
-import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.request.ConsentArtefactReference;
 import in.projecteka.consentmanager.consent.model.request.ConsentNotifier;
 import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
@@ -17,51 +14,44 @@ import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageListener;
-import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.UUID;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_CONSENT_NOTIFICATION_QUEUE;
-import static in.projecteka.consentmanager.ConsentManagerConfiguration.PARKING_EXCHANGE;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
+import static in.projecteka.consentmanager.common.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.PARKING_EXCHANGE;
 
 @AllArgsConstructor
 public class HiuConsentNotificationListener {
     private static final Logger logger = LoggerFactory.getLogger(HiuConsentNotificationListener.class);
     private final MessageListenerContainerFactory messageListenerContainerFactory;
-    private final DestinationsConfig destinationsConfig;
     private final Jackson2JsonMessageConverter converter;
     private final ConsentArtefactNotifier consentArtefactNotifier;
     private final AmqpTemplate amqpTemplate;
     private final ListenerProperties listenerProperties;
 
     @PostConstruct
-    public void subscribe() throws ClientError {
-        DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig
-                .getQueues()
-                .get(HIU_CONSENT_NOTIFICATION_QUEUE);
+    public void subscribe() {
 
-        MessageListenerContainer mlc = messageListenerContainerFactory
-                .createMessageListenerContainer(destinationInfo.getRoutingKey());
+        var mlc = messageListenerContainerFactory.createMessageListenerContainer(HIU_CONSENT_NOTIFICATION_QUEUE);
 
         MessageListener messageListener = message -> {
             try {
                 //This is NOT a generic solution. Based on the context, it either needs to retry, or it might also need to propagate the error to the upstream systems.
                 //TODO be revisited during Gateway development
                 if (hasExceededRetryCount(message)) {
-                    amqpTemplate.convertAndSend(PARKING_EXCHANGE, message.getMessageProperties().getReceivedRoutingKey(), message);
+                    amqpTemplate.convertAndSend(PARKING_EXCHANGE,
+                            message.getMessageProperties().getReceivedRoutingKey(),
+                            message);
                     return;
                 }
-                ConsentArtefactsMessage consentArtefactsMessage =
-                        (ConsentArtefactsMessage) converter.fromMessage(message);
+                var consentArtefactsMessage = (ConsentArtefactsMessage) converter.fromMessage(message);
                 logger.info("Received message for Request id : {}", consentArtefactsMessage.getConsentRequestId());
 
                 notifyHiu(consentArtefactsMessage);
@@ -92,28 +82,15 @@ public class HiuConsentNotificationListener {
     }
 
     private HIUNotificationRequest hiuNotificationRequest(ConsentArtefactsMessage consentArtefactsMessage) {
-        var requestId = UUID.randomUUID();
-        ConsentStatus status = consentArtefactsMessage.getStatus();
-
-        if (status == EXPIRED || status == DENIED ) {
-            return HIUNotificationRequest.builder()
-                    .requestId(requestId)
-                    .timestamp(LocalDateTime.now(ZoneOffset.UTC))
-                    .notification(ConsentNotifier.builder()
-                            .status(status)
-                            .consentRequestId(consentArtefactsMessage.getConsentRequestId())
-                            .build())
-                    .build();
-        }
         List<ConsentArtefactReference> consentArtefactReferences = consentArtefactReferences(consentArtefactsMessage);
         return HIUNotificationRequest
                 .builder()
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC))
-                .requestId(requestId)
+                .requestId(UUID.randomUUID())
                 .notification(ConsentNotifier
                         .builder()
                         .consentRequestId(consentArtefactsMessage.getConsentRequestId())
-                        .status(status)
+                        .status(consentArtefactsMessage.getStatus())
                         .consentArtefacts(consentArtefactReferences)
                         .build())
                 .build();

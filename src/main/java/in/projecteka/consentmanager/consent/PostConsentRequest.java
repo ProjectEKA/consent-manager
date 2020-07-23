@@ -9,7 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.ConsentManagerConfiguration.CONSENT_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.CONSENT_REQUEST_QUEUE;
+
 
 @AllArgsConstructor
 public class PostConsentRequest {
@@ -19,8 +20,7 @@ public class PostConsentRequest {
 
     @SneakyThrows
     public Mono<Void> broadcastConsentRequestNotification(ConsentRequest consentRequest) {
-        DestinationsConfig.DestinationInfo destinationInfo =
-                destinationsConfig.getQueues().get(CONSENT_REQUEST_QUEUE);
+        var destinationInfo = destinationsConfig.getQueues().get(CONSENT_REQUEST_QUEUE);
 
         return Mono.create(monoSink -> {
             amqpTemplate.convertAndSend(destinationInfo.getExchange(), destinationInfo.getRoutingKey(), consentRequest);

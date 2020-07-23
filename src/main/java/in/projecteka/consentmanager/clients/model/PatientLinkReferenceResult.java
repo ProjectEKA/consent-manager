@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.util.StringUtils;
 
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -21,7 +22,7 @@ import java.util.UUID;
 @Data
 public class PatientLinkReferenceResult {
     private UUID requestId;
-    private String timestamp;
+    private LocalDateTime timestamp;
     private UUID transactionId;
     private Link link;
     private RespError error;

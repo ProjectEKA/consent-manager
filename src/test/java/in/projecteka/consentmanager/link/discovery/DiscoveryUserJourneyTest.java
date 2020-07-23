@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.link.discovery;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
@@ -58,7 +57,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
-import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
@@ -148,8 +147,8 @@ class DiscoveryUserJourneyTest {
     }
 
     @Test
-    public void shouldGetProvidersByName() throws IOException {
-        var providers = new ObjectMapper().readValue(
+    void shouldGetProvidersByName() throws IOException {
+        var providers = OBJECT_MAPPER.readValue(
                 Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource("provider.json")),
                 new TypeReference<List<JsonNode>>() {
                 });
@@ -181,7 +180,7 @@ class DiscoveryUserJourneyTest {
 
     @Test
     void shouldGetProviderById() throws IOException {
-        var providers = new ObjectMapper().readValue(
+        var providers = OBJECT_MAPPER.readValue(
                 Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource("providerById.json")),
                 new TypeReference<JsonNode>() {
                 });
@@ -458,6 +457,6 @@ class DiscoveryUserJourneyTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isBadRequest();
     }
 }

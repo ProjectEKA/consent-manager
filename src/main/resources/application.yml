@@ -17,7 +17,6 @@ consentmanager:
   gatewayservice:
     baseUrl: ${GATEWAY_BASE_URL}
     requestTimeout: ${GATEWAY_REQUEST_TIMEOUT}
-    enabled: ${GATEWAY_ENABLED}
     clientSecret: ${GATEWAY_CLIENT_SECRET}
     clientId: ${GATEWAY_CLIENT_ID}
     jwkUrl: ${CENTRAL_REGISTRY_JWK_URL}
@@ -43,6 +42,8 @@ consentmanager:
     expiryInMinutes: ${OTP_EXPIRY_IN_MINUTES}
   jwt:
     secret: ${JWT_SECRET}
+  authorization:
+    header: ${AUTHORIZATION_HEADER:Authorization}
   keycloak:
     baseUrl: ${KEY_CLOAK_URL}
     clientId: ${KEY_CLOAK_CONSENT_CLIENT_ID}
@@ -75,6 +76,8 @@ consentmanager:
     maximumRetries: ${LISTENERS_MAXIMUM_RETRIES}
     # In milliseconds
     retryInterval: ${LISTENERS_RETRY_INTERVAL}
+  nhsproperties:
+    hiuid: ${NHS_HIU_ID:12342345}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}

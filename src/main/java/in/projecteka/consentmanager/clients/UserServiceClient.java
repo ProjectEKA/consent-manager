@@ -1,13 +1,11 @@
 package in.projecteka.consentmanager.clients;
 
-import com.google.common.net.HttpHeaders;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.user.model.PatientResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -15,6 +13,8 @@ import java.time.Duration;
 import java.util.function.Supplier;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static reactor.core.publisher.Mono.error;
 
 @AllArgsConstructor
 public class UserServiceClient {
@@ -26,6 +26,7 @@ public class UserServiceClient {
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
     private final ServiceAuthentication serviceAuthentication;
+    private final String authorizationHeader;
 
     public Mono<User> userOf(String userId) {
         return tokenGenerator.get()
@@ -33,10 +34,10 @@ public class UserServiceClient {
                         webClient
                                 .get()
                                 .uri(String.format(INTERNAL_PATH_USER_IDENTIFICATION, url, userId))
-                                .header(AUTHORIZATION, token)
+                                .header(authorizationHeader, token)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 404,
-                                        clientResponse -> Mono.error(ClientError.userNotFound()))
+                                        clientResponse -> error(ClientError.userNotFound()))
                                 .bodyToMono(User.class));
     }
 
@@ -48,15 +49,15 @@ public class UserServiceClient {
                         webClient
                                 .post()
                                 .uri(gatewayServiceProperties.getBaseUrl() + PATIENT_FIND_URL_PATH)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header(HttpHeaders.AUTHORIZATION, authToken)
+                                .contentType(APPLICATION_JSON)
+                                .header(AUTHORIZATION, authToken)
                                 .header(routingKey, requesterId)
                                 .bodyValue(patientResponse)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,
-                                        clientResponse -> Mono.error(ClientError.unAuthorized()))
+                                        clientResponse -> error(ClientError.unAuthorized()))
                                 .onStatus(HttpStatus::is5xxServerError,
-                                        clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                                        clientResponse -> error(ClientError.networkServiceCallFailed()))
                                 .toBodilessEntity()
                                 .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout())))
                 .then();

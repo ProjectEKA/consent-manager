@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
-import in.projecteka.consentmanager.dataflow.model.hip.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.hip.DataRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,21 +19,6 @@ public class DataRequestNotifier {
     private final WebClient webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
-
-    public Mono<Void> notifyHip(DataFlowRequest dataFlowRequest, String hipUrl) {
-        return tokenGenerator.get()
-                .flatMap(token ->
-                        webClientBuilder
-                                .post()
-                                .uri(hipUrl + "/health-information/request")
-                                .header(AUTHORIZATION, token)
-                                .bodyValue(dataFlowRequest)
-                                .retrieve()
-                                .onStatus(HttpStatus::is5xxServerError,
-                                        clientResponse -> Mono.error(unknownErrorOccurred()))
-                                .toBodilessEntity())
-                .then();
-    }
 
     public Mono<Void> notifyHip(DataRequest dataFlowRequest, String hipId) {
         return tokenGenerator.get()

@@ -31,7 +31,6 @@ public class Authenticator {
     private final Logger logger = LoggerFactory.getLogger(Authenticator.class);
     private final CacheAdapter<String, String> blacklistedTokens;
 
-
     public Authenticator(JWKSet jwkSet, CacheAdapter<String, String> blacklistedTokens, ConfigurableJWTProcessor<SecurityContext> jwtProcessor) {
         this.blacklistedTokens = blacklistedTokens;
         var immutableJWKSet = new ImmutableJWKSet<>(jwkSet);
@@ -53,7 +52,7 @@ public class Authenticator {
             return Mono.empty();
         }
         var credentials = parts[1];
-        return blacklistedTokens.exists(String.format(BLACKLIST_FORMAT,BLACKLIST,credentials))
+        return blacklistedTokens.exists(String.format(BLACKLIST_FORMAT, BLACKLIST, credentials))
                 .filter(exists -> !exists)
                 .flatMap(uselessFalse -> {
                     JWTClaimsSet jwtClaimsSet;

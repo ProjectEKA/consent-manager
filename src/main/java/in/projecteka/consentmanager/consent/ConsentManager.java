@@ -123,15 +123,20 @@ public class ConsentManager {
                 .flatMap(val -> validatePatient(requestedDetail.getPatient().getId())
                         .then(validatePurpose(requestedDetail.getPurpose()))
                         .then(validateHiTypes(requestedDetail.getHiTypes()))
-                        .then(validateHIPAndHIU(requestedDetail)))
-                .flatMap(r -> Mono.defer(() -> saveConsentRequest(requestedDetail, requestId)));
+                        .then(validateHIPAndHIU(requestedDetail))
+                        .then(saveConsentRequest(requestedDetail, requestId))
+                        .then(broadcastConsentRequest(requestedDetail, requestId)));
     }
 
-    private Mono<Void> saveConsentRequest(RequestedDetail requestedDetail, UUID requestId) {
-        ConsentRequestId request = ConsentRequestId.builder()
+    private Mono<Void> broadcastConsentRequest(RequestedDetail requestedDetail, UUID requestId){
+        return postConsentRequest.broadcastConsentRequestNotification(ConsentRequest.builder()
+                .detail(requestedDetail)
                 .id(requestId)
-                .build();
-        ConsentRequestResult consentRequestResult = ConsentRequestResult.builder()
+                .build());
+    }
+    private Mono<Void> saveConsentRequest(RequestedDetail requestedDetail, UUID requestId) {
+        var request = ConsentRequestId.builder().id(requestId).build();
+        var consentRequestResult = ConsentRequestResult.builder()
                 .requestId(UUID.randomUUID())
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .consentRequest(request)
@@ -227,6 +232,7 @@ public class ConsentManager {
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
         return validatePatient(patientId)
+                .then(validateDate(grantedConsents))
                 .then(validateHiTypes(in(grantedConsents)))
                 .then(validateConsentRequest(requestId, patientId))
                 .flatMap(consentRequest -> validateLinkedHips(patientId, grantedConsents)
@@ -238,6 +244,20 @@ public class ConsentManager {
                                                 consentRequest.getLastUpdated(),
                                                 consentRequest.getHiu())
                                                 .thenReturn(consentApprovalResponse(consents)))));
+    }
+
+    private Mono<Void> validateDate(List<GrantedConsent> grantedConsents){
+        boolean validDates = grantedConsents.stream().allMatch(grantedConsent -> isdateValidatedForNullAndFuture(grantedConsent));
+        if(!validDates)
+            return Mono.error(ClientError.invalidDateRange());
+        else
+            return Mono.empty();
+    }
+
+    private Boolean isdateValidatedForNullAndFuture(GrantedConsent grantedConsent){
+        return grantedConsent.getPermission().getDateRange().getFromDate() != null &&
+                grantedConsent.getPermission().getDateRange().getFromDate().isBefore(LocalDateTime.now(ZoneOffset.UTC)) &&
+                grantedConsent.getPermission().getDateRange().getToDate() != null;
     }
 
     private Mono<ConsentArtefactRepresentation> updateHipName(

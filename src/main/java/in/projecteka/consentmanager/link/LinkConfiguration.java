@@ -9,7 +9,6 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
@@ -18,7 +17,6 @@ import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.DiscoveryRepository;
 import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.link.link.LinkRepository;
-import in.projecteka.consentmanager.user.UserServiceProperties;
 import io.lettuce.core.RedisClient;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -64,19 +62,6 @@ public class LinkConfiguration {
         return new DiscoveryServiceClient(builder.build(),
                 serviceAuthentication::authenticate,
                 gatewayServiceProperties);
-    }
-
-    @Bean
-    public UserServiceClient userServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
-                                               UserServiceProperties userServiceProperties,
-                                               IdentityService identityService,
-                                               GatewayServiceProperties gatewayServiceProperties,
-                                               ServiceAuthentication serviceAuthentication) {
-        return new UserServiceClient(builder.build(),
-                userServiceProperties.getUrl(),
-                identityService::authenticate,
-                gatewayServiceProperties,
-                serviceAuthentication);
     }
 
     @Bean

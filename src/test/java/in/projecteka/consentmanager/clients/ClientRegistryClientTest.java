@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.clients;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Provider;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,11 +24,12 @@ import static in.projecteka.consentmanager.clients.TestBuilders.identifier;
 import static in.projecteka.consentmanager.clients.TestBuilders.provider;
 import static in.projecteka.consentmanager.clients.TestBuilders.telecom;
 import static in.projecteka.consentmanager.clients.TestBuilders.type;
+import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-public class ClientRegistryClientTest {
+class ClientRegistryClientTest {
     @Captor
     private ArgumentCaptor<ClientRequest> captor;
     private ClientRegistryClient clientRegistryClient;
@@ -37,14 +37,14 @@ public class ClientRegistryClientTest {
     private ExchangeFunction exchangeFunction;
 
     @BeforeEach
-    public void init() {
+    void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         clientRegistryClient = new ClientRegistryClient(webClientBuilder, "http://localhost:8000");
     }
 
     @Test
-    public void getProvidersByGivenName() throws IOException {
+    void getProvidersByGivenName() throws IOException {
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var identifier = identifier().use(Identifier.IdentifierType.OFFICIAL.toString()).build();
@@ -54,7 +54,7 @@ public class ClientRegistryClientTest {
                 .identifiers(of(identifier))
                 .name("Max")
                 .build();
-        var providerJson = new ObjectMapper().writeValueAsString(source);
+        var providerJson = OBJECT_MAPPER.writeValueAsString(source);
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(
                         ClientResponse.create(HttpStatus.OK)
@@ -78,7 +78,7 @@ public class ClientRegistryClientTest {
     }
 
     @Test
-    public void getProviderById() throws IOException {
+    void getProviderById() throws IOException {
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var identifier = identifier().use(Identifier.IdentifierType.OFFICIAL.toString()).build();
@@ -88,7 +88,7 @@ public class ClientRegistryClientTest {
                 .identifiers(of(identifier))
                 .name("Max")
                 .build();
-        var providerJson = new ObjectMapper().writeValueAsString(source);
+        var providerJson = OBJECT_MAPPER.writeValueAsString(source);
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(
                         ClientResponse.create(HttpStatus.OK)
@@ -112,7 +112,7 @@ public class ClientRegistryClientTest {
     }
 
     @Test
-    public void getProviderByGivenId() throws IOException {
+    void getProviderByGivenId() throws IOException {
         Provider provider = provider()
                 .name("Provider")
                 .addresses(of(address().city("Provider City").build()))
@@ -120,7 +120,7 @@ public class ClientRegistryClientTest {
                 .types(of(type().coding(of(coding().code("Code").build())).build()))
                 .build();
 
-        String providerJsonResponse = new ObjectMapper().writeValueAsString(provider);
+        String providerJsonResponse = OBJECT_MAPPER.writeValueAsString(provider);
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(
                         ClientResponse.create(HttpStatus.OK)

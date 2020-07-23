@@ -34,10 +34,10 @@ class DiscoveryServiceClientTest {
     private ExchangeFunction exchangeFunction;
 
     @BeforeEach
-    public void init() {
+    void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        var serviceProperties = new GatewayServiceProperties("http://ncg-gateway.com/v1", 1000, false, "", "", "");
+        var serviceProperties = new GatewayServiceProperties("http://ncg-gateway.com/v1", 1000, "", "", "");
         discoveryServiceClient = new DiscoveryServiceClient(webClientBuilder.build(),
                 () -> Mono.just(string()),
                 serviceProperties);

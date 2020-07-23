@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.consent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWKSet;
-import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.Authenticator;
@@ -21,10 +20,12 @@ import in.projecteka.consentmanager.consent.model.HIType;
 import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.PatientReference;
+import in.projecteka.consentmanager.consent.model.Requester;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
+import in.projecteka.consentmanager.consent.policies.NhsPolicyCheck;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -32,8 +33,6 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
@@ -58,9 +57,9 @@ import java.util.stream.Stream;
 
 import static com.google.common.net.HttpHeaders.AUTHORIZATION;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
-import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
-import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
+import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequest;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.notificationMessage;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
@@ -68,6 +67,8 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -82,9 +83,6 @@ import static org.mockito.Mockito.when;
 class ConsentRequestUserJourneyTest {
     @Autowired
     private WebTestClient webTestClient;
-
-    @MockBean
-    private DestinationsConfig destinationsConfig;
 
     @MockBean
     private HipConsentNotificationListener hipConsentNotificationListener;
@@ -138,9 +136,6 @@ class ConsentRequestUserJourneyTest {
 
     @MockBean
     private ConsentManagerClient consentManagerClient;
-
-    @Captor
-    private ArgumentCaptor<ConsentRequest> captor;
 
     private static final MockWebServer clientRegistryServer = new MockWebServer();
     private static final MockWebServer userServer = new MockWebServer();
@@ -235,7 +230,7 @@ class ConsentRequestUserJourneyTest {
         when(gatewayTokenVerifier.verify(authToken))
                 .thenReturn(Mono.just(new ServiceCaller("MAX-ID", List.of())));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
-        when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
+        when(postConsentRequestNotification.broadcastConsentRequestNotification(any()))
                 .thenReturn(Mono.empty());
         when(conceptValidator.validatePurpose("CAREMGT")).thenReturn(Mono.just(true));
         when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
@@ -395,7 +390,7 @@ class ConsentRequestUserJourneyTest {
         String scope = "consentrequest.approve";
 
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
-        when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
+        when(postConsentRequestNotification.broadcastConsentRequestNotification(any()))
                 .thenReturn(Mono.empty());
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
                 .thenReturn(Mono.just(consentRequestDetail));
@@ -423,8 +418,7 @@ class ConsentRequestUserJourneyTest {
         var token = string();
         var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
-        when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
-                .thenReturn(Mono.empty());
+        when(postConsentRequestNotification.broadcastConsentRequestNotification(any())).thenReturn(Mono.empty());
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
         load(clientRegistryServer, session);
         load(clientRegistryServer, session);
@@ -511,8 +505,7 @@ class ConsentRequestUserJourneyTest {
         var authToken = string();
         when(gatewayTokenVerifier.verify(authToken)).thenReturn(Mono.just(new ServiceCaller("MAX-ID", List.of())));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
-        when(postConsentRequestNotification.broadcastConsentRequestNotification(captor.capture()))
-                .thenReturn(Mono.empty());
+        when(postConsentRequestNotification.broadcastConsentRequestNotification(any())).thenReturn(Mono.empty());
         when(conceptValidator.validatePurpose("INVALID-CODE")).thenReturn(Mono.just(false));
         when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
         when(repository.requestOf(any())).thenReturn(Mono.empty());
@@ -590,15 +583,15 @@ class ConsentRequestUserJourneyTest {
         LocalDateTime toDate = LocalDateTime.now().plusMinutes(1);
         AccessPeriod dateRange = AccessPeriod.builder().fromDate(fromDate).toDate(toDate).build();
         ConsentPermission permission = ConsentPermission.builder().dateRange(dateRange).build();
-        RequestedDetail requestedDetail = RequestedDetail.builder()
+        var requestedDetail = RequestedDetail.builder()
                 .purpose(new ConsentPurpose())
                 .patient(PatientReference.builder().build())
                 .permission(permission)
-                .hiu(HIUReference.builder().build())
+                .hiu(HIUReference.builder().id(HIUId).build())
                 .hip(HIPReference.builder().build())
                 .hiTypes(HIType.values())
                 .build();
-        in.projecteka.consentmanager.consent.model.request.ConsentRequest consentRequest = consentRequest()
+        var consentRequest = consentRequest()
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
                 .consent(requestedDetail)
                 .build();
@@ -613,9 +606,8 @@ class ConsentRequestUserJourneyTest {
         when(repository.requestOf(anyString())).thenReturn(Mono.empty());
         when(conceptValidator.validatePurpose(any())).thenReturn(Mono.just(true));
         when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
-        when(consentManagerClient.sendInitResponseToGateway(any(), eq(HIUId)))
-                .thenReturn(Mono.empty());
-
+        when(consentManagerClient.sendInitResponseToGateway(any(), eq(HIUId))).thenReturn(Mono.empty());
+        when(postConsentRequestNotification.broadcastConsentRequestNotification(any())).thenReturn(Mono.empty());
         load(clientRegistryServer, session);
         load(clientRegistryServer, session);
         load(clientRegistryServer, session);
@@ -637,6 +629,33 @@ class ConsentRequestUserJourneyTest {
                 .expectStatus()
                 .isAccepted();
     }
+
+    @Test
+    void shouldReturnTrueOnPolicyCheck() {
+        var hiuId = "10000002";
+        var patientName = "xyz@xyz";
+        var requestedDetail = RequestedDetail.builder()
+                .hiu(HIUReference.builder().id(hiuId).build())
+                .patient(PatientReference.builder().id(patientName).build())
+                .requester(Requester.builder().name(patientName).build())
+                .build();
+        assertTrue(new NhsPolicyCheck().checkPolicyFor(ConsentRequest.builder().detail(requestedDetail).build(),
+                hiuId));
+    }
+
+    @Test
+    void shouldReturnFalseOnPolicyCheck() {
+        var hiuId = string();
+        var patientName = "xyz@xyz";
+        var requestedDetail = RequestedDetail.builder()
+                .hiu(HIUReference.builder().id(hiuId).build())
+                .patient(PatientReference.builder().id(patientName).build())
+                .requester(Requester.builder().name(hiuId).build())
+                .build();
+        assertFalse(new NhsPolicyCheck().checkPolicyFor(ConsentRequest.builder().detail(requestedDetail).build(),
+                hiuId));
+    }
+
 
     static class PropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override

@@ -31,22 +31,22 @@ public class TokenService {
                         .flatMap(user -> Mono.error(new InvalidPasswordException())));
     }
 
-    public Mono<Session>tokenForRefreshToken(String userName, String refreshToken){
+    public Mono<Session> tokenForRefreshToken(String userName, String refreshToken) {
         return identityServiceClient.getToken(loginRequestWithRefreshToken(userName, refreshToken))
                 .onErrorResume(error -> userRepository.userWith(userName)
                         .switchIfEmpty(Mono.error(new InvalidUserNameException()))
-                        .flatMap(user -> Mono.error(new InvalidRefreshTokenException())));    }
-
+                        .flatMap(user -> Mono.error(new InvalidRefreshTokenException())));
+    }
 
     public Mono<Session> tokenForOtpUser(String username, String sessionId, String otp) {
-        return identityServiceClient.getToken(loginRequestForOtp(username,sessionId,otp));
+        return identityServiceClient.getToken(loginRequestForOtp(username, sessionId, otp));
     }
 
     private MultiValueMap<String, String> loginRequestForOtp(String username, String sessionId, String otp) {
         LinkedMultiValueMap<String, String> formData = loginRequestCommon();
-        formData.add("username",username);
-        formData.add("session_id",sessionId);
-        formData.add("otp",otp);
+        formData.add("username", username);
+        formData.add("session_id", sessionId);
+        formData.add("otp", otp);
         return formData;
     }
 

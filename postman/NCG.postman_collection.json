@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "321a6787-f695-4bda-acb4-9a3920a78342",
-		"name": "NCG",
+		"name": "NHA",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -113,11 +113,72 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "51c7be74-e15f-4ee1-8a73-10d001796a21",
+								"id": "e24561e5-266e-41b3-9396-b1647b6b2b01",
 								"exec": [
-									"pm.test(\"Update auth creation token\", function () {",
-									"    var request = JSON.parse(pm.request.body.raw);",
-									"    pm.environment.set(\"USERNAME\", request.username);",
+									"pm.test(\"Update healthId and token\", function () {",
+									"    var response = pm.response.json();",
+									"    pm.environment.set(\"TOKEN\", response.token);",
+									"    pm.environment.set(\"HEALTH_ID\", response.healthId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{USER_TEMP_TOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\":\n\t{\n\t\t\"first\": \"Hina\", \n\t\t\"last\": \"Patel\", \n\t\t\"middle\": \"\"\n\t},\n\t\"dateOfBirth\":\n\t{ \n\t\t\"date\": 12, \n\t\t\"month\":12, \n\t\t\"year\":1979\n\t},\n\t\"gender\": \"F\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/profile",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Login Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4d3a337f-6734-4651-ac50-5516b35a9413",
+								"exec": [
+									"pm.test(\"Update user credentials\", function () {",
+									"    var request = JSON.parse(pm.request.body.raw);;",
+									"    pm.environment.set(\"USERNAME\", request.cmId);",
 									"    pm.environment.set(\"PASSWORD\", request.password);",
 									"});"
 								],
@@ -149,26 +210,20 @@
 						"method": "POST",
 						"header": [
 							{
-								"key": "Authorization",
-								"value": "{{USER_TEMP_TOKEN}}",
-								"type": "text"
-							},
-							{
 								"key": "Content-Type",
 								"name": "Content-Type",
 								"value": "application/json",
 								"type": "text"
 							},
 							{
-								"key": "",
-								"value": "",
-								"type": "text",
-								"disabled": true
+								"key": "Authorization",
+								"value": "{{TOKEN}}",
+								"type": "text"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\":{\n\t\t\"first\": \"Hina\", \n\t\t\"last\": \"Patel\", \n\t\t\"middle\": \"\"\n },\n\t\"username\": \"{{lowerfirstname}}.{{lowerlastname}}@ncg\",\n\t\"password\": \"{{$randomPassword}}#\",\n\t\"dateOfBirth\":{ \n\t\t\"date\": 12, \n\t\t\"month\":12, \n\t\t\"year\":1979\n},\n\t\"gender\": \"F\"\n}",
+							"raw": "{\n\t\"cmId\": \"{{lowerfirstname}}.{{lowerlastname}}@pmjay\",\n\t\"healthId\": \"{{HEALTH_ID}}\",\n\t\"password\": \"{{$randomPassword}}#\" \n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -176,13 +231,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{CM_HOST}}/patients/profile",
+							"raw": "{{CM_HOST}}/patients/profile/update-login-details",
 							"host": [
 								"{{CM_HOST}}"
 							],
 							"path": [
 								"patients",
-								"profile"
+								"profile",
+								"update-login-details"
 							]
 						}
 					},

@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
+import in.projecteka.consentmanager.user.model.User;
 import io.lettuce.core.RedisClient;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -174,13 +175,19 @@ public class UserConfiguration {
     }
 
     @Bean
+    public DummyHealthAccountService dummyHealthAccountService(UserRepository userRepository) {
+        return new DummyHealthAccountService(userRepository);
+    }
+
+    @Bean
     public HASSignupService hasSignupService(HASSignupServiceClient hasSignupServiceClient,
                                              UserRepository userRepository,
                                              SignUpService signUpService,
                                              TokenService tokenService,
                                              IdentityServiceClient identityServiceClient,
                                              SessionService sessionService,
-                                             OtpServiceProperties otpServiceProperties
+                                             OtpServiceProperties otpServiceProperties,
+                                             DummyHealthAccountService dummyHealthAccountService
     ) {
         return new HASSignupService(hasSignupServiceClient,
                 userRepository,
@@ -188,7 +195,8 @@ public class UserConfiguration {
                 tokenService,
                 identityServiceClient,
                 sessionService,
-                otpServiceProperties
+                otpServiceProperties,
+                dummyHealthAccountService
                 );
     }
 

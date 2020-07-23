@@ -15,6 +15,7 @@ import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
+import in.projecteka.consentmanager.user.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -59,6 +60,9 @@ class HASSignupServiceTest {
     @Mock
     private OtpServiceProperties otpServiceProperties;
 
+    @Mock
+    private DummyHealthAccountService dummyHealthAccountService;
+
     private HASSignupService hasSignupService;
 
     @BeforeEach
@@ -72,17 +76,17 @@ class HASSignupServiceTest {
                 tokenService,
                 identityServiceClient,
                 sessionService,
-                otpServiceProperties);
+                otpServiceProperties,
+                dummyHealthAccountService);
     }
 
     @Test
-    public void shouldCreateUser() {
+    public void shouldCreateNewUserOnHAS() {
         var signUpRequest = SignUpRequest.builder()
                 .name(PatientName.builder().first("hina").middle("").last("patel").build())
                 .dateOfBirth(DateOfBirth.builder().date(1).month(1).year(2020).build())
                 .gender(Gender.F)
                 .build();
-
         var hasUser = HealthAccountUser.builder()
                 .firstName("hina")
                 .middleName("")
@@ -95,48 +99,63 @@ class HASSignupServiceTest {
                 .gender("F")
                 .token("tempToken")
                 .build();
-
         var token = string();
         var mobileNumber = string();
 
+        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
         when(hasSignupServiceClient.createHASAccount(any(HASSignupRequest.class))).thenReturn(Mono.just(hasUser));
         when(signupService.getSessionId(anyString())).thenReturn(token);
         when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
-        when(userRepository.save(any(),anyString())).thenReturn(Mono.empty());
+        when(userRepository.save(any(), anyString())).thenReturn(Mono.empty());
         when(signupService.removeOf(anyString())).thenReturn(Mono.empty());
 
-        StepVerifier.create(hasSignupService.createHASAccount(signUpRequest,token))
+        StepVerifier.create(hasSignupService.createHASAccount(signUpRequest, token))
                 .assertNext(res -> {
                     assertThat(res.getHealthId()).isEqualTo("tempId");
                     assertThat(res.getToken()).isEqualTo("tempToken");
+                    assertThat(res.getCmId()).isEqualTo(null);
                 })
                 .verifyComplete();
     }
 
     @Test
-    public void shouldCreateUserForAllowedNumber() {
+    public void shouldCreateNewUserForAllowedNumber() {
         var signUpRequest = SignUpRequest.builder()
                 .name(PatientName.builder().first("hina").middle("").last("patel").build())
                 .dateOfBirth(DateOfBirth.builder().date(1).month(1).year(2020).build())
                 .gender(Gender.F)
                 .build();
-
         var token = string();
         var mobileNumber = "+91-9999999999";
+        HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(true)
+                .healthId(UUID.randomUUID().toString())
+                .token(UUID.randomUUID().toString())
+                .firstName("Hina")
+                .lastName("Patel")
+                .middleName("")
+                .dayOfBirth(6)
+                .monthOfBirth(12)
+                .yearOfBirth(1960)
+                .gender("F")
+                .build();
 
+        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
         when(signupService.getSessionId(anyString())).thenReturn(token);
         when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
         when(userRepository.save(any(HealthAccountUser.class), anyString())).thenReturn(Mono.empty());
         when(signupService.removeOf(anyString())).thenReturn(Mono.empty());
         when(otpServiceProperties.allowListNumbers()).thenReturn(Arrays.asList("+91-9999999999"));
+        when(dummyHealthAccountService.createHASAccount(any(HASSignupRequest.class))).thenReturn(Mono.just(healthAccountUser));
+
 
         StepVerifier.create(hasSignupService.createHASAccount(signUpRequest, token))
                 .assertNext(res -> {
-                    assertThat(res.getHealthId()).isNotEmpty();
-                    assertThat(res.getToken()).isNotEmpty();
+                    assertThat(res.getHealthId()).isEqualTo(healthAccountUser.getHealthId());
+                    assertThat(res.getToken()).isEqualTo(healthAccountUser.getToken());
+                    assertThat(res.getNewHASUser()).isTrue();
                 })
                 .verifyComplete();
-        verify(hasSignupServiceClient,never()).createHASAccount(any(HASSignupRequest.class));
+        verify(hasSignupServiceClient, never()).createHASAccount(any(HASSignupRequest.class));
     }
 
     @Test
@@ -146,7 +165,6 @@ class HASSignupServiceTest {
                 .dateOfBirth(DateOfBirth.builder().date(1).month(1).year(2020).build())
                 .gender(Gender.F)
                 .build();
-
         var token = string();
         var mobileNumber = string();
 
@@ -168,7 +186,6 @@ class HASSignupServiceTest {
                 .dateOfBirth(DateOfBirth.builder().date(1).month(1).year(2020).build())
                 .gender(Gender.F)
                 .build();
-
         var token = string();
         var mobileNumber = string();
 
@@ -184,13 +201,99 @@ class HASSignupServiceTest {
     }
 
     @Test
+    public void shouldReturnCMIdForExistingUser() {
+        var signUpRequest = SignUpRequest.builder()
+                .name(PatientName.builder().first("hina").middle("").last("patel").build())
+                .dateOfBirth(DateOfBirth.builder().date(1).month(1).year(2020).build())
+                .gender(Gender.F)
+                .build();
+        var hasUser = HealthAccountUser.builder()
+                .firstName("hina")
+                .middleName("")
+                .lastName("patel")
+                .dayOfBirth(1)
+                .monthOfBirth(1)
+                .yearOfBirth(2020)
+                .healthId("tempId")
+                .name("hina patel")
+                .gender("F")
+                .token("tempToken")
+                .newHASUser(false)
+                .build();
+        var user = User.builder().identifier("hinapatel00@pmjay").build();
+        var token = string();
+        String mobileNumber = string();
+
+        when(signupService.getSessionId(anyString())).thenReturn(token);
+        when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
+        when(hasSignupServiceClient.createHASAccount(any(HASSignupRequest.class))).thenReturn(Mono.just(hasUser));
+        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.just(user));
+        when(signupService.removeOf(anyString())).thenReturn(Mono.empty());
+
+        StepVerifier.create(hasSignupService.createHASAccount(signUpRequest, token))
+                .assertNext(res -> {
+                    assertThat(res.getHealthId()).isEqualTo("tempId");
+                    assertThat(res.getToken()).isEqualTo("tempToken");
+                    assertThat(res.getCmId()).isEqualTo("hinapatel00@pmjay");
+                    assertThat(res.getNewHASUser()).isEqualTo(false);
+                })
+                .verifyComplete();
+        verify(userRepository, never()).save(any(HealthAccountUser.class), anyString());
+    }
+
+    @Test
+    public void shouldReturnCMIdForExistingUserInCaseOfAllowedNumber() {
+        var signUpRequest = SignUpRequest.builder()
+                .name(PatientName.builder().first("hina").middle("").last("patel").build())
+                .dateOfBirth(DateOfBirth.builder().date(1).month(1).year(2020).build())
+                .gender(Gender.F)
+                .build();
+        var user = User.builder().identifier("hinapatel00@pmjay").healthId(UUID.randomUUID().toString())
+                .name(PatientName.builder().first("Hina").last("Patel").middle("").build())
+                .dateOfBirth(DateOfBirth.builder().date(7).month(4).year(1979).build())
+                .gender(Gender.valueOf("F"))
+                .build();
+        var token = string();
+        var mobileNumber = "+91-9999999999";
+        HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(false)
+                .healthId(UUID.randomUUID().toString())
+                .token(UUID.randomUUID().toString())
+                .firstName("Hina")
+                .lastName("Patel")
+                .middleName("")
+                .dayOfBirth(6)
+                .monthOfBirth(12)
+                .yearOfBirth(1960)
+                .gender("F")
+                .build();
+
+        when(signupService.getSessionId(anyString())).thenReturn(token);
+        when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
+        when(otpServiceProperties.allowListNumbers()).thenReturn(Arrays.asList("+91-9999999999"));
+        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.just(user));
+        when(dummyHealthAccountService.createHASAccount(any(HASSignupRequest.class)))
+                .thenReturn(Mono.just(healthAccountUser));
+        when(signupService.removeOf(anyString())).thenReturn(Mono.empty());
+
+
+        StepVerifier.create(hasSignupService.createHASAccount(signUpRequest, token))
+                .assertNext(res -> {
+                    assertThat(res.getHealthId()).isEqualTo(healthAccountUser.getHealthId());
+                    assertThat(res.getToken()).isEqualTo(healthAccountUser.getToken());
+                    assertThat(res.getNewHASUser()).isFalse();
+                })
+                .verifyComplete();
+        verify(userRepository, never()).save(any(HealthAccountUser.class), anyString());
+    }
+
+    @Test
     public void shouldUpdateLoginDetailsOnHAS() {
         var updateLoginRequestDetails = UpdateLoginDetailsRequest.builder().cmId("hinapatel456@pmjay")
                 .healthId("12345-12345-12345")
                 .password("Test@1243")
                 .build();
         var token = string();
-        var patientName = PatientName.builder().first("hina").middle("").last("patel").build();
+        var user = User.builder().name(PatientName.builder().first("hina").middle("").last("patel").build()).build();
         var session = session().build();
         String accessToken = format("Bearer %s", session.getAccessToken());
 
@@ -198,8 +301,8 @@ class HASSignupServiceTest {
         when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class))).thenReturn(Mono.empty());
         when(userRepository.updateCMId(anyString(), anyString()))
                 .thenReturn(Mono.empty());
-        when(userRepository.getNameByHealthId(updateLoginRequestDetails.getHealthId()))
-                .thenReturn(Mono.just(patientName));
+        when(userRepository.getPatientByHealthId(updateLoginRequestDetails.getHealthId()))
+                .thenReturn(Mono.just(user));
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(session));
         when(identityServiceClient.createUser(any(Session.class), any(KeycloakUser.class))).thenReturn(Mono.empty());
         when(sessionService.forNew(any(SessionRequest.class))).thenReturn(Mono.just(session));
@@ -218,15 +321,15 @@ class HASSignupServiceTest {
                 .password("Test@1243")
                 .build();
         var token = UUID.randomUUID().toString();
-        var patientName = PatientName.builder().first("hina").middle("").last("patel").build();
+        var user = User.builder().name(PatientName.builder().first("hina").middle("").last("patel").build()).build();
         var session = session().build();
         String accessToken = format("Bearer %s", session.getAccessToken());
 
         when(userRepository.userWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
         when(userRepository.updateCMId(anyString(), anyString()))
                 .thenReturn(Mono.empty());
-        when(userRepository.getNameByHealthId(updateLoginRequestDetails.getHealthId()))
-                .thenReturn(Mono.just(patientName));
+        when(userRepository.getPatientByHealthId(updateLoginRequestDetails.getHealthId()))
+                .thenReturn(Mono.just(user));
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(session));
         when(identityServiceClient.createUser(any(Session.class), any(KeycloakUser.class))).thenReturn(Mono.empty());
         when(sessionService.forNew(any(SessionRequest.class))).thenReturn(Mono.just(session));
@@ -236,7 +339,7 @@ class HASSignupServiceTest {
                     assertThat(res.getToken()).isEqualTo(accessToken);
                 })
                 .verifyComplete();
-        verify(hasSignupServiceClient,never()).updateHASAccount(any(UpdateHASUserRequest.class));
+        verify(hasSignupServiceClient, never()).updateHASAccount(any(UpdateHASUserRequest.class));
     }
 
     @Test
@@ -287,7 +390,7 @@ class HASSignupServiceTest {
         when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class))).thenReturn(Mono.empty());
         when(userRepository.updateCMId(anyString(), anyString()))
                 .thenReturn(Mono.empty());
-        when(userRepository.getNameByHealthId(updateLoginRequestDetails.getHealthId()))
+        when(userRepository.getPatientByHealthId(updateLoginRequestDetails.getHealthId()))
                 .thenReturn(Mono.empty());
 
         StepVerifier.create(hasSignupService.updateHASLoginDetails(updateLoginRequestDetails, token))
@@ -303,7 +406,7 @@ class HASSignupServiceTest {
                 .password("Test@1243")
                 .build();
         var token = string();
-        var patientName = PatientName.builder().first("hina").middle("").last("patel").build();
+        var user = User.builder().name(PatientName.builder().first("hina").middle("").last("patel").build()).build();
         var session = session().build();
 
 
@@ -311,8 +414,8 @@ class HASSignupServiceTest {
         when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class))).thenReturn(Mono.empty());
         when(userRepository.updateCMId(anyString(), anyString()))
                 .thenReturn(Mono.empty());
-        when(userRepository.getNameByHealthId(updateLoginRequestDetails.getHealthId()))
-                .thenReturn(Mono.just(patientName));
+        when(userRepository.getPatientByHealthId(updateLoginRequestDetails.getHealthId()))
+                .thenReturn(Mono.just(user));
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(session));
         when(identityServiceClient.createUser(any(Session.class), any(KeycloakUser.class)))
                 .thenReturn(Mono.empty());

@@ -15,6 +15,7 @@ public class User {
     private final DateOfBirth dateOfBirth;
     private final String phone;
     private final JsonArray unverifiedIdentifiers;
+    private final String healthId;
 
     public static User from(CoreSignUpRequest request, String mobileNumber) {
         return new User(request.getUsername().toLowerCase(),
@@ -22,6 +23,8 @@ public class User {
                 request.getGender(),
                 request.getDateOfBirth(),
                 mobileNumber,
-                request.getUnverifiedIdentifiers() != null ? new JsonArray(request.getUnverifiedIdentifiers()) : null);
+                request.getUnverifiedIdentifiers() != null ? new JsonArray(request.getUnverifiedIdentifiers()) : null,
+                null
+                );
     }
 }

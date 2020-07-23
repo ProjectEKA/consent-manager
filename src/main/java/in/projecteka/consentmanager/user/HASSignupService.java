@@ -4,20 +4,21 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.HASSignupServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
+import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.user.model.DateOfBirth;
+import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.GrantType;
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
+import in.projecteka.consentmanager.user.model.HealthAccountUser;
+import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.SignUpResponse;
 import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
-import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
-import in.projecteka.consentmanager.user.model.HealthAccountUser;
-import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.user.model.UserCredential;
 import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
@@ -35,6 +36,7 @@ public class HASSignupService {
     private final IdentityServiceClient identityServiceClient;
     private final SessionService sessionService;
     private final OtpServiceProperties otpServiceProperties;
+    private final DummyHealthAccountService dummyHealthAccountService;
 
     public Mono<SignUpResponse> createHASAccount(SignUpRequest signUpRequest, String token) {
         String sessionId = signUpService.getSessionId(token);
@@ -42,10 +44,12 @@ public class HASSignupService {
                 .flatMap(mobileNumber -> {
                     HASSignupRequest signupRequest = createHASSignupRequest(signUpRequest, token, sessionId);
                     return createAccount(signupRequest, mobileNumber)
-                            .flatMap(healthAccountUser -> userRepository.save(healthAccountUser, mobileNumber)
-                                    .then(signUpService.removeOf(sessionId))
-                                    .thenReturn(SignUpResponse.builder().healthId(healthAccountUser.getHealthId())
-                                            .token(healthAccountUser.getToken()).build()));
+                            .flatMap(healthAccountUser -> userRepository.getPatientByHealthId(healthAccountUser.getHealthId())
+                                    .flatMap(user -> signUpService.removeOf(sessionId)
+                                            .thenReturn(createSignUpResponse(healthAccountUser, user.getIdentifier())))
+                                    .switchIfEmpty(Mono.defer(() -> userRepository.save(healthAccountUser, mobileNumber))
+                                            .then(Mono.defer(() -> signUpService.removeOf(sessionId)))
+                                            .thenReturn(createSignUpResponse(healthAccountUser, null))));
                 });
     }
 
@@ -53,19 +57,21 @@ public class HASSignupService {
         if (!isNumberFromAllowedList(mobileNumber)) {
             return hasSignupServiceClient.createHASAccount(signupRequest);
         }
-        return Mono.just(
-                HealthAccountUser.builder()
-                .firstName(signupRequest.getFirstName())
-                .middleName(signupRequest.getMiddleName())
-                .lastName(signupRequest.getLastName())
-                .gender(signupRequest.getGender())
-                .dayOfBirth(signupRequest.getDayOfBirth())
-                .monthOfBirth(signupRequest.getMonthOfBirth())
-                .yearOfBirth(signupRequest.getYearOfBirth())
-                .healthId(UUID.randomUUID().toString())
-                .token(UUID.randomUUID().toString())
-                .build()
-        );
+        return dummyHealthAccountService.createHASAccount(signupRequest);
+    }
+
+    private SignUpResponse createSignUpResponse(HealthAccountUser user, String cmId) {
+        return SignUpResponse.builder().healthId(user.getHealthId()).token(user.getToken())
+                .dateOfBirth(DateOfBirth.builder().date(user.getDayOfBirth())
+                        .month(user.getMonthOfBirth()).year(user.getYearOfBirth()).build())
+                .patientName(PatientName.builder().first(user.getFirstName())
+                        .last(user.getLastName()).middle(user.getMiddleName()).build())
+                .gender(Gender.valueOf(user.getGender()))
+                .districtName(user.getDistrictName())
+                .stateName(user.getStateName())
+                .newHASUser(user.getNewHASUser())
+                .cmId(cmId)
+                .build();
     }
 
     private HASSignupRequest createHASSignupRequest(SignUpRequest signUpRequest, String token, String txnId) {
@@ -94,9 +100,9 @@ public class HASSignupService {
                     return Mono.empty();
                 }))
                 .then(Mono.defer(() -> userRepository.updateCMId(request.getHealthId(), request.getCmId())))
-                .then(Mono.defer(() -> userRepository.getNameByHealthId(request.getHealthId())))
+                .then(Mono.defer(() -> userRepository.getPatientByHealthId(request.getHealthId())))
                 .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.userNotFound())))
-                .flatMap(patientName -> Mono.just(new KeycloakUser(patientName.createFullName(),
+                .flatMap(patient -> Mono.just(new KeycloakUser(patient.getName().createFullName(),
                         request.getCmId(),
                         Collections.singletonList(new UserCredential(request.getPassword())),
                         Boolean.TRUE.toString()

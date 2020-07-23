@@ -259,6 +259,7 @@ public class UserService {
         return otpServiceClient.send(consentManagerIdNotification);
     }
 
+    //TODO : To be removed post completion of HAS integration
     public Mono<Void> create(CoreSignUpRequest coreSignUpRequest, String sessionId) {
         UserCredential credential = new UserCredential(coreSignUpRequest.getPassword());
         KeycloakUser keycloakUser = new KeycloakUser(

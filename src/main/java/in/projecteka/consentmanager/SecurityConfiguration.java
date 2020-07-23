@@ -224,10 +224,6 @@ public class SecurityConfiguration {
             if (isSignUpRequest(requestPath, requestMethod)) {
                 return checkSignUp(token).switchIfEmpty(error(unAuthorized()));
             }
-            if(isUpdateLoginDetailsRequest(requestPath,requestMethod)) {
-                // Token will be verified by HAS
-                return Mono.empty();
-            }
             if (isPinVerificationRequest(requestPath, requestMethod)) {
                 Optional<String> validScope = getScope(requestPath, requestMethod);
                 if (validScope.isEmpty()) {
@@ -315,10 +311,6 @@ public class SecurityConfiguration {
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
             return (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
                     (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod));
-        }
-
-        private boolean isUpdateLoginDetailsRequest(String url, HttpMethod httpMethod) {
-            return (("/patients/profile/update-login-details").equals(url) && HttpMethod.POST.equals(httpMethod));
         }
     }
 

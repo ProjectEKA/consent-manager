@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
@@ -26,7 +25,8 @@ public class UserRepository {
     private static final String SELECT_PATIENT = "select id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers " +
             "from patient where id = $1";
 
-    private static final String SELECT_NAME_BY_HEALTH_ID = "select first_name, middle_name, last_name from patient where health_id = $1";
+    private static final String SELECT_PATIENT_BY_HEALTH_ID = "select id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers \" +\n" +
+            "            \"from patient where health_id = $1";
 
     private static final String SELECT_PATIENT_BY_GENDER_MOB = "select id, first_name, middle_name, last_name, date_of_birth, month_of_birth, year_of_birth, unverified_identifiers from patient" +
             " where gender = $1 and phone_number = $2";
@@ -34,6 +34,9 @@ public class UserRepository {
     private final static String DELETE_PATIENT = "DELETE FROM patient WHERE id=$1";
 
     private final String UPDATE_CM_ID = "Update patient set id=$1 where health_id=$2";
+
+    private static final String SELECT_PATIENT_BY_NAME_GENDER = "select health_id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth " +
+            "from patient where first_name = $1 and last_name = $2 and gender = $3";
 
     private final PgPool dbClient;
 
@@ -155,9 +158,9 @@ public class UserRepository {
                         }));
     }
 
-    public Mono<PatientName> getNameByHealthId(String healthId) {
+    public Mono<User> getPatientByHealthId(String healthId) {
 
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_NAME_BY_HEALTH_ID)
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT_BY_HEALTH_ID)
                 .execute(Tuple.of(healthId),
                         handler -> {
                             if (handler.failed()) {
@@ -172,12 +175,24 @@ public class UserRepository {
                             }
                             var patientRow = patientIterator.next();
                             try {
-                                var patientName = PatientName.builder()
-                                        .first(patientRow.getString("first_name"))
-                                        .middle(patientRow.getString("middle_name"))
-                                        .last(patientRow.getString("last_name"))
+                                var user = User.builder()
+                                        .identifier(patientRow.getString("id"))
+                                        .name(PatientName.builder()
+                                                .first(patientRow.getString("first_name"))
+                                                .middle(patientRow.getString("middle_name"))
+                                                .last(patientRow.getString("last_name"))
+                                                .build()
+                                        )
+                                        .dateOfBirth(DateOfBirth.builder()
+                                                .date(patientRow.getInteger("date_of_birth"))
+                                                .month(patientRow.getInteger("month_of_birth"))
+                                                .year(patientRow.getInteger("year_of_birth"))
+                                                .build())
+                                        .unverifiedIdentifiers((JsonArray) patientRow.getValue("unverified_identifiers"))
+                                        .gender(Gender.valueOf(patientRow.getString("gender")))
+                                        .phone(patientRow.getString("phone_number"))
                                         .build();
-                                monoSink.success(patientName);
+                                monoSink.success(user);
                             } catch (Exception exc) {
                                 logger.error(exc.getMessage(), exc);
                                 monoSink.success();
@@ -188,5 +203,46 @@ public class UserRepository {
     public Mono<Void> updateCMId(String healthId, String cmId) {
         Tuple userDetails = Tuple.of(cmId, healthId);
         return doOperation(UPDATE_CM_ID, userDetails);
+    }
+
+    // This is to replicate HAS existing user feature
+    public Mono<User> getExistingUser(String firstName, String lastName, String gender) {
+
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT_BY_NAME_GENDER)
+                .execute(Tuple.of(firstName, lastName, gender),
+                        handler -> {
+                            if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
+                                monoSink.error(new DbOperationError());
+                                return;
+                            }
+                            var patientIterator = handler.result().iterator();
+                            if (!patientIterator.hasNext()) {
+                                monoSink.success();
+                                return;
+                            }
+                            var patientRow = patientIterator.next();
+                            try {
+                                var user = User.builder()
+                                        .healthId(patientRow.getString("health_id"))
+                                        .name(PatientName.builder()
+                                                .first(patientRow.getString("first_name"))
+                                                .middle(patientRow.getString("middle_name"))
+                                                .last(patientRow.getString("last_name"))
+                                                .build()
+                                        )
+                                        .dateOfBirth(DateOfBirth.builder()
+                                                .date(patientRow.getInteger("date_of_birth"))
+                                                .month(patientRow.getInteger("month_of_birth"))
+                                                .year(patientRow.getInteger("year_of_birth"))
+                                                .build())
+                                        .gender(Gender.valueOf(patientRow.getString("gender")))
+                                        .build();
+                                monoSink.success(user);
+                            } catch (Exception exc) {
+                                logger.error(exc.getMessage(), exc);
+                                monoSink.success();
+                            }
+                        }));
     }
 }

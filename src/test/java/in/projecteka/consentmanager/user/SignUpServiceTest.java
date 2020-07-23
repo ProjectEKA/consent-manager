@@ -4,7 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import in.projecteka.consentmanager.clients.model.OtpAction;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
-import in.projecteka.consentmanager.clients.model.OtpCreationDetail;
+import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
@@ -55,7 +55,7 @@ class SignUpServiceTest {
         var sessionId = easyRandom.nextObject(String.class);
         OtpRequest otpRequest = new OtpRequest(sessionId,
                 communicationData,
-                OtpCreationDetail
+                OtpGenerationDetail
                         .builder()
                         .systemName("PHR App")
                         .action(OtpAction.REGISTRATION.toString()).build());

@@ -5,7 +5,7 @@ import lombok.Value;
 
 @Value
 @Builder
-public class OtpCreationDetail {
+public class OtpGenerationDetail {
     private String systemName;
     private String action;
 }

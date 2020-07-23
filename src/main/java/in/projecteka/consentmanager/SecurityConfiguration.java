@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static in.projecteka.consentmanager.clients.ClientError.unAuthorized;
 import static in.projecteka.consentmanager.common.Constants.PATH_HEARTBEAT;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
@@ -51,7 +52,10 @@ import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Stream.of;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static reactor.core.publisher.Mono.empty;
+import static reactor.core.publisher.Mono.error;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -107,31 +111,31 @@ public class SecurityConfiguration {
         PIN_VERIFICATION_MATCHERS.add(changePinMatcher);
     }
 
+    private static final String[] ALLOWED_LIST_URLS = new String[]{"/**.json",
+                                                                   "/ValueSet/**.json",
+                                                                   "/patients/generateotp",
+                                                                   "/patients/verifyotp",
+                                                                   "/patients/profile/loginmode",
+                                                                   "/patients/profile/recovery-init",
+                                                                   "/patients/profile/recovery-confirm",
+                                                                   "/users/verify",
+                                                                   "/users/permit",
+                                                                   "/otpsession/verify",
+                                                                   "/otpsession/permit",
+                                                                   "/sessions",
+                                                                   PATH_HEARTBEAT,
+                                                                   "/**.html",
+                                                                   "/**.js",
+                                                                   "/**.yaml",
+                                                                   "/**.css",
+                                                                   "/**.png"};
+
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity httpSecurity,
             ReactiveAuthenticationManager authenticationManager,
             ServerSecurityContextRepository securityContextRepository) {
-
-        final String[] allowedListUrls = {"/**.json",
-                                          "/ValueSet/**.json",
-                                          "/patients/generateotp",
-                                          "/patients/verifyotp",
-                                          "/patients/profile/loginmode",
-                                          "/patients/profile/recovery-init",
-                                          "/patients/profile/recovery-confirm",
-                                          "/users/verify",
-                                          "/users/permit",
-                                          "/otpsession/verify",
-                                          "/otpsession/permit",
-                                          "/sessions",
-                                          PATH_HEARTBEAT,
-                                          "/**.html",
-                                          "/**.js",
-                                          "/**.yaml",
-                                          "/**.css",
-                                          "/**.png"};
-        httpSecurity.authorizeExchange().pathMatchers(allowedListUrls).permitAll();
+        httpSecurity.authorizeExchange().pathMatchers(ALLOWED_LIST_URLS).permitAll();
         httpSecurity.httpBasic().disable().formLogin().disable().csrf().disable().logout().disable();
         httpSecurity
                 .authorizeExchange()
@@ -199,28 +203,32 @@ public class SecurityConfiguration {
 
         @Override
         public Mono<SecurityContext> load(ServerWebExchange exchange) {
-            String requestPath = exchange.getRequest().getPath().toString();
-            HttpMethod requestMethod = exchange.getRequest().getMethod();
+            var requestPath = exchange.getRequest().getPath().toString();
+            if (isAllowedList(requestPath)) {
+                return empty();
+            }
 
+            var requestMethod = exchange.getRequest().getMethod();
             if (isGatewayAuthenticationOnly(requestPath, requestMethod)) {
-                return checkGateway(exchange.getRequest().getHeaders().getFirst(AUTHORIZATION));
+                return checkGateway(exchange.getRequest().getHeaders().getFirst(AUTHORIZATION))
+                        .switchIfEmpty(error(unAuthorized()));
             }
 
             var token = exchange.getRequest().getHeaders().getFirst(authorizationHeader);
             if (isEmpty(token)) {
-                return Mono.empty();
+                return error(unAuthorized());
             }
             if (isSignUpRequest(requestPath, requestMethod)) {
-                return checkSignUp(token);
+                return checkSignUp(token).switchIfEmpty(error(unAuthorized()));
             }
             if (isPinVerificationRequest(requestPath, requestMethod)) {
                 Optional<String> validScope = getScope(requestPath, requestMethod);
                 if (validScope.isEmpty()) {
-                    return Mono.empty();//TODO handle better?
+                    return empty();//TODO handle better?
                 }
-                return validatePinVerificationRequest(token, validScope.get());
+                return validatePinVerificationRequest(token, validScope.get()).switchIfEmpty(error(unAuthorized()));
             }
-            return check(token);
+            return check(token).switchIfEmpty(error(unAuthorized()));
         }
 
         private Mono<SecurityContext> checkGateway(String token) {
@@ -243,6 +251,12 @@ public class SecurityConfiguration {
                             token,
                             new ArrayList<>()))
                     .map(SecurityContextImpl::new);
+        }
+
+        private boolean isAllowedList(String url) {
+            AntPathMatcher antPathMatcher = new AntPathMatcher();
+            return of(ALLOWED_LIST_URLS)
+                    .anyMatch(pattern -> antPathMatcher.match(pattern, url));
         }
 
         private boolean isGatewayAuthenticationOnly(String url, HttpMethod method) {

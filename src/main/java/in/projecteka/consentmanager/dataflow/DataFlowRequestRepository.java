@@ -29,7 +29,7 @@ public class DataFlowRequestRepository {
             "(transaction_id, notification_request, request_id) VALUES ($1, $2, $3)";
     private static final String SELECT_TRANSACTION_ID = "SELECT transaction_id FROM health_info_notification WHERE " +
             "request_id=$1";
-    private static final String UPDATE_DATAFLOW_REQUEST_STATUS = "UPDATE data_flow_request SET status = $1 WHERE " +
+    private static final String UPDATE_DATA_FLOW_REQUEST_STATUS = "UPDATE data_flow_request SET status = $1 WHERE " +
             "transaction_id = $2";
 
     private final PgPool dbClient;
@@ -96,7 +96,7 @@ public class DataFlowRequestRepository {
 
     public Mono<Void> updateDataFlowRequestStatus(String transactionId, DataFlowRequestStatus status) {
         return Mono.create(monoSink ->
-                dbClient.preparedQuery(UPDATE_DATAFLOW_REQUEST_STATUS)
+                dbClient.preparedQuery(UPDATE_DATA_FLOW_REQUEST_STATUS)
                         .execute(Tuple.of(status.name(), transactionId),
                                 handler -> {
                                     if (handler.failed()) {

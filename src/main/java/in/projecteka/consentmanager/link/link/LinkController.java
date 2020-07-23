@@ -21,9 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
@@ -52,11 +49,11 @@ public class LinkController {
     public Mono<Void> onLinkCareContexts(@RequestBody PatientLinkReferenceResult patientLinkReferenceResult) {
         return Mono.just(patientLinkReferenceResult)
                 .filterWhen(res -> validator.validate(patientLinkReferenceResult.getRequestId().toString(),
-                        convertTimestampToLocalDateTimeUTC(patientLinkReferenceResult.getTimestamp()).toString()))
+                        patientLinkReferenceResult.getTimestamp().toString()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(res ->
                         validator.put(patientLinkReferenceResult.getRequestId().toString(),
-                                patientLinkReferenceResult.getTimestamp())
+                                patientLinkReferenceResult.getTimestamp().toString())
                                 .then(link.onLinkCareContexts(patientLinkReferenceResult)));
     }
 
@@ -87,12 +84,12 @@ public class LinkController {
     @PostMapping(PATH_LINK_ON_CONFIRM)
     public Mono<Void> onConfirmLink(@RequestBody @Valid LinkConfirmationResult confirmationResult) {
         return Mono.just(confirmationResult)
-                .filterWhen(req -> validator.validate(confirmationResult.getRequestId().toString()
-                        , convertTimestampToLocalDateTimeUTC(confirmationResult.getTimestamp()).toString()))
+                .filterWhen(req -> validator.validate(confirmationResult.getRequestId().toString(),
+                        confirmationResult.getTimestamp().toString()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(discard -> link.onConfirmLink(confirmationResult)
                         .then(validator.put(confirmationResult.getRequestId().toString(),
-                                confirmationResult.getTimestamp())));
+                                confirmationResult.getTimestamp().toString())));
     }
 
     @PostMapping(Constants.APP_PATH_LINK_INIT)
@@ -101,9 +98,5 @@ public class LinkController {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .flatMap(caller -> link.patientCareContexts(caller.getUsername(), patientLinkReferenceRequest));
-    }
-
-    private LocalDateTime convertTimestampToLocalDateTimeUTC(String timestamp) {
-        return LocalDateTime.ofInstant(Instant.parse(timestamp), ZoneOffset.UTC);
     }
 }

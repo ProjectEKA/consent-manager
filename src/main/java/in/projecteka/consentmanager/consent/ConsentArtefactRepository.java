@@ -24,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.StreamSupport;
@@ -199,12 +200,16 @@ public class ConsentArtefactRepository {
                                     fluxSink.next(ConsentExpiry.builder()
                                             .consentId(row.getString("consent_artefact_id"))
                                             .patientId(row.getString("patient_id"))
-                                            .consentExpiryDate(row.getLocalDateTime("consent_expiry_date"))
+                                            .consentExpiryDate(toDate(row.getString("consent_expiry_date")))
                                             .build());
                                 });
                             }
                             fluxSink.complete();
                         }));
+    }
+
+    private LocalDateTime toDate(String timestamp) {
+        return LocalDateTime.parse(timestamp, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
     public Mono<Void> updateStatus(String consentId, String consentRequestId, ConsentStatus status) {

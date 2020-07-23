@@ -2,7 +2,13 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
-import in.projecteka.consentmanager.clients.model.*;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.consentmanager.clients.model.Meta;
+import in.projecteka.consentmanager.clients.model.OtpAction;
+import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
+import in.projecteka.consentmanager.clients.model.OtpCreationDetail;
+import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
@@ -90,7 +96,13 @@ public class SessionService {
         return userRepository.userWith(otpVerificationRequest.getUsername())
                 .switchIfEmpty(error(ClientError.userNotFound()))
                 .map(user -> new OtpCommunicationData("mobile", user.getPhone()))
-                .map(otpCommunicationData -> new OtpRequest(sessionId, otpCommunicationData, OtpCreationDetail.builder().action(OtpAction.REGISTRATION.toString()).systemName(consentServiceProperties.getName()).build()))
+                .map(otpCommunicationData -> new OtpRequest(sessionId,
+                        otpCommunicationData,
+                        OtpCreationDetail
+                                .builder()
+                                .action(OtpAction.REGISTRATION.toString())
+                                .systemName(consentServiceProperties.getName())
+                                .build()))
                 .flatMap(requestBody ->
                         otpAttemptService.validateOTPRequest(requestBody.getCommunication().getMode(), requestBody.getCommunication().getValue(), OtpAttempt.Action.OTP_REQUEST_LOGIN, otpVerificationRequest.getUsername())
                                 .then(otpServiceClient.send(requestBody)

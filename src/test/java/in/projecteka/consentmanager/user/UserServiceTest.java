@@ -145,7 +145,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldReturnTemporarySessionReceivedFromClient() {
+    void shouldReturnTemporarySessionReceivedFromClient() {
         var userSignUpEnquiry = new UserSignUpEnquiry("MOBILE", "+91-9788888");
         var sessionId = string();
         var signUpSession = new SignUpSession(sessionId);
@@ -170,7 +170,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldReturnTokenReceivedFromClient() {
+    void shouldReturnTokenReceivedFromClient() {
         var sessionId = string();
         var otp = string();
         var token = string();

@@ -211,7 +211,7 @@ public class ClientError extends Throwable {
     }
 
     public static ClientError invalidDateRange() {
-        return new ClientError(UNAUTHORIZED,
+        return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_DATE_RANGE, "Date Range given is invalid")));
     }
 

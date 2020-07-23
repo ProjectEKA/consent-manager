@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.clients;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
@@ -24,6 +23,7 @@ import java.io.IOException;
 
 import static in.projecteka.consentmanager.clients.TestBuilders.string;
 import static in.projecteka.consentmanager.clients.TestBuilders.user;
+import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -61,7 +61,7 @@ class UserServiceClientTest {
                 .last("")
                 .build())
                 .build();
-        String patientResponseBody = new ObjectMapper().writeValueAsString(user);
+        String patientResponseBody = OBJECT_MAPPER.writeValueAsString(user);
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
                         .header("Content-Type", "application/json")

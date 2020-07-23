@@ -15,6 +15,7 @@ import in.projecteka.consentmanager.user.model.HealthAccountUser;
 import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
+import in.projecteka.consentmanager.user.model.UpdateHASAddressRequest;
 import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
 import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
@@ -28,6 +29,7 @@ import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -496,32 +498,250 @@ class HASSignupServiceTest {
                 .verify();
     }
 
-//    @Test
-//    public void shouldVerifyAadharOTP() {
-//        var token = string();
-//        var verifyAadharOtpRequest = VerifyAadharOtpRequest.builder().txnId("testTxnId").otp("666666").build();
-//        var sessionId = string();
-//        var mobileNumber = string();
-//        var hasUser = HealthAccountUser.builder()
-//                .healthId(string())
-//                .token(token)
-//                .dayOfBirth(1).build();
-//
-//        when(signupService.getSessionId(anyString())).thenReturn(sessionId);
-//        when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
-//        when(dummyHealthAccountService.createHASUser()).thenReturn(hasUser);
-//        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class))).thenReturn(Mono.just(hasUser));
-//        when(hasCache.put(anyString(),anyString())).thenReturn(Mono.empty());
-//        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
-//        when(userRepository.save(any(HealthAccountUser.class),anyString())).thenReturn(Mono.empty());
-//        when(signupService.removeOf(anyString())).thenReturn(Mono.empty());
-//
-//        StepVerifier.create(hasSignupService.verifyAadharOtp(verifyAadharOtpRequest,token))
-//                .assertNext(response -> {
-//                    assertThat(response.getHealthId()).isEqualTo(hasUser.getHealthId());
-//                    assertThat(response.getDateOfBirth().getDate()).isEqualTo(hasUser.getDayOfBirth());
-//                    assertThat(response.getToken()).isEqualTo(token);
-//                })
-//                .verifyComplete();
-//    }
+    @Test
+    public void shouldVerifyAadharOTPForAlreadyExistingUser() {
+        var verifyAadharOtpRequest = VerifyAadharOtpRequest.builder().txnId("testTxnId").otp("666666").build();
+        var sessionId = string();
+        var user = User.builder().identifier("hinapatel00@pmjay").healthId(UUID.randomUUID().toString())
+                .name(PatientName.builder().first("Hina").last("Patel").middle("").build())
+                .dateOfBirth(DateOfBirth.builder().date(7).month(4).year(1979).build())
+                .gender(Gender.valueOf("F"))
+                .build();
+        var token = string();
+        var mobileNumber = "+91-9999999999";
+        HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(false)
+                .healthId(UUID.randomUUID().toString())
+                .token(UUID.randomUUID().toString())
+                .firstName("Hina")
+                .lastName("Patel")
+                .middleName("")
+                .dayOfBirth(6)
+                .monthOfBirth(12)
+                .yearOfBirth(1960)
+                .gender("F")
+                .build();
+
+        when(signupService.getSessionId(anyString())).thenReturn(sessionId);
+        when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
+        when(dummyHealthAccountService.createHASUser()).thenReturn(healthAccountUser);
+        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class))).thenReturn(Mono.just(healthAccountUser));
+        when(hasCache.put(anyString(),anyString())).thenReturn(Mono.empty());
+        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.just(user));
+        when(userRepository.save(any(HealthAccountUser.class),anyString())).thenReturn(Mono.empty());
+        when(signupService.removeOf(anyString())).thenReturn(Mono.empty());
+
+        StepVerifier.create(hasSignupService.verifyAadharOtp(verifyAadharOtpRequest,token))
+                .assertNext(response -> {
+                    assertThat(response.getHealthId()).isEqualTo(healthAccountUser.getHealthId());
+                    assertThat(response.getDateOfBirth().getDate()).isEqualTo(healthAccountUser.getDayOfBirth());
+                    assertThat(response.getToken()).isEqualTo(healthAccountUser.getToken());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    public void shouldVerifyAadharOTPForNewUser() {
+        var verifyAadharOtpRequest = VerifyAadharOtpRequest.builder().txnId("testTxnId").otp("666666").build();
+        var sessionId = string();
+        var token = string();
+        var mobileNumber = "+91-9999999999";
+        HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(true)
+                .healthId(UUID.randomUUID().toString())
+                .token(UUID.randomUUID().toString())
+                .firstName("Hina")
+                .lastName("Patel")
+                .middleName("")
+                .dayOfBirth(6)
+                .monthOfBirth(12)
+                .yearOfBirth(1960)
+                .gender("F")
+                .build();
+
+        when(signupService.getSessionId(anyString())).thenReturn(sessionId);
+        when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
+        when(dummyHealthAccountService.createHASUser()).thenReturn(healthAccountUser);
+        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class))).thenReturn(Mono.just(healthAccountUser));
+        when(hasCache.put(anyString(),anyString())).thenReturn(Mono.empty());
+        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
+        when(userRepository.save(any(HealthAccountUser.class),anyString())).thenReturn(Mono.empty());
+        when(signupService.removeOf(anyString())).thenReturn(Mono.empty());
+
+        StepVerifier.create(hasSignupService.verifyAadharOtp(verifyAadharOtpRequest,token))
+                .assertNext(response -> {
+                    assertThat(response.getHealthId()).isEqualTo(healthAccountUser.getHealthId());
+                    assertThat(response.getDateOfBirth().getDate()).isEqualTo(healthAccountUser.getDayOfBirth());
+                    assertThat(response.getToken()).isEqualTo(healthAccountUser.getToken());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    public void shouldThrowErrorIfHasGivesError() {
+        var verifyAadharOtpRequest = VerifyAadharOtpRequest.builder().txnId("testTxnId").otp("666666").build();
+        var sessionId = string();
+        var token = string();
+        var mobileNumber = "+91-9999999998";
+        HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(true)
+                .healthId(UUID.randomUUID().toString())
+                .token(UUID.randomUUID().toString())
+                .firstName("Hina")
+                .lastName("Patel")
+                .middleName("")
+                .dayOfBirth(6)
+                .monthOfBirth(12)
+                .yearOfBirth(1960)
+                .gender("F")
+                .build();
+
+        when(signupService.getSessionId(anyString())).thenReturn(sessionId);
+        when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
+        when(dummyHealthAccountService.createHASUser()).thenReturn(healthAccountUser);
+        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class))).thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
+        when(hasCache.put(anyString(),anyString())).thenReturn(Mono.empty());
+        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
+        when(userRepository.save(any(HealthAccountUser.class),anyString())).thenReturn(Mono.empty());
+        when(signupService.removeOf(anyString())).thenReturn(Mono.empty());
+
+        StepVerifier.create(hasSignupService.verifyAadharOtp(verifyAadharOtpRequest,token))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is5xxServerError())
+                .verify();
+    }
+
+    @Test
+    public void shouldThrowErrorIfSessionIdIsNotPresent() {
+        var verifyAadharOtpRequest = VerifyAadharOtpRequest.builder().txnId("testTxnId").otp("666666").build();
+        var sessionId = string();
+        var token = string();
+        HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(true)
+                .healthId(UUID.randomUUID().toString())
+                .token(UUID.randomUUID().toString())
+                .firstName("Hina")
+                .lastName("Patel")
+                .middleName("")
+                .dayOfBirth(6)
+                .monthOfBirth(12)
+                .yearOfBirth(1960)
+                .gender("F")
+                .build();
+
+        when(signupService.getSessionId(anyString())).thenReturn(sessionId);
+        when(signupService.getMobileNumber(anyString())).thenReturn(Mono.empty());
+        when(dummyHealthAccountService.createHASUser()).thenReturn(healthAccountUser);
+        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class))).thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
+        when(hasCache.put(anyString(),anyString())).thenReturn(Mono.empty());
+        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
+        when(userRepository.save(any(HealthAccountUser.class),anyString())).thenReturn(Mono.empty());
+        when(signupService.removeOf(anyString())).thenReturn(Mono.empty());
+
+        StepVerifier.create(hasSignupService.verifyAadharOtp(verifyAadharOtpRequest,token))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is4xxClientError())
+                .verify();
+    }
+
+    @Test
+    void shouldUpdateAddressAfterVerifyingAadhar() {
+        var token = string();
+        var healthId = "healthId";
+        var user = User.builder().identifier("hinapatel00@pmjay").healthId(healthId)
+                .name(PatientName.builder().first("Hina").last("Patel").middle("").build())
+                .dateOfBirth(DateOfBirth.builder().date(7).month(4).year(1979).build())
+                .gender(Gender.valueOf("F"))
+                .build();
+        var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1").healthId(healthId).build();
+        HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(false)
+                .healthId(healthId)
+                .token(UUID.randomUUID().toString())
+                .firstName("Hina")
+                .lastName("Patel")
+                .middleName("")
+                .dayOfBirth(6)
+                .monthOfBirth(12)
+                .yearOfBirth(1960)
+                .gender("F")
+                .build();
+        when(hasCache.getIfPresent(healthId)).thenReturn(Mono.just("true"));
+        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.just(user));
+        when(hasSignupServiceClient.updateHASAddress(any(UpdateHASAddressRequest.class),anyString())).thenReturn(Mono.just(healthAccountUser));
+        StepVerifier.create(hasSignupService.updateHASAddress(addressRequest,token))
+                .assertNext(response -> {
+                    assertThat(response.getHealthId().equals(healthId));
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldThrowErrorIfHealthIdIsNotPresentInCache() {
+        var token = string();
+        var healthId = "healthId";
+        var user = User.builder().identifier("hinapatel00@pmjay").healthId(healthId)
+                .name(PatientName.builder().first("Hina").last("Patel").middle("").build())
+                .dateOfBirth(DateOfBirth.builder().date(7).month(4).year(1979).build())
+                .gender(Gender.valueOf("F"))
+                .build();
+        var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1").healthId(healthId).build();
+        HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(false)
+                .healthId(healthId)
+                .token(UUID.randomUUID().toString())
+                .firstName("Hina")
+                .lastName("Patel")
+                .middleName("")
+                .dayOfBirth(6)
+                .monthOfBirth(12)
+                .yearOfBirth(1960)
+                .gender("F")
+                .build();
+        when(hasCache.getIfPresent(healthId)).thenReturn(Mono.empty());
+        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.just(user));
+        when(hasSignupServiceClient.updateHASAddress(any(UpdateHASAddressRequest.class),anyString())).thenReturn(Mono.just(healthAccountUser));
+        StepVerifier.create(hasSignupService.updateHASAddress(addressRequest,token))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is4xxClientError())
+                .verify();
+    }
+
+    @Test
+    void shouldThrowErrorIfUserNotFoundInDB() {
+        var token = string();
+        var healthId = "healthId";
+        var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1").healthId(healthId).build();
+        HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(false)
+                .healthId(healthId)
+                .token(UUID.randomUUID().toString())
+                .firstName("Hina")
+                .lastName("Patel")
+                .middleName("")
+                .dayOfBirth(6)
+                .monthOfBirth(12)
+                .yearOfBirth(1960)
+                .gender("F")
+                .build();
+        when(hasCache.getIfPresent(healthId)).thenReturn(Mono.just("true"));
+        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
+        when(hasSignupServiceClient.updateHASAddress(any(UpdateHASAddressRequest.class),anyString())).thenReturn(Mono.just(healthAccountUser));
+        StepVerifier.create(hasSignupService.updateHASAddress(addressRequest,token))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is4xxClientError())
+                .verify();
+    }
+
+    @Test
+    void shouldThrowErrorIfHASGivesError() {
+        var token = string();
+        var healthId = "healthId";
+        var user = User.builder().identifier("hinapatel00@pmjay").healthId(healthId)
+                .name(PatientName.builder().first("Hina").last("Patel").middle("").build())
+                .dateOfBirth(DateOfBirth.builder().date(7).month(4).year(1979).build())
+                .gender(Gender.valueOf("F"))
+                .build();
+        var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1").healthId(healthId).build();
+        when(hasCache.getIfPresent(healthId)).thenReturn(Mono.just("true"));
+        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.just(user));
+        when(hasSignupServiceClient.updateHASAddress(any(UpdateHASAddressRequest.class),anyString())).thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
+        StepVerifier.create(hasSignupService.updateHASAddress(addressRequest,token))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is5xxServerError())
+                .verify();
+    }
 }

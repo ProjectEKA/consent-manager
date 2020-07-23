@@ -175,6 +175,7 @@ public class HASSignupService {
     public Mono<VerifyAadharOtpResponse> verifyAadharOtp(VerifyAadharOtpRequest request, String token) {
         var sessionId = signUpService.getSessionId(token);
         return signUpService.getMobileNumber(sessionId)
+                .switchIfEmpty(Mono.defer(() -> Mono.error(ClientError.invalidRequester("bad request"))))
                 .flatMap(mobileNumber -> (isNumberFromAllowedList(mobileNumber) ?
                         Mono.just(dummyHealthAccountService.createHASUser()) :
                         hasSignupServiceClient.verifyAadharOtp(request))

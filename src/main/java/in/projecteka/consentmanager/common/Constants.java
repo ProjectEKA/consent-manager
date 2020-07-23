@@ -29,6 +29,11 @@ public class Constants {
     public static final String PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH = "%s/links/link/confirm";
     public static final String PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH = "%s/links/link/init";
 
+    // Cache
+    public static final String GUAVA = "guava";
+
+    public static final String SERVICE_DOWN = "Service Down";
+
     private Constants() {
     }
 }

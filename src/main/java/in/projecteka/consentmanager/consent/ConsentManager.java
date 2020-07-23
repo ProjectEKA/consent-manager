@@ -232,6 +232,7 @@ public class ConsentManager {
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
         return validatePatient(patientId)
+                .then(validateDate(grantedConsents))
                 .then(validateHiTypes(in(grantedConsents)))
                 .then(validateConsentRequest(requestId, patientId))
                 .flatMap(consentRequest -> validateLinkedHips(patientId, grantedConsents)
@@ -243,6 +244,20 @@ public class ConsentManager {
                                                 consentRequest.getLastUpdated(),
                                                 consentRequest.getHiu())
                                                 .thenReturn(consentApprovalResponse(consents)))));
+    }
+
+    private Mono<Void> validateDate(List<GrantedConsent> grantedConsents){
+        boolean validDates = grantedConsents.stream().allMatch(grantedConsent -> isdateValidatedForNullAndFuture(grantedConsent));
+        if(!validDates)
+            return Mono.error(ClientError.invalidDateRange());
+        else
+            return Mono.empty();
+    }
+
+    private Boolean isdateValidatedForNullAndFuture(GrantedConsent grantedConsent){
+        return grantedConsent.getPermission().getDateRange().getFromDate() != null &&
+                grantedConsent.getPermission().getDateRange().getFromDate().isBefore(LocalDateTime.now(ZoneOffset.UTC)) &&
+                grantedConsent.getPermission().getDateRange().getToDate() != null;
     }
 
     private Mono<ConsentArtefactRepresentation> updateHipName(

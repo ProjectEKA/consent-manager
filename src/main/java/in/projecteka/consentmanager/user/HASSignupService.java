@@ -42,10 +42,10 @@ public class HASSignupService {
                 .flatMap(mobileNumber -> {
                     HASSignupRequest signupRequest = createHASSignupRequest(signUpRequest, token, sessionId);
                     return createAccount(signupRequest, mobileNumber)
-                            .flatMap(user -> userRepository.save(user, mobileNumber)
+                            .flatMap(healthAccountUser -> userRepository.save(healthAccountUser, mobileNumber)
                                     .then(signUpService.removeOf(sessionId))
-                                    .thenReturn(SignUpResponse.builder().healthId(user.getHealthId())
-                                            .token(user.getToken()).build()));
+                                    .thenReturn(SignUpResponse.builder().healthId(healthAccountUser.getHealthId())
+                                            .token(healthAccountUser.getToken()).build()));
                 });
     }
 
@@ -53,13 +53,19 @@ public class HASSignupService {
         if (!isNumberFromAllowedList(mobileNumber)) {
             return hasSignupServiceClient.createHASAccount(signupRequest);
         }
-        return Mono.just(HealthAccountUser.builder().firstName("Demo").lastName("Patient")
+        return Mono.just(
+                HealthAccountUser.builder()
+                .firstName(signupRequest.getFirstName())
+                .middleName(signupRequest.getMiddleName())
+                .lastName(signupRequest.getLastName())
+                .gender(signupRequest.getGender())
+                .dayOfBirth(signupRequest.getDayOfBirth())
+                .monthOfBirth(signupRequest.getMonthOfBirth())
+                .yearOfBirth(signupRequest.getYearOfBirth())
                 .healthId(UUID.randomUUID().toString())
-                .gender("F")
-                .dayOfBirth(5)
-                .monthOfBirth(11)
-                .yearOfBirth(1999)
-                .token(UUID.randomUUID().toString()).build());
+                .token(UUID.randomUUID().toString())
+                .build()
+        );
     }
 
     private HASSignupRequest createHASSignupRequest(SignUpRequest signUpRequest, String token, String txnId) {

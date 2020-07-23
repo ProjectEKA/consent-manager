@@ -4,6 +4,7 @@ import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
 import in.projecteka.consentmanager.user.model.HealthAccountUser;
+import in.projecteka.consentmanager.user.model.UpdateHASAddressRequest;
 import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import in.projecteka.consentmanager.user.model.VerifyAadharOtpRequest;
 import lombok.AllArgsConstructor;
@@ -78,6 +79,20 @@ public class HASSignupServiceClient {
                 .body(Mono.just(request), VerifyAadharOtpRequest.class)
                 .retrieve()
                 .onStatus(HttpStatus::is4xxClientError, clientResponse -> Mono.error(ClientError.invalidRequester("Invalid Request")))
+                .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                .bodyToMono(HealthAccountUser.class);
+    }
+
+
+    public Mono<HealthAccountUser> updateHASAddress(UpdateHASAddressRequest request, String token) {
+        return webClient
+                .post()
+                .uri(uriBuilder -> uriBuilder.path(HAS_ACCOUNT_UPDATE).build())
+                .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                .header("X-Token", token)
+                .body(Mono.just(request), UpdateHASAddressRequest.class)
+                .accept(APPLICATION_JSON)
+                .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                 .bodyToMono(HealthAccountUser.class);
     }

@@ -5,11 +5,12 @@ import in.projecteka.consentmanager.clients.HASSignupServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
-import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
-import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
-import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.common.Serializer;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
 import in.projecteka.consentmanager.user.model.GrantType;
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
 import in.projecteka.consentmanager.user.model.HealthAccountUser;
@@ -17,13 +18,13 @@ import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.SignUpResponse;
+import in.projecteka.consentmanager.user.model.UpdateHASAddressRequest;
 import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
 import in.projecteka.consentmanager.user.model.UserCredential;
-import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
-import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.VerifyAadharOtpRequest;
+import in.projecteka.consentmanager.user.model.VerifyAadharOtpResponse;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -43,6 +44,7 @@ public class HASSignupService {
     private final SessionService sessionService;
     private final OtpServiceProperties otpServiceProperties;
     private final DummyHealthAccountService dummyHealthAccountService;
+    private final CacheAdapter<String, String> hasCache;
 
     public Mono<SignUpResponse> createHASAccount(SignUpRequest signUpRequest, String token) {
         String sessionId = signUpService.getSessionId(token);
@@ -156,10 +158,7 @@ public class HASSignupService {
         return isValidAadhar(request.getAadhaar()) ?
                 signUpService.getMobileNumber(sessionId)
                         .filter(this::isNumberFromAllowedList)
-                        .flatMap(bool -> Mono.just(GenerateAadharOtpResponse.builder()
-                                .txnID(UUID.randomUUID().toString())
-                                .token(token)
-                                .build()))
+                        .flatMap(bool -> Mono.just(dummyHealthAccountService.createDummyGenerateAadharOtpResponse(token)))
                         .switchIfEmpty(Mono.defer(() -> hasSignupServiceClient.generateAadharOtp(request)
                                 .flatMap(response -> Mono.just(GenerateAadharOtpResponse.builder()
                                         .txnID(response.getTxnID())
@@ -173,12 +172,46 @@ public class HASSignupService {
         return aadhaar.matches(regex);
     }
 
-    public Mono<HealthAccountUser> verifyAadharOtp(VerifyAadharOtpRequest request, String token) {
+    public Mono<VerifyAadharOtpResponse> verifyAadharOtp(VerifyAadharOtpRequest request, String token) {
         var sessionId = signUpService.getSessionId(token);
         return signUpService.getMobileNumber(sessionId)
-                .filter(this::isNumberFromAllowedList)
-                .flatMap(res -> createHealthAccountUser())
-                .switchIfEmpty(Mono.defer(() -> hasSignupServiceClient.verifyAadharOtp(request)));
+                .flatMap(mobileNumber -> (isNumberFromAllowedList(mobileNumber) ?
+                        Mono.just(dummyHealthAccountService.createHASUser()) :
+                        hasSignupServiceClient.verifyAadharOtp(request))
+                        .flatMap(response -> hasCache.put(response.getHealthId(), response.getNewHASUser().toString())
+                                .then(userRepository.getPatientByHealthId(response.getHealthId())
+                                        .flatMap(patient -> Mono.just(createVerifyAadharOtpResponse(response)))
+                                        .switchIfEmpty(Mono.defer(()->userRepository.save(response, mobileNumber))
+                                                .thenReturn(createVerifyAadharOtpResponse(response))))))
+                .flatMap(response -> signUpService.removeOf(sessionId).thenReturn(response));
+    }
 
+    private VerifyAadharOtpResponse createVerifyAadharOtpResponse(HealthAccountUser user) {
+        return VerifyAadharOtpResponse.builder()
+                .healthId(user.getHealthId())
+                .name(PatientName.builder()
+                        .first(user.getFirstName())
+                        .middle(user.getMiddleName())
+                        .last(user.getLastName()).build())
+                .dateOfBirth(DateOfBirth.builder()
+                        .date(user.getDayOfBirth())
+                        .month(user.getMonthOfBirth())
+                        .year(user.getYearOfBirth()).build())
+                .gender(user.getGender())
+                .token(user.getToken())
+                .build();
+    }
+
+    public Mono<SignUpResponse> updateHASAddress(UpdateHASAddressRequest request, String token) {
+        return hasCache.getIfPresent(request.getHealthId())
+                .flatMap(newHasUser -> {
+                    var isNewUser = Serializer.to(newHasUser, Boolean.class);
+                    return Mono.just(isNewUser);
+                })
+                .flatMap(isNewUser ->
+                        userRepository.getPatientByHealthId(request.getHealthId())
+                                .flatMap(user -> hasSignupServiceClient.updateHASAddress(request, token)
+                                        .flatMap(hasUser -> Mono.just(createSignUpResponse(hasUser, user.getIdentifier())))))
+                .switchIfEmpty(Mono.error(ClientError.invalidRequester("Invalid Update Address Request")));
     }
 }

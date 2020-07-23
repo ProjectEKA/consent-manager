@@ -1,11 +1,13 @@
 package in.projecteka.consentmanager.user;
 
+import com.google.common.base.Verify;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.HASSignupServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
@@ -18,6 +20,7 @@ import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
 import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
 import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
 import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.consentmanager.user.model.VerifyAadharOtpRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -25,7 +28,9 @@ import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.user.TestBuilders.session;
@@ -67,6 +72,9 @@ class HASSignupServiceTest {
 
     private HASSignupService hasSignupService;
 
+    @Mock
+    private CacheAdapter<String, String> hasCache;
+
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
@@ -79,7 +87,8 @@ class HASSignupServiceTest {
                 identityServiceClient,
                 sessionService,
                 otpServiceProperties,
-                dummyHealthAccountService);
+                dummyHealthAccountService,
+                hasCache);
     }
 
     @Test
@@ -139,14 +148,18 @@ class HASSignupServiceTest {
                 .monthOfBirth(12)
                 .yearOfBirth(1960)
                 .gender("F")
+                .newHASUser(true)
                 .build();
+
+        var user = user();
 
         when(signupService.getSessionId(anyString())).thenReturn(token);
         when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
         when(userRepository.save(any(HealthAccountUser.class), anyString())).thenReturn(Mono.empty());
         when(signupService.removeOf(anyString())).thenReturn(Mono.empty());
-        when(otpServiceProperties.allowListNumbers()).thenReturn(Arrays.asList("+91-9999999999"));
+        when(otpServiceProperties.allowListNumbers()).thenReturn(Collections.singletonList("+91-9999999999"));
         when(dummyHealthAccountService.createHASAccount(any(HASSignupRequest.class))).thenReturn(Mono.just(healthAccountUser));
+        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
 
 
         StepVerifier.create(hasSignupService.createHASAccount(signUpRequest, token))
@@ -449,7 +462,7 @@ class HASSignupServiceTest {
     }
 
     @Test
-    public void shouldGenerateThrowErrorWhenAadharIsInvalid() {
+    public void shouldThrowErrorWhenAadharIsInvalid() {
         var token = string();
         var aadharOtpRequest = GenerateAadharOtpRequest.builder().aadhaar("12345678901").build();
         var aadharOtpResponse = GenerateAadharOtpResponse.builder().txnID("testTxnID").token(token).build();
@@ -465,4 +478,50 @@ class HASSignupServiceTest {
                         ((ClientError) throwable).getHttpStatus().is4xxClientError())
                 .verify();
     }
+
+    @Test
+    public void shouldThrowErrorWhenClientGivesError() {
+        var token = string();
+        var aadharOtpRequest = GenerateAadharOtpRequest.builder().aadhaar("123456789012").build();
+        var sessionId = string();
+        var mobileNumber = string();
+
+        when(signupService.getSessionId(token)).thenReturn(sessionId);
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
+        when(hasSignupServiceClient.generateAadharOtp(aadharOtpRequest)).thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
+
+        StepVerifier.create(hasSignupService.generateAadharOtp(aadharOtpRequest,token))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is5xxServerError())
+                .verify();
+    }
+
+//    @Test
+//    public void shouldVerifyAadharOTP() {
+//        var token = string();
+//        var verifyAadharOtpRequest = VerifyAadharOtpRequest.builder().txnId("testTxnId").otp("666666").build();
+//        var sessionId = string();
+//        var mobileNumber = string();
+//        var hasUser = HealthAccountUser.builder()
+//                .healthId(string())
+//                .token(token)
+//                .dayOfBirth(1).build();
+//
+//        when(signupService.getSessionId(anyString())).thenReturn(sessionId);
+//        when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
+//        when(dummyHealthAccountService.createHASUser()).thenReturn(hasUser);
+//        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class))).thenReturn(Mono.just(hasUser));
+//        when(hasCache.put(anyString(),anyString())).thenReturn(Mono.empty());
+//        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
+//        when(userRepository.save(any(HealthAccountUser.class),anyString())).thenReturn(Mono.empty());
+//        when(signupService.removeOf(anyString())).thenReturn(Mono.empty());
+//
+//        StepVerifier.create(hasSignupService.verifyAadharOtp(verifyAadharOtpRequest,token))
+//                .assertNext(response -> {
+//                    assertThat(response.getHealthId()).isEqualTo(hasUser.getHealthId());
+//                    assertThat(response.getDateOfBirth().getDate()).isEqualTo(hasUser.getDayOfBirth());
+//                    assertThat(response.getToken()).isEqualTo(token);
+//                })
+//                .verifyComplete();
+//    }
 }

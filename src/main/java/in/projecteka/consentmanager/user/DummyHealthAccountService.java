@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.user;
 
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
 import in.projecteka.consentmanager.user.model.HealthAccountUser;
 import in.projecteka.consentmanager.user.model.User;
@@ -27,6 +28,27 @@ public class DummyHealthAccountService {
                 .dayOfBirth(signupRequest.getDayOfBirth())
                 .monthOfBirth(signupRequest.getMonthOfBirth())
                 .yearOfBirth(signupRequest.getYearOfBirth())
+                .newHASUser(true)
+                .healthId(UUID.randomUUID().toString())
+                .token(UUID.randomUUID().toString()).build();
+    }
+
+    public GenerateAadharOtpResponse createDummyGenerateAadharOtpResponse(String token) {
+        return GenerateAadharOtpResponse.builder()
+                .txnID(UUID.randomUUID().toString())
+                .token(token)
+                .build();
+    }
+
+    public HealthAccountUser createHASUser() {
+        return HealthAccountUser.builder()
+                .firstName("Hina")
+                .middleName("")
+                .lastName("Patel")
+                .gender("F")
+                .dayOfBirth(12)
+                .monthOfBirth(12)
+                .yearOfBirth(1979)
                 .newHASUser(true)
                 .healthId(UUID.randomUUID().toString())
                 .token(UUID.randomUUID().toString()).build();

@@ -51,8 +51,6 @@ import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
-import static in.projecteka.consentmanager.user.Constants.HAS_ACCOUNT_UPDATE;
-import static in.projecteka.consentmanager.user.Constants.GENERATE_AADHAR_OTP;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -128,6 +126,7 @@ public class SecurityConfiguration {
                                                                    PATH_HEARTBEAT,
                                                                    "/patients/profile/update-login-details",
                                                                    "/patients/generate-aadhar-otp",
+                                                                   "/patients/verify-aadhar-otp",
                                                                    "/**.html",
                                                                    "/**.js",
                                                                    "/**.yaml",

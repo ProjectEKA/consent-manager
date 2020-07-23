@@ -7,7 +7,8 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 @Getter
-public class VerifyAadharOtpRequest {
-    private final String txnId;
-    private final String otp;
+public class UpdateHASAddressRequest {
+    private final String healthId;
+    private final String districtCode;
+    private final String stateCode;
 }

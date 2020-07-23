@@ -12,7 +12,6 @@ import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
 import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
 import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
-import in.projecteka.consentmanager.user.model.HealthAccountUser;
 import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierGroup;
 import in.projecteka.consentmanager.user.model.IdentifierType;
@@ -27,6 +26,7 @@ import in.projecteka.consentmanager.user.model.SendOtpAction;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.SignUpResponse;
 import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.UpdateHASAddressRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
 import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
@@ -34,6 +34,7 @@ import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.ValidatePinRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
 import in.projecteka.consentmanager.user.model.VerifyAadharOtpRequest;
+import in.projecteka.consentmanager.user.model.VerifyAadharOtpResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -290,10 +291,15 @@ public class PatientsController {
         return hasSignupService.generateAadharOtp(request,token);
     }
 
-    @ResponseStatus(CREATED)
     @PostMapping(Constants.VERIFY_AADHAR_OTP)
-    public Mono<HealthAccountUser> verifyAadharOtp(@RequestBody VerifyAadharOtpRequest request,
-                                                   @RequestHeader(name = "Authorization") String token) {
+    public Mono<VerifyAadharOtpResponse> verifyAadharOtp(@RequestBody VerifyAadharOtpRequest request,
+                                                         @RequestHeader(name = "Authorization") String token) {
         return hasSignupService.verifyAadharOtp(request,token);
+    }
+
+    @PostMapping(Constants.UPDATE_ADDRESS)
+    public Mono<SignUpResponse> updateHASAddress(@RequestBody UpdateHASAddressRequest request,
+                                                         @RequestHeader(name = "Authorization") String token) {
+        return hasSignupService.updateHASAddress(request,token);
     }
 }

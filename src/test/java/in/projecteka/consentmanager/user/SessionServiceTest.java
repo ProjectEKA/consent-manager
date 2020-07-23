@@ -76,13 +76,15 @@ class SessionServiceTest {
     }
 
     @Test
-    void returnSession() {
+    void shouldCreateLoginResponseForIdentityToken() {
         var sessionRequest = sessionRequest().grantType(GrantType.PASSWORD).build();
-        var expectedSession = session().build();
+        var session = session().build();
+        var expectedToken = "Bearer "+session.getAccessToken();
+
         when(lockedUserService.validateLogin(sessionRequest.getUsername())).thenReturn(Mono.empty());
         when(lockedUserService.removeLockedUser(sessionRequest.getUsername())).thenReturn(Mono.empty());
         when(tokenService.tokenForUser(sessionRequest.getUsername(), sessionRequest.getPassword()))
-                .thenReturn(Mono.just(expectedSession));
+                .thenReturn(Mono.just(session));
         var sessionService = new SessionService(tokenService,
                 blacklistedTokens,
                 unverifiedSessions,
@@ -95,7 +97,8 @@ class SessionServiceTest {
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
         StepVerifier.create(sessionPublisher)
-                .assertNext(session -> assertThat(session).isEqualTo(expectedSession))
+                .assertNext(loginResponse ->
+                        assertThat(loginResponse.getToken()).isEqualTo(expectedToken))
                 .verifyComplete();
         verify(lockedUserService, times(1)).validateLogin(sessionRequest.getUsername());
     }
@@ -180,11 +183,14 @@ class SessionServiceTest {
     @Test
     void returnRefreshToken() {
         var sessionRequest = sessionRequest().grantType(GrantType.REFRESH_TOKEN).build();
-        var expectedSession = session().build();
+        var session = session().build();
+        var expectedToken = "Bearer "+session.getAccessToken();
+
         when(lockedUserService.validateLogin(sessionRequest.getUsername())).thenReturn(Mono.empty());
         when(lockedUserService.removeLockedUser(sessionRequest.getUsername())).thenReturn(Mono.empty());
         when(tokenService.tokenForRefreshToken(sessionRequest.getUsername(), sessionRequest.getRefreshToken()))
-                .thenReturn(Mono.just(expectedSession));
+                .thenReturn(Mono.just(session));
+
         var sessionService = new SessionService(tokenService,
                 blacklistedTokens,
                 unverifiedSessions,
@@ -197,7 +203,9 @@ class SessionServiceTest {
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
         StepVerifier.create(sessionPublisher)
-                .assertNext(session -> assertThat(session).isEqualTo(expectedSession))
+                .assertNext(loginResponse ->
+                        assertThat(loginResponse.getToken()).isEqualTo(expectedToken)
+                )
                 .verifyComplete();
         verify(lockedUserService, times(1)).validateLogin(sessionRequest.getUsername());
     }

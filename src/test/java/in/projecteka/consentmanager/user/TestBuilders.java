@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.user.model.*;
+import lombok.extern.java.Log;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 import org.jeasy.random.FieldPredicates;
@@ -26,6 +27,10 @@ public class TestBuilders {
 
     public static Session.SessionBuilder session() {
         return easyRandom.nextObject(Session.SessionBuilder.class);
+    }
+
+    public static LoginResponse.LoginResponseBuilder loginResponse() {
+        return easyRandom.nextObject(LoginResponse.LoginResponseBuilder.class);
     }
 
     public static String string() {

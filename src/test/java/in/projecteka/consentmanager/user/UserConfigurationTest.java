@@ -2,7 +2,9 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
@@ -29,7 +31,19 @@ class UserConfigurationTest {
     private TokenService tokenService;
 
     @Mock
+    private OtpAttemptService otpAttemptService;
+
+    @Mock
+    private LockedUserService lockedUserService;
+
+    @Mock
     private UserServiceProperties properties;
+
+    @Mock
+    private UserServiceClient userServiceClient;
+
+    @Mock
+    private ConsentServiceProperties consentServiceProperties;
 
     private final UserConfiguration userConfiguration = new UserConfiguration();
 
@@ -42,7 +56,11 @@ class UserConfigurationTest {
                 signupService,
                 identityServiceClient,
                 tokenService,
-                properties))
+                properties,
+                otpAttemptService,
+                lockedUserService,
+                userServiceClient,
+                consentServiceProperties))
                 .isInstanceOf(UserService.class);
     }
 }

@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager;
 
 import com.nimbusds.jose.jwk.JWKSet;
+import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
@@ -60,6 +61,10 @@ public class AuthorizationTest {
     @SuppressWarnings("unused")
     @MockBean(name = "identityServiceJWKSet")
     private JWKSet identityServiceJWKSet;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private ConceptValidator conceptValidator;
 
     @BeforeEach
     public void setUp() {

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
@@ -19,9 +19,9 @@ import java.util.Date;
 public class AccessPeriod implements Serializable {
     @JsonProperty("from")
     @NotNull(message = "From Date is not specified.")
-    private Date fromDate;
+    private LocalDateTime fromDate;
 
     @JsonProperty("to")
     @NotNull(message = "To Date is not specified.")
-    private Date toDate;
+    private LocalDateTime toDate;
 }

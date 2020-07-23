@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -16,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 public class HIPConsentArtefact implements Serializable {
     private String consentId;
-    private Date createdAt;
+    private LocalDateTime createdAt;
     private ConsentPurpose purpose;
     private PatientReference patient;
     private CMReference consentManager;

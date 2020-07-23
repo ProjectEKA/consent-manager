@@ -8,12 +8,12 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+
 @Getter
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode
-public class DataFlowRequest {
-    private final String transactionId;
+public class HiRequest {
     private final Consent consent;
     private final DateRange dateRange;
     private final String dataPushUrl;

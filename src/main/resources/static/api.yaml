@@ -739,6 +739,51 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /consent-artefacts:
+    get:
+      tags:
+        - consent
+      summary: List all consent artefacts
+      description: Return list of consent artefacts which are matching filter criteria.
+      operationId: listConsentArtefacts
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/status'
+      responses:
+        '200':
+          description: List of consent artefacts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentArtefactResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ConsentArtefactResponse'
+        '401':
+          description:  >
+            **Causes:**
+              * Expired/Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /health-information/request:
     post:
@@ -801,6 +846,124 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /patients/generateotp:
+    post:
+      tags:
+        - account
+      summary: Generate OTP for the user
+      description: Generates OTP for the given user and sent to the users' verified identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateOtpRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/GenerateOtpRequest'
+      responses:
+        '200':
+          description: Details of the session and otp are sent in response. otpMedium defines verified identifier where it would be sent to. Its value is mentioned in otpMediumValue. OTP has an expiry time in minutes which is also sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateOtpResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/GenerateOtpResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Verified identifier is non existent for the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: >
+            **Causes:**
+              * User does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patients/verifyotp:
+    post:
+      tags:
+        - account
+      summary: Verify OTP of the user for reset-password user flow
+      description: Verifies OTP for the given user as part of reset-password flow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOtpRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/VerifyOtpRequest'
+      responses:
+        '200':
+          description: A temporary token which will allow the user to reset profile password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyOtpResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/VerifyOtpResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Verified identifier is non existent for the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: >
+            **Causes:**
+              * User does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /patients/enquiries:
     post:
       tags:
@@ -1003,10 +1166,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PinVerificationRequest'
+              $ref: '#/components/schemas/ValidatePinRequest'
           application/xml:
             schema:
-              $ref: '#/components/schemas/PinVerificationRequest'
+              $ref: '#/components/schemas/ValidatePinRequest'
       responses:
         '200':
           description: Successful verification of PIN.
@@ -1022,6 +1185,62 @@ paths:
             **Causes:**
               * Token is invalid
               * PIN is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /patients/change-pin:
+    post:
+      tags:
+        - account
+      summary: Change PIN
+      description: to change the transaction PIN.
+      parameters:
+        - name: Authorization
+          description: Token received after successful verification of PIN
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePinRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/ChangePinRequest'
+      responses:
+        '200':
+          description: PIN updated successfully.
+        '400':
+          description: Bad request (Invalid PIN)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description:  >
+            **Causes:**
+              * Invalid token.
           content:
             application/json:
               schema:
@@ -1063,8 +1282,197 @@ paths:
             schema:
               $ref: '#/components/schemas/CreatePatientRequest'
       responses:
-        '200':
+        '201':
           description: Profile created successfully.
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Invalid/expired token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patients/profile/recovery-init:
+    post:
+      tags:
+        - account
+      summary: Initiates the recover CM Id process and generates OTP on success
+      description: Initiates the recover CM Id process generates OTP on success
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoverCmIdRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/RecoverCmIdRequest'
+      responses:
+        '200':
+          description: Details of the session and otp are sent in response. otpMedium defines verified identifier where it would be sent to. Its value is mentioned in otpMediumValue. OTP has an expiry time in minutes which is also sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateOtpResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/GenerateOtpResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Verified identifier is non existent for the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: >
+            **Causes:**
+              * No Patients found
+              * Multiple patients found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patients/profile/recovery-confirm:
+    post:
+      tags:
+        - account
+      summary: Verify OTP of the user generated by recovery-init and reveals CM Id on successfull verification of OTP
+      description: Verify OTP of the user generated by recovery-init and reveals CM Id on successfull verification of OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOtpRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/VerifyOtpRequest'
+      responses:
+        '200':
+          description: Found a patient
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryVerifyOtpResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/RecoveryVerifyOtpResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Verified identifier is non existent for the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: >
+            **Causes:**
+              * User does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patients/profile/reset-password:
+    put:
+      tags:
+        - account
+      summary: Update Account
+      description: Profile password is updated with the given value.
+      parameters:
+        - name: Authorization
+          description: Token received after successful verification of OTP.
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePatientRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/UpdatePatientRequest'
+      responses:
+        '200':
+          description: Profile updated successfully.
           content:
             application/json:
               schema:
@@ -1087,6 +1495,115 @@ paths:
           description: >
             **Causes:**
               * Invalid/expired token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patients/profile/loginmode:
+    get:
+      tags:
+        - account
+      summary: Get login type of the given user
+      description: Fetch a login type associated with the user-name
+      operationId: fetchLoginMode
+      parameters:
+        - name: userName
+          in: query
+          required: true
+          schema:
+            type: string
+            format: string
+            example: raj.sharma@ncg
+      responses:
+        '200':
+          description: Login mode of the user. If the mode is CREDENTIAL, it signifies that the consent-manager id of the user has the password set. Otherwise, user logs in via OTP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginModeResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/LoginModeResponse'
+        '404':
+          description: User doesn't exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream system(s) is down.
+              * Unhandled exceptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+  /patients/profile/update-password:
+    put:
+      tags:
+        - account
+      summary: Update password
+      description: Profile password is updated with the given new password.
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfilePassword'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/UpdateProfilePassword'
+      responses:
+        '200':
+          description: Password updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Invalid new password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            **Causes:**
+              * Invalid old password.
           content:
             application/json:
               schema:
@@ -1208,6 +1725,74 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   # Sessions
+  /otpsession/verify:
+    post:
+      description: |
+        Request Otp for consent manager id.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OtpVerificationRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/OtpVerificationRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OtpVerificationResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/OtpVerificationResponse'
+        404:
+          description: User Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Error(On server side)
+  /otpsession/permit:
+    post:
+      description: |
+        validate otp.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OtpPermitRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/OtpPermitRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Error(On server side)
   /logout:
     post:
       description: |
@@ -1237,6 +1822,52 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Error(On server side) in logging out
+
+  /sessions:
+    post:
+      summary: Login for users.
+      description: All the users can login. User types are super admin/admin/lab assistants.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: User login successfull.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   parameters:
@@ -1270,6 +1901,21 @@ components:
       schema:
         type: integer
         format: int32
+    status:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+      description: >
+        1. Query string parameter restricts the data returned from your request.
+        2. Possible values of status
+            | status | logic |
+            | ------ | ------ |
+            | GRANTED | Gets all Granted consent artefacts |
+            | EXPIRED | Gets all Expired consent artefacts |
+            | REVOKED | Gets all Revoked consent artefacts |
+            | ALL | Gets all consent artefacts |
     filters:
       name: filters
       in: query
@@ -1310,6 +1956,21 @@ components:
         format: uuid
       required: true
   schemas:
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          format: text
+        password:
+          type: string
+          format: text
+        grantType:
+          type: string
+          format: text
+          example: password/refreshToken
+        refreshToken:
+          type: string
     PatientDiscoveryRepresentation:
       type: object
       properties:
@@ -1368,6 +2029,9 @@ components:
     PatientDiscoveryRequest:
       type: object
       properties:
+        requestId:
+          type: string
+          format: uuid
         hip:
           type: object
           properties:
@@ -1385,8 +2049,12 @@ components:
     PatientLinkReferenceRequest:
       type: object
       properties:
+        requestId:
+          type: string
+          format: uuid
         transactionId:
           type: string
+          format: uuid
         patient:
           $ref: '#/components/schemas/Patient'
       xml:
@@ -1550,6 +2218,10 @@ components:
           type: string
           xml:
             attribute: true
+        name:
+          type: string
+          xml:
+            attribute: true
       xml:
         name: OrganizationResponse
     Organization:
@@ -1692,6 +2364,9 @@ components:
     ConsentRequest:
       type: object
       properties:
+        requestId:
+          type: string
+          format: uuid
         consent:
           type: object
           required:
@@ -1752,6 +2427,7 @@ components:
       type: object
       required:
         - id
+        - name
       properties:
         id:
           type: string
@@ -1869,6 +2545,20 @@ components:
         signature:
           type: string
           example: Signature of CM as defined in W3C standards; Base64 encoded
+    ConsentArtefactResponse:
+      type: object
+      properties:
+        limit:
+          type: integer
+        size:
+          type: integer
+        offset:
+          type: integer
+        consentArtefacts:
+          $ref: '#/components/schemas/ConsentArtefacts'
+        signature:
+          type: string
+          example: Signature of CM as defined in W3C standards; Base64 encoded
     HealthInformationRequest:
       type: object
       required:
@@ -1949,6 +2639,54 @@ components:
         keyValue:
           type: string
           format: string
+
+    GenerateOtpRequest:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+          format: string
+          example: raj.sharma@ncg
+    GenerateOtpResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        otpMedium:
+          type: string
+          enum: [MOBILE | EMAIL]
+          example: MOBILE
+        otpMediumValue:
+          type: string
+          format: string
+          example: 9999999999
+        expiryInMinutes:
+          type: integer
+          example: 5
+    VerifyOtpRequest:
+      type: object
+      required:
+        - sessionId
+        - value
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          example: 6357247d-6b9d-425e-a9a5-6ba9915c12ea
+        value:
+          type: integer
+          example: 666666
+          description: '6 digit number'
+    VerifyOtpResponse:
+      type: object
+      properties:
+        temporaryToken:
+          type: string
+          description: JWT Token
     MobileNumberEnquiryRequest:
       type: object
       required:
@@ -1994,10 +2732,11 @@ components:
           type: string
           example: user@ncg
         name:
-          type: string
-          example: Raj Sharma
+          $ref: '#/components/schemas/PatientName'
         gender:
           $ref: '#/components/schemas/Gender'
+        dateOfBirth:
+          $ref: '#/components/schemas/DateOfBirth'
         hasTransactionPin:
           type: boolean
         verifiedIdentifiers:
@@ -2018,8 +2757,17 @@ components:
             name: unverifiedIdentifiers
             wrapped: true
           example:
-            type: "PAN"
-            value: "EEE****00J"
+            [
+            {type: "PAN", value: "EEE****00J"},
+            {type: "ABPMJAYID", value: "P1234ABCD"}
+            ]
+    LoginModeResponse:
+      type: object
+      properties:
+        loginType:
+          type: string
+          enum: [CREDENTIAL, OTP]
+          example: CREDENTIAL | OTP
     IdentifierReference:
       type: object
       properties:
@@ -2031,13 +2779,14 @@ components:
         name: Identifier
     IdentifierType:
       type: string
-      enum: [MOBILE, PAN]
+      enum: [MOBILE, PAN, ABPMJAYID]
     Gender:
       type: string
       enum:
         - M
         - F
         - O
+        - U
     CreatePinRequest:
       type: object
       properties:
@@ -2048,7 +2797,25 @@ components:
           description: '4 digit number'
       required:
         - pin
-    PinVerificationRequest:
+    ValidatePinRequest:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        pin:
+          type: string
+          maximum: 9999
+          example: "1234"
+          description: '4 digit number'
+        scope:
+          type: string
+          enum: [consentrequest.approve, consent.revoke, profile.changepin]
+          description: 'Scope the supplied token will be valid for'
+      required:
+        - pin
+        - scope
+    ChangePinRequest:
       type: object
       properties:
         pin:
@@ -2062,16 +2829,14 @@ components:
       type: object
       properties:
         name:
-          type: string
-          example: Raj Sharma
+          $ref: '#/components/schemas/PatientName'
         username:
           type: string
           example: raj.sharma@ncg
         password:
           type: string
-        yearOfBirth:
-          type: integer
-          example: 2000
+        dateOfBirth:
+          $ref: '#/components/schemas/DateOfBirth'
         gender:
           $ref: '#/components/schemas/Gender'
       required:
@@ -2079,6 +2844,85 @@ components:
         - username
         - password
         - gender
+    PatientName:
+      type: object
+      properties:
+        first:
+          type: string
+          example: Raj
+        last:
+          type: string
+          example: Kumar
+        middle:
+          type: string
+          example: Sharma
+      required:
+        - first
+    DateOfBirth:
+      type: object
+      properties:
+        date:
+          type: integer
+          example: 01
+        month:
+          type: integer
+          example: 01
+        year:
+          type: integer
+          example: 01
+      required:
+        - year
+    RecoverCmIdRequest:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/PatientName'
+        gender:
+          $ref: '#/components/schemas/Gender'
+        dateOfBirth:
+          $ref: '#/components/schemas/DateOfBirth'
+        verifiedIdentifiers:
+          description: verified identifiers are passed
+          type: array
+          items:
+            $ref: '#/components/schemas/VerifiedIdentifiers'
+          xml:
+            name: verifiedIdentifiers
+            wrapped: true
+        unverifiedIdentifiers:
+          description: additional unverified identifiers may be passed
+          type: array
+          items:
+            $ref: '#/components/schemas/UnverifiedIdentifiers'
+          xml:
+            name: unverifiedIdentifiers
+            wrapped: true
+      required:
+        - name
+        - gender
+        - verifiedIdentifiers
+    RecoveryVerifyOtpResponse:
+      type: object
+      properties:
+        cmId:
+          type: string
+    UpdatePatientRequest:
+      type: object
+      properties:
+        password:
+          type: string
+      required:
+        - password
+    UpdateProfilePassword:
+      type: object
+      properties:
+        oldPassword:
+          type: string
+        newPassword:
+          type: string
+      required:
+        - oldPassword
+        - newPassword
     AuthResponse:
       type: object
       properties:
@@ -2111,6 +2955,9 @@ components:
     HINotification:
       type: object
       properties:
+        requestId:
+          type: string
+          format: uuid
         transactionId:
           type: string
         consentId:
@@ -2162,6 +3009,31 @@ components:
     PatientIdentifierType:
       type: string
       enum: [MOBILE, MR]
+    VerifiedIdentifiers:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/VerifiedIdentifierType'
+        value:
+          type: string
+          example: "+919800083232"
+      xml:
+        name: Identifier
+    VerifiedIdentifierType:
+      type: string
+      enum: [MOBILE]
+    UnverifiedIdentifiers:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/UnverifiedIdentifierType'
+        value:
+          type: string
+      xml:
+        name: Identifier
+    UnverifiedIdentifierType:
+      type: string
+      enum: [PMJAY ID]
     ConsentDenyRequest:
       type: object
       properties:
@@ -2172,3 +3044,30 @@ components:
       properties:
         refreshToken:
           type: string
+    OtpVerificationRequest:
+      type: object
+      properties:
+        username:
+          type: string
+      required:
+        - username
+    OtpVerificationResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+    OtpPermitRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        sessionId:
+          type: string
+        otp:
+          type: string
+      required:
+        - username
+        - otp
+        - sessionId

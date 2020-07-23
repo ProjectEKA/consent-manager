@@ -10,7 +10,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Future;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
@@ -25,9 +25,10 @@ public class ConsentPermission implements Serializable {
     @NotNull(message = "Permission period is not specified.")
     private AccessPeriod dateRange;
 
+    @Valid
     @NotNull(message = "Permission expiry is not specified.")
     @Future(message = "Permission expiry must be in future.")
-    private Date dataEraseAt;
+    private LocalDateTime dataEraseAt;
 
     @Valid
     private DataFrequency frequency;

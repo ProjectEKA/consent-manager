@@ -9,9 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIP_CONSENT_NOTIFICATION_QUEUE;
-import static in.projecteka.consentmanager.ConsentManagerConfiguration.HIU_CONSENT_NOTIFICATION_QUEUE;
-import static in.projecteka.consentmanager.clients.ClientError.queueNotFound;
+import static in.projecteka.consentmanager.common.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
 
 @AllArgsConstructor
 public class ConsentNotificationPublisher {
@@ -32,11 +31,6 @@ public class ConsentNotificationPublisher {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig.getQueues()
                 .get(HIU_CONSENT_NOTIFICATION_QUEUE);
 
-        if (destinationInfo == null) {
-            String errorMessage = String.format("%s %s", HIU_CONSENT_NOTIFICATION_QUEUE, " not found");
-            logger.error(errorMessage);
-            throw queueNotFound();
-        }
         sendMessage(message, destinationInfo.getExchange(), destinationInfo.getRoutingKey());
         logger.info("Broadcasting consent artefact notification for Request Id: {}",
                 message.getConsentRequestId());
@@ -47,17 +41,13 @@ public class ConsentNotificationPublisher {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig.getQueues()
                 .get(HIP_CONSENT_NOTIFICATION_QUEUE);
 
-        if (destinationInfo == null) {
-            String errorMessage = String.format("%s %s", HIP_CONSENT_NOTIFICATION_QUEUE, " not found");
-            logger.error(errorMessage);
-            throw queueNotFound();
-        }
         message.getConsentArtefacts()
                 .forEach(consentArtefact -> {
                     sendMessage(consentArtefact, destinationInfo.getExchange(), destinationInfo.getRoutingKey());
                     logger.info(
                             "Broadcasting consent artefact notification to hip for consent artefact: {}",
-                            consentArtefact.getConsentDetail().getConsentId());
+                            consentArtefact.getConsentId()
+                    );
                 });
     }
 

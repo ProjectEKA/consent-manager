@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 
@@ -15,4 +16,6 @@ import java.io.Serializable;
 public class HIPReference implements Serializable {
     @NotEmpty(message = "HIP identifier is not specified.")
     private String id;
+    @Nullable
+    private String name;
 }

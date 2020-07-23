@@ -1,5 +1,7 @@
 package in.projecteka.consentmanager.user.model;
 
+import in.projecteka.consentmanager.user.IdentifierUtils;
+
 public enum IdentifierType {
     MOBILE {
         @Override
@@ -16,4 +18,8 @@ public enum IdentifierType {
     };
 
     public abstract boolean isValid(String value);
+
+    public IdentifierGroup getIdentifierGroup() {
+        return IdentifierUtils.identifierTypeGroupMap.get(this);
+    }
 }

@@ -5,14 +5,14 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
-import in.projecteka.consentmanager.common.cache.RedisOptions;
+import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -34,14 +34,22 @@ public class UserConfiguration {
                                    SignUpService signupService,
                                    IdentityServiceClient identityServiceClient,
                                    TokenService tokenService,
-                                   UserServiceProperties userServiceProperties) {
+                                   UserServiceProperties userServiceProperties,
+                                   OtpAttemptService otpAttemptService,
+                                   LockedUserService lockedUserService,
+                                   UserServiceClient userServiceClient,
+                                   ConsentServiceProperties consentServiceProperties) {
         return new UserService(userRepository,
                 otpServiceProperties,
                 otpServiceClient,
                 signupService,
                 identityServiceClient,
                 tokenService,
-                userServiceProperties);
+                userServiceProperties,
+                otpAttemptService,
+                lockedUserService,
+                userServiceClient,
+                consentServiceProperties);
     }
 
     @Bean
@@ -50,40 +58,38 @@ public class UserConfiguration {
     }
 
     @Bean
-    public OtpServiceClient otpServiceClient(WebClient.Builder builder,
-                                             OtpServiceProperties otpServiceProperties) {
-        return new OtpServiceClient(builder, otpServiceProperties.getUrl());
-    }
-
-    @Bean
-    public IdentityServiceClient keycloakClient(WebClient.Builder builder,
+    public IdentityServiceClient keycloakClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                 IdentityServiceProperties identityServiceProperties) {
         return new IdentityServiceClient(builder, identityServiceProperties);
     }
 
     @Bean
     public SignUpService authenticatorService(JWTProperties jwtProperties,
-                                              CacheAdapter<String, String> sessionCache,
-                                              CacheAdapter<String, String> secondSessionCache,
+                                              CacheAdapter<String, String> unverifiedSessions,
+                                              CacheAdapter<String, String> verifiedSessions,
                                               UserServiceProperties userServiceProperties) {
         return new SignUpService(jwtProperties,
-                sessionCache,
-                secondSessionCache,
+                unverifiedSessions,
+                verifiedSessions,
                 userServiceProperties.getUserCreationTokenValidity());
     }
 
-    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens"})
-    public CacheAdapter<String, String> createLoadingCacheAdapter(LoadingCache<String,String> cache) {
-       return new LoadingCacheAdapter(cache);
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @Bean({"unverifiedSessions", "verifiedSessions", "blockListedTokens", "usedTokens"})
+    public CacheAdapter<String, String> createLoadingCacheAdapter() {
+        return new LoadingCacheAdapter(createSessionCache(5));
     }
 
-    @Bean
-    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    public LoadingCache<String, String> createSessionCache() {
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @Bean({"dayCache"})
+    public CacheAdapter<String, String> createDayLoadingCacheAdapter() {
+        return new LoadingCacheAdapter(createSessionCache(24 * 60));
+    }
+
+    public LoadingCache<String, String> createSessionCache(int duration) {
         return CacheBuilder
                 .newBuilder()
-                .expireAfterWrite(5, TimeUnit.MINUTES)
+                .expireAfterWrite(duration, TimeUnit.MINUTES)
                 .build(new CacheLoader<String, String>() {
                     public String load(String key) {
                         return "";
@@ -91,23 +97,43 @@ public class UserConfiguration {
                 });
     }
 
-    @ConditionalOnProperty(value="consentmanager.cacheMethod", havingValue = "redis")
-    @Bean({"unverifiedSessions", "verifiedSessions", "blacklistedTokens"})
-    public CacheAdapter<String, String> createRedisCacheAdapter(RedisOptions redisOptions) {
-        RedisURI redisUri = RedisURI.Builder.
-                redis(redisOptions.getHost())
-                .withPort(redisOptions.getPort())
-                .withPassword(redisOptions.getPassword())
-                .build();
-        RedisClient redisClient = RedisClient.create(redisUri);
-        return new RedisCacheAdapter(redisClient);
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"unverifiedSessions", "verifiedSessions", "blockListedTokens", "usedTokens"})
+    public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
+        return new RedisCacheAdapter(redisClient, 5);
     }
 
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"dayCache"})
+    public CacheAdapter<String, String> createDayRedisCacheAdapter(RedisClient redisClient) {
+        return new RedisCacheAdapter(redisClient, 24 * 60);
+    }
+
+    @Bean
+    LockedUserService lockedUserService(LockedUsersRepository lockedUsersRepository, LockedServiceProperties lockedServiceProperties) {
+        return new LockedUserService(lockedUsersRepository, lockedServiceProperties);
+    }
 
     @Bean
     public SessionService sessionService(TokenService tokenService,
-                                         CacheAdapter<String,String> blacklistedTokens) {
-        return new SessionService(tokenService, blacklistedTokens);
+                                         CacheAdapter<String, String> blockListedTokens,
+                                         CacheAdapter<String, String> unverifiedSessions,
+                                         LockedUserService lockedUserService,
+                                         UserRepository userRepository,
+                                         OtpServiceClient otpServiceClient,
+                                         OtpServiceProperties otpServiceProperties,
+                                         OtpAttemptService otpAttemptService,
+                                         ConsentServiceProperties serviceProperties
+    ) {
+        return new SessionService(tokenService,
+                blockListedTokens,
+                unverifiedSessions,
+                lockedUserService,
+                userRepository,
+                otpServiceClient,
+                otpServiceProperties,
+                otpAttemptService,
+                serviceProperties);
     }
 
     @Bean
@@ -124,8 +150,9 @@ public class UserConfiguration {
     public TransactionPinService transactionPinService(TransactionPinRepository transactionPinRepository,
                                                        BCryptPasswordEncoder encoder,
                                                        @Qualifier("keySigningPrivateKey") PrivateKey privateKey,
-                                                       UserServiceProperties userServiceProperties) {
-        return new TransactionPinService(transactionPinRepository, encoder, privateKey, userServiceProperties);
+                                                       UserServiceProperties userServiceProperties,
+                                                       CacheAdapter<String, String> dayCache) {
+        return new TransactionPinService(transactionPinRepository, encoder, privateKey, userServiceProperties, dayCache);
     }
 
     @Bean

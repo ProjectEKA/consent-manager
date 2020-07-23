@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.exception.InvalidSessionException;
+import in.projecteka.consentmanager.user.model.SendOtpAction;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import io.jsonwebtoken.Claims;
@@ -40,7 +41,15 @@ public class SignUpService {
 
     public Mono<SignUpSession> cacheAndSendSession(String sessionId, String mobileNumber) {
         SignUpSession signupSession = new SignUpSession(sessionId);
-        return unverifiedSessions.put(signupSession.getSessionId(), mobileNumber)
+        return unverifiedSessions.put(signupSession.getSessionId(), mobileNumber).thenReturn(signupSession);
+    }
+
+    public Mono<SignUpSession> updatedVerifiedSession(String sessionId,
+                                                      String userName,
+                                                      SendOtpAction action) {
+        SignUpSession signupSession = new SignUpSession(sessionId);
+        String sessionIdWithAction = action.toString() + signupSession.getSessionId();
+        return verifiedSessions.put(sessionIdWithAction, userName)
                 .then(Mono.just(signupSession));
     }
 
@@ -66,7 +75,7 @@ public class SignUpService {
                 }).flatMap(newSession -> generateToken(new HashMap<>(), newSession));
     }
 
-    private Mono<Token> generateToken(Map<String, Object> claims, String subject) {
+    public Mono<Token> generateToken(Map<String, Object> claims, String subject) {
         return Mono.just(new Token(Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
@@ -84,6 +93,10 @@ public class SignUpService {
     }
 
     public Mono<String> getMobileNumber(String sessionId) {
+        return verifiedSessions.getIfPresent(sessionId);
+    }
+
+    public Mono<String> getUserName(String sessionId) {
         return verifiedSessions.getIfPresent(sessionId);
     }
 

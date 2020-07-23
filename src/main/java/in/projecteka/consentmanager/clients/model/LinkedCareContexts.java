@@ -2,11 +2,15 @@ package in.projecteka.consentmanager.clients.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LinkedCareContexts {
@@ -22,6 +26,14 @@ public class LinkedCareContexts {
         List<CareContext> careContexts = new ArrayList<>();
     }
 
+    @Builder
+    @AllArgsConstructor
+    @Value
+    public static class PatientLinkedCareContext {
+        private String patientRefNo;
+        private String careContextRefNo;
+    }
+
     private final List<HipLink> links = new ArrayList<>();
 
     @JsonProperty("patient")
@@ -35,7 +47,7 @@ public class LinkedCareContexts {
                     hipLink = new HipLink();
                     hipLink.hipId = (String) ((Map) hipMap).get("id");
                     hipLink.hipName = (String) ((Map) hipMap).get("name");
-                    hipLink.patientReference = (String) ((Map) hipMap).get("referenceNumber");
+                    hipLink.patientReference = (String) ((Map) link).get("referenceNumber");
 
                 }
                 Object careContexts = ((Map) link).get("careContexts");
@@ -88,5 +100,14 @@ public class LinkedCareContexts {
             }
         }
         return result;
+    }
+
+    public List<PatientLinkedCareContext> getCareContext(String hipId) {
+        return links.stream().filter(hipLink -> hipLink.hipId.equals(hipId))
+                .flatMap(hipLink -> hipLink.careContexts.stream().map(careContext ->
+                        PatientLinkedCareContext.builder()
+                                .careContextRefNo(careContext.careContextReference)
+                                .patientRefNo(hipLink.patientReference)
+                                .build())).collect(Collectors.toList());
     }
 }

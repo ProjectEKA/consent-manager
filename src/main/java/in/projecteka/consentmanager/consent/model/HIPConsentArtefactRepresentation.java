@@ -13,4 +13,5 @@ public class HIPConsentArtefactRepresentation {
     private HIPConsentArtefact consentDetail;
     private ConsentStatus status;
     private String signature;
+    private String consentId;
 }

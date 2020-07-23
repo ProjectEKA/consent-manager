@@ -5,25 +5,24 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-
 import java.util.function.Supplier;
-
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
 public class PatientServiceClient {
 
-    private final WebClient.Builder webClientBuilder;
+    private static final String INTERNAL_PATH_PATIENT_LINKS = "%s/internal/patients/%s/links";
+    private final WebClient webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
     private final String baseUrl;
+    private final String authorizationHeader;
 
     public Mono<LinkedCareContexts> retrievePatientLinks(String username) {
         return tokenGenerator.get()
                 .flatMap(authorization ->
-                        webClientBuilder.build()
+                        webClientBuilder
                                 .get()
-                                .uri(String.format("%s/internal/patients/%s/links", baseUrl, username))
-                                .header(AUTHORIZATION, authorization)
+                                .uri(String.format(INTERNAL_PATH_PATIENT_LINKS, baseUrl, username))
+                                .header(authorizationHeader, authorization)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,
                                         clientResponse -> Mono.error(ClientError.unAuthorized()))

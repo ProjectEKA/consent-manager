@@ -1,0 +1,82 @@
+version: '3'
+services:
+  keycloak:
+    image: "jboss/keycloak:9.0.2"
+    container_name: keycloak
+    hostname: keycloak
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: welcome
+      DB_VENDOR: POSTGRES
+      DB_ADDR: postgres
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_SCHEMA: public
+      DB_PASSWORD: password
+    depends_on:
+      - postgres
+    ports:
+      - "9001:8080"
+
+  postgres:
+    image: "postgres:latest"
+    container_name: postgres
+    hostname: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db-init.sql:/docker-entrypoint-initdb.d/db-init.sql
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    healthcheck:
+      test: "pg_isready -h localhost -p 5432 -q -U postgres"
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  keycloak_setup:
+    image: "projecteka/keycloak-setup"
+    container_name: keycloak_setup
+    environment:
+      KEYCLOAK_SERVER: http://keycloak:8080/auth
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: welcome
+    command: "sh -c 'dockerize -wait http://keycloak:8080 -timeout 240s && java -jar /app.jar'"
+    depends_on:
+      - keycloak
+
+  cm-db-setup:
+    image: projecteka/cm-db-initializer
+    container_name: cm-db-setup
+    environment:
+      - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/consent_manager -Djdbc.username=postgres -Djdbc.password=password'
+    depends_on:
+      - keycloak_setup
+
+  hiu-db-setup:
+    image: projecteka/hiu-db-initializer
+    container_name: hiu-db-setup
+    environment:
+      - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/health_information_user -Djdbc.username=postgres -Djdbc.password=password'
+    depends_on:
+      - cm-db-setup
+
+  gateway-db-setup:
+    image: projecteka/gateway-db-initializer
+    container_name: gateway-db-setup
+    environment:
+      - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/gateway -Djdbc.username=postgres -Djdbc.password=password'
+    depends_on:
+      - hiu-db-setup
+
+  orthanc:
+    image: jodogne/orthanc-plugins
+    container_name: orthanc-plugins
+    ports:
+      - "4242:4242"
+      - "8042:8042"
+volumes:
+  postgres_data:
+    driver: local

@@ -1,7 +1,9 @@
 package in.projecteka.consentmanager.clients;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
+import in.projecteka.consentmanager.user.model.PatientName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -21,37 +23,55 @@ import java.io.IOException;
 
 import static in.projecteka.consentmanager.clients.TestBuilders.string;
 import static in.projecteka.consentmanager.clients.TestBuilders.user;
+import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
-public class UserServiceClientTest {
+class UserServiceClientTest {
     @Captor
     private ArgumentCaptor<ClientRequest> captor;
     @Mock
     private ExchangeFunction exchangeFunction;
+    @Mock
+    private ServiceAuthentication serviceAuthentication;
+
+    private UserServiceClient userServiceClient;
+    private String token;
 
     @BeforeEach
-    public void init() {
+    void init() {
         MockitoAnnotations.initMocks(this);
+        WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
+        var serviceProperties = new GatewayServiceProperties("http://example.com", 1000, "", "", "");
+        token = string();
+        userServiceClient = new UserServiceClient(webClientBuilder.build(),
+                "http://user-service/",
+                () -> Mono.just(token),
+                serviceProperties,
+                serviceAuthentication,
+                AUTHORIZATION);
     }
 
     @Test
-    public void shouldGetUser() throws IOException {
-        User user = user().name("first name").build();
-        var token = string();
-        String patientResponseBody = new ObjectMapper().writeValueAsString(user);
+    void shouldGetUser() throws IOException {
+        User user = user().name(PatientName.builder()
+                .first("first name")
+                .middle("")
+                .last("")
+                .build())
+                .build();
+        String patientResponseBody = OBJECT_MAPPER.writeValueAsString(user);
         when(exchangeFunction.exchange(captor.capture()))
                 .thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK)
                         .header("Content-Type", "application/json")
                         .body(patientResponseBody).build()));
-        var webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        var userServiceClient = new UserServiceClient(webClientBuilder, "http://user-service/", () -> Mono.just(token));
 
         StepVerifier.create(userServiceClient.userOf("1"))
-                .assertNext(response -> assertThat(response.getName()).isEqualTo(user.getName()))
+                .assertNext(response -> assertThat(response.getName().createFullName()).isEqualTo(user.getName().createFullName()))
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://user-service/internal/users/1/");
+        assertThat(captor.getValue().url().toString()).hasToString("http://user-service/internal/users/1/");
         assertThat(captor.getValue().headers().get(HttpHeaders.AUTHORIZATION).get(0)).isEqualTo(token);
     }
 }

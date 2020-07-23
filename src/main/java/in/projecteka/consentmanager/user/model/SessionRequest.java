@@ -11,4 +11,6 @@ public class SessionRequest {
     String username;
 
     String password;
+
+    String refreshToken;
 }

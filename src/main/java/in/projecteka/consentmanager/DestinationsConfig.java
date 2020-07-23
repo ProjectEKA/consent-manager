@@ -9,7 +9,6 @@ import java.util.Map;
 @Getter
 public class DestinationsConfig {
     private final Map<String, DestinationInfo> queues;
-    private final Map<String, DestinationInfo> topics;
 
     @Getter
     @AllArgsConstructor

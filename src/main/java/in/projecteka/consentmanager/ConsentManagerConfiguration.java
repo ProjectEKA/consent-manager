@@ -1,38 +1,62 @@
 package in.projecteka.consentmanager;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
+import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.ServiceAuthenticationClient;
+import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
+import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
-import in.projecteka.consentmanager.common.CentralRegistryTokenVerifier;
+import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.common.KeyPairConfig;
+import in.projecteka.consentmanager.common.RequestValidator;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisOptions;
+import in.projecteka.consentmanager.common.heartbeat.CacheMethodProperty;
+import in.projecteka.consentmanager.common.heartbeat.Heartbeat;
+import in.projecteka.consentmanager.common.heartbeat.RabbitmqOptions;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
+import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
+import in.projecteka.consentmanager.user.UserRepository;
+import in.projecteka.consentmanager.user.UserServiceProperties;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import lombok.SneakyThrows;
-import org.springframework.amqp.core.AmqpAdmin;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Exchange;
-import org.springframework.amqp.core.ExchangeBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.client.reactive.ClientHttpConnector;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.ServerCodecConfigurer;
+import org.springframework.http.codec.json.Jackson2JsonDecoder;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 
 import java.io.IOException;
 import java.net.URL;
@@ -41,17 +65,16 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
+
+import static in.projecteka.consentmanager.common.Constants.CONSENT_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.EXCHANGE;
+import static in.projecteka.consentmanager.common.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
 
 @Configuration
 public class ConsentManagerConfiguration {
-    public static final String HIU_CONSENT_NOTIFICATION_QUEUE = "hiu-consent-notification-queue";
-    public static final String HIP_CONSENT_NOTIFICATION_QUEUE = "hip-consent-notification-queue";
-    public static final String HIP_DATA_FLOW_REQUEST_QUEUE = "hip-data-flow-request-queue";
-    public static final String CONSENT_REQUEST_QUEUE = "consent-request-queue";
-    public static final String DEAD_LETTER_QUEUE = "cm-dead-letter-queue";
-    private static final String CM_DEAD_LETTER_EXCHANGE = "cm-dead-letter-exchange";
-    private static final String CM_DEAD_LETTER_ROUTING_KEY = "cm-dead-letter";
-
 
     private final KeyPairConfig keyPairConfig;
 
@@ -60,16 +83,80 @@ public class ConsentManagerConfiguration {
         this.keyPairConfig = keyPairConfig;
     }
 
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @Bean({"accessToken"})
+    public CacheAdapter<String, String> createLoadingCacheAdapterForAccessToken() {
+        return new LoadingCacheAdapter(createSessionCache(5));
+    }
+
+    public LoadingCache<String, String> createSessionCache(int duration) {
+        return CacheBuilder
+                .newBuilder()
+                .expireAfterWrite(duration, TimeUnit.MINUTES)
+                .build(new CacheLoader<String, String>() {
+                    public String load(String key) {
+                        return "";
+                    }
+                });
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean
-    public CentralRegistry centralRegistry(ClientRegistryClient clientRegistryClient,
-                                           ClientRegistryProperties clientRegistryProperties) {
-        return new CentralRegistry(clientRegistryClient, clientRegistryProperties);
+    public RedisClient getRedisClient(RedisOptions redisOptions) {
+        RedisURI redisUri = RedisURI.Builder.
+                redis(redisOptions.getHost())
+                .withPort(redisOptions.getPort())
+                .withPassword(redisOptions.getPassword())
+                .build();
+        return RedisClient.create(redisUri);
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"accessToken"})
+    public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
+        return new RedisCacheAdapter(redisClient, 5);
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @Bean({"cacheForReplayAttack"})
+    public CacheAdapter<String, String> createLoadingCacheAdapterForReplayAttack() {
+        return new LoadingCacheAdapter(createSessionCache(10));
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"cacheForReplayAttack"})
+    public CacheAdapter<String, String> createRedisCacheAdapterForReplayAttack(RedisClient redisClient) {
+        return new RedisCacheAdapter(redisClient, 10);
     }
 
     @Bean
-    public ClientRegistryClient clientRegistryClient(WebClient.Builder builder,
+    public CentralRegistry centralRegistry(ClientRegistryClient clientRegistryClient) {
+        return new CentralRegistry(clientRegistryClient);
+    }
+
+    @Bean
+    public ServiceAuthenticationClient serviceAuthenticationClient(
+            @Qualifier("customBuilder") WebClient.Builder webClientBuilder,
+            GatewayServiceProperties gatewayServiceProperties) {
+        return new ServiceAuthenticationClient(webClientBuilder, gatewayServiceProperties.getBaseUrl());
+    }
+
+    @Bean
+    public ServiceAuthentication serviceAuthentication(ServiceAuthenticationClient serviceAuthenticationClient,
+                                                       GatewayServiceProperties gatewayServiceProperties,
+                                                       CacheAdapter<String, String> accessToken) {
+        return new ServiceAuthentication(serviceAuthenticationClient, gatewayServiceProperties, accessToken);
+    }
+
+    @Bean
+    public ClientRegistryClient clientRegistryClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                      ClientRegistryProperties clientRegistryProperties) {
         return new ClientRegistryClient(builder, clientRegistryProperties.getUrl());
+    }
+
+    @Bean
+    public LockedUsersRepository lockedUsersRepository(DbOptions dbOptions) {
+        return new LockedUsersRepository(pgPool(dbOptions));
     }
 
     @Bean
@@ -102,46 +189,17 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public DestinationsConfig destinationsConfig(AmqpAdmin amqpAdmin) {
+    public DestinationsConfig destinationsConfig() {
         HashMap<String, DestinationsConfig.DestinationInfo> queues = new HashMap<>();
-        queues.put(CONSENT_REQUEST_QUEUE, new DestinationsConfig.DestinationInfo("exchange", CONSENT_REQUEST_QUEUE));
+        queues.put(CONSENT_REQUEST_QUEUE,
+                new DestinationsConfig.DestinationInfo(EXCHANGE, CONSENT_REQUEST_QUEUE));
         queues.put(HIU_CONSENT_NOTIFICATION_QUEUE,
-                new DestinationsConfig.DestinationInfo("exchange", HIU_CONSENT_NOTIFICATION_QUEUE));
+                new DestinationsConfig.DestinationInfo(EXCHANGE, HIU_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_CONSENT_NOTIFICATION_QUEUE,
-                new DestinationsConfig.DestinationInfo("exchange", HIP_CONSENT_NOTIFICATION_QUEUE));
+                new DestinationsConfig.DestinationInfo(EXCHANGE, HIP_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_DATA_FLOW_REQUEST_QUEUE,
-                new DestinationsConfig.DestinationInfo("exchange", HIP_DATA_FLOW_REQUEST_QUEUE));
-
-        Queue deadLetterQueue = QueueBuilder.durable(DEAD_LETTER_QUEUE).build();
-        Binding with = BindingBuilder
-                .bind(deadLetterQueue)
-                .to(new DirectExchange(CM_DEAD_LETTER_EXCHANGE))
-                .with(CM_DEAD_LETTER_ROUTING_KEY);
-        amqpAdmin.declareQueue(deadLetterQueue);
-        amqpAdmin.declareExchange(new DirectExchange(CM_DEAD_LETTER_EXCHANGE));
-        amqpAdmin.declareBinding(with);
-
-        DestinationsConfig destinationsConfig = new DestinationsConfig(queues, null);
-        destinationsConfig.getQueues()
-                .forEach((key, destination) -> {
-                    Exchange ex = ExchangeBuilder.directExchange(
-                            destination.getExchange())
-                            .durable(true)
-                            .build();
-                    amqpAdmin.declareExchange(ex);
-                    Queue q = QueueBuilder.durable(
-                            destination.getRoutingKey())
-                            .deadLetterExchange(CM_DEAD_LETTER_EXCHANGE)
-                            .deadLetterRoutingKey(CM_DEAD_LETTER_ROUTING_KEY)
-                            .build();
-                    amqpAdmin.declareQueue(q);
-                    Binding b = BindingBuilder.bind(q)
-                            .to(ex)
-                            .with(destination.getRoutingKey())
-                            .noargs();
-                    amqpAdmin.declareBinding(b);
-                });
-        return destinationsConfig;
+                new DestinationsConfig.DestinationInfo(EXCHANGE, HIP_DATA_FLOW_REQUEST_QUEUE));
+        return new DestinationsConfig(queues);
     }
 
     @Bean
@@ -152,8 +210,8 @@ public class ConsentManagerConfiguration {
 
     @Bean
     public TokenService tokenService(IdentityServiceProperties identityServiceProperties,
-                                     IdentityServiceClient identityServiceClient) {
-        return new TokenService(identityServiceProperties, identityServiceClient);
+                                     IdentityServiceClient identityServiceClient, UserRepository userRepository) {
+        return new TokenService(identityServiceProperties, identityServiceClient, userRepository);
     }
 
     @SneakyThrows
@@ -173,8 +231,9 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean("centralRegistryJWKSet")
-    public JWKSet jwkSet(ClientRegistryProperties clientRegistryProperties) throws IOException, ParseException {
-        return JWKSet.load(new URL(clientRegistryProperties.getJwkUrl()));
+    public JWKSet jwkSet(GatewayServiceProperties gatewayServiceProperties)
+            throws IOException, ParseException {
+        return JWKSet.load(new URL(gatewayServiceProperties.getJwkUrl()));
     }
 
     @Bean("identityServiceJWKSet")
@@ -184,7 +243,69 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public CentralRegistryTokenVerifier centralRegistryTokenVerifier(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
-        return new CentralRegistryTokenVerifier(jwkSet);
+    public GatewayTokenVerifier centralRegistryTokenVerifier(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
+        return new GatewayTokenVerifier(jwkSet);
+    }
+
+    @Bean
+    public RequestValidator requestValidator(
+            @Qualifier("cacheForReplayAttack") CacheAdapter<String, String> cacheForReplayAttack) {
+        return new RequestValidator(cacheForReplayAttack);
+    }
+
+    @Bean
+    public Heartbeat heartbeat(IdentityServiceProperties identityServiceProperties,
+                               DbOptions dbOptions,
+                               RabbitmqOptions rabbitmqOptions,
+                               RedisOptions redisOptions,
+                               CacheMethodProperty cacheMethodProperty) {
+        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions, redisOptions, cacheMethodProperty);
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "webclient.keepalive", havingValue = "false")
+    public ClientHttpConnector clientHttpConnector() {
+        return new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.newConnection()));
+    }
+
+    @Bean("customBuilder")
+    public WebClient.Builder webClient(final ClientHttpConnector clientHttpConnector, ObjectMapper objectMapper) {
+        return WebClient
+                .builder()
+                .exchangeStrategies(exchangeStrategies(objectMapper))
+                .clientConnector(clientHttpConnector);
+    }
+
+    private ExchangeStrategies exchangeStrategies(ObjectMapper objectMapper) {
+        var encoder = new Jackson2JsonEncoder(objectMapper);
+        var decoder = new Jackson2JsonDecoder(objectMapper);
+        return ExchangeStrategies
+                .builder()
+                .codecs(configurer -> {
+                    configurer.defaultCodecs().jackson2JsonEncoder(encoder);
+                    configurer.defaultCodecs().jackson2JsonDecoder(decoder);
+                }).build();
+    }
+
+    @Bean
+    public UserServiceClient userServiceClient(
+            @Qualifier("customBuilder") WebClient.Builder builder,
+            UserServiceProperties userServiceProperties,
+            IdentityService identityService,
+            GatewayServiceProperties gatewayServiceProperties,
+            ServiceAuthentication serviceAuthentication,
+            @Value("${consentmanager.authorization.header}") String authorizationHeader) {
+        return new UserServiceClient(builder.build(),
+                userServiceProperties.getUrl(),
+                identityService::authenticate,
+                gatewayServiceProperties,
+                serviceAuthentication,
+                authorizationHeader);
+    }
+
+    @Bean
+    public OtpServiceClient otpServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
+                                             OtpServiceProperties otpServiceProperties) {
+        return new OtpServiceClient(builder, otpServiceProperties.getUrl());
     }
 }

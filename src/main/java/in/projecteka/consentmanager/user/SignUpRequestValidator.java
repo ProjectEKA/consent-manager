@@ -2,9 +2,11 @@ package in.projecteka.consentmanager.user;
 
 import com.google.common.base.Strings;
 import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
+import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.Identifier;
 import in.projecteka.consentmanager.user.model.IdentifierType;
+import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.consentmanager.user.model.SignUpIdentifier;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import io.vavr.collection.CharSeq;
@@ -45,17 +47,18 @@ public class SignUpRequestValidator {
                 validate(signUpRequest.getGender()),
                 validateUserName(signUpRequest.getUsername(), userIdSuffix),
                 validatePassword(signUpRequest.getPassword()),
-                validateYearOfBirth(signUpRequest.getYearOfBirth()),
+                validateDateOfBirth(signUpRequest.getDateOfBirth()),
                 validateUnVerifiedIdentifiers(signUpRequest.getUnverifiedIdentifiers()))
-                .ap((firstName, gender, username, password, dateOfBirth, unverifiedIdentifiers) ->
-                        CoreSignUpRequest.builder()
-                                .name(firstName)
-                                .gender(gender)
-                                .username(username)
-                                .password(password)
-                                .yearOfBirth(dateOfBirth)
-                                .unverifiedIdentifiers(unverifiedIdentifiers)
-                                .build());
+                .ap((name, gender, username, password, dateOfBirth, unverifiedIdentifiers) ->
+                         CoreSignUpRequest.builder()
+                                    .name(name)
+                                    .gender(gender)
+                                    .username(username)
+                                    .password(password)
+                                    .dateOfBirth(dateOfBirth)
+                                    .unverifiedIdentifiers(unverifiedIdentifiers)
+                                    .build()
+                );
     }
 
     protected static Validation<String, List<Identifier>> validateUnVerifiedIdentifiers(
@@ -117,10 +120,17 @@ public class SignUpRequestValidator {
         return Validation.invalid("gender can't be empty");
     }
 
-    private static Validation<String, String> validateName(String name) {
-        if (Strings.isNullOrEmpty(name)) {
+    private static Validation<String, PatientName> validateName(PatientName name) {
+        if (Strings.isNullOrEmpty(name.getFirst())) {
             return Validation.invalid("Name can't be empty");
         }
+        if (Strings.isNullOrEmpty(name.getMiddle())) {
+            PatientName.builder().middle("");
+        }
+        if (Strings.isNullOrEmpty(name.getLast())) {
+            PatientName.builder().last("");
+        }
+
         return allowed(VALID_NAME_CHARS, "name", name);
     }
 
@@ -150,6 +160,20 @@ public class SignUpRequestValidator {
         return Validation.valid(username);
     }
 
+    private static Validation<String, PatientName> allowed(String characters, String fieldName, PatientName name) {
+        if (name.createFullName().length() >  99){
+            return Validation.invalid(format("%s should be between %d and %d characters", "name", 1, 99));
+        }
+
+        return CharSeq.of(name.createFullName())
+                .replaceAll(characters, "")
+                .transform(seq -> seq.isEmpty()
+                        ? Validation.valid(name)
+                        : Validation.invalid(format("%s contains invalid characters: ' %s '",
+                        fieldName,
+                        seq.distinct().sorted())));
+    }
+
     private static Validation<String, String> allowed(String characters, String fieldName, String value) {
         return CharSeq.of(value)
                 .replaceAll(characters, "")
@@ -160,13 +184,24 @@ public class SignUpRequestValidator {
                                           seq.distinct().sorted())));
     }
 
-    private static Validation<String, Integer> validateYearOfBirth(Integer year) {
-        return year == null || ((year <= (TODAY.getYear())) && (year >= TODAY.getYear() - 120))
-               ? Validation.valid(year)
+    private static Validation<String, DateOfBirth> validateDateOfBirth(DateOfBirth date) {
+
+        if(date.getDate() != null){
+            if(date.getDate() > 31 && date.getDate() < 1){
+                return Validation.invalid("Date cannot be more than 31");
+            }
+        }
+        if(date.getMonth() != null){
+            if(date.getMonth() > 12 && date.getMonth() < 1){
+                return Validation.invalid("Month cannot be more than 12");
+            }
+        }
+        return date.getYear() == null || ((date.getYear() <= (TODAY.getYear())) && (date.getYear() >= TODAY.getYear() - 120))
+               ? Validation.valid(date)
                : Validation.invalid("Year of birth can't be in future or older than 120 years");
     }
 
-    private static Validation<String, String> validatePassword(String password) {
+    public static Validation<String, String> validatePassword(String password) {
         if (Strings.isNullOrEmpty(password)) {
             return Validation.invalid("password can't be empty");
         }

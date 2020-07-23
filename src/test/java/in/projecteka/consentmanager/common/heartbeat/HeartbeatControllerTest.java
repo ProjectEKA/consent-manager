@@ -51,7 +51,7 @@ class HeartbeatControllerTest {
 
     @Test
     void shouldGiveCMStatusAsUp() throws JsonProcessingException {
-        var heartbeatResponse = HeartbeatResponse.builder().timeStamp(now().toString()).status(UP).build();
+        var heartbeatResponse = HeartbeatResponse.builder().timeStamp(now()).status(UP).build();
         var heartbeatResponseJson = OBJECT_MAPPER.writeValueAsString(heartbeatResponse);
         when(heartbeat.getStatus()).thenReturn(Mono.just(heartbeatResponse));
 
@@ -67,7 +67,7 @@ class HeartbeatControllerTest {
     @Test
     void shouldGiveCMStatusAsDown() throws JsonProcessingException {
         var heartbeatResponse = HeartbeatResponse.builder()
-                .timeStamp(now().toString())
+                .timeStamp(now())
                 .status(DOWN)
                 .error(Error.builder().code(ErrorCode.SERVICE_DOWN).message(SERVICE_DOWN).build())
                 .build();

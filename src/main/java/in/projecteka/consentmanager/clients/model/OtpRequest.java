@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 public class OtpRequest {
     private String sessionId;
     private OtpCommunicationData communication;
-    private OtpCreationDetail creationDetail;
+    private OtpGenerationDetail generationDetail;
 }

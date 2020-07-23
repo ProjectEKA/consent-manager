@@ -5,7 +5,7 @@ import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpAction;
-import in.projecteka.consentmanager.clients.model.OtpCreationDetail;
+import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
@@ -141,27 +141,27 @@ public class UserService {
         var communication = new OtpCommunicationData(userSignupEnquiry.getIdentifierType(),
                 userSignupEnquiry.getIdentifier());
 
-        OtpCreationDetail otpCreationDetail = otpAttmptAction == OtpAttempt.Action.OTP_REQUEST_REGISTRATION ? OtpCreationDetail
+        OtpGenerationDetail otpGenerationDetail = otpAttmptAction == OtpAttempt.Action.OTP_REQUEST_REGISTRATION ? OtpGenerationDetail
                 .builder()
                 .action(OtpAction.REGISTRATION.toString())
                 .systemName(consentServiceProperties.getName())
                 .build() : otpAttmptAction == OtpAttempt.Action.OTP_REQUEST_LOGIN ?
-                OtpCreationDetail
+                OtpGenerationDetail
                         .builder()
                         .action(OtpAction.LOGIN.toString())
                         .systemName(consentServiceProperties.getName())
                         .build() : otpAttmptAction == OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD ?
-                OtpCreationDetail
+                OtpGenerationDetail
                         .builder()
                         .action(OtpAction.RECOVER_PASSWORD.toString())
                         .systemName(consentServiceProperties.getName())
                         .build():
-                OtpCreationDetail
+                OtpGenerationDetail
                         .builder()
                         .action(OtpAction.FORGOT_CM_ID.toString())
                         .systemName(consentServiceProperties.getName())
                         .build();
-        var otpRequest = new OtpRequest(UUID.randomUUID().toString(), communication, otpCreationDetail);
+        var otpRequest = new OtpRequest(UUID.randomUUID().toString(), communication, otpGenerationDetail);
         return Optional.of(otpRequest);
     }
 

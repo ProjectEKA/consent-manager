@@ -6,7 +6,7 @@ import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.Meta;
 import in.projecteka.consentmanager.clients.model.OtpAction;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
-import in.projecteka.consentmanager.clients.model.OtpCreationDetail;
+import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
@@ -98,7 +98,7 @@ public class SessionService {
                 .map(user -> new OtpCommunicationData("mobile", user.getPhone()))
                 .map(otpCommunicationData -> new OtpRequest(sessionId,
                         otpCommunicationData,
-                        OtpCreationDetail
+                        OtpGenerationDetail
                                 .builder()
                                 .action(OtpAction.REGISTRATION.toString())
                                 .systemName(consentServiceProperties.getName())

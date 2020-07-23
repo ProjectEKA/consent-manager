@@ -11,6 +11,7 @@ import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
+import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import io.lettuce.core.RedisClient;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -36,7 +37,8 @@ public class UserConfiguration {
                                    UserServiceProperties userServiceProperties,
                                    OtpAttemptService otpAttemptService,
                                    LockedUserService lockedUserService,
-                                   UserServiceClient userServiceClient) {
+                                   UserServiceClient userServiceClient,
+                                   ConsentServiceProperties consentServiceProperties) {
         return new UserService(userRepository,
                 otpServiceProperties,
                 otpServiceClient,
@@ -46,7 +48,8 @@ public class UserConfiguration {
                 userServiceProperties,
                 otpAttemptService,
                 lockedUserService,
-                userServiceClient);
+                userServiceClient,
+                consentServiceProperties);
     }
 
     @Bean
@@ -119,7 +122,9 @@ public class UserConfiguration {
                                          UserRepository userRepository,
                                          OtpServiceClient otpServiceClient,
                                          OtpServiceProperties otpServiceProperties,
-                                         OtpAttemptService otpAttemptService) {
+                                         OtpAttemptService otpAttemptService,
+                                         ConsentServiceProperties serviceProperties
+    ) {
         return new SessionService(tokenService,
                 blockListedTokens,
                 unverifiedSessions,
@@ -127,7 +132,8 @@ public class UserConfiguration {
                 userRepository,
                 otpServiceClient,
                 otpServiceProperties,
-                otpAttemptService);
+                otpAttemptService,
+                serviceProperties);
     }
 
     @Bean

@@ -20,11 +20,9 @@ import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import io.vertx.pgclient.PgPool;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -34,16 +32,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.security.KeyPair;
 import java.security.PublicKey;
 
-@Slf4j
 @Configuration
 public class ConsentConfiguration {
-
-    private final KeyPairConfig keyPairConfig;
-
-    @Autowired
-    public ConsentConfiguration(KeyPairConfig keyPairConfig) {
-        this.keyPairConfig = keyPairConfig;
-    }
 
     @Bean
     public ConsentRequestRepository consentRequestRepository(PgPool pgPool) {
@@ -205,7 +195,7 @@ public class ConsentConfiguration {
 
     @SneakyThrows
     @Bean
-    public KeyPair keyPair() {
+    public KeyPair keyPair(KeyPairConfig keyPairConfig) {
         return keyPairConfig.createSignArtefactKeyPair();
     }
 

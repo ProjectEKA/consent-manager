@@ -1,10 +1,12 @@
 package in.projecteka.consentmanager.common;
 
-import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.ConstructorBinding;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,27 +18,28 @@ import java.security.PublicKey;
 import java.security.cert.Certificate;
 
 @Slf4j
-@Component
-@NoArgsConstructor
+@Getter
+@AllArgsConstructor
+@ConstructorBinding
+@ConfigurationProperties(prefix = "keystore")
 public class KeyPairConfig {
-    @Value("${keyStore.filePath}")
-    private String keyStoreFilePath;
+    @Value("${keystore.file-path}")
+    private final String keyStoreFilePath;
 
-    @Value("${keyStore.password}")
-    private String keyStorePassword;
+    @Value("${keystore.password}")
+    private final String keyStorePassword;
 
-    @Value("${keyStore.signArtefactKeyPair.storeType}")
-    private String signArtefactKeyPairType;
+    @Value("${keystore.sign-artefact-keypair.storetype}")
+    private final String signArtefactKeyPairType;
 
-    @Value("${keyStore.signArtefactKeyPair.alias}")
-    private String signArtefactKeyPairAlias;
+    @Value("${keystore.sign-artefact-keypair.alias}")
+    private final String signArtefactKeyPairAlias;
 
-    @Value("${keyStore.pinVerificationKeyPair.storeType}")
-    private String pinVerificationKeyPairType;
+    @Value("${keystore.pin-verification-keypair.storetype}")
+    private final String pinVerificationKeyPairType;
 
-    @Value("${keyStore.pinVerificationKeyPair.alias}")
-    private String pinVerificationKeyPairAlias;
-
+    @Value("${keystore.pin-verification-keypair.alias}")
+    private final String pinVerificationKeyPairAlias;
 
     public KeyPair createSignArtefactKeyPair() {
         return getKeyPairForAlias(signArtefactKeyPairAlias, signArtefactKeyPairType);

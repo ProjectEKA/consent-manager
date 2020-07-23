@@ -36,12 +36,12 @@ consentmanager:
   linkservice:
     url: http://localhost:9000
     txnTimeout: 5000
-keyStore:
-  filePath: "./src/test/resources/consent-manager-test-keystore.p12"
+keystore:
+  file-path: "./src/test/resources/consent-manager-test-keystore.p12"
   password: password
-  signArtefactKeyPair:
-    storeType: PKCS12
+  sign-artefact-keypair:
+    store-type: PKCS12
     alias: test-sign-artefact
-  pinVerificationKeyPair:
-    storeType: PKCS12
+  pin-verification-keypair:
+    store-type: PKCS12
     alias: test-pin-verification

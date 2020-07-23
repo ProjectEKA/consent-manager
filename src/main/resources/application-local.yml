@@ -68,14 +68,14 @@ consentmanager:
     jwkUrl: http://localhost:8000/v0.5/certs
   nhsproperties:
     hiuId: 10000002
-keyStore:
-  filePath: "consent-manager-local-keystore.p12"
+keystore:
+  file-path: "consent-manager-local-keystore.p12"
   password: password
-  signArtefactKeyPair:
-    storeType: PKCS12
+  sign-artefact-keypair:
+    store-type: PKCS12
     alias: test-sign-artefact
-  pinVerificationKeyPair:
-    storeType: PKCS12
+  pin-verification-keypair:
+    store-type: PKCS12
     alias: test-pin-verification
 spring:
   rabbitmq:

@@ -38,7 +38,6 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import lombok.SneakyThrows;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -75,13 +74,6 @@ import static in.projecteka.consentmanager.common.Constants.HIU_CONSENT_NOTIFICA
 
 @Configuration
 public class ConsentManagerConfiguration {
-
-    private final KeyPairConfig keyPairConfig;
-
-    @Autowired
-    public ConsentManagerConfiguration(KeyPairConfig keyPairConfig) {
-        this.keyPairConfig = keyPairConfig;
-    }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"accessToken"})
@@ -216,7 +208,7 @@ public class ConsentManagerConfiguration {
 
     @SneakyThrows
     @Bean("pinSigning")
-    public KeyPair keyPair() {
+    public KeyPair keyPair(KeyPairConfig keyPairConfig) {
         return keyPairConfig.createPinVerificationKeyPair();
     }
 

@@ -85,14 +85,14 @@ spring:
     port: ${RABBITMQ_PORT}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
-keyStore:
-  filePath: ${KEYSTORE_PATH:consent-manager-keystore.p12}
+keystore:
+  file-path: ${KEYSTORE_PATH:consent-manager-keystore.p12}
   password: ${KEYSTORE_PASSWORD}
-  signArtefactKeyPair:
-    storeType: PKCS12
+  sign-artefact-keypair:
+    store-type: PKCS12
     alias: ${SIGN_ARTEFACT_KEYPAIR_ALIAS:cm-sign-artefact}
-  pinVerificationKeyPair:
-    storeType: PKCS12
+  pin-verification-keypair:
+    store-type: PKCS12
     alias: ${PIN_VERIFICATION_KEYPAIR_ALIAS:cm-pin-verification}
 webclient:
   keepAlive: ${CM_KEEP_ALIVE:true}

@@ -1,9 +1,7 @@
 package in.projecteka.consentmanager.link.link;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
-import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
@@ -54,7 +52,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.io.IOException;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -62,7 +60,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
-import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.Constants.APP_PATH_LINK_INIT;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
@@ -91,9 +89,6 @@ class LinkUserJourneyTest {
     private static final MockWebServer userServer = new MockWebServer();
     private static final MockWebServer identityServer = new MockWebServer();
     private static final MockWebServer gatewayServer = new MockWebServer();
-
-    @MockBean
-    private DestinationsConfig destinationsConfig;
 
     @Autowired
     private WebTestClient webTestClient;
@@ -179,7 +174,7 @@ class LinkUserJourneyTest {
         var patientLinksResponse = PatientLinksResponse.builder().patient(patientLinks).build();
         var user = user().build();
         user.setIdentifier(patientId);
-        var userJson = new ObjectMapper().writeValueAsString(user);
+        var userJson = OBJECT_MAPPER.writeValueAsString(user);
         clientRegistryServer.setDispatcher(dispatcher);
         userServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(userJson));
         identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
@@ -187,7 +182,7 @@ class LinkUserJourneyTest {
         patientLinksResponse.getPatient().setLinks(patientLinks.getLinks().stream()
                 .peek(link -> link.setHip(Hip.builder().id(link.getHip().getId()).build()))
                 .collect(Collectors.toList()));
-        var patientLinksRes = new ObjectMapper().writeValueAsString(patientLinksResponse);
+        var patientLinksRes = OBJECT_MAPPER.writeValueAsString(patientLinksResponse);
         when(linkRepository.getLinkedCareContextsForAllHip(patientId)).thenReturn(Mono.just(patientLinks));
 
         webTestClient
@@ -204,7 +199,7 @@ class LinkUserJourneyTest {
 
 
     @Test
-    void shouldConfirmLinkCareContexts() throws IOException {
+    void shouldConfirmLinkCareContexts() {
         var token = string();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
         clientRegistryServer.setDispatcher(dispatcher);
@@ -263,7 +258,7 @@ class LinkUserJourneyTest {
     }
 
     @Test
-    void shouldReturnInvalidResponseForConfirmLinkCareContexts() throws IOException {
+    void shouldReturnInvalidResponseForConfirmLinkCareContexts() {
         var token = string();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("123@ncg", false)));
         clientRegistryServer.setDispatcher(dispatcher);
@@ -359,8 +354,8 @@ class LinkUserJourneyTest {
             String mxAsJson = null;
             String tmhJson = null;
             try {
-                mxAsJson = new ObjectMapper().writeValueAsString(maxProvider);
-                tmhJson = new ObjectMapper().writeValueAsString(tmhProvider);
+                mxAsJson = OBJECT_MAPPER.writeValueAsString(maxProvider);
+                tmhJson = OBJECT_MAPPER.writeValueAsString(tmhProvider);
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
@@ -382,7 +377,7 @@ class LinkUserJourneyTest {
         var token = string();
         var patientLinkReferenceResult = patientLinkReferenceResult()
                 .requestId(UUID.randomUUID())
-                .timestamp(Instant.now().plusSeconds(60L).toString())
+                .timestamp(LocalDateTime.now().plusSeconds(60L))
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
         when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
@@ -407,7 +402,7 @@ class LinkUserJourneyTest {
         var token = string();
         var patientLinkReferenceResult = patientLinkReferenceResult()
                 .requestId(UUID.randomUUID())
-                .timestamp(Instant.now().toString())
+                .timestamp(LocalDateTime.now())
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
         when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
@@ -426,7 +421,7 @@ class LinkUserJourneyTest {
     }
 
     @Test
-    void shouldFailOnLinkCareContextsWhenRequestIdIsNotGiven() throws Exception {
+    void shouldFailOnLinkCareContextsWhenRequestIdIsNotGiven() {
         var token = string();
         var gatewayResponse = GatewayResponse.builder()
                 .requestId(null)
@@ -434,7 +429,7 @@ class LinkUserJourneyTest {
         var patientLinkReferenceResult = PatientLinkReferenceResult.builder()
                 .requestId(UUID.randomUUID())
                 .resp(gatewayResponse)
-                .timestamp(Instant.now().plusSeconds(60L).toString())
+                .timestamp(LocalDateTime.now().plusSeconds(60L))
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
         when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());

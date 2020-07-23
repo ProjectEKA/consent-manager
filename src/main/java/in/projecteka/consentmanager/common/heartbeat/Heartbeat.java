@@ -15,6 +15,7 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.URL;
@@ -41,15 +42,15 @@ public class Heartbeat {
     public Mono<HeartbeatResponse> getStatus() {
         try {
             return isPostgresUp() && isKeycloakUp() && isRabbitMQUp() && isCacheUp()
-                   ? just(HeartbeatResponse.builder().timeStamp(now(UTC).toString()).status(UP).build())
+                   ? just(HeartbeatResponse.builder().timeStamp(now(UTC)).status(UP).build())
                    : just(HeartbeatResponse.builder()
-                           .timeStamp(now(UTC).toString())
+                           .timeStamp(now(UTC))
                            .status(Status.DOWN)
                            .error(Error.builder().code(ErrorCode.SERVICE_DOWN).message(SERVICE_DOWN).build())
                            .build());
         } catch (IOException | TimeoutException e) {
             return just(HeartbeatResponse.builder()
-                    .timeStamp(now(UTC).toString())
+                    .timeStamp(now(UTC))
                     .status(Status.DOWN)
                     .error(Error.builder().code(ErrorCode.SERVICE_DOWN).message(SERVICE_DOWN).build())
                     .build());

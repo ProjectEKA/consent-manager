@@ -1,20 +1,16 @@
 package in.projecteka.consentmanager.common;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.user.SignUpService;
-import in.projecteka.consentmanager.user.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.security.KeyPair;
 
@@ -34,12 +30,6 @@ class KeyPairConfigTest {
     private JWKSet identityServiceJWKSet;
 
     @MockBean
-    private UserService userService;
-
-    @MockBean
-    private DestinationsConfig destinationsConfig;
-
-    @MockBean
     private HiuConsentNotificationListener hiuConsentNotificationListener;
 
     @MockBean
@@ -51,9 +41,6 @@ class KeyPairConfigTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
-
-    @MockBean
-    private SignUpService signupService;
     
     @Test
     void shouldCreateSignArtefactKeyPair() {

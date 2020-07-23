@@ -15,6 +15,8 @@ import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
 import in.projecteka.consentmanager.user.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -139,7 +141,6 @@ class HASSignupServiceTest {
                 .gender("F")
                 .build();
 
-        when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
         when(signupService.getSessionId(anyString())).thenReturn(token);
         when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
         when(userRepository.save(any(HealthAccountUser.class), anyString())).thenReturn(Mono.empty());
@@ -422,6 +423,44 @@ class HASSignupServiceTest {
         when(sessionService.forNew(any(SessionRequest.class))).thenReturn(Mono.error(ClientError.invalidUserNameOrPassword()));
 
         StepVerifier.create(hasSignupService.updateHASLoginDetails(updateLoginRequestDetails, token))
+                .expectErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().is4xxClientError())
+                .verify();
+    }
+
+    @Test
+    public void shouldGenerateAadharOTP() {
+        var token = string();
+        var aadharOtpRequest = GenerateAadharOtpRequest.builder().aadhaar("123456789012").build();
+        var aadharOtpResponse = GenerateAadharOtpResponse.builder().txnID("testTxnID").token(token).build();
+        var sessionId = string();
+        var mobileNumber = string();
+
+        when(signupService.getSessionId(token)).thenReturn(sessionId);
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
+        when(hasSignupServiceClient.generateAadharOtp(aadharOtpRequest)).thenReturn(Mono.just(aadharOtpResponse));
+
+        StepVerifier.create(hasSignupService.generateAadharOtp(aadharOtpRequest,token))
+                .assertNext(response -> {
+                    assertThat(response.getTxnID()).isEqualTo("testTxnID");
+                    assertThat(response.getToken()).isEqualTo(token);
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    public void shouldGenerateThrowErrorWhenAadharIsInvalid() {
+        var token = string();
+        var aadharOtpRequest = GenerateAadharOtpRequest.builder().aadhaar("12345678901").build();
+        var aadharOtpResponse = GenerateAadharOtpResponse.builder().txnID("testTxnID").token(token).build();
+        var sessionId = string();
+        var mobileNumber = string();
+
+        when(signupService.getSessionId(token)).thenReturn(sessionId);
+        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
+        when(hasSignupServiceClient.generateAadharOtp(aadharOtpRequest)).thenReturn(Mono.just(aadharOtpResponse));
+
+        StepVerifier.create(hasSignupService.generateAadharOtp(aadharOtpRequest,token))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().is4xxClientError())
                 .verify();

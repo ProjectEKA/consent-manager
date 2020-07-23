@@ -2948,8 +2948,25 @@ components:
           description: JWT Token
         healthId:
           type: string
-          example: 12345 12345 12345
-
+          example: 1234-1234-1234-1234
+        cmId:
+          type: string
+          example: abc@ndhm
+        name:
+          $ref: '#/components/schemas/PatientName'
+        dateOfBirth:
+          $ref: '#/components/schemas/DateOfBirth'
+        gender:
+          $ref: '#/components/schemas/Gender'
+        stateName:
+          type: string
+          example: Maharashtra
+        districtName:
+          type: string
+          example: Pune
+        newHASUser:
+          type: boolean
+          example: true
     UpdateLoginDetailsRequest:
       type: object
       properties:

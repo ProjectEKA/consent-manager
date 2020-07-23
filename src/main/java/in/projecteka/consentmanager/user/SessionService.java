@@ -57,7 +57,7 @@ public class SessionService {
                         .then(request.getGrantType() == GrantType.PASSWORD
                               ? tokenService.tokenForUser(request.getUsername(), request.getPassword())
                               : tokenService.tokenForRefreshToken(request.getUsername(), request.getRefreshToken()))))
-                .flatMap(session -> Mono.just(mapToLoginResponse(session)))
+                .map(this::mapToLoginResponse)
                 .flatMap(loginResponse -> lockedUserService.removeLockedUser(request.getUsername())
                         .thenReturn(loginResponse))
                 .onErrorResume(error ->

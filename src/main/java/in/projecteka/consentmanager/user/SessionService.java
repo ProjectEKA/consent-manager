@@ -13,6 +13,7 @@ import in.projecteka.consentmanager.user.exception.InvalidPasswordException;
 import in.projecteka.consentmanager.user.exception.InvalidRefreshTokenException;
 import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
 import in.projecteka.consentmanager.user.model.GrantType;
+import in.projecteka.consentmanager.user.model.LoginResponse;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
@@ -32,6 +33,7 @@ import static in.projecteka.consentmanager.clients.ClientError.invalidRefreshTok
 import static in.projecteka.consentmanager.clients.ClientError.invalidUserNameOrPassword;
 import static in.projecteka.consentmanager.common.Constants.BLACKLIST;
 import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
+import static java.lang.String.format;
 import static reactor.core.publisher.Mono.empty;
 import static reactor.core.publisher.Mono.error;
 
@@ -49,13 +51,15 @@ public class SessionService {
     private final OtpServiceProperties otpServiceProperties;
     private final OtpAttemptService otpAttemptService;
 
-    public Mono<Session> forNew(SessionRequest request) {
+    public Mono<LoginResponse> forNew(SessionRequest request) {
         return credentialsNotEmpty(request)
                 .switchIfEmpty(Mono.defer(() -> lockedUserService.validateLogin(request.getUsername())
                         .then(request.getGrantType() == GrantType.PASSWORD
                               ? tokenService.tokenForUser(request.getUsername(), request.getPassword())
                               : tokenService.tokenForRefreshToken(request.getUsername(), request.getRefreshToken()))))
-                .flatMap(session -> lockedUserService.removeLockedUser(request.getUsername()).thenReturn(session))
+                .flatMap(session -> Mono.just(mapToLoginResponse(session)))
+                .flatMap(loginResponse -> lockedUserService.removeLockedUser(request.getUsername())
+                        .thenReturn(loginResponse))
                 .onErrorResume(error ->
                 {
                     logger.error(error.getMessage(), error);
@@ -70,6 +74,11 @@ public class SessionService {
                 });
     }
 
+    private LoginResponse mapToLoginResponse(Session session) {
+        String accessToken = format("Bearer %s", session.getAccessToken());
+        return LoginResponse.builder().token(accessToken).build();
+    }
+
     private Mono<Session> credentialsNotEmpty(SessionRequest request) {
         if (request.getGrantType() == GrantType.PASSWORD
                 && (StringUtils.isEmpty(request.getUsername()) || StringUtils.isEmpty(request.getPassword())))
@@ -82,7 +91,7 @@ public class SessionService {
     }
 
     public Mono<Void> logout(String accessToken, LogoutRequest logoutRequest) {
-        return blockListedTokens.put(String.format(BLACKLIST_FORMAT, BLACKLIST, accessToken), "")
+        return blockListedTokens.put(format(BLACKLIST_FORMAT, BLACKLIST, accessToken), "")
                 .then(tokenService.revoke(logoutRequest.getRefreshToken()));
     }
 

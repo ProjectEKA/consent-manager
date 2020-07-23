@@ -1353,10 +1353,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UpdateLoginDetailsResponse'
+                $ref: '#/components/schemas/LoginResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/UpdateLoginDetailsResponse'
+                $ref: '#/components/schemas/LoginResponse'
         '400':
           description: >
             **Causes:**
@@ -1915,10 +1915,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/LoginResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/LoginResponse'
         '400':
           description: >
             **Causes:**
@@ -2983,7 +2983,7 @@ components:
         - health-id
         - password
 
-    UpdateLoginDetailsResponse:
+    LoginResponse:
       type: object
       properties:
         token:

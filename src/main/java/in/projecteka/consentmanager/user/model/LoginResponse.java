@@ -9,6 +9,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @EqualsAndHashCode
-public class UpdateLoginDetailsResponse {
+public class LoginResponse {
     String token;
 }

@@ -109,7 +109,7 @@ class DataFlowRequesterUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
-
+    
     @SuppressWarnings("unused")
     @MockBean(name = "centralRegistryJWKSet")
     private JWKSet centralRegistryJWKSet;
@@ -275,7 +275,7 @@ class DataFlowRequesterUserJourneyTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus()
-                .isUnauthorized()
+                .isBadRequest()
                 .expectBody()
                 .json(errorResponseJson);
     }

@@ -247,14 +247,14 @@ public class ConsentManager {
     }
 
     private Mono<Void> validateDate(List<GrantedConsent> grantedConsents){
-        boolean validDates = grantedConsents.stream().allMatch(grantedConsent -> isdateValidatedForNullAndFuture(grantedConsent));
+        boolean validDates = grantedConsents.stream().allMatch(grantedConsent -> isDateValidatedForNullAndFuture(grantedConsent));
         if(!validDates)
             return Mono.error(ClientError.invalidDateRange());
         else
             return Mono.empty();
     }
 
-    private Boolean isdateValidatedForNullAndFuture(GrantedConsent grantedConsent){
+    private Boolean isDateValidatedForNullAndFuture(GrantedConsent grantedConsent){
         return grantedConsent.getPermission().getDateRange().getFromDate() != null &&
                 grantedConsent.getPermission().getDateRange().getFromDate().isBefore(LocalDateTime.now(ZoneOffset.UTC)) &&
                 grantedConsent.getPermission().getDateRange().getToDate() != null;

@@ -11,4 +11,5 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConstructorBinding
 public class NHSProperties {
     private String hiuId;
+    private String hasBaseUrl;
 }

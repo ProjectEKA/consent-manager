@@ -22,4 +22,5 @@ public class Constants {
     public static final String APP_PATH_USER_SIGN_UP_ENQUIRY = "/users/verify";
     public static final String APP_PATH_INTERNAL_FIND_USER_BY_USERNAME = "/internal/users/{userName}";
     public static final String APP_PATH_INTERNAL_GET_CARE_CONTEXT = "/internal/users/care-contexts";
+    public static final String USERS_AUTH_CONFIRM = CURRENT_VERSION + "/users/auth/confirm";
 }

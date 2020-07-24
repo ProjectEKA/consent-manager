@@ -51,6 +51,7 @@ import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
+import static in.projecteka.consentmanager.user.Constants.USERS_AUTH_CONFIRM;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -73,7 +74,8 @@ public class SecurityConfiguration {
             PATH_HEALTH_INFORMATION_ON_REQUEST,
             PATH_HEALTH_INFORMATION_REQUEST,
             PATH_HEALTH_INFORMATION_NOTIFY,
-            PATH_HIP_CONSENT_ON_NOTIFY
+            PATH_HIP_CONSENT_ON_NOTIFY,
+            USERS_AUTH_CONFIRM
     };
 
     static {
@@ -95,6 +97,7 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HEALTH_INFORMATION_NOTIFY, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HEALTH_INFORMATION_ON_REQUEST, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_CONSENT_ON_NOTIFY, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(USERS_AUTH_CONFIRM, HttpMethod.POST));
 
         RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve",
                 HttpMethod.POST,

@@ -26,6 +26,7 @@ import in.projecteka.consentmanager.common.cache.RedisOptions;
 import in.projecteka.consentmanager.common.heartbeat.CacheMethodProperty;
 import in.projecteka.consentmanager.common.heartbeat.Heartbeat;
 import in.projecteka.consentmanager.common.heartbeat.RabbitmqOptions;
+import in.projecteka.consentmanager.consent.NHSProperties;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
@@ -287,13 +288,15 @@ public class ConsentManagerConfiguration {
             IdentityService identityService,
             GatewayServiceProperties gatewayServiceProperties,
             ServiceAuthentication serviceAuthentication,
-            @Value("${consentmanager.authorization.header}") String authorizationHeader) {
+            @Value("${consentmanager.authorization.header}") String authorizationHeader,
+            NHSProperties nhsProperties) {
         return new UserServiceClient(builder.build(),
                 userServiceProperties.getUrl(),
                 identityService::authenticate,
                 gatewayServiceProperties,
                 serviceAuthentication,
-                authorizationHeader);
+                authorizationHeader,
+                nhsProperties);
     }
 
     @Bean

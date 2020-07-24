@@ -4,13 +4,7 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.OtpAction;
-import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
-import in.projecteka.consentmanager.clients.model.KeycloakUser;
-import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
-import in.projecteka.consentmanager.clients.model.OtpRequest;
-import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.clients.model.*;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.consent.model.Action;
@@ -21,24 +15,9 @@ import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.filters.ABPMJAYIdFilter;
 import in.projecteka.consentmanager.user.filters.NameFilter;
 import in.projecteka.consentmanager.user.filters.YOBFilter;
-import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
-import in.projecteka.consentmanager.user.model.InitiateCmIdRecoveryRequest;
-import in.projecteka.consentmanager.user.model.LoginMode;
-import in.projecteka.consentmanager.user.model.LoginModeResponse;
-import in.projecteka.consentmanager.user.model.OtpAttempt;
-import in.projecteka.consentmanager.user.model.OtpVerification;
+import in.projecteka.consentmanager.user.model.*;
 import in.projecteka.consentmanager.user.model.Patient;
-import in.projecteka.consentmanager.user.model.PatientResponse;
-import in.projecteka.consentmanager.user.model.RecoverCmIdResponse;
-import in.projecteka.consentmanager.user.model.RequesterDetail;
-import in.projecteka.consentmanager.user.model.SendOtpAction;
-import in.projecteka.consentmanager.user.model.SignUpSession;
-import in.projecteka.consentmanager.user.model.Token;
-import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
-import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
-import in.projecteka.consentmanager.user.model.UserCredential;
-import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -373,5 +352,18 @@ public class UserService {
 
     private Mono<User> getDistinctUser(List<User> rows) {
         return rows.size() == 1 ? Mono.just(rows.get(0)) : Mono.empty();
+    }
+
+    public Mono<Void> confirmAuthFor(UserAuthConfirmRequest request){
+        return userServiceClient.verifyOtpWithHasFor(HasOtpVerificationRequest.builder()
+                    .txnId(request.getConfirmation().getTransactionId())
+                    .otp(request.getConfirmation().getToken())
+                    .build())
+                .flatMap(hasToken -> temp(hasToken))
+                .then();
+    }
+
+    private  Mono<Void> temp(HasToken hasToken){
+        return Mono.empty();
     }
 }

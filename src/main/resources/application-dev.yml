@@ -75,6 +75,7 @@ consentmanager:
     retryInterval: 10000
   nhsproperties:
     hiuid: 10000002
+    hasBaseUrl: https://14.143.232.46/api
 spring:
   rabbitmq:
     host: localhost

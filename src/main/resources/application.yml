@@ -79,6 +79,7 @@ consentmanager:
     retryInterval: ${LISTENERS_RETRY_INTERVAL}
   nhsproperties:
     hiuid: ${NHS_HIU_ID:12342345}
+    hasBaseUrl: ${HAS_BASE_URL:https://14.143.232.46/api}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}

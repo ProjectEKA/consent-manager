@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.jeasy.random.EasyRandom;
 
+import java.time.LocalDateTime;
+
 public class TestBuilders {
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule())
@@ -14,5 +16,13 @@ public class TestBuilders {
 
     public static String string() {
         return easyRandom.nextObject(String.class);
+    }
+
+    public static LocalDateTime localDateTime() {
+        return easyRandom.nextObject(LocalDateTime.class);
+    }
+
+    public static Long aLong() {
+        return easyRandom.nextObject(Long.class);
     }
 }

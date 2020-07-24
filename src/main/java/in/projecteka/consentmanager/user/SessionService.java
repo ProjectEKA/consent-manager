@@ -51,7 +51,6 @@ public class SessionService {
     private final OtpServiceClient otpServiceClient;
     private final OtpServiceProperties otpServiceProperties;
     private final OtpAttemptService otpAttemptService;
-
     private final ConsentServiceProperties consentServiceProperties;
 
     public Mono<Session> forNew(SessionRequest request) {

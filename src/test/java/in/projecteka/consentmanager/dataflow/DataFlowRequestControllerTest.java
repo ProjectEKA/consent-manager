@@ -92,8 +92,8 @@ class DataFlowRequestControllerTest {
         var token = string();
         var dataFlowRequestBody = gatewayDataFlowRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.put(anyString(), any())).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), any())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(dataFlowRequester.requestHealthDataInfo(any())).thenReturn(Mono.empty());
 
@@ -132,8 +132,8 @@ class DataFlowRequestControllerTest {
         var token = string();
         var healthInformationNotificationRequest = healthInformationNotificationRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.put(anyString(), any())).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), any())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(dataFlowRequester.notifyHealthInformationStatus(healthInformationNotificationRequest))
                 .thenReturn(Mono.empty());
@@ -154,7 +154,7 @@ class DataFlowRequestControllerTest {
         var token = string();
         var healthInformationNotificationRequest = healthInformationNotificationRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(validator.validate(anyString(), any())).thenReturn(Mono.just(Boolean.FALSE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(dataFlowRequester.notifyHealthInformationStatus(healthInformationNotificationRequest))
                 .thenReturn(Mono.empty());
@@ -175,8 +175,8 @@ class DataFlowRequestControllerTest {
         var token = string();
         var healthInformationResponse = healthInformationResponseBuilder().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.put(anyString(), any())).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), any())).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(dataFlowRequester.updateDataflowRequestStatus(healthInformationResponse)).thenReturn(Mono.empty());
 
@@ -195,7 +195,7 @@ class DataFlowRequestControllerTest {
         var token = string();
         var healthInformationResponse = healthInformationResponseBuilder().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(validator.validate(anyString(), any())).thenReturn(Mono.just(Boolean.FALSE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(dataFlowRequester.updateDataflowRequestStatus(healthInformationResponse)).thenReturn(Mono.empty());
 

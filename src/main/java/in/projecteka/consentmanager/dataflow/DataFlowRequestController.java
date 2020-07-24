@@ -41,12 +41,12 @@ public class DataFlowRequestController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> requestHealthInformationV1(@Valid @RequestBody GatewayDataFlowRequest dataFlowRequest) {
         return Mono.just(dataFlowRequest)
-                .filterWhen(req -> validator.validate(req.getRequestId().toString(), req.getTimestamp().toString()))
+                .filterWhen(req -> validator.validate(req.getRequestId().toString(), req.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(req -> ReactiveSecurityContextHolder.getContext()
                         .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
                         .doOnSuccess(requester -> Mono.defer(() ->
-                                validator.put(req.getRequestId().toString(), req.getTimestamp().toString())
+                                validator.put(req.getRequestId().toString(), req.getTimestamp())
                                         .then(dataFlowRequester.requestHealthDataInfo(dataFlowRequest))).subscribe())
                         .then());
     }
@@ -56,11 +56,11 @@ public class DataFlowRequestController {
     public Mono<Void> onRequestHealthInformationV1(
             @RequestBody @Valid HealthInformationResponse healthInformationResponse) {
         return Mono.just(healthInformationResponse)
-                .filterWhen(res -> validator.validate(res.getRequestId().toString(), res.getTimestamp().toString()))
+                .filterWhen(res -> validator.validate(res.getRequestId().toString(), res.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(res -> validator.put(
                         healthInformationResponse.getRequestId().toString(),
-                        healthInformationResponse.getTimestamp().toString())
+                        healthInformationResponse.getTimestamp())
                         .then(dataFlowRequester.updateDataflowRequestStatus(healthInformationResponse)));
     }
 
@@ -68,12 +68,12 @@ public class DataFlowRequestController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> healthInformationNotify(@RequestBody HealthInfoNotificationRequest notificationRequest) {
         return Mono.just(notificationRequest)
-                .filterWhen(req -> validator.validate(req.getRequestId().toString(), req.getTimestamp().toString()))
+                .filterWhen(req -> validator.validate(req.getRequestId().toString(), req.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(req -> ReactiveSecurityContextHolder.getContext()
                         .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
                         .doOnSuccess(requester -> Mono.defer(() ->
-                                validator.put(req.getRequestId().toString(), req.getTimestamp().toString())
+                                validator.put(req.getRequestId().toString(), req.getTimestamp())
                                         .then(dataFlowRequester.notifyHealthInformationStatus(notificationRequest)))
                                 .subscribe())
                         .then());

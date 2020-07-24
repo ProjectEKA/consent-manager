@@ -32,7 +32,6 @@ import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.ValidatePinRequest;
-import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
 import in.projecteka.consentmanager.user.model.VerifyAadharOtpRequest;
 import in.projecteka.consentmanager.user.model.VerifyAadharOtpResponse;
 import in.projecteka.consentmanager.user.model.LoginResponse;

@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.user.model.LoginResponse;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
@@ -20,7 +21,7 @@ public class SessionController {
     private final SessionService sessionService;
 
     @PostMapping(Constants.APP_PATH_NEW_SESSION)
-    public Mono<Session> forNew(@RequestBody SessionRequest sessionRequest) {
+    public Mono<LoginResponse> forNew(@RequestBody SessionRequest sessionRequest) {
         return sessionService.forNew(sessionRequest);
     }
 

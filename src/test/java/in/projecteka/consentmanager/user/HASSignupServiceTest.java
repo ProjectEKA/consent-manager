@@ -12,6 +12,7 @@ import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
 import in.projecteka.consentmanager.user.model.HealthAccountUser;
+import in.projecteka.consentmanager.user.model.LoginResponse;
 import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
@@ -35,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.user.TestBuilders.loginResponse;
 import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
@@ -310,8 +312,8 @@ class HASSignupServiceTest {
                 .build();
         var token = string();
         var user = User.builder().name(PatientName.builder().first("hina").middle("").last("patel").build()).build();
+        var loginResponse = loginResponse().build();
         var session = session().build();
-        String accessToken = format("Bearer %s", session.getAccessToken());
 
         when(userRepository.userWith(updateLoginRequestDetails.getCmId())).thenReturn(Mono.empty());
         when(hasSignupServiceClient.updateHASAccount(any(UpdateHASUserRequest.class))).thenReturn(Mono.empty());
@@ -321,12 +323,10 @@ class HASSignupServiceTest {
                 .thenReturn(Mono.just(user));
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(session));
         when(identityServiceClient.createUser(any(Session.class), any(KeycloakUser.class))).thenReturn(Mono.empty());
-        when(sessionService.forNew(any(SessionRequest.class))).thenReturn(Mono.just(session));
+        when(sessionService.forNew(any(SessionRequest.class))).thenReturn(Mono.just(loginResponse));
 
         StepVerifier.create(hasSignupService.updateHASLoginDetails(updateLoginRequestDetails, token))
-                .assertNext(res -> {
-                    assertThat(res.getToken()).isEqualTo(accessToken);
-                })
+                .assertNext(res -> assertThat(res).isEqualTo(loginResponse))
                 .verifyComplete();
     }
 
@@ -338,6 +338,7 @@ class HASSignupServiceTest {
                 .build();
         var token = UUID.randomUUID().toString();
         var user = User.builder().name(PatientName.builder().first("hina").middle("").last("patel").build()).build();
+        var loginResponse = loginResponse().build();
         var session = session().build();
         String accessToken = format("Bearer %s", session.getAccessToken());
 
@@ -348,12 +349,10 @@ class HASSignupServiceTest {
                 .thenReturn(Mono.just(user));
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(session));
         when(identityServiceClient.createUser(any(Session.class), any(KeycloakUser.class))).thenReturn(Mono.empty());
-        when(sessionService.forNew(any(SessionRequest.class))).thenReturn(Mono.just(session));
+        when(sessionService.forNew(any(SessionRequest.class))).thenReturn(Mono.just(loginResponse));
 
         StepVerifier.create(hasSignupService.updateHASLoginDetails(updateLoginRequestDetails, token))
-                .assertNext(res -> {
-                    assertThat(res.getToken()).isEqualTo(accessToken);
-                })
+                .assertNext(res -> assertThat(res).isEqualTo(loginResponse))
                 .verifyComplete();
         verify(hasSignupServiceClient, never()).updateHASAccount(any(UpdateHASUserRequest.class));
     }

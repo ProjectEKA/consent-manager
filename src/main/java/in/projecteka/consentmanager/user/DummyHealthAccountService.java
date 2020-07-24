@@ -15,9 +15,10 @@ public class DummyHealthAccountService {
     private final UserRepository userRepository;
 
     public Mono<HealthAccountUser> createHASAccount(HASSignupRequest signupRequest) {
-        return userRepository.getExistingUser(signupRequest.getFirstName(), signupRequest.getLastName(), signupRequest.getGender())
-                .flatMap(user -> Mono.just(mapToHealthAccountUser(user)))
-                .switchIfEmpty(Mono.defer(() -> Mono.just(createNewDummyHASUser(signupRequest))));
+        return Mono.just(createNewDummyHASUser(signupRequest));
+//        return userRepository.getExistingUser(signupRequest.getFirstName(), signupRequest.getLastName(), signupRequest.getGender())
+//                .flatMap(user -> Mono.just(mapToHealthAccountUser(user)))
+//                .switchIfEmpty(Mono.defer(() -> Mono.just(createNewDummyHASUser(signupRequest))));
     }
 
     private HealthAccountUser createNewDummyHASUser(HASSignupRequest signupRequest) {

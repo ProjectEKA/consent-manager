@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
 import in.projecteka.consentmanager.user.model.GrantType;
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
 import in.projecteka.consentmanager.user.model.HealthAccountUser;
+import in.projecteka.consentmanager.user.model.LoginResponse;
 import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
@@ -21,7 +22,6 @@ import in.projecteka.consentmanager.user.model.SignUpResponse;
 import in.projecteka.consentmanager.user.model.UpdateHASAddressRequest;
 import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
-import in.projecteka.consentmanager.user.model.UpdateLoginDetailsResponse;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.VerifyAadharOtpRequest;
 import in.projecteka.consentmanager.user.model.VerifyAadharOtpResponse;
@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
-import static java.lang.String.format;
 
 @AllArgsConstructor
 public class HASSignupService {
@@ -97,7 +96,7 @@ public class HASSignupService {
                 .build();
     }
 
-    public Mono<UpdateLoginDetailsResponse> updateHASLoginDetails(UpdateLoginDetailsRequest request, String token) {
+    public Mono<LoginResponse> updateHASLoginDetails(UpdateLoginDetailsRequest request, String token) {
         var updateHASLoginDetails = createUpdateHASUserRequest(request, token);
         return userRepository.userWith(request.getCmId())
                 .flatMap(patient -> Mono.error(userAlreadyExists(patient.getIdentifier())))
@@ -124,11 +123,7 @@ public class HASSignupService {
                 .then(Mono.defer(() -> sessionService.forNew(SessionRequest.builder().grantType(GrantType.PASSWORD)
                         .username(request.getCmId())
                         .password(request.getPassword())
-                        .build())))
-                .flatMap(session -> {
-                    String accessToken = format("Bearer %s", session.getAccessToken());
-                    return Mono.just(UpdateLoginDetailsResponse.builder().token(accessToken).build());
-                });
+                        .build())));
     }
 
     private boolean isHealthAccountToken(String token) {

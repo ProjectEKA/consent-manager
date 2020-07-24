@@ -218,7 +218,7 @@ public class HASSignupService {
                 .flatMap(isNewUser ->
                         userRepository.getPatientByHealthId(request.getHealthId())
                                 .flatMap(user -> isNumberFromAllowedList(user.getPhone()) && !isHealthAccountToken(token) ?
-                                        Mono.just(createSignUpResponse(dummyHealthAccountService.mapToHealthAccountUser(user), user.getIdentifier())) :
+                                        Mono.just(createSignUpResponse(dummyHealthAccountService.mapToHealthAccountUser(user,isNewUser), user.getIdentifier())) :
                                         hasSignupServiceClient.updateHASAddress(request, token)
                                                 .flatMap(hasUser -> Mono.just(createSignUpResponse(hasUser, user.getIdentifier())))))
                 .switchIfEmpty(Mono.error(ClientError.invalidRequester("Invalid Update Address Request")));

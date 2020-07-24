@@ -57,6 +57,10 @@ public class DummyHealthAccountService {
     }
 
     public HealthAccountUser mapToHealthAccountUser(User user) {
+        return mapToHealthAccountUser(user,false);
+    }
+
+    public HealthAccountUser mapToHealthAccountUser(User user, Boolean newHASUser) {
         return HealthAccountUser.builder()
                 .healthId(user.getHealthId())
                 .token(UUID.randomUUID().toString())
@@ -69,7 +73,7 @@ public class DummyHealthAccountService {
                 .gender(user.getGender().toString())
                 .districtName("Pune")
                 .stateName("Maharashtra")
-                .newHASUser(false)
+                .newHASUser(newHASUser)
                 .build();
     }
 }

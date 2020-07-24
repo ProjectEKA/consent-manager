@@ -198,8 +198,7 @@ public class UserConfiguration {
                 sessionService,
                 otpServiceProperties,
                 dummyHealthAccountService,
-                hasCache
-                );
+                hasCache);
     }
 
     @Bean

@@ -42,6 +42,7 @@ public class DummyHealthAccountService {
 
     public HealthAccountUser createHASUser() {
         return HealthAccountUser.builder()
+                .name("Hina Patel")
                 .firstName("Hina")
                 .middleName("")
                 .lastName("Patel")
@@ -54,7 +55,7 @@ public class DummyHealthAccountService {
                 .token(UUID.randomUUID().toString()).build();
     }
 
-    private HealthAccountUser mapToHealthAccountUser(User user) {
+    public HealthAccountUser mapToHealthAccountUser(User user) {
         return HealthAccountUser.builder()
                 .healthId(user.getHealthId())
                 .token(UUID.randomUUID().toString())

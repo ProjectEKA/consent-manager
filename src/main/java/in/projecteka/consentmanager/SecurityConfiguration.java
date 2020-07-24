@@ -127,6 +127,7 @@ public class SecurityConfiguration {
                                                                    "/patients/profile/update-login-details",
                                                                    "/patients/generate-aadhar-otp",
                                                                    "/patients/verify-aadhar-otp",
+                                                                   "/patients/update-address",
                                                                    "/**.html",
                                                                    "/**.js",
                                                                    "/**.yaml",

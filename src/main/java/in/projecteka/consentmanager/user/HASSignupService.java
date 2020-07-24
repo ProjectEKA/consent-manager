@@ -182,18 +182,29 @@ public class HASSignupService {
                         .flatMap(response -> hasCache.put(response.getHealthId(), response.getNewHASUser().toString())
                                 .then(userRepository.getPatientByHealthId(response.getHealthId())
                                         .flatMap(patient -> Mono.just(createVerifyAadharOtpResponse(response)))
-                                        .switchIfEmpty(Mono.defer(()->userRepository.save(response, mobileNumber))
+                                        .switchIfEmpty(Mono.defer(() ->
+                                                addFirstName(response)
+                                                        .flatMap(updatedUser -> userRepository.save(updatedUser, mobileNumber)))
                                                 .thenReturn(createVerifyAadharOtpResponse(response))))))
                 .flatMap(response -> signUpService.removeOf(sessionId).thenReturn(response));
+    }
+
+    private Mono<HealthAccountUser> addFirstName(HealthAccountUser user) {
+        return Mono.just(HealthAccountUser.builder()
+                .name(user.getName())
+                .firstName(user.getName())
+                .healthId(user.getHealthId())
+                .gender(user.getGender())
+                .dayOfBirth(user.getDayOfBirth())
+                .monthOfBirth(user.getMonthOfBirth())
+                .yearOfBirth(user.getYearOfBirth())
+                .build());
     }
 
     private VerifyAadharOtpResponse createVerifyAadharOtpResponse(HealthAccountUser user) {
         return VerifyAadharOtpResponse.builder()
                 .healthId(user.getHealthId())
-                .name(PatientName.builder()
-                        .first(user.getFirstName())
-                        .middle(user.getMiddleName())
-                        .last(user.getLastName()).build())
+                .name(user.getName())
                 .dateOfBirth(DateOfBirth.builder()
                         .date(user.getDayOfBirth())
                         .month(user.getMonthOfBirth())
@@ -211,8 +222,10 @@ public class HASSignupService {
                 })
                 .flatMap(isNewUser ->
                         userRepository.getPatientByHealthId(request.getHealthId())
-                                .flatMap(user -> hasSignupServiceClient.updateHASAddress(request, token)
-                                        .flatMap(hasUser -> Mono.just(createSignUpResponse(hasUser, user.getIdentifier())))))
+                                .flatMap(user -> isNumberFromAllowedList(user.getPhone()) ?
+                                        Mono.just(createSignUpResponse(dummyHealthAccountService.mapToHealthAccountUser(user), user.getIdentifier())) :
+                                        hasSignupServiceClient.updateHASAddress(request, token)
+                                                .flatMap(hasUser -> Mono.just(createSignUpResponse(hasUser, user.getIdentifier())))))
                 .switchIfEmpty(Mono.error(ClientError.invalidRequester("Invalid Update Address Request")));
     }
 }

@@ -17,6 +17,7 @@ import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.KeyPairConfig;
 import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -36,6 +37,7 @@ import in.projecteka.consentmanager.user.UserServiceProperties;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -66,8 +68,6 @@ import reactor.netty.resources.ConnectionProvider;
 import java.io.IOException;
 import java.net.URL;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.text.ParseException;
@@ -205,11 +205,10 @@ public class ConsentManagerConfiguration {
         return new TokenService(identityServiceProperties, identityServiceClient, userRepository);
     }
 
+    @SneakyThrows
     @Bean("pinSigning")
-    public KeyPair keyPair() throws NoSuchAlgorithmException {
-        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
-        keyPairGen.initialize(2048);
-        return keyPairGen.genKeyPair();
+    public KeyPair keyPair(KeyPairConfig keyPairConfig) {
+        return keyPairConfig.createPinVerificationKeyPair();
     }
 
     @Bean("keySigningPublicKey")

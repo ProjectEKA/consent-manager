@@ -222,7 +222,7 @@ public class HASSignupService {
                 })
                 .flatMap(isNewUser ->
                         userRepository.getPatientByHealthId(request.getHealthId())
-                                .flatMap(user -> isNumberFromAllowedList(user.getPhone()) ?
+                                .flatMap(user -> isNumberFromAllowedList(user.getPhone()) && !isHealthAccountToken(token) ?
                                         Mono.just(createSignUpResponse(dummyHealthAccountService.mapToHealthAccountUser(user), user.getIdentifier())) :
                                         hasSignupServiceClient.updateHASAddress(request, token)
                                                 .flatMap(hasUser -> Mono.just(createSignUpResponse(hasUser, user.getIdentifier())))))

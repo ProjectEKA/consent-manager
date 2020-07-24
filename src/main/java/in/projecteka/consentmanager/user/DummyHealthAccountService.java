@@ -66,6 +66,8 @@ public class DummyHealthAccountService {
                 .monthOfBirth(user.getDateOfBirth().getMonth())
                 .yearOfBirth(user.getDateOfBirth().getYear())
                 .gender(user.getGender().toString())
+                .districtName("Pune")
+                .stateName("Maharashtra")
                 .newHASUser(false)
                 .build();
     }

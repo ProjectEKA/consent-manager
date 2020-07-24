@@ -26,7 +26,7 @@ public class UserRepository {
     private static final String SELECT_PATIENT = "select id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers " +
             "from patient where id = $1";
 
-    private static final String SELECT_PATIENT_BY_HEALTH_ID = "select id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers \" +\n" +
+    private static final String SELECT_PATIENT_BY_HEALTH_ID = "select id, health_id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers \" +\n" +
             "            \"from patient where health_id = $1";
 
     private static final String SELECT_PATIENT_BY_GENDER_MOB = "select id, first_name, middle_name, last_name, date_of_birth, month_of_birth, year_of_birth, unverified_identifiers from patient" +
@@ -177,6 +177,7 @@ public class UserRepository {
                             var patientRow = patientIterator.next();
                             try {
                                 var user = User.builder()
+                                        .healthId(patientRow.getString("health_id"))
                                         .identifier(patientRow.getString("id"))
                                         .name(PatientName.builder()
                                                 .first(patientRow.getString("first_name"))

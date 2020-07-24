@@ -125,8 +125,6 @@ public class SecurityConfiguration {
                                                                    "/sessions",
                                                                    PATH_HEARTBEAT,
                                                                    "/patients/profile/update-login-details",
-                                                                   "/patients/generate-aadhar-otp",
-                                                                   "/patients/verify-aadhar-otp",
                                                                    "/patients/update-address",
                                                                    "/**.html",
                                                                    "/**.js",
@@ -312,6 +310,8 @@ public class SecurityConfiguration {
 
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
             return (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
+                    (("/patients/generate-aadhar-otp").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
+                    (("/patients/verify-aadhar-otp").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
                     (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod));
         }
     }

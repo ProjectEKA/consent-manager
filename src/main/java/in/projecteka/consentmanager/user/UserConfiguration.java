@@ -127,7 +127,8 @@ public class UserConfiguration {
             UserRepository userRepository,
             OtpServiceClient otpServiceClient,
             OtpServiceProperties otpServiceProperties,
-            OtpAttemptService otpAttemptService) {
+            OtpAttemptService otpAttemptService,
+            ConsentServiceProperties serviceProperties) {
         return new SessionService(tokenService,
                 blockListedTokens,
                 unverifiedSessions,

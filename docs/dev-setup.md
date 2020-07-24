@@ -72,6 +72,7 @@
 3. In the command line, run the following
 
     ```bash
+    docker pull projecteka/monitor-db-initializer
     docker pull projecteka/gateway-db-initializer
     docker pull projecteka/cm-db-initializer
     docker pull projecteka/hiu-db-initializer

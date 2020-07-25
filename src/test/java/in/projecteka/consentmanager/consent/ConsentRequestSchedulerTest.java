@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
@@ -64,7 +65,7 @@ class ConsentRequestSchedulerTest {
 
     @Test
     public void processConsentRequestsWhenRequestIsExpired() {
-        LocalDateTime createdAt = LocalDateTime.now().minus(Duration.ofMinutes(20));
+        LocalDateTime createdAt = LocalDateTime.now(ZoneOffset.UTC).minus(Duration.ofHours(2));
         var consentRequestDetail =
                 consentRequestDetail().status(ConsentStatus.REQUESTED).createdAt(createdAt).build();
         var consentArtefactsMessage = ConsentArtefactsMessage.builder()

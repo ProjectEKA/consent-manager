@@ -1,5 +1,7 @@
 package in.projecteka.consentmanager.common;
 
+import java.time.LocalDateTime;
+
 public class Constants {
     public static final String API_VERSION = "v0.5";
     public static final String BLACKLIST = "blacklist";
@@ -7,6 +9,7 @@ public class Constants {
     public static final String SCOPE_CONSENT_APPROVE = "consentrequest.approve";
     public static final String SCOPE_CONSENT_REVOKE = "consent.revoke";
     public static final String SCOPE_CHANGE_PIN = "profile.changepin";
+    public static final LocalDateTime DEFAULT_CACHE_VALUE = LocalDateTime.MIN;
 
     // rabbitmq
     public static final String CONSENT_REQUEST_QUEUE = "consent-request-queue";
@@ -28,6 +31,11 @@ public class Constants {
     //Gateway API paths
     public static final String PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH = "%s/links/link/confirm";
     public static final String PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH = "%s/links/link/init";
+
+    // Cache
+    public static final String GUAVA = "guava";
+
+    public static final String SERVICE_DOWN = "Service Down";
 
     private Constants() {
     }

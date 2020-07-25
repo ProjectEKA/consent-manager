@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.user.model.GrantType;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
@@ -68,6 +69,9 @@ class SessionServiceTest {
     private OtpAttemptService otpAttemptService;
 
     @Mock
+    private ConsentServiceProperties consentServiceProperties;
+
+    @Mock
     CacheAdapter<String, String> unverifiedSessions;
 
     @BeforeEach
@@ -92,7 +96,8 @@ class SessionServiceTest {
                 userRepository,
                 otpServiceClient,
                 otpServiceProperties,
-                otpAttemptService);
+                otpAttemptService,
+                consentServiceProperties);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -118,7 +123,8 @@ class SessionServiceTest {
                 userRepository,
                 otpServiceClient,
                 otpServiceProperties,
-                otpAttemptService);
+                otpAttemptService,
+                consentServiceProperties);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -144,7 +150,8 @@ class SessionServiceTest {
                 userRepository,
                 otpServiceClient,
                 otpServiceProperties,
-                otpAttemptService);
+                otpAttemptService,
+                consentServiceProperties);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -170,7 +177,8 @@ class SessionServiceTest {
                 userRepository,
                 otpServiceClient,
                 otpServiceProperties,
-                otpAttemptService);
+                otpAttemptService,
+                consentServiceProperties);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -198,7 +206,8 @@ class SessionServiceTest {
                 userRepository,
                 otpServiceClient,
                 otpServiceProperties,
-                otpAttemptService);
+                otpAttemptService,
+                consentServiceProperties);
 
         var sessionPublisher = sessionService.forNew(sessionRequest);
 
@@ -225,7 +234,8 @@ class SessionServiceTest {
                 userRepository,
                 otpServiceClient,
                 otpServiceProperties,
-                otpAttemptService);
+                otpAttemptService,
+                consentServiceProperties);
 
         Mono<Void> logout = sessionService.logout(testAccessToken, logoutRequest);
 
@@ -252,7 +262,8 @@ class SessionServiceTest {
                 userRepository,
                 otpServiceClient,
                 otpServiceProperties,
-                otpAttemptService);
+                otpAttemptService,
+                consentServiceProperties);
 
         StepVerifier.create(sessionService.sendOtp(new OtpVerificationRequest(username))).
                 assertNext(response -> {
@@ -277,7 +288,8 @@ class SessionServiceTest {
                 userRepository,
                 otpServiceClient,
                 otpServiceProperties,
-                otpAttemptService);
+                otpAttemptService,
+                consentServiceProperties);
 
         StepVerifier.create(sessionService.sendOtp(new OtpVerificationRequest(username)))
                 .expectErrorSatisfies(throwable -> assertThat(((ClientError) throwable).getHttpStatus() == NOT_FOUND))
@@ -301,7 +313,8 @@ class SessionServiceTest {
                 userRepository,
                 otpServiceClient,
                 otpServiceProperties,
-                otpAttemptService);
+                otpAttemptService,
+                consentServiceProperties);
 
         StepVerifier.create(sessionService.sendOtp(new OtpVerificationRequest(username)))
                 .expectErrorSatisfies(throwable ->
@@ -323,7 +336,8 @@ class SessionServiceTest {
                 userRepository,
                 otpServiceClient,
                 otpServiceProperties,
-                otpAttemptService);
+                otpAttemptService,
+                consentServiceProperties);
 
         StepVerifier.create(sessionService.validateOtp(otpPermitRequest))
                 .expectErrorSatisfies(throwable -> assertThat(((ClientError) throwable).getHttpStatus() == BAD_REQUEST))
@@ -345,7 +359,8 @@ class SessionServiceTest {
                 userRepository,
                 otpServiceClient,
                 otpServiceProperties,
-                otpAttemptService);
+                otpAttemptService,
+                consentServiceProperties);
 
         StepVerifier.create(sessionService.validateOtp(otpPermitRequest))
                 .expectErrorSatisfies(throwable -> assertThat(((ClientError) throwable).getHttpStatus() == BAD_REQUEST))
@@ -373,7 +388,8 @@ class SessionServiceTest {
                 userRepository,
                 otpServiceClient,
                 otpServiceProperties,
-                otpAttemptService);
+                otpAttemptService,
+                consentServiceProperties);
 
         StepVerifier.create(sessionService.validateOtp(otpPermitRequest))
                 .assertNext(session -> assertThat(session).isEqualTo(expectedSession))

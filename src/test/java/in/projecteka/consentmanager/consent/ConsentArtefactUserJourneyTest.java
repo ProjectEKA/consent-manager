@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
-import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
@@ -366,7 +366,7 @@ class ConsentArtefactUserJourneyTest {
         when(serviceAuthentication.authenticate()).thenReturn(Mono.empty());
         when(gatewayTokenVerifier.verify(token))
                 .thenReturn(Mono.just(caller));
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
         when(consentArtefactRepository.getConsentArtefact(fetchRequest.getConsentId()))
                 .thenReturn(Mono.just(consentArtefact));
         when(centralRegistry.providerWith(any())).thenReturn(Mono.just(Provider.builder().name("test-hip").build()));

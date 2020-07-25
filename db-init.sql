@@ -4,3 +4,4 @@ grant all privileges on database keycloak to keycloak;
 create database consent_manager;
 create database health_information_user;
 create database gateway;
+create database monitor;

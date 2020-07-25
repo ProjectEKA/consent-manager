@@ -6,6 +6,7 @@ consentmanager:
     maxPageSize: 100
     url: http://localhost:9000
     consentRequestExpiry: 60
+    name: PHR-App
   scheduler:
     consentExpiryCronExpr: '0 0 * ? * *'
     consentRequestExpiryCronExpr: '0 0 0/12 ? * *'
@@ -76,6 +77,15 @@ consentmanager:
     jwkUrl: http://localhost:8000/v0.5/certs
   nhsproperties:
     hiuId: 10000002
+keystore:
+  file-path: "consent-manager-local-keystore.p12"
+  password: password
+  sign-artefact-keypair:
+    store-type: PKCS12
+    alias: test-sign-artefact
+  pin-verification-keypair:
+    store-type: PKCS12
+    alias: test-pin-verification
 spring:
   rabbitmq:
     host: localhost

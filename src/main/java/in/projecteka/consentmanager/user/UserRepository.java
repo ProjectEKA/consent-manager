@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.HealthAccountUser;
 import in.projecteka.consentmanager.user.model.PatientName;
+import in.projecteka.consentmanager.user.model.UpdateHASAddressRequest;
 import in.projecteka.consentmanager.user.model.User;
 import io.vertx.core.json.JsonArray;
 import io.vertx.pgclient.PgPool;
@@ -19,13 +20,13 @@ import reactor.core.publisher.Mono;
 public class UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
     private static final String INSERT_PATIENT = "Insert into patient(health_id, " +
-            "first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number)" +
-            " values($1, $2, $3, $4, $5, $6, $7, $8, $9);";
+            "first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, state_code, district_code)" +
+            " values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);";
 
     private static final String SELECT_PATIENT = "select id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers " +
             "from patient where id = $1";
 
-    private static final String SELECT_PATIENT_BY_HEALTH_ID = "select id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers \" +\n" +
+    private static final String SELECT_PATIENT_BY_HEALTH_ID = "select id, health_id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers \" +\n" +
             "            \"from patient where health_id = $1";
 
     private static final String SELECT_PATIENT_BY_GENDER_MOB = "select id, first_name, middle_name, last_name, date_of_birth, month_of_birth, year_of_birth, unverified_identifiers from patient" +
@@ -34,6 +35,8 @@ public class UserRepository {
     private final static String DELETE_PATIENT = "DELETE FROM patient WHERE id=$1";
 
     private final String UPDATE_CM_ID = "Update patient set id=$1 where health_id=$2";
+
+    private final String UPDATE_ADDRESS = "Update patient set district_code=$2, state_code=$3 where health_id=$1";
 
     private static final String SELECT_PATIENT_BY_NAME_GENDER = "select health_id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth " +
             "from patient where first_name = $1 and last_name = $2 and gender = $3";
@@ -104,7 +107,9 @@ public class UserRepository {
                 user.getDayOfBirth(),
                 user.getMonthOfBirth(),
                 user.getYearOfBirth(),
-                mobileNumber);
+                mobileNumber,
+                user.getStateCode(),
+                user.getDistrictCode());
         return doOperation(INSERT_PATIENT, userDetails);
     }
 
@@ -176,6 +181,7 @@ public class UserRepository {
                             var patientRow = patientIterator.next();
                             try {
                                 var user = User.builder()
+                                        .healthId(patientRow.getString("health_id"))
                                         .identifier(patientRow.getString("id"))
                                         .name(PatientName.builder()
                                                 .first(patientRow.getString("first_name"))
@@ -244,5 +250,10 @@ public class UserRepository {
                                 monoSink.success();
                             }
                         }));
+    }
+
+    public Mono<Void> updateAddress(UpdateHASAddressRequest request) {
+        Tuple userDetails = Tuple.of(request.getHealthId(),request.getDistrictCode(),request.getStateCode());
+        return doOperation(UPDATE_ADDRESS, userDetails);
     }
 }

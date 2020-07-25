@@ -90,7 +90,8 @@ public class UserService {
     public Mono<Void> user(String userName, RequesterDetail requester, UUID requestId) {
         return Mono.defer(() -> {
             findUser(userName, requester.getType().getRoutingKey(), requester.getId(), requestId);
-            return Mono.empty();
+            return
+                    Mono.empty();
         });
     }
 

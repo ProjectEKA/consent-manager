@@ -51,7 +51,6 @@ import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
-import static in.projecteka.consentmanager.user.Constants.HAS_ACCOUNT_UPDATE;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -126,6 +125,7 @@ public class SecurityConfiguration {
                                                                    "/sessions",
                                                                    PATH_HEARTBEAT,
                                                                    "/patients/profile/update-login-details",
+                                                                   "/patients/update-address",
                                                                    "/**.html",
                                                                    "/**.js",
                                                                    "/**.yaml",
@@ -310,6 +310,8 @@ public class SecurityConfiguration {
 
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
             return (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
+                    (("/patients/generate-aadhar-otp").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
+                    (("/patients/verify-aadhar-otp").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
                     (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod));
         }
     }

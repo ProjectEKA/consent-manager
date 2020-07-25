@@ -113,7 +113,7 @@ public class UserConfiguration {
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    @Bean({"unverifiedSessions", "verifiedSessions", "blockListedTokens", "usedTokens"})
+    @Bean({"unverifiedSessions", "verifiedSessions", "blockListedTokens", "usedTokens", "hasCache"})
     public CacheAdapter<String, String> createLoadingCacheAdapter() {
         return new LoadingCacheAdapter(createSessionCache(5));
     }
@@ -136,9 +136,8 @@ public class UserConfiguration {
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
-    @Bean({"unverifiedSessions", "verifiedSessions", "blockListedTokens", "usedTokens"})
-    public CacheAdapter<String, String> createRedisCacheAdapter(
-            ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
+    @Bean({"unverifiedSessions", "verifiedSessions", "blockListedTokens", "usedTokens", "hasCache"})
+    public CacheAdapter<String, String> createRedisCacheAdapter(ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
         return new RedisCacheAdapter(stringReactiveRedisOperations, 5);
     }
 
@@ -196,7 +195,8 @@ public class UserConfiguration {
                                              IdentityServiceClient identityServiceClient,
                                              SessionService sessionService,
                                              OtpServiceProperties otpServiceProperties,
-                                             DummyHealthAccountService dummyHealthAccountService
+                                             DummyHealthAccountService dummyHealthAccountService,
+                                             CacheAdapter<String, String> hasCache
     ) {
         return new HASSignupService(hasSignupServiceClient,
                 userRepository,
@@ -205,8 +205,8 @@ public class UserConfiguration {
                 identityServiceClient,
                 sessionService,
                 otpServiceProperties,
-                dummyHealthAccountService
-                );
+                dummyHealthAccountService,
+                hasCache);
     }
 
     @Bean

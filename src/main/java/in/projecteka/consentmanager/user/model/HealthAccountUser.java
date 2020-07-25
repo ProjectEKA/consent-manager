@@ -25,4 +25,6 @@ public class HealthAccountUser {
     private final String stateName;
     @JsonProperty("new")
     private final Boolean newHASUser;
+    private final String stateCode;
+    private final String districtCode;
 }

@@ -23,6 +23,9 @@ public class Constants {
     public static final String APP_PATH_INTERNAL_FIND_USER_BY_USERNAME = "/internal/users/{userName}";
     public static final String APP_PATH_INTERNAL_GET_CARE_CONTEXT = "/internal/users/care-contexts";
     public static final String APP_PATH_PROFILE_UPDATE_LOGIN_DETAILS = "/profile/update-login-details";
+    public static final String GENERATE_AADHAR_OTP = "/generate-aadhar-otp";
+    public static final String VERIFY_AADHAR_OTP = "/verify-aadhar-otp";
+    public static final String UPDATE_ADDRESS = "/update-address";
 
     //HAS apis
     public static final String HAS_CREATE_ACCOUNT_VERIFIED_MOBILE_TOKEN = "/v1/ha/create_account_verified_mobile_token";

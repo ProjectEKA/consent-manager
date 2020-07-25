@@ -38,9 +38,6 @@ public class UserRepository {
 
     private final String UPDATE_ADDRESS = "Update patient set district_code=$2, state_code=$3 where health_id=$1";
 
-    private static final String SELECT_PATIENT_BY_NAME_GENDER = "select health_id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth " +
-            "from patient where first_name = $1 and last_name = $2 and gender = $3";
-
     private final PgPool dbClient;
 
     public Mono<User> userWith(String userName) {
@@ -163,6 +160,19 @@ public class UserRepository {
                         }));
     }
 
+    private String generateGetPatientByHealthIdQuery(String lastName) {
+        String query = "select health_id, first_name, middle_name, last_name, gender," +
+                " date_of_birth, month_of_birth, year_of_birth from patient";
+        StringBuilder queryBuilder = new StringBuilder(query).append(" where  first_name = $1 and gender = $2");
+
+        if (lastName != null) {
+            queryBuilder.append(" and last_name = $3");
+        } else {
+            queryBuilder.append(" and last_name is null");
+        }
+        return queryBuilder.toString();
+    }
+
     public Mono<User> getPatientByHealthId(String healthId) {
 
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT_BY_HEALTH_ID)
@@ -214,42 +224,48 @@ public class UserRepository {
     // This is to replicate HAS existing user feature
     public Mono<User> getExistingUser(String firstName, String lastName, String gender) {
 
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT_BY_NAME_GENDER)
-                .execute(Tuple.of(firstName, lastName, gender),
-                        handler -> {
-                            if (handler.failed()) {
-                                logger.error(handler.cause().getMessage(), handler.cause());
-                                monoSink.error(new DbOperationError());
-                                return;
-                            }
-                            var patientIterator = handler.result().iterator();
-                            if (!patientIterator.hasNext()) {
-                                monoSink.success();
-                                return;
-                            }
-                            var patientRow = patientIterator.next();
-                            try {
-                                var user = User.builder()
-                                        .healthId(patientRow.getString("health_id"))
-                                        .name(PatientName.builder()
-                                                .first(patientRow.getString("first_name"))
-                                                .middle(patientRow.getString("middle_name"))
-                                                .last(patientRow.getString("last_name"))
-                                                .build()
-                                        )
-                                        .dateOfBirth(DateOfBirth.builder()
-                                                .date(patientRow.getInteger("date_of_birth"))
-                                                .month(patientRow.getInteger("month_of_birth"))
-                                                .year(patientRow.getInteger("year_of_birth"))
-                                                .build())
-                                        .gender(Gender.valueOf(patientRow.getString("gender")))
-                                        .build();
-                                monoSink.success(user);
-                            } catch (Exception exc) {
-                                logger.error(exc.getMessage(), exc);
-                                monoSink.success();
-                            }
-                        }));
+        return Mono.create(monoSink -> {
+            Tuple tuple = Tuple.of(firstName, gender, lastName);
+            if(lastName == null) {
+                tuple = Tuple.of(firstName,gender);
+            }
+            dbClient.preparedQuery(generateGetPatientByHealthIdQuery(lastName))
+                    .execute(tuple,
+                            handler -> {
+                                if (handler.failed()) {
+                                    logger.error(handler.cause().getMessage(), handler.cause());
+                                    monoSink.error(new DbOperationError());
+                                    return;
+                                }
+                                var patientIterator = handler.result().iterator();
+                                if (!patientIterator.hasNext()) {
+                                    monoSink.success();
+                                    return;
+                                }
+                                var patientRow = patientIterator.next();
+                                try {
+                                    var user = User.builder()
+                                            .healthId(patientRow.getString("health_id"))
+                                            .name(PatientName.builder()
+                                                    .first(patientRow.getString("first_name"))
+                                                    .middle(patientRow.getString("middle_name"))
+                                                    .last(patientRow.getString("last_name"))
+                                                    .build()
+                                            )
+                                            .dateOfBirth(DateOfBirth.builder()
+                                                    .date(patientRow.getInteger("date_of_birth"))
+                                                    .month(patientRow.getInteger("month_of_birth"))
+                                                    .year(patientRow.getInteger("year_of_birth"))
+                                                    .build())
+                                            .gender(Gender.valueOf(patientRow.getString("gender")))
+                                            .build();
+                                    monoSink.success(user);
+                                } catch (Exception exc) {
+                                    logger.error(exc.getMessage(), exc);
+                                    monoSink.success();
+                                }
+                            });
+        });
     }
 
     public Mono<Void> updateAddress(UpdateHASAddressRequest request) {

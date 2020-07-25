@@ -25,7 +25,6 @@ import javax.validation.Valid;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 
-
 @RestController
 @AllArgsConstructor
 public class LinkController {
@@ -46,15 +45,12 @@ public class LinkController {
     }
 
     @PostMapping(PATH_LINK_ON_INIT)
-    public Mono<Void> onLinkCareContexts(@RequestBody PatientLinkReferenceResult patientLinkReferenceResult) {
-        return Mono.just(patientLinkReferenceResult)
-                .filterWhen(res -> validator.validate(patientLinkReferenceResult.getRequestId().toString(),
-                        patientLinkReferenceResult.getTimestamp().toString()))
+    public Mono<Void> onLinkCareContexts(@RequestBody PatientLinkReferenceResult result) {
+        return Mono.just(result)
+                .filterWhen(res -> validator.validate(result.getRequestId().toString(), result.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
-                .flatMap(res ->
-                        validator.put(patientLinkReferenceResult.getRequestId().toString(),
-                                patientLinkReferenceResult.getTimestamp().toString())
-                                .then(link.onLinkCareContexts(patientLinkReferenceResult)));
+                .flatMap(res -> validator.put(result.getRequestId().toString(), result.getTimestamp())
+                        .then(link.onLinkCareContexts(result)));
     }
 
     /**
@@ -78,18 +74,16 @@ public class LinkController {
     /**
      * HIP->Gateway Callback API for /links/link/confirm
      *
-     * @param confirmationResult
+     * @param result
      * @return
      */
     @PostMapping(PATH_LINK_ON_CONFIRM)
-    public Mono<Void> onConfirmLink(@RequestBody @Valid LinkConfirmationResult confirmationResult) {
-        return Mono.just(confirmationResult)
-                .filterWhen(req -> validator.validate(confirmationResult.getRequestId().toString(),
-                        confirmationResult.getTimestamp().toString()))
+    public Mono<Void> onConfirmLink(@RequestBody @Valid LinkConfirmationResult result) {
+        return Mono.just(result)
+                .filterWhen(req -> validator.validate(result.getRequestId().toString(), result.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
-                .flatMap(discard -> link.onConfirmLink(confirmationResult)
-                        .then(validator.put(confirmationResult.getRequestId().toString(),
-                                confirmationResult.getTimestamp().toString())));
+                .flatMap(discard -> link.onConfirmLink(result)
+                        .then(validator.put(result.getRequestId().toString(), result.getTimestamp())));
     }
 
     @PostMapping(Constants.APP_PATH_LINK_INIT)

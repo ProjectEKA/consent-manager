@@ -20,4 +20,6 @@ public class HASSignupRequest {
     private final Integer yearOfBirth;
     private final String token;
     private final String txnId;
+    private final String stateCode;
+    private final String districtCode;
 }

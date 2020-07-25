@@ -31,7 +31,10 @@ public class DummyHealthAccountService {
                 .yearOfBirth(signupRequest.getYearOfBirth())
                 .newHASUser(true)
                 .healthId(UUID.randomUUID().toString())
-                .token(UUID.randomUUID().toString()).build();
+                .token(UUID.randomUUID().toString())
+                .stateCode(signupRequest.getStateCode())
+                .districtCode(signupRequest.getDistrictCode())
+                .build();
     }
 
     public GenerateAadharOtpResponse createDummyGenerateAadharOtpResponse(String token) {

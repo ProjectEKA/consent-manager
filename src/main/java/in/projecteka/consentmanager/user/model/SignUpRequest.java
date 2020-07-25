@@ -15,5 +15,7 @@ public class SignUpRequest {
     private final PatientName name;
     private final Gender gender;
     private final DateOfBirth dateOfBirth;
+    private final String stateCode;
+    private final String districtCode;
 }
 

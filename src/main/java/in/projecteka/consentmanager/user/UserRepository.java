@@ -19,8 +19,8 @@ import reactor.core.publisher.Mono;
 public class UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
     private static final String INSERT_PATIENT = "Insert into patient(health_id, " +
-            "first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number)" +
-            " values($1, $2, $3, $4, $5, $6, $7, $8, $9);";
+            "first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, state_code, district_code)" +
+            " values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);";
 
     private static final String SELECT_PATIENT = "select id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers " +
             "from patient where id = $1";
@@ -104,7 +104,9 @@ public class UserRepository {
                 user.getDayOfBirth(),
                 user.getMonthOfBirth(),
                 user.getYearOfBirth(),
-                mobileNumber);
+                mobileNumber,
+                user.getStateCode(),
+                user.getDistrictCode());
         return doOperation(INSERT_PATIENT, userDetails);
     }
 

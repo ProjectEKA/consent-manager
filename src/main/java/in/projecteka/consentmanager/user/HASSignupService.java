@@ -93,6 +93,8 @@ public class HASSignupService {
                 .token(token)
                 .txnId(txnId)
                 .gender(signUpRequest.getGender().toString())
+                .stateCode(signUpRequest.getStateCode())
+                .districtCode(signUpRequest.getDistrictCode())
                 .build();
     }
 

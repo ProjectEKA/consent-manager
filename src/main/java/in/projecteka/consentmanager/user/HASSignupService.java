@@ -195,6 +195,8 @@ public class HASSignupService {
                 .dayOfBirth(user.getDayOfBirth())
                 .monthOfBirth(user.getMonthOfBirth())
                 .yearOfBirth(user.getYearOfBirth())
+                .stateCode(user.getStateCode())
+                .districtCode(user.getDistrictCode())
                 .build());
     }
 
@@ -219,10 +221,15 @@ public class HASSignupService {
                 })
                 .flatMap(isNewUser ->
                         userRepository.getPatientByHealthId(request.getHealthId())
-                                .flatMap(user -> isNumberFromAllowedList(user.getPhone()) && !isHealthAccountToken(token) ?
-                                        Mono.just(createSignUpResponse(dummyHealthAccountService.mapToHealthAccountUser(user,isNewUser), user.getIdentifier())) :
-                                        hasSignupServiceClient.updateHASAddress(request, token)
-                                                .flatMap(hasUser -> Mono.just(createSignUpResponse(hasUser, user.getIdentifier())))))
+                                .flatMap(user -> isNumberFromAllowedList(user.getPhone()) && !isHealthAccountToken(token)
+                                        ? userRepository.updateAddress(request)
+                                        .then(Mono.just(createSignUpResponse(dummyHealthAccountService.mapToHealthAccountUser(user, isNewUser),
+                                                user.getIdentifier())))
+                                        : hasSignupServiceClient.updateHASAddress(request, token)
+                                        .flatMap(hasUser -> {
+                                            userRepository.updateAddress(request);
+                                            return Mono.just(createSignUpResponse(hasUser, user.getIdentifier()));
+                                        })))
                 .switchIfEmpty(Mono.error(ClientError.invalidRequester("Invalid Update Address Request")));
     }
 }

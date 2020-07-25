@@ -137,7 +137,7 @@ public class UserConfiguration {
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"unverifiedSessions", "verifiedSessions", "blockListedTokens", "usedTokens", "hasCache"})
-    public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
+    public CacheAdapter<String, String> createRedisCacheAdapter(ReactiveRedisOperations<String, String> redisClient) {
         return new RedisCacheAdapter(redisClient, 5);
     }
 

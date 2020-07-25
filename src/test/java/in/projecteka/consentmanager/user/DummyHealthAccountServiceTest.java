@@ -55,8 +55,7 @@ class DummyHealthAccountServiceTest {
                 .verifyComplete();
     }
 
-//    @Test
-    @Ignore("Turn off matching user for time being")
+    @Test
     public void shouldReturnHASUserMatchingWithSignUpRequest() {
         var signUpRequest = HASSignupRequest.builder()
                 .firstName("Hina")

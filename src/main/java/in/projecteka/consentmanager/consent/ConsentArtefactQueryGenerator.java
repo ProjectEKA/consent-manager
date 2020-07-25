@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static in.projecteka.consentmanager.common.Serializer.from;
@@ -47,7 +48,7 @@ public class ConsentArtefactQueryGenerator {
                         ConsentStatus.GRANTED.toString()));
         Query updateConsentReqStatus = new Query(UPDATE_CONSENT_REQUEST_STATUS_QUERY,
                 Tuple.of(ConsentStatus.GRANTED.toString(),
-                        LocalDateTime.now(),
+                        LocalDateTime.now(ZoneOffset.UTC),
                         requestId));
         return Mono.just(QueryRepresentation.builder()
                 .queries(List.of(insertCA, insertHIPCA, updateConsentReqStatus))

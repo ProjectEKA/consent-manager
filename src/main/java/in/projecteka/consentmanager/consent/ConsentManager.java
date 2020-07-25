@@ -33,11 +33,11 @@ import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLight;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
-import in.projecteka.consentmanager.consent.model.response.HIPCosentNotificationAcknowledgment;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestId;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestResult;
+import in.projecteka.consentmanager.consent.model.response.HIPCosentNotificationAcknowledgment;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -68,6 +68,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PURPO
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_STATE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
@@ -83,6 +84,7 @@ public class ConsentManager {
     public static final String ALL_CONSENT_ARTEFACTS = "ALL";
     private static final Logger logger = LoggerFactory.getLogger(ConsentManager.class);
     private final UserServiceClient userServiceClient;
+    private final ConsentServiceProperties consentServiceProperties;
     private final ConsentRequestRepository consentRequestRepository;
     private final ConsentArtefactRepository consentArtefactRepository;
     private final KeyPair keyPair;
@@ -232,6 +234,7 @@ public class ConsentManager {
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
         return validatePatient(patientId)
+                .then(processExpiredConsentRequest(requestId))
                 .then(validateDate(grantedConsents))
                 .then(validateHiTypes(in(grantedConsents)))
                 .then(validateConsentRequest(requestId, patientId))
@@ -246,6 +249,15 @@ public class ConsentManager {
                                                 .thenReturn(consentApprovalResponse(consents)))));
     }
 
+    private Mono<Void> processExpiredConsentRequest(String requestId) {
+        return consentRequestRepository.requestOf(requestId)
+                .filter(consentRequest -> isConsentRequestExpired(consentRequest.getCreatedAt()) &&
+                consentRequest.getStatus().equals(REQUESTED))
+                .switchIfEmpty(Mono.empty())
+                .flatMap(response -> consentRequestRepository.updateStatus(requestId, EXPIRED).
+                        then(Mono.error(ClientError.consentRequestExpired())));
+    }
+
     private Mono<Void> validateDate(List<GrantedConsent> grantedConsents){
         boolean validDates = grantedConsents.stream().allMatch(grantedConsent -> isDateValidatedForNullAndFuture(grantedConsent));
         if(!validDates)
@@ -258,6 +270,11 @@ public class ConsentManager {
         return grantedConsent.getPermission().getDateRange().getFromDate() != null &&
                 grantedConsent.getPermission().getDateRange().getFromDate().isBefore(LocalDateTime.now(ZoneOffset.UTC)) &&
                 grantedConsent.getPermission().getDateRange().getToDate() != null;
+    }
+
+    private boolean isConsentRequestExpired(LocalDateTime createdAt) {
+        LocalDateTime requestExpiry = createdAt.plusMinutes(consentServiceProperties.getConsentRequestExpiry());
+        return requestExpiry.isBefore(LocalDateTime.now(ZoneOffset.UTC));
     }
 
     private Mono<ConsentArtefactRepresentation> updateHipName(
@@ -570,6 +587,8 @@ public class ConsentManager {
                 .switchIfEmpty(Mono.error(new ClientError(CONFLICT,
                         new ErrorRepresentation(new Error(INVALID_STATE,
                                 format("Consent request is not in %s state", REQUESTED.toString()))))))
+                .filter(consentRequest -> !isConsentRequestExpired(consentRequest.getCreatedAt()))
+                .switchIfEmpty(Mono.defer(() -> consentRequestRepository.updateStatus(id, EXPIRED).then(Mono.error(ClientError.consentRequestExpired()))))
                 .flatMap(consentRequest -> consentRequestRepository.updateStatus(id, DENIED)
                         .then(consentRequestRepository.requestOf(id)))
                 .flatMap(consentRequest -> broadcastConsentArtefacts(List.of(),

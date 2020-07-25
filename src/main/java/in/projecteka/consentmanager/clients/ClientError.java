@@ -13,6 +13,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEF
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_FORBIDDEN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_NOT_GRANTED;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_EXPIRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_RANGE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_OTP_ATTEMPTS_EXCEEDED;
@@ -213,6 +214,11 @@ public class ClientError extends Throwable {
     public static ClientError invalidDateRange() {
         return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_DATE_RANGE, "Date Range given is invalid")));
+    }
+
+    public static ClientError consentRequestExpired() {
+        return new ClientError(HttpStatus.GONE,
+                new ErrorRepresentation(new Error(CONSENT_REQUEST_EXPIRED, "Consent Request expired")));
     }
 
     public static ClientError consentExpired() {

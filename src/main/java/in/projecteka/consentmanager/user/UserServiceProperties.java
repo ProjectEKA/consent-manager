@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.user;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
@@ -9,6 +10,7 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @Getter
 @AllArgsConstructor
 @ConstructorBinding
+@Builder
 public class UserServiceProperties {
     private final String url;
     private final int transactionPinDigitSize;

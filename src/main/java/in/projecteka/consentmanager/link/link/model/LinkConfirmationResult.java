@@ -10,6 +10,7 @@ import lombok.Value;
 import org.springframework.util.StringUtils;
 
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Value
@@ -17,12 +18,12 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LinkConfirmationResult {
-    private UUID requestId;
-    private String timestamp;
-    private PatientRepresentation patient;
-    private RespError error;
+    UUID requestId;
+    LocalDateTime timestamp;
+    PatientRepresentation patient;
+    RespError error;
     @NotNull
-    private GatewayResponse resp;
+    GatewayResponse resp;
 
     public boolean hasResponseId() {
         return (resp != null) && !StringUtils.isEmpty(resp.getRequestId());

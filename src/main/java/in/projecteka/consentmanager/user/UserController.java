@@ -40,12 +40,12 @@ public class UserController {
     public Mono<Void> userWith(@Valid @RequestBody PatientRequest patientRequest) {
         return Mono.just(patientRequest)
                 .filterWhen(req ->
-                        validator.validate(patientRequest.getRequestId().toString(), patientRequest.getTimestamp().toString()))
+                        validator.validate(patientRequest.getRequestId().toString(), patientRequest.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(validatedRequest -> userService.user(patientRequest.getQuery().getPatient().getId(),
                                              patientRequest.getQuery().getRequester(),
                                              patientRequest.getRequestId())
-                        .then(validator.put(patientRequest.getRequestId().toString(), patientRequest.getTimestamp().toString())));
+                        .then(validator.put(patientRequest.getRequestId().toString(), patientRequest.getTimestamp())));
     }
 
     @ResponseStatus(CREATED)

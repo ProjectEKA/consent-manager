@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.link.discovery;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
@@ -58,14 +57,13 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
-import static in.projecteka.consentmanager.consent.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -148,8 +146,8 @@ class DiscoveryUserJourneyTest {
     }
 
     @Test
-    public void shouldGetProvidersByName() throws IOException {
-        var providers = new ObjectMapper().readValue(
+    void shouldGetProvidersByName() throws IOException {
+        var providers = OBJECT_MAPPER.readValue(
                 Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource("provider.json")),
                 new TypeReference<List<JsonNode>>() {
                 });
@@ -181,7 +179,7 @@ class DiscoveryUserJourneyTest {
 
     @Test
     void shouldGetProviderById() throws IOException {
-        var providers = new ObjectMapper().readValue(
+        var providers = OBJECT_MAPPER.readValue(
                 Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource("providerById.json")),
                 new TypeReference<JsonNode>() {
                 });
@@ -377,8 +375,8 @@ class DiscoveryUserJourneyTest {
         var token = string();
         var patientDiscoveryResult = TestBuilders.discoveryResult().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
         when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
         when(discoveryResults.put(anyString(), anyString())).thenReturn(Mono.empty());
@@ -399,7 +397,7 @@ class DiscoveryUserJourneyTest {
         var patientDiscoveryResult = TestBuilders.discoveryResult().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.FALSE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient.post()
@@ -431,8 +429,8 @@ class DiscoveryUserJourneyTest {
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
         when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
 

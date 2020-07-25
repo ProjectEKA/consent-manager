@@ -1,7 +1,5 @@
 package in.projecteka.consentmanager.link.link;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
@@ -32,11 +30,15 @@ import java.time.ZoneOffset;
 import java.util.Objects;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.clients.ClientError.invalidResponseFromHIP;
 import static in.projecteka.consentmanager.clients.ErrorMap.toCmError;
 import static in.projecteka.consentmanager.common.CustomScheduler.scheduleThis;
+import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.tryTo;
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static reactor.core.publisher.Mono.empty;
+import static reactor.core.publisher.Mono.error;
 
 @AllArgsConstructor
 public class Link {
@@ -59,7 +61,7 @@ public class Link {
 
         return Mono.just(patientLinkReferenceRequest.getRequestId())
                 .filterWhen(this::validateRequest)
-                .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
+                .switchIfEmpty(error(ClientError.requestAlreadyExists()))
                 .flatMap(id -> linkRepository.getHIPIdFromDiscovery(patientLinkReferenceRequest.getTransactionId())
                         .flatMap(hipId -> getHIPPatientLinkReferenceResponse(
                                 linkReferenceRequest,
@@ -83,8 +85,8 @@ public class Link {
                         scheduleThis(linkServiceClient.linkPatientEnquiryRequest(linkReferenceRequest, token, hipId))
                                 .timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
                                 .responseFrom(discard -> Mono.defer(() -> linkResults.get(requestId.toString())))
-                                .onErrorResume(DelayTimeoutException.class, discard -> Mono.error(ClientError.gatewayTimeOut()))
-                                .flatMap(response -> tryTo(response, PatientLinkReferenceResult.class).map(Mono::just).orElse(Mono.empty()))
+                                .onErrorResume(DelayTimeoutException.class, discard -> error(ClientError.gatewayTimeOut()))
+                                .flatMap(response -> tryTo(response, PatientLinkReferenceResult.class).map(Mono::just).orElse(empty()))
                                 .flatMap(linkReferenceResult -> {
                                     if (linkReferenceResult.getError() != null) {
                                         logger.error("[Link] Link initiation resulted in error {}", linkReferenceResult.getError());
@@ -100,38 +102,26 @@ public class Link {
     }
 
     public Mono<PatientLinksResponse> getLinkedCareContexts(String patientId) {
-        return linkRepository.getLinkedCareContextsForAllHip(patientId).map(patientLinks ->
-                PatientLinksResponse.builder().patient(patientLinks).build());
+        return linkRepository.getLinkedCareContextsForAllHip(patientId)
+                .map(patientLinks -> PatientLinksResponse.builder().patient(patientLinks).build());
     }
 
     public Mono<Void> onLinkCareContexts(PatientLinkReferenceResult patientLinkReferenceResult) {
         if (patientLinkReferenceResult.hasResponseId()) {
-            return linkResults.put(patientLinkReferenceResult.getResp().getRequestId(), serializeLinkReferenceResultFromHIP(patientLinkReferenceResult));
+            return linkResults.put(patientLinkReferenceResult.getResp().getRequestId(),
+                    from(patientLinkReferenceResult));
         }
-        logger.error("[Link] Received a patient link reference response from Gateway without original request Id mentioned.{}", patientLinkReferenceResult.getRequestId());
+        logger.error("[Link] Received a patient link reference response from Gateway without" +
+                "original request Id mentioned.{}", patientLinkReferenceResult.getRequestId());
         return Mono.error(ClientError.unprocessableEntity());
-    }
-
-    private String serializeLinkReferenceResultFromHIP(PatientLinkReferenceResult responseBody) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            return objectMapper.writeValueAsString(responseBody);
-        } catch (JsonProcessingException e) {
-            logger.error("[Link] Can not serialize patient link reference response from HIP", e);
-        }
-        return null;
     }
 
     public Mono<PatientLinkResponse> verifyLinkToken(String username, PatientLinkRequest patientLinkRequest) {
         UUID requestId = UUID.randomUUID();
         return linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())
-                .switchIfEmpty(Mono.error(ClientError.transactionIdNotFound()))
+                .switchIfEmpty(error(ClientError.transactionIdNotFound()))
                 .flatMap(linkRepository::getHIPIdFromDiscovery)
-                .flatMap(hipId ->
-                        confirmAndLinkPatient(patientLinkRequest,
-                                username,
-                                hipId,
-                                requestId));
+                .flatMap(hipId -> confirmAndLinkPatient(patientLinkRequest, username, hipId, requestId));
     }
 
     private Mono<PatientLinkResponse> confirmAndLinkPatient(
@@ -139,22 +129,28 @@ public class Link {
             String patientId,
             String hipId,
             UUID requestId) {
-        return scheduleThis(linkServiceClient.confirmPatientLink(toLinkConfirmationRequest(patientLinkRequest, requestId), hipId))
+        return scheduleThis(
+                linkServiceClient.confirmPatientLink(toLinkConfirmationRequest(patientLinkRequest, requestId), hipId))
                 .timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
                 .responseFrom(discard -> Mono.defer(() -> linkResults.get(requestId.toString())))
-                .onErrorResume(DelayTimeoutException.class, discard -> Mono.error(ClientError.gatewayTimeOut()))
-                .flatMap(response -> tryTo(response, LinkConfirmationResult.class).map(Mono::just).orElse(Mono.empty()))
+                .onErrorResume(DelayTimeoutException.class, discard -> error(ClientError.gatewayTimeOut()))
+                .flatMap(response -> tryTo(response, LinkConfirmationResult.class).map(Mono::just).orElse(empty()))
                 .flatMap(confirmationResult -> {
                     if (confirmationResult.getError() != null) {
                         logger.error("[Link] Link confirmation resulted in error {}", confirmationResult.getError());
-                        return Mono.error(new ClientError(BAD_REQUEST, cmErrorRepresentation(confirmationResult.getError())));
+                        return Mono.error(new ClientError(BAD_REQUEST,
+                                cmErrorRepresentation(confirmationResult.getError())));
                     }
                     if (confirmationResult.getPatient() == null) {
-                        logger.error("[Link] Link confirmation should have returned linked care context details or error caused." +
+                        logger.error("[Link] Link confirmation should have returned" +
+                                "linked care context details or error caused. " +
                                 "Gateway requestId {}", confirmationResult.getRequestId());
-                        return Mono.error(ClientError.invalidResponseFromHIP());
+                        return error(invalidResponseFromHIP());
                     }
-                    return linkRepository.insertToLink(hipId, patientId, patientLinkRequest.getLinkRefNumber(), confirmationResult.getPatient())
+                    return linkRepository.insertToLink(hipId,
+                            patientId,
+                            patientLinkRequest.getLinkRefNumber(),
+                            confirmationResult.getPatient())
                             .thenReturn(PatientLinkResponse.builder()
                                     .patient(confirmationResult.getPatient())
                                     .build());
@@ -162,11 +158,12 @@ public class Link {
     }
 
     private ErrorRepresentation cmErrorRepresentation(RespError respError) {
-        Error error = Error.builder().code(toCmError(respError.getCode())).message(respError.getMessage()).build();
+        var error = Error.builder().code(toCmError(respError.getCode())).message(respError.getMessage()).build();
         return ErrorRepresentation.builder().error(error).build();
     }
 
-    private LinkConfirmationRequest toLinkConfirmationRequest(PatientLinkRequest patientLinkRequest, UUID requestId) {
+    private LinkConfirmationRequest toLinkConfirmationRequest(PatientLinkRequest patientLinkRequest,
+                                                              UUID requestId) {
         return LinkConfirmationRequest.builder()
                 .requestId(requestId)
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC))
@@ -180,20 +177,11 @@ public class Link {
 
     public Mono<Void> onConfirmLink(LinkConfirmationResult confirmationResult) {
         if (confirmationResult.hasResponseId()) {
-            return linkResults.put(confirmationResult.getResp().getRequestId(), serializeConfirmationFromHIP(confirmationResult));
+            return linkResults.put(confirmationResult.getResp().getRequestId(), from(confirmationResult));
         } else {
-            logger.error("[Link] Received a confirmation response from Gateway without original request Id mentioned.{}", confirmationResult.getRequestId());
+            logger.error("[Link] Received a confirmation response from Gateway " +
+                    "without original request Id mentioned.{}", confirmationResult.getRequestId());
             return Mono.error(ClientError.unprocessableEntity());
         }
-    }
-
-    private String serializeConfirmationFromHIP(LinkConfirmationResult confirmationResult) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            return objectMapper.writeValueAsString(confirmationResult);
-        } catch (JsonProcessingException e) {
-            logger.error("[Link] Can not serialize response from HIP", e);
-        }
-        return null;
     }
 }

@@ -1,7 +1,9 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.HealthAccountServiceTokenResponse;
+import in.projecteka.consentmanager.clients.model.OtpAction;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
+import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.OtpRequestResponse;
 import org.jeasy.random.EasyRandom;
@@ -45,7 +47,8 @@ class HealthAccountServiceClientTest {
     public void shouldSendOTPRequest() {
         var sessionId = easyRandom.nextObject(String.class);
         var value = easyRandom.nextObject(String.class);
-        var otpRequest = new OtpRequest(sessionId, new OtpCommunicationData("MOBILE", value));
+        OtpGenerationDetail generationDetail = OtpGenerationDetail.builder().action(OtpAction.REGISTRATION.toString()).systemName("APP").build();
+        var otpRequest = new OtpRequest(sessionId, new OtpCommunicationData("MOBILE", value), generationDetail);
 
         when(exchangeFunction.exchange(captor.capture())).thenReturn(
                 Mono.just(

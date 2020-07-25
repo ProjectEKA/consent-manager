@@ -71,6 +71,14 @@ services:
     depends_on:
       - hiu-db-setup
 
+  monitor-db-setup:
+    image: projecteka/monitor-db-initializer
+    container_name: monitor-db-setup
+    environment:
+      - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/gateway -Djdbc.username=postgres -Djdbc.password=password'
+    depends_on:
+      - gateway-db-setup
+
   orthanc:
     image: jodogne/orthanc-plugins
     container_name: orthanc-plugins

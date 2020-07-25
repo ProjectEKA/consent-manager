@@ -58,10 +58,10 @@ public class DiscoveryController {
     public Mono<Void> onDiscoverPatientCareContexts(@RequestBody @Valid DiscoveryResult discoveryResult) {
         return Mono.just(discoveryResult)
                 .filterWhen(req -> validator.validate(discoveryResult.getRequestId().toString(),
-                        discoveryResult.getTimestamp().toString()))
+                        discoveryResult.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(validatedRequest -> validator.put(discoveryResult.getRequestId().toString(),
-                        discoveryResult.getTimestamp().toString())
+                        discoveryResult.getTimestamp())
                         .then(discovery.onDiscoverPatientCareContexts(discoveryResult)));
     }
 

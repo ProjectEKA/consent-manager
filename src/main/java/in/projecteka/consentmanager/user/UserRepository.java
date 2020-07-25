@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.HealthAccountUser;
 import in.projecteka.consentmanager.user.model.PatientName;
+import in.projecteka.consentmanager.user.model.UpdateHASAddressRequest;
 import in.projecteka.consentmanager.user.model.User;
 import io.vertx.core.json.JsonArray;
 import io.vertx.pgclient.PgPool;
@@ -34,6 +35,8 @@ public class UserRepository {
     private final static String DELETE_PATIENT = "DELETE FROM patient WHERE id=$1";
 
     private final String UPDATE_CM_ID = "Update patient set id=$1 where health_id=$2";
+
+    private final String UPDATE_ADDRESS = "Update patient set district_code=$2, state_code=$3 where health_id=$1";
 
     private static final String SELECT_PATIENT_BY_NAME_GENDER = "select health_id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth " +
             "from patient where first_name = $1 and last_name = $2 and gender = $3";
@@ -247,5 +250,10 @@ public class UserRepository {
                                 monoSink.success();
                             }
                         }));
+    }
+
+    public Mono<Void> updateAddress(UpdateHASAddressRequest request) {
+        Tuple userDetails = Tuple.of(request.getHealthId(),request.getDistrictCode(),request.getStateCode());
+        return doOperation(UPDATE_ADDRESS, userDetails);
     }
 }

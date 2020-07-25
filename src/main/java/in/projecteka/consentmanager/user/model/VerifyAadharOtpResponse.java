@@ -13,5 +13,4 @@ public class VerifyAadharOtpResponse {
     private final String name;
     private final DateOfBirth dateOfBirth;
     private final String gender;
-
 }

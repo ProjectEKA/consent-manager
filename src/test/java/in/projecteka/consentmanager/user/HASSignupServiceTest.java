@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.user;
 
-import com.google.common.base.Verify;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.HASSignupServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
@@ -10,17 +9,16 @@ import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
+import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
 import in.projecteka.consentmanager.user.model.HealthAccountUser;
-import in.projecteka.consentmanager.user.model.LoginResponse;
 import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.UpdateHASAddressRequest;
 import in.projecteka.consentmanager.user.model.UpdateHASUserRequest;
 import in.projecteka.consentmanager.user.model.UpdateLoginDetailsRequest;
-import in.projecteka.consentmanager.user.model.GenerateAadharOtpResponse;
-import in.projecteka.consentmanager.user.model.GenerateAadharOtpRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.VerifyAadharOtpRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,8 +28,6 @@ import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
@@ -44,9 +40,9 @@ import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class HASSignupServiceTest {
 
@@ -434,7 +430,8 @@ class HASSignupServiceTest {
         when(tokenService.tokenForAdmin()).thenReturn(Mono.just(session));
         when(identityServiceClient.createUser(any(Session.class), any(KeycloakUser.class)))
                 .thenReturn(Mono.empty());
-        when(sessionService.forNew(any(SessionRequest.class))).thenReturn(Mono.error(ClientError.invalidUserNameOrPassword()));
+        when(sessionService.forNew(any(SessionRequest.class)))
+                .thenReturn(Mono.error(ClientError.invalidUserNameOrPassword()));
 
         StepVerifier.create(hasSignupService.updateHASLoginDetails(updateLoginRequestDetails, token))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
@@ -472,7 +469,8 @@ class HASSignupServiceTest {
 
         when(signupService.getSessionId(token)).thenReturn(sessionId);
         when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
-        when(hasSignupServiceClient.generateAadharOtp(aadharOtpRequest)).thenReturn(Mono.just(aadharOtpResponse));
+        when(hasSignupServiceClient.generateAadharOtp(aadharOtpRequest))
+                .thenReturn(Mono.just(aadharOtpResponse));
 
         StepVerifier.create(hasSignupService.generateAadharOtp(aadharOtpRequest,token))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
@@ -489,7 +487,8 @@ class HASSignupServiceTest {
 
         when(signupService.getSessionId(token)).thenReturn(sessionId);
         when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
-        when(hasSignupServiceClient.generateAadharOtp(aadharOtpRequest)).thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
+        when(hasSignupServiceClient.generateAadharOtp(aadharOtpRequest))
+                .thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
 
         StepVerifier.create(hasSignupService.generateAadharOtp(aadharOtpRequest,token))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
@@ -523,7 +522,8 @@ class HASSignupServiceTest {
         when(signupService.getSessionId(anyString())).thenReturn(sessionId);
         when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
         when(dummyHealthAccountService.createHASUser()).thenReturn(healthAccountUser);
-        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class))).thenReturn(Mono.just(healthAccountUser));
+        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class)))
+                .thenReturn(Mono.just(healthAccountUser));
         when(hasCache.put(anyString(),anyString())).thenReturn(Mono.empty());
         when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.just(user));
         when(userRepository.save(any(HealthAccountUser.class),anyString())).thenReturn(Mono.empty());
@@ -559,7 +559,8 @@ class HASSignupServiceTest {
         when(signupService.getSessionId(anyString())).thenReturn(sessionId);
         when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
         when(dummyHealthAccountService.createHASUser()).thenReturn(healthAccountUser);
-        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class))).thenReturn(Mono.just(healthAccountUser));
+        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class)))
+                .thenReturn(Mono.just(healthAccountUser));
         when(hasCache.put(anyString(),anyString())).thenReturn(Mono.empty());
         when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
         when(userRepository.save(any(HealthAccountUser.class),anyString())).thenReturn(Mono.empty());
@@ -595,7 +596,8 @@ class HASSignupServiceTest {
         when(signupService.getSessionId(anyString())).thenReturn(sessionId);
         when(signupService.getMobileNumber(anyString())).thenReturn(Mono.just(mobileNumber));
         when(dummyHealthAccountService.createHASUser()).thenReturn(healthAccountUser);
-        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class))).thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
+        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class)))
+                .thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
         when(hasCache.put(anyString(),anyString())).thenReturn(Mono.empty());
         when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
         when(userRepository.save(any(HealthAccountUser.class),anyString())).thenReturn(Mono.empty());
@@ -627,7 +629,8 @@ class HASSignupServiceTest {
         when(signupService.getSessionId(anyString())).thenReturn(sessionId);
         when(signupService.getMobileNumber(anyString())).thenReturn(Mono.empty());
         when(dummyHealthAccountService.createHASUser()).thenReturn(healthAccountUser);
-        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class))).thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
+        when(hasSignupServiceClient.verifyAadharOtp(any(VerifyAadharOtpRequest.class)))
+                .thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
         when(hasCache.put(anyString(),anyString())).thenReturn(Mono.empty());
         when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
         when(userRepository.save(any(HealthAccountUser.class),anyString())).thenReturn(Mono.empty());
@@ -648,7 +651,8 @@ class HASSignupServiceTest {
                 .dateOfBirth(DateOfBirth.builder().date(7).month(4).year(1979).build())
                 .gender(Gender.valueOf("F"))
                 .build();
-        var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1").healthId(healthId).build();
+        var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1")
+                .healthId(healthId).build();
         HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(false)
                 .healthId(healthId)
                 .token(UUID.randomUUID().toString())
@@ -662,7 +666,8 @@ class HASSignupServiceTest {
                 .build();
         when(hasCache.getIfPresent(healthId)).thenReturn(Mono.just("true"));
         when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.just(user));
-        when(hasSignupServiceClient.updateHASAddress(any(UpdateHASAddressRequest.class),anyString())).thenReturn(Mono.just(healthAccountUser));
+        when(hasSignupServiceClient.updateHASAddress(any(UpdateHASAddressRequest.class),anyString()))
+                .thenReturn(Mono.just(healthAccountUser));
         StepVerifier.create(hasSignupService.updateHASAddress(addressRequest,token))
                 .assertNext(response -> {
                     assertThat(response.getHealthId().equals(healthId));
@@ -679,7 +684,8 @@ class HASSignupServiceTest {
                 .dateOfBirth(DateOfBirth.builder().date(7).month(4).year(1979).build())
                 .gender(Gender.valueOf("F"))
                 .build();
-        var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1").healthId(healthId).build();
+        var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1")
+                .healthId(healthId).build();
         HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(false)
                 .healthId(healthId)
                 .token(UUID.randomUUID().toString())
@@ -693,7 +699,8 @@ class HASSignupServiceTest {
                 .build();
         when(hasCache.getIfPresent(healthId)).thenReturn(Mono.empty());
         when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.just(user));
-        when(hasSignupServiceClient.updateHASAddress(any(UpdateHASAddressRequest.class),anyString())).thenReturn(Mono.just(healthAccountUser));
+        when(hasSignupServiceClient.updateHASAddress(any(UpdateHASAddressRequest.class),anyString()))
+                .thenReturn(Mono.just(healthAccountUser));
         StepVerifier.create(hasSignupService.updateHASAddress(addressRequest,token))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().is4xxClientError())
@@ -704,7 +711,8 @@ class HASSignupServiceTest {
     void shouldThrowErrorIfUserNotFoundInDB() {
         var token = string();
         var healthId = "healthId";
-        var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1").healthId(healthId).build();
+        var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1")
+                .healthId(healthId).build();
         HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(false)
                 .healthId(healthId)
                 .token(UUID.randomUUID().toString())
@@ -718,7 +726,8 @@ class HASSignupServiceTest {
                 .build();
         when(hasCache.getIfPresent(healthId)).thenReturn(Mono.just("true"));
         when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.empty());
-        when(hasSignupServiceClient.updateHASAddress(any(UpdateHASAddressRequest.class),anyString())).thenReturn(Mono.just(healthAccountUser));
+        when(hasSignupServiceClient.updateHASAddress(any(UpdateHASAddressRequest.class),anyString()))
+                .thenReturn(Mono.just(healthAccountUser));
         StepVerifier.create(hasSignupService.updateHASAddress(addressRequest,token))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().is4xxClientError())
@@ -734,10 +743,12 @@ class HASSignupServiceTest {
                 .dateOfBirth(DateOfBirth.builder().date(7).month(4).year(1979).build())
                 .gender(Gender.valueOf("F"))
                 .build();
-        var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1").healthId(healthId).build();
+        var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1")
+                .healthId(healthId).build();
         when(hasCache.getIfPresent(healthId)).thenReturn(Mono.just("true"));
         when(userRepository.getPatientByHealthId(anyString())).thenReturn(Mono.just(user));
-        when(hasSignupServiceClient.updateHASAddress(any(UpdateHASAddressRequest.class),anyString())).thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
+        when(hasSignupServiceClient.updateHASAddress(any(UpdateHASAddressRequest.class),anyString()))
+                .thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
         StepVerifier.create(hasSignupService.updateHASAddress(addressRequest,token))
                 .expectErrorMatches(throwable -> throwable instanceof ClientError &&
                         ((ClientError) throwable).getHttpStatus().is5xxServerError())

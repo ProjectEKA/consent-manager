@@ -68,7 +68,13 @@ public class HASSignupService {
     }
 
     private SignUpResponse createSignUpResponse(HealthAccountUser user, String cmId) {
-        return SignUpResponse.builder().healthId(user.getHealthId()).token(user.getToken())
+        return createSignUpResponse(user,cmId,user.getToken());
+    }
+
+    private SignUpResponse createSignUpResponse(HealthAccountUser user, String cmId, String token) {
+        return SignUpResponse.builder()
+                .healthId(user.getHealthId())
+                .token(token)
                 .dateOfBirth(DateOfBirth.builder().date(user.getDayOfBirth())
                         .month(user.getMonthOfBirth()).year(user.getYearOfBirth()).build())
                 .patientName(PatientName.builder().first(user.getFirstName())
@@ -226,7 +232,7 @@ public class HASSignupService {
                                         : hasSignupServiceClient.updateHASAddress(request, token)
                                         .flatMap(hasUser -> {
                                             userRepository.updateAddress(request);
-                                            return Mono.just(createSignUpResponse(hasUser, user.getIdentifier()));
+                                            return Mono.just(createSignUpResponse(hasUser, user.getIdentifier(), token));
                                         })))
                 .switchIfEmpty(Mono.error(ClientError.invalidRequester("Invalid Update Address Request")));
     }

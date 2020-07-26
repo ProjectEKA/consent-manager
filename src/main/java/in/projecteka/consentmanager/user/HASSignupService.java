@@ -194,6 +194,8 @@ public class HASSignupService {
         return Mono.just(HealthAccountUser.builder()
                 .name(user.getName())
                 .firstName(user.getName())
+                .middleName(user.getMiddleName())
+                .lastName(user.getLastName())
                 .healthId(user.getHealthId())
                 .gender(user.getGender())
                 .dayOfBirth(user.getDayOfBirth())
@@ -201,6 +203,10 @@ public class HASSignupService {
                 .yearOfBirth(user.getYearOfBirth())
                 .stateCode(user.getStateCode())
                 .districtCode(user.getDistrictCode())
+                .newHASUser(user.getNewHASUser())
+                .districtName(user.getDistrictName())
+                .stateName(user.getStateName())
+                .newHASUser(user.getNewHASUser())
                 .build());
     }
 
@@ -230,6 +236,7 @@ public class HASSignupService {
                                         .then(Mono.just(createSignUpResponse(dummyHealthAccountService.mapToHealthAccountUser(user, isNewUser),
                                                 user.getIdentifier())))
                                         : hasSignupServiceClient.updateHASAddress(request, token)
+                                        .flatMap(this::addFirstName)
                                         .flatMap(hasUser -> {
                                             userRepository.updateAddress(request);
                                             return Mono.just(createSignUpResponse(hasUser, user.getIdentifier(), token));

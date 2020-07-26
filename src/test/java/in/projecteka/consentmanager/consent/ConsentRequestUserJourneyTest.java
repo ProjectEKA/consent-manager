@@ -391,17 +391,17 @@ class ConsentRequestUserJourneyTest {
         String scope = "consentrequest.approve";
 
         var consentRequestDetail = consentRequestDetail()
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(30))
                 .build();
+        //when(consentServiceProperties.getConsentRequestExpiry()).thenReturn(60);
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7")).thenReturn(Mono.just(consentRequestDetail));
-        when(repository.updateStatus(consentRequestDetail.getRequestId(), EXPIRED)).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(any()))
                 .thenReturn(Mono.empty());
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
                 .thenReturn(Mono.just(consentRequestDetail));
         when(pinVerificationTokenService.validateToken(token, scope))
                 .thenReturn(Mono.just(new Caller(patientId, false, "randomSessionId")));
-        when(consentServiceProperties.getConsentRequestExpiry()).thenReturn(60);
         when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
         when(conceptValidator.validateHITypes(anyList())).thenReturn(Mono.just(true));
@@ -459,14 +459,13 @@ class ConsentRequestUserJourneyTest {
                 "}";
         load(patientLinkServer, linkedPatientContextsJson);
         String patientId = "ashok.kumar@ncg";
-        var consentRequestDetail = consentRequestDetail().build();
+        var consentRequestDetail = consentRequestDetail().createdAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(30))
+                                    .build();
 
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7")).thenReturn(Mono.just(consentRequestDetail));
-        when(repository.updateStatus(consentRequestDetail.getRequestId(), EXPIRED)).thenReturn(Mono.empty());
         String scope = "consentrequest.approve";
         when(pinVerificationTokenService.validateToken(token, scope))
                 .thenReturn(Mono.just(new Caller(patientId, false)));
-        when(consentServiceProperties.getConsentRequestExpiry()).thenReturn(60);
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
                 .thenReturn(Mono.just(consentRequestDetail));
         when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
@@ -673,6 +672,7 @@ class ConsentRequestUserJourneyTest {
                     Stream.of("consentmanager.clientregistry.url=" + clientRegistryServer.url(""),
                             "consentmanager.userservice.url=" + userServer.url(""),
                             "consentmanager.consentservice.maxPageSize=50",
+                            "consentmanager.consentservice.consentRequestExpiry=60",
                             "consentmanager.keycloak.baseUrl=" + identityServer.url(""),
                             "consentmanager.linkservice.url=" + patientLinkServer.url(""),
                             "consentmanager.gatewayservice.baseUrl=" + gatewayServer.url("")));

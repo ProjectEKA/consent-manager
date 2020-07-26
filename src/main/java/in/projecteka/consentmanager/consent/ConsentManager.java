@@ -234,10 +234,12 @@ public class ConsentManager {
                                                         String requestId,
                                                         List<GrantedConsent> grantedConsents) {
         return validatePatient(patientId)
-                .then(processExpiredConsentRequest(requestId))
                 .then(validateDate(grantedConsents))
                 .then(validateHiTypes(in(grantedConsents)))
                 .then(validateConsentRequest(requestId, patientId))
+                .filter(consentRequestDetail -> !isConsentRequestExpired(consentRequestDetail.getCreatedAt()))
+                .switchIfEmpty(Mono.defer(() -> processExpiredConsentRequestForApprove(requestId)
+                        .then(Mono.error(ClientError.consentRequestExpired()))))
                 .flatMap(consentRequest -> validateLinkedHips(patientId, grantedConsents)
                         .then(generateConsentArtefacts(requestId, grantedConsents, patientId, consentRequest)
                                 .flatMap(consents ->
@@ -249,13 +251,18 @@ public class ConsentManager {
                                                 .thenReturn(consentApprovalResponse(consents)))));
     }
 
-    private Mono<Void> processExpiredConsentRequest(String requestId) {
+    private Mono<Void> processExpiredConsentRequestForApprove(String requestId) {
         return consentRequestRepository.requestOf(requestId)
-                .filter(consentRequest -> isConsentRequestExpired(consentRequest.getCreatedAt()) &&
-                consentRequest.getStatus().equals(REQUESTED))
+                .filter(consentRequest -> consentRequest.getStatus().equals(REQUESTED))
                 .switchIfEmpty(Mono.empty())
-                .flatMap(response -> consentRequestRepository.updateStatus(requestId, EXPIRED).
-                        then(Mono.error(ClientError.consentRequestExpired())));
+                .flatMap(response -> consentRequestRepository.updateStatus(requestId, EXPIRED)
+                        .then(consentRequestRepository.requestOf(requestId))
+                            .flatMap(consentRequest ->
+                                    broadcastConsentArtefacts(List.of(),
+                                            requestId,
+                                            EXPIRED,
+                                            consentRequest.getLastUpdated(),
+                                            consentRequest.getHiu())));
     }
 
     private Mono<Void> validateDate(List<GrantedConsent> grantedConsents){
@@ -588,9 +595,18 @@ public class ConsentManager {
                         new ErrorRepresentation(new Error(INVALID_STATE,
                                 format("Consent request is not in %s state", REQUESTED.toString()))))))
                 .filter(consentRequest -> !isConsentRequestExpired(consentRequest.getCreatedAt()))
-                .switchIfEmpty(Mono.defer(() -> consentRequestRepository.updateStatus(id, EXPIRED).then(Mono.error(ClientError.consentRequestExpired()))))
+                .switchIfEmpty(Mono.defer(() -> processExpiredConsentRequestsForDeny(id).then(Mono.error(ClientError.consentRequestExpired()))))
                 .flatMap(consentRequest -> consentRequestRepository.updateStatus(id, DENIED)
                         .then(consentRequestRepository.requestOf(id)))
+                .flatMap(consentRequest -> broadcastConsentArtefacts(List.of(),
+                        consentRequest.getRequestId(),
+                        consentRequest.getStatus(),
+                        consentRequest.getLastUpdated(),
+                        consentRequest.getHiu()));
+    }
+
+    private Mono<Void> processExpiredConsentRequestsForDeny(String id){
+        return consentRequestRepository.updateStatus(id, EXPIRED).then(consentRequestRepository.requestOf(id))
                 .flatMap(consentRequest -> broadcastConsentArtefacts(List.of(),
                         consentRequest.getRequestId(),
                         consentRequest.getStatus(),

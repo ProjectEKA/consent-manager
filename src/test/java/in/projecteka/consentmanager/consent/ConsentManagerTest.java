@@ -317,7 +317,7 @@ class ConsentManagerTest {
         var requestId = string();
         var consentRequestDetail = consentRequestDetail()
                 .requestId(requestId)
-                .createdAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(58))
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(30))
                 .patient(new PatientReference(patientId))
                 .status(REQUESTED);
         when(repository.requestOf(requestId)).thenReturn(Mono.just(consentRequestDetail.build()),

@@ -38,7 +38,7 @@ public class DummyHealthAccountService {
 
     public GenerateAadharOtpResponse createDummyGenerateAadharOtpResponse(String token) {
         return GenerateAadharOtpResponse.builder()
-                .txnID(UUID.randomUUID().toString())
+                .transactionId(UUID.randomUUID().toString())
                 .token(token)
                 .build();
     }

@@ -444,7 +444,7 @@ class HASSignupServiceTest {
     public void shouldGenerateAadharOTP() {
         var token = string();
         var aadharOtpRequest = GenerateAadharOtpRequest.builder().aadhaar("123456789012").build();
-        var aadharOtpResponse = GenerateAadharOtpResponse.builder().txnID("testTxnID").token(token).build();
+        var aadharOtpResponse = GenerateAadharOtpResponse.builder().transactionId("testTxnID").token(token).build();
         var sessionId = string();
         var mobileNumber = string();
 
@@ -454,7 +454,7 @@ class HASSignupServiceTest {
 
         StepVerifier.create(hasSignupService.generateAadharOtp(aadharOtpRequest,token))
                 .assertNext(response -> {
-                    assertThat(response.getTxnID()).isEqualTo("testTxnID");
+                    assertThat(response.getTransactionId()).isEqualTo("testTxnID");
                     assertThat(response.getToken()).isEqualTo(token);
                 })
                 .verifyComplete();
@@ -464,7 +464,7 @@ class HASSignupServiceTest {
     public void shouldThrowErrorWhenAadharIsInvalid() {
         var token = string();
         var aadharOtpRequest = GenerateAadharOtpRequest.builder().aadhaar("12345678901").build();
-        var aadharOtpResponse = GenerateAadharOtpResponse.builder().txnID("testTxnID").token(token).build();
+        var aadharOtpResponse = GenerateAadharOtpResponse.builder().transactionId("testTxnID").token(token).build();
         var sessionId = string();
         var mobileNumber = string();
 

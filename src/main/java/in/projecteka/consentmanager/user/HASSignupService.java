@@ -156,7 +156,7 @@ public class HASSignupService {
                         .flatMap(bool -> Mono.just(dummyHealthAccountService.createDummyGenerateAadharOtpResponse(token)))
                         .switchIfEmpty(Mono.defer(() -> hasSignupServiceClient.generateAadharOtp(request)
                                 .flatMap(response -> Mono.just(GenerateAadharOtpResponse.builder()
-                                        .txnID(response.getTxnID())
+                                        .transactionId(response.getTransactionId())
                                         .token(token)
                                         .build())))) :
                 Mono.error(ClientError.invalidRequester("Invalid aadhar number"));

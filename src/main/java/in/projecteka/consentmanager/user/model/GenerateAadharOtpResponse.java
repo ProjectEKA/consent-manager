@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.user.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,6 +9,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class GenerateAadharOtpResponse {
-    private final String txnID;
+    @JsonAlias({"txnID","txnId"})
+    private final String transactionId;
     private final String token;
 }

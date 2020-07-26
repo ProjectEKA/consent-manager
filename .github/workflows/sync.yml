@@ -2,7 +2,7 @@ name: Auto sync
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "* */6 * * *"
 
 jobs:
   repo-sync:
@@ -14,5 +14,5 @@ jobs:
         with:
           source_repo: "https://github.com/ProjectEKA/consent-manager.git"
           source_branch: "master"
-          destination_branch: "master"
+          destination_branch: "new_branch"
           github_token: ${{ secrets.GITHUB_TOKEN }}

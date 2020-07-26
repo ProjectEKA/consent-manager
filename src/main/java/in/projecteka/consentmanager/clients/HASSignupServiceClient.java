@@ -16,6 +16,7 @@ import java.util.Map;
 
 import static in.projecteka.consentmanager.user.Constants.HAS_ACCOUNT_UPDATE;
 import static in.projecteka.consentmanager.user.Constants.HAS_CREATE_ACCOUNT_VERIFIED_MOBILE_TOKEN;
+import static java.lang.String.format;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -45,10 +46,11 @@ public class HASSignupServiceClient {
     }
 
     public Mono<Void> updateHASAccount(UpdateHASUserRequest request, String token) {
+        String xTokenValue = format("Bearer %s", token);
         return webClient
                 .post()
                 .uri(uriBuilder -> uriBuilder.path(HAS_ACCOUNT_UPDATE).build())
-                .header(X_TOKEN_HEADER_NAME, token)
+                .header(X_TOKEN_HEADER_NAME, xTokenValue)
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .body(Mono.just(request), UpdateHASUserRequest.class)
                 .accept(APPLICATION_JSON)
@@ -86,11 +88,12 @@ public class HASSignupServiceClient {
 
 
     public Mono<HealthAccountUser> updateHASAddress(UpdateHASAddressRequest request, String token) {
+        String xTokenValue = format("Bearer %s", token);
         return webClient
                 .post()
                 .uri(uriBuilder -> uriBuilder.path(HAS_ACCOUNT_UPDATE).build())
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
-                .header("X-Token", token)
+                .header("X-Token", xTokenValue)
                 .body(Mono.just(request), UpdateHASAddressRequest.class)
                 .accept(APPLICATION_JSON)
                 .retrieve()

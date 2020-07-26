@@ -83,6 +83,6 @@ class HASSignupServiceClientTest {
 
         assertThat(captor.getValue().url().getPath()).isEqualTo("/healthaccountservice"+HAS_ACCOUNT_UPDATE);
         assertThat(captor.getValue().url().getHost()).isEqualTo("localhost");
-        assertThat(captor.getValue().headers().getFirst("X-Token")).isEqualTo(token);
+        assertThat(captor.getValue().headers().getFirst("X-Token")).isEqualTo("Bearer " +token);
     }
 }

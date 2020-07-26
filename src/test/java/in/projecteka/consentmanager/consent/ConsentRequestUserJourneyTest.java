@@ -57,7 +57,6 @@ import java.util.stream.Stream;
 
 import static com.google.common.net.HttpHeaders.AUTHORIZATION;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
-import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequest;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.notificationMessage;
@@ -113,6 +112,9 @@ class ConsentRequestUserJourneyTest {
 
     @Mock
     private CentralRegistry centralRegistry;
+
+    @Mock
+    private ConsentServiceProperties consentServiceProperties;
 
     @SuppressWarnings("unused")
     @MockBean(name = "centralRegistryJWKSet")
@@ -360,7 +362,6 @@ class ConsentRequestUserJourneyTest {
     void shouldApproveConsentGrant() throws JsonProcessingException {
         var token = string();
         String patientId = "ashok.kumar@ncg";
-        var consentRequestDetail = OBJECT_MAPPER.readValue(requestedConsentJson, ConsentRequestDetail.class);
         load(userServer, "{}");
         load(identityServer, "{}");
         load(identityServer, "{}");
@@ -389,7 +390,12 @@ class ConsentRequestUserJourneyTest {
         load(patientLinkServer, linkedPatientContextsJson);
         String scope = "consentrequest.approve";
 
+        var consentRequestDetail = consentRequestDetail()
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(30))
+                .build();
+        //when(consentServiceProperties.getConsentRequestExpiry()).thenReturn(60);
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
+        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7")).thenReturn(Mono.just(consentRequestDetail));
         when(postConsentRequestNotification.broadcastConsentRequestNotification(any()))
                 .thenReturn(Mono.empty());
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
@@ -452,9 +458,11 @@ class ConsentRequestUserJourneyTest {
                 "    }\n" +
                 "}";
         load(patientLinkServer, linkedPatientContextsJson);
-        var consentRequestDetail = OBJECT_MAPPER.readValue(requestedConsentJson, ConsentRequestDetail.class);
         String patientId = "ashok.kumar@ncg";
+        var consentRequestDetail = consentRequestDetail().createdAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(30))
+                                    .build();
 
+        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7")).thenReturn(Mono.just(consentRequestDetail));
         String scope = "consentrequest.approve";
         when(pinVerificationTokenService.validateToken(token, scope))
                 .thenReturn(Mono.just(new Caller(patientId, false)));
@@ -664,6 +672,7 @@ class ConsentRequestUserJourneyTest {
                     Stream.of("consentmanager.clientregistry.url=" + clientRegistryServer.url(""),
                             "consentmanager.userservice.url=" + userServer.url(""),
                             "consentmanager.consentservice.maxPageSize=50",
+                            "consentmanager.consentservice.consentRequestExpiry=60",
                             "consentmanager.keycloak.baseUrl=" + identityServer.url(""),
                             "consentmanager.linkservice.url=" + patientLinkServer.url(""),
                             "consentmanager.gatewayservice.baseUrl=" + gatewayServer.url("")));

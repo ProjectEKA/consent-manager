@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.common.CacheHealth;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
@@ -47,6 +48,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.ReactiveRedisClusterConnection;
+import org.springframework.data.redis.connection.ReactiveRedisConnection;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
@@ -76,11 +80,11 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import static in.projecteka.consentmanager.common.Constants.CONSENT_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.common.Constants.DEFAULT_CACHE_VALUE;
 import static in.projecteka.consentmanager.common.Constants.EXCHANGE;
 import static in.projecteka.consentmanager.common.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.common.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
 import static in.projecteka.consentmanager.common.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
-import static in.projecteka.consentmanager.common.Constants.DEFAULT_CACHE_VALUE;
 
 @Configuration
 public class ConsentManagerConfiguration {
@@ -248,9 +252,8 @@ public class ConsentManagerConfiguration {
     public Heartbeat heartbeat(IdentityServiceProperties identityServiceProperties,
                                DbOptions dbOptions,
                                RabbitmqOptions rabbitmqOptions,
-                               RedisOptions redisOptions,
-                               CacheMethodProperty cacheMethodProperty) {
-        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions, redisOptions, cacheMethodProperty);
+                               CacheHealth cacheHealth) {
+        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions, cacheHealth);
     }
 
     @Bean
@@ -338,9 +341,36 @@ public class ConsentManagerConfiguration {
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean("Lettuce")
-    ReactiveRedisConnectionFactory reactiveRedisConnectionFactory(RedisOptions redisOptions) {
+    ReactiveRedisConnectionFactory redisConnection(RedisOptions redisOptions) {
         var configuration = new RedisStandaloneConfiguration(redisOptions.getHost(), redisOptions.getPort());
         configuration.setPassword(redisOptions.getPassword());
         return new LettuceConnectionFactory(configuration);
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @Bean("Lettuce")
+    ReactiveRedisConnectionFactory dummyRedisConnection() {
+        return new ReactiveRedisConnectionFactory() {
+            @Override
+            public ReactiveRedisConnection getReactiveConnection() {
+                return null;
+            }
+
+            @Override
+            public ReactiveRedisClusterConnection getReactiveClusterConnection() {
+                return null;
+            }
+
+            @Override
+            public DataAccessException translateExceptionIfPossible(RuntimeException ex) {
+                return null;
+            }
+        };
+    }
+
+    @Bean
+    public CacheHealth cacheHealth(@Qualifier("Lettuce") ReactiveRedisConnectionFactory redisConnectionFactory,
+                                   CacheMethodProperty cacheMethodProperty) {
+        return new CacheHealth(cacheMethodProperty, redisConnectionFactory);
     }
 }

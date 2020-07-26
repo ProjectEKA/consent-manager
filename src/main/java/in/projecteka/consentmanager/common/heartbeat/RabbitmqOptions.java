@@ -12,4 +12,6 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 public class RabbitmqOptions {
     private final String host;
     private final int port;
+    private final String username;
+    private final String password;
 }

@@ -104,7 +104,7 @@ public class HASSignupService {
                 .flatMap(patient -> Mono.error(userAlreadyExists(patient.getIdentifier())))
                 .switchIfEmpty(Mono.defer(() -> {
                     if (isHealthAccountToken(token)) {
-                        return hasSignupServiceClient.updateHASAccount(updateHASLoginDetails);
+                        return hasSignupServiceClient.updateHASAccount(updateHASLoginDetails, token);
                     }
                     return Mono.empty();
                 }))
@@ -139,9 +139,7 @@ public class HASSignupService {
 
     private UpdateHASUserRequest createUpdateHASUserRequest(UpdateLoginDetailsRequest request, String token) {
         return UpdateHASUserRequest.builder()
-                .healthId(request.getHealthId())
                 .password(request.getPassword())
-                .token(token)
                 .build();
     }
 

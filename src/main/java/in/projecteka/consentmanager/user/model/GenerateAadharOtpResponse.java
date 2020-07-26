@@ -8,6 +8,6 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class GenerateAadharOtpResponse {
-    private final String txnID;
+    private final String txnId;
     private final String token;
 }

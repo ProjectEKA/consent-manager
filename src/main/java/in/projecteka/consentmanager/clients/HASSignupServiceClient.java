@@ -88,11 +88,12 @@ public class HASSignupServiceClient {
 
 
     public Mono<HealthAccountUser> updateHASAddress(UpdateHASAddressRequest request, String token) {
+        String xTokenValue = format("Bearer %s", token);
         return webClient
                 .post()
                 .uri(uriBuilder -> uriBuilder.path(HAS_ACCOUNT_UPDATE).build())
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
-                .header("X-Token", token)
+                .header("X-Token", xTokenValue)
                 .body(Mono.just(request), UpdateHASAddressRequest.class)
                 .accept(APPLICATION_JSON)
                 .retrieve()

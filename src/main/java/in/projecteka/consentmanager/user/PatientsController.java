@@ -27,6 +27,7 @@ import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.ValidatePinRequest;
+import in.projecteka.consentmanager.user.model.ForgotPinOTPSession;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -72,6 +73,14 @@ public class PatientsController {
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
                 .flatMap(userName -> transactionPinService.createPinFor(userName, createPinRequest.getPin()));
+    }
+
+    @PostMapping(Constants.APP_PATH_FORGET_PIN_GENERATE_OTP)
+    public Mono<ForgotPinOTPSession> generateOtp(){
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .map(Caller::getUsername)
+                .flatMap(transactionPinService::sendOtpForForgetPin);
     }
 
     @GetMapping(Constants.APP_PATH_GET_PROFILE)

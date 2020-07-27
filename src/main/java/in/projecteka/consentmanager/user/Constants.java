@@ -10,6 +10,9 @@ public class Constants {
     public static final String APP_PATH_VERIFY_PIN = "/verify-pin";
     public static final String APP_PATH_GENERATE_OTP = "/generateotp";
     public static final String APP_PATH_VERIFY_OTP = "/verifyotp";
+    public static final String APP_PATH_FORGET_PIN_GENERATE_OTP = "/forgot-pin/generate-otp";
+    public static final String APP_PATH_FORGET_PIN_VALIDATE_OTP = "/forgot-pin/validate-otp";
+    public static final String APP_PATH_FORGET_PIN_UPDATE_PIN = "/forgot-pin/update-pin";
     public static final String APP_PATH_UPDATE_PROFILE_PASSWORD = "/profile/update-password";
     public static final String APP_PATH_CHANGE_PIN = "/change-pin";
     public static final String APP_PATH_PROFILE_RECOVERY_INIT = "/profile/recovery-init";

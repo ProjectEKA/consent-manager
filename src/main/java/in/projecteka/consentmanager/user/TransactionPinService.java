@@ -1,12 +1,22 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.OtpServiceClient;
+import in.projecteka.consentmanager.clients.model.OtpAction;
+import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
+import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
+import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.TransactionPin;
+import in.projecteka.consentmanager.user.model.ForgotPinOTPSession;
+import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.consentmanager.user.model.IdentifierType;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,12 +38,17 @@ import static reactor.core.publisher.Mono.error;
 import static reactor.core.publisher.Mono.just;
 
 @AllArgsConstructor
+@Builder
 public class TransactionPinService {
     private final TransactionPinRepository transactionPinRepository;
     private final BCryptPasswordEncoder encoder;
     private final PrivateKey privateKey;
     private final UserServiceProperties userServiceProperties;
     private final CacheAdapter<String, String> dayCache;
+    private final UserService userService;
+    private final OtpServiceClient otpServiceClient;
+    private final ConsentServiceProperties consentServiceProperties;
+    private final CacheAdapter<String, String> unverifiedSessions;
     private static final Logger logger = LoggerFactory.getLogger(TransactionPinService.class);
 
     public Mono<Void> createPinFor(String patientId, String pin) {
@@ -54,8 +69,8 @@ public class TransactionPinService {
     private Mono<Void> validateTransactionPin(String patientId) {
         return isTransactionPinSet(patientId)
                 .flatMap(hasTransactionPin -> Boolean.TRUE.equals(hasTransactionPin)
-                                              ? error(ClientError.transactionPinAlreadyCreated())
-                                              : Mono.empty());
+                        ? error(ClientError.transactionPinAlreadyCreated())
+                        : Mono.empty());
     }
 
     public Mono<Boolean> isTransactionPinSet(String patientId) {
@@ -121,5 +136,23 @@ public class TransactionPinService {
         }
         String encodedPin = encoder.encode(pin);
         return transactionPinRepository.changeTransactionPin(username, encodedPin);
+    }
+
+    public Mono<ForgotPinOTPSession> sendOtpForForgetPin(String userName) {
+        return userService.userWith(userName)
+                .map(User::getPhone)
+                .map(this::generateOtpRequest)
+                .flatMap(otpRequest -> otpServiceClient.send(otpRequest)
+                        .then(unverifiedSessions.put(otpRequest.getSessionId(), otpRequest.getCommunication().getValue()))
+                        .thenReturn(new ForgotPinOTPSession(otpRequest.getSessionId())));
+    }
+
+    private OtpRequest generateOtpRequest(String phoneNumber) {
+        var otpCommunicationData = new OtpCommunicationData(IdentifierType.MOBILE.toString(), phoneNumber);
+        var otpGenerationDetail = OtpGenerationDetail.builder()
+                .action(OtpAction.FORGOT_PIN.toString())
+                .systemName(consentServiceProperties.getName())
+                .build();
+        return new OtpRequest(UUID.randomUUID().toString(), otpCommunicationData, otpGenerationDetail);
     }
 }

@@ -24,7 +24,7 @@ import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheGenericAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
-import in.projecteka.consentmanager.common.cache.RedisLocalDateTimeAdapter;
+import in.projecteka.consentmanager.common.cache.RedisGenericAdapter;
 import in.projecteka.consentmanager.common.cache.RedisOptions;
 import in.projecteka.consentmanager.common.heartbeat.CacheMethodProperty;
 import in.projecteka.consentmanager.common.heartbeat.Heartbeat;
@@ -333,7 +333,7 @@ public class ConsentManagerConfiguration {
     @Bean({"cacheForReplayAttack"})
     public CacheAdapter<String, LocalDateTime> createRedisCacheAdapterForReplayAttack(
             ReactiveRedisOperations<String, LocalDateTime> localDateTimeOps) {
-        return new RedisLocalDateTimeAdapter(localDateTimeOps, 10);
+        return new RedisGenericAdapter<>(localDateTimeOps, 10);
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")

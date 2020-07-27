@@ -77,9 +77,9 @@ consentmanager:
   cacheMethod: ${CACHE_METHOD:guava}
   redis:
     #Will not be used if cacheMethod is guava
-    host: ${REDIS_HOST}
-    port: 6379
-    password: ${REDIS_PASSWORD}
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:password}
   listeners:
     maximumRetries: ${LISTENERS_MAXIMUM_RETRIES}
     # In milliseconds

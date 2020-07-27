@@ -32,7 +32,7 @@ class RequestValidatorTest {
                     public LocalDateTime load(String key) {
                         return LocalDateTime.MIN;
                     }
-                }));
+                }), LocalDateTime.MIN);
     }
 
     private static Stream<Arguments> nonAllowedDates() {

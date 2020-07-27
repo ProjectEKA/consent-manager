@@ -72,6 +72,7 @@ public class ConsentConfiguration {
     @Bean
     public ConsentManager consentManager(
             UserServiceClient userServiceClient,
+            ConsentServiceProperties consentServiceProperties,
             ConsentRequestRepository repository,
             ConsentArtefactRepository consentArtefactRepository,
             KeyPair keyPair,
@@ -83,6 +84,7 @@ public class ConsentConfiguration {
             PatientServiceClient patientServiceClient,
             ConsentManagerClient consentManagerClient) {
         return new ConsentManager(userServiceClient,
+                consentServiceProperties,
                 repository,
                 consentArtefactRepository,
                 keyPair,

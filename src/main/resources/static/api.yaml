@@ -2907,9 +2907,12 @@ components:
           $ref: '#/components/schemas/DateOfBirth'
         gender:
           $ref: '#/components/schemas/Gender'
+        stateCode:
+          type: string
+        districtCode:
+          type: string
       required:
         - name
-        - username
         - password
         - gender
     PatientName:

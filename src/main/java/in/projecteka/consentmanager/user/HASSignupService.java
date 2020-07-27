@@ -184,16 +184,18 @@ public class HASSignupService {
                                 .then(userRepository.getPatientByHealthId(response.getHealthId())
                                         .flatMap(patient -> Mono.just(createVerifyAadharOtpResponse(response)))
                                         .switchIfEmpty(Mono.defer(() ->
-                                                addFirstName(response)
+                                                updateFirstName(response)
                                                         .flatMap(updatedUser -> userRepository.save(updatedUser, mobileNumber)))
                                                 .thenReturn(createVerifyAadharOtpResponse(response))))))
                 .flatMap(response -> signUpService.removeOf(sessionId).thenReturn(response));
     }
 
-    private Mono<HealthAccountUser> addFirstName(HealthAccountUser user) {
+    private Mono<HealthAccountUser> updateFirstName(HealthAccountUser user) {
         return Mono.just(HealthAccountUser.builder()
                 .name(user.getName())
                 .firstName(user.getName())
+                .middleName(user.getMiddleName())
+                .lastName(user.getLastName())
                 .healthId(user.getHealthId())
                 .gender(user.getGender())
                 .dayOfBirth(user.getDayOfBirth())
@@ -201,6 +203,10 @@ public class HASSignupService {
                 .yearOfBirth(user.getYearOfBirth())
                 .stateCode(user.getStateCode())
                 .districtCode(user.getDistrictCode())
+                .newHASUser(user.getNewHASUser())
+                .districtName(user.getDistrictName())
+                .stateName(user.getStateName())
+                .newHASUser(user.getNewHASUser())
                 .build());
     }
 
@@ -230,6 +236,7 @@ public class HASSignupService {
                                         .then(Mono.just(createSignUpResponse(dummyHealthAccountService.mapToHealthAccountUser(user, isNewUser),
                                                 user.getIdentifier())))
                                         : hasSignupServiceClient.updateHASAddress(request, token)
+                                        .flatMap(this::updateFirstName)
                                         .flatMap(hasUser -> {
                                             userRepository.updateAddress(request);
                                             return Mono.just(createSignUpResponse(hasUser, user.getIdentifier(), token));

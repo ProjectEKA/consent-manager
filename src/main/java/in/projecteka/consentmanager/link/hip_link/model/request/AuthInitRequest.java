@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.hipLinkInitialization.model.request;
+package in.projecteka.consentmanager.link.hip_link.model.request;
 
 import lombok.Value;
 

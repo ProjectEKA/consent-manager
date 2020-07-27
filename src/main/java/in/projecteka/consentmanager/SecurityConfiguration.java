@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static in.projecteka.consentmanager.hipLinkInitialization.Constants.PATH_HIP_LINK_USER_AUTH_INIT;
 import static in.projecteka.consentmanager.clients.ClientError.unAuthorized;
 import static in.projecteka.consentmanager.common.Constants.PATH_HEARTBEAT;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
@@ -49,6 +48,7 @@ import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORM
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
 import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
+import static in.projecteka.consentmanager.link.Constants.PATH_HIP_LINK_USER_AUTH_INIT;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;

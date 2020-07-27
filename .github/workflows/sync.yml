@@ -14,5 +14,13 @@ jobs:
         with:
           source_repo: "https://github.com/ProjectEKA/consent-manager.git"
           source_branch: "master"
-          destination_branch: "new_branch"
+          destination_branch: "eka_sync_branch"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: pull-request
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: "eka_sync_branch"
+          destination_branch: "master"
+          pr_body: ":crown: *An automated PR*"
+          pr_title: "Pulling ${{ github.ref }} into master"
           github_token: ${{ secrets.GITHUB_TOKEN }}

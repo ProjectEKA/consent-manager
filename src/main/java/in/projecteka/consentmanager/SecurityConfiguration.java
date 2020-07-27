@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static in.projecteka.consentmanager.hipLinkInitialization.Constants.PATH_HIP_LINK_USER_AUTH_INIT;
 import static in.projecteka.consentmanager.clients.ClientError.unAuthorized;
 import static in.projecteka.consentmanager.common.Constants.PATH_HEARTBEAT;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
@@ -73,7 +74,8 @@ public class SecurityConfiguration {
             PATH_HEALTH_INFORMATION_ON_REQUEST,
             PATH_HEALTH_INFORMATION_REQUEST,
             PATH_HEALTH_INFORMATION_NOTIFY,
-            PATH_HIP_CONSENT_ON_NOTIFY
+            PATH_HIP_CONSENT_ON_NOTIFY,
+            PATH_HIP_LINK_USER_AUTH_INIT
     };
 
     static {

@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,8 +32,7 @@ public class ConsentRequestRepository {
     private static final Logger logger = LoggerFactory.getLogger(ConsentRequestRepository.class);
     private static final String SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS;
     private static final String SELECT_CONSENT_REQUEST_BY_ID;
-    private static final String SELECT_CONSENT_REQUEST_BY_STATUS;
-
+    private static final String SELECT_CONSENT_REQUESTS_BY_STATUS;
     private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT;
     private static final String SELECT_CONSENT_REQUEST_COUNT = "SELECT COUNT(*) FROM consent_request " +
             "WHERE patient_id=$1  and status!=$3 and (status=$2 OR $2 IS NULL)";
@@ -42,7 +42,7 @@ public class ConsentRequestRepository {
             "date_modified=$2 WHERE request_id=$3";
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent request";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
-    private static final String FAILED_TO_GET_CONSENT_REQUEST_BY_STATUS = "Failed to get consent requests by status";
+    private static final String FAILED_TO_GET_CONSENT_REQUESTS_BY_STATUS = "Failed to get consent requests by status";
 
     private final PgPool dbClient;
 
@@ -54,7 +54,7 @@ public class ConsentRequestRepository {
                 " LIMIT $2 OFFSET $3";
         SELECT_CONSENT_REQUEST_BY_ID = s + "request_id=$1";
         SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS = s + "request_id=$1 and status=$2 and patient_id=$3";
-        SELECT_CONSENT_REQUEST_BY_STATUS = s + "status=$1";
+        SELECT_CONSENT_REQUESTS_BY_STATUS = s + "status=$1";
     }
 
     public ConsentRequestRepository(PgPool dbClient) {
@@ -163,7 +163,7 @@ public class ConsentRequestRepository {
 
     public Mono<Void> updateStatus(String id, ConsentStatus status) {
         return Mono.create(monoSink -> dbClient.preparedQuery(UPDATE_CONSENT_REQUEST_STATUS_QUERY)
-                .execute(Tuple.of(status.toString(), LocalDateTime.now(), id),
+                .execute(Tuple.of(status.toString(), LocalDateTime.now(ZoneOffset.UTC), id),
                         updateHandler -> {
                             if (updateHandler.failed()) {
                                 monoSink.error(new Exception("Failed to update status"));
@@ -178,12 +178,12 @@ public class ConsentRequestRepository {
     }
 
     public Flux<ConsentRequestDetail> getConsentsByStatus(ConsentStatus status) {
-        return Flux.create(fluxSink -> dbClient.preparedQuery(SELECT_CONSENT_REQUEST_BY_STATUS)
+        return Flux.create(fluxSink -> dbClient.preparedQuery(SELECT_CONSENT_REQUESTS_BY_STATUS)
                 .execute(Tuple.of(status.toString()),
                         handler -> {
                             if (handler.failed()) {
                                 logger.error(handler.cause().getMessage(), handler.cause());
-                                fluxSink.error(new Exception(FAILED_TO_GET_CONSENT_REQUEST_BY_STATUS));
+                                fluxSink.error(new Exception(FAILED_TO_GET_CONSENT_REQUESTS_BY_STATUS));
                                 return;
                             }
                             RowSet<Row> results = handler.result();

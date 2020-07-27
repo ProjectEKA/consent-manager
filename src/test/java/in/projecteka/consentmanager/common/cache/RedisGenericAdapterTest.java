@@ -19,7 +19,7 @@ import static reactor.core.publisher.Mono.empty;
 import static reactor.core.publisher.Mono.just;
 import static reactor.test.StepVerifier.create;
 
-class RedisLocalDateTimeAdapterTest {
+class RedisGenericAdapterTest {
 
     public static final int EXPIRATION_IN_MINUTES = 5;
     @Mock
@@ -28,12 +28,12 @@ class RedisLocalDateTimeAdapterTest {
     @Mock
     ReactiveValueOperations<String, LocalDateTime> valueOperations;
 
-    private RedisLocalDateTimeAdapter localDateTimeAdapter;
+    private RedisGenericAdapter<LocalDateTime> localDateTimeAdapter;
 
     @BeforeEach
     public void init() {
         initMocks(this);
-        localDateTimeAdapter = new RedisLocalDateTimeAdapter(redisOperations, EXPIRATION_IN_MINUTES);
+        localDateTimeAdapter = new RedisGenericAdapter<>(redisOperations, EXPIRATION_IN_MINUTES);
     }
 
     @Test

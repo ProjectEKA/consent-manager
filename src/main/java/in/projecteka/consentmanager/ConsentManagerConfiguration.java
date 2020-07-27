@@ -326,7 +326,7 @@ public class ConsentManagerConfiguration {
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"cacheForReplayAttack"})
     public CacheAdapter<String, LocalDateTime> stringLocalDateTimeCacheAdapter() {
-        return new LoadingCacheGenericAdapter<>(stringLocalDateTimeLoadingCache(10));
+        return new LoadingCacheGenericAdapter<>(stringLocalDateTimeLoadingCache(10), DEFAULT_CACHE_VALUE);
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")

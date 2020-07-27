@@ -2,7 +2,7 @@ name: Auto sync
 
 on:
   schedule:
-    - cron: "* */6 * * *"
+    - cron: "0 */6 * * *"
 
 jobs:
   repo-sync:

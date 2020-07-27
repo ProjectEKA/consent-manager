@@ -4,19 +4,17 @@ import com.google.common.cache.LoadingCache;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
-
-import static in.projecteka.consentmanager.common.Constants.DEFAULT_CACHE_VALUE;
 import static reactor.core.publisher.Mono.fromCallable;
 import static reactor.core.publisher.Mono.fromRunnable;
 
 @AllArgsConstructor
 public class LoadingCacheGenericAdapter<T> implements CacheAdapter<String, T> {
     private final LoadingCache<String, T> loadingCache;
+    private final T fallbackValue;
 
     @Override
     public Mono<T> get(String key) {
-        return fromCallable(() -> loadingCache.get(key) == DEFAULT_CACHE_VALUE ? null : loadingCache.get(key));
+        return fromCallable(() -> loadingCache.get(key) == fallbackValue ? null : loadingCache.get(key));
     }
 
     @Override
@@ -36,7 +34,7 @@ public class LoadingCacheGenericAdapter<T> implements CacheAdapter<String, T> {
 
     @Override
     public Mono<Boolean> exists(String key) {
-        return fromCallable(() -> loadingCache.getIfPresent(key) != LocalDateTime.MIN);
+        return fromCallable(() -> loadingCache.getIfPresent(key) != fallbackValue);
     }
 
     @Override

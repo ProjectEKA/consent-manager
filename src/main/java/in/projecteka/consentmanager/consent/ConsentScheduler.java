@@ -9,6 +9,8 @@ import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentati
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIUReference;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import reactor.core.publisher.Mono;
@@ -22,12 +24,15 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 
 @AllArgsConstructor
 public class ConsentScheduler {
+    private static final Logger logger = LoggerFactory.getLogger(ConsentScheduler.class);
+
     private final ConsentArtefactRepository consentArtefactRepository;
     private final ConsentNotificationPublisher consentNotificationPublisher;
 
     @Scheduled(cron = "${consentmanager.scheduler.consentExpiryCronExpr}")
     @Async
     public void processExpiredConsents() {
+        logger.info("Processing consent for expiry");
         var consentExpiries = consentArtefactRepository.getConsentArtefacts(GRANTED).collectList().block();
         if (consentExpiries != null) {
             consentExpiries.forEach(consentExpiry -> {
@@ -38,6 +43,7 @@ public class ConsentScheduler {
                     if (consentRepresentation != null) {
                         updateAndBroadcastConsentExpiry(consentExpiry.getConsentId(), consentRepresentation);
                     }
+                    logger.info("Consent with id {} is expired", consentExpiry.getConsentId());
                 }
             });
         }

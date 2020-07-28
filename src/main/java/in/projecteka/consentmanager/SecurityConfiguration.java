@@ -123,6 +123,8 @@ public class SecurityConfiguration {
                                                                    "/otpsession/verify",
                                                                    "/otpsession/permit",
                                                                    "/sessions",
+                                                                    "/states",
+                                                                    "/{state-code}/districts",
                                                                    PATH_HEARTBEAT,
                                                                    "/patients/profile/update-login-details",
                                                                    "/patients/update-address",

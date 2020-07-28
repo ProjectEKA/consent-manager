@@ -8,14 +8,19 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpAction;
 import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.consentmanager.clients.model.DistrictData;
 import in.projecteka.consentmanager.clients.model.HealthAccountServiceTokenResponse;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.clients.model.StateRequestResponse;
+import in.projecteka.consentmanager.clients.model.StateData;
 import in.projecteka.consentmanager.clients.properties.HealthAccountServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
+import in.projecteka.consentmanager.common.Serializer;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.model.Action;
 import in.projecteka.consentmanager.consent.model.Communication;
 import in.projecteka.consentmanager.consent.model.CommunicationType;
@@ -55,6 +60,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.clients.ClientError.failedToFetchUserCredentials;
 import static in.projecteka.consentmanager.clients.ClientError.from;
@@ -63,6 +70,8 @@ import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
 import static in.projecteka.consentmanager.user.IdentifierUtils.getIdentifierValue;
 import static in.projecteka.consentmanager.user.model.IdentifierType.MOBILE;
 import static java.lang.String.format;
+import static in.projecteka.consentmanager.common.Serializer.to;
+
 
 @AllArgsConstructor
 public class UserService {
@@ -80,7 +89,8 @@ public class UserService {
     private final OtpAttemptService otpAttemptService;
     private final LockedUserService lockedUserService;
     private final UserServiceClient userServiceClient;
-
+    private final CacheAdapter<String, List<StateData>> stateCache;
+    private final CacheAdapter<String, List<DistrictData>> districtCache;
     private final ConsentServiceProperties consentServiceProperties;
 
     public Mono<User> userWith(String userName) {
@@ -445,5 +455,26 @@ public class UserService {
                     return validateAndVerifyOtp(otpVerification, builder.build())
                             .then(signupService.generateToken(otpVerification.getSessionId()));
                 });
+    }
+
+    public Mono<List<StateData>> getStates() {
+        return stateCache.getIfPresent("states")
+                .switchIfEmpty(healthAccountServiceClient.getState()
+                        .map(response -> response.stream()
+                                .map(state -> {
+                                    districtCache.put(state.getCode(),state.getDistricts()).subscribe();
+                                    return StateData.builder()
+                                            .stateName(state.getName().trim())
+                                            .stateCode(state.getCode())
+                                            .build();
+                                })
+                                .collect(Collectors.toList()))
+                        .flatMap(stateList -> stateCache.put("states", stateList).thenReturn(stateList))
+                );
+    }
+
+    public Mono<List<DistrictData>> getDistricts(String stateCode) {
+        return districtCache.getIfPresent(stateCode)
+                .switchIfEmpty(Mono.error(ClientError.invalidGetDistrictDataRequest()));
     }
 }

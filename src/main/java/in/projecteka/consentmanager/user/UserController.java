@@ -1,7 +1,9 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.consentmanager.clients.model.StateData;
 import in.projecteka.consentmanager.common.RequestValidator;
+import in.projecteka.consentmanager.clients.model.DistrictData;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.PatientRequest;
 import in.projecteka.consentmanager.user.model.SignUpSession;
@@ -19,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
+
+import java.util.List;
 
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
 import static org.springframework.http.HttpStatus.CREATED;
@@ -64,5 +68,15 @@ public class UserController {
     @GetMapping(Constants.APP_PATH_INTERNAL_FIND_USER_BY_USERNAME)
     public Mono<User> internalUserWith(@PathVariable String userName) {
         return userService.userWith(userName);
+    }
+
+    @GetMapping("/states")
+    public Mono<List<StateData>> getStates() {
+        return userService.getStates();
+    }
+
+    @GetMapping("/{state-code}/districts")
+    public Mono<List<DistrictData>> getDistricts(@PathVariable(value = "state-code") String stateCode) {
+        return userService.getDistricts(stateCode);
     }
 }

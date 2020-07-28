@@ -1,11 +1,14 @@
 package in.projecteka.consentmanager.user;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.HealthAccountServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.model.DistrictData;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.HealthAccountServiceTokenResponse;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
@@ -14,9 +17,12 @@ import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.OtpRequestResponse;
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.consentmanager.clients.model.StateData;
+import in.projecteka.consentmanager.clients.model.StateRequestResponse;
 import in.projecteka.consentmanager.clients.properties.HealthAccountServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.DbOperationError;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.DateOfBirth;
@@ -74,7 +80,10 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -135,6 +144,13 @@ class UserServiceTest {
 
     private UserService userService;
 
+    @Mock
+    private CacheAdapter<String, List<StateData>> stateCache;
+
+    @Mock
+    private CacheAdapter<String, List<DistrictData>> districtCache;
+
+
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
@@ -154,6 +170,8 @@ class UserServiceTest {
                 otpAttemptService,
                 lockedUserService,
                 userServiceClient,
+                stateCache,
+                districtCache,
                 consentServiceProperties);
     }
 
@@ -824,5 +842,82 @@ class UserServiceTest {
         verify(userServiceClient, times(1)).sendPatientResponseToGateWay(any(), any(), any());
         assertThat(patientResponse.getValue().getError()).isNull();
         assertThat(patientResponse.getValue().getPatient()).isNotNull();
+    }
+
+    @Test
+    void shouldReturnStateData() throws JsonProcessingException {
+        var stateData = new ArrayList<StateData>();
+        var state = StateData.builder().stateCode("1").stateName("state1").build();
+        stateData.add(state);
+
+        when(stateCache.getIfPresent(anyString())).thenReturn(Mono.just(stateData));
+        when(healthAccountServiceClient.getState()).thenReturn(Mono.empty());
+
+        StepVerifier.create(userService.getStates())
+                .assertNext(response -> assertEquals(stateData,response))
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldCacheStateDataAndDistrictDataForAllStates() throws JsonProcessingException {
+        var state1 = StateRequestResponse.builder()
+                .name("state1")
+                .code("1")
+                .districts(List.of(DistrictData.builder().code("1").name("district1").build()))
+                .build();
+
+        var state2 = StateRequestResponse.builder()
+                .name("state2")
+                .code("2")
+                .districts(List.of(DistrictData.builder().code("2").name("district2").build()))
+                .build();
+
+        when(stateCache.getIfPresent("states")).thenReturn(Mono.empty());
+        when(stateCache.put(anyString(), anyList())).thenReturn(Mono.empty());
+        when(districtCache.put(anyString(), anyList())).thenReturn(Mono.empty());
+        when(healthAccountServiceClient.getState()).thenReturn(Mono.just(asList(state1, state2)));
+
+        StepVerifier.create(userService.getStates().ignoreElement())
+                .verifyComplete();
+
+        verify(stateCache, times(1)).getIfPresent("states");
+        verify(stateCache, times(1)).put(eq("states"), anyList());
+        verify(districtCache, times(1)).put(eq("1"), anyList());
+        verify(districtCache, times(1)).put(eq("2"), anyList());
+
+    }
+
+    @Test
+    void shouldThrowUnauthorizedIfGetUnauthorizedFromClient() {
+        when(stateCache.getIfPresent(anyString())).thenReturn(Mono.empty());
+        when(healthAccountServiceClient.getState()).thenReturn(Mono.error(ClientError.unAuthorized()));
+
+        StepVerifier.create(userService.getStates())
+                .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().value() == 401);
+
+    }
+
+    @Test
+    void shouldReturnDistrictsForGivenStatesFromCache() throws JsonProcessingException {
+        DistrictData expectedDistrict = DistrictData.builder().name("district1").code("1").build();
+
+        when(districtCache.getIfPresent("1")).thenReturn(Mono.just(asList(expectedDistrict)));
+
+        StepVerifier.create(userService.getDistricts("1"))
+                .assertNext(districts -> {
+                    assertThat(districts.size()).isEqualTo(1);
+                    assertThat(districts.get(0)).isEqualTo(expectedDistrict);
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldThrowInvalidRequestIfListIsNotPresentInCache() {
+        when(districtCache.getIfPresent("1")).thenReturn(Mono.empty());
+
+        StepVerifier.create(userService.getDistricts("1"))
+                .verifyErrorMatches(throwable -> throwable instanceof ClientError &&
+                        ((ClientError) throwable).getHttpStatus().value() == 400);
     }
 }

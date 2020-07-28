@@ -4,11 +4,16 @@ import in.projecteka.consentmanager.clients.HealthAccountServiceClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.model.DistrictData;
+import in.projecteka.consentmanager.clients.model.StateData;
 import in.projecteka.consentmanager.clients.properties.HealthAccountServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,6 +60,12 @@ class UserConfigurationTest {
 
     private final UserConfiguration userConfiguration = new UserConfiguration();
 
+    @Mock
+    private CacheAdapter<String, List<StateData>> stateCache;
+
+    @Mock
+    private CacheAdapter<String, List<DistrictData>> districtCache;
+
     @Test
     public void shouldReturnUserServiceInstance() {
         assertThat(userConfiguration.userService(
@@ -70,6 +81,8 @@ class UserConfigurationTest {
                 otpAttemptService,
                 lockedUserService,
                 userServiceClient,
+                stateCache,
+                districtCache,
                 consentServiceProperties))
                 .isInstanceOf(UserService.class);
     }

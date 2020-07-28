@@ -6,6 +6,14 @@ import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.OtpRequestResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
+import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.consentmanager.clients.model.OtpRequestResponse;
+import in.projecteka.consentmanager.clients.model.HealthAccountServiceTokenResponse;
+import in.projecteka.consentmanager.clients.model.StateRequestResponse;
+import in.projecteka.consentmanager.clients.model.DistrictData;
 import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,8 +31,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 class HealthAccountServiceClientTest {
     private @Captor
@@ -114,5 +127,31 @@ class HealthAccountServiceClientTest {
 
         assertThat(captor.getValue().url().getPath()).isEqualTo("/healthaccountservice/v1/ha/verify_mobile_otp");
         assertThat(captor.getValue().url().getHost()).isEqualTo("localhost");
+    }
+
+    @Test
+    void shouldGetStateRequestResponse() throws JsonProcessingException {
+        var state1 = StateRequestResponse.builder()
+                .name("state1")
+                .code("1")
+                .districts(List.of(DistrictData.builder().code("1").name("district1").build()))
+                .build();
+        List <StateRequestResponse>stateList = new ArrayList<>();
+        stateList.add(state1);
+        String stateResponseJson = new ObjectMapper().writeValueAsString(stateList);
+
+        when(exchangeFunction.exchange(captor.capture())).thenReturn(
+                Mono.just(
+                        ClientResponse
+                                .create(HttpStatus.OK)
+                                .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                                .body(stateResponseJson)
+                                .build()));
+
+        StepVerifier.create(healthAccountServiceClient.getState()).assertNext(
+                value -> {
+                    assertThat(value.get(0).getCode()).isEqualTo("1");
+                }
+        ).verifyComplete();
     }
 }

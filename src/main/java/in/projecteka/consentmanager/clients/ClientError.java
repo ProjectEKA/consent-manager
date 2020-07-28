@@ -78,6 +78,11 @@ public class ClientError extends Throwable {
                 new Error(INVALID_REQUEST, "Too many requests from gateway")));
     }
 
+    public static ClientError invalidGetDistrictDataRequest() {
+        return new ClientError(BAD_REQUEST, new ErrorRepresentation(
+                new Error(INVALID_REQUEST, "Invalid get district data request")));
+    }
+
     public ErrorCode getErrorCode() {
         return this.error.getError().getCode();
     }

@@ -9,6 +9,7 @@ consentmanager:
     hiTypesDefUrl: classpath:/static/ValueSet/health-info-type.json
     #in minutes
     consentRequestExpiry: ${CONSENT_REQUEST_EXPIRY}
+    name: ${CONSENT_SERVICE_NAME:PHR-App}
   scheduler:
     consentExpiryCronExpr: ${CONSENT_EXPIRY_CRON_EXPRESSION}
     consentRequestExpiryCronExpr: ${CONSENT_REQUEST_EXPIRY_CRON_EXPRESSION}
@@ -69,9 +70,9 @@ consentmanager:
   cacheMethod: ${CACHE_METHOD:guava}
   redis:
     #Will not be used if cacheMethod is guava
-    host: ${REDIS_HOST}
-    port: 6379
-    password: ${REDIS_PASSWORD}
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:password}
   listeners:
     maximumRetries: ${LISTENERS_MAXIMUM_RETRIES}
     # In milliseconds
@@ -84,5 +85,14 @@ spring:
     port: ${RABBITMQ_PORT}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+keystore:
+  file-path: ${KEYSTORE_PATH:consent-manager-keystore.p12}
+  password: ${KEYSTORE_PASSWORD}
+  sign-artefact-keypair:
+    store-type: PKCS12
+    alias: ${SIGN_ARTEFACT_KEYPAIR_ALIAS:cm-sign-artefact}
+  pin-verification-keypair:
+    store-type: PKCS12
+    alias: ${PIN_VERIFICATION_KEYPAIR_ALIAS:cm-pin-verification}
 webclient:
   keepAlive: ${CM_KEEP_ALIVE:true}

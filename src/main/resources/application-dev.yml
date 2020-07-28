@@ -9,6 +9,7 @@ consentmanager:
     hiTypesDefUrl: classpath:/static/ValueSet/health-info-type.json
     #in minutes
     consentRequestExpiry: 60
+    name: PHR-App
   scheduler:
     consentExpiryCronExpr: '0 0 * ? * *'
     consentRequestExpiryCronExpr: '0 0 0/12 ? * *'

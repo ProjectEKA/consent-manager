@@ -15,14 +15,16 @@ import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.DiscoveryRepository;
+import in.projecteka.consentmanager.link.hip_link.UserAuthInitAction;
+import in.projecteka.consentmanager.link.hip_link.UserAuthentication;
 import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.link.link.LinkRepository;
-import io.lettuce.core.RedisClient;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.concurrent.TimeUnit;
@@ -79,6 +81,18 @@ public class LinkConfiguration {
                 linkResults);
     }
 
+    @Bean
+    public UserAuthInitAction initAction() {
+        return new UserAuthInitAction();
+    }
+
+    @Bean
+    public UserAuthentication userAuthentication(
+            UserAuthInitAction initAction
+    ) {
+        return new UserAuthentication(initAction);
+    }
+
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"discoveryResults", "linkResults"})
     public CacheAdapter<String, String> createLoadingCacheAdapter() {
@@ -98,8 +112,8 @@ public class LinkConfiguration {
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"discoveryResults", "linkResults"})
-    public CacheAdapter<String, String> createRedisCacheAdapter(RedisClient redisClient) {
-        return new RedisCacheAdapter(redisClient, 5);
+    public CacheAdapter<String, String> createRedisCacheAdapter(
+            ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
+        return new RedisCacheAdapter(stringReactiveRedisOperations, 5);
     }
-
 }

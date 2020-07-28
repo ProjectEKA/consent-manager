@@ -13,18 +13,19 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEF
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_FORBIDDEN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_ARTEFACT_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_NOT_GRANTED;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_EXPIRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUEST_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_DATE_RANGE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_OTP_ATTEMPTS_EXCEEDED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PIN_ATTEMPTS_EXCEEDED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PROVIDER_OR_CARE_CONTEXT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_RECOVERY_REQUEST;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUEST;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_RESP_REQUEST_ID;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SCOPE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_SESSION;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TOKEN;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_TRANSACTION_PIN;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.NETWORK_SERVICE_ERROR;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.NO_PATIENT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.NO_RESULT_FROM_GATEWAY;
@@ -32,11 +33,12 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_EXPIRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_INVALID;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_REQUEST_LIMIT_EXCEEDED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.PROVIDER_NOT_FOUND;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.REFRESH_TOKEN_INCORRECT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.QUEUE_NOT_FOUND;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.REFRESH_TOKEN_INCORRECT;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.REQUEST_ALREADY_EXISTS;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_ID_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_PIN_IS_ALREADY_CREATED;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_PIN_NOT_FOUND;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.UNABLE_TO_CONNECT_TO_PROVIDER;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.UNKNOWN_ERROR_OCCURRED;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.UNPROCESSABLE_RESPONSE_FROM_GATEWAY;
@@ -50,21 +52,23 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_LINK_
 
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.GATEWAY_TIMEOUT;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.PRECONDITION_FAILED;
 import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
-import static org.springframework.http.HttpStatus.PRECONDITION_FAILED;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
-
 
 @Getter
 @ToString
 public class ClientError extends Throwable {
 
-    private static final String CANNOT_PROCESS_REQUEST_TRY_LATER = "Cannot process the request at the moment, please try later.";
+    private static final String CANNOT_PROCESS_REQUEST_TRY_LATER =
+            "Cannot process the request at the moment, please try later.";
+    public static final String INVALID_TRANSACTION_PIN = "Invalid transaction pin";
+    public static final String CANNOT_FIND_THE_CONSENT_ARTEFACT = "Cannot find the consent artefact";
     private final HttpStatus httpStatus;
     private final ErrorRepresentation error;
 
@@ -78,7 +82,7 @@ public class ClientError extends Throwable {
                 new Error(INVALID_REQUEST, "Too many requests from gateway")));
     }
 
-    public ErrorCode getErrorCode(){
+    public ErrorCode getErrorCode() {
         return this.error.getError().getCode();
     }
 
@@ -94,17 +98,19 @@ public class ClientError extends Throwable {
 
     public static ClientError transactionPinDidNotMatch(String auxMessage) {
         return new ClientError(UNAUTHORIZED,
-                new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN, String.format("%s;%s","Invalid transaction pin",auxMessage))));
+                new ErrorRepresentation(new Error(ErrorCode.INVALID_TRANSACTION_PIN,
+                        format("%s;%s", INVALID_TRANSACTION_PIN, auxMessage))));
     }
 
     public static ClientError invalidAttemptsExceeded() {
         return new ClientError(UNAUTHORIZED,
-                new ErrorRepresentation(new Error(INVALID_PIN_ATTEMPTS_EXCEEDED, "Invalid Pin attempts exceeded; Try again after sometime.")));
+                new ErrorRepresentation(new Error(INVALID_PIN_ATTEMPTS_EXCEEDED,
+                        "Invalid Pin attempts exceeded; Try again after sometime.")));
     }
 
     public static ClientError invalidTransactionPin() {
         return new ClientError(BAD_REQUEST,
-                new ErrorRepresentation(new Error(INVALID_TRANSACTION_PIN, "Invalid transaction pin")));
+                new ErrorRepresentation(new Error(ErrorCode.INVALID_TRANSACTION_PIN, INVALID_TRANSACTION_PIN)));
     }
 
     public static ClientError otpExpired() {
@@ -144,12 +150,12 @@ public class ClientError extends Throwable {
 
     public static ClientError consentArtefactNotFound() {
         return new ClientError(NOT_FOUND,
-                new ErrorRepresentation(new Error(CONSENT_ARTEFACT_NOT_FOUND, "Cannot find the consent artefact")));
+                new ErrorRepresentation(new Error(CONSENT_ARTEFACT_NOT_FOUND, CANNOT_FIND_THE_CONSENT_ARTEFACT)));
     }
 
     public static ClientError consentArtefactForbidden() {
         return new ClientError(FORBIDDEN,
-                new ErrorRepresentation(new Error(CONSENT_ARTEFACT_FORBIDDEN, "Cannot retrieve Consent artefact")));
+                new ErrorRepresentation(new Error(CONSENT_ARTEFACT_FORBIDDEN, CANNOT_FIND_THE_CONSENT_ARTEFACT)));
     }
 
     public static ClientError invalidOtp() {
@@ -167,7 +173,6 @@ public class ClientError extends Throwable {
     public static ClientError failedToCreateTransactionPin() {
         return internalServerError("Failed to create transaction pin");
     }
-
 
     public static ClientError failedToInsertLockedUser() {
         return internalServerError("Failed to insert locked user");
@@ -189,7 +194,6 @@ public class ClientError extends Throwable {
     public static ClientError failedToFetchTransactionPin() {
         return internalServerError("Failed to fetch transaction pin");
     }
-
 
     public static ClientError failedToFetchLockedUser() {
         return internalServerError("Failed to fetch Locked User");
@@ -218,8 +222,13 @@ public class ClientError extends Throwable {
     }
 
     public static ClientError invalidDateRange() {
-        return new ClientError(UNAUTHORIZED,
+        return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_DATE_RANGE, "Date Range given is invalid")));
+    }
+
+    public static ClientError consentRequestExpired() {
+        return new ClientError(HttpStatus.GONE,
+                new ErrorRepresentation(new Error(CONSENT_REQUEST_EXPIRED, "Consent Request expired")));
     }
 
     public static ClientError consentExpired() {
@@ -301,30 +310,29 @@ public class ClientError extends Throwable {
 
     public static ClientError invalidScope() {
         return new ClientError(UNAUTHORIZED,
-                new ErrorRepresentation(new Error(INVALID_SCOPE, "The scope provided is invalid for current operation")));
+                new ErrorRepresentation(new Error(INVALID_SCOPE,
+                        "The scope provided is invalid for current operation")));
     }
 
     public static ClientError invalidSession(String session) {
         return new ClientError(BAD_REQUEST,
-                new ErrorRepresentation(new Error(INVALID_SESSION, String.format("The sessionId: %s is invalid",session))));
+                new ErrorRepresentation(new Error(INVALID_SESSION, format("The sessionId: %s is invalid", session))));
     }
 
     public static ClientError gatewayTimeOut() {
-        return new ClientError(GATEWAY_TIMEOUT, new ErrorRepresentation(new Error(NO_RESULT_FROM_GATEWAY, "Didn't receive any result from Gateway")));
+        return new ClientError(GATEWAY_TIMEOUT,
+                new ErrorRepresentation(new Error(NO_RESULT_FROM_GATEWAY,
+                        "Didn't receive any result from Gateway")));
     }
 
     public static ClientError tooManyInvalidOtpAttempts() {
         return new ClientError(TOO_MANY_REQUESTS,
-                new ErrorRepresentation(new Error(INVALID_OTP_ATTEMPTS_EXCEEDED, "Invalid OTP attempts limit exceeded")));
+                new ErrorRepresentation(new Error(INVALID_OTP_ATTEMPTS_EXCEEDED,
+                        "Invalid OTP attempts limit exceeded")));
     }
 
-    public static ClientError unknownUnauthroziedError(String message) {
+    public static ClientError unknownUnauthorizedError(String message) {
         return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(UNKNOWN_ERROR_OCCURRED, message)));
-    }
-
-    public static ClientError patientNotFound() {
-        return new ClientError(NOT_FOUND,
-                new ErrorRepresentation(new Error(NO_PATIENT_FOUND, "Could not find patient information")));
     }
 
     public static ClientError unprocessableEntity() {
@@ -344,11 +352,14 @@ public class ClientError extends Throwable {
     }
 
     public static ClientError invalidResponseFromHIP() {
-        return new ClientError(UNPROCESSABLE_ENTITY, new ErrorRepresentation(new Error(UNPROCESSABLE_RESPONSE_FROM_GATEWAY, "Could not process response from HIP")));
+        return new ClientError(UNPROCESSABLE_ENTITY,
+                new ErrorRepresentation(new Error(UNPROCESSABLE_RESPONSE_FROM_GATEWAY,
+                        "Could not process response from HIP")));
     }
 
     public static ClientError invalidOldPassword(int remainingAttempts) {
-        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT, "You have " + remainingAttempts + " tries available after that your account will be locked")));
+        return new ClientError(UNAUTHORIZED, new ErrorRepresentation(new Error(USERNAME_OR_PASSWORD_INCORRECT,
+                "You have " + remainingAttempts + " tries available after that your account will be locked")));
     }
 
     public static RespError from(ClientError exception) {

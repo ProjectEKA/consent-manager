@@ -1,98 +1,98 @@
 package in.projecteka.consentmanager.common.cache;
 
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
-import org.assertj.core.api.Assertions;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
+import org.springframework.data.redis.core.ReactiveRedisOperations;
+import org.springframework.data.redis.core.ReactiveValueOperations;
 
-import static org.mockito.Mockito.verify;
+import static in.projecteka.consentmanager.common.TestBuilders.aLong;
+import static in.projecteka.consentmanager.common.TestBuilders.string;
+import static java.time.Duration.ofMinutes;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
-
+import static org.mockito.MockitoAnnotations.initMocks;
+import static reactor.core.publisher.Mono.empty;
+import static reactor.core.publisher.Mono.just;
+import static reactor.test.StepVerifier.create;
 
 class RedisCacheAdapterTest {
+
+    public static final int EXPIRATION_IN_MINUTES = 5;
     @Mock
-    private RedisClient redisClient;
+    ReactiveRedisOperations<String, String> redisOperations;
+
     @Mock
-    private StatefulRedisConnection<String, String> statefulConnection;
-    @Mock
-    private RedisReactiveCommands<String,String> redisReactiveCommands;
+    ReactiveValueOperations<String, String> valueOperations;
+
     private RedisCacheAdapter redisCacheAdapter;
 
     @BeforeEach
     public void init() {
-        MockitoAnnotations.initMocks(this);
-        redisCacheAdapter = new RedisCacheAdapter(redisClient,5);
-        when(redisClient.connect()).thenReturn(statefulConnection);
-        when(statefulConnection.reactive()).thenReturn(redisReactiveCommands);
-        redisCacheAdapter.postConstruct();
+        initMocks(this);
+        redisCacheAdapter = new RedisCacheAdapter(redisOperations, EXPIRATION_IN_MINUTES);
     }
 
     @Test
-    public void shouldGetFromRedisCache() {
-        String testKey = "foo";
-        String testValue = "bar";
-        when(redisReactiveCommands.get(testKey)).thenReturn(Mono.just(testValue));
+    void get() {
+        var key = string();
+        var value = string();
+        when(redisOperations.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(key)).thenReturn(just(value));
 
-        String cachedValue = redisCacheAdapter.get(testKey).block();
-        Assert.assertEquals(testValue,cachedValue);
-        verify(statefulConnection).reactive();
-        verify(redisReactiveCommands).get(testKey);
-    }
-
-    @Test
-    public void shouldSetValueOnRedisCache() {
-        String testKey = "foo";
-        String testValue = "bar";
-        long expiration = 5 * 60L;
-        when(redisReactiveCommands.set(testKey,testValue)).thenReturn(Mono.just("OK"));
-        when(redisReactiveCommands.expire(testKey, expiration)).thenReturn(Mono.just(true));
-
-        StepVerifier.create(redisCacheAdapter.put(testKey, testValue)).verifyComplete();
-        verify(redisReactiveCommands).set(testKey,testValue);
-        verify(redisReactiveCommands).expire(testKey,expiration);
-    }
-
-    @Test
-    public void shouldInvalidate() {
-        String testKey = "foo";
-        when(redisReactiveCommands.expire(testKey, 0L)).thenReturn(Mono.just(true));
-
-        StepVerifier.create(redisCacheAdapter.invalidate(testKey)).verifyComplete();
-        verify(redisReactiveCommands).expire(testKey,0L);
-    }
-
-    @Test
-    public void shouldIncrement() {
-        String testKey = "testKey";
-        long expectedIncrement = 2L;
-        when(redisReactiveCommands.incr(testKey)).thenReturn(Mono.just(expectedIncrement));
-
-        StepVerifier.create(redisCacheAdapter.increment(testKey))
-                .assertNext(increment -> Assertions.assertThat(increment).isEqualTo(expectedIncrement))
+        create(redisCacheAdapter.get(key))
+                .assertNext(actualValue -> assertThat(actualValue).isEqualTo(value))
                 .verifyComplete();
-
-        verify(redisReactiveCommands).incr(testKey);
     }
 
     @Test
-    public void shouldIncrementAndSetExpiry() {
-        String testKey = "testKey";
-        long expectedIncrement = 1L;
-        when(redisReactiveCommands.incr(testKey)).thenReturn(Mono.just(expectedIncrement));
-        when(redisReactiveCommands.expire(testKey,5 * 60)).thenReturn(Mono.just(true));
+    void put() {
+        var key = string();
+        var value = string();
+        var expiration = ofMinutes(EXPIRATION_IN_MINUTES);
+        when(redisOperations.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.set(key, value, expiration)).thenReturn(just(true));
 
-        StepVerifier.create(redisCacheAdapter.increment(testKey))
-                .assertNext(increment -> Assertions.assertThat(increment).isEqualTo(expectedIncrement))
+        create(redisCacheAdapter.put(key, value)).verifyComplete();
+    }
+
+    @Test
+    void invalidate() {
+        var key = string();
+        when(redisOperations.expire(key, ofMinutes(0))).thenReturn(just(true));
+
+        create(redisCacheAdapter.invalidate(key)).verifyComplete();
+    }
+
+    @Test
+    void getIfPresent() {
+        var key = string();
+        when(redisOperations.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(key)).thenReturn(empty());
+
+        create(redisCacheAdapter.getIfPresent(key))
                 .verifyComplete();
+    }
 
-        verify(redisReactiveCommands).incr(testKey);
-        verify(redisReactiveCommands).expire(testKey,5 * 60);
+    @Test
+    void exists() {
+        var key = string();
+        when(redisOperations.hasKey(key)).thenReturn(just(true));
+
+        create(redisCacheAdapter.exists(key))
+                .assertNext(exist -> assertThat(exist).isTrue())
+                .verifyComplete();
+    }
+
+    @Test
+    void increment() {
+        var key = string();
+        var expectedIncrement = aLong();
+        when(redisOperations.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.increment(key)).thenReturn(just(expectedIncrement));
+
+        create(redisCacheAdapter.increment(key))
+                .assertNext(increment -> assertThat(increment).isEqualTo(expectedIncrement))
+                .verifyComplete();
     }
 }

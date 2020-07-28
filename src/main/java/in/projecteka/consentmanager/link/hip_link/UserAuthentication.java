@@ -13,7 +13,6 @@ public class UserAuthentication {
 
     public Mono<Void> authInit(AuthInitRequest request) {
         logger.info("User auth initialization");
-        initAction.execute(request);
-        return Mono.empty();
+        return initAction.execute(request);
     }
 }

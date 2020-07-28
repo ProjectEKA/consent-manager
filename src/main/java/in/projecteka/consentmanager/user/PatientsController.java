@@ -27,7 +27,6 @@ import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.ValidatePinRequest;
-import in.projecteka.consentmanager.user.model.ForgotPinOTPSession;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -76,11 +75,35 @@ public class PatientsController {
     }
 
     @PostMapping(Constants.APP_PATH_FORGET_PIN_GENERATE_OTP)
-    public Mono<ForgotPinOTPSession> generateOtp(){
+    @ResponseStatus(CREATED)
+    public Mono<GenerateOtpResponse> generateOtpForForgetPin() {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
-                .flatMap(transactionPinService::sendOtpForForgetPin);
+                .flatMap(userService::userWith)
+                .flatMap(user -> getGenerateOtpResponseFor(
+                        new UserSignUpEnquiry(IdentifierType.MOBILE.toString(), user.getPhone()),
+                        user.getIdentifier(),
+                        OtpAttempt.Action.OTP_REQUEST_FORGOT_CONSENT_PIN,
+                        SendOtpAction.FORGOT_CONSENT_PIN));
+    }
+
+    @PostMapping(Constants.APP_PATH_FORGET_PIN_VALIDATE_OTP)
+    public Mono<Token> validateOtp(@RequestBody OtpVerification otpVerification) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .map(Caller::getUsername)
+                .flatMap(username -> userService.verifyOtpForForgotConsentPin(otpVerification));
+    }
+
+    @PutMapping(Constants.APP_PATH_FORGET_PIN_UPDATE_PIN)
+    public Mono<Void> resetConsentPin(@RequestBody ChangePinRequest changePinRequest,
+                                      @RequestHeader(name = "Authorization") String token) {
+        var sessionId = signupService.sessionFrom(token);
+        return Mono.justOrEmpty(sessionId)
+                .flatMap(signupService::getUserName)
+                .flatMap(username -> transactionPinService.changeTransactionPinFor(username, changePinRequest.getPin()))
+                .then(Mono.defer(() -> signupService.removeOf(sessionId)));
     }
 
     @GetMapping(Constants.APP_PATH_GET_PROFILE)

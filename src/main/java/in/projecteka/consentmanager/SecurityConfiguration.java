@@ -307,7 +307,8 @@ public class SecurityConfiguration {
 
         private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
             return (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
-                    (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod));
+                    (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod)) ||
+                    (("/patients/reset-pin").equals(url) && HttpMethod.PUT.equals(httpMethod));
         }
     }
 

@@ -150,39 +150,18 @@ public class UserConfiguration {
         return new BCryptPasswordEncoder();
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    @Bean("forgotPinUnverifedSessions")
-    public CacheAdapter<String, String> forgotPinUnverifiedSessionsLoadingCache() {
-        return new LoadingCacheAdapter(createSessionCache(5));
-    }
-
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
-    @Bean("forgotPinUnverifedSessions")
-    public CacheAdapter<String, String> forgotPinUnverifiedSessionsRedisCache(
-            ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
-        return new RedisCacheAdapter(stringReactiveRedisOperations, 24 * 60);
-    }
-
     @Bean
     public TransactionPinService transactionPinService(TransactionPinRepository transactionPinRepository,
                                                        BCryptPasswordEncoder encoder,
                                                        @Qualifier("keySigningPrivateKey") PrivateKey privateKey,
                                                        UserServiceProperties userServiceProperties,
-                                                       @Qualifier("dayCache") CacheAdapter<String, String> dayCache,
-                                                       UserService userService,
-                                                       OtpServiceClient otpServiceClient,
-                                                       ConsentServiceProperties consentServiceProperties,
-                                                       @Qualifier("forgotPinUnverifedSessions") CacheAdapter<String, String> unverifiedSessions) {
+                                                       @Qualifier("dayCache") CacheAdapter<String, String> dayCache) {
         return TransactionPinService.builder()
                 .encoder(encoder)
                 .privateKey(privateKey)
-                .userService(userService)
                 .userServiceProperties(userServiceProperties)
-                .consentServiceProperties(consentServiceProperties)
                 .dayCache(dayCache)
-                .otpServiceClient(otpServiceClient)
                 .transactionPinRepository(transactionPinRepository)
-                .unverifiedSessions(unverifiedSessions)
                 .build();
     }
 

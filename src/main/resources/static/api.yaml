@@ -905,6 +905,108 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /states:
+    get:
+      tags:
+        - account
+      summary: List of States
+      description: Getting list of States.
+      responses:
+        '200':
+          description: List of States.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateRequestResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/StateRequestResponse'
+
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: >
+            **Causes:**
+              * Not Found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /{state-code}/districts:
+    get:
+      tags:
+        - account
+      summary: Districts list of specific State.
+      description: Getting list of Districts.
+      responses:
+        '200':
+          description: List of Districts .
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistrictRequestResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/DistrictRequestResponse'
+
+        '400':
+          description: >
+            **Causes:**
+              * Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: >
+            **Causes:**
+              * Not Found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /patients/verifyotp:
     post:
       tags:
@@ -3192,3 +3294,35 @@ components:
         - username
         - otp
         - sessionId
+    StateRequestResponse:
+      type: object
+      properties:
+        states:
+          type: array
+          items:
+            $ref: '#/components/schemas/state'
+    state:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "maharashtra"
+        code:
+          type: integer
+          example: 27
+    DistrictRequestResponse:
+      type: object
+      properties:
+        districts:
+          type: array
+          items:
+            $ref: '#/components/schemas/district'
+    district:
+      type: object
+      properties:
+        name :
+          type: string
+          example: "pune"
+        code:
+          type: integer
+          example: 490

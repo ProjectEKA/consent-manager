@@ -1736,6 +1736,103 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /patients/forgot-pin/generate-otp:
+    post:
+      tags:
+        - account
+      summary: Generate OTP for forgot pin flow
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+      responses:
+        '201':
+          description: OTP generated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateOtpResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patients/forgot-pin/validate-otp:
+    post:
+      tags:
+        - account
+      summary: Validate OTP for forgot pin flow
+      parameters:
+        - $ref: '#/components/parameters/authorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOtpRequest'
+      responses:
+        '200':
+          description: OTP validation successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyOtpResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/VerifyOtpResponse'
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patients/reset-pin:
+    put:
+      tags:
+        - account
+      summary: Update ping with temporary token
+      parameters:
+        - name: Authorization
+          description: Token received after successful verification of OTP.
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePinRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/ChangePinRequest'
+      responses:
+        '204':
+          description: Pin updated successfully.
+        '500':
+          description: >
+            **Causes:**
+              * Downstream services are down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 
   /patients/profile/update-password:
     put:

@@ -48,6 +48,7 @@ import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORM
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
 import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
+import static in.projecteka.consentmanager.link.Constants.PATH_HIP_LINK_USER_AUTH_INIT;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
@@ -73,7 +74,8 @@ public class SecurityConfiguration {
             PATH_HEALTH_INFORMATION_ON_REQUEST,
             PATH_HEALTH_INFORMATION_REQUEST,
             PATH_HEALTH_INFORMATION_NOTIFY,
-            PATH_HIP_CONSENT_ON_NOTIFY
+            PATH_HIP_CONSENT_ON_NOTIFY,
+            PATH_HIP_LINK_USER_AUTH_INIT
     };
 
     static {

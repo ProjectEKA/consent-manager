@@ -51,6 +51,10 @@ import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_
 import static in.projecteka.consentmanager.link.Constants.PATH_HIP_LINK_USER_AUTH_INIT;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
+import static in.projecteka.consentmanager.user.Constants.APP_PATH_CREATE_USER;
+import static in.projecteka.consentmanager.user.Constants.APP_PATH_RESET_PASSWORD;
+import static in.projecteka.consentmanager.user.Constants.APP_PATH_RESET_PIN;
+import static in.projecteka.consentmanager.user.Constants.BASE_PATH_PATIENTS_APIS;
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;
@@ -63,6 +67,7 @@ import static reactor.core.publisher.Mono.error;
 public class SecurityConfiguration {
 
     private static final List<Map.Entry<String, HttpMethod>> SERVICE_ONLY_URLS = new ArrayList<>();
+    private static final List<Map.Entry<String, HttpMethod>> TEMP_TOKEN_URLS = new ArrayList<>();
     private static final List<RequestMatcher> PIN_VERIFICATION_MATCHERS = new ArrayList<>();
     private static final String[] GATEWAY_APIS = new String[]{
             PATH_CARE_CONTEXTS_ON_DISCOVER,
@@ -111,6 +116,10 @@ public class SecurityConfiguration {
         PIN_VERIFICATION_MATCHERS.add(approveMatcher);
         PIN_VERIFICATION_MATCHERS.add(revokeMatcher);
         PIN_VERIFICATION_MATCHERS.add(changePinMatcher);
+
+        TEMP_TOKEN_URLS.add(Map.entry(BASE_PATH_PATIENTS_APIS + APP_PATH_CREATE_USER, HttpMethod.POST));
+        TEMP_TOKEN_URLS.add(Map.entry(BASE_PATH_PATIENTS_APIS + APP_PATH_RESET_PASSWORD, HttpMethod.PUT));
+        TEMP_TOKEN_URLS.add(Map.entry(BASE_PATH_PATIENTS_APIS + APP_PATH_RESET_PIN, HttpMethod.PUT));
     }
 
     private static final String[] ALLOWED_LIST_URLS = new String[]{"/**.json",
@@ -220,7 +229,7 @@ public class SecurityConfiguration {
             if (isEmpty(token)) {
                 return error(unAuthorized());
             }
-            if (isSignUpRequest(requestPath, requestMethod)) {
+            if (isPostOTPVerificationRequest(requestPath, requestMethod)) {
                 return checkSignUp(token).switchIfEmpty(error(unAuthorized()));
             }
             if (isPinVerificationRequest(requestPath, requestMethod)) {
@@ -307,10 +316,11 @@ public class SecurityConfiguration {
                             .map(SecurityContextImpl::new));
         }
 
-        private boolean isSignUpRequest(String url, HttpMethod httpMethod) {
-            return (("/patients/profile").equals(url) && HttpMethod.POST.equals(httpMethod)) ||
-                    (("/patients/profile/reset-password").equals(url) && HttpMethod.PUT.equals(httpMethod)) ||
-                    (("/patients/reset-pin").equals(url) && HttpMethod.PUT.equals(httpMethod));
+        private boolean isPostOTPVerificationRequest(String url, HttpMethod httpMethod) {
+            var antPathMatcher = new AntPathMatcher();
+            return TEMP_TOKEN_URLS.stream()
+                    .anyMatch(pattern ->
+                            antPathMatcher.match(pattern.getKey(), url) && pattern.getValue().equals(httpMethod));
         }
     }
 

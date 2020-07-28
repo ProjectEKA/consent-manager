@@ -53,9 +53,10 @@ import static in.projecteka.consentmanager.user.model.SendOtpAction.RECOVER_PASS
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 @RestController
-@RequestMapping("/patients")
+@RequestMapping(Constants.BASE_PATH_PATIENTS_APIS)
 @AllArgsConstructor
 public class PatientsController {
     private final ProfileService profileService;
@@ -89,14 +90,15 @@ public class PatientsController {
     }
 
     @PostMapping(Constants.APP_PATH_FORGET_PIN_VALIDATE_OTP)
-    public Mono<Token> validateOtp(@RequestBody OtpVerification otpVerification) {
+    public Mono<Token> verifyOtpForForgetPin(@RequestBody OtpVerification otpVerification) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
                 .flatMap(username -> userService.verifyOtpForForgotConsentPin(otpVerification));
     }
 
-    @PutMapping(Constants.APP_PATH_FORGET_PIN_UPDATE_PIN)
+    @PutMapping(Constants.APP_PATH_RESET_PIN)
+    @ResponseStatus(NO_CONTENT)
     public Mono<Void> resetConsentPin(@RequestBody ChangePinRequest changePinRequest,
                                       @RequestHeader(name = "Authorization") String token) {
         var sessionId = signupService.sessionFrom(token);
@@ -130,7 +132,7 @@ public class PatientsController {
     }
 
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/profile")
+    @PostMapping(Constants.APP_PATH_CREATE_USER)
     public Mono<Void> create(@RequestBody SignUpRequest request,
                              @RequestHeader(name = "Authorization") String token) {
         var signUpRequests = SignUpRequestValidator.validate(request, userService.getUserIdSuffix());
@@ -220,7 +222,7 @@ public class PatientsController {
         return Mono.error(ClientError.unAuthorized());
     }
 
-    @PutMapping("/profile/reset-password")
+    @PutMapping(Constants.APP_PATH_RESET_PASSWORD)
     public Mono<Session> update(@RequestBody UpdateUserRequest request,
                                 @RequestHeader(name = "Authorization") String token) {
         var updateUserRequests = SignUpRequestValidator.validatePassword(request.getPassword());

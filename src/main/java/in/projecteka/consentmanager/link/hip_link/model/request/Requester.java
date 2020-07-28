@@ -5,5 +5,5 @@ import lombok.Value;
 @Value
 public class Requester {
     Integer id;
-    String type;
+    RequesterType requesterType;
 }

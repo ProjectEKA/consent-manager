@@ -6,6 +6,6 @@ import lombok.Value;
 @AllArgsConstructor
 @Value
 public class TokenConfirmation {
-    private String linkRefNumber;
-    private String token;
+    String linkRefNumber;
+    String token;
 }

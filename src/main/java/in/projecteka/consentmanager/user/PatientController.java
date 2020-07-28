@@ -58,7 +58,7 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 @RestController
 @RequestMapping(Constants.BASE_PATH_PATIENTS_APIS)
 @AllArgsConstructor
-public class PatientsController {
+public class PatientController {
     private final ProfileService profileService;
     private final TransactionPinService transactionPinService;
     private final SignUpService signupService;

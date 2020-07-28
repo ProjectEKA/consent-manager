@@ -1,6 +1,8 @@
 package in.projecteka.consentmanager.user;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.ClientError;
@@ -12,6 +14,7 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.user.model.ChangePinRequest;
 import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
 import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
@@ -39,11 +42,13 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -53,6 +58,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
@@ -79,7 +85,16 @@ class PatientControllerTest {
     private UserService userService;
 
     @MockBean
+    private BCryptPasswordEncoder encoder;
+
+    @MockBean
+    private TransactionPinRepository transactionPinRepository;
+
+    @MockBean
     private LockedUserService lockedUserService;
+
+    @MockBean
+    private UserServiceProperties userServiceProperties;
 
     @MockBean
     private ProfileService profileService;
@@ -205,7 +220,7 @@ class PatientControllerTest {
                 .expectBody()
                 .json(expectedResponseJson);
 
-        verify(userService, times(1)).sendOtpFor(userSignUpEnquiry, otpRequest.getUsername(),OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD, SendOtpAction.RECOVER_PASSWORD);
+        verify(userService, times(1)).sendOtpFor(userSignUpEnquiry, otpRequest.getUsername(), OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD, SendOtpAction.RECOVER_PASSWORD);
         verify(profileService, times(1)).profileFor(otpRequest.getUsername());
     }
 
@@ -481,7 +496,7 @@ class PatientControllerTest {
         ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
         InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
-        JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
+        JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type", "ABPMJAYID").put("value", unverifiedIdentifierValue));
         User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(patientName().first("abc").
                 build()).dateOfBirth(dateOfBirth()
                 .year(1998).build()).
@@ -501,7 +516,7 @@ class PatientControllerTest {
         var expectedResponseJson = OBJECT_MAPPER.writeValueAsString(expectedResponse);
 
         when(userService.getPatientByDetails(any())).thenReturn(Mono.just(user));
-        when(userService.sendOtpFor(any(),any(),any(),any())).thenReturn(Mono.just(signUpSession));
+        when(userService.sendOtpFor(any(), any(), any(), any())).thenReturn(Mono.just(signUpSession));
 
         webClient.post()
                 .uri("/patients/profile/recovery-init")
@@ -511,9 +526,9 @@ class PatientControllerTest {
                 .expectStatus()
                 .isOk()
                 .expectBody(GenerateOtpResponse.class)
-        .value(GenerateOtpResponse::getOtpMedium,is(OtpMediumType.MOBILE.toString()));
+                .value(GenerateOtpResponse::getOtpMedium, is(OtpMediumType.MOBILE.toString()));
 
-        verify(userService, times(1)).sendOtpFor(userSignUpEnquiry, user.getIdentifier(),OtpAttempt.Action.OTP_REQUEST_RECOVER_CM_ID, SendOtpAction.RECOVER_CM_ID);
+        verify(userService, times(1)).sendOtpFor(userSignUpEnquiry, user.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_RECOVER_CM_ID, SendOtpAction.RECOVER_CM_ID);
     }
 
     @Test
@@ -567,7 +582,7 @@ class PatientControllerTest {
         DateOfBirth dateOfBirth = dateOfBirth().year(1998).build();
         String verifiedIdentifierValue = "+91-9999999999";
         String unverifiedIdentifierValue = "P1234ABCD";
-        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(List.of(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue),new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
+        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(List.of(new Identifier(IdentifierType.MOBILE, verifiedIdentifierValue), new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
         InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
@@ -592,7 +607,7 @@ class PatientControllerTest {
         ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(IdentifierType.ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
         InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
-        JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type","ABPMJAYID").put("value",unverifiedIdentifierValue));
+        JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type", "ABPMJAYID").put("value", unverifiedIdentifierValue));
         User user = User.builder().identifier(cmId).phone(verifiedIdentifierValue)
                 .name(patientName().first("abc").build())
                 .dateOfBirth(dateOfBirth().year(1998).build())
@@ -621,7 +636,7 @@ class PatientControllerTest {
                 .expectStatus()
                 .is5xxServerError();
 
-        verify(userService, times(1)).sendOtpFor(userSignUpEnquiry, user.getIdentifier(),OtpAttempt.Action.OTP_REQUEST_RECOVER_CM_ID, SendOtpAction.RECOVER_CM_ID);
+        verify(userService, times(1)).sendOtpFor(userSignUpEnquiry, user.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_RECOVER_CM_ID, SendOtpAction.RECOVER_CM_ID);
     }
 
     @Test
@@ -639,4 +654,101 @@ class PatientControllerTest {
 
         verify(userService, times(1)).verifyOtpForRecoverCmId(otpVerification);
     }
+
+    @Test
+    void shouldGenerateOTPForForgetPin() throws JsonProcessingException {
+        var captor = ArgumentCaptor.forClass(UserSignUpEnquiry.class);
+        var cmId = "abc@ncg";
+        var token = string();
+        SignUpSession session = new SignUpSession(UUID.randomUUID().toString());
+
+        User user = User.builder().identifier(cmId).phone("+91-9999999999")
+                .name(patientName().first("abc").build())
+                .dateOfBirth(dateOfBirth().year(1998).build())
+                .build();
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(cmId, true)));
+        when(userService.userWith(cmId)).thenReturn(Mono.just(user));
+        when(userService.sendOtpFor(captor.capture(),
+                eq(cmId),
+                eq(OtpAttempt.Action.OTP_REQUEST_FORGOT_CONSENT_PIN),
+                eq(SendOtpAction.FORGOT_CONSENT_PIN))).thenReturn(Mono.just(session));
+        when(userService.getExpiryInMinutes()).thenReturn(1);
+
+        var expectedResponse = GenerateOtpResponse.builder()
+                .expiryInMinutes(1)
+                .otpMedium("MOBILE")
+                .otpMediumValue("+**-******9999")
+                .sessionId(session.getSessionId())
+                .build();
+
+        webClient.post()
+                .uri(Constants.BASE_PATH_PATIENTS_APIS + Constants.APP_PATH_FORGET_PIN_GENERATE_OTP)
+                .header(AUTHORIZATION, token)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody()
+                .json(new ObjectMapper()
+                        .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+                        .writeValueAsString(expectedResponse));
+    }
+
+    @Test
+    void shouldValidateOTPForForgetPin() throws JsonProcessingException {
+        var cmId = "abc@ncg";
+        var token = string();
+        User user = User.builder().identifier(cmId).phone("+91-9999999999")
+                .name(patientName().first("abc").build())
+                .dateOfBirth(dateOfBirth().year(1998).build())
+                .build();
+        OtpVerification otpVerification = new OtpVerification(UUID.randomUUID().toString(),user.getPhone());
+        var tempToken = new Token("temp-token");
+
+        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(cmId, true)));
+        when(userService.verifyOtpForForgotConsentPin(otpVerification)).thenReturn(Mono.just(tempToken));
+
+        webClient.post()
+                .uri(Constants.BASE_PATH_PATIENTS_APIS + Constants.APP_PATH_FORGET_PIN_VALIDATE_OTP)
+                .header(AUTHORIZATION, token)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(otpVerification))
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .json(new ObjectMapper()
+                        .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+                        .writeValueAsString(tempToken));
+    }
+
+    @Test
+    void shouldResetPinForForgetPin(){
+        var token = string();
+        var cmId = "cm-id";
+        var sessionId = "session-id";
+        var pin = "4444";
+        var encodedPin = "xyz@123";
+
+        when(userServiceProperties.getTransactionPinDigitSize()).thenReturn(4);
+        when(signupService.validateToken(token)).thenReturn(Mono.just(true));
+        when(signupService.sessionFrom(token)).thenReturn(sessionId);
+        when(signupService.getUserName(sessionId)).thenReturn(Mono.just(cmId));
+        var changePinRequest = new ChangePinRequest(pin);
+
+        when(encoder.encode(pin)).thenReturn(encodedPin);
+        when(transactionPinRepository.changeTransactionPin(cmId,encodedPin)).thenReturn(Mono.empty());
+        when(signupService.removeOf(sessionId)).thenReturn(Mono.empty());
+
+        webClient.put()
+                .uri(Constants.BASE_PATH_PATIENTS_APIS + Constants.APP_PATH_RESET_PIN)
+                .header(AUTHORIZATION, token)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(changePinRequest))
+                .exchange()
+                .expectStatus()
+                .isNoContent();
+    }
+
 }

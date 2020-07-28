@@ -6,7 +6,7 @@ import in.projecteka.consentmanager.DbOptions;
 import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
-import in.projecteka.consentmanager.common.cache.RedisOptions;
+import in.projecteka.consentmanager.common.CacheHealth;
 import in.projecteka.consentmanager.common.heartbeat.model.HeartbeatResponse;
 import in.projecteka.consentmanager.common.heartbeat.model.Status;
 import lombok.AllArgsConstructor;
@@ -15,13 +15,11 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.URL;
 import java.util.concurrent.TimeoutException;
 
-import static in.projecteka.consentmanager.common.Constants.GUAVA;
 import static in.projecteka.consentmanager.common.Constants.SERVICE_DOWN;
 import static in.projecteka.consentmanager.common.heartbeat.model.Status.UP;
 import static java.lang.String.valueOf;
@@ -36,12 +34,11 @@ public class Heartbeat {
     private final IdentityServiceProperties identityServiceProperties;
     private final DbOptions dbOptions;
     private final RabbitmqOptions rabbitmqOptions;
-    private final RedisOptions redisOptions;
-    private final CacheMethodProperty cacheMethodProperty;
+    private final CacheHealth cacheHealth;
 
     public Mono<HeartbeatResponse> getStatus() {
         try {
-            return isPostgresUp() && isKeycloakUp() && isRabbitMQUp() && isCacheUp()
+            return isPostgresUp() && isKeycloakUp() && isRabbitMQUp() && cacheHealth.isUp()
                    ? just(HeartbeatResponse.builder().timeStamp(now(UTC)).status(UP).build())
                    : just(HeartbeatResponse.builder()
                            .timeStamp(now(UTC))
@@ -57,15 +54,12 @@ public class Heartbeat {
         }
     }
 
-    private boolean isCacheUp() throws IOException {
-        return cacheMethodProperty.getMethodName().equalsIgnoreCase(GUAVA)
-                || checkConnection(redisOptions.getHost(), redisOptions.getPort());
-    }
-
     private boolean isRabbitMQUp() throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(rabbitmqOptions.getHost());
         factory.setPort(rabbitmqOptions.getPort());
+        factory.setUsername(rabbitmqOptions.getUsername());
+        factory.setPassword(rabbitmqOptions.getPassword());
         try (Connection connection = factory.newConnection()) {
             return connection.isOpen();
         }

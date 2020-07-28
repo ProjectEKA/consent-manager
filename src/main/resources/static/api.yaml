@@ -1574,7 +1574,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OTPSessionIdResponse'
+                $ref: '#/components/schemas/GenerateOtpResponse'
         '500':
           description: >
             **Causes:**
@@ -1601,7 +1601,7 @@ paths:
             schema:
               $ref: '#/components/schemas/VerifyOtpRequest'
       responses:
-        '201':
+        '200':
           description: OTP validation successful.
           content:
             application/json:
@@ -1622,7 +1622,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /patients/forgot-pin/update-pin:
+  /patients/reset-pin:
     put:
       tags:
         - account
@@ -3168,8 +3168,3 @@ components:
         - username
         - otp
         - sessionId
-    OTPSessionIdResponse:
-      type: object
-      properties:
-        sessionId:
-          type: string

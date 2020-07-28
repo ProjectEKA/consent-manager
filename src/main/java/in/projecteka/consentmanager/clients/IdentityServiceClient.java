@@ -17,7 +17,7 @@ import java.util.function.Function;
 import static in.projecteka.consentmanager.clients.ClientError.invalidOtp;
 import static in.projecteka.consentmanager.clients.ClientError.networkServiceCallFailed;
 import static in.projecteka.consentmanager.clients.ClientError.otpExpired;
-import static in.projecteka.consentmanager.clients.ClientError.unknownUnauthroziedError;
+import static in.projecteka.consentmanager.clients.ClientError.unknownUnauthorizedError;
 import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
 import static java.lang.String.format;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -78,7 +78,7 @@ public class IdentityServiceClient {
                 case "1003":
                     return error(otpExpired());
                 default:
-                    return error(unknownUnauthroziedError(keyCloakError.getErrorDescription()));
+                    return error(unknownUnauthorizedError(keyCloakError.getErrorDescription()));
             }
         };
     }

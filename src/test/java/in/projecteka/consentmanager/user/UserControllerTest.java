@@ -31,6 +31,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
@@ -48,7 +49,6 @@ import static reactor.core.publisher.Mono.empty;
 import static reactor.core.publisher.Mono.just;
 
 @SuppressWarnings("ALL")
-
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
@@ -162,8 +162,8 @@ class UserControllerTest {
         var token = string();
         var patientRequest = patientRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
         when(userService.user(patientRequest.getQuery().getPatient().getId(),
                 patientRequest.getQuery().getRequester(),
@@ -186,7 +186,7 @@ class UserControllerTest {
         var patientRequest = patientRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.FALSE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
 
         webClient.post()

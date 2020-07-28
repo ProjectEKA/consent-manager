@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
-import java.util.Optional;
 import java.util.UUID;
 
 
@@ -46,15 +45,15 @@ public class TransactionPinRepository {
                         }));
     }
 
-    public Mono<Optional<TransactionPin>> getTransactionPinByPatient(String patientId) {
+    public Mono<TransactionPin> getTransactionPinByPatient(String patientId) {
         return getTransactionPin(patientId, SELECT_TRANSACTION_PIN_BY_PATIENT);
     }
 
-    public Mono<Optional<TransactionPin>> getTransactionPinByRequest(UUID requestId) {
+    public Mono<TransactionPin> getTransactionPinByRequest(UUID requestId) {
         return getTransactionPin(requestId.toString(), SELECT_TRANSACTION_PIN_BY_REQUEST);
     }
 
-    private Mono<Optional<TransactionPin>> getTransactionPin(String patientId, String selectTransactionPinByRequest) {
+    private Mono<TransactionPin> getTransactionPin(String patientId, String selectTransactionPinByRequest) {
         return Mono.create(monoSink -> dbClient.preparedQuery(selectTransactionPinByRequest)
                 .execute(Tuple.of(patientId),
                         handler -> {
@@ -65,19 +64,19 @@ public class TransactionPinRepository {
                             }
                             var transactionPinIterator = handler.result().iterator();
                             if (!transactionPinIterator.hasNext()) {
-                                monoSink.success(Optional.empty());
+                                monoSink.success();
                                 return;
                             }
                             monoSink.success(transactionPinFrom(transactionPinIterator.next()));
                         }));
     }
 
-    private Optional<TransactionPin> transactionPinFrom(Row row) {
-        return Optional.of(TransactionPin
+    private TransactionPin transactionPinFrom(Row row) {
+        return TransactionPin
                 .builder()
                 .patientId(row.getString("patient_id"))
                 .pin(row.getString("pin"))
-                .build());
+                .build();
     }
 
     public Mono<Void> updateRequestId(UUID requestId, String patientId) {
@@ -95,7 +94,7 @@ public class TransactionPinRepository {
 
     public Mono<Void> changeTransactionPin(String patientId, String pin) {
         return Mono.create(monoSink -> dbClient.preparedQuery(UPDATE_TRANSACTION_PIN)
-                .execute(Tuple.of(patientId,pin),
+                .execute(Tuple.of(patientId, pin),
                         handler -> {
                             if (handler.failed()) {
                                 logger.error(handler.cause().getMessage(), handler.cause());

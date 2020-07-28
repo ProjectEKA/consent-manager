@@ -4,7 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
-import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
+import in.projecteka.consentmanager.common.cache.LoadingCacheGenericAdapter;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,18 +21,18 @@ import static in.projecteka.consentmanager.common.TestBuilders.string;
 
 class RequestValidatorTest {
 
-    private static CacheAdapter<String, String> cacheForReplayAttack;
+    private static CacheAdapter<String, LocalDateTime> cacheForReplayAttack;
 
     @BeforeAll
     static void setUp() {
-        cacheForReplayAttack = new LoadingCacheAdapter(CacheBuilder
+        cacheForReplayAttack = new LoadingCacheGenericAdapter<LocalDateTime>(CacheBuilder
                 .newBuilder()
-                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .expireAfterWrite(10, TimeUnit.SECONDS)
                 .build(new CacheLoader<>() {
-                    public String load(String key) {
-                        return "";
+                    public LocalDateTime load(String key) {
+                        return LocalDateTime.MIN;
                     }
-                }));
+                }), LocalDateTime.MIN);
     }
 
     private static Stream<Arguments> nonAllowedDates() {
@@ -47,28 +47,18 @@ class RequestValidatorTest {
         RequestValidator validator = new RequestValidator(cacheForReplayAttack);
 
         StepVerifier
-                .create(validator.validate(string(), time.toString()))
+                .create(validator.validate(string(), time))
                 .expectNext(false)
                 .expectComplete()
                 .verify();
     }
 
-    @Test
-    void shouldReturnFalseIfTimestampIsInNotValidFormat() {
-        RequestValidator validator = new RequestValidator(cacheForReplayAttack);
-
-        StepVerifier
-                .create(validator.validate(string(), string()))
-                .expectNext(false)
-                .expectComplete()
-                .verify();
-    }
 
     @Test
     void returnErrorIfEntryExists() {
         var requestValidator = new RequestValidator(cacheForReplayAttack);
         var requestId = string();
-        var timestamp = string();
+        var timestamp = LocalDateTime.now(ZoneOffset.UTC);
         requestValidator.put(requestId, timestamp).subscribe().dispose();
 
         StepVerifier
@@ -83,7 +73,7 @@ class RequestValidatorTest {
         var requestValidator = new RequestValidator(cacheForReplayAttack);
 
         StepVerifier
-                .create(requestValidator.validate(string(), LocalDateTime.now(ZoneOffset.UTC).toString()))
+                .create(requestValidator.validate(string(), LocalDateTime.now(ZoneOffset.UTC)))
                 .expectNext(true)
                 .expectComplete()
                 .verify();

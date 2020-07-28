@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -49,7 +50,7 @@ public class ConsentRequestScheduler {
 
     private boolean isConsentRequestExpired(LocalDateTime createdAt) {
         LocalDateTime requestExpiry = createdAt.plus(Duration.ofMinutes(consentServiceProperties.getConsentRequestExpiry()));
-        return requestExpiry.isBefore(LocalDateTime.now());
+        return requestExpiry.isBefore(LocalDateTime.now(ZoneOffset.UTC));
     }
 
     private Mono<Void> broadcastConsentArtefacts(List<HIPConsentArtefactRepresentation> consents,

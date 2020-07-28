@@ -124,8 +124,8 @@ class SecurityConfigurationTest {
         var token = string();
         var caller = ServiceCaller.builder().roles(List.of(GATEWAY)).build();
         var patientRequest = patientRequest().build();
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
-        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient
@@ -148,8 +148,8 @@ class SecurityConfigurationTest {
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
                 .build();
         var caller = ServiceCaller.builder().clientId(username).roles(List.of(GATEWAY)).build();
-        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
         when(dataFlowRequester.notifyHealthInformationStatus(any())).thenReturn(Mono.empty());
 

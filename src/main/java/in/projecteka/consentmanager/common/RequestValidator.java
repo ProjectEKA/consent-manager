@@ -3,50 +3,39 @@ package in.projecteka.consentmanager.common;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+
+import static in.projecteka.consentmanager.common.Constants.DEFAULT_CACHE_VALUE;
+import static reactor.core.publisher.Mono.defer;
+import static reactor.core.publisher.Mono.just;
 
 @AllArgsConstructor
 public class RequestValidator {
-    private final CacheAdapter<String, String> cacheForReplayAttack;
-    private static final Logger logger = LoggerFactory.getLogger(RequestValidator.class);
+    private final CacheAdapter<String, LocalDateTime> cacheForReplayAttack;
 
     private String keyFor(String requestId) {
         return String.format("replay_%s", requestId);
     }
 
-    public Mono<Void> put(String requestId, String timestamp) {
+    public Mono<Void> put(String requestId, LocalDateTime timestamp) {
         return cacheForReplayAttack.put(keyFor(requestId), timestamp);
     }
 
-    public Mono<Boolean> validate(String requestId, String timestamp) {
+    public Mono<Boolean> validate(String requestId, LocalDateTime timestamp) {
         return isRequestIdPresent(keyFor(requestId))
                 .flatMap(result -> Mono.error(ClientError.tooManyRequests()))
-                .then(Mono.just(isRequestIdValidInGivenTimestamp(timestamp)));
+                .then(defer(() -> just(isRequestIdValidInGivenTimestamp(timestamp))));
     }
 
-    private Mono<Boolean> isRequestIdPresent(String requestId) {
-        return cacheForReplayAttack.get(requestId).map(StringUtils::hasText);
+    private Mono<Boolean> isRequestIdPresent(String key) {
+        return cacheForReplayAttack.get(key).map(dateTime -> dateTime != DEFAULT_CACHE_VALUE);
     }
 
-    private boolean isRequestIdValidInGivenTimestamp(String timestamp) {
-        try {
-            return isValidTimestamp(toDate(timestamp));
-        } catch (DateTimeParseException e) {
-            logger.error(e.getMessage(), e);
-            return false;
-        }
-    }
-
-    private LocalDateTime toDate(String timestamp) {
-        return LocalDateTime.parse(timestamp, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    private boolean isRequestIdValidInGivenTimestamp(LocalDateTime timestamp) {
+        return isValidTimestamp(timestamp);
     }
 
     private boolean isValidTimestamp(LocalDateTime timestamp) {

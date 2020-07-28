@@ -14,6 +14,8 @@ public class Constants {
     public static final String PATH_CARE_CONTEXTS_ON_DISCOVER = CURRENT_VERSION + "/care-contexts/on-discover";
     public static final String PATH_LINK_ON_INIT = CURRENT_VERSION + "/links/link/on-init";
     public static final String PATH_LINK_ON_CONFIRM = CURRENT_VERSION + "/links/link/on-confirm";
+    public static final String PATH_HIP_LINK_USER_AUTH_INIT = CURRENT_VERSION + "/users/auth/init";
+
 
     private Constants() {
 

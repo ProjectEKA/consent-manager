@@ -15,6 +15,8 @@ import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.DiscoveryRepository;
+import in.projecteka.consentmanager.link.hip_link.UserAuthInitAction;
+import in.projecteka.consentmanager.link.hip_link.UserAuthentication;
 import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.link.link.LinkRepository;
 import io.vertx.pgclient.PgPool;
@@ -77,6 +79,18 @@ public class LinkConfiguration {
                 centralRegistry,
                 linkServiceProperties,
                 linkResults);
+    }
+
+    @Bean
+    public UserAuthInitAction initAction() {
+        return new UserAuthInitAction();
+    }
+
+    @Bean
+    public UserAuthentication userAuthentication(
+            UserAuthInitAction initAction
+    ) {
+        return new UserAuthentication(initAction);
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)

@@ -65,7 +65,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient(timeout = "6000")
@@ -376,8 +375,8 @@ class DiscoveryUserJourneyTest {
         var token = string();
         var patientDiscoveryResult = TestBuilders.discoveryResult().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
         when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
         when(discoveryResults.put(anyString(), anyString())).thenReturn(Mono.empty());
@@ -398,7 +397,7 @@ class DiscoveryUserJourneyTest {
         var patientDiscoveryResult = TestBuilders.discoveryResult().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.FALSE));
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.FALSE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
 
         webTestClient.post()
@@ -430,8 +429,8 @@ class DiscoveryUserJourneyTest {
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
-        when(validator.put(anyString(), anyString())).thenReturn(Mono.empty());
-        when(validator.validate(anyString(), anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
         when(cacheForReplayAttack.put(anyString(), anyString())).thenReturn(Mono.empty());
 

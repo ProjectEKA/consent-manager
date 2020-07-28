@@ -4,7 +4,7 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpAction;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
-import in.projecteka.consentmanager.clients.model.OtpCreationDetail;
+import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +50,7 @@ class OtpServiceClientTest {
         var value = easyRandom.nextObject(String.class);
         var otpRequest = new OtpRequest(sessionId,
                 new OtpCommunicationData("MOBILE", value),
-                OtpCreationDetail
+                OtpGenerationDetail
                         .builder()
                         .systemName("PHR App")
                         .action(OtpAction.FORGOT_CM_ID.toString())
@@ -72,7 +72,7 @@ class OtpServiceClientTest {
     public void shouldThrowClientErrorWhenOtpRequestFails() {
         var otpRequest = new OtpRequest(easyRandom.nextObject(String.class),
                 new OtpCommunicationData("MOBILE", easyRandom.nextObject(String.class)),
-                OtpCreationDetail
+                OtpGenerationDetail
                         .builder()
                         .systemName("PHR App")
                         .action(OtpAction.FORGOT_CM_ID.toString())

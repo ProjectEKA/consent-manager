@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.IdentityService;
+import in.projecteka.consentmanager.common.KeyPairConfig;
 import in.projecteka.consentmanager.common.ListenerProperties;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -29,7 +30,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 
 @Configuration
@@ -72,6 +72,7 @@ public class ConsentConfiguration {
     @Bean
     public ConsentManager consentManager(
             UserServiceClient userServiceClient,
+            ConsentServiceProperties consentServiceProperties,
             ConsentRequestRepository repository,
             ConsentArtefactRepository consentArtefactRepository,
             KeyPair keyPair,
@@ -83,6 +84,7 @@ public class ConsentConfiguration {
             PatientServiceClient patientServiceClient,
             ConsentManagerClient consentManagerClient) {
         return new ConsentManager(userServiceClient,
+                consentServiceProperties,
                 repository,
                 consentArtefactRepository,
                 keyPair,
@@ -195,10 +197,8 @@ public class ConsentConfiguration {
 
     @SneakyThrows
     @Bean
-    public KeyPair keyPair() {
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-        keyGen.initialize(2048);
-        return keyGen.generateKeyPair();
+    public KeyPair keyPair(KeyPairConfig keyPairConfig) {
+        return keyPairConfig.createSignArtefactKeyPair();
     }
 
     @Bean

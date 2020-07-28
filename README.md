@@ -169,3 +169,20 @@ Generates PNGs for all `*.puml` files located in `docs/diagrams` and `<project>/
  ```alpha
  make png
 ```
+
+## Create a keypair in keystore (Also initializes keystore) 
+```keytool -genkeypair -alias ${keypair_alias} -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore ${keystore_filepath} -validity ${validity_in_days} -storepass ${password}```
+
+**keyalg:** the cryptographic algorithm to generate the key pair.
+
+**keysize:** the size of the key. We have used 2048 bits, but 4096 can be used for production.
+
+**storetype:** the type of keystore - it's either PKCS12 or JKS.
+
+When running the previous command, we will be asked to input some information, but we are free to skip all of it (just press Return to skip an option). When asked if the information is correct, we should type yes. Finally, we hit return to use the keystore password as key password as well.
+
+## Verify keystore content
+
+in JKS format - ```keytool -list -v -keystore ${filepath}```
+
+in PKCS12 format - ```keytool -list -v -storetype pkcs12 -keystore ${filepath}```

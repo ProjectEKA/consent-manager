@@ -11,12 +11,12 @@ import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
+import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.ConsentPurpose;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
-import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIType;
@@ -40,6 +40,8 @@ import reactor.test.StepVerifier;
 
 import java.security.KeyPair;
 import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -78,6 +80,8 @@ class ConsentManagerTest {
     @Mock
     private ConsentRequestRepository repository;
     @Mock
+    private ConsentServiceProperties consentServiceProperties;
+    @Mock
     private ConsentArtefactRepository consentArtefactRepository;
     @Mock
     private CentralRegistry centralRegistry;
@@ -96,6 +100,7 @@ class ConsentManagerTest {
     private ConsentRequestNotificationListener consentRequestNotificationListener;
     @MockBean
     private KeyPair keyPair;
+
     private ConsentManager consentManager;
     @Captor
     private ArgumentCaptor<ConsentRequest> captor;
@@ -114,6 +119,7 @@ class ConsentManagerTest {
         CMProperties cmProperties = new CMProperties("NCG");
         ConsentArtefactQueryGenerator queryGenerator = new ConsentArtefactQueryGenerator();
         consentManager = new ConsentManager(userClient,
+                consentServiceProperties,
                 repository,
                 consentArtefactRepository,
                 keyPair,
@@ -311,12 +317,13 @@ class ConsentManagerTest {
         var requestId = string();
         var consentRequestDetail = consentRequestDetail()
                 .requestId(requestId)
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(30))
                 .patient(new PatientReference(patientId))
                 .status(REQUESTED);
-        when(repository.requestOf(requestId))
-                .thenReturn(Mono.just(consentRequestDetail.build()),
+        when(repository.requestOf(requestId)).thenReturn(Mono.just(consentRequestDetail.build()),
                         Mono.just(consentRequestDetail.status(DENIED).build()));
         when(repository.updateStatus(requestId, DENIED)).thenReturn(Mono.empty());
+        when(consentServiceProperties.getConsentRequestExpiry()).thenReturn(60);
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
         Mono<? extends Void> publisher = consentManager.deny(requestId, patientId);

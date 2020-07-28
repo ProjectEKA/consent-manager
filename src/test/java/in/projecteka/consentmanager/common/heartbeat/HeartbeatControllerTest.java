@@ -78,7 +78,7 @@ class HeartbeatControllerTest {
                 .uri(PATH_HEARTBEAT)
                 .exchange()
                 .expectStatus()
-                .isOk()
+                .is5xxServerError()
                 .expectBody()
                 .json(heartbeatResponseJson);
     }

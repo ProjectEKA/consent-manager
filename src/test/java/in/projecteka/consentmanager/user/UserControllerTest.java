@@ -49,7 +49,6 @@ import static reactor.core.publisher.Mono.empty;
 import static reactor.core.publisher.Mono.just;
 
 @SuppressWarnings("ALL")
-
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient

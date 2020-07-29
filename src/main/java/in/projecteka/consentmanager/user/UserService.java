@@ -160,10 +160,8 @@ public class UserService {
                 return OtpAction.RECOVER_PASSWORD;
             case OTP_REQUEST_FORGOT_CONSENT_PIN:
                 return OtpAction.FORGOT_PIN;
-            case OTP_REQUEST_RECOVER_CM_ID:
-                return OtpAction.FORGOT_CM_ID;
             default:
-                return null;
+                return OtpAction.FORGOT_CM_ID;
         }
     }
 

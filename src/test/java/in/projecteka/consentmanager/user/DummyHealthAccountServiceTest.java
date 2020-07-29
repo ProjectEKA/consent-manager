@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.user.model.HASSignupRequest;
 import in.projecteka.consentmanager.user.model.User;
-import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -46,7 +45,7 @@ class DummyHealthAccountServiceTest {
 
         StepVerifier.create(dummyHealthAccountService.createHASAccount(signUpRequest))
                 .assertNext(healthAccountUser -> {
-                    assertThat(healthAccountUser.getHealthId()).isNotEmpty();
+                    assertThat(healthAccountUser.getHealthIdNumber()).isNotEmpty();
                     assertThat(healthAccountUser.getToken()).isNotEmpty();
                     assertThat(healthAccountUser.getFirstName()).isEqualTo(signUpRequest.getFirstName());
                     assertThat(healthAccountUser.getLastName()).isEqualTo(signUpRequest.getLastName());
@@ -75,7 +74,7 @@ class DummyHealthAccountServiceTest {
 
         StepVerifier.create(dummyHealthAccountService.createHASAccount(signUpRequest))
                 .assertNext(healthAccountUser -> {
-                    assertThat(healthAccountUser.getHealthId()).isEqualTo(user.getHealthId());
+                    assertThat(healthAccountUser.getHealthIdNumber()).isEqualTo(user.getHealthIdNumber());
                     assertThat(healthAccountUser.getToken()).isNotEmpty();
                     assertThat(healthAccountUser.getFirstName()).isEqualTo(user.getName().getFirst());
                     assertThat(healthAccountUser.getLastName()).isEqualTo(user.getName().getLast());

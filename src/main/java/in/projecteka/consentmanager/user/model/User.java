@@ -15,7 +15,7 @@ public class User {
     private final DateOfBirth dateOfBirth;
     private final String phone;
     private final JsonArray unverifiedIdentifiers;
-    private final String healthId;
+    private final String healthIdNumber;
 
     public static User from(CoreSignUpRequest request, String mobileNumber) {
         return new User(request.getUsername().toLowerCase(),

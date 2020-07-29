@@ -17,15 +17,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static in.projecteka.consentmanager.user.Constants.HAS_OTP_REQUEST_FOR_MOBILE_PATH;
+import static in.projecteka.consentmanager.user.Constants.HAS_OTP_VERIFY_FOR_MOBILE_PATH;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 public class HealthAccountServiceClient {
     private final Logger logger = LoggerFactory.getLogger(HealthAccountServiceClient.class);
     private final WebClient webClient;
-
-    private final String OTP_REQUEST_FOR_MOBILE_PATH = "/v1/ha/generate_mobile_otp";
-    private final String OTP_VERIFY_FOR_MOBILE_PATH = "/v1/ha/verify_mobile_otp";
 
     public HealthAccountServiceClient(WebClient.Builder webClient, String baseUrl) {
         this.webClient = webClient.baseUrl(baseUrl).build();
@@ -37,7 +36,7 @@ public class HealthAccountServiceClient {
 
         return webClient
                 .post()
-                .uri(uriBuilder -> uriBuilder.path(OTP_REQUEST_FOR_MOBILE_PATH).build())
+                .uri(uriBuilder -> uriBuilder.path(HAS_OTP_REQUEST_FOR_MOBILE_PATH).build())
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .body(Mono.just(requestBody), Map.class)
                 .retrieve()
@@ -52,7 +51,7 @@ public class HealthAccountServiceClient {
 
         return webClient
                 .post()
-                .uri(uriBuilder -> uriBuilder.path(OTP_VERIFY_FOR_MOBILE_PATH).build())
+                .uri(uriBuilder -> uriBuilder.path(HAS_OTP_VERIFY_FOR_MOBILE_PATH).build())
                 .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .body(Mono.just(requestBody), Map.class)
                 .retrieve()
@@ -83,5 +82,4 @@ public class HealthAccountServiceClient {
         }
         return mobileNumber;
     }
-
 }

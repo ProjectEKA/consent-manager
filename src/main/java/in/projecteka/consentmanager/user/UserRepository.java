@@ -19,24 +19,24 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 public class UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
-    private static final String INSERT_PATIENT = "Insert into patient(health_id, " +
+    private static final String INSERT_PATIENT = "Insert into patient(health_id_number, " +
             "first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, state_code, district_code)" +
             " values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);";
 
     private static final String SELECT_PATIENT = "select id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers " +
             "from patient where id = $1";
 
-    private static final String SELECT_PATIENT_BY_HEALTH_ID = "select id, health_id, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers \" +\n" +
-            "            \"from patient where health_id = $1";
+    private static final String SELECT_PATIENT_BY_HEALTH_ID_NUMBER = "select id, health_id_number, first_name, middle_name, last_name, gender, date_of_birth, month_of_birth, year_of_birth, phone_number, unverified_identifiers \" +\n" +
+            "            \"from patient where health_id_number = $1";
 
     private static final String SELECT_PATIENT_BY_GENDER_MOB = "select id, first_name, middle_name, last_name, date_of_birth, month_of_birth, year_of_birth, unverified_identifiers from patient" +
             " where gender = $1 and phone_number = $2";
 
     private final static String DELETE_PATIENT = "DELETE FROM patient WHERE id=$1";
 
-    private final String UPDATE_CM_ID = "Update patient set id=$1 where health_id=$2";
+    private final String UPDATE_CM_ID = "Update patient set id=$1 where health_id_number=$2";
 
-    private final String UPDATE_ADDRESS = "Update patient set district_code=$2, state_code=$3 where health_id=$1";
+    private final String UPDATE_ADDRESS = "Update patient set district_code=$2, state_code=$3 where health_id_number=$1";
 
     private final PgPool dbClient;
 
@@ -96,7 +96,7 @@ public class UserRepository {
     }
 
     public Mono<Void> save(HealthAccountUser user, String mobileNumber) {
-        Tuple userDetails = Tuple.of(user.getHealthId(),
+        Tuple userDetails = Tuple.of(user.getHealthIdNumber(),
                 user.getFirstName(),
                 user.getMiddleName(),
                 user.getLastName(),
@@ -161,7 +161,7 @@ public class UserRepository {
     }
 
     private String generateGetPatientByHealthIdQuery(String lastName) {
-        String query = "select health_id, first_name, middle_name, last_name, gender," +
+        String query = "select health_id_number, first_name, middle_name, last_name, gender," +
                 " date_of_birth, month_of_birth, year_of_birth from patient";
         StringBuilder queryBuilder = new StringBuilder(query).append(" where  first_name = $1 and gender = $2");
 
@@ -175,7 +175,7 @@ public class UserRepository {
 
     public Mono<User> getPatientByHealthId(String healthId) {
 
-        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT_BY_HEALTH_ID)
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_PATIENT_BY_HEALTH_ID_NUMBER)
                 .execute(Tuple.of(healthId),
                         handler -> {
                             if (handler.failed()) {
@@ -191,7 +191,7 @@ public class UserRepository {
                             var patientRow = patientIterator.next();
                             try {
                                 var user = User.builder()
-                                        .healthId(patientRow.getString("health_id"))
+                                        .healthIdNumber(patientRow.getString("health_id_number"))
                                         .identifier(patientRow.getString("id"))
                                         .name(PatientName.builder()
                                                 .first(patientRow.getString("first_name"))
@@ -245,7 +245,7 @@ public class UserRepository {
                                 var patientRow = patientIterator.next();
                                 try {
                                     var user = User.builder()
-                                            .healthId(patientRow.getString("health_id"))
+                                            .healthIdNumber(patientRow.getString("health_id_number"))
                                             .name(PatientName.builder()
                                                     .first(patientRow.getString("first_name"))
                                                     .middle(patientRow.getString("middle_name"))

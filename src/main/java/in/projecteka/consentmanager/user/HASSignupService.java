@@ -51,7 +51,7 @@ public class HASSignupService {
                 .flatMap(mobileNumber -> {
                     HASSignupRequest signupRequest = createHASSignupRequest(signUpRequest, token, sessionId);
                     return createAccount(signupRequest, mobileNumber)
-                            .flatMap(healthAccountUser -> userRepository.getPatientByHealthId(healthAccountUser.getHealthId())
+                            .flatMap(healthAccountUser -> userRepository.getPatientByHealthId(healthAccountUser.getHealthIdNumber())
                                     .flatMap(user -> signUpService.removeOf(sessionId)
                                             .thenReturn(createSignUpResponse(healthAccountUser, user.getIdentifier())))
                                     .switchIfEmpty(Mono.defer(() -> userRepository.save(healthAccountUser, mobileNumber))
@@ -68,12 +68,12 @@ public class HASSignupService {
     }
 
     private SignUpResponse createSignUpResponse(HealthAccountUser user, String cmId) {
-        return createSignUpResponse(user,cmId,user.getToken());
+        return createSignUpResponse(user, cmId, user.getToken());
     }
 
     private SignUpResponse createSignUpResponse(HealthAccountUser user, String cmId, String token) {
         return SignUpResponse.builder()
-                .healthId(user.getHealthId())
+                .healthId(user.getHealthIdNumber())
                 .token(token)
                 .dateOfBirth(DateOfBirth.builder().date(user.getDayOfBirth())
                         .month(user.getMonthOfBirth()).year(user.getYearOfBirth()).build())
@@ -146,6 +146,7 @@ public class HASSignupService {
     private UpdateHASUserRequest createUpdateHASUserRequest(UpdateLoginDetailsRequest request, String token) {
         return UpdateHASUserRequest.builder()
                 .password(request.getPassword())
+                .healthId(request.getCmId())
                 .build();
     }
 
@@ -180,8 +181,8 @@ public class HASSignupService {
                 .flatMap(mobileNumber -> (isNumberFromAllowedList(mobileNumber) ?
                         Mono.just(dummyHealthAccountService.createHASUser()) :
                         hasSignupServiceClient.verifyAadharOtp(request))
-                        .flatMap(response -> hasCache.put(response.getHealthId(), response.getNewHASUser().toString())
-                                .then(userRepository.getPatientByHealthId(response.getHealthId())
+                        .flatMap(response -> hasCache.put(response.getHealthIdNumber(), response.getNewHASUser().toString())
+                                .then(userRepository.getPatientByHealthId(response.getHealthIdNumber())
                                         .flatMap(patient -> Mono.just(createVerifyAadharOtpResponse(response)))
                                         .switchIfEmpty(Mono.defer(() ->
                                                 updateFirstName(response)
@@ -196,7 +197,7 @@ public class HASSignupService {
                 .firstName(user.getName())
                 .middleName(user.getMiddleName())
                 .lastName(user.getLastName())
-                .healthId(user.getHealthId())
+                .healthIdNumber(user.getHealthIdNumber())
                 .gender(user.getGender())
                 .dayOfBirth(user.getDayOfBirth())
                 .monthOfBirth(user.getMonthOfBirth())
@@ -212,7 +213,7 @@ public class HASSignupService {
 
     private VerifyAadharOtpResponse createVerifyAadharOtpResponse(HealthAccountUser user) {
         return VerifyAadharOtpResponse.builder()
-                .healthId(user.getHealthId())
+                .healthId(user.getHealthIdNumber())
                 .name(user.getName())
                 .dateOfBirth(DateOfBirth.builder()
                         .date(user.getDayOfBirth())

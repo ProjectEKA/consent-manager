@@ -11,4 +11,5 @@ import lombok.Getter;
 @EqualsAndHashCode
 public class UpdateHASUserRequest {
     String password;
+    String healthId;
 }

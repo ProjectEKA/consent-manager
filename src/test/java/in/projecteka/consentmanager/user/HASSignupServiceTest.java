@@ -106,7 +106,7 @@ class HASSignupServiceTest {
                 .dayOfBirth(1)
                 .monthOfBirth(1)
                 .yearOfBirth(2020)
-                .healthId("tempId")
+                .healthIdNumber("tempId")
                 .name("hina patel")
                 .gender("F")
                 .token("tempToken")
@@ -140,7 +140,7 @@ class HASSignupServiceTest {
         var token = string();
         var mobileNumber = "+91-9999999999";
         HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(true)
-                .healthId(UUID.randomUUID().toString())
+                .healthIdNumber(UUID.randomUUID().toString())
                 .token(UUID.randomUUID().toString())
                 .firstName("Hina")
                 .lastName("Patel")
@@ -165,7 +165,7 @@ class HASSignupServiceTest {
 
         StepVerifier.create(hasSignupService.createHASAccount(signUpRequest, token))
                 .assertNext(res -> {
-                    assertThat(res.getHealthId()).isEqualTo(healthAccountUser.getHealthId());
+                    assertThat(res.getHealthId()).isEqualTo(healthAccountUser.getHealthIdNumber());
                     assertThat(res.getToken()).isEqualTo(healthAccountUser.getToken());
                     assertThat(res.getNewHASUser()).isTrue();
                 })
@@ -229,7 +229,7 @@ class HASSignupServiceTest {
                 .dayOfBirth(1)
                 .monthOfBirth(1)
                 .yearOfBirth(2020)
-                .healthId("tempId")
+                .healthIdNumber("tempId")
                 .name("hina patel")
                 .gender("F")
                 .token("tempToken")
@@ -263,7 +263,7 @@ class HASSignupServiceTest {
                 .dateOfBirth(DateOfBirth.builder().date(1).month(1).year(2020).build())
                 .gender(Gender.F)
                 .build();
-        var user = User.builder().identifier("hinapatel00@pmjay").healthId(UUID.randomUUID().toString())
+        var user = User.builder().identifier("hinapatel00@pmjay").healthIdNumber(UUID.randomUUID().toString())
                 .name(PatientName.builder().first("Hina").last("Patel").middle("").build())
                 .dateOfBirth(DateOfBirth.builder().date(7).month(4).year(1979).build())
                 .gender(Gender.valueOf("F"))
@@ -271,7 +271,7 @@ class HASSignupServiceTest {
         var token = string();
         var mobileNumber = "+91-9999999999";
         HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(false)
-                .healthId(UUID.randomUUID().toString())
+                .healthIdNumber(UUID.randomUUID().toString())
                 .token(UUID.randomUUID().toString())
                 .firstName("Hina")
                 .lastName("Patel")
@@ -293,7 +293,7 @@ class HASSignupServiceTest {
 
         StepVerifier.create(hasSignupService.createHASAccount(signUpRequest, token))
                 .assertNext(res -> {
-                    assertThat(res.getHealthId()).isEqualTo(healthAccountUser.getHealthId());
+                    assertThat(res.getHealthId()).isEqualTo(healthAccountUser.getHealthIdNumber());
                     assertThat(res.getToken()).isEqualTo(healthAccountUser.getToken());
                     assertThat(res.getNewHASUser()).isFalse();
                 })
@@ -501,7 +501,7 @@ class HASSignupServiceTest {
     public void shouldVerifyAadharOTPForAlreadyExistingUser() {
         var verifyAadharOtpRequest = VerifyAadharOtpRequest.builder().txnId("testTxnId").otp("666666").build();
         var sessionId = string();
-        var user = User.builder().identifier("hinapatel00@pmjay").healthId(UUID.randomUUID().toString())
+        var user = User.builder().identifier("hinapatel00@pmjay").healthIdNumber(UUID.randomUUID().toString())
                 .name(PatientName.builder().first("Hina").last("Patel").middle("").build())
                 .dateOfBirth(DateOfBirth.builder().date(7).month(4).year(1979).build())
                 .gender(Gender.valueOf("F"))
@@ -509,7 +509,7 @@ class HASSignupServiceTest {
         var token = string();
         var mobileNumber = "+91-9999999999";
         HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(false)
-                .healthId(UUID.randomUUID().toString())
+                .healthIdNumber(UUID.randomUUID().toString())
                 .token(UUID.randomUUID().toString())
                 .firstName("Hina")
                 .lastName("Patel")
@@ -532,7 +532,7 @@ class HASSignupServiceTest {
 
         StepVerifier.create(hasSignupService.verifyAadharOtp(verifyAadharOtpRequest,token))
                 .assertNext(response -> {
-                    assertThat(response.getHealthId()).isEqualTo(healthAccountUser.getHealthId());
+                    assertThat(response.getHealthId()).isEqualTo(healthAccountUser.getHealthIdNumber());
                     assertThat(response.getDateOfBirth().getDate()).isEqualTo(healthAccountUser.getDayOfBirth());
                     assertThat(response.getToken()).isEqualTo(healthAccountUser.getToken());
                 })
@@ -546,7 +546,7 @@ class HASSignupServiceTest {
         var token = string();
         var mobileNumber = "+91-9999999999";
         HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(true)
-                .healthId(UUID.randomUUID().toString())
+                .healthIdNumber(UUID.randomUUID().toString())
                 .token(UUID.randomUUID().toString())
                 .firstName("Hina")
                 .lastName("Patel")
@@ -569,7 +569,7 @@ class HASSignupServiceTest {
 
         StepVerifier.create(hasSignupService.verifyAadharOtp(verifyAadharOtpRequest,token))
                 .assertNext(response -> {
-                    assertThat(response.getHealthId()).isEqualTo(healthAccountUser.getHealthId());
+                    assertThat(response.getHealthId()).isEqualTo(healthAccountUser.getHealthIdNumber());
                     assertThat(response.getDateOfBirth().getDate()).isEqualTo(healthAccountUser.getDayOfBirth());
                     assertThat(response.getToken()).isEqualTo(healthAccountUser.getToken());
                 })
@@ -583,7 +583,7 @@ class HASSignupServiceTest {
         var token = string();
         var mobileNumber = "+91-9999999998";
         HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(true)
-                .healthId(UUID.randomUUID().toString())
+                .healthIdNumber(UUID.randomUUID().toString())
                 .token(UUID.randomUUID().toString())
                 .firstName("Hina")
                 .lastName("Patel")
@@ -616,7 +616,7 @@ class HASSignupServiceTest {
         var sessionId = string();
         var token = string();
         HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(true)
-                .healthId(UUID.randomUUID().toString())
+                .healthIdNumber(UUID.randomUUID().toString())
                 .token(UUID.randomUUID().toString())
                 .firstName("Hina")
                 .lastName("Patel")
@@ -647,7 +647,7 @@ class HASSignupServiceTest {
     void shouldUpdateAddressAfterVerifyingAadhar() {
         var token = string();
         var healthId = "healthId";
-        var user = User.builder().identifier("hinapatel00@pmjay").healthId(healthId)
+        var user = User.builder().identifier("hinapatel00@pmjay").healthIdNumber(healthId)
                 .name(PatientName.builder().first("Hina").last("Patel").middle("").build())
                 .dateOfBirth(DateOfBirth.builder().date(7).month(4).year(1979).build())
                 .gender(Gender.valueOf("F"))
@@ -655,7 +655,7 @@ class HASSignupServiceTest {
         var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1")
                 .healthId(healthId).build();
         HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(false)
-                .healthId(healthId)
+                .healthIdNumber(healthId)
                 .token(UUID.randomUUID().toString())
                 .firstName("Hina")
                 .lastName("Patel")
@@ -680,7 +680,7 @@ class HASSignupServiceTest {
     void shouldThrowErrorIfHealthIdIsNotPresentInCache() {
         var token = string();
         var healthId = "healthId";
-        var user = User.builder().identifier("hinapatel00@pmjay").healthId(healthId)
+        var user = User.builder().identifier("hinapatel00@pmjay").healthIdNumber(healthId)
                 .name(PatientName.builder().first("Hina").last("Patel").middle("").build())
                 .dateOfBirth(DateOfBirth.builder().date(7).month(4).year(1979).build())
                 .gender(Gender.valueOf("F"))
@@ -688,7 +688,7 @@ class HASSignupServiceTest {
         var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1")
                 .healthId(healthId).build();
         HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(false)
-                .healthId(healthId)
+                .healthIdNumber(healthId)
                 .token(UUID.randomUUID().toString())
                 .firstName("Hina")
                 .lastName("Patel")
@@ -715,7 +715,7 @@ class HASSignupServiceTest {
         var addressRequest = UpdateHASAddressRequest.builder().districtCode("1").stateCode("1")
                 .healthId(healthId).build();
         HealthAccountUser healthAccountUser = HealthAccountUser.builder().newHASUser(false)
-                .healthId(healthId)
+                .healthIdNumber(healthId)
                 .token(UUID.randomUUID().toString())
                 .firstName("Hina")
                 .lastName("Patel")
@@ -739,7 +739,7 @@ class HASSignupServiceTest {
     void shouldThrowErrorIfHASGivesError() {
         var token = string();
         var healthId = "healthId";
-        var user = User.builder().identifier("hinapatel00@pmjay").healthId(healthId)
+        var user = User.builder().identifier("hinapatel00@pmjay").healthIdNumber(healthId)
                 .name(PatientName.builder().first("Hina").last("Patel").middle("").build())
                 .dateOfBirth(DateOfBirth.builder().date(7).month(4).year(1979).build())
                 .gender(Gender.valueOf("F"))

@@ -11,7 +11,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class HealthAccountUser {
-    private final String healthId;
+    private final String healthIdNumber;
     private final String firstName;
     private final String middleName;
     private final String lastName;

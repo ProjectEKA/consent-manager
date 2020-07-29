@@ -29,7 +29,7 @@ public class DummyHealthAccountService {
                 .monthOfBirth(signupRequest.getMonthOfBirth())
                 .yearOfBirth(signupRequest.getYearOfBirth())
                 .newHASUser(true)
-                .healthId(UUID.randomUUID().toString())
+                .healthIdNumber(UUID.randomUUID().toString())
                 .token(UUID.randomUUID().toString())
                 .stateCode(signupRequest.getStateCode())
                 .districtCode(signupRequest.getDistrictCode())
@@ -54,7 +54,7 @@ public class DummyHealthAccountService {
                 .monthOfBirth(12)
                 .yearOfBirth(1979)
                 .newHASUser(true)
-                .healthId(UUID.randomUUID().toString())
+                .healthIdNumber(UUID.randomUUID().toString())
                 .token(UUID.randomUUID().toString()).build();
     }
 
@@ -64,7 +64,7 @@ public class DummyHealthAccountService {
 
     public HealthAccountUser mapToHealthAccountUser(User user, Boolean newHASUser) {
         return HealthAccountUser.builder()
-                .healthId(user.getHealthId())
+                .healthIdNumber(user.getHealthIdNumber())
                 .token(UUID.randomUUID().toString())
                 .firstName(user.getName().getFirst())
                 .middleName(user.getName().getMiddle())

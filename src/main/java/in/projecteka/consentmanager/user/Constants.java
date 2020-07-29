@@ -30,4 +30,8 @@ public class Constants {
     //HAS apis
     public static final String HAS_CREATE_ACCOUNT_VERIFIED_MOBILE_TOKEN = "/v1/ha/create_account_verified_mobile_token";
     public static final String HAS_ACCOUNT_UPDATE = "/v1/ha/update_account";
+    public static final String HAS_OTP_REQUEST_FOR_AADHAR = "/v1/ha/generate_aadhar_otp";
+    public static final String HAS_VERIFY_OTP_FOR_AADHAR = "/v1/ha/verify_aadhar_otp";
+    public static final String HAS_OTP_REQUEST_FOR_MOBILE_PATH = "/v1/ha/generate_mobile_otp";
+    public static final String HAS_OTP_VERIFY_FOR_MOBILE_PATH = "/v1/ha/verify_mobile_otp";
 }

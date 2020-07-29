@@ -756,4 +756,25 @@ class UserServiceTest {
         assertThat(patientResponse.getValue().getError()).isNull();
         assertThat(patientResponse.getValue().getPatient()).isNotNull();
     }
+
+    @Test
+    void shouldVerifyOTPForForgetConsentPin(){
+        var sessionId = string();
+        var otp = string();
+        var token = string();
+        var user = new EasyRandom().nextObject(User.class);
+        var sessionIdWithAction = SendOtpAction.FORGOT_CONSENT_PIN.toString() + sessionId;
+        ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
+        OtpVerification otpVerification = new OtpVerification(sessionId, otp);
+        when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
+        when(signupService.generateToken(any(), eq(sessionIdWithAction))).thenReturn(Mono.just(new Token(token)));
+        when(signupService.getUserName(eq(sessionIdWithAction))).thenReturn(Mono.just(user.getIdentifier()));
+        when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));
+        when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
+        when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
+
+        StepVerifier.create(userService.verifyOtpForForgotConsentPin(otpVerification))
+                .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
+                .verifyComplete();
+    }
 }

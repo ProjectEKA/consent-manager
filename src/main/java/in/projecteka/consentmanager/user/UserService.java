@@ -141,28 +141,28 @@ public class UserService {
         var communication = new OtpCommunicationData(userSignupEnquiry.getIdentifierType(),
                 userSignupEnquiry.getIdentifier());
 
-        OtpGenerationDetail otpGenerationDetail = otpAttmptAction == OtpAttempt.Action.OTP_REQUEST_REGISTRATION ? OtpGenerationDetail
-                .builder()
-                .action(OtpAction.REGISTRATION.toString())
-                .systemName(consentServiceProperties.getName())
-                .build() : otpAttmptAction == OtpAttempt.Action.OTP_REQUEST_LOGIN ?
-                OtpGenerationDetail
+        OtpGenerationDetail otpGenerationDetail = OtpGenerationDetail
                         .builder()
-                        .action(OtpAction.LOGIN.toString())
-                        .systemName(consentServiceProperties.getName())
-                        .build() : otpAttmptAction == OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD ?
-                OtpGenerationDetail
-                        .builder()
-                        .action(OtpAction.RECOVER_PASSWORD.toString())
-                        .systemName(consentServiceProperties.getName())
-                        .build():
-                OtpGenerationDetail
-                        .builder()
-                        .action(OtpAction.FORGOT_CM_ID.toString())
+                        .action(getOtpActionFor(otpAttmptAction).toString())
                         .systemName(consentServiceProperties.getName())
                         .build();
         var otpRequest = new OtpRequest(UUID.randomUUID().toString(), communication, otpGenerationDetail);
         return Optional.of(otpRequest);
+    }
+
+    private OtpAction getOtpActionFor(OtpAttempt.Action otpAttmptAction) {
+        switch (otpAttmptAction){
+            case OTP_REQUEST_REGISTRATION:
+                return OtpAction.REGISTRATION;
+            case OTP_REQUEST_LOGIN:
+                return OtpAction.LOGIN;
+            case OTP_REQUEST_RECOVER_PASSWORD:
+                return OtpAction.RECOVER_PASSWORD;
+            case OTP_REQUEST_FORGOT_CONSENT_PIN:
+                return OtpAction.FORGOT_PIN;
+            default:
+                return OtpAction.FORGOT_CM_ID;
+        }
     }
 
     public Mono<SignUpSession> sendOtpFor(UserSignUpEnquiry userSignupEnquiry,
@@ -243,6 +243,27 @@ public class UserService {
                             .then(createNotificationMessage(user, otpVerification.getSessionId())
                                     .flatMap(this::notifyUserWith))
                             .then(Mono.just(RecoverCmIdResponse.builder().cmId(user.getIdentifier()).build()));
+                });
+    }
+
+    public Mono<Token> verifyOtpForForgotConsentPin(OtpVerification otpVerification) {
+        if (!validateOtpVerification(otpVerification)) {
+            return Mono.error(new InvalidRequestException(INVALID_REQUEST_BODY));
+        }
+        String sessionIdWithAction = SendOtpAction.FORGOT_CONSENT_PIN.toString() + otpVerification.getSessionId();
+        return signupService.getUserName(sessionIdWithAction)
+                .switchIfEmpty(Mono.error(ClientError.networkServiceCallFailed()))
+                .flatMap(userRepository::userWith)
+                .flatMap(user -> {
+                    OtpAttempt otpAttempt = OtpAttempt.builder()
+                            .sessionId(otpVerification.getSessionId())
+                            .identifierType(MOBILE.name())
+                            .identifierValue(user.getPhone())
+                            .action(OtpAttempt.Action.OTP_SUBMIT_FORGOT_CONSENT_PIN)
+                            .cmId(user.getIdentifier())
+                            .build();
+                    return validateAndVerifyOtp(otpVerification, otpAttempt)
+                            .then(signupService.generateToken(new HashMap<>(), sessionIdWithAction));
                 });
     }
 

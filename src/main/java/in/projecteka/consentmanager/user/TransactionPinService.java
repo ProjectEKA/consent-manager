@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.user.model.TransactionPin;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ import static reactor.core.publisher.Mono.error;
 import static reactor.core.publisher.Mono.just;
 
 @AllArgsConstructor
+@Builder
 public class TransactionPinService {
     private final TransactionPinRepository transactionPinRepository;
     private final BCryptPasswordEncoder encoder;
@@ -54,8 +56,8 @@ public class TransactionPinService {
     private Mono<Void> validateTransactionPin(String patientId) {
         return isTransactionPinSet(patientId)
                 .flatMap(hasTransactionPin -> Boolean.TRUE.equals(hasTransactionPin)
-                                              ? error(ClientError.transactionPinAlreadyCreated())
-                                              : Mono.empty());
+                        ? error(ClientError.transactionPinAlreadyCreated())
+                        : Mono.empty());
     }
 
     public Mono<Boolean> isTransactionPinSet(String patientId) {

@@ -1626,7 +1626,7 @@ paths:
     put:
       tags:
         - account
-      summary: Update ping with temporary token
+      summary: Update pin with temporary token
       parameters:
         - name: Authorization
           description: Token received after successful verification of OTP.

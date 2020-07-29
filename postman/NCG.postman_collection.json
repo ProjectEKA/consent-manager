@@ -1400,8 +1400,171 @@
 						}
 					},
 					"response": []
-				}
+				},
 
+				{
+					"name": "Forgot Pin Generate OTP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "184f75af-f1ee-4aa9-a778-a288e759fbc8",
+								"exec": [
+									"pm.test(\"Update session id\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"SESSION_ID\", jsonData.sessionId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{AUTHORIZATION}}"
+							}
+						],
+						"url": {
+							"raw": "{{CM_HOST}}/patients/forgot-pin/generate-otp",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"forgot-pin",
+								"generate-otp"
+							]
+						},
+						"description": "\t"
+					},
+					"response": []
+				},
+
+				{
+					"name": "Forgot Pin Validate OTP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "9bbee635-1a23-4870-893d-9303d20e1ab1",
+								"exec": [
+									"pm.test(\"Update user creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"USER_TEMP_TOKEN\", jsonData.temporaryToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{AUTHORIZATION}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"sessionId\": \"{{SESSION_ID}}\",\n\t\"value\": \"666666\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/forgot-pin/validate-otp",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"forgot-pin",
+								"validate-otp"
+							]
+						}
+					},
+					"response": []
+				},
+
+				{
+					"name": "Update Consent PIN",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "844a8cc3-1487-47e0-8973-fa2ae5a25127",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "740e9033-f649-4da7-8b89-31b1c36bb1b6",
+								"exec": [
+									"pm.test(\"Update user creation token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"AUTHORIZATION\", \"bearer \" + jsonData.accessToken);",
+									"    pm.environment.set(\"REFRESH_TOKEN\", jsonData.refreshToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{USER_TEMP_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"pin\": \"5555\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CM_HOST}}/patients/reset-pin",
+							"host": [
+								"{{CM_HOST}}"
+							],
+							"path": [
+								"patients",
+								"reset-pin"
+							]
+						}
+					},
+					"response": []
+				}
 			],
 			"protocolProfileBehavior": {}
 		},

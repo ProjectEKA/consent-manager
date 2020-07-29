@@ -11,7 +11,6 @@ import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
-import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.common.DelayTimeoutException;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -32,7 +31,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.ClientError.invalidResponseFromHIP;
-import static in.projecteka.consentmanager.clients.ClientError.transactionIdNotFound;
 import static in.projecteka.consentmanager.clients.ErrorMap.toCmError;
 import static in.projecteka.consentmanager.common.CustomScheduler.scheduleThis;
 import static in.projecteka.consentmanager.common.Serializer.from;

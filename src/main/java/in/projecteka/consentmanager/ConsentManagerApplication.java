@@ -23,7 +23,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@SpringBootApplication(exclude = { RedisAutoConfiguration.class })
+@SpringBootApplication(exclude = {RedisAutoConfiguration.class})
 @EnableScheduling
 @EnableAsync
 @EnableConfigurationProperties({ClientRegistryProperties.class,
@@ -43,7 +43,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
                                 NHSProperties.class,
                                 CacheMethodProperty.class,
                                 KeyPairConfig.class
-                              })
+})
 public class ConsentManagerApplication {
     public static void main(String[] args) {
         SpringApplication.run(ConsentManagerApplication.class, args);

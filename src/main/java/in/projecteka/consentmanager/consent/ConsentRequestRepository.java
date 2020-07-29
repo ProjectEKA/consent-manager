@@ -35,7 +35,7 @@ public class ConsentRequestRepository {
     private static final String SELECT_CONSENT_REQUESTS_BY_STATUS;
     private static final String SELECT_CONSENT_DETAILS_FOR_PATIENT;
     private static final String SELECT_CONSENT_REQUEST_COUNT = "SELECT COUNT(*) FROM consent_request " +
-            "WHERE patient_id=$1  and status!=$3 and (status=$2 OR $2 IS NULL)";
+            "WHERE LOWER(patient_id) = $1  and status != $3 and (status=$2 OR $2 IS NULL)";
     private static final String INSERT_CONSENT_REQUEST_QUERY = "INSERT INTO consent_request " +
             "(request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
@@ -49,9 +49,9 @@ public class ConsentRequestRepository {
     static {
         String s = "SELECT request_id, status, details, date_created, date_modified FROM consent_request " +
                 "where ";
-        SELECT_CONSENT_DETAILS_FOR_PATIENT = s + "patient_id=$1 and status!=$5 and (status=$4 OR $4 IS NULL) " +
-                "ORDER BY date_modified DESC" +
-                " LIMIT $2 OFFSET $3";
+        SELECT_CONSENT_DETAILS_FOR_PATIENT = s + " LOWER(patient_id) = $1 and status!=$5 and (status=$4 OR $4 IS NULL) "
+                + "ORDER BY date_modified DESC"
+                + " LIMIT $2 OFFSET $3";
         SELECT_CONSENT_REQUEST_BY_ID = s + "request_id=$1";
         SELECT_CONSENT_REQUEST_BY_ID_AND_STATUS = s + "request_id=$1 and status=$2 and patient_id=$3";
         SELECT_CONSENT_REQUESTS_BY_STATUS = s + "status=$1";
@@ -83,7 +83,7 @@ public class ConsentRequestRepository {
                                                                            int offset,
                                                                            String status) {
         return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_DETAILS_FOR_PATIENT)
-                .execute(Tuple.of(patientId, limit, offset, status, GRANTED.toString()),
+                .execute(Tuple.of(patientId.toLowerCase(), limit, offset, status, GRANTED.toString()),
                         handler -> {
                             List<ConsentRequestDetail> requestList = getConsentRequestDetails(handler);
                             dbClient.preparedQuery(SELECT_CONSENT_REQUEST_COUNT)

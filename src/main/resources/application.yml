@@ -80,7 +80,7 @@ consentmanager:
   nhsproperties:
     hiuid: ${NHS_HIU_ID:12342345}
   linktokencache:
-    expiry: ${LINK_TOKEN_CACHE_EXPIRY}
+    expiry: ${LINK_TOKEN_CACHE_EXPIRY:1440}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}

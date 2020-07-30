@@ -11,6 +11,8 @@ consentmanager:
     consentRequestExpiry: ${CONSENT_REQUEST_EXPIRY}
     name: ${CONSENT_SERVICE_NAME:PHR-App}
   scheduler:
+    consent-artefact-expiry-enabled: ${CONSENT_EXPIRY_CRON_ENABLED:true}
+    consent-request-expiry-enabled: ${CONSENT_EXPIRY_CRON_ENABLED:true}
     consentExpiryCronExpr: ${CONSENT_EXPIRY_CRON_EXPRESSION}
     consentRequestExpiryCronExpr: ${CONSENT_REQUEST_EXPIRY_CRON_EXPRESSION}
   clientregistry:

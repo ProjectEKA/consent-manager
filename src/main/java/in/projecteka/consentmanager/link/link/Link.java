@@ -38,6 +38,7 @@ import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.ClientError.invalidResponseFromHIP;
 import static in.projecteka.consentmanager.clients.ErrorMap.toCmError;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_ID_NOT_FOUND;
 import static in.projecteka.consentmanager.common.CustomScheduler.scheduleThis;
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.tryTo;
@@ -128,7 +129,13 @@ public class Link {
     public Mono<PatientLinkResponse> verifyLinkToken(String username, PatientLinkRequest patientLinkRequest) {
         UUID requestId = UUID.randomUUID();
         return linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())
-                .switchIfEmpty(error(ClientError.transactionIdNotFound()))
+                .onErrorResume(error -> {
+                    if (error.getClass() == ClientError.class
+                            && ((ClientError) error).getErrorCode().getValue() == TRANSACTION_ID_NOT_FOUND.getValue()) {
+                        return Mono.error(ClientError.invalidLinkReference());
+                    } else
+                        return Mono.error(error);
+                })
                 .flatMap(linkRepository::getHIPIdFromDiscovery)
                 .flatMap(hipId -> confirmAndLinkPatient(patientLinkRequest, username, hipId, requestId));
     }

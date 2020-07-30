@@ -27,7 +27,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static reactor.core.publisher.Mono.empty;
 import static reactor.core.publisher.Mono.just;
+import static reactor.core.publisher.Mono.justOrEmpty;
 
 public class GatewayTokenVerifier {
     private final ConfigurableJWTProcessor<SecurityContext> jwtProcessor;
@@ -51,22 +53,22 @@ public class GatewayTokenVerifier {
             var parts = token.split(" ");
             if (parts.length == 2) {
                 var credentials = parts[1];
-                return Mono.justOrEmpty(jwtProcessor.process(credentials, null))
+                return justOrEmpty(jwtProcessor.process(credentials, null))
                         .flatMap(jwtClaimsSet -> {
                             try {
                                 var clientId = jwtClaimsSet.getStringClaim("clientId");
                                 var serviceCaller = new ServiceCaller(clientId, getRole(jwtClaimsSet));
                                 return just(serviceCaller);
                             } catch (Exception e) {
-                                logger.error(e.getMessage(),e);
-                                return Mono.empty();
+                                logger.error(e.getMessage(), e);
+                                return empty();
                             }
                         });
             }
-            return Mono.empty();
+            return empty();
         } catch (ParseException | BadJOSEException | JOSEException e) {
             logger.error("Unauthorized access", e);
-            return Mono.empty();
+            return empty();
         }
     }
 

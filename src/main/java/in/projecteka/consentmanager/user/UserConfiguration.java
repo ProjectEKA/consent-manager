@@ -156,11 +156,13 @@ public class UserConfiguration {
                                                        @Qualifier("keySigningPrivateKey") PrivateKey privateKey,
                                                        UserServiceProperties userServiceProperties,
                                                        @Qualifier("dayCache") CacheAdapter<String, String> dayCache) {
-        return new TransactionPinService(transactionPinRepository,
-                encoder,
-                privateKey,
-                userServiceProperties,
-                dayCache);
+        return TransactionPinService.builder()
+                .encoder(encoder)
+                .privateKey(privateKey)
+                .userServiceProperties(userServiceProperties)
+                .dayCache(dayCache)
+                .transactionPinRepository(transactionPinRepository)
+                .build();
     }
 
     @Bean

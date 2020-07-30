@@ -12,7 +12,7 @@ jobs:
         with:
           java-version: 11
       - name: Build and unit tests
-        run: ./gradlew clean build
+        run: ./gradlew clean build --info
       - name: Code coverage
         run: ./gradlew jacocoTestReport
       - name: Sonarcube Analysis

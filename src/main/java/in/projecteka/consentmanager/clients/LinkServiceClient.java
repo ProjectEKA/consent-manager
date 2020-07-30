@@ -88,14 +88,23 @@ public class LinkServiceClient {
     }
 
     private String getLinkOnAddContextsUrl() {
-        return String.format(Constants.LINKS_LINK_ON_ADD_CONTEXTS, gatewayServiceProperties.getBaseUrl());
+        return getBaseUrl().concat(Constants.LINKS_LINK_ON_ADD_CONTEXTS);
     }
 
     private String getLinkConfirmationUrl() {
-        return String.format(Constants.PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH, gatewayServiceProperties.getBaseUrl());
+        return getBaseUrl().concat(Constants.PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH);
     }
 
     private String getLinkEnquiryUrl() {
-        return String.format(Constants.PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH, gatewayServiceProperties.getBaseUrl());
+        return getBaseUrl().concat(Constants.PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH);
+    }
+
+    private String getBaseUrl() {
+        var baseUrl = gatewayServiceProperties.getBaseUrl();
+        String trimmed = baseUrl.trim();
+        if (trimmed.endsWith("/")) {
+            return trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed;
     }
 }

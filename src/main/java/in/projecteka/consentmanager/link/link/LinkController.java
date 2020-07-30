@@ -7,15 +7,11 @@ import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.RequestValidator;
-import in.projecteka.consentmanager.common.ServiceCaller;
-import in.projecteka.consentmanager.common.cache.CacheAdapter;
-import in.projecteka.consentmanager.consent.model.FetchRequest;
 import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
 import in.projecteka.consentmanager.link.link.model.LinkRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -101,7 +97,7 @@ public class LinkController {
                 .flatMap(caller -> link.patientCareContexts(caller.getUsername(), patientLinkReferenceRequest));
     }
 
-    @PostMapping(Constants.HIP_PATH_ADD_CONTEXTS)
+    @PostMapping(Constants.PATH_HIP_ADD_CONTEXTS)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> linkCareContexts(@RequestBody LinkRequest linkRequest) {
         return Mono.just(linkRequest)

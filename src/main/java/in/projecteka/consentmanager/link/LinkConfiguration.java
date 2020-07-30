@@ -127,19 +127,5 @@ public class LinkConfiguration {
             ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
         return new RedisCacheAdapter(stringReactiveRedisOperations, 5);
     }
-
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    @Bean({"usedAccessTokens"})
-    public CacheAdapter<String, String> createUsedTokensLoadingCacheAdapter(
-            LinkTokenCacheProperties linkTokenCacheProperties) {
-        return new LoadingCacheAdapter(createSessionCache(linkTokenCacheProperties.getExpiry()));
-    }
-
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
-    @Bean({"usedAccessTokens"})
-    public CacheAdapter<String, String> createUsedTokensRedisCacheAdapter(
-            ReactiveRedisOperations<String, String> stringReactiveRedisOperations,
-            LinkTokenCacheProperties linkTokenCacheProperties) {
-        return new RedisCacheAdapter(stringReactiveRedisOperations, linkTokenCacheProperties.getExpiry());
-    }
+    
 }

@@ -24,7 +24,6 @@ import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
-import in.projecteka.consentmanager.link.link.model.CareContextRepresentations;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
@@ -55,10 +54,8 @@ import reactor.core.publisher.MonoSink;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -66,7 +63,7 @@ import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.Constants.APP_PATH_CONFIRM_LINK;
 import static in.projecteka.consentmanager.link.Constants.HIP_INITIATED_ACTION_LINK;
-import static in.projecteka.consentmanager.link.Constants.HIP_PATH_ADD_CONTEXTS;
+import static in.projecteka.consentmanager.link.Constants.PATH_HIP_ADD_CONTEXTS;
 import static in.projecteka.consentmanager.link.Constants.APP_PATH_LINK_INIT;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.link.link.TestBuilders.linkHipAction;
@@ -532,7 +529,7 @@ class LinkUserJourneyTest {
 
         webTestClient
                 .post()
-                .uri(HIP_PATH_ADD_CONTEXTS)
+                .uri(PATH_HIP_ADD_CONTEXTS)
                 .header("Authorization", token)
                 .contentType(APPLICATION_JSON)
                 .bodyValue(linkRequest)

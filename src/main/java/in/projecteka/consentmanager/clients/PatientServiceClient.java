@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 @AllArgsConstructor
 public class PatientServiceClient {
 
-    private static final String INTERNAL_PATH_PATIENT_LINKS = "%s/internal/patients/%s/links";
+    private static final String INTERNAL_PATH_PATIENT_LINKS = "/internal/patients/%s/links";
     private final WebClient webClientBuilder;
     private final Supplier<Mono<String>> tokenGenerator;
     private final String baseUrl;
@@ -21,12 +21,20 @@ public class PatientServiceClient {
                 .flatMap(authorization ->
                         webClientBuilder
                                 .get()
-                                .uri(String.format(INTERNAL_PATH_PATIENT_LINKS, baseUrl, username))
+                                .uri(getBaseUrl(baseUrl).concat(String.format(INTERNAL_PATH_PATIENT_LINKS, username)))
                                 .header(authorizationHeader, authorization)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,
                                         clientResponse -> Mono.error(ClientError.unAuthorized()))
                                 .onStatus(HttpStatus::isError, clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
                                 .bodyToMono(LinkedCareContexts.class));
+    }
+
+    private String getBaseUrl(String baseUrl) {
+        String trimmed = baseUrl.trim();
+        if (trimmed.endsWith("/")) {
+            return trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed;
     }
 }

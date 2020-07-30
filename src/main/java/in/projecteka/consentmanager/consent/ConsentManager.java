@@ -459,7 +459,7 @@ public class ConsentManager {
                             .build();
                 })
                 .onErrorResume(ClientError.class, exception -> {
-                    logger.error(exception.getMessage(), exception);
+                    logger.error(exception.getError().getError().getMessage(), exception);
                     var consentArtefactResult = ConsentArtefactResult.builder()
                             .requestId(UUID.randomUUID())
                             .timestamp(LocalDateTime.now(ZoneOffset.UTC))

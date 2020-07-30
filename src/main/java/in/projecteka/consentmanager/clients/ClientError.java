@@ -61,10 +61,10 @@ import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 @ToString
 public class ClientError extends Throwable {
 
-    private static final String CANNOT_PROCESS_REQUEST_TRY_LATER =
-            "Cannot process the request at the moment, please try later.";
     public static final String INVALID_TRANSACTION_PIN = "Invalid transaction pin";
     public static final String CANNOT_FIND_THE_CONSENT_ARTEFACT = "Cannot find the consent artefact";
+    private static final String CANNOT_PROCESS_REQUEST_TRY_LATER =
+            "Cannot process the request at the moment, please try later.";
     private final HttpStatus httpStatus;
     private final ErrorRepresentation error;
 
@@ -76,10 +76,6 @@ public class ClientError extends Throwable {
     public static ClientError tooManyRequests() {
         return new ClientError(TOO_MANY_REQUESTS, new ErrorRepresentation(
                 new Error(INVALID_REQUEST, "Too many requests from gateway")));
-    }
-
-    public ErrorCode getErrorCode() {
-        return this.error.getError().getCode();
     }
 
     public static ClientError unableToConnectToProvider() {
@@ -354,11 +350,23 @@ public class ClientError extends Throwable {
     }
 
     public static RespError from(ClientError exception) {
-        return RespError.builder().code(exception.getErrorCode().getValue()).message(exception.getMessage()).build();
+        return RespError.builder()
+                .code(exception.getErrorCode().getValue())
+                .message(exception.getError().getError().getMessage())
+                .build();
     }
 
     public static ClientError invalidResponseFromGateway() {
         return new ClientError(BAD_REQUEST,
                 new ErrorRepresentation(new Error(INVALID_RESP_REQUEST_ID, "resp.requestId is null or empty")));
+    }
+
+    public static ClientError invalidToken(String errorMessage) {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(UNKNOWN_ERROR_OCCURRED, errorMessage)));
+    }
+
+    public ErrorCode getErrorCode() {
+        return this.error.getError().getCode();
     }
 }

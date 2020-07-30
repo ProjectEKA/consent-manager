@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
+import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
@@ -23,6 +24,7 @@ import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.consentmanager.link.link.model.CareContextRepresentations;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
@@ -63,8 +65,12 @@ import java.util.stream.Stream;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.Constants.APP_PATH_CONFIRM_LINK;
+import static in.projecteka.consentmanager.link.Constants.HIP_INITIATED_ACTION_LINK;
+import static in.projecteka.consentmanager.link.Constants.HIP_PATH_ADD_CONTEXTS;
 import static in.projecteka.consentmanager.link.Constants.APP_PATH_LINK_INIT;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
+import static in.projecteka.consentmanager.link.link.TestBuilders.linkHipAction;
+import static in.projecteka.consentmanager.link.link.TestBuilders.linkRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResponse;
@@ -98,6 +104,17 @@ class LinkUserJourneyTest {
     private static final MockWebServer userServer = new MockWebServer();
     private static final MockWebServer identityServer = new MockWebServer();
     private static final MockWebServer gatewayServer = new MockWebServer();
+
+    @MockBean
+    @Qualifier("linkResults")
+    CacheAdapter<String, String> linkResults;
+
+    @MockBean
+    @Qualifier("cacheForReplayAttack")
+    CacheAdapter<String, String> cacheForReplayAttack;
+
+    @MockBean
+    LinkTokenVerifier linkTokenVerifier;
 
     @Autowired
     private WebTestClient webTestClient;
@@ -135,14 +152,6 @@ class LinkUserJourneyTest {
 
     @MockBean
     private RequestValidator validator;
-
-    @MockBean
-    @Qualifier("linkResults")
-    CacheAdapter<String, String> linkResults;
-
-    @MockBean
-    @Qualifier("cacheForReplayAttack")
-    CacheAdapter<String, String> cacheForReplayAttack;
 
     @MockBean
     private LinkServiceClient linkServiceClient;
@@ -219,7 +228,7 @@ class LinkUserJourneyTest {
         when(serviceAuthentication.authenticate()).thenReturn(just(string()));
         when(linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())).thenReturn(just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(just(hipId)); //linkRes.getPatient()
-        when(linkRepository.insertToLink(eq(hipId), eq("123@ncg"), eq(patientLinkRequest.getLinkRefNumber()), any()))
+        when(linkRepository.insertToLink(eq(hipId), eq("123@ncg"), eq(patientLinkRequest.getLinkRefNumber()), any(), eq(Constants.LINK_INITIATOR_CM)))
                 .thenReturn(empty());
         String linkConfirmationResult = "{\n" +
                 "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
@@ -278,7 +287,7 @@ class LinkUserJourneyTest {
         when(serviceAuthentication.authenticate()).thenReturn(just(string()));
         when(linkRepository.getTransactionIdFromLinkReference(patientLinkRequest.getLinkRefNumber())).thenReturn(just(transactionId));
         when(linkRepository.getHIPIdFromDiscovery(transactionId)).thenReturn(just(hipId)); //linkRes.getPatient()
-        when(linkRepository.insertToLink(eq(hipId), eq("123@ncg"), eq(patientLinkRequest.getLinkRefNumber()), any()))
+        when(linkRepository.insertToLink(eq(hipId), eq("123@ncg"), eq(patientLinkRequest.getLinkRefNumber()), any(), eq(Constants.LINK_INITIATOR_CM)))
                 .thenReturn(empty());
         String linkConfirmationResult = "{\n" +
                 "  \"requestId\": \"5f7a535d-a3fd-416b-b069-c97d021fbacd\",\n" +
@@ -339,47 +348,6 @@ class LinkUserJourneyTest {
                 .expectBody()
                 .json(errorResponseJson);
     }
-
-    static class ContextInitializer
-            implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-        @Override
-        public void initialize(ConfigurableApplicationContext applicationContext) {
-            TestPropertyValues values =
-                    TestPropertyValues.of(
-                            Stream.of("consentmanager.clientregistry.url=" + clientRegistryServer.url(""),
-                                    "consentmanager.userservice.url=" + userServer.url(""),
-                                    "consentmanager.keycloak.baseUrl=" + identityServer.url(""),
-                                    "consentmanager.gatewayservice.baseUrl=" + gatewayServer.url("")));
-            values.applyTo(applicationContext);
-        }
-    }
-
-    final Dispatcher dispatcher = new Dispatcher() {
-        @Override
-        public MockResponse dispatch(RecordedRequest request) {
-            var official = identifier().use("official").system(hipServer.url("").toString()).build();
-            var maxProvider = provider().name("Max").identifiers(of(official)).build();
-            var tmhProvider = provider().name("TMH").identifiers(of(official)).build();
-            String mxAsJson = null;
-            String tmhJson = null;
-            try {
-                mxAsJson = OBJECT_MAPPER.writeValueAsString(maxProvider);
-                tmhJson = OBJECT_MAPPER.writeValueAsString(tmhProvider);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
-
-            switch (request.getPath()) {
-                case "/api/2.0/providers/10000004":
-                    return new MockResponse().setResponseCode(200).setBody(mxAsJson).setHeader("content-type",
-                            "application/json");
-                case "/api/2.0/providers/10000005":
-                    return new MockResponse().setResponseCode(200).setBody(tmhJson).setHeader("content-type",
-                            "application/json");
-            }
-            return new MockResponse().setResponseCode(404);
-        }
-    };
 
     @Test
     void onLinkCareContexts() {
@@ -541,4 +509,77 @@ class LinkUserJourneyTest {
                 .expectStatus()
                 .isBadRequest();
     }
+
+    @Test
+    void shouldLinkCareContexts() {
+        var token = string();
+        var linkRequest = linkRequest().build();
+        var hipAction = linkHipAction().build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(of(GATEWAY)).build();
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
+        clientRegistryServer.setDispatcher(dispatcher);
+        gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(just(TRUE));
+
+        when(linkTokenVerifier.getHipIdFromToken(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction.getHipId()));
+        when(linkTokenVerifier.validateSession(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction));
+        when(linkTokenVerifier.validateHipAction(hipAction, HIP_INITIATED_ACTION_LINK)).thenReturn(Mono.just(hipAction));
+        when(linkRepository.insertToLink(eq(hipAction.getHipId()), eq(hipAction.getPatientId()), eq(hipAction.getSessionId()),
+                any(PatientRepresentation.class), eq(Constants.LINK_INITIATOR_HIP))).thenReturn(Mono.empty());
+        when(linkRepository.incrementHipActionCounter(hipAction.getSessionId())).thenReturn(Mono.empty());
+        when(linkServiceClient.sendLinkResponseToGateway(any(), anyString())).thenReturn(Mono.empty());
+        when(serviceAuthentication.authenticate()).thenReturn(just(string()));
+
+        webTestClient
+                .post()
+                .uri(HIP_PATH_ADD_CONTEXTS)
+                .header("Authorization", token)
+                .contentType(APPLICATION_JSON)
+                .bodyValue(linkRequest)
+                .accept(APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+    }
+
+    static class ContextInitializer
+            implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            TestPropertyValues values =
+                    TestPropertyValues.of(
+                            Stream.of("consentmanager.clientregistry.url=" + clientRegistryServer.url(""),
+                                    "consentmanager.userservice.url=" + userServer.url(""),
+                                    "consentmanager.keycloak.baseUrl=" + identityServer.url(""),
+                                    "consentmanager.gatewayservice.baseUrl=" + gatewayServer.url("")));
+            values.applyTo(applicationContext);
+        }
+    }
+
+    final Dispatcher dispatcher = new Dispatcher() {
+        @Override
+        public MockResponse dispatch(RecordedRequest request) {
+            var official = identifier().use("official").system(hipServer.url("").toString()).build();
+            var maxProvider = provider().name("Max").identifiers(of(official)).build();
+            var tmhProvider = provider().name("TMH").identifiers(of(official)).build();
+            String mxAsJson = null;
+            String tmhJson = null;
+            try {
+                mxAsJson = OBJECT_MAPPER.writeValueAsString(maxProvider);
+                tmhJson = OBJECT_MAPPER.writeValueAsString(tmhProvider);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+
+            switch (request.getPath()) {
+                case "/api/2.0/providers/10000004":
+                    return new MockResponse().setResponseCode(200).setBody(mxAsJson).setHeader("content-type",
+                            "application/json");
+                case "/api/2.0/providers/10000005":
+                    return new MockResponse().setResponseCode(200).setBody(tmhJson).setHeader("content-type",
+                            "application/json");
+            }
+            return new MockResponse().setResponseCode(404);
+        }
+    };
 }

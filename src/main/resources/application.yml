@@ -79,6 +79,8 @@ consentmanager:
     retryInterval: ${LISTENERS_RETRY_INTERVAL}
   nhsproperties:
     hiuid: ${NHS_HIU_ID:12342345}
+  linktokencache:
+    expiry: ${LINK_TOKEN_CACHE_EXPIRY}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}

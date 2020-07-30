@@ -5,8 +5,10 @@ import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.Constants;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
+import in.projecteka.consentmanager.link.link.model.LinkResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -61,6 +63,32 @@ public class LinkServiceClient {
                                 .toBodilessEntity()
                                 .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout())))
                 .thenReturn(Boolean.TRUE);
+    }
+
+    public Mono<Void> sendLinkResponseToGateway(LinkResponse linkResponse, String hipId) {
+        return serviceAuthentication.authenticate()
+                .flatMap(token ->
+                        webClientBuilder
+                                .post()
+                                .uri(getLinkOnAddContextsUrl())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header(AUTHORIZATION, token)
+                                .header(HDR_HIP_ID, hipId)
+                                .bodyValue(linkResponse)
+                                .retrieve()
+                                .onStatus(httpStatus -> httpStatus.value() == HttpStatus.BAD_REQUEST.value(),
+                                        clientResponse -> Mono.error(ClientError.unprocessableEntity()))
+                                .onStatus(httpStatus -> httpStatus.value() == HttpStatus.UNAUTHORIZED.value(),
+                                        clientResponse -> Mono.error(ClientError.unAuthorized()))
+                                .onStatus(HttpStatus::is5xxServerError,
+                                        clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                                .toBodilessEntity()
+                                .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout())))
+                .then();
+    }
+
+    private String getLinkOnAddContextsUrl() {
+        return String.format(Constants.LINKS_LINK_ON_ADD_CONTEXTS, gatewayServiceProperties.getBaseUrl());
     }
 
     private String getLinkConfirmationUrl() {

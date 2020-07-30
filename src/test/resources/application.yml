@@ -5,6 +5,7 @@ consentmanager:
   consentservice:
     purposeOfUseDefUrl: classpath:/static/ValueSet/purpose-of-use.json
     hiTypesDefUrl: classpath:/static/ValueSet/health-info-type.json
+    consentRequestExpiry:  5000
   scheduler:
     consentExpiryCronExpr: "0 */1 * ? * *"
     consentRequestExpiryCronExpr: '0 0 0/12 ? * *'

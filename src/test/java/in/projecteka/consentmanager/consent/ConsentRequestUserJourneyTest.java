@@ -65,6 +65,8 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static java.lang.String.format;
+import static java.time.LocalDateTime.now;
+import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -112,9 +114,6 @@ class ConsentRequestUserJourneyTest {
 
     @Mock
     private CentralRegistry centralRegistry;
-
-    @Mock
-    private ConsentServiceProperties consentServiceProperties;
 
     @SuppressWarnings("unused")
     @MockBean(name = "centralRegistryJWKSet")
@@ -391,7 +390,7 @@ class ConsentRequestUserJourneyTest {
         String scope = "consentrequest.approve";
 
         var consentRequestDetail = consentRequestDetail()
-                .createdAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(30))
+                .createdAt(now(UTC).minusMinutes(30))
                 .build();
         //when(consentServiceProperties.getConsentRequestExpiry()).thenReturn(60);
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
@@ -459,7 +458,7 @@ class ConsentRequestUserJourneyTest {
                 "}";
         load(patientLinkServer, linkedPatientContextsJson);
         String patientId = "ashok.kumar@ncg";
-        var consentRequestDetail = consentRequestDetail().createdAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(30))
+        var consentRequestDetail = consentRequestDetail().createdAt(now(UTC).minusMinutes(30))
                                     .build();
 
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7")).thenReturn(Mono.just(consentRequestDetail));
@@ -491,6 +490,7 @@ class ConsentRequestUserJourneyTest {
         var consentRequestDetail = consentRequestDetail()
                 .requestId(requestId)
                 .patient(new PatientReference(patientId))
+                .createdAt(now(UTC))
                 .status(REQUESTED);
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
         when(repository.updateStatus(requestId, DENIED)).thenReturn(Mono.empty());
@@ -587,8 +587,8 @@ class ConsentRequestUserJourneyTest {
         var authToken = string();
         var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         String HIUId = "MAX-ID";
-        LocalDateTime fromDate = LocalDateTime.now();
-        LocalDateTime toDate = LocalDateTime.now().plusMinutes(1);
+        LocalDateTime fromDate = now();
+        LocalDateTime toDate = now().plusMinutes(1);
         AccessPeriod dateRange = AccessPeriod.builder().fromDate(fromDate).toDate(toDate).build();
         ConsentPermission permission = ConsentPermission.builder().dateRange(dateRange).build();
         var requestedDetail = RequestedDetail.builder()
@@ -600,7 +600,7 @@ class ConsentRequestUserJourneyTest {
                 .hiTypes(HIType.values())
                 .build();
         var consentRequest = consentRequest()
-                .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
+                .timestamp(now(UTC).plusMinutes(2))
                 .consent(requestedDetail)
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();

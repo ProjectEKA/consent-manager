@@ -99,7 +99,7 @@ public class SessionService {
                         otpCommunicationData,
                         OtpGenerationDetail
                                 .builder()
-                                .action(OtpAction.REGISTRATION.toString())
+                                .action(OtpAction.LOGIN.toString())
                                 .systemName(consentServiceProperties.getName())
                                 .build()))
                 .flatMap(requestBody ->

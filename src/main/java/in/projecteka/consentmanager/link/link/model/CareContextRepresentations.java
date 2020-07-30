@@ -1,8 +1,7 @@
-package in.projecteka.consentmanager.clients.model;
+package in.projecteka.consentmanager.link.link.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import in.projecteka.consentmanager.clients.model.CareContextRepresentation;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,10 +14,6 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @Data
-public class PatientRepresentation {
-    @NotNull
-    private String referenceNumber;
-    private String display;
-    @NotEmpty
+public class CareContextRepresentations {
     private List<CareContextRepresentation> careContexts;
 }

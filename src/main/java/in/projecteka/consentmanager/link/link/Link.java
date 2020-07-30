@@ -14,8 +14,14 @@ import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.DelayTimeoutException;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.link.Constants;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.consentmanager.link.link.model.Acknowledgement;
+import in.projecteka.consentmanager.link.link.model.AuthzHipAction;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
+import in.projecteka.consentmanager.link.link.model.LinkRequest;
+import in.projecteka.consentmanager.link.link.model.LinkResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import in.projecteka.consentmanager.link.link.model.TokenConfirmation;
@@ -36,7 +42,9 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_I
 import static in.projecteka.consentmanager.common.CustomScheduler.scheduleThis;
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.tryTo;
+import static in.projecteka.consentmanager.link.Constants.HIP_INITIATED_ACTION_LINK;
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
+import static in.projecteka.consentmanager.link.link.model.AcknowledgementStatus.SUCCESS;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static reactor.core.publisher.Mono.empty;
 import static reactor.core.publisher.Mono.error;
@@ -49,6 +57,7 @@ public class Link {
     private final ServiceAuthentication serviceAuthentication;
     private final LinkServiceProperties serviceProperties;
     private final CacheAdapter<String, String> linkResults;
+    private final LinkTokenVerifier linkTokenVerifier;
 
     public Mono<PatientLinkReferenceResponse> patientCareContexts(
             String patientId,
@@ -157,7 +166,8 @@ public class Link {
                     return linkRepository.insertToLink(hipId,
                             patientId,
                             patientLinkRequest.getLinkRefNumber(),
-                            confirmationResult.getPatient())
+                            confirmationResult.getPatient(),
+                            Constants.LINK_INITIATOR_CM)
                             .thenReturn(PatientLinkResponse.builder()
                                     .patient(confirmationResult.getPatient())
                                     .build());
@@ -190,5 +200,48 @@ public class Link {
                     "without original request Id mentioned.{}", confirmationResult.getRequestId());
             return Mono.error(ClientError.unprocessableEntity());
         }
+    }
+
+    public Mono<Void> addCareContexts(LinkRequest linkRequest) {
+        return linkTokenVerifier
+                .getHipIdFromToken(linkRequest.getLink().getAccessToken())
+                .flatMap(hipId ->
+                        linkTokenVerifier.validateSession(linkRequest.getLink().getAccessToken())
+                                .flatMap(hipAction -> linkTokenVerifier.validateHipAction(hipAction, HIP_INITIATED_ACTION_LINK))
+                                .flatMap(hipAction -> linkRepository.insertToLink(
+                                        hipAction.getHipId(),
+                                        hipAction.getPatientId(),
+                                        hipAction.getSessionId(),
+                                        linkRequest.getLink().getPatient(),
+                                        Constants.LINK_INITIATOR_HIP)
+                                        .then(updateHipActionCounter(hipAction))
+                                        .thenReturn(linkSuccessResponse(linkRequest)))
+                                .onErrorResume(ClientError.class, exception -> linkFailureResponse(linkRequest, exception))
+                                .flatMap(linkResponse -> linkServiceClient.sendLinkResponseToGateway(linkResponse, hipId)));
+    }
+
+    private Mono<Void> updateHipActionCounter(AuthzHipAction hipAction) {
+        return linkRepository.incrementHipActionCounter(hipAction.getSessionId());
+    }
+
+    private Mono<? extends LinkResponse> linkFailureResponse(LinkRequest linkRequest, ClientError exception) {
+        logger.error(exception.getError().getError().getMessage(), exception);
+        var linkResponse = LinkResponse.builder()
+                .requestId(UUID.randomUUID())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
+                .error(ClientError.from(exception))
+                .resp(GatewayResponse.builder().requestId(linkRequest.getRequestId().toString()).build())
+                .build();
+        return Mono.just(linkResponse);
+    }
+
+    private LinkResponse linkSuccessResponse(LinkRequest linkRequest) {
+        Acknowledgement acknowledgement = Acknowledgement.builder().status(SUCCESS).build();
+        return LinkResponse.builder()
+                .requestId(UUID.randomUUID())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
+                .acknowledgement(acknowledgement)
+                .resp(GatewayResponse.builder().requestId(linkRequest.getRequestId().toString()).build())
+                .build();
     }
 }

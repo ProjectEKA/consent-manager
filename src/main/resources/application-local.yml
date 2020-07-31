@@ -68,6 +68,8 @@ consentmanager:
     jwkUrl: http://localhost:8000/v0.5/certs
   nhsproperties:
     hiuId: 10000002
+  linktokencache:
+    expiry: 1440
 keystore:
   file-path: "consent-manager-local-keystore.p12"
   password: password

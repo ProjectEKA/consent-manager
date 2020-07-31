@@ -4,6 +4,7 @@ import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
+import in.projecteka.consentmanager.clients.properties.LinkTokenCacheProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.KeyPairConfig;
 import in.projecteka.consentmanager.common.ListenerProperties;
@@ -41,8 +42,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
                                 GatewayServiceProperties.class,
                                 RabbitmqOptions.class,
                                 NHSProperties.class,
+                                KeyPairConfig.class,
                                 CacheMethodProperty.class,
-                                KeyPairConfig.class
+                                LinkTokenCacheProperties.class
 })
 public class ConsentManagerApplication {
     public static void main(String[] args) {

@@ -9,14 +9,17 @@ import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
+import in.projecteka.consentmanager.link.link.model.LinkRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
+import org.springframework.http.HttpStatus;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -92,5 +95,20 @@ public class LinkController {
         return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .flatMap(caller -> link.patientCareContexts(caller.getUsername(), patientLinkReferenceRequest));
+    }
+
+    @PostMapping(Constants.PATH_HIP_ADD_CONTEXTS)
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public Mono<Void> linkCareContexts(@RequestBody LinkRequest linkRequest) {
+        return Mono.just(linkRequest)
+                .filterWhen(req ->
+                        validator.validate(linkRequest.getRequestId().toString(), linkRequest.getTimestamp()))
+                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .doOnSuccess(requester -> Mono.defer(() -> {
+                    validator.put(
+                            linkRequest.getRequestId().toString(), linkRequest.getTimestamp());
+                    return link.addCareContexts(linkRequest);
+                }).subscribe())
+                .then();
     }
 }

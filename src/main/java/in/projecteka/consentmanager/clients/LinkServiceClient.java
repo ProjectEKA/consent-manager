@@ -5,8 +5,10 @@ import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.Constants;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
+import in.projecteka.consentmanager.link.link.model.LinkResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -63,11 +65,46 @@ public class LinkServiceClient {
                 .thenReturn(Boolean.TRUE);
     }
 
+    public Mono<Void> sendLinkResponseToGateway(LinkResponse linkResponse, String hipId) {
+        return serviceAuthentication.authenticate()
+                .flatMap(token ->
+                        webClientBuilder
+                                .post()
+                                .uri(getLinkOnAddContextsUrl())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header(AUTHORIZATION, token)
+                                .header(HDR_HIP_ID, hipId)
+                                .bodyValue(linkResponse)
+                                .retrieve()
+                                .onStatus(httpStatus -> httpStatus.value() == HttpStatus.BAD_REQUEST.value(),
+                                        clientResponse -> Mono.error(ClientError.unprocessableEntity()))
+                                .onStatus(httpStatus -> httpStatus.value() == HttpStatus.UNAUTHORIZED.value(),
+                                        clientResponse -> Mono.error(ClientError.unAuthorized()))
+                                .onStatus(HttpStatus::is5xxServerError,
+                                        clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                                .toBodilessEntity()
+                                .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout())))
+                .then();
+    }
+
+    private String getLinkOnAddContextsUrl() {
+        return getBaseUrl().concat(Constants.LINKS_LINK_ON_ADD_CONTEXTS);
+    }
+
     private String getLinkConfirmationUrl() {
-        return String.format(Constants.PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH, gatewayServiceProperties.getBaseUrl());
+        return getBaseUrl().concat(Constants.PATIENTS_CARE_CONTEXTS_LINK_CONFIRMATION_URL_PATH);
     }
 
     private String getLinkEnquiryUrl() {
-        return String.format(Constants.PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH, gatewayServiceProperties.getBaseUrl());
+        return getBaseUrl().concat(Constants.PATIENTS_CARE_CONTEXTS_LINK_INIT_URL_PATH);
+    }
+
+    private String getBaseUrl() {
+        var baseUrl = gatewayServiceProperties.getBaseUrl();
+        String trimmed = baseUrl.trim();
+        if (trimmed.endsWith("/")) {
+            return trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed;
     }
 }

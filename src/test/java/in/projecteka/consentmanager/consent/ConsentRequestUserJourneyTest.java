@@ -494,9 +494,7 @@ class ConsentRequestUserJourneyTest {
                 .status(REQUESTED);
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
         when(repository.updateStatus(requestId, DENIED)).thenReturn(Mono.empty());
-        when(repository.requestOf(requestId))
-                .thenReturn(Mono.just(consentRequestDetail.build()),
-                        Mono.just(consentRequestDetail.status(DENIED).build()));
+        when(repository.requestOf(requestId)).thenReturn(Mono.just(consentRequestDetail.build()));
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
         webTestClient.post()

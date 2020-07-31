@@ -35,6 +35,8 @@ import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
 import in.projecteka.consentmanager.user.UserRepository;
 import in.projecteka.consentmanager.user.UserServiceProperties;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.SocketOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
@@ -53,6 +55,7 @@ import org.springframework.data.redis.connection.ReactiveRedisClusterConnection;
 import org.springframework.data.redis.connection.ReactiveRedisConnection;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -85,6 +88,7 @@ import static in.projecteka.consentmanager.common.Constants.EXCHANGE;
 import static in.projecteka.consentmanager.common.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.common.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
 import static in.projecteka.consentmanager.common.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
+import static io.lettuce.core.ReadFrom.REPLICA_PREFERRED;
 
 @Configuration
 public class ConsentManagerConfiguration {
@@ -342,9 +346,14 @@ public class ConsentManagerConfiguration {
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean("Lettuce")
     ReactiveRedisConnectionFactory redisConnection(RedisOptions redisOptions) {
+        var socketOptions = SocketOptions.builder().keepAlive(redisOptions.isKeepAliveEnabled()).build();
+        var clientConfiguration = LettuceClientConfiguration.builder()
+                .readFrom(REPLICA_PREFERRED)
+                .clientOptions(ClientOptions.builder().socketOptions(socketOptions).build())
+                .build();
         var configuration = new RedisStandaloneConfiguration(redisOptions.getHost(), redisOptions.getPort());
         configuration.setPassword(redisOptions.getPassword());
-        return new LettuceConnectionFactory(configuration);
+        return new LettuceConnectionFactory(configuration, clientConfiguration);
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)

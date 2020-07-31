@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import reactor.core.publisher.Mono;
 
@@ -23,6 +22,7 @@ import static in.projecteka.consentmanager.common.Constants.BLACKLIST;
 import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 @SuppressWarnings("unused")
 class AuthenticatorTest {
@@ -36,12 +36,12 @@ class AuthenticatorTest {
     @Spy
     private Authenticator authenticator;
     @BeforeEach
-    public void init() {
-        MockitoAnnotations.initMocks(this);
+    void init() {
+        initMocks(this);
     }
 
     @Test
-    public void shouldReturnNoCallerWhenBlacklisted() {
+    void shouldReturnNoCallerWhenBlacklisted() {
         String accessToken = "accesstoken";
         String testToken = String.format("%s %s","Bearer", accessToken);
         when(blacklistedTokens.exists(String.format(BLACKLIST_FORMAT,BLACKLIST,accessToken))).thenReturn(Mono.just(true));
@@ -51,7 +51,7 @@ class AuthenticatorTest {
     }
 
     @Test
-    public void shouldReturnCallerWhenNotBlackListed() throws ParseException, JOSEException, BadJOSEException {
+    void shouldReturnCallerWhenNotBlackListed() throws ParseException, JOSEException, BadJOSEException {
         String accessToken = "accesstoken";
         String testUserName = "testuser";
         String testToken = String.format("%s %s","Bearer", accessToken);

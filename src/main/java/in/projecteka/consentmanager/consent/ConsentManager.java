@@ -459,7 +459,7 @@ public class ConsentManager {
                             .build();
                 })
                 .onErrorResume(ClientError.class, exception -> {
-                    logger.error(exception.getMessage(), exception);
+                    logger.error(exception.getError().getError().getMessage(), exception);
                     var consentArtefactResult = ConsentArtefactResult.builder()
                             .requestId(UUID.randomUUID())
                             .timestamp(LocalDateTime.now(ZoneOffset.UTC))
@@ -597,7 +597,7 @@ public class ConsentManager {
                 .filter(consentRequest -> !isConsentRequestExpired(consentRequest.getCreatedAt()))
                 .switchIfEmpty(Mono.defer(() -> processExpiredConsentRequestsForDeny(id).then(Mono.error(ClientError.consentRequestExpired()))))
                 .flatMap(consentRequest -> consentRequestRepository.updateStatus(id, DENIED)
-                        .then(consentRequestRepository.requestOf(id)))
+                        .thenReturn(consentRequest.toBuilder().status(DENIED).build()))
                 .flatMap(consentRequest -> broadcastConsentArtefacts(List.of(),
                         consentRequest.getRequestId(),
                         consentRequest.getStatus(),

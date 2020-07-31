@@ -10,6 +10,9 @@ import in.projecteka.consentmanager.clients.model.Type;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
+import in.projecteka.consentmanager.link.link.model.AuthzHipAction;
+import in.projecteka.consentmanager.link.link.model.Link;
+import in.projecteka.consentmanager.link.link.model.LinkRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.link.link.model.Links;
@@ -85,5 +88,17 @@ public class TestBuilders {
 
     public static PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder linkReferenceRequest() {
         return easyRandom.nextObject(PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder.class);
+    }
+
+    public static LinkRequest.LinkRequestBuilder linkRequest() {
+        return easyRandom.nextObject(LinkRequest.LinkRequestBuilder.class);
+    }
+
+    public static Link.LinkBuilder link() {
+        return easyRandom.nextObject(Link.LinkBuilder.class);
+    }
+
+    public static AuthzHipAction.AuthzHipActionBuilder linkHipAction() {
+        return easyRandom.nextObject(AuthzHipAction.AuthzHipActionBuilder.class);
     }
 }

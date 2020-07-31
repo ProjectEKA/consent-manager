@@ -47,6 +47,7 @@ import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
+import static in.projecteka.consentmanager.link.Constants.PATH_HIP_ADD_CONTEXTS;
 import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 import static in.projecteka.consentmanager.link.Constants.PATH_HIP_LINK_USER_AUTH_INIT;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
@@ -80,6 +81,7 @@ public class SecurityConfiguration {
             PATH_HEALTH_INFORMATION_REQUEST,
             PATH_HEALTH_INFORMATION_NOTIFY,
             PATH_HIP_CONSENT_ON_NOTIFY,
+            PATH_HIP_ADD_CONTEXTS,
             PATH_HIP_LINK_USER_AUTH_INIT
     };
 
@@ -102,6 +104,7 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HEALTH_INFORMATION_NOTIFY, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HEALTH_INFORMATION_ON_REQUEST, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_CONSENT_ON_NOTIFY, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_ADD_CONTEXTS, HttpMethod.POST));
 
         RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve",
                 HttpMethod.POST,

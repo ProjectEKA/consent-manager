@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.clients.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class CareContextRepresentation {
+    @NotNull
     private String referenceNumber;
     private String display;
 }

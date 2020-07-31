@@ -4,12 +4,14 @@ import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.common.DbOperation;
 import in.projecteka.consentmanager.common.DbOperationError;
+import in.projecteka.consentmanager.link.link.model.AuthzHipAction;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowIterator;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import lombok.SneakyThrows;
@@ -34,7 +36,7 @@ public class LinkRepository {
     private static final String SELECT_LINKED_CARE_CONTEXTS = "SELECT hip_id, patient FROM link WHERE " +
             "consent_manager_user_id=$1";
     private static final String INSERT_TO_LINK = "INSERT INTO link (hip_id, consent_manager_user_id, link_reference," +
-            "patient) VALUES ($1, $2, $3, $4)";
+            "patient, initiated_by) VALUES ($1, $2, $3, $4, $5)";
     private static final String INSERT_TO_LINK_REFERENCE = "INSERT INTO link_reference (patient_link_reference, " +
             "hip_id, request_id) VALUES ($1, $2, $3)";
     private static final String SELECT_HIP_ID_FROM_DISCOVERY = "SELECT hip_id FROM discovery_request WHERE " +
@@ -44,6 +46,12 @@ public class LinkRepository {
             "'referenceNumber' = $1";
     private static final String SELECT_LINK_REFRENCE = "SELECT patient_link_reference FROM link_reference WHERE " +
             "request_id=$1";
+    private static final String SELECT_HIP_AUTHZ_ACTION = "SELECT session_id, hip_id, patient_id, purpose, expiry, repeat, current_counter " +
+            "FROM authz_hip_actions " +
+            "WHERE session_id = $1 AND expiry > timezone('utc'::text, now())";
+    private static final String UPDATE_HIP_ACTION_COUNTER = "UPDATE authz_hip_actions SET current_counter = current_counter + 1 " +
+            "WHERE session_id=$1";
+
     private final PgPool dbClient;
 
     public LinkRepository(PgPool dbClient) {
@@ -99,9 +107,9 @@ public class LinkRepository {
     }
 
     public Mono<Void> insertToLink(String hipId, String consentManagerUserId, String linkRefNumber,
-                                   PatientRepresentation patient) {
+                                   PatientRepresentation patient, String initiatedBy) {
         return Mono.create(monoSink -> dbClient.preparedQuery(INSERT_TO_LINK)
-                .execute(Tuple.of(hipId, consentManagerUserId, linkRefNumber, new JsonObject(from(patient))),
+                .execute(Tuple.of(hipId, consentManagerUserId, linkRefNumber, new JsonObject(from(patient)), initiatedBy),
                         handler -> {
                             if (handler.failed()) {
                                 logger.error(handler.cause().getMessage(), handler.cause());
@@ -146,6 +154,47 @@ public class LinkRepository {
                                     .id(patientId)
                                     .links(linksList)
                                     .build());
+                        }));
+    }
+
+    public Mono<AuthzHipAction> getAuthzHipAction(String sessionId) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_HIP_AUTHZ_ACTION)
+                .execute(Tuple.of(sessionId),
+                        handler -> {
+                            if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
+                                monoSink.error(new DbOperationError());
+                                return;
+                            }
+                            RowIterator<Row> iterator = handler.result().iterator();
+                            if (!iterator.hasNext()) {
+                                monoSink.success();
+                                return;
+                            }
+                            Row result = iterator.next();
+                            var hipAction = AuthzHipAction.builder()
+                                    .sessionId(result.getString("session_id"))
+                                    .hipId(result.getString("hip_id"))
+                                    .patientId(result.getString("patient_id"))
+                                    .expiry(result.getLocalDateTime("expiry"))
+                                    .purpose(result.getString("purpose"))
+                                    .repeat(result.getInteger("repeat"))
+                                    .currentCounter(result.getInteger("current_counter"))
+                                    .build();
+                            monoSink.success(hipAction);
+                        }));
+    }
+
+    public Mono<Void> incrementHipActionCounter(String sessionId) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(UPDATE_HIP_ACTION_COUNTER)
+                .execute(Tuple.of(sessionId),
+                        updateHandler -> {
+                            if (updateHandler.failed()) {
+                                logger.error(updateHandler.cause().getMessage(), updateHandler.cause());
+                                monoSink.error(new Exception("Failed to update hip action counter. sessionId:" + sessionId));
+                                return;
+                            }
+                            monoSink.success();
                         }));
     }
 }

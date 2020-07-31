@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
+import in.projecteka.consentmanager.clients.properties.LinkTokenCacheProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -19,6 +20,7 @@ import in.projecteka.consentmanager.link.hip_link.UserAuthInitAction;
 import in.projecteka.consentmanager.link.hip_link.UserAuthentication;
 import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.link.link.LinkRepository;
+import in.projecteka.consentmanager.link.link.LinkTokenVerifier;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -27,6 +29,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.security.PublicKey;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
@@ -43,18 +46,26 @@ public class LinkConfiguration {
     }
 
     @Bean
+    public LinkTokenVerifier linkTokenVerifier(@Qualifier("keySigningPublicKey") PublicKey key,
+                                               LinkRepository linkRepository) {
+        return new LinkTokenVerifier(key, linkRepository);
+    }
+
+    @Bean
     public Link link(@Qualifier("customBuilder") WebClient.Builder builder,
                      LinkRepository linkRepository,
                      GatewayServiceProperties gatewayServiceProperties,
                      LinkServiceProperties serviceProperties,
-                     CacheAdapter<String, String> linkResults,
-                     ServiceAuthentication serviceAuthentication) {
+                     @Qualifier("linkResults") CacheAdapter<String, String> linkResults,
+                     ServiceAuthentication serviceAuthentication,
+                     LinkTokenVerifier linkTokenVerifier) {
         return new Link(
                 new LinkServiceClient(builder.build(), serviceAuthentication, gatewayServiceProperties),
                 linkRepository,
                 serviceAuthentication,
                 serviceProperties,
-                linkResults);
+                linkResults,
+                linkTokenVerifier);
     }
 
     @Bean
@@ -72,7 +83,7 @@ public class LinkConfiguration {
                                DiscoveryServiceClient discoveryServiceClient,
                                UserServiceClient userServiceClient,
                                LinkServiceProperties linkServiceProperties,
-                               CacheAdapter<String, String> linkResults) {
+                               @Qualifier("linkResults") CacheAdapter<String, String> linkResults) {
         return new Discovery(userServiceClient,
                 discoveryServiceClient,
                 discoveryRepository,
@@ -116,4 +127,5 @@ public class LinkConfiguration {
             ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
         return new RedisCacheAdapter(stringReactiveRedisOperations, 5);
     }
+    
 }

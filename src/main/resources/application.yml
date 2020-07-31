@@ -73,12 +73,15 @@ consentmanager:
     host: ${REDIS_HOST:localhost}
     port: ${REDIS_PORT:6379}
     password: ${REDIS_PASSWORD:password}
+    keep-alive-enabled: ${KEEP_ALIVE_ENABLED:false}
   listeners:
     maximumRetries: ${LISTENERS_MAXIMUM_RETRIES}
     # In milliseconds
     retryInterval: ${LISTENERS_RETRY_INTERVAL}
   nhsproperties:
     hiuid: ${NHS_HIU_ID:12342345}
+  linktokencache:
+    expiry: ${LINK_TOKEN_CACHE_EXPIRY:1440}
 spring:
   rabbitmq:
     host: ${RABBITMQ_HOST}

@@ -73,6 +73,7 @@ consentmanager:
     host: ${REDIS_HOST:localhost}
     port: ${REDIS_PORT:6379}
     password: ${REDIS_PASSWORD:password}
+    keep-alive-enabled: ${KEEP_ALIVE_ENABLED:false}
   listeners:
     maximumRetries: ${LISTENERS_MAXIMUM_RETRIES}
     # In milliseconds

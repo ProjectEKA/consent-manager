@@ -9,6 +9,8 @@ consentmanager:
   scheduler:
     consentExpiryCronExpr: "0 */1 * ? * *"
     consentRequestExpiryCronExpr: '0 0 0/12 ? * *'
+    consent-artefact-expiry-enabled: false
+    consent-request-expiry-enabled: false
   clientregistry:
     XAuthToken: dummy-auth-token
     clientId: dummy-client-id

@@ -25,6 +25,7 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -111,6 +112,7 @@ public class ConsentConfiguration {
     }
 
     @Bean
+    @ConditionalOnProperty(value = "${consent-manager.scheduler.consent-artefact-expiry-enabled}", havingValue = "true")
     public ConsentScheduler consentScheduler(
             ConsentArtefactRepository consentArtefactRepository,
             ConsentNotificationPublisher consentNotificationPublisher) {
@@ -118,6 +120,7 @@ public class ConsentConfiguration {
     }
 
     @Bean
+    @ConditionalOnProperty(value = "${consent-manager.scheduler.consent-request-expiry-enabled}", havingValue = "true")
     ConsentRequestScheduler consentRequestScheduler(ConsentRequestRepository repository,
                                                     ConsentServiceProperties consentServiceProperties,
                                                     ConsentNotificationPublisher consentNotificationPublisher) {

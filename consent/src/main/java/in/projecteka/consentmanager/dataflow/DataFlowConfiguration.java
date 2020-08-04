@@ -65,7 +65,7 @@ public class DataFlowConfiguration {
     }
 
     @Bean
-    public DataFlowRequestRepository dataRequestRepository(PgPool pgPool) {
+    public DataFlowRequestRepository dataRequestRepository(@Qualifier("readWriteClient") PgPool pgPool) {
         return new DataFlowRequestRepository(pgPool);
     }
 

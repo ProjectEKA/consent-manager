@@ -37,12 +37,13 @@ import java.security.PublicKey;
 public class ConsentConfiguration {
 
     @Bean
-    public ConsentRequestRepository consentRequestRepository(PgPool pgPool) {
-        return new ConsentRequestRepository(pgPool);
+    public ConsentRequestRepository consentRequestRepository(@Qualifier("readWriteClient") PgPool readWriteClient,
+                                                             @Qualifier("readOnlyClient") PgPool readOnlyClient) {
+        return new ConsentRequestRepository(readWriteClient, readOnlyClient);
     }
 
     @Bean
-    public ConsentArtefactRepository consentArtefactRepository(PgPool pgPool) {
+    public ConsentArtefactRepository consentArtefactRepository(@Qualifier("readWriteClient") PgPool pgPool) {
         return new ConsentArtefactRepository(pgPool);
     }
 

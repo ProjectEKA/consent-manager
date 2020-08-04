@@ -62,7 +62,14 @@ consentmanager:
     schema: ${CONSENT_MANAGER_DB_NAME}
     user: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
-    poolSize: 5
+    poolSize: ${MASTER_POOL_SIZE:5}
+    replica-read-enabled: {REPLICA_READ_ENABLED:false}
+    replica:
+      host: ${POSTGRES_HOST}
+      port: ${POSTGRES_PORT:5432}
+      user: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+      poolSize: ${REPLICA_POOL_SIZE:3}
   dataflow:
     consentmanager:
       url: ${CONSENT_MANAGER_URL}

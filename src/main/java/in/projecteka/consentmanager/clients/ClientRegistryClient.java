@@ -10,6 +10,7 @@ import static java.lang.String.format;
 
 public class ClientRegistryClient {
 
+    private static final String FR_PROVIDER_URL = "/api/2.0/organizations";
     private final WebClient webClient;
 
     public ClientRegistryClient(WebClient.Builder webClient, String baseUrl) {
@@ -19,7 +20,7 @@ public class ClientRegistryClient {
     public Flux<Provider> providersOf(String name) {
         return webClient
                 .get()
-                .uri(format("/api/2.0/providers?name=%s", name))
+                .uri(format(FR_PROVIDER_URL + "?name=%s", name))
                 .retrieve()
                 .bodyToFlux(Provider.class);
     }
@@ -27,7 +28,7 @@ public class ClientRegistryClient {
     public Mono<Provider> providerWith(String id) {
         return webClient
                 .get()
-                .uri(format("/api/2.0/providers/%s", id))
+                .uri(format(FR_PROVIDER_URL + "/%s", id))
                 .retrieve()
                 .onStatus(httpStatus -> httpStatus.value() == 404,
                         clientResponse -> Mono.error(ClientError.providerNotFound()))

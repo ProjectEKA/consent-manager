@@ -74,7 +74,7 @@ class ClientRegistryClientTest {
                 })
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://localhost:8000/api/2.0/providers?name=Max");
+        assertThat(captor.getValue().url().toString()).isEqualTo("http://localhost:8000/api/2.0/organizations?name=Max");
     }
 
     @Test
@@ -108,7 +108,7 @@ class ClientRegistryClientTest {
                 })
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://localhost:8000/api/2.0/providers/10000005");
+        assertThat(captor.getValue().url().toString()).isEqualTo("http://localhost:8000/api/2.0/organizations/10000005");
     }
 
     @Test
@@ -140,6 +140,6 @@ class ClientRegistryClientTest {
                 })
                 .verifyComplete();
 
-        assertThat(captor.getValue().url().toString()).isEqualTo("http://localhost:8000/api/2.0/providers/10000003");
+        assertThat(captor.getValue().url().toString()).isEqualTo("http://localhost:8000/api/2.0/organizations/10000003");
     }
 }

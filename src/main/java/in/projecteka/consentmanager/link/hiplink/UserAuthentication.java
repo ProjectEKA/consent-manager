@@ -1,6 +1,6 @@
-package in.projecteka.consentmanager.link.hip_link;
+package in.projecteka.consentmanager.link.hiplink;
 
-import in.projecteka.consentmanager.link.hip_link.model.request.AuthInitRequest;
+import in.projecteka.consentmanager.link.hiplink.model.request.AuthInitRequest;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

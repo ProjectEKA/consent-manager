@@ -88,7 +88,6 @@ import static in.projecteka.consentmanager.common.Constants.EXCHANGE;
 import static in.projecteka.consentmanager.common.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.common.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
 import static in.projecteka.consentmanager.common.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
-import static io.lettuce.core.ReadFrom.REPLICA_PREFERRED;
 
 @Configuration
 public class ConsentManagerConfiguration {
@@ -348,7 +347,7 @@ public class ConsentManagerConfiguration {
     ReactiveRedisConnectionFactory redisConnection(RedisOptions redisOptions) {
         var socketOptions = SocketOptions.builder().keepAlive(redisOptions.isKeepAliveEnabled()).build();
         var clientConfiguration = LettuceClientConfiguration.builder()
-                .readFrom(REPLICA_PREFERRED)
+                .readFrom(redisOptions.getReadFrom())
                 .clientOptions(ClientOptions.builder().socketOptions(socketOptions).build())
                 .build();
         var configuration = new RedisStandaloneConfiguration(redisOptions.getHost(), redisOptions.getPort());

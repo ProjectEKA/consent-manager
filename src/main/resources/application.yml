@@ -76,6 +76,7 @@ consentmanager:
     port: ${REDIS_PORT:6379}
     password: ${REDIS_PASSWORD:password}
     keep-alive-enabled: ${KEEP_ALIVE_ENABLED:false}
+    read-from: ${READ_FROM:UPSTREAM}
   listeners:
     maximumRetries: ${LISTENERS_MAXIMUM_RETRIES}
     # In milliseconds

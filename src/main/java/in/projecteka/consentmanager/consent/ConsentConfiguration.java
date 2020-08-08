@@ -112,7 +112,9 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "${consent-manager.scheduler.consent-artefact-expiry-enabled}", havingValue = "true")
+    @ConditionalOnProperty(prefix = "consentmanager.scheduler",
+            value = "consent-artefact-expiry-enabled",
+            havingValue = "true")
     public ConsentScheduler consentScheduler(
             ConsentArtefactRepository consentArtefactRepository,
             ConsentNotificationPublisher consentNotificationPublisher) {
@@ -120,7 +122,9 @@ public class ConsentConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "${consent-manager.scheduler.consent-request-expiry-enabled}", havingValue = "true")
+    @ConditionalOnProperty(prefix = "consentmanager.scheduler",
+            value = "consent-request-expiry-enabled",
+            havingValue = "true")
     ConsentRequestScheduler consentRequestScheduler(ConsentRequestRepository repository,
                                                     ConsentServiceProperties consentServiceProperties,
                                                     ConsentNotificationPublisher consentNotificationPublisher) {

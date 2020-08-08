@@ -11,6 +11,7 @@ import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisOptions;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -101,15 +102,18 @@ public class UserConfiguration {
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"unverifiedSessions", "verifiedSessions", "blockListedTokens", "usedTokens"})
     public CacheAdapter<String, String> createRedisCacheAdapter(
-            ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
-        return new RedisCacheAdapter(stringReactiveRedisOperations, 5);
+            ReactiveRedisOperations<String, String> stringReactiveRedisOperations,
+            RedisOptions redisOptions) {
+        return new RedisCacheAdapter(stringReactiveRedisOperations, 5, redisOptions.getRetry());
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"dayCache"})
     public CacheAdapter<String, String> createDayRedisCacheAdapter(
-            ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
-        return new RedisCacheAdapter(stringReactiveRedisOperations, 24 * 60);
+            ReactiveRedisOperations<String, String> stringReactiveRedisOperations,
+            RedisOptions redisOptions) {
+        return new RedisCacheAdapter(stringReactiveRedisOperations, 24 * 60,
+                redisOptions.getRetry());
     }
 
     @Bean

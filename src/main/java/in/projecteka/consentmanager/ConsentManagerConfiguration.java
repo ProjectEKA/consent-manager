@@ -123,8 +123,10 @@ public class ConsentManagerConfiguration {
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"accessToken"})
     public CacheAdapter<String, String> createRedisCacheAdapter(
-            ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
-        return new RedisCacheAdapter(stringReactiveRedisOperations, 5);
+            ReactiveRedisOperations<String, String> stringReactiveRedisOperations,
+            RedisOptions redisOptions) {
+        return new RedisCacheAdapter(stringReactiveRedisOperations, 5,
+                redisOptions.getRetry());
     }
 
     @Bean
@@ -338,8 +340,9 @@ public class ConsentManagerConfiguration {
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"cacheForReplayAttack"})
     public CacheAdapter<String, LocalDateTime> createRedisCacheAdapterForReplayAttack(
-            ReactiveRedisOperations<String, LocalDateTime> localDateTimeOps) {
-        return new RedisGenericAdapter<>(localDateTimeOps, 10);
+            ReactiveRedisOperations<String, LocalDateTime> localDateTimeOps,
+            RedisOptions redisOptions) {
+        return new RedisGenericAdapter<>(localDateTimeOps, 10, redisOptions.getRetry());
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")

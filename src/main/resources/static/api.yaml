@@ -1972,8 +1972,6 @@ paths:
       summary: Api for getting the public key for verifying signature
       description: >
         This API is called by HIPs to get public key to verify signature.
-      parameters:
-        - $ref: "#/components/parameters/authorization"
       responses:
         '200':
           description:
@@ -1985,28 +1983,6 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/KeyDetail'
-        '400':
-          description: >
-            **Causes:**
-              * token is not provided or invalid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: >
-            **Causes:**
-              * Unauthorized request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: >
             **Causes:**

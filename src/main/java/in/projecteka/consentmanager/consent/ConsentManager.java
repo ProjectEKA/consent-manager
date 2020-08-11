@@ -69,6 +69,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUE
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_HITYPE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PURPOSE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_STATE;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.UNABLE_TO_PARSE_KEY;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
@@ -79,6 +80,7 @@ import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @AllArgsConstructor
@@ -134,20 +136,25 @@ public class ConsentManager {
     }
 
     public Mono<CertResponse> getCert(){
-        RSAPublicKey publicKey  = (RSAPublicKey)(keyPair.getPublic());
-        var publicKeyModulus = publicKey.getModulus();
-        var publicKeyExponent  = publicKey.getPublicExponent();
-        CertDetails certDetails = CertDetails.builder()
-                .alg(publicKey.getAlgorithm())
-                .e(Base64.getUrlEncoder().encodeToString(publicKeyExponent.toByteArray()))
-                .fmt(publicKey.getFormat())
-                .kty(publicKey.getAlgorithm())
-                .n(Base64.getUrlEncoder().encodeToString(publicKeyModulus.toByteArray()))
-                .publicKey(Base64.getEncoder().encodeToString(publicKey.getEncoded()))
-                .startDate("2020-01-01:00:00:00Z")
-                .use("sign")
-                .build();
-        return Mono.just(CertResponse.builder().key(certDetails).build());
+        try {
+            RSAPublicKey publicKey  = (RSAPublicKey)(keyPair.getPublic());
+            var publicKeyModulus = publicKey.getModulus();
+            var publicKeyExponent  = publicKey.getPublicExponent();
+            CertDetails certDetails = CertDetails.builder()
+                    .alg(publicKey.getAlgorithm())
+                    .e(Base64.getUrlEncoder().encodeToString(publicKeyExponent.toByteArray()))
+                    .fmt(publicKey.getFormat())
+                    .kty(publicKey.getAlgorithm())
+                    .n(Base64.getUrlEncoder().encodeToString(publicKeyModulus.toByteArray()))
+                    .publicKey(Base64.getEncoder().encodeToString(publicKey.getEncoded()))
+                    .startDate("2020-01-01:00:00:00Z")
+                    .use("sign")
+                    .build();
+            return Mono.just(CertResponse.builder().key(certDetails).build());
+        }catch (Exception e){
+            return Mono.error(new ClientError(INTERNAL_SERVER_ERROR,
+                    new ErrorRepresentation(new Error(UNABLE_TO_PARSE_KEY, "Unable to parse public key"))));
+        }
     }
 
     private Mono<Void> broadcastConsentRequest(RequestedDetail requestedDetail, UUID requestId){

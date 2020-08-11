@@ -8,6 +8,8 @@ import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.CMReference;
+import in.projecteka.consentmanager.consent.model.CertDetails;
+import in.projecteka.consentmanager.consent.model.CertResponse;
 import in.projecteka.consentmanager.consent.model.Consent;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
@@ -52,6 +54,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignedObject;
+import java.security.interfaces.RSAPublicKey;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
@@ -128,6 +131,23 @@ public class ConsentManager {
                         .then(validateHIPAndHIU(requestedDetail))
                         .then(saveConsentRequest(requestedDetail, requestId))
                         .then(broadcastConsentRequest(requestedDetail, requestId)));
+    }
+
+    public Mono<CertResponse> getCert(){
+        RSAPublicKey publicKey  = (RSAPublicKey)(keyPair.getPublic());
+        var publicKeyModulus = publicKey.getModulus();
+        var publicKeyExponent  = publicKey.getPublicExponent();
+        CertDetails certDetails = CertDetails.builder()
+                .alg(publicKey.getAlgorithm())
+                .e(Base64.getUrlEncoder().encodeToString(publicKeyExponent.toByteArray()))
+                .fmt(publicKey.getFormat())
+                .kty(publicKey.getAlgorithm())
+                .n(Base64.getUrlEncoder().encodeToString(publicKeyModulus.toByteArray()))
+                .publicKey(Base64.getEncoder().encodeToString(publicKey.getEncoded()))
+                .startDate("2020-01-01:00:00:00Z")
+                .use("sign")
+                .build();
+        return Mono.just(CertResponse.builder().key(certDetails).build());
     }
 
     private Mono<Void> broadcastConsentRequest(RequestedDetail requestedDetail, UUID requestId){

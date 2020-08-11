@@ -1979,10 +1979,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/KeyDetail'
+                $ref: '#/components/schemas/KeyResponse'
             application/xml:
               schema:
-                $ref: '#/components/schemas/KeyDetail'
+                $ref: '#/components/schemas/KeyResponse'
         '500':
           description: >
             **Causes:**
@@ -3197,25 +3197,19 @@ components:
         - username
         - otp
         - sessionId
+    KeyResponse:
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/KeyDetail'
+          xml:
+            wrapped: true
     KeyDetail:
       type: object
       properties:
-        key:
-          type: object
-          properties:
-            kty:
-              type: string
-            alg:
-              type: string
-            use:
-              type: string
-            n:
-              type: string
-            e:
-              type: string
-            fmt:
-              type: string
-            publicKey:
-              type: string
-            startDate:
-              type: string
+        startDate:
+          type: string
+        publicKey:
+          type: string

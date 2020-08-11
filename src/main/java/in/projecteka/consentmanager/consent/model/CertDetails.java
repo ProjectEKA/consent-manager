@@ -12,12 +12,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CertDetails {
-    private String kty;
-    private String alg;
-    private String use;
-    private String n;
-    private String e;
-    private String fmt;
     private String publicKey;
     private String startDate;
 }

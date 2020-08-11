@@ -54,9 +54,9 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignedObject;
-import java.security.interfaces.RSAPublicKey;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -137,20 +137,13 @@ public class ConsentManager {
 
     public Mono<CertResponse> getCert(){
         try {
-            RSAPublicKey publicKey  = (RSAPublicKey)(keyPair.getPublic());
-            var publicKeyModulus = publicKey.getModulus();
-            var publicKeyExponent  = publicKey.getPublicExponent();
             CertDetails certDetails = CertDetails.builder()
-                    .alg(publicKey.getAlgorithm())
-                    .e(Base64.getUrlEncoder().encodeToString(publicKeyExponent.toByteArray()))
-                    .fmt(publicKey.getFormat())
-                    .kty(publicKey.getAlgorithm())
-                    .n(Base64.getUrlEncoder().encodeToString(publicKeyModulus.toByteArray()))
-                    .publicKey(Base64.getEncoder().encodeToString(publicKey.getEncoded()))
+                    .publicKey(Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded()))
                     .startDate("2020-01-01:00:00:00Z")
-                    .use("sign")
                     .build();
-            return Mono.just(CertResponse.builder().key(certDetails).build());
+            var keys = new ArrayList<CertDetails>();
+            keys.add(certDetails);
+            return Mono.just(CertResponse.builder().keys(keys).build());
         }catch (Exception e){
             return Mono.error(new ClientError(INTERNAL_SERVER_ERROR,
                     new ErrorRepresentation(new Error(UNABLE_TO_PARSE_KEY, "Unable to parse public key"))));

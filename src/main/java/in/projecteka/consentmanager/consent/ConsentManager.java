@@ -8,6 +8,8 @@ import in.projecteka.consentmanager.clients.model.Error;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.CMReference;
+import in.projecteka.consentmanager.consent.model.CertDetails;
+import in.projecteka.consentmanager.consent.model.CertResponse;
 import in.projecteka.consentmanager.consent.model.Consent;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
@@ -54,6 +56,7 @@ import java.security.Signature;
 import java.security.SignedObject;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -66,6 +69,7 @@ import static in.projecteka.consentmanager.clients.model.ErrorCode.CONSENT_REQUE
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_HITYPE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_PURPOSE;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_STATE;
+import static in.projecteka.consentmanager.clients.model.ErrorCode.UNABLE_TO_PARSE_KEY;
 import static in.projecteka.consentmanager.clients.model.ErrorCode.USER_NOT_FOUND;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
@@ -76,6 +80,7 @@ import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @AllArgsConstructor
@@ -128,6 +133,21 @@ public class ConsentManager {
                         .then(validateHIPAndHIU(requestedDetail))
                         .then(saveConsentRequest(requestedDetail, requestId))
                         .then(broadcastConsentRequest(requestedDetail, requestId)));
+    }
+
+    public Mono<CertResponse> getCert(){
+        try {
+            CertDetails certDetails = CertDetails.builder()
+                    .publicKey(Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded()))
+                    .startDate("2020-01-01:00:00:00Z")
+                    .build();
+            var keys = new ArrayList<CertDetails>();
+            keys.add(certDetails);
+            return Mono.just(CertResponse.builder().keys(keys).build());
+        }catch (Exception e){
+            return Mono.error(new ClientError(INTERNAL_SERVER_ERROR,
+                    new ErrorRepresentation(new Error(UNABLE_TO_PARSE_KEY, "Unable to parse public key"))));
+        }
     }
 
     private Mono<Void> broadcastConsentRequest(RequestedDetail requestedDetail, UUID requestId){

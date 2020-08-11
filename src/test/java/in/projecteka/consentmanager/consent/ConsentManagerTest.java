@@ -480,7 +480,8 @@ class ConsentManagerTest {
         var certResponse = certResponse().build();
         StepVerifier.create(consentManager.getCert())
                 .assertNext(response -> {
-                    response.equals(certResponse);
+                    assertThat(response.getKeys().contains(certResponse));
+                    assertThat(response.getKeys().size()).isEqualTo(1);
                 })
                 .verifyComplete();
     }

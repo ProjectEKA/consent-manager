@@ -61,10 +61,13 @@ public class DataFlowRequester {
 
     public Mono<Void> requestHealthDataInfo(GatewayDataFlowRequest dataFlowRequest) {
         final UUID transactionId = UUID.randomUUID();
+        final UUID gatewayRequestId = dataFlowRequest.getRequestId();
+        logger.info("[DataFlowRequester] Received data flow request for Gateway requestId={}", gatewayRequestId);
         AtomicReference<String> hiuId = new AtomicReference<>("");
         return fetchConsentArtefact(dataFlowRequest.getHiRequest().getConsent().getId())
                 .flatMap(caRep -> {
                     if(caRep == null) {
+                        logger.info("[DataFlowRequester] No consent artefact found for Gateway requestId={}", gatewayRequestId);
                         return Mono.error(ClientError.consentArtefactNotFound());
                     }
                     if(caRep.getConsentDetail() != null
@@ -83,6 +86,8 @@ public class DataFlowRequester {
                             .transactionId(transactionId)
                             .sessionStatus(REQUESTED)
                             .build();
+                    logger.info("[DataFlowRequester] Building Data flow request result for Gateway " +
+                            "requestId={} with transactionId={}", gatewayRequestId, transactionId);
                     return DataFlowRequestResult.builder()
                             .requestId(UUID.randomUUID())
                             .timestamp(LocalDateTime.now())
@@ -93,6 +98,8 @@ public class DataFlowRequester {
                             .build();
                 })
                 .onErrorResume(ClientError.class, exception -> {
+                    logger.info("[DataFlowRequester] Building Data flow request error response for Gateway " +
+                            "requestId={}", gatewayRequestId);
                     var dataFlowRequestResult = DataFlowRequestResult.builder()
                             .requestId(UUID.randomUUID())
                             .timestamp(LocalDateTime.now())
@@ -107,6 +114,8 @@ public class DataFlowRequester {
     }
 
     private Mono<Void> sendHealthInformationResponseToGateway(DataFlowRequestResult dataFlowRequest, String hiuId) {
+        logger.info("[DataFlowRequester] About to send data flow request response for gateway " +
+                "requestId={}", dataFlowRequest.getResp().getRequestId());
         return dataFlowRequestClient.sendHealthInformationResponseToGateway(dataFlowRequest, hiuId);
     }
 

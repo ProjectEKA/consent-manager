@@ -71,7 +71,6 @@ import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClient.Builder;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
 
@@ -139,7 +138,7 @@ public class ConsentManagerConfiguration {
 
     @Bean
     public ServiceAuthenticationClient serviceAuthenticationClient(
-            @Qualifier("customBuilder") Builder webClientBuilder,
+            @Qualifier("customBuilder") WebClient.Builder webClientBuilder,
             GatewayServiceProperties gatewayServiceProperties) {
         return new ServiceAuthenticationClient(webClientBuilder, gatewayServiceProperties.getBaseUrl());
     }
@@ -152,7 +151,7 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public ClientRegistryClient clientRegistryClient(@Qualifier("customBuilder") Builder builder,
+    public ClientRegistryClient clientRegistryClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                      ClientRegistryProperties clientRegistryProperties) {
         return new ClientRegistryClient(builder, clientRegistryProperties.getUrl());
     }
@@ -272,7 +271,7 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean("customBuilder")
-    public Builder webClient(final ClientHttpConnector clientHttpConnector, ObjectMapper objectMapper) {
+    public WebClient.Builder webClient(final ClientHttpConnector clientHttpConnector, ObjectMapper objectMapper) {
         return WebClient
                 .builder()
                 .exchangeStrategies(exchangeStrategies(objectMapper))
@@ -292,7 +291,7 @@ public class ConsentManagerConfiguration {
 
     @Bean
     public UserServiceClient userServiceClient(
-            @Qualifier("customBuilder") Builder builder,
+            @Qualifier("customBuilder") WebClient.Builder builder,
             UserServiceProperties userServiceProperties,
             IdentityService identityService,
             GatewayServiceProperties gatewayServiceProperties,
@@ -307,7 +306,7 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public OtpServiceClient otpServiceClient(@Qualifier("customBuilder") Builder builder,
+    public OtpServiceClient otpServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                              OtpServiceProperties otpServiceProperties) {
         return new OtpServiceClient(builder, otpServiceProperties.getUrl());
     }

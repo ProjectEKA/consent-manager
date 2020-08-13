@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.ErrorMap;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.Error;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Provider;
@@ -23,6 +24,7 @@ import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -79,7 +81,7 @@ public class Discovery {
                         .timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
                         .responseFrom(discard -> Mono.defer(() -> discoveryResults.get(requestId.toString()))))
                 .onErrorResume(DelayTimeoutException.class, discard -> Mono.error(ClientError.gatewayTimeOut()))
-                .flatMap(response -> tryTo(response, DiscoveryResult.class).map(Mono::just).orElse(Mono.empty()))
+                .flatMap(response -> tryTo(response, DiscoveryResult.class).map(Mono::just).orElse(Mono.error(invalidResponseFromHIP())))
                 .switchIfEmpty(Mono.error(invalidResponseFromHIP()))
                 .flatMap(discoveryResult -> {
                     if (discoveryResult.getError() != null) {
@@ -111,12 +113,60 @@ public class Discovery {
 	}
 
     public Mono<Void> onDiscoverPatientCareContexts(DiscoveryResult discoveryResult) {
+        if (discoveryResult.getPatient() == null){
+            logger.error("[Discovery] Received a discovery response from Gateway without patient details for requestId.{} with error {}",
+                    discoveryResult.getRequestId(), getDiscoveryError(discoveryResult));
+            return handleDiscoveryError(discoveryResult.getResp().getRequestId(), "Patient Details not found");
+        }
+
+        if (StringUtils.isEmpty(discoveryResult.getPatient().getReferenceNumber())){
+            logger.error("[Discovery] Received a discovery response from Gateway without blank patient reference for requestId.{} with error {}",
+                    discoveryResult.getRequestId(), getDiscoveryError(discoveryResult));
+            return handleDiscoveryError(discoveryResult.getResp().getRequestId(), "Patient Reference should not be blank");
+        }
+
+        if (discoveryResult.getPatient().getCareContexts() == null){
+            logger.error("[Discovery] Received a discovery response from Gateway with care contexts as null for requestId.{}  with error {}",
+                    discoveryResult.getRequestId(), getDiscoveryError(discoveryResult));
+            return handleDiscoveryError(discoveryResult.getResp().getRequestId(), "Care contexts should not be null");
+        }
+
+        if (hasEmptyCareContextReferences(discoveryResult)){
+            logger.error("[Discovery] Received a discovery response from Gateway with invalid care context references for requestId.{} with error {}",
+                    discoveryResult.getRequestId(), getDiscoveryError(discoveryResult));
+            return handleDiscoveryError(discoveryResult.getResp().getRequestId(), "All the care contexts should have valid references");
+        }
+
         if (discoveryResult.hasResponseId()) {
             return discoveryResults.put(discoveryResult.getResp().getRequestId(), from(discoveryResult));
         }
         logger.error("[Discovery] Received a discovery response from Gateway without original request Id mentioned.{}",
                 discoveryResult.getRequestId());
         return Mono.error(ClientError.unprocessableEntity());
+    }
+
+    private String getDiscoveryError(DiscoveryResult discoveryResult) {
+        return discoveryResult.getError() != null ? discoveryResult.getError().getMessage() : "";
+    }
+
+    private Mono<Void> handleDiscoveryError(String requestId, String errorMessage) {
+        DiscoveryResult errorDiscovery = DiscoveryResult.builder()
+                .error(RespError.builder()
+                        .code(ErrorCode.INVALID_DISCOVERY.getValue())
+                        .message("Could not find the user details")
+                        .build())
+                .build();
+
+        return discoveryResults
+                .put(requestId, from(errorDiscovery))
+                .then(Mono.error(ClientError.invalidDiscovery(errorMessage)));
+    }
+
+    private boolean hasEmptyCareContextReferences(DiscoveryResult discoveryResult) {
+        return discoveryResult.getPatient().getCareContexts().stream()
+                .anyMatch(
+                        careContext -> StringUtils.isEmpty(careContext.getReferenceNumber())
+                );
     }
 
     private long getExpectedFlowResponseDuration() {

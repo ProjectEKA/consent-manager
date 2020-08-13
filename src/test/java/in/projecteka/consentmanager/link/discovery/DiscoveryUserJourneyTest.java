@@ -59,6 +59,7 @@ import java.util.stream.Stream;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.patient;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -423,7 +424,7 @@ class DiscoveryUserJourneyTest {
                 .build();
         var patientDiscoveryResult = DiscoveryResult.builder()
                 .requestId(UUID.randomUUID())
-                .patient(null)
+                .patient(patient().build())
                 .error(error)
                 .resp(gatewayResponse)
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))

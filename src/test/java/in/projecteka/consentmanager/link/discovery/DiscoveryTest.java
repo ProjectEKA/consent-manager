@@ -4,11 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.Serializer;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifierType;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.CareContext;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.user.model.PatientName;
@@ -25,16 +29,23 @@ import java.util.UUID;
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResponse;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResult;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.identifier;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.patient;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientIdentifierBuilder;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientInResponse;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.telecom;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.user;
+import static java.util.Arrays.asList;
 import static java.util.List.of;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -58,20 +69,22 @@ class DiscoveryTest {
     @Mock
     CacheAdapter<String, String> discoveryResults;
 
+    private Discovery discovery;
+
     @BeforeEach
     void setUp() {
         initMocks(this);
-    }
-
-    @Test
-    void returnProvidersWithOfficial() {
-        var discovery = new Discovery(
+        discovery = new Discovery(
                 userServiceClient,
                 discoveryServiceClient,
                 discoveryRepository,
                 centralRegistry,
                 linkServiceProperties,
                 discoveryResults);
+    }
+
+    @Test
+    void returnProvidersWithOfficial() {
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var identifier = identifier().use(
@@ -96,13 +109,6 @@ class DiscoveryTest {
         String userName = "1";
         var transactionId = UUID.randomUUID();
         var requestId = UUID.randomUUID();
-        var discovery = new Discovery(
-                userServiceClient,
-                discoveryServiceClient,
-                discoveryRepository,
-                centralRegistry,
-                linkServiceProperties,
-                discoveryResults);
 
         when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.just(transactionId.toString()));
 
@@ -119,13 +125,6 @@ class DiscoveryTest {
 
     @Test
     void returnEmptyProvidersWhenOfficialIdentifierIsUnavailable() {
-        var discovery = new Discovery(
-                userServiceClient,
-                discoveryServiceClient,
-                discoveryRepository,
-                centralRegistry,
-                linkServiceProperties,
-                discoveryResults);
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
         var identifier = identifier().build();
@@ -177,16 +176,173 @@ class DiscoveryTest {
                 .patient(patientInResponse)
                 .transactionId(transactionId)
                 .build();
-        var discovery = new Discovery(userServiceClient,
-                discoveryServiceClient,
-                discoveryRepository,
-                centralRegistry,
-                linkServiceProperties,
-                discoveryResults);
         StepVerifier.create(
                 discovery.patientInHIP(patientId, unverifiedIdentifiers, hipId, transactionId, requestId)
                         .subscriberContext(cxt -> cxt.put(AUTHORIZATION, string())))
                 .expectNext(discoveryResponse)
                 .verifyComplete();
+    }
+
+    @Test
+    void shouldGiveErrorIfThereWasErrorInPatientDiscovery() throws JsonProcessingException {
+        var hipId = string();
+        var transactionId = UUID.randomUUID();
+        var requestId = UUID.randomUUID();
+        var patientId = string();
+        PatientName name = PatientName.builder().first("first name").middle(null).last(null).build();
+        var user = user().identifier("1").name(name).phone("+91-9999999999").build();
+        PatientIdentifier ncp1008 = patientIdentifierBuilder().type(PatientIdentifierType.MR).value("NCP1008").build();
+        var unverifiedIdentifiers = Collections.singletonList(ncp1008);
+
+        DiscoveryResult discoveryResult = DiscoveryResult.builder()
+                .error(RespError
+                        .builder()
+                        .code(ErrorCode.INVALID_DISCOVERY.getValue())
+                        .message("Patient Not Found")
+                        .build())
+                .build();
+
+        String errorInDiscovery = OBJECT_MAPPER.writeValueAsString(discoveryResult);
+        when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.empty());
+        when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
+        when(discoveryServiceClient.requestPatientFor(any(), eq(hipId)))
+                .thenReturn(Mono.just(true));
+        when(discoveryResults.get(requestId.toString())).thenReturn(Mono.just(errorInDiscovery));
+        when(discoveryRepository.insert(hipId, patientId, transactionId, requestId)).thenReturn(Mono.empty());
+
+        StepVerifier.create(
+                discovery.patientInHIP(patientId, unverifiedIdentifiers, hipId, transactionId, requestId)
+                        .subscriberContext(cxt -> cxt.put(AUTHORIZATION, string())))
+                .expectErrorMatches(
+                        err -> err instanceof ClientError &&
+                                ((ClientError) err).getError().getError().getMessage().equals("Patient Not Found")
+                ).verify();
+    }
+
+    @Test
+    void shouldPutDiscoveryResultInTheCache() {
+        DiscoveryResult discoveryResult = discoveryResult().build();
+
+        when(discoveryResults.put(anyString(), anyString())).thenReturn(Mono.empty());
+        StepVerifier.create(
+                discovery.onDiscoverPatientCareContexts(discoveryResult)
+        ).verifyComplete();
+
+        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), Serializer.from(discoveryResult));
+    }
+
+    @Test
+    void shouldGiveErrorWhenInvalidRequestId() {
+        DiscoveryResult discoveryResult = discoveryResult().resp(null).build();
+
+        when(discoveryResults.put(anyString(), anyString())).thenReturn(Mono.empty());
+        StepVerifier.create(
+                discovery.onDiscoverPatientCareContexts(discoveryResult)
+        ).expectError(ClientError.class).verify();
+
+        verify(discoveryResults, never()).put(anyString(), anyString());
+    }
+
+    @Test
+    void shouldGiveErrorWhenDiscoveryDoesNotHavePatient() {
+        DiscoveryResult discoveryResult = discoveryResult().patient(null).build();
+        DiscoveryResult errorDiscovery = DiscoveryResult.builder()
+                .error(RespError.builder()
+                        .code(ErrorCode.INVALID_DISCOVERY.getValue())
+                        .message("Could not find the user details")
+                        .build())
+                .build();
+
+
+        when(discoveryResults.put(anyString(), anyString())).thenReturn(Mono.empty());
+        StepVerifier.create(
+                discovery.onDiscoverPatientCareContexts(discoveryResult)
+        ).expectErrorMatches(err -> err instanceof ClientError &&
+                ((ClientError) err).getError().getError().getMessage().equals("Patient Details not found")).verify();
+
+        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), Serializer.from(errorDiscovery));
+    }
+
+    @Test
+    void shouldGiveErrorWhenDiscoveryPatientReferenceIsEmpty() {
+        DiscoveryResult discoveryResult = discoveryResult().patient(
+                patient().referenceNumber(null).build())
+                .build();
+
+        DiscoveryResult errorDiscovery = DiscoveryResult.builder()
+                .error(RespError.builder()
+                        .code(ErrorCode.INVALID_DISCOVERY.getValue())
+                        .message("Could not find the user details")
+                        .build())
+                .build();
+
+        when(discoveryResults.put(anyString(), anyString())).thenReturn(Mono.empty());
+        StepVerifier.create(
+                discovery.onDiscoverPatientCareContexts(discoveryResult)
+        ).expectErrorMatches(err -> err instanceof ClientError &&
+                ((ClientError) err).getError().getError().getMessage().equals("Patient Reference should not be blank")).verify();
+
+        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), Serializer.from(errorDiscovery));
+    }
+
+    @Test
+    void shouldGiveErrorWhenDiscoveryCareContextIsNull() {
+        DiscoveryResult discoveryResult = discoveryResult().patient(
+                patient().careContexts(null).build())
+                .build();
+
+        DiscoveryResult errorDiscovery = DiscoveryResult.builder()
+                .error(RespError.builder()
+                        .code(ErrorCode.INVALID_DISCOVERY.getValue())
+                        .message("Could not find the user details")
+                        .build())
+                .build();
+
+        when(discoveryResults.put(anyString(), anyString())).thenReturn(Mono.empty());
+        StepVerifier.create(
+                discovery.onDiscoverPatientCareContexts(discoveryResult)
+        ).expectErrorMatches(err -> err instanceof ClientError &&
+                ((ClientError) err).getError().getError().getMessage().equals("Care contexts should not be null")).verify();
+
+        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), Serializer.from(errorDiscovery));
+    }
+
+    @Test
+    void shouldGiveErrorWhenOneOfTheCareContextsReferencesIsEmpty() {
+        CareContext careContext1 = CareContext.builder().referenceNumber("ABC123").build();
+        CareContext careContext2 = CareContext.builder().referenceNumber("").build();
+
+        DiscoveryResult discoveryResult = discoveryResult().patient(
+                patient().careContexts(asList(careContext1, careContext2)).build())
+                .build();
+
+        DiscoveryResult errorDiscovery = DiscoveryResult.builder()
+                .error(RespError.builder()
+                        .code(ErrorCode.INVALID_DISCOVERY.getValue())
+                        .message("Could not find the user details")
+                        .build())
+                .build();
+
+        when(discoveryResults.put(anyString(), anyString())).thenReturn(Mono.empty());
+        StepVerifier.create(
+                discovery.onDiscoverPatientCareContexts(discoveryResult)
+        ).expectErrorMatches(err -> err instanceof ClientError &&
+                ((ClientError) err).getError().getError().getMessage().equals("All the care contexts should have valid references")).verify();
+
+        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), Serializer.from(errorDiscovery));
+    }
+
+    @Test
+    void shouldNotThrowErrorWhenCareContextIsEmptyList() {
+        DiscoveryResult discoveryResult = discoveryResult().patient(
+                patient().careContexts(Collections.emptyList()).build())
+                .build();
+
+        when(discoveryResults.put(anyString(), anyString())).thenReturn(Mono.empty());
+        StepVerifier.create(
+                discovery.onDiscoverPatientCareContexts(discoveryResult)
+        ).verifyComplete();
+
+        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), Serializer.from(discoveryResult));
     }
 }

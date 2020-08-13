@@ -190,6 +190,7 @@ class DataFlowRequesterUserJourneyTest {
     @Test
     void shouldThrowConsentArtefactExpired() throws IOException {
         String token = string();
+        var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         var hiuId = "10000005";
         var dataFlowRequest = dataFlowRequest()
                 .dateRange(DateRange.builder()
@@ -213,7 +214,9 @@ class DataFlowRequesterUserJourneyTest {
                 new MockResponse()
                         .setHeader("Content-Type", "application/json")
                         .setBody(consentArtefactRepresentationJson));
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
+        identityServer.enqueue(new MockResponse()
+                .setHeader("Content-Type", "application/json")
+                .setBody(session));
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
         when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
                 .thenReturn(Mono.empty());

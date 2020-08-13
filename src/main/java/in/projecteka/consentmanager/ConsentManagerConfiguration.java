@@ -5,6 +5,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.nimbusds.jose.jwk.JWKSet;
+import in.projecteka.consentmanager.DestinationsConfig.DestinationInfo;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
@@ -61,6 +62,7 @@ import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.RedisSerializationContext.RedisSerializationContextBuilder;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -69,6 +71,7 @@ import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClient.Builder;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
 
@@ -136,7 +139,7 @@ public class ConsentManagerConfiguration {
 
     @Bean
     public ServiceAuthenticationClient serviceAuthenticationClient(
-            @Qualifier("customBuilder") WebClient.Builder webClientBuilder,
+            @Qualifier("customBuilder") Builder webClientBuilder,
             GatewayServiceProperties gatewayServiceProperties) {
         return new ServiceAuthenticationClient(webClientBuilder, gatewayServiceProperties.getBaseUrl());
     }
@@ -144,12 +147,12 @@ public class ConsentManagerConfiguration {
     @Bean
     public ServiceAuthentication serviceAuthentication(ServiceAuthenticationClient serviceAuthenticationClient,
                                                        GatewayServiceProperties gatewayServiceProperties,
-                                                       CacheAdapter<String, String> accessToken) {
+                                                       @Qualifier("accessToken") CacheAdapter<String, String> accessToken) {
         return new ServiceAuthentication(serviceAuthenticationClient, gatewayServiceProperties, accessToken);
     }
 
     @Bean
-    public ClientRegistryClient clientRegistryClient(@Qualifier("customBuilder") WebClient.Builder builder,
+    public ClientRegistryClient clientRegistryClient(@Qualifier("customBuilder") Builder builder,
                                                      ClientRegistryProperties clientRegistryProperties) {
         return new ClientRegistryClient(builder, clientRegistryProperties.getUrl());
     }
@@ -190,22 +193,23 @@ public class ConsentManagerConfiguration {
 
     @Bean
     public DestinationsConfig destinationsConfig() {
-        HashMap<String, DestinationsConfig.DestinationInfo> queues = new HashMap<>();
+        HashMap<String, DestinationInfo> queues = new HashMap<>();
         queues.put(CONSENT_REQUEST_QUEUE,
-                new DestinationsConfig.DestinationInfo(EXCHANGE, CONSENT_REQUEST_QUEUE));
+                new DestinationInfo(EXCHANGE, CONSENT_REQUEST_QUEUE));
         queues.put(HIU_CONSENT_NOTIFICATION_QUEUE,
-                new DestinationsConfig.DestinationInfo(EXCHANGE, HIU_CONSENT_NOTIFICATION_QUEUE));
+                new DestinationInfo(EXCHANGE, HIU_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_CONSENT_NOTIFICATION_QUEUE,
-                new DestinationsConfig.DestinationInfo(EXCHANGE, HIP_CONSENT_NOTIFICATION_QUEUE));
+                new DestinationInfo(EXCHANGE, HIP_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_DATA_FLOW_REQUEST_QUEUE,
-                new DestinationsConfig.DestinationInfo(EXCHANGE, HIP_DATA_FLOW_REQUEST_QUEUE));
+                new DestinationInfo(EXCHANGE, HIP_DATA_FLOW_REQUEST_QUEUE));
         return new DestinationsConfig(queues);
     }
 
     @Bean
     public IdentityService identityService(IdentityServiceClient identityServiceClient,
-                                           IdentityServiceProperties identityServiceProperties) {
-        return new IdentityService(identityServiceClient, identityServiceProperties);
+                                           IdentityServiceProperties identityServiceProperties,
+                                           @Qualifier("accessToken") CacheAdapter<String, String> accessToken) {
+        return new IdentityService(identityServiceClient, identityServiceProperties, accessToken);
     }
 
     @Bean
@@ -268,7 +272,7 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean("customBuilder")
-    public WebClient.Builder webClient(final ClientHttpConnector clientHttpConnector, ObjectMapper objectMapper) {
+    public Builder webClient(final ClientHttpConnector clientHttpConnector, ObjectMapper objectMapper) {
         return WebClient
                 .builder()
                 .exchangeStrategies(exchangeStrategies(objectMapper))
@@ -288,7 +292,7 @@ public class ConsentManagerConfiguration {
 
     @Bean
     public UserServiceClient userServiceClient(
-            @Qualifier("customBuilder") WebClient.Builder builder,
+            @Qualifier("customBuilder") Builder builder,
             UserServiceProperties userServiceProperties,
             IdentityService identityService,
             GatewayServiceProperties gatewayServiceProperties,
@@ -303,7 +307,7 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public OtpServiceClient otpServiceClient(@Qualifier("customBuilder") WebClient.Builder builder,
+    public OtpServiceClient otpServiceClient(@Qualifier("customBuilder") Builder builder,
                                              OtpServiceProperties otpServiceProperties) {
         return new OtpServiceClient(builder, otpServiceProperties.getUrl());
     }
@@ -313,7 +317,7 @@ public class ConsentManagerConfiguration {
     ReactiveRedisOperations<String, LocalDateTime> redisOperations(
             @Qualifier("Lettuce") ReactiveRedisConnectionFactory factory) {
         Jackson2JsonRedisSerializer<LocalDateTime> serializer = new Jackson2JsonRedisSerializer<>(LocalDateTime.class);
-        RedisSerializationContext.RedisSerializationContextBuilder<String, LocalDateTime> builder =
+        RedisSerializationContextBuilder<String, LocalDateTime> builder =
                 RedisSerializationContext.newSerializationContext(new StringRedisSerializer());
         RedisSerializationContext<String, LocalDateTime> context = builder.value(serializer).build();
         return new ReactiveRedisTemplate<>(factory, context);
@@ -324,7 +328,7 @@ public class ConsentManagerConfiguration {
     ReactiveRedisOperations<String, String> stringReactiveRedisOperations(
             @Qualifier("Lettuce") ReactiveRedisConnectionFactory factory) {
         Jackson2JsonRedisSerializer<String> serializer = new Jackson2JsonRedisSerializer<>(String.class);
-        RedisSerializationContext.RedisSerializationContextBuilder<String, String> builder =
+        RedisSerializationContextBuilder<String, String> builder =
                 RedisSerializationContext.newSerializationContext(new StringRedisSerializer());
         RedisSerializationContext<String, String> context = builder.value(serializer).build();
         return new ReactiveRedisTemplate<>(factory, context);

@@ -55,6 +55,7 @@ public enum ErrorCode {
     USER_ALREADY_EXISTS(1434),
     USER_NOT_FOUND(1414),
     UNABLE_TO_PARSE_KEY(1514),
+    INVALID_DISCOVERY(1438),
     USER_TEMPORARILY_BLOCKED(1423); /*please resume codes from the line above, we will put the codes in order later
     and in ranges*/
 

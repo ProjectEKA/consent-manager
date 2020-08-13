@@ -80,4 +80,7 @@ public class TestBuilders {
         return easyRandom.nextObject(in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult.DiscoveryResultBuilder.class);
     }
 
+    public static in.projecteka.consentmanager.link.discovery.model.patient.response.Patient.PatientBuilder patient() {
+        return easyRandom.nextObject(in.projecteka.consentmanager.link.discovery.model.patient.response.Patient.PatientBuilder.class);
+    }
 }

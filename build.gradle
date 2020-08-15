@@ -15,6 +15,10 @@ repositories {
     mavenCentral()
 }
 
+bootJar {
+    layered()
+}
+
 sonarqube {
     properties {
         property "sonar.projectKey", "ProjectEKA_hdaf"

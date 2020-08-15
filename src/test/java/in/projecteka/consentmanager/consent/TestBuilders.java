@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
+import in.projecteka.consentmanager.consent.model.CertResponse;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
@@ -57,6 +58,10 @@ public class TestBuilders {
 
     public static HIPCosentNotificationAcknowledgment.HIPCosentNotificationAcknowledgmentBuilder hipConsentNotificationAcknowledgement() {
         return easyRandom.nextObject(HIPCosentNotificationAcknowledgment.HIPCosentNotificationAcknowledgmentBuilder.class);
+    }
+
+    public static CertResponse.CertResponseBuilder certResponse() {
+        return easyRandom.nextObject(CertResponse.CertResponseBuilder.class);
     }
 
     public static String string() {

@@ -1,6 +1,6 @@
 plugins {
-    id 'org.springframework.boot' version '2.3.2.RELEASE'
-    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id 'org.springframework.boot' version '2.3.3.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.10.RELEASE'
     id 'java'
     id 'com.avast.gradle.docker-compose' version '0.13.0'
     id "org.sonarqube" version "3.0"
@@ -66,10 +66,10 @@ dependencies {
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     implementation 'io.vertx:vertx-pg-client:3.9.2'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'com.nimbusds:nimbus-jose-jwt:8.19'
+    implementation 'com.nimbusds:nimbus-jose-jwt:8.20'
     implementation 'io.vavr:vavr:0.10.3'
     implementation 'org.passay:passay:1.6.0'
-    implementation 'io.lettuce:lettuce-core:5.3.2.RELEASE'
+    implementation 'io.lettuce:lettuce-core:5.3.3.RELEASE'
     implementation 'net.logstash.logback:logstash-logback-encoder:6.4'
     implementation 'org.springframework.data:spring-data-redis'
     testImplementation 'org.apache.commons:commons-lang3:3.11'

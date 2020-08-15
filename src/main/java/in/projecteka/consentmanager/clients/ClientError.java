@@ -375,6 +375,12 @@ public class ClientError extends Throwable {
                 new ErrorRepresentation(new Error(UNKNOWN_ERROR_OCCURRED, errorMessage)));
     }
 
+    public static ClientError invalidDiscovery(String message) {
+        return new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(ErrorCode.INVALID_DISCOVERY,
+                        message)));
+    }
+
     public ErrorCode getErrorCode() {
         return this.error.getError().getCode();
     }

@@ -13,6 +13,7 @@ import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisOptions;
 import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.DiscoveryRepository;
 import in.projecteka.consentmanager.link.hiplink.UserAuthInitAction;
@@ -123,8 +124,9 @@ public class LinkConfiguration {
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"discoveryResults", "linkResults"})
     public CacheAdapter<String, String> createRedisCacheAdapter(
-            ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
-        return new RedisCacheAdapter(stringReactiveRedisOperations, 5);
+            ReactiveRedisOperations<String, String> stringReactiveRedisOperations,
+            RedisOptions redisOptions) {
+        return new RedisCacheAdapter(stringReactiveRedisOperations, 5, redisOptions.getRetry());
     }
     
 }

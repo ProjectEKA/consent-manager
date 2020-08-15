@@ -13,7 +13,7 @@ public class ServiceAuthentication {
     private final CacheAdapter<String, String> accessTokenCache;
 
     public Mono<String> authenticate() {
-        return accessTokenCache.getIfPresent("consentManager:clientRegistry:accessToken")
+        return accessTokenCache.getIfPresent("consentManager:gateway:accessToken")
                 .switchIfEmpty(Mono.defer(this::tokenUsingSecret))
                 .map(token -> String.format("%s %s", "Bearer", token));
     }
@@ -21,7 +21,7 @@ public class ServiceAuthentication {
     private Mono<String> tokenUsingSecret() {
         return client.getTokenFor(properties.getClientId(), properties.getClientSecret())
                 .flatMap(session ->
-                        accessTokenCache.put("consentManager:clientRegistry:accessToken", session.getAccessToken())
+                        accessTokenCache.put("consentManager:gateway:accessToken", session.getAccessToken())
                                 .thenReturn(session.getAccessToken()));
     }
 }

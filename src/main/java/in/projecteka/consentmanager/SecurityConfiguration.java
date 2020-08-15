@@ -41,14 +41,15 @@ import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
+import static in.projecteka.consentmanager.consent.Constants.GET_CONSENT_CERT;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
 import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
-import static in.projecteka.consentmanager.link.Constants.PATH_HIP_ADD_CONTEXTS;
 import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
+import static in.projecteka.consentmanager.link.Constants.PATH_HIP_ADD_CONTEXTS;
 import static in.projecteka.consentmanager.link.Constants.PATH_HIP_LINK_USER_AUTH_INIT;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
@@ -142,7 +143,8 @@ public class SecurityConfiguration {
                                                                    "/**.js",
                                                                    "/**.yaml",
                                                                    "/**.css",
-                                                                   "/**.png"};
+                                                                   "/**.png",
+                                                                   GET_CONSENT_CERT};
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(

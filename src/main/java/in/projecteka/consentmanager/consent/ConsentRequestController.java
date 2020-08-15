@@ -4,6 +4,7 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.consent.model.CertResponse;
 import in.projecteka.consentmanager.consent.model.ConsentRequestValidator;
 import in.projecteka.consentmanager.consent.model.request.ConsentApprovalRequest;
 import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
@@ -118,5 +119,10 @@ public class ConsentRequestController {
                 .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
                 .map(Caller::getUsername)
                 .flatMap(username -> consentManager.deny(id, username));
+    }
+
+    @GetMapping(value = Constants.GET_CONSENT_CERT)
+    public Mono<CertResponse> getCert(){
+        return consentManager.getCert();
     }
 }

@@ -5,6 +5,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.nimbusds.jose.jwk.JWKSet;
+import in.projecteka.consentmanager.DestinationsConfig.DestinationInfo;
 import in.projecteka.consentmanager.clients.ClientRegistryClient;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
@@ -61,6 +62,7 @@ import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.RedisSerializationContext.RedisSerializationContextBuilder;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -123,8 +125,10 @@ public class ConsentManagerConfiguration {
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"accessToken"})
     public CacheAdapter<String, String> createRedisCacheAdapter(
-            ReactiveRedisOperations<String, String> stringReactiveRedisOperations) {
-        return new RedisCacheAdapter(stringReactiveRedisOperations, 5);
+            ReactiveRedisOperations<String, String> stringReactiveRedisOperations,
+            RedisOptions redisOptions) {
+        return new RedisCacheAdapter(stringReactiveRedisOperations, 5,
+                redisOptions.getRetry());
     }
 
     @Bean
@@ -142,7 +146,7 @@ public class ConsentManagerConfiguration {
     @Bean
     public ServiceAuthentication serviceAuthentication(ServiceAuthenticationClient serviceAuthenticationClient,
                                                        GatewayServiceProperties gatewayServiceProperties,
-                                                       CacheAdapter<String, String> accessToken) {
+                                                       @Qualifier("accessToken") CacheAdapter<String, String> accessToken) {
         return new ServiceAuthentication(serviceAuthenticationClient, gatewayServiceProperties, accessToken);
     }
 
@@ -188,22 +192,23 @@ public class ConsentManagerConfiguration {
 
     @Bean
     public DestinationsConfig destinationsConfig() {
-        HashMap<String, DestinationsConfig.DestinationInfo> queues = new HashMap<>();
+        HashMap<String, DestinationInfo> queues = new HashMap<>();
         queues.put(CONSENT_REQUEST_QUEUE,
-                new DestinationsConfig.DestinationInfo(EXCHANGE, CONSENT_REQUEST_QUEUE));
+                new DestinationInfo(EXCHANGE, CONSENT_REQUEST_QUEUE));
         queues.put(HIU_CONSENT_NOTIFICATION_QUEUE,
-                new DestinationsConfig.DestinationInfo(EXCHANGE, HIU_CONSENT_NOTIFICATION_QUEUE));
+                new DestinationInfo(EXCHANGE, HIU_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_CONSENT_NOTIFICATION_QUEUE,
-                new DestinationsConfig.DestinationInfo(EXCHANGE, HIP_CONSENT_NOTIFICATION_QUEUE));
+                new DestinationInfo(EXCHANGE, HIP_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_DATA_FLOW_REQUEST_QUEUE,
-                new DestinationsConfig.DestinationInfo(EXCHANGE, HIP_DATA_FLOW_REQUEST_QUEUE));
+                new DestinationInfo(EXCHANGE, HIP_DATA_FLOW_REQUEST_QUEUE));
         return new DestinationsConfig(queues);
     }
 
     @Bean
     public IdentityService identityService(IdentityServiceClient identityServiceClient,
-                                           IdentityServiceProperties identityServiceProperties) {
-        return new IdentityService(identityServiceClient, identityServiceProperties);
+                                           IdentityServiceProperties identityServiceProperties,
+                                           @Qualifier("accessToken") CacheAdapter<String, String> accessToken) {
+        return new IdentityService(identityServiceClient, identityServiceProperties, accessToken);
     }
 
     @Bean
@@ -311,7 +316,7 @@ public class ConsentManagerConfiguration {
     ReactiveRedisOperations<String, LocalDateTime> redisOperations(
             @Qualifier("Lettuce") ReactiveRedisConnectionFactory factory) {
         Jackson2JsonRedisSerializer<LocalDateTime> serializer = new Jackson2JsonRedisSerializer<>(LocalDateTime.class);
-        RedisSerializationContext.RedisSerializationContextBuilder<String, LocalDateTime> builder =
+        RedisSerializationContextBuilder<String, LocalDateTime> builder =
                 RedisSerializationContext.newSerializationContext(new StringRedisSerializer());
         RedisSerializationContext<String, LocalDateTime> context = builder.value(serializer).build();
         return new ReactiveRedisTemplate<>(factory, context);
@@ -322,7 +327,7 @@ public class ConsentManagerConfiguration {
     ReactiveRedisOperations<String, String> stringReactiveRedisOperations(
             @Qualifier("Lettuce") ReactiveRedisConnectionFactory factory) {
         Jackson2JsonRedisSerializer<String> serializer = new Jackson2JsonRedisSerializer<>(String.class);
-        RedisSerializationContext.RedisSerializationContextBuilder<String, String> builder =
+        RedisSerializationContextBuilder<String, String> builder =
                 RedisSerializationContext.newSerializationContext(new StringRedisSerializer());
         RedisSerializationContext<String, String> context = builder.value(serializer).build();
         return new ReactiveRedisTemplate<>(factory, context);
@@ -338,8 +343,9 @@ public class ConsentManagerConfiguration {
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
     @Bean({"cacheForReplayAttack"})
     public CacheAdapter<String, LocalDateTime> createRedisCacheAdapterForReplayAttack(
-            ReactiveRedisOperations<String, LocalDateTime> localDateTimeOps) {
-        return new RedisGenericAdapter<>(localDateTimeOps, 10);
+            ReactiveRedisOperations<String, LocalDateTime> localDateTimeOps,
+            RedisOptions redisOptions) {
+        return new RedisGenericAdapter<>(localDateTimeOps, 10, redisOptions.getRetry());
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")

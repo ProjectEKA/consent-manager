@@ -50,7 +50,6 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -430,8 +429,8 @@ class ConsentRequestUserJourneyTest {
         load(clientRegistryServer, session);
         load(clientRegistryServer, session);
         load(userServer, "{}");
-        load(identityServer, "{}");
-        load(identityServer, "{}");
+        load(identityServer, session);
+        load(identityServer, session);
         //NOTE: referenceNumber of linked CareContext is different. ashokkumar.ipdContext
         //while the grant is for ashokkumar.opdcontext
         String linkedPatientContextsJson = "{\n" +

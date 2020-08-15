@@ -2,21 +2,29 @@ package in.projecteka.consentmanager.common;
 
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Mono;
 
-import static java.lang.String.format;
-
 @AllArgsConstructor
 public class IdentityService {
     private final IdentityServiceClient identityServiceClient;
     private final IdentityServiceProperties identityServiceProperties;
+    private final CacheAdapter<String, String> accessTokenCache;
 
     public Mono<String> authenticate() {
+        return accessTokenCache.getIfPresent("consentManager:accessToken")
+                .switchIfEmpty(Mono.defer(this::tokenUsingSecret))
+                .map(token -> String.format("%s %s", "Bearer", token));
+    }
+
+    private Mono<String> tokenUsingSecret() {
         return identityServiceClient.getToken(loginRequestWith())
-                .map(session -> format("%s %s", session.getTokenType(), session.getAccessToken()));
+                .flatMap(session ->
+                        accessTokenCache.put("consentManager:accessToken", session.getAccessToken())
+                                .thenReturn(session.getAccessToken()));
     }
 
     private MultiValueMap<String, String> loginRequestWith() {

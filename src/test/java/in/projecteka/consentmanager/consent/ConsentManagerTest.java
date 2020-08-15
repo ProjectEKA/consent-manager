@@ -48,6 +48,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.consent.TestBuilders.artefactLightRepresentation;
+import static in.projecteka.consentmanager.consent.TestBuilders.certResponse;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefact;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
@@ -472,5 +473,16 @@ class ConsentManagerTest {
                 acknowledgement.getAcknowledgement().getConsentId(),
                 ConsentNotificationStatus.ACKNOWLEDGED,
                 ConsentNotificationReceiver.HIP);
+    }
+
+    @Test
+    void shouldReturnSuccessCertResponse() {
+        var certResponse = certResponse().build();
+        StepVerifier.create(consentManager.getCert())
+                .assertNext(response -> {
+                    assertThat(response.getKeys().contains(certResponse));
+                    assertThat(response.getKeys().size()).isEqualTo(1);
+                })
+                .verifyComplete();
     }
 }

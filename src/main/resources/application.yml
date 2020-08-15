@@ -1,5 +1,6 @@
 server:
   port: 8000
+  shutdown: graceful
 consentmanager:
   consentservice:
     defaultPageSize: ${DEFAULT_PAGE_SIZE}
@@ -77,6 +78,7 @@ consentmanager:
     password: ${REDIS_PASSWORD:password}
     keep-alive-enabled: ${KEEP_ALIVE_ENABLED:false}
     read-from: ${READ_FROM:UPSTREAM}
+    retry: ${REDIS_RETRY:0}
   listeners:
     maximumRetries: ${LISTENERS_MAXIMUM_RETRIES}
     # In milliseconds
@@ -91,6 +93,8 @@ spring:
     port: ${RABBITMQ_PORT}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 keystore:
   file-path: ${KEYSTORE_PATH:consent-manager-keystore.p12}
   password: ${KEYSTORE_PASSWORD}

@@ -1,5 +1,6 @@
 server:
   port: 8000
+  shutdown: graceful
 consentmanager:
   consentservice:
     defaultPageSize: ${DEFAULT_PAGE_SIZE}
@@ -92,6 +93,8 @@ spring:
     port: ${RABBITMQ_PORT}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 keystore:
   file-path: ${KEYSTORE_PATH:consent-manager-keystore.p12}
   password: ${KEYSTORE_PASSWORD}

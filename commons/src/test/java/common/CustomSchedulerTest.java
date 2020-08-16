@@ -1,6 +1,6 @@
 package common;
 
-import in.projecteka.consentmanager.common.DelayTimeoutException;
+import in.projecteka.library.common.DelayTimeoutException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import static common.TestBuilders.string;
-import static in.projecteka.consentmanager.common.CustomScheduler.scheduleThis;
+import static in.projecteka.library.common.CustomScheduler.scheduleThis;
 
 class CustomSchedulerTest {
 

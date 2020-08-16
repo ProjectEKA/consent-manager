@@ -1,14 +1,14 @@
 package common;
 
-import in.projecteka.consentmanager.common.CacheHealth;
-import in.projecteka.consentmanager.common.heartbeat.CacheMethodProperty;
+import in.projecteka.library.common.CacheHealth;
+import in.projecteka.library.common.heartbeat.CacheMethodProperty;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.data.redis.connection.ReactiveRedisConnection;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 
-import static in.projecteka.consentmanager.common.Constants.GUAVA;
+import static in.projecteka.library.common.Constants.GUAVA;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;

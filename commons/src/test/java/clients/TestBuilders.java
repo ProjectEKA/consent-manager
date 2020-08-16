@@ -1,15 +1,15 @@
 package clients;
 
-import in.projecteka.consentmanager.clients.model.Address;
-import in.projecteka.consentmanager.clients.model.Coding;
-import in.projecteka.consentmanager.clients.model.Identifier;
-import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequest;
-import in.projecteka.consentmanager.clients.model.KeycloakUser;
-import in.projecteka.consentmanager.clients.model.Provider;
-import in.projecteka.consentmanager.clients.model.Session;
-import in.projecteka.consentmanager.clients.model.Telecom;
-import in.projecteka.consentmanager.clients.model.Type;
-import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.library.clients.model.Address;
+import in.projecteka.library.clients.model.Coding;
+import in.projecteka.library.clients.model.Identifier;
+import in.projecteka.library.clients.model.KeyCloakUserPasswordChangeRequest;
+import in.projecteka.library.clients.model.KeycloakUser;
+import in.projecteka.library.clients.model.Provider;
+import in.projecteka.library.clients.model.Session;
+import in.projecteka.library.clients.model.Telecom;
+import in.projecteka.library.clients.model.Type;
+import in.projecteka.library.clients.model.User;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {

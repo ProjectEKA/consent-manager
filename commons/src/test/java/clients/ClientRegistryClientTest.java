@@ -1,8 +1,8 @@
 package clients;
 
-import in.projecteka.consentmanager.clients.ClientRegistryClient;
-import in.projecteka.consentmanager.clients.model.Identifier;
-import in.projecteka.consentmanager.clients.model.Provider;
+import in.projecteka.library.clients.ClientRegistryClient;
+import in.projecteka.library.clients.model.Identifier;
+import in.projecteka.library.clients.model.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

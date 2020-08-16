@@ -9,8 +9,8 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import in.projecteka.consentmanager.common.GatewayTokenVerifier;
-import in.projecteka.consentmanager.common.ServiceCaller;
+import in.projecteka.library.common.GatewayTokenVerifier;
+import in.projecteka.library.common.ServiceCaller;
 import net.minidev.json.JSONArray;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static common.TestBuilders.string;
-import static in.projecteka.consentmanager.common.Role.GATEWAY;
+import static in.projecteka.library.common.Role.GATEWAY;
 import static java.lang.String.format;
 import static reactor.test.StepVerifier.create;
 

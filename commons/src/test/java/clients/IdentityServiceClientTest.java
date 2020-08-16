@@ -1,12 +1,12 @@
 package clients;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import in.projecteka.consentmanager.clients.IdentityServiceClient;
-import in.projecteka.consentmanager.clients.model.ClientError;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
-import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
-import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequest;
-import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
+import in.projecteka.library.clients.IdentityServiceClient;
+import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.ErrorCode;
+import in.projecteka.library.clients.model.KeyCloakUserCredentialRepresentation;
+import in.projecteka.library.clients.model.KeyCloakUserPasswordChangeRequest;
+import in.projecteka.library.clients.model.KeyCloakUserRepresentation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

@@ -1,8 +1,8 @@
 package clients;
 
-import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.PatientName;
-import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.library.clients.UserServiceClient;
+import in.projecteka.library.clients.model.PatientName;
+import in.projecteka.library.clients.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

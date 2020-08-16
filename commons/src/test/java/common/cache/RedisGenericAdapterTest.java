@@ -1,6 +1,6 @@
 package common.cache;
 
-import in.projecteka.consentmanager.common.cache.RedisGenericAdapter;
+import in.projecteka.library.common.cache.RedisGenericAdapter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;

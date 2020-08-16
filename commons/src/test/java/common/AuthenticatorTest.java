@@ -6,9 +6,9 @@ import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
-import in.projecteka.consentmanager.common.Authenticator;
-import in.projecteka.consentmanager.common.Caller;
-import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.library.common.Authenticator;
+import in.projecteka.library.common.Caller;
+import in.projecteka.library.common.cache.CacheAdapter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -19,8 +19,8 @@ import reactor.core.publisher.Mono;
 
 import java.text.ParseException;
 
-import static in.projecteka.consentmanager.common.Constants.BLACKLIST;
-import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
+import static in.projecteka.library.common.Constants.BLACKLIST;
+import static in.projecteka.library.common.Constants.BLACKLIST_FORMAT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.verify;

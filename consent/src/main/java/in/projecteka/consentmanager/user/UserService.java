@@ -4,11 +4,11 @@ import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.OtpAction;
-import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
 import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
+import in.projecteka.consentmanager.clients.model.OtpAction;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
+import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
@@ -16,6 +16,7 @@ import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.consent.model.Action;
 import in.projecteka.consentmanager.consent.model.Communication;
 import in.projecteka.consentmanager.consent.model.CommunicationType;
+import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.filters.ABPMJAYIdFilter;
@@ -142,16 +143,16 @@ public class UserService {
                 userSignupEnquiry.getIdentifier());
 
         OtpGenerationDetail otpGenerationDetail = OtpGenerationDetail
-                        .builder()
-                        .action(getOtpActionFor(otpAttmptAction).toString())
-                        .systemName(consentServiceProperties.getName())
-                        .build();
+                .builder()
+                .action(getOtpActionFor(otpAttmptAction).toString())
+                .systemName(consentServiceProperties.getName())
+                .build();
         var otpRequest = new OtpRequest(UUID.randomUUID().toString(), communication, otpGenerationDetail);
         return Optional.of(otpRequest);
     }
 
     private OtpAction getOtpActionFor(OtpAttempt.Action otpAttmptAction) {
-        switch (otpAttmptAction){
+        switch (otpAttmptAction) {
             case OTP_REQUEST_REGISTRATION:
                 return OtpAction.REGISTRATION;
             case OTP_REQUEST_LOGIN:
@@ -267,21 +268,19 @@ public class UserService {
                 });
     }
 
-    private Mono<ConsentManagerIdNotification> createNotificationMessage(User user, String sessionId) {
-        return Mono.just(ConsentManagerIdNotification.builder()
-                .communication(Communication.builder()
+    private Mono<Notification<ConsentManagerIdContent>> createNotificationMessage(User user, String sessionId) {
+        return Mono.just(new Notification<>(sessionId,
+                Communication.builder()
                         .communicationType(CommunicationType.MOBILE)
                         .value(user.getPhone())
-                        .build())
-                .id(sessionId)
-                .action(Action.CONSENT_MANAGER_ID_RECOVERED)
-                .content(ConsentManagerIdContent.builder()
+                        .build(),
+                ConsentManagerIdContent.builder()
                         .consentManagerId(user.getIdentifier())
-                        .build())
-                .build());
+                        .build(),
+                Action.CONSENT_MANAGER_ID_RECOVERED));
     }
 
-    public Mono<Void> notifyUserWith(ConsentManagerIdNotification consentManagerIdNotification) {
+    public Mono<Void> notifyUserWith(Notification<ConsentManagerIdContent> consentManagerIdNotification) {
         return otpServiceClient.send(consentManagerIdNotification);
     }
 

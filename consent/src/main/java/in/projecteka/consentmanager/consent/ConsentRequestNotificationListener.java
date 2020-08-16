@@ -58,7 +58,7 @@ public class ConsentRequestNotificationListener {
         mlc.start();
     }
 
-    public Mono<Void> notifyUserWith(Notification notification) {
+    public Mono<Void> notifyUserWith(Notification<Content> notification) {
         return consentNotificationClient.send(notification);
     }
 
@@ -78,16 +78,14 @@ public class ConsentRequestNotificationListener {
         return new NhsPolicyCheck().checkPolicyFor(consentRequest, nhsProperties.getHiuId());
     }
 
-    private Mono<Notification> createNotificationMessage(ConsentRequest consentRequest) {
+    private Mono<Notification<Content>> createNotificationMessage(ConsentRequest consentRequest) {
         return userServiceClient.userOf(consentRequest.getDetail().getPatient().getId())
-                .map(user -> Notification.builder()
-                        .communication(Communication.builder()
+                .map(user -> new Notification<>(consentRequest.getId().toString(),
+                        Communication.builder()
                                 .communicationType(CommunicationType.MOBILE)
                                 .value(user.getPhone())
-                                .build())
-                        .id(consentRequest.getId())
-                        .action(Action.CONSENT_REQUEST_CREATED)
-                        .content(Content.builder()
+                                .build(),
+                        Content.builder()
                                 .requester(consentRequest.getDetail().getRequester().getName())
                                 .consentRequestId(consentRequest.getId())
                                 .hiTypes(Arrays.stream(consentRequest.getDetail().getHiTypes())
@@ -96,8 +94,8 @@ public class ConsentRequestNotificationListener {
                                 .deepLinkUrl(String.format("%s/consent/%s",
                                         consentServiceProperties.getUrl(),
                                         consentRequest.getId()))
-                                .build())
-                        .build());
+                                .build(),
+                        Action.CONSENT_REQUEST_CREATED));
     }
 
     private Mono<Void> autoApproveFor(ConsentRequest consentRequest) {

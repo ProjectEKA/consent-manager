@@ -13,6 +13,7 @@ import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
+import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
@@ -127,7 +128,7 @@ class UserServiceTest {
     private UserService userService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.initMocks(this);
         var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"), 5);
         userService = new UserService(
@@ -163,7 +164,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowInvalidRequestExceptionForInvalidDeviceType() {
+    void shouldThrowInvalidRequestExceptionForInvalidDeviceType() {
         var producer = userService.sendOtp(userSignUpEnquiry().build());
 
         StepVerifier.create(producer).verifyError(InvalidRequestException.class);
@@ -208,7 +209,7 @@ class UserServiceTest {
             "empty",
             "null"
     })
-    public void shouldThrowInvalidRequestExceptionForInvalidOtpValue(
+    void shouldThrowInvalidRequestExceptionForInvalidOtpValue(
             @ConvertWith(NullableConverter.class) String value) {
         OtpVerification otpVerification = new OtpVerification(string(), value);
 
@@ -223,7 +224,7 @@ class UserServiceTest {
             "empty",
             "null"
     })
-    public void shouldThrowInvalidRequestExceptionForInvalidOtpSessionId(
+    void shouldThrowInvalidRequestExceptionForInvalidOtpSessionId(
             @ConvertWith(NullableConverter.class) String sessionId) {
         OtpVerification otpVerification = new OtpVerification(sessionId, string());
 
@@ -233,7 +234,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void verifyOtp() {
+    void verifyOtp() {
         var sessionId = string();
         var otp = string();
         var token = string();
@@ -257,7 +258,7 @@ class UserServiceTest {
             "empty",
             "null"
     })
-    public void shouldThrowErrorForInvalidOtpValue(
+    void shouldThrowErrorForInvalidOtpValue(
             @ConvertWith(NullableConverter.class) String value) {
         OtpVerification otpVerification = new OtpVerification(string(), value);
 
@@ -272,7 +273,7 @@ class UserServiceTest {
             "empty",
             "null"
     })
-    public void shouldThrowErrorForInvalidOtpSessionId(
+    void shouldThrowErrorForInvalidOtpSessionId(
             @ConvertWith(NullableConverter.class) String sessionId) {
         OtpVerification otpVerification = new OtpVerification(sessionId, string());
 
@@ -282,7 +283,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldCreateUser() {
+    void shouldCreateUser() {
         var signUpRequest = coreSignUpRequest()
                 .dateOfBirth(DateOfBirth.builder()
                         .month(LocalDate.now().getMonthValue())
@@ -302,7 +303,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldReturnUserAlreadyExistsError() {
+    void shouldReturnUserAlreadyExistsError() {
         var signUpRequest = coreSignUpRequest()
                 .dateOfBirth(DateOfBirth.builder()
                         .month(LocalDate.now().getMonthValue())
@@ -324,7 +325,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldCreateUserWhenYOBIsNull() {
+    void shouldCreateUserWhenYOBIsNull() {
         var signUpRequest = coreSignUpRequest()
                 .name(
                         PatientName.builder()
@@ -347,7 +348,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldNotCreateUserWhenIDPClientFails() {
+    void shouldNotCreateUserWhenIDPClientFails() {
         var signUpRequest = coreSignUpRequest()
                 .dateOfBirth(DateOfBirth.builder()
                         .month(LocalDate.now().getMonthValue())
@@ -404,7 +405,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void updateUserDetails() {
+    void updateUserDetails() {
         String userName = "user@ncg";
         var request = UpdateUserRequest.builder().password("Test@3142").build();
         var sessionId = string();
@@ -428,7 +429,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void updateUserDetailsFailsForInvalidUserName() {
+    void updateUserDetailsFailsForInvalidUserName() {
         var request = UpdateUserRequest.builder().password("Test@3142").build();
         var sessionId = string();
         when(signupService.getUserName(sessionId)).thenReturn(Mono.empty());
@@ -441,7 +442,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void updateUserDetailsFailsWhenTokenForAdminFails() {
+    void updateUserDetailsFailsWhenTokenForAdminFails() {
         var userName = "user@ncg";
         var request = UpdateUserRequest.builder().password("Test@3142").build();
         var sessionId = string();
@@ -460,7 +461,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldUpdatePasswordSuccessfully() {
+    void shouldUpdatePasswordSuccessfully() {
         String userName = "testUser@ncg";
         var request = updatePasswordRequest().build();
         Session oldSession = session().build();
@@ -491,7 +492,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldReturnUnauthorizedErrorForInvalidOldPassword() {
+    void shouldReturnUnauthorizedErrorForInvalidOldPassword() {
         var userName = "TestUser@ncg";
         var request = updatePasswordRequest().build();
         when(tokenService.tokenForUser(userName, request.getOldPassword()))
@@ -508,7 +509,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void shouldReturnErrorWhenUpdateUserWithNewPasswordFails() {
+    void shouldReturnErrorWhenUpdateUserWithNewPasswordFails() {
         var userName = "user@ncg";
         var request = updatePasswordRequest().build();
         var oldSession = session().build();
@@ -539,7 +540,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void getLoginMode() {
+    void getLoginMode() {
         String userName = "user@ncg";
         Session tokenForAdmin = session().build();
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
@@ -564,7 +565,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void getLoginModeAsOTPWhenPasswordNotSet() {
+    void getLoginModeAsOTPWhenPasswordNotSet() {
         String userName = "user@ncg";
         Session tokenForAdmin = session().build();
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
@@ -584,7 +585,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void getLoginModeReturnsErrorForNonExistentUser() {
+    void getLoginModeReturnsErrorForNonExistentUser() {
         String userName = "user@ncg";
         Session tokenForAdmin = session().build();
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
@@ -673,14 +674,14 @@ class UserServiceTest {
     }
 
     @Test
-    public void verifyOtpForRecoveringCmId() {
+    void verifyOtpForRecoveringCmId() {
         var sessionId = string();
         var otp = string();
         var token = string();
         var user = new EasyRandom().nextObject(User.class);
         var sessionIdWithAction = SendOtpAction.RECOVER_CM_ID.toString() + sessionId;
         ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
-        ArgumentCaptor<ConsentManagerIdNotification> consentManagerArgumentCaptor = ArgumentCaptor.forClass(ConsentManagerIdNotification.class);
+        ArgumentCaptor<Notification> consentManagerArgumentCaptor = ArgumentCaptor.forClass(Notification.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
         when(signupService.generateToken(new HashMap<>(), sessionId))
@@ -758,7 +759,7 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldVerifyOTPForForgetConsentPin(){
+    void shouldVerifyOTPForForgetConsentPin() {
         var sessionId = string();
         var otp = string();
         var token = string();

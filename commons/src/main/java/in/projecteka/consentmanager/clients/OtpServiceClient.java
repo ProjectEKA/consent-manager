@@ -1,13 +1,14 @@
 package in.projecteka.consentmanager.clients;
 
+import in.projecteka.consentmanager.clients.model.ClientError;
+import in.projecteka.consentmanager.clients.model.Notification;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.VerificationRequest;
-import in.projecteka.consentmanager.consent.model.Notification;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
+import static in.projecteka.consentmanager.clients.model.ClientError.unknownErrorOccurred;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -53,7 +54,7 @@ public class OtpServiceClient {
                 .then();
     }
 
-    public Mono<Void> send(Notification notification) {
+    public Mono<Void> send(Notification<?> notification) {
         return webClient
                 .post()
                 .uri(uriBuilder -> uriBuilder.path("/notification").build())

@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.link;
 
-import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.model.Error;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
-import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.DbOperationError;
+import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.Error;
+import in.projecteka.library.clients.model.ErrorCode;
+import in.projecteka.library.clients.model.ErrorRepresentation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler;
@@ -27,6 +27,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
+import static org.springframework.boot.web.error.ErrorAttributeOptions.defaults;
+
 @Slf4j
 public class ClientErrorExceptionHandler extends AbstractErrorWebExceptionHandler {
     public ClientErrorExceptionHandler(
@@ -42,7 +44,7 @@ public class ClientErrorExceptionHandler extends AbstractErrorWebExceptionHandle
     }
 
     private Mono<ServerResponse> renderErrorResponse(ServerRequest request) {
-        Map<String, Object> errorPropertiesMap = getErrorAttributes(request, false);
+        Map<String, Object> errorPropertiesMap = getErrorAttributes(request, defaults());
         Throwable error = getError(request);
         // Default error response
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;

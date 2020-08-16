@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static in.projecteka.consentmanager.clients.ClientError.unAuthorized;
 import static in.projecteka.consentmanager.common.Constants.PATH_HEARTBEAT;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
 import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
@@ -58,6 +57,7 @@ import static in.projecteka.consentmanager.user.Constants.APP_PATH_RESET_PASSWOR
 import static in.projecteka.consentmanager.user.Constants.APP_PATH_RESET_PIN;
 import static in.projecteka.consentmanager.user.Constants.BASE_PATH_PATIENTS_APIS;
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
+import static in.projecteka.library.clients.model.ClientError.unAuthorized;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;

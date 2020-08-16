@@ -5,9 +5,6 @@ import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.DataFlowRequestClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
-import in.projecteka.consentmanager.clients.model.Error;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
-import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.RequestValidator;
@@ -25,6 +22,9 @@ import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
 import in.projecteka.consentmanager.dataflow.model.DateRange;
 import in.projecteka.consentmanager.dataflow.model.HIUReference;
 import in.projecteka.consentmanager.dataflow.model.hip.DataRequest;
+import in.projecteka.library.clients.model.Error;
+import in.projecteka.library.clients.model.ErrorCode;
+import in.projecteka.library.clients.model.ErrorRepresentation;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
@@ -109,7 +109,7 @@ class DataFlowRequesterUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
-    
+
     @SuppressWarnings("unused")
     @MockBean(name = "centralRegistryJWKSet")
     private JWKSet centralRegistryJWKSet;

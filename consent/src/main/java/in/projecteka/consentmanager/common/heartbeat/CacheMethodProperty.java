@@ -13,4 +13,8 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @Builder
 public class CacheMethodProperty {
     private final String methodName;
+
+    public in.projecteka.library.common.heartbeat.CacheMethodProperty toHeartBeat() {
+        return new in.projecteka.library.common.heartbeat.CacheMethodProperty(methodName);
+    }
 }

@@ -1,8 +1,8 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
+import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

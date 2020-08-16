@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.LinkServiceClient;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.model.CareContextRepresentation;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
@@ -11,9 +10,10 @@ import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.link.model.Hip;
-import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.LinkResponse;
+import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
+import in.projecteka.library.clients.model.ClientError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -25,6 +25,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.ArrayList;
+
 import static in.projecteka.consentmanager.link.Constants.HIP_INITIATED_ACTION_LINK;
 import static in.projecteka.consentmanager.link.link.LinkTokenVerifier.ERROR_INVALID_TOKEN_NO_HIP_ID;
 import static in.projecteka.consentmanager.link.link.LinkTokenVerifier.ERROR_INVALID_TOKEN_REQUIRED_ATTRIBUTES_NOT_PRESENT;

@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -11,6 +10,7 @@ import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

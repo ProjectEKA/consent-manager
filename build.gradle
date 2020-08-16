@@ -30,6 +30,12 @@ subprojects {
     }
 }
 
+project(':consent') {
+    dependencies {
+        implementation project(':commons')
+    }
+}
+
 bootJar {
     enabled = false
 }

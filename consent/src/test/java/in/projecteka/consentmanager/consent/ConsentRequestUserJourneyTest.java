@@ -458,7 +458,7 @@ class ConsentRequestUserJourneyTest {
         load(patientLinkServer, linkedPatientContextsJson);
         String patientId = "ashok.kumar@ncg";
         var consentRequestDetail = consentRequestDetail().createdAt(now(UTC).minusMinutes(30))
-                                    .build();
+                .build();
 
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7")).thenReturn(Mono.just(consentRequestDetail));
         String scope = "consentrequest.approve";
@@ -478,7 +478,7 @@ class ConsentRequestUserJourneyTest {
                 .body(BodyInserters.fromValue(CONSENT_GRANT_JSON))
                 .exchange()
                 .expectStatus().isBadRequest()
-                .expectBody(in.projecteka.consentmanager.clients.model.Error.class);
+                .expectBody(in.projecteka.library.clients.model.Error.class);
     }
 
     @Test
@@ -576,7 +576,7 @@ class ConsentRequestUserJourneyTest {
                 .body(BodyInserters.fromValue(consentRequestJson))
                 .exchange()
                 .expectStatus().isBadRequest()
-                .expectBody(in.projecteka.consentmanager.clients.model.Error.class);
+                .expectBody(in.projecteka.library.clients.model.Error.class);
     }
 
     @Test

@@ -1,8 +1,6 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.Meta;
 import in.projecteka.consentmanager.clients.model.OtpAction;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
@@ -22,6 +20,7 @@ import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -31,10 +30,11 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.clients.ClientError.invalidRefreshToken;
-import static in.projecteka.consentmanager.clients.ClientError.invalidUserNameOrPassword;
 import static in.projecteka.consentmanager.common.Constants.BLACKLIST;
 import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
+import static in.projecteka.library.clients.model.ClientError.invalidRefreshToken;
+import static in.projecteka.library.clients.model.ClientError.invalidUserNameOrPassword;
+import static in.projecteka.library.clients.model.ErrorCode.OTP_INVALID;
 import static reactor.core.publisher.Mono.empty;
 import static reactor.core.publisher.Mono.error;
 
@@ -57,8 +57,8 @@ public class SessionService {
         return credentialsNotEmpty(request)
                 .switchIfEmpty(Mono.defer(() -> lockedUserService.validateLogin(request.getUsername())
                         .then(request.getGrantType() == GrantType.PASSWORD
-                                ? tokenService.tokenForUser(request.getUsername(), request.getPassword())
-                                : tokenService.tokenForRefreshToken(request.getUsername(), request.getRefreshToken()))))
+                              ? tokenService.tokenForUser(request.getUsername(), request.getPassword())
+                              : tokenService.tokenForRefreshToken(request.getUsername(), request.getRefreshToken()))))
                 .flatMap(session -> lockedUserService.removeLockedUser(request.getUsername()).thenReturn(session))
                 .onErrorResume(error ->
                 {
@@ -129,7 +129,7 @@ public class SessionService {
                         .then(tokenService
                                 .tokenForOtpUser(otpPermitRequest.getUsername(), otpPermitRequest.getSessionId(), otpPermitRequest.getOtp()))
                         .onErrorResume(ClientError.class, error -> {
-                            if (error.getErrorCode() == ErrorCode.OTP_INVALID) {
+                            if (error.getErrorCode() == OTP_INVALID) {
                                 return lockedUserService.createOrUpdateLockedUser(username).then(error(error));
                             }
                             return error(error);

@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.user.model.TransactionPin;
+import in.projecteka.library.clients.model.ClientError;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;

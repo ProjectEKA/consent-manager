@@ -9,9 +9,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.function.Supplier;
 
-import static in.projecteka.consentmanager.clients.ClientError.unknownErrorOccurred;
 import static in.projecteka.consentmanager.common.Constants.HDR_HIP_ID;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_HIP_INFORMATION_REQUEST;
+import static in.projecteka.library.clients.model.ClientError.unknownErrorOccurred;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor

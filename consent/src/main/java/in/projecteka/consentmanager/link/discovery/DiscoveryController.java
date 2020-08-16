@@ -1,11 +1,11 @@
 package in.projecteka.consentmanager.link.discovery;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.DiscoveryRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;

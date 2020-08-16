@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.clients;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
 import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
+import in.projecteka.library.clients.model.ClientError;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;

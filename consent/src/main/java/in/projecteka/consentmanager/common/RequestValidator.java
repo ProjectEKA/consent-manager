@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.common;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 

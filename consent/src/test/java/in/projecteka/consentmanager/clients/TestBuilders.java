@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.Address;
 import in.projecteka.consentmanager.clients.model.Coding;
-import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequest;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
@@ -19,6 +18,7 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.CareContext;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.PatientResponse;
+import in.projecteka.library.clients.model.ErrorRepresentation;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {

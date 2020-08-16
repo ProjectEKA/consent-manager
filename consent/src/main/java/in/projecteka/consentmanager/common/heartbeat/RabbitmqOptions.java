@@ -14,4 +14,8 @@ public class RabbitmqOptions {
     private final int port;
     private final String username;
     private final String password;
+
+    public in.projecteka.library.common.heartbeat.RabbitmqOptions toHeartBeat() {
+        return new in.projecteka.library.common.heartbeat.RabbitmqOptions(host, port, username, password);
+    }
 }

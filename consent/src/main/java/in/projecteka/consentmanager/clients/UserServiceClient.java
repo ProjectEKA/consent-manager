@@ -4,6 +4,7 @@ import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.user.model.PatientResponse;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;

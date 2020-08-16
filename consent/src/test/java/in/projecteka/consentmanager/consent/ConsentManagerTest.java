@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.consent;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
@@ -27,6 +26,7 @@ import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
+import in.projecteka.library.clients.model.ClientError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

@@ -5,6 +5,7 @@ import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestResult;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
+import in.projecteka.library.clients.model.ClientError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;

@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.Session;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.slf4j.Logger;

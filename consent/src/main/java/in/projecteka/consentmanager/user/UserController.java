@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.PatientRequest;
@@ -8,6 +7,7 @@ import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;

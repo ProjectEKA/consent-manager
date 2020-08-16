@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
@@ -12,8 +11,9 @@ import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
 import in.projecteka.consentmanager.link.link.model.LinkRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
-import org.springframework.http.HttpStatus;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

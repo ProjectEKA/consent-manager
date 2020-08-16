@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.user.model.KeyCloakError;
+import in.projecteka.library.clients.model.ClientError;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -14,11 +15,11 @@ import reactor.core.publisher.Mono;
 
 import java.util.function.Function;
 
-import static in.projecteka.consentmanager.clients.ClientError.invalidOtp;
-import static in.projecteka.consentmanager.clients.ClientError.networkServiceCallFailed;
-import static in.projecteka.consentmanager.clients.ClientError.otpExpired;
-import static in.projecteka.consentmanager.clients.ClientError.unknownUnauthorizedError;
-import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
+import static in.projecteka.library.clients.model.ClientError.invalidOtp;
+import static in.projecteka.library.clients.model.ClientError.networkServiceCallFailed;
+import static in.projecteka.library.clients.model.ClientError.otpExpired;
+import static in.projecteka.library.clients.model.ClientError.unknownUnauthorizedError;
+import static in.projecteka.library.clients.model.ClientError.userNotFound;
 import static java.lang.String.format;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
@@ -65,7 +66,7 @@ public class IdentityServiceClient {
                 .retrieve()
                 .onStatus(httpStatus -> httpStatus.value() == 401,
                         clientResponse -> clientResponse.bodyToMono(KeyCloakError.class).flatMap(toClientError()))
-                .onStatus(HttpStatus::isError, clientResponse -> error(ClientError.networkServiceCallFailed()))
+                .onStatus(HttpStatus::isError, clientResponse -> error(networkServiceCallFailed()))
                 .bodyToMono(Session.class);
     }
 

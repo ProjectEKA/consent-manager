@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.Provider;
+import in.projecteka.library.clients.model.ClientError;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;

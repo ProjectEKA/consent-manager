@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.ClientError;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 

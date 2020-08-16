@@ -3,6 +3,7 @@ package in.projecteka.consentmanager.clients;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResult;
+import in.projecteka.library.clients.model.ClientError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -10,8 +11,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_DATA_FLOW_CM_ON_REQUEST;
 import static in.projecteka.consentmanager.common.Constants.HDR_HIU_ID;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_DATA_FLOW_CM_ON_REQUEST;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 public class DataFlowRequestClient {

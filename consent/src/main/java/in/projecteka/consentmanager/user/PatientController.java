@@ -1,8 +1,5 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.model.Error;
-import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
@@ -27,6 +24,9 @@ import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.consentmanager.user.model.ValidatePinRequest;
+import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.Error;
+import in.projecteka.library.clients.model.ErrorRepresentation;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -46,10 +46,10 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static in.projecteka.consentmanager.clients.ClientError.invalidRequester;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_REQUESTER;
 import static in.projecteka.consentmanager.user.model.OtpAttempt.Action.OTP_REQUEST_RECOVER_PASSWORD;
 import static in.projecteka.consentmanager.user.model.SendOtpAction.RECOVER_PASSWORD;
+import static in.projecteka.library.clients.model.ClientError.invalidRequester;
+import static in.projecteka.library.clients.model.ErrorCode.INVALID_REQUESTER;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;

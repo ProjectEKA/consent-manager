@@ -1,15 +1,11 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
-import in.projecteka.consentmanager.clients.model.Error;
-import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Patient;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
-import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.DelayTimeoutException;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
@@ -25,6 +21,10 @@ import in.projecteka.consentmanager.link.link.model.LinkResponse;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import in.projecteka.consentmanager.link.link.model.TokenConfirmation;
+import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.Error;
+import in.projecteka.library.clients.model.ErrorRepresentation;
+import in.projecteka.library.clients.model.RespError;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,15 +36,15 @@ import java.time.ZoneOffset;
 import java.util.Objects;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.clients.ClientError.invalidResponseFromHIP;
 import static in.projecteka.consentmanager.clients.ErrorMap.toCmError;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.TRANSACTION_ID_NOT_FOUND;
 import static in.projecteka.consentmanager.common.CustomScheduler.scheduleThis;
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.tryTo;
 import static in.projecteka.consentmanager.link.Constants.HIP_INITIATED_ACTION_LINK;
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 import static in.projecteka.consentmanager.link.link.model.AcknowledgementStatus.SUCCESS;
+import static in.projecteka.library.clients.model.ClientError.invalidResponseFromHIP;
+import static in.projecteka.library.clients.model.ErrorCode.TRANSACTION_ID_NOT_FOUND;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static reactor.core.publisher.Mono.empty;
 import static reactor.core.publisher.Mono.error;
@@ -78,7 +78,6 @@ public class Link {
                                 hipId,
                                 patientLinkReferenceRequest.getRequestId())));
     }
-
 
     private Mono<Boolean> validateRequest(UUID requestId) {
         return linkRepository.selectLinkReference(requestId)

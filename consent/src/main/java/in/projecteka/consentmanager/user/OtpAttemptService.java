@@ -1,8 +1,7 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.ClientError;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -12,6 +11,8 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
+import static in.projecteka.consentmanager.user.model.OtpAttempt.AttemptStatus.FAILURE;
+import static in.projecteka.library.clients.model.ErrorCode.OTP_INVALID;
 
 @Service
 @AllArgsConstructor
@@ -52,10 +53,10 @@ public class OtpAttemptService {
         return otpAttemptRepository.removeAttempts(otpAttempt);
     }
 
-    public <T> Mono<T> handleInvalidOTPError(ClientError error, OtpAttempt attempt){
+    public <T> Mono<T> handleInvalidOTPError(ClientError error, OtpAttempt attempt) {
         Mono<T> invalidOTPError = Mono.error(error);
-        if(error.getErrorCode().equals(ErrorCode.OTP_INVALID)) {
-            return saveOTPAttempt(attempt.toBuilder().attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build()).then(invalidOTPError);
+        if (error.getErrorCode().equals(OTP_INVALID)) {
+            return saveOTPAttempt(attempt.toBuilder().attemptStatus(FAILURE).build()).then(invalidOTPError);
         }
         return invalidOTPError;
     }
@@ -66,7 +67,7 @@ public class OtpAttemptService {
 
     private Mono<List<OtpAttempt>> validateLatestAttempt(List<OtpAttempt> attempts) {
         OtpAttempt latestAttempt = attempts.get(0);
-        if (latestAttempt.getAttemptStatus() == OtpAttempt.AttemptStatus.FAILURE) {
+        if (latestAttempt.getAttemptStatus() == FAILURE) {
             return handleBlockedLatestAttempt(latestAttempt);
         }
         return Mono.just(attempts);
@@ -84,7 +85,7 @@ public class OtpAttemptService {
         OtpAttempt firstAttempt = attempts.get(attempts.size() - 1);
         boolean isAttemptsLimitExceeded = isWithinTimeLimit(firstAttempt, userServiceProperties.getMaxOtpAttemptsPeriodInMin());
         if (isAttemptsLimitExceeded) {
-            return saveOTPAttempt(firstAttempt.toBuilder().attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build())
+            return saveOTPAttempt(firstAttempt.toBuilder().attemptStatus(FAILURE).build())
                     .then(Mono.error(ClientError.otpRequestLimitExceeded()));
         }
         return Mono.empty();
@@ -93,7 +94,7 @@ public class OtpAttemptService {
     private boolean isNoneBlockedExceptLatest(List<OtpAttempt> otpAttempts) {
         List<OtpAttempt> duplicateAttempts = new ArrayList<>(otpAttempts);
         duplicateAttempts.remove(0); //remove latest otp attempt
-        return duplicateAttempts.stream().noneMatch(attempt -> attempt.getAttemptStatus() == OtpAttempt.AttemptStatus.FAILURE);
+        return duplicateAttempts.stream().noneMatch(attempt -> attempt.getAttemptStatus() == FAILURE);
     }
 
     public boolean isWithinTimeLimit(OtpAttempt attempt, int timeLimitInMin) {

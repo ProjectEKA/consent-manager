@@ -1,15 +1,10 @@
 package in.projecteka.consentmanager.link.discovery;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.ErrorMap;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.Error;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
-import in.projecteka.consentmanager.clients.model.ErrorRepresentation;
 import in.projecteka.consentmanager.clients.model.Identifier;
 import in.projecteka.consentmanager.clients.model.Provider;
-import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
@@ -20,6 +15,11 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
+import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.ErrorCode;
+import in.projecteka.library.clients.model.ErrorRepresentation;
+import in.projecteka.library.clients.model.Error;
+import in.projecteka.library.clients.model.RespError;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,10 +37,12 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static in.projecteka.consentmanager.clients.ClientError.invalidResponseFromHIP;
 import static in.projecteka.consentmanager.common.CustomScheduler.scheduleThis;
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.tryTo;
+import static in.projecteka.library.clients.model.ClientError.gatewayTimeOut;
+import static in.projecteka.library.clients.model.ClientError.invalidResponseFromHIP;
+import static in.projecteka.library.clients.model.ClientError.requestAlreadyExists;
 
 @AllArgsConstructor
 public class Discovery {
@@ -73,14 +75,14 @@ public class Discovery {
 
         return Mono.just(requestId)
                 .filterWhen(this::validateRequest)
-                .switchIfEmpty(Mono.error(ClientError.requestAlreadyExists()))
+                .switchIfEmpty(Mono.error(requestAlreadyExists()))
                 .flatMap(val -> userWith(userName))
                 .flatMap(user -> scheduleThis(discoveryServiceClient.requestPatientFor(
                         requestFor(user, transactionId, unverifiedIdentifiers, requestId),
                         providerId))
                         .timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
                         .responseFrom(discard -> Mono.defer(() -> discoveryResults.get(requestId.toString()))))
-                .onErrorResume(DelayTimeoutException.class, discard -> Mono.error(ClientError.gatewayTimeOut()))
+                .onErrorResume(DelayTimeoutException.class, discard -> Mono.error(gatewayTimeOut()))
                 .flatMap(response -> tryTo(response, DiscoveryResult.class).map(Mono::just).orElse(Mono.error(invalidResponseFromHIP())))
                 .switchIfEmpty(Mono.error(invalidResponseFromHIP()))
                 .flatMap(discoveryResult -> {
@@ -104,34 +106,34 @@ public class Discovery {
                         .subscribe());
     }
 
-	private ErrorRepresentation cmErrorRepresentation(RespError respError) {
-		Error error = Error.builder()
-				.code(ErrorMap.toCmError(respError.getCode()))
-				.message(respError.getMessage())
-				.build();
-		return ErrorRepresentation.builder().error(error).build();
-	}
+    private ErrorRepresentation cmErrorRepresentation(RespError respError) {
+        Error error = Error.builder()
+                .code(ErrorMap.toCmError(respError.getCode()))
+                .message(respError.getMessage())
+                .build();
+        return ErrorRepresentation.builder().error(error).build();
+    }
 
     public Mono<Void> onDiscoverPatientCareContexts(DiscoveryResult discoveryResult) {
-        if (discoveryResult.getPatient() == null){
+        if (discoveryResult.getPatient() == null) {
             logger.error("[Discovery] Received a discovery response from Gateway without patient details for requestId.{} with error {}",
                     discoveryResult.getRequestId(), getDiscoveryError(discoveryResult));
             return handleDiscoveryError(discoveryResult.getResp().getRequestId(), "Patient Details not found");
         }
 
-        if (StringUtils.isEmpty(discoveryResult.getPatient().getReferenceNumber())){
+        if (StringUtils.isEmpty(discoveryResult.getPatient().getReferenceNumber())) {
             logger.error("[Discovery] Received a discovery response from Gateway without blank patient reference for requestId.{} with error {}",
                     discoveryResult.getRequestId(), getDiscoveryError(discoveryResult));
             return handleDiscoveryError(discoveryResult.getResp().getRequestId(), "Patient Reference should not be blank");
         }
 
-        if (discoveryResult.getPatient().getCareContexts() == null){
+        if (discoveryResult.getPatient().getCareContexts() == null) {
             logger.error("[Discovery] Received a discovery response from Gateway with care contexts as null for requestId.{}  with error {}",
                     discoveryResult.getRequestId(), getDiscoveryError(discoveryResult));
             return handleDiscoveryError(discoveryResult.getResp().getRequestId(), "Care contexts should not be null");
         }
 
-        if (hasEmptyCareContextReferences(discoveryResult)){
+        if (hasEmptyCareContextReferences(discoveryResult)) {
             logger.error("[Discovery] Received a discovery response from Gateway with invalid care context references for requestId.{} with error {}",
                     discoveryResult.getRequestId(), getDiscoveryError(discoveryResult));
             return handleDiscoveryError(discoveryResult.getResp().getRequestId(), "All the care contexts should have valid references");
@@ -193,8 +195,8 @@ public class Discovery {
                 .build();
         List<in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier> unverifiedIds =
                 (unverifiedIdentifiers == null || unverifiedIdentifiers.isEmpty())
-                        ? Collections.emptyList()
-                        : unverifiedIdentifiers.stream().map(patientIdentifier ->
+                ? Collections.emptyList()
+                : unverifiedIdentifiers.stream().map(patientIdentifier ->
                         in.projecteka.consentmanager.link.discovery.model.patient.request.Identifier.builder()
                                 .type(patientIdentifier.getType().toString())
                                 .value(patientIdentifier.getValue())

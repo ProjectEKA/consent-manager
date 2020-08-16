@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
@@ -8,6 +7,7 @@ import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIUReference;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -16,4 +16,9 @@ public class DbOptions {
     private final String user;
     private final String password;
     private final int poolSize;
+
+    public in.projecteka.library.common.DbOptions toHeartBeat() {
+        return new in.projecteka.library.common.DbOptions(host, port);
+    }
+
 }

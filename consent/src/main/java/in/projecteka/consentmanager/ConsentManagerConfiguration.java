@@ -15,7 +15,6 @@ import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
-import in.projecteka.consentmanager.common.CacheHealth;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
@@ -29,13 +28,14 @@ import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisGenericAdapter;
 import in.projecteka.consentmanager.common.cache.RedisOptions;
 import in.projecteka.consentmanager.common.heartbeat.CacheMethodProperty;
-import in.projecteka.consentmanager.common.heartbeat.Heartbeat;
 import in.projecteka.consentmanager.common.heartbeat.RabbitmqOptions;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
 import in.projecteka.consentmanager.user.UserRepository;
 import in.projecteka.consentmanager.user.UserServiceProperties;
+import in.projecteka.library.common.CacheHealth;
+import in.projecteka.library.common.heartbeat.Heartbeat;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
 import io.vertx.pgclient.PgConnectOptions;
@@ -261,7 +261,10 @@ public class ConsentManagerConfiguration {
                                DbOptions dbOptions,
                                RabbitmqOptions rabbitmqOptions,
                                CacheHealth cacheHealth) {
-        return new Heartbeat(identityServiceProperties, dbOptions, rabbitmqOptions, cacheHealth);
+        return new Heartbeat(identityServiceProperties.getBaseUrl(),
+                dbOptions.toHeartBeat(),
+                rabbitmqOptions.toHeartBeat(),
+                cacheHealth);
     }
 
     @Bean
@@ -385,6 +388,6 @@ public class ConsentManagerConfiguration {
     @Bean
     public CacheHealth cacheHealth(@Qualifier("Lettuce") ReactiveRedisConnectionFactory redisConnectionFactory,
                                    CacheMethodProperty cacheMethodProperty) {
-        return new CacheHealth(cacheMethodProperty, redisConnectionFactory);
+        return new CacheHealth(cacheMethodProperty.toHeartBeat(), redisConnectionFactory);
     }
 }

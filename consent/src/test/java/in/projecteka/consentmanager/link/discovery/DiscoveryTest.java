@@ -1,11 +1,8 @@
 package in.projecteka.consentmanager.link.discovery;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
-import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.Serializer;
@@ -16,6 +13,9 @@ import in.projecteka.consentmanager.link.discovery.model.patient.response.CareCo
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.user.model.PatientName;
+import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.ErrorCode;
+import in.projecteka.library.clients.model.RespError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;

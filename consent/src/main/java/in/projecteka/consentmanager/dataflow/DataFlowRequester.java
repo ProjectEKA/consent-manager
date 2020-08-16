@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.dataflow;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.DataFlowRequestClient;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
@@ -14,6 +13,7 @@ import in.projecteka.consentmanager.dataflow.model.HIRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
 import in.projecteka.consentmanager.dataflow.model.HealthInformationResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +25,8 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static in.projecteka.consentmanager.clients.ClientError.from;
 import static in.projecteka.consentmanager.dataflow.model.RequestStatus.REQUESTED;
+import static in.projecteka.library.clients.model.ClientError.from;
 
 @AllArgsConstructor
 public class DataFlowRequester {
@@ -66,11 +66,11 @@ public class DataFlowRequester {
         AtomicReference<String> hiuId = new AtomicReference<>("");
         return fetchConsentArtefact(dataFlowRequest.getHiRequest().getConsent().getId())
                 .flatMap(caRep -> {
-                    if(caRep == null) {
+                    if (caRep == null) {
                         logger.info("[DataFlowRequester] No consent artefact found for Gateway requestId={}", gatewayRequestId);
                         return Mono.error(ClientError.consentArtefactNotFound());
                     }
-                    if(caRep.getConsentDetail() != null
+                    if (caRep.getConsentDetail() != null
                             && caRep.getConsentDetail().getHiu() != null
                             && caRep.getConsentDetail().getHiu().getId() != null) {
                         hiuId.set(caRep.getConsentDetail().getHiu().getId());
@@ -80,7 +80,7 @@ public class DataFlowRequester {
                 .flatMap(flowRequest -> dataFlowRequestRepository.addDataFlowRequest(transactionId.toString(), flowRequest)
                         .thenReturn(flowRequest))
                 .flatMap(flowRequest -> notifyHIP(transactionId.toString(), flowRequest)
-                .thenReturn(flowRequest))
+                        .thenReturn(flowRequest))
                 .map(result -> {
                     var hiRequest = HIRequest.builder()
                             .transactionId(transactionId)

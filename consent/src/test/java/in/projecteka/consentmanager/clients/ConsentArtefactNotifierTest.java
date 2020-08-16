@@ -4,6 +4,7 @@ import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.consent.model.request.ConsentNotifier;
 import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
 import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
+import in.projecteka.library.clients.model.ClientError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

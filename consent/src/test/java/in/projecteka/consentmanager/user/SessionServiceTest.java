@@ -1,7 +1,6 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.NullableConverter;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.clients.model.Session;
@@ -13,6 +12,7 @@ import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.library.clients.model.ClientError;
 import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.link.link;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.link.link.model.AuthzHipAction;
+import in.projecteka.library.clients.model.ClientError;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;

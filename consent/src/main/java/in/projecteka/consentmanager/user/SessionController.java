@@ -1,12 +1,12 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

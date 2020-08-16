@@ -1,24 +1,25 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.clients.model.ErrorCode;
+import in.projecteka.library.clients.model.ErrorCode;
 
 import java.util.Map;
 
-import static in.projecteka.consentmanager.clients.model.ErrorCode.CARE_CONTEXT_NOT_FOUND;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.DISCOVERY_REQUEST_NOT_FOUND;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.DUPLICATE_DISCOVERY_REQUEST;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.FAILED_TO_GET_LINKED_CARE_CONTEXTS;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.INVALID_LINK_REFERENCE;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_EXPIRED;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.OTP_INVALID;
-import static in.projecteka.consentmanager.clients.model.ErrorCode.UNKNOWN_ERROR_OCCURRED;
+import static in.projecteka.library.clients.model.ErrorCode.CARE_CONTEXT_NOT_FOUND;
+import static in.projecteka.library.clients.model.ErrorCode.DISCOVERY_REQUEST_NOT_FOUND;
+import static in.projecteka.library.clients.model.ErrorCode.DUPLICATE_DISCOVERY_REQUEST;
+import static in.projecteka.library.clients.model.ErrorCode.FAILED_TO_GET_LINKED_CARE_CONTEXTS;
+import static in.projecteka.library.clients.model.ErrorCode.INVALID_LINK_REFERENCE;
+import static in.projecteka.library.clients.model.ErrorCode.NO_PATIENT_FOUND;
+import static in.projecteka.library.clients.model.ErrorCode.OTP_EXPIRED;
+import static in.projecteka.library.clients.model.ErrorCode.OTP_INVALID;
+import static in.projecteka.library.clients.model.ErrorCode.UNKNOWN_ERROR_OCCURRED;
 import static java.util.Map.of;
 import static java.util.Objects.isNull;
 
 public class ErrorMap {
 
     //hip
-    private static final Map<Integer, ErrorCode> ERROR_CODE_MAP = of(3404, ErrorCode.NO_PATIENT_FOUND,
+    private static final Map<Integer, ErrorCode> ERROR_CODE_MAP = of(3404, NO_PATIENT_FOUND,
             3402, CARE_CONTEXT_NOT_FOUND,
             3405, OTP_INVALID,
             3406, OTP_EXPIRED,

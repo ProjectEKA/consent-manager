@@ -1,10 +1,11 @@
 package in.projecteka.consentmanager.clients;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequest;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
+import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.ErrorCode;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

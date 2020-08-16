@@ -1,9 +1,9 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.TransactionPin;
+import in.projecteka.library.clients.model.ClientError;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.AllArgsConstructor;
@@ -19,10 +19,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.clients.ClientError.invalidAttemptsExceeded;
-import static in.projecteka.consentmanager.clients.ClientError.requestAlreadyExists;
-import static in.projecteka.consentmanager.clients.ClientError.transactionPinDidNotMatch;
-import static in.projecteka.consentmanager.clients.ClientError.transactionPinNotFound;
+import static in.projecteka.library.clients.model.ClientError.invalidAttemptsExceeded;
+import static in.projecteka.library.clients.model.ClientError.requestAlreadyExists;
+import static in.projecteka.library.clients.model.ClientError.transactionPinDidNotMatch;
+import static in.projecteka.library.clients.model.ClientError.transactionPinNotFound;
 import static java.lang.String.format;
 import static reactor.core.publisher.Mono.defer;
 import static reactor.core.publisher.Mono.error;
@@ -56,8 +56,8 @@ public class TransactionPinService {
     private Mono<Void> validateTransactionPin(String patientId) {
         return isTransactionPinSet(patientId)
                 .flatMap(hasTransactionPin -> Boolean.TRUE.equals(hasTransactionPin)
-                        ? error(ClientError.transactionPinAlreadyCreated())
-                        : Mono.empty());
+                                              ? error(ClientError.transactionPinAlreadyCreated())
+                                              : Mono.empty());
     }
 
     public Mono<Boolean> isTransactionPinSet(String patientId) {

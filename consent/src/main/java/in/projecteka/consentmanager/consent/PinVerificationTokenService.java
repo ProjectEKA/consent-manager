@@ -1,8 +1,8 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.library.clients.model.ClientError;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;

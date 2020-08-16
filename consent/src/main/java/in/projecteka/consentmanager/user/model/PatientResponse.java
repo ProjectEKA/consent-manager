@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.user.model;
 
-import in.projecteka.consentmanager.clients.model.RespError;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.library.clients.model.RespError;
 import lombok.Builder;
 import lombok.Value;
 
@@ -12,11 +12,11 @@ import java.util.UUID;
 @Value
 @Builder
 public class PatientResponse {
-    private UUID requestId;
-    private LocalDateTime timestamp;
-    private Patient patient;
-    private RespError error;
+    UUID requestId;
+    LocalDateTime timestamp;
+    Patient patient;
+    RespError error;
     @NotNull
-    private GatewayResponse resp;
+    GatewayResponse resp;
 }
 

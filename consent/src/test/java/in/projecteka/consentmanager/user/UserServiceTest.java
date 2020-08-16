@@ -1,11 +1,9 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.NullableConverter;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
@@ -31,6 +29,8 @@ import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.ErrorCode;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.assertj.core.api.InstanceOfAssertFactories;

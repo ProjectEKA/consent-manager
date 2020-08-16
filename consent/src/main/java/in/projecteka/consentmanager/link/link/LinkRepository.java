@@ -25,9 +25,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.clients.ClientError.transactionIdNotFound;
 import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.consentmanager.common.Serializer.to;
+import static in.projecteka.library.clients.model.ClientError.transactionIdNotFound;
 
 public class LinkRepository {
 

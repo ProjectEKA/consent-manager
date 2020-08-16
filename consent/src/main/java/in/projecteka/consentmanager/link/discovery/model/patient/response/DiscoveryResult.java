@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.link.discovery.model.patient.response;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import in.projecteka.consentmanager.clients.model.RespError;
+import in.projecteka.library.clients.model.RespError;
 import lombok.Builder;
 import lombok.Value;
 import org.springframework.util.StringUtils;
@@ -17,15 +17,15 @@ import java.util.UUID;
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DiscoveryResult {
-    private UUID requestId;
-    private LocalDateTime timestamp;
-    private UUID transactionId;
-    private Patient patient;
-    private RespError error;
+    UUID requestId;
+    LocalDateTime timestamp;
+    UUID transactionId;
+    Patient patient;
+    RespError error;
     @NotNull
-    private GatewayResponse resp;
+    GatewayResponse resp;
 
-    public boolean hasResponseId(){
+    public boolean hasResponseId() {
         return (resp != null) && !StringUtils.isEmpty(resp.getRequestId());
     }
 }

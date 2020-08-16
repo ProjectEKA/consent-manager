@@ -1,8 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
@@ -59,7 +57,7 @@ class HipConsentNotificationListenerTest {
     }
 
     @Test
-    void shouldSendNotificationToHIPWithoutConsentArtefactsOnExpiry() throws ClientError, JsonProcessingException {
+    void shouldSendNotificationToHIPWithoutConsentArtefactsOnExpiry() {
         var messageListenerCaptor = ArgumentCaptor.forClass(MessageListener.class);
         var mockMessage = Mockito.mock(Message.class);
         var mockMessageProperties = Mockito.mock(MessageProperties.class);
@@ -70,7 +68,7 @@ class HipConsentNotificationListenerTest {
                         .hip(HIPReference.builder()
                                 .id("HIP_ID")
                                 .build())
-                .build())
+                        .build())
                 .consentId(consentId)
                 .build();
         when(messageListenerContainerFactory
@@ -86,8 +84,8 @@ class HipConsentNotificationListenerTest {
 
         MessageListener messageListener = messageListenerCaptor.getValue();
         messageListener.onMessage(mockMessage);
-        verify(messageListenerContainer,times(1)).start();
-        verify(messageListenerContainer,times(1))
+        verify(messageListenerContainer, times(1)).start();
+        verify(messageListenerContainer, times(1))
                 .setupMessageListener(messageListenerCaptor.capture());
 
         verify(consentArtefactNotifier).sendConsentArtefactToHIP(any(), anyString());

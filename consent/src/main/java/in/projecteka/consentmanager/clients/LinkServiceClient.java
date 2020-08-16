@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.common.Constants;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
 import in.projecteka.consentmanager.link.link.model.LinkResponse;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

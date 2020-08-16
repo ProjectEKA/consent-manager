@@ -1,10 +1,8 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.ClientError;
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.ErrorCode;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.OtpAction;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
@@ -40,6 +38,8 @@ import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserCredential;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.ErrorCode;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,12 +54,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.clients.ClientError.failedToFetchUserCredentials;
-import static in.projecteka.consentmanager.clients.ClientError.from;
-import static in.projecteka.consentmanager.clients.ClientError.userAlreadyExists;
-import static in.projecteka.consentmanager.clients.ClientError.userNotFound;
 import static in.projecteka.consentmanager.user.IdentifierUtils.getIdentifierValue;
 import static in.projecteka.consentmanager.user.model.IdentifierType.MOBILE;
+import static in.projecteka.library.clients.model.ClientError.failedToFetchUserCredentials;
+import static in.projecteka.library.clients.model.ClientError.from;
+import static in.projecteka.library.clients.model.ClientError.userAlreadyExists;
+import static in.projecteka.library.clients.model.ClientError.userNotFound;
 import static java.lang.String.format;
 
 @AllArgsConstructor

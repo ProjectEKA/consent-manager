@@ -52,6 +52,8 @@ dependencies {
     implementation 'net.logstash.logback:logstash-logback-encoder:6.4'
     implementation 'org.springframework.data:spring-data-redis'
     testImplementation 'org.apache.commons:commons-lang3:3.11'
+
+    implementation project(":commons")
 }
 
 jacocoTestReport {

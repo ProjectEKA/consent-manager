@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
+import in.projecteka.consentmanager.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;

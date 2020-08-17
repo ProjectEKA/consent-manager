@@ -5,7 +5,7 @@ import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.DataFlowRequestClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
-import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
+import in.projecteka.consentmanager.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import io.vertx.pgclient.PgPool;

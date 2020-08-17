@@ -5,7 +5,7 @@ import in.projecteka.consentmanager.clients.model.CareContextRepresentation;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
-import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
+import in.projecteka.consentmanager.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.link.model.Hip;

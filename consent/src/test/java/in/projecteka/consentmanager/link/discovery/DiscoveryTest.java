@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.link.discovery;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
+import in.projecteka.consentmanager.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.Serializer;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifierType;

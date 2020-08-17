@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.common.heartbeat;
+package in.projecteka.consentmanager.heartbeat;
 
 import in.projecteka.library.common.Constants;
 import in.projecteka.library.common.heartbeat.Heartbeat;

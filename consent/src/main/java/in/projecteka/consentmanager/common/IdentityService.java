@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.common;
 
 import in.projecteka.consentmanager.clients.IdentityServiceClient;
-import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
+import in.projecteka.consentmanager.properties.IdentityServiceProperties;
 import in.projecteka.library.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
 import org.springframework.util.LinkedMultiValueMap;

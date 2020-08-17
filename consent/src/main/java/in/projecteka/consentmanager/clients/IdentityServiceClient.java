@@ -5,7 +5,7 @@ import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequ
 import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.KeycloakUser;
 import in.projecteka.consentmanager.clients.model.Session;
-import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
+import in.projecteka.consentmanager.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.user.model.KeyCloakError;
 import in.projecteka.library.clients.model.ClientError;
 import org.springframework.http.HttpStatus;

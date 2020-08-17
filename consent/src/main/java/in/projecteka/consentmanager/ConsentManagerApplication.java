@@ -1,16 +1,16 @@
 package in.projecteka.consentmanager;
 
-import in.projecteka.consentmanager.clients.properties.ClientRegistryProperties;
-import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
-import in.projecteka.consentmanager.clients.properties.IdentityServiceProperties;
-import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
-import in.projecteka.consentmanager.clients.properties.LinkTokenCacheProperties;
-import in.projecteka.consentmanager.clients.properties.OtpServiceProperties;
+import in.projecteka.consentmanager.properties.ClientRegistryProperties;
+import in.projecteka.consentmanager.properties.GatewayServiceProperties;
+import in.projecteka.consentmanager.properties.IdentityServiceProperties;
+import in.projecteka.consentmanager.properties.LinkServiceProperties;
+import in.projecteka.consentmanager.properties.LinkTokenCacheProperties;
+import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.KeyPairConfig;
 import in.projecteka.consentmanager.common.ListenerProperties;
-import in.projecteka.consentmanager.common.cache.RedisOptions;
-import in.projecteka.consentmanager.common.heartbeat.CacheMethodProperty;
-import in.projecteka.consentmanager.common.heartbeat.RabbitmqOptions;
+import in.projecteka.consentmanager.properties.RedisOptions;
+import in.projecteka.consentmanager.properties.CacheMethodProperty;
+import in.projecteka.consentmanager.properties.RabbitmqOptions;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.consent.NHSProperties;
 import in.projecteka.consentmanager.dataflow.DataFlowConsentManagerProperties;

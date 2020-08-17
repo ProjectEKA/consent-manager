@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.common;
 
 import in.projecteka.consentmanager.clients.ServiceAuthenticationClient;
-import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
+import in.projecteka.consentmanager.properties.GatewayServiceProperties;
 import in.projecteka.library.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;

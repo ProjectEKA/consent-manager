@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.common.cache;
+package in.projecteka.consentmanager.properties;
 
 public enum ReadFrom {
     UPSTREAM,

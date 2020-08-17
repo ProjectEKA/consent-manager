@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.common.heartbeat;
+package in.projecteka.consentmanager.heartbeat;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWKSet;

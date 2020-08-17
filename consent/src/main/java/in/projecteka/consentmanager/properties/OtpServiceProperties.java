@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.clients.properties;
+package in.projecteka.consentmanager.properties;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

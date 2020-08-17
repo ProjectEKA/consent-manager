@@ -7,7 +7,7 @@ import in.projecteka.consentmanager.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.properties.LinkTokenCacheProperties;
 import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.properties.KeyPairConfig;
-import in.projecteka.consentmanager.common.ListenerProperties;
+import in.projecteka.consentmanager.properties.ListenerProperties;
 import in.projecteka.consentmanager.properties.RedisOptions;
 import in.projecteka.consentmanager.properties.CacheMethodProperty;
 import in.projecteka.consentmanager.properties.RabbitmqOptions;

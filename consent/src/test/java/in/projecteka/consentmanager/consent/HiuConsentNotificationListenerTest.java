@@ -2,7 +2,7 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
-import in.projecteka.consentmanager.common.ListenerProperties;
+import in.projecteka.consentmanager.properties.ListenerProperties;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

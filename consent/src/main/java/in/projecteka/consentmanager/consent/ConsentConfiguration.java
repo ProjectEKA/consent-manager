@@ -14,7 +14,7 @@ import in.projecteka.consentmanager.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.properties.KeyPairConfig;
-import in.projecteka.consentmanager.common.ListenerProperties;
+import in.projecteka.consentmanager.properties.ListenerProperties;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.library.common.CentralRegistry;
 import in.projecteka.library.common.cache.CacheAdapter;

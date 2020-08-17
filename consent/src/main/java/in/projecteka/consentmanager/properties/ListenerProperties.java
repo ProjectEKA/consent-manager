@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.common;
+package in.projecteka.consentmanager.properties;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,6 +10,6 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @Getter
 @ConstructorBinding
 public class ListenerProperties {
-    private int maximumRetries;
-    private int retryInterval;
+    private final int maximumRetries;
+    private final int retryInterval;
 }

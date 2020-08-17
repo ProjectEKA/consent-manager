@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.consent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
-import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.consent.model.AccessPeriod;
 import in.projecteka.consentmanager.consent.model.ConsentPermission;
 import in.projecteka.consentmanager.consent.model.ConsentPurpose;
@@ -22,6 +21,7 @@ import in.projecteka.consentmanager.consent.model.response.RequestCreatedReprese
 import in.projecteka.consentmanager.consent.policies.NhsPolicyCheck;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.library.clients.model.Provider;
+import in.projecteka.library.common.Authenticator;
 import in.projecteka.library.common.Caller;
 import in.projecteka.library.common.CentralRegistry;
 import in.projecteka.library.common.GatewayTokenVerifier;

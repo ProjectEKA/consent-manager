@@ -1,11 +1,10 @@
-package in.projecteka.consentmanager.common;
+package in.projecteka.consentmanager.properties;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.properties.KeyPairConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

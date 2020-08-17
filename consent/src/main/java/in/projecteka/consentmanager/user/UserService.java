@@ -25,6 +25,7 @@ import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.consentmanager.user.model.UserAuthConfirmRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.library.clients.IdentityServiceClient;
 import in.projecteka.library.clients.OtpServiceClient;

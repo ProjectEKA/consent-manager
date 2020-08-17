@@ -14,13 +14,15 @@ jobs:
         with:
           java-version: 12
       - name: Build and unit tests
-        run: ./gradlew clean build
+        run: ./gradlew clean test
       - name: Code coverage
         run: ./gradlew jacocoTestReport
       - name: Code analysis
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew sonarqube
+      - name: Generate artefact
+        run: ./gradlew :consent:bootJar
       - name: Set env
         run: echo ::set-env name=RELEASE_VERSION::$(echo $GITHUB_SHA | head -c7)
       - name: Docker Registry

@@ -2,9 +2,9 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.properties.GatewayServiceProperties;
-import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.user.model.PatientResponse;
 import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.common.ServiceAuthentication;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;

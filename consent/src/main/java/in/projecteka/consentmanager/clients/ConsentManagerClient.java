@@ -1,11 +1,11 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.properties.GatewayServiceProperties;
-import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestResult;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
+import in.projecteka.consentmanager.properties.GatewayServiceProperties;
 import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.common.ServiceAuthentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;

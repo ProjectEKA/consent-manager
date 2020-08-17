@@ -9,7 +9,6 @@ import in.projecteka.consentmanager.DestinationsConfig.DestinationInfo;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
-import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.properties.CacheMethodProperty;
 import in.projecteka.consentmanager.properties.ClientRegistryProperties;
@@ -30,6 +29,7 @@ import in.projecteka.library.common.CacheHealth;
 import in.projecteka.library.common.CentralRegistry;
 import in.projecteka.library.common.IdentityService;
 import in.projecteka.library.common.RequestValidator;
+import in.projecteka.library.common.ServiceAuthentication;
 import in.projecteka.library.common.ServiceCredential;
 import in.projecteka.library.common.cache.CacheAdapter;
 import in.projecteka.library.common.cache.LoadingCacheAdapter;
@@ -145,10 +145,14 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public ServiceAuthentication serviceAuthentication(ServiceAuthenticationClient serviceAuthenticationClient,
-                                                       GatewayServiceProperties gatewayServiceProperties,
-                                                       @Qualifier("accessToken") CacheAdapter<String, String> accessToken) {
-        return new ServiceAuthentication(serviceAuthenticationClient, gatewayServiceProperties, accessToken);
+    public ServiceAuthentication serviceAuthentication(
+            ServiceAuthenticationClient serviceAuthenticationClient,
+            GatewayServiceProperties gatewayServiceProperties,
+            @Qualifier("accessToken") CacheAdapter<String, String> accessToken) {
+        return new ServiceAuthentication(serviceAuthenticationClient,
+                new ServiceCredential(gatewayServiceProperties.getClientId(),
+                        gatewayServiceProperties.getClientSecret()),
+                accessToken);
     }
 
     @Bean

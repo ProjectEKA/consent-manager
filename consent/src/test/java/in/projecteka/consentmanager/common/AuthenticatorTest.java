@@ -6,6 +6,7 @@ import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import in.projecteka.library.common.Caller;
 import in.projecteka.library.common.cache.CacheAdapter;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;

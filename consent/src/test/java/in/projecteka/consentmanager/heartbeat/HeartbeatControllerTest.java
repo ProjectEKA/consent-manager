@@ -18,8 +18,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.common.Constants.PATH_HEARTBEAT;
-import static in.projecteka.consentmanager.common.Constants.SERVICE_DOWN;
+import static in.projecteka.consentmanager.Constants.PATH_HEARTBEAT;
+import static in.projecteka.consentmanager.Constants.SERVICE_DOWN;
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.library.common.heartbeat.model.Status.DOWN;
 import static in.projecteka.library.common.heartbeat.model.Status.UP;

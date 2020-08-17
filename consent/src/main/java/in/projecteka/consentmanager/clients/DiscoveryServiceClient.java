@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.function.Supplier;
 
-import static in.projecteka.consentmanager.common.Constants.HDR_HIP_ID;
+import static in.projecteka.consentmanager.Constants.HDR_HIP_ID;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor

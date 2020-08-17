@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.TestBuilders.string;
-import static in.projecteka.consentmanager.common.Constants.HDR_HIP_ID;
+import static in.projecteka.consentmanager.Constants.HDR_HIP_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;

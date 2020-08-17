@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static in.projecteka.consentmanager.common.Constants.CONSENT_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.Constants.CONSENT_REQUEST_QUEUE;
 
 @AllArgsConstructor
 public class ConsentRequestNotificationListener {

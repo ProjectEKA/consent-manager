@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.user;
 
-import static in.projecteka.consentmanager.common.Constants.CURRENT_VERSION;
+import static in.projecteka.consentmanager.Constants.CURRENT_VERSION;
 
 public class Constants {
     public static final String BASE_PATH_PATIENTS_APIS = "/patients";

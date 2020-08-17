@@ -22,8 +22,8 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashSet;
 
-import static in.projecteka.consentmanager.common.Constants.BLACKLIST;
-import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
+import static in.projecteka.consentmanager.Constants.BLACKLIST;
+import static in.projecteka.consentmanager.Constants.BLACKLIST_FORMAT;
 
 public class Authenticator {
 

@@ -2,7 +2,7 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.properties.GatewayServiceProperties;
-import in.projecteka.consentmanager.common.Constants;
+import in.projecteka.consentmanager.Constants;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
 import in.projecteka.consentmanager.link.link.model.LinkResponse;
@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
-import static in.projecteka.consentmanager.common.Constants.HDR_HIP_ID;
+import static in.projecteka.consentmanager.Constants.HDR_HIP_ID;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor

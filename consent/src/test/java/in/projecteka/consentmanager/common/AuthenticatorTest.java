@@ -18,8 +18,8 @@ import reactor.core.publisher.Mono;
 
 import java.text.ParseException;
 
-import static in.projecteka.consentmanager.common.Constants.BLACKLIST;
-import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
+import static in.projecteka.consentmanager.Constants.BLACKLIST;
+import static in.projecteka.consentmanager.Constants.BLACKLIST_FORMAT;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;

@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
-import static in.projecteka.consentmanager.common.Constants.HDR_HIU_ID;
+import static in.projecteka.consentmanager.Constants.HDR_HIU_ID;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_DATA_FLOW_CM_ON_REQUEST;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 

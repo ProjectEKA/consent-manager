@@ -21,7 +21,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static in.projecteka.consentmanager.common.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static org.mockito.ArgumentMatchers.any;

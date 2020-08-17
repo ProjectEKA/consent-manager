@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.link;
 
-import static in.projecteka.consentmanager.common.Constants.CURRENT_VERSION;
+import static in.projecteka.consentmanager.Constants.CURRENT_VERSION;
 
 public class Constants {
     public static final String APP_PATH_CONFIRM_LINK = "/v1/links/link/confirm";

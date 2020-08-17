@@ -30,8 +30,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.common.Constants.BLACKLIST;
-import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
+import static in.projecteka.consentmanager.Constants.BLACKLIST;
+import static in.projecteka.consentmanager.Constants.BLACKLIST_FORMAT;
 import static in.projecteka.library.clients.model.ClientError.invalidRefreshToken;
 import static in.projecteka.library.clients.model.ClientError.invalidUserNameOrPassword;
 import static in.projecteka.library.clients.model.ErrorCode.OTP_INVALID;

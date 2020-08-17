@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.common.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
 
 @AllArgsConstructor
 public class DataFlowBroadcastListener {

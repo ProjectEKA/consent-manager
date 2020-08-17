@@ -24,8 +24,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static in.projecteka.consentmanager.common.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
-import static in.projecteka.consentmanager.common.Constants.PARKING_EXCHANGE;
+import static in.projecteka.consentmanager.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.Constants.PARKING_EXCHANGE;
 
 @AllArgsConstructor
 public class HiuConsentNotificationListener {

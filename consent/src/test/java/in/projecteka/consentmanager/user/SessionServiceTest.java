@@ -25,8 +25,8 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static in.projecteka.consentmanager.clients.TestBuilders.session;
-import static in.projecteka.consentmanager.common.Constants.BLACKLIST;
-import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
+import static in.projecteka.consentmanager.Constants.BLACKLIST;
+import static in.projecteka.consentmanager.Constants.BLACKLIST_FORMAT;
 import static in.projecteka.consentmanager.user.TestBuilders.sessionRequest;
 import static in.projecteka.consentmanager.user.model.OtpAttempt.Action.OTP_REQUEST_LOGIN;
 import static org.assertj.core.api.Assertions.assertThat;

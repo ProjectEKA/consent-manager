@@ -9,9 +9,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
-import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_APPROVE;
-import static in.projecteka.consentmanager.common.Constants.SCOPE_CONSENT_REVOKE;
-import static in.projecteka.consentmanager.common.Constants.SCOPE_CHANGE_PIN;
+import static in.projecteka.consentmanager.Constants.SCOPE_CONSENT_APPROVE;
+import static in.projecteka.consentmanager.Constants.SCOPE_CONSENT_REVOKE;
+import static in.projecteka.consentmanager.Constants.SCOPE_CHANGE_PIN;
 
 @AllArgsConstructor
 @Getter

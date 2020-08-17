@@ -85,12 +85,12 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
-import static in.projecteka.consentmanager.common.Constants.CONSENT_REQUEST_QUEUE;
-import static in.projecteka.consentmanager.common.Constants.DEFAULT_CACHE_VALUE;
-import static in.projecteka.consentmanager.common.Constants.EXCHANGE;
-import static in.projecteka.consentmanager.common.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
-import static in.projecteka.consentmanager.common.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
-import static in.projecteka.consentmanager.common.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.Constants.CONSENT_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.Constants.DEFAULT_CACHE_VALUE;
+import static in.projecteka.consentmanager.Constants.EXCHANGE;
+import static in.projecteka.consentmanager.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.consentmanager.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
 
 @Configuration
 public class ConsentManagerConfiguration {

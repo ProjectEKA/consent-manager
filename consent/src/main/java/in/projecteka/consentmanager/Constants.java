@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager.common;
+package in.projecteka.consentmanager;
 
 import java.time.LocalDateTime;
 

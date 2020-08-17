@@ -15,7 +15,7 @@ import java.time.Duration;
 import java.util.function.Supplier;
 
 import static com.google.common.net.HttpHeaders.AUTHORIZATION;
-import static in.projecteka.consentmanager.common.Constants.HDR_HIU_ID;
+import static in.projecteka.consentmanager.Constants.HDR_HIU_ID;
 import static java.lang.String.format;
 import static java.util.function.Predicate.not;
 

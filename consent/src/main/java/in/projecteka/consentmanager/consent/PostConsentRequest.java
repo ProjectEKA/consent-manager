@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
 import reactor.core.publisher.Mono;
 
-import static in.projecteka.consentmanager.common.Constants.CONSENT_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.Constants.CONSENT_REQUEST_QUEUE;
 
 
 @AllArgsConstructor

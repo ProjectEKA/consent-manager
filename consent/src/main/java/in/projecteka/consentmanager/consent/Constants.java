@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
-import static in.projecteka.consentmanager.common.Constants.CURRENT_VERSION;
+import static in.projecteka.consentmanager.Constants.CURRENT_VERSION;
 
 public class Constants {
     public static final String PATH_CONSENT_REQUESTS_INIT = CURRENT_VERSION + "/consent-requests/init";

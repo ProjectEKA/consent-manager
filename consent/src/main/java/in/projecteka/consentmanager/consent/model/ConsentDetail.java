@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static in.projecteka.consentmanager.common.Constants.API_VERSION;
+import static in.projecteka.consentmanager.Constants.API_VERSION;
 
 @AllArgsConstructor
 @NoArgsConstructor

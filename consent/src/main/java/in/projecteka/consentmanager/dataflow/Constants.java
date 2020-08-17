@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.dataflow;
 
-import static in.projecteka.consentmanager.common.Constants.CURRENT_VERSION;
+import static in.projecteka.consentmanager.Constants.CURRENT_VERSION;
 
 public class Constants {
     public static final String PATH_HEALTH_INFORMATION_REQUEST = CURRENT_VERSION + "/health-information/request";

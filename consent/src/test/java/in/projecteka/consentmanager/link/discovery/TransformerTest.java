@@ -1,20 +1,20 @@
 package in.projecteka.consentmanager.link.discovery;
 
-import in.projecteka.consentmanager.clients.model.Address;
-import in.projecteka.consentmanager.clients.model.Coding;
-import in.projecteka.consentmanager.clients.model.Identifier;
-import in.projecteka.consentmanager.clients.model.Telecom;
-import in.projecteka.consentmanager.clients.model.Type;
+import in.projecteka.library.clients.model.Address;
+import in.projecteka.library.clients.model.Coding;
+import in.projecteka.library.clients.model.Identifier;
+import in.projecteka.library.clients.model.Telecom;
+import in.projecteka.library.clients.model.Type;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.coding;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.identifier;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.provider;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.telecom;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.type;
+import static in.projecteka.consentmanager.clients.TestBuilders.address;
+import static in.projecteka.consentmanager.clients.TestBuilders.coding;
+import static in.projecteka.consentmanager.clients.TestBuilders.identifier;
+import static in.projecteka.consentmanager.clients.TestBuilders.provider;
+import static in.projecteka.consentmanager.clients.TestBuilders.telecom;
+import static in.projecteka.consentmanager.clients.TestBuilders.type;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TransformerTest {
@@ -47,7 +47,7 @@ class TransformerTest {
         Telecom work = telecom().use("work").build();
         Telecom another = telecom().build();
         var provider = provider()
-                .telecoms(List.of(another,work))
+                .telecoms(List.of(another, work))
                 .build();
 
         ProviderRepresentation providerRepresentation = Transformer.to(provider);
@@ -60,7 +60,7 @@ class TransformerTest {
         Telecom work = telecom().use("work").build();
         Telecom another = telecom().use("work").build();
         var provider = provider()
-                .telecoms(List.of(another,work))
+                .telecoms(List.of(another, work))
                 .build();
 
         ProviderRepresentation providerRepresentation = Transformer.to(provider);
@@ -84,7 +84,7 @@ class TransformerTest {
         Address work = address().use("work").build();
         Address another = address().build();
         var provider = provider()
-                .addresses(List.of(another,work))
+                .addresses(List.of(another, work))
                 .build();
 
         ProviderRepresentation providerRepresentation = Transformer.to(provider);
@@ -97,7 +97,7 @@ class TransformerTest {
         Address work = address().use("work").build();
         Address another = address().use("Work").build();
         var provider = provider()
-                .addresses(List.of(another,work))
+                .addresses(List.of(another, work))
                 .build();
 
         ProviderRepresentation providerRepresentation = Transformer.to(provider);

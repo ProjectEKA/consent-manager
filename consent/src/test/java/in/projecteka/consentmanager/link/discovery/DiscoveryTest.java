@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
-import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.Serializer;
 import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
@@ -15,7 +14,9 @@ import in.projecteka.consentmanager.link.discovery.model.patient.response.Gatewa
 import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.ErrorCode;
+import in.projecteka.library.clients.model.Identifier;
 import in.projecteka.library.clients.model.RespError;
+import in.projecteka.library.common.CentralRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -26,17 +27,17 @@ import reactor.test.StepVerifier;
 import java.util.Collections;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.clients.TestBuilders.address;
+import static in.projecteka.consentmanager.clients.TestBuilders.identifier;
+import static in.projecteka.consentmanager.clients.TestBuilders.patientInResponse;
+import static in.projecteka.consentmanager.clients.TestBuilders.provider;
+import static in.projecteka.consentmanager.clients.TestBuilders.telecom;
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.address;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResponse;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResult;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.identifier;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patient;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientIdentifierBuilder;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientInResponse;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
-import static in.projecteka.consentmanager.link.discovery.TestBuilders.telecom;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.user;
 import static java.util.Arrays.asList;
 import static java.util.List.of;
@@ -87,8 +88,7 @@ class DiscoveryTest {
     void returnProvidersWithOfficial() {
         var address = address().use("work").build();
         var telecommunication = telecom().use("work").build();
-        var identifier = identifier().use(
-                in.projecteka.consentmanager.clients.model.Identifier.IdentifierType.OFFICIAL.toString()).build();
+        var identifier = identifier().use(Identifier.IdentifierType.OFFICIAL.toString()).build();
         var provider = provider()
                 .addresses(of(address))
                 .telecoms(of(telecommunication))

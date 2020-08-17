@@ -59,6 +59,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.clients.TestBuilders.identifier;
+import static in.projecteka.consentmanager.clients.TestBuilders.provider;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.Constants.APP_PATH_CONFIRM_LINK;
@@ -66,7 +68,6 @@ import static in.projecteka.consentmanager.link.Constants.APP_PATH_LINK_INIT;
 import static in.projecteka.consentmanager.link.Constants.HIP_INITIATED_ACTION_LINK;
 import static in.projecteka.consentmanager.link.Constants.PATH_HIP_ADD_CONTEXTS;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
-import static in.projecteka.consentmanager.link.link.TestBuilders.identifier;
 import static in.projecteka.consentmanager.link.link.TestBuilders.linkHipAction;
 import static in.projecteka.consentmanager.link.link.TestBuilders.linkRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
@@ -74,7 +75,6 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkRef
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceResult;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientRepresentation;
-import static in.projecteka.consentmanager.link.link.TestBuilders.provider;
 import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
 import static java.lang.Boolean.FALSE;

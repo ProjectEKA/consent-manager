@@ -3,10 +3,8 @@ package in.projecteka.consentmanager.consent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
-import in.projecteka.consentmanager.clients.model.Provider;
 import in.projecteka.consentmanager.common.Authenticator;
 import in.projecteka.consentmanager.common.Caller;
-import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceCaller;
@@ -27,6 +25,8 @@ import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepres
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
 import in.projecteka.consentmanager.consent.policies.NhsPolicyCheck;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.library.clients.model.Provider;
+import in.projecteka.library.common.CentralRegistry;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.Matchers;
@@ -75,6 +75,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static reactor.core.publisher.Mono.just;
 
 @ExtendWith(SpringExtension.class)
 @AutoConfigureWebTestClient
@@ -228,12 +229,12 @@ class ConsentRequestUserJourneyTest {
         var authToken = string();
         var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
         when(gatewayTokenVerifier.verify(authToken))
-                .thenReturn(Mono.just(new ServiceCaller("MAX-ID", List.of())));
+                .thenReturn(just(new ServiceCaller("MAX-ID", List.of())));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(any()))
                 .thenReturn(Mono.empty());
-        when(conceptValidator.validatePurpose("CAREMGT")).thenReturn(Mono.just(true));
-        when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
+        when(conceptValidator.validatePurpose("CAREMGT")).thenReturn(just(true));
+        when(conceptValidator.validateHITypes(any())).thenReturn(just(true));
         when(repository.requestOf(anyString())).thenReturn(Mono.empty());
 
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
@@ -305,9 +306,9 @@ class ConsentRequestUserJourneyTest {
         var token = string();
         List<ConsentRequestDetail> requests = new ArrayList<>();
         ListResult<List<ConsentRequestDetail>> result = new ListResult<>(requests, 0);
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("Ganesh@ncg", true)));
+        when(authenticator.verify(token)).thenReturn(just(new Caller("Ganesh@ncg", true)));
         when(repository.requestsForPatient("Ganesh@ncg", 20, 0, null)).
-                thenReturn(Mono.just(result));
+                thenReturn(just(result));
 
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/consent-requests").queryParam("limit", "20").build())
@@ -330,9 +331,9 @@ class ConsentRequestUserJourneyTest {
         detail.setStatus(EXPIRED);
         requests.add(detail);
         ListResult<List<ConsentRequestDetail>> result = new ListResult<>(requests, 1);
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller("Ganesh@ncg", true)));
+        when(authenticator.verify(token)).thenReturn(just(new Caller("Ganesh@ncg", true)));
         when(repository.requestsForPatient("Ganesh@ncg", 20, 0, "EXPIRED")).
-                thenReturn(Mono.just(result));
+                thenReturn(just(result));
 
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/consent-requests")
@@ -357,7 +358,7 @@ class ConsentRequestUserJourneyTest {
     }
 
     @Test
-    void shouldApproveConsentGrant() throws JsonProcessingException {
+    void shouldApproveConsentGrant() {
         var token = string();
         String patientId = "ashok.kumar@ncg";
         load(userServer, "{}");
@@ -391,19 +392,18 @@ class ConsentRequestUserJourneyTest {
         var consentRequestDetail = consentRequestDetail()
                 .createdAt(now(UTC).minusMinutes(30))
                 .build();
-        //when(consentServiceProperties.getConsentRequestExpiry()).thenReturn(60);
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
-        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7")).thenReturn(Mono.just(consentRequestDetail));
+        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7")).thenReturn(just(consentRequestDetail));
         when(postConsentRequestNotification.broadcastConsentRequestNotification(any()))
                 .thenReturn(Mono.empty());
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
-                .thenReturn(Mono.just(consentRequestDetail));
+                .thenReturn(just(consentRequestDetail));
         when(pinVerificationTokenService.validateToken(token, scope))
-                .thenReturn(Mono.just(new Caller(patientId, false, "randomSessionId")));
+                .thenReturn(just(new Caller(patientId, false, "randomSessionId")));
         when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
-        when(conceptValidator.validateHITypes(anyList())).thenReturn(Mono.just(true));
-        when(centralRegistry.providerWith(eq("10000005"))).thenReturn(Mono.just(Provider.builder().build()));
+        when(conceptValidator.validateHITypes(anyList())).thenReturn(just(true));
+        when(centralRegistry.providerWith(eq("10000005"))).thenReturn(just(Provider.builder().build()));
 
         webTestClient.post()
                 .uri("/consent-requests/30d02f6d-de17-405e-b4ab-d31b2bb799d7/approve")
@@ -460,15 +460,15 @@ class ConsentRequestUserJourneyTest {
         var consentRequestDetail = consentRequestDetail().createdAt(now(UTC).minusMinutes(30))
                 .build();
 
-        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7")).thenReturn(Mono.just(consentRequestDetail));
+        when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7")).thenReturn(just(consentRequestDetail));
         String scope = "consentrequest.approve";
         when(pinVerificationTokenService.validateToken(token, scope))
-                .thenReturn(Mono.just(new Caller(patientId, false)));
+                .thenReturn(just(new Caller(patientId, false)));
         when(repository.requestOf("30d02f6d-de17-405e-b4ab-d31b2bb799d7", "REQUESTED", patientId))
-                .thenReturn(Mono.just(consentRequestDetail));
+                .thenReturn(just(consentRequestDetail));
         when(consentArtefactRepository.process(any())).thenReturn(Mono.empty());
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
-        when(conceptValidator.validateHITypes(anyList())).thenReturn(Mono.just(true));
+        when(conceptValidator.validateHITypes(anyList())).thenReturn(just(true));
 
         webTestClient.post()
                 .uri("/consent-requests/30d02f6d-de17-405e-b4ab-d31b2bb799d7/approve")
@@ -491,9 +491,9 @@ class ConsentRequestUserJourneyTest {
                 .patient(new PatientReference(patientId))
                 .createdAt(now(UTC))
                 .status(REQUESTED);
-        when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(patientId, false)));
+        when(authenticator.verify(token)).thenReturn(just(new Caller(patientId, false)));
         when(repository.updateStatus(requestId, DENIED)).thenReturn(Mono.empty());
-        when(repository.requestOf(requestId)).thenReturn(Mono.just(consentRequestDetail.build()));
+        when(repository.requestOf(requestId)).thenReturn(just(consentRequestDetail.build()));
         when(consentNotificationPublisher.publish(any())).thenReturn(Mono.empty());
 
         webTestClient.post()
@@ -508,11 +508,11 @@ class ConsentRequestUserJourneyTest {
     @Test
     void shouldThrowErrorForInvalidPurposeInConsentRequest() {
         var authToken = string();
-        when(gatewayTokenVerifier.verify(authToken)).thenReturn(Mono.just(new ServiceCaller("MAX-ID", List.of())));
+        when(gatewayTokenVerifier.verify(authToken)).thenReturn(just(new ServiceCaller("MAX-ID", List.of())));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(any())).thenReturn(Mono.empty());
-        when(conceptValidator.validatePurpose("INVALID-CODE")).thenReturn(Mono.just(false));
-        when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
+        when(conceptValidator.validatePurpose("INVALID-CODE")).thenReturn(just(false));
+        when(conceptValidator.validateHITypes(any())).thenReturn(just(true));
         when(repository.requestOf(any())).thenReturn(Mono.empty());
         // TODO: Two calls being made to CR to get token within one single request, have to make it single.
         load(clientRegistryServer, "{}");
@@ -602,15 +602,15 @@ class ConsentRequestUserJourneyTest {
                 .build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
 
-        when(authenticator.verify(authToken)).thenReturn(Mono.just(new Caller("user-id", false)));
+        when(authenticator.verify(authToken)).thenReturn(just(new Caller("user-id", false)));
         when(gatewayTokenVerifier.verify(authToken))
-                .thenReturn(Mono.just(caller));
+                .thenReturn(just(caller));
         when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
-        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(just(Boolean.TRUE));
         when(repository.insert(any(), any())).thenReturn(Mono.empty());
         when(repository.requestOf(anyString())).thenReturn(Mono.empty());
-        when(conceptValidator.validatePurpose(any())).thenReturn(Mono.just(true));
-        when(conceptValidator.validateHITypes(any())).thenReturn(Mono.just(true));
+        when(conceptValidator.validatePurpose(any())).thenReturn(just(true));
+        when(conceptValidator.validateHITypes(any())).thenReturn(just(true));
         when(consentManagerClient.sendInitResponseToGateway(any(), eq(HIUId))).thenReturn(Mono.empty());
         when(postConsentRequestNotification.broadcastConsentRequestNotification(any())).thenReturn(Mono.empty());
         load(clientRegistryServer, session);

@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.link.discovery;
 
-import in.projecteka.consentmanager.clients.model.Address;
-import in.projecteka.consentmanager.clients.model.Coding;
-import in.projecteka.consentmanager.clients.model.Identifier;
-import in.projecteka.consentmanager.clients.model.Provider;
-import in.projecteka.consentmanager.clients.model.Telecom;
+import in.projecteka.library.clients.model.Address;
+import in.projecteka.library.clients.model.Coding;
+import in.projecteka.library.clients.model.Identifier;
+import in.projecteka.library.clients.model.Provider;
+import in.projecteka.library.clients.model.Telecom;
 
 public class Transformer {
 
@@ -37,12 +37,12 @@ public class Transformer {
     private static String cityFrom(Provider provider) {
         if (provider.getAddresses() != null) {
             var address = provider.getAddresses()
-                            .stream()
-                            .filter(add -> add.getUse().equalsIgnoreCase("work"))
-                            .findFirst()
-                            .orElse(!provider.getAddresses().isEmpty()
-                                    ? provider.getAddresses().get(0)
-                                    : new Address("", ""));
+                    .stream()
+                    .filter(add -> add.getUse().equalsIgnoreCase("work"))
+                    .findFirst()
+                    .orElse(!provider.getAddresses().isEmpty()
+                            ? provider.getAddresses().get(0)
+                            : new Address("", ""));
             return address.getCity();
         }
         return null;

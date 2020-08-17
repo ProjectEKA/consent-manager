@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.common.CentralRegistry;
 import in.projecteka.consentmanager.consent.model.CMReference;
 import in.projecteka.consentmanager.consent.model.CertDetails;
 import in.projecteka.consentmanager.consent.model.CertResponse;
@@ -41,6 +40,7 @@ import in.projecteka.consentmanager.link.discovery.model.patient.response.Gatewa
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.Error;
 import in.projecteka.library.clients.model.ErrorRepresentation;
+import in.projecteka.library.common.CentralRegistry;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;

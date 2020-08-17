@@ -1,0 +1,49 @@
+plugins {
+    id "org.sonarqube" version "3.0"
+    id 'jacoco'
+}
+
+task bootRunLocal {
+    bootRun.configure {
+        systemProperty "spring.profiles.active", 'local'
+    }
+}
+
+bootJar {
+    layered()
+}
+
+bootRunLocal.finalizedBy bootRun
+
+dependencies {
+    implementation 'javax.validation:validation-api:2.0.1.Final'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'io.vertx:vertx-pg-client:3.9.2'
+    implementation 'com.google.guava:guava:29.0-jre'
+    implementation 'io.jsonwebtoken:jjwt:0.9.1'
+    implementation 'com.nimbusds:nimbus-jose-jwt:8.20'
+    implementation 'io.vavr:vavr:0.10.3'
+    implementation 'org.passay:passay:1.6.0'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+
+    implementation project(':commons')
+}
+
+jacocoTestReport {
+    additionalSourceDirs.from = files(sourceSets.main.allJava.srcDirs)
+    reports {
+        html.enabled true
+        xml.enabled true
+        csv.enabled false
+        html.destination file("build/reports/jacoco/html")
+    }
+    executionData.from = files('build/jacoco/test.exec')
+}

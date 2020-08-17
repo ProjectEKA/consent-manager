@@ -36,6 +36,12 @@ project(':consent') {
     }
 }
 
+project(':user') {
+    dependencies {
+        implementation project(':commons')
+    }
+}
+
 bootJar {
     enabled = false
 }

@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.consent;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import in.projecteka.consentmanager.common.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -18,6 +17,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static in.projecteka.library.common.Serializer.to;
 
 @Component
 public class ConceptValidator implements InitializingBean {
@@ -46,7 +47,7 @@ public class ConceptValidator implements InitializingBean {
                 result.write(buffer, 0, length);
             }
             var valueSet = result.toString(StandardCharsets.UTF_8);
-            JsonNode jsonNode = Serializer.to(valueSet, JsonNode.class);
+            JsonNode jsonNode = to(valueSet, JsonNode.class);
             JsonNode compose = jsonNode.get("compose");
             ConcurrentHashMap<String, String> conceptCodes = new ConcurrentHashMap<>();
             if (compose != null && compose.has("include")) {

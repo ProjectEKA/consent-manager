@@ -24,9 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.common.Serializer.from;
-import static in.projecteka.consentmanager.common.Serializer.to;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
+import static in.projecteka.library.common.Serializer.from;
+import static in.projecteka.library.common.Serializer.to;
 
 public class ConsentRequestRepository {
     private static final Logger logger = LoggerFactory.getLogger(ConsentRequestRepository.class);

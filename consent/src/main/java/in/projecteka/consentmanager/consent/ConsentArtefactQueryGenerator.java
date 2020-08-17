@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 
-import static in.projecteka.consentmanager.common.Serializer.from;
+import static in.projecteka.library.common.Serializer.from;
 
 @AllArgsConstructor
 public class ConsentArtefactQueryGenerator {

@@ -14,8 +14,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.common.Serializer.from;
 import static in.projecteka.library.clients.model.ClientError.unknownErrorOccurred;
+import static in.projecteka.library.common.Serializer.from;
 
 public class DataFlowRequestRepository {
 

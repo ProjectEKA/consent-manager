@@ -3,13 +3,13 @@ package in.projecteka.consentmanager.consent;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentExpiry;
+import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.Query;
-import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import io.vertx.core.AsyncResult;
 import io.vertx.pgclient.PgPool;
@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import static in.projecteka.consentmanager.common.Serializer.to;
+import static in.projecteka.library.common.Serializer.to;
 
 @AllArgsConstructor
 public class ConsentArtefactRepository {

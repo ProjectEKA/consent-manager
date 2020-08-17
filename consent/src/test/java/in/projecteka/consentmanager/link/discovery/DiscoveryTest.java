@@ -3,13 +3,12 @@ package in.projecteka.consentmanager.link.discovery;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.properties.LinkServiceProperties;
-import in.projecteka.consentmanager.common.Serializer;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifierType;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.CareContext;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.consentmanager.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.ErrorCode;
@@ -39,6 +38,7 @@ import static in.projecteka.consentmanager.link.discovery.TestBuilders.patient;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patientIdentifierBuilder;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.user;
+import static in.projecteka.library.common.Serializer.from;
 import static java.util.Arrays.asList;
 import static java.util.List.of;
 import static org.mockito.ArgumentMatchers.any;
@@ -228,7 +228,7 @@ class DiscoveryTest {
                 discovery.onDiscoverPatientCareContexts(discoveryResult)
         ).verifyComplete();
 
-        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), Serializer.from(discoveryResult));
+        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), from(discoveryResult));
     }
 
     @Test
@@ -260,7 +260,7 @@ class DiscoveryTest {
         ).expectErrorMatches(err -> err instanceof ClientError &&
                 ((ClientError) err).getError().getError().getMessage().equals("Patient Details not found")).verify();
 
-        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), Serializer.from(errorDiscovery));
+        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), from(errorDiscovery));
     }
 
     @Test
@@ -282,7 +282,7 @@ class DiscoveryTest {
         ).expectErrorMatches(err -> err instanceof ClientError &&
                 ((ClientError) err).getError().getError().getMessage().equals("Patient Reference should not be blank")).verify();
 
-        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), Serializer.from(errorDiscovery));
+        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), from(errorDiscovery));
     }
 
     @Test
@@ -304,7 +304,7 @@ class DiscoveryTest {
         ).expectErrorMatches(err -> err instanceof ClientError &&
                 ((ClientError) err).getError().getError().getMessage().equals("Care contexts should not be null")).verify();
 
-        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), Serializer.from(errorDiscovery));
+        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), from(errorDiscovery));
     }
 
     @Test
@@ -329,7 +329,7 @@ class DiscoveryTest {
         ).expectErrorMatches(err -> err instanceof ClientError &&
                 ((ClientError) err).getError().getError().getMessage().equals("All the care contexts should have valid references")).verify();
 
-        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), Serializer.from(errorDiscovery));
+        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), from(errorDiscovery));
     }
 
     @Test
@@ -343,6 +343,6 @@ class DiscoveryTest {
                 discovery.onDiscoverPatientCareContexts(discoveryResult)
         ).verifyComplete();
 
-        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), Serializer.from(discoveryResult));
+        verify(discoveryResults, times(1)).put(discoveryResult.getResp().getRequestId(), from(discoveryResult));
     }
 }

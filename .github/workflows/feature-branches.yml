@@ -17,18 +17,3 @@ jobs:
         run: ./gradlew jacocoTestReport
       - name: Sonarcube Analysis
         run: ./gradlew sonarqube
-      - name: Set env
-        run: echo ::set-env name=RELEASE_VERSION::$(echo $GITHUB_SHA | head -c7)
-      - name: Docker Registry
-        env:
-          DOCKER_REGISTRY_URL: docker.io
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY_URL
-      - name: Build docker image
-        env:
-          CONTAINER_REPO_NAME: consent-manager
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        run: |
-          cd consent
-          docker build -t $DOCKER_USERNAME/$CONTAINER_REPO_NAME:$RELEASE_VERSION .

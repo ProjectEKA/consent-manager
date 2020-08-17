@@ -6,7 +6,6 @@ import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.FetchRequest;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
-import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
@@ -39,10 +38,6 @@ public class TestBuilders {
 
     public static ConsentArtefactLightRepresentation.ConsentArtefactLightRepresentationBuilder artefactLightRepresentation() {
         return easyRandom.nextObject(ConsentArtefactLightRepresentation.ConsentArtefactLightRepresentationBuilder.class);
-    }
-
-    public static Notification.NotificationBuilder notificationMessage() {
-        return easyRandom.nextObject(Notification.NotificationBuilder.class);
     }
 
     public static ConsentRequestResult.ConsentRequestResultBuilder consentRequestResult() {

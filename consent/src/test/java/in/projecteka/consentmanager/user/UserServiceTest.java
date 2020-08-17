@@ -1,11 +1,8 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.NullableConverter;
-import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
-import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
 import in.projecteka.consentmanager.user.model.DateOfBirth;
@@ -25,10 +22,13 @@ import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.library.clients.IdentityServiceClient;
+import in.projecteka.library.clients.OtpServiceClient;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.ErrorCode;
 import in.projecteka.library.clients.model.KeyCloakUserCredentialRepresentation;
 import in.projecteka.library.clients.model.KeyCloakUserRepresentation;
+import in.projecteka.library.clients.model.Notification;
+import in.projecteka.library.clients.model.OtpRequest;
 import in.projecteka.library.clients.model.Session;
 import in.projecteka.library.common.DbOperationError;
 import io.vertx.core.json.JsonArray;

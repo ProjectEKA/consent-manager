@@ -1,16 +1,8 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpAction;
-import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
-import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
-import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
-import in.projecteka.consentmanager.consent.model.Action;
-import in.projecteka.consentmanager.consent.model.Communication;
-import in.projecteka.consentmanager.consent.model.CommunicationType;
-import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidRequestException;
@@ -35,9 +27,16 @@ import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.library.clients.IdentityServiceClient;
+import in.projecteka.library.clients.OtpServiceClient;
 import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.Communication;
+import in.projecteka.library.clients.model.CommunicationType;
 import in.projecteka.library.clients.model.ErrorCode;
 import in.projecteka.library.clients.model.KeycloakUser;
+import in.projecteka.library.clients.model.Notification;
+import in.projecteka.library.clients.model.OtpCommunicationData;
+import in.projecteka.library.clients.model.OtpGenerationDetail;
+import in.projecteka.library.clients.model.OtpRequest;
 import in.projecteka.library.clients.model.Session;
 import in.projecteka.library.clients.model.UserCredential;
 import lombok.AllArgsConstructor;
@@ -56,6 +55,7 @@ import java.util.UUID;
 
 import static in.projecteka.consentmanager.user.IdentifierUtils.getIdentifierValue;
 import static in.projecteka.consentmanager.user.model.IdentifierType.MOBILE;
+import static in.projecteka.library.clients.model.Action.CONSENT_MANAGER_ID_RECOVERED;
 import static in.projecteka.library.clients.model.ClientError.failedToFetchUserCredentials;
 import static in.projecteka.library.clients.model.ClientError.from;
 import static in.projecteka.library.clients.model.ClientError.userAlreadyExists;
@@ -277,7 +277,7 @@ public class UserService {
                 ConsentManagerIdContent.builder()
                         .consentManagerId(user.getIdentifier())
                         .build(),
-                Action.CONSENT_MANAGER_ID_RECOVERED));
+                CONSENT_MANAGER_ID_RECOVERED));
     }
 
     public Mono<Void> notifyUserWith(Notification<ConsentManagerIdContent> consentManagerIdNotification) {

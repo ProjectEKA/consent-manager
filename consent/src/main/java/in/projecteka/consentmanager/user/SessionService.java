@@ -1,11 +1,7 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.Meta;
 import in.projecteka.consentmanager.clients.model.OtpAction;
-import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
-import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
-import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidPasswordException;
@@ -18,7 +14,11 @@ import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
+import in.projecteka.library.clients.OtpServiceClient;
 import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.OtpCommunicationData;
+import in.projecteka.library.clients.model.OtpGenerationDetail;
+import in.projecteka.library.clients.model.OtpRequest;
 import in.projecteka.library.clients.model.Session;
 import in.projecteka.library.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;

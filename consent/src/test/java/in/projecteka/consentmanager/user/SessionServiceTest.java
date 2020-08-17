@@ -1,8 +1,6 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.NullableConverter;
-import in.projecteka.consentmanager.clients.OtpServiceClient;
-import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.model.GrantType;
@@ -10,7 +8,9 @@ import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.library.clients.OtpServiceClient;
 import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.OtpRequest;
 import in.projecteka.library.common.cache.CacheAdapter;
 import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,9 +24,9 @@ import org.mockito.Mock;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import static in.projecteka.consentmanager.clients.TestBuilders.session;
 import static in.projecteka.consentmanager.Constants.BLACKLIST;
 import static in.projecteka.consentmanager.Constants.BLACKLIST_FORMAT;
+import static in.projecteka.consentmanager.clients.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.sessionRequest;
 import static in.projecteka.consentmanager.user.model.OtpAttempt.Action.OTP_REQUEST_LOGIN;
 import static org.assertj.core.api.Assertions.assertThat;

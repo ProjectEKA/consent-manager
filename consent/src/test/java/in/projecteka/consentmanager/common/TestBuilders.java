@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import in.projecteka.consentmanager.user.model.TransactionPin;
+import in.projecteka.library.clients.model.Notification;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.jeasy.random.EasyRandom;
 
@@ -32,7 +33,7 @@ public class TestBuilders {
         return easyRandom.nextObject(LocalDateTime.class);
     }
 
-    public static Long aLong() {
-        return easyRandom.nextObject(Long.class);
+    public static Notification.NotificationBuilder notificationMessage() {
+        return easyRandom.nextObject(Notification.NotificationBuilder.class);
     }
 }

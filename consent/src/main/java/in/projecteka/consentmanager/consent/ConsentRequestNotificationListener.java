@@ -1,19 +1,19 @@
 package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
-import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.consent.model.Action;
-import in.projecteka.consentmanager.consent.model.Communication;
-import in.projecteka.consentmanager.consent.model.CommunicationType;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.Content;
 import in.projecteka.consentmanager.consent.model.GrantedContext;
 import in.projecteka.consentmanager.consent.model.HIType;
-import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.policies.NhsPolicyCheck;
+import in.projecteka.library.clients.OtpServiceClient;
+import in.projecteka.library.clients.model.Action;
+import in.projecteka.library.clients.model.Communication;
+import in.projecteka.library.clients.model.CommunicationType;
+import in.projecteka.library.clients.model.Notification;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

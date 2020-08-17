@@ -3,11 +3,11 @@ package in.projecteka.consentmanager.user;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import in.projecteka.consentmanager.clients.model.OtpAction;
-import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
-import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
-import in.projecteka.consentmanager.clients.model.OtpRequest;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.library.clients.model.OtpCommunicationData;
+import in.projecteka.library.clients.model.OtpGenerationDetail;
+import in.projecteka.library.clients.model.OtpRequest;
 import in.projecteka.library.common.cache.CacheAdapter;
 import in.projecteka.library.common.cache.LoadingCacheAdapter;
 import org.jeasy.random.EasyRandom;
@@ -49,11 +49,11 @@ class SignUpServiceTest {
     }
 
     @Test
-    public void shouldCreateAndSendSessionId() {
+    void shouldCreateAndSendSessionId() {
         String value = easyRandom.nextObject(String.class);
-        OtpCommunicationData communicationData = new OtpCommunicationData("MOBILE", value);
+        var communicationData = new OtpCommunicationData("MOBILE", value);
         var sessionId = easyRandom.nextObject(String.class);
-        OtpRequest otpRequest = new OtpRequest(sessionId,
+        var otpRequest = new OtpRequest(sessionId,
                 communicationData,
                 OtpGenerationDetail
                         .builder()
@@ -70,7 +70,7 @@ class SignUpServiceTest {
     }
 
     @Test
-    public void shouldGenerateToken() {
+    void shouldGenerateToken() {
         var sessionId = easyRandom.nextObject(String.class);
         String number = easyRandom.nextObject(String.class);
         when(jwtProperties.getSecret()).thenReturn(easyRandom.nextObject(String.class));
@@ -81,7 +81,7 @@ class SignUpServiceTest {
     }
 
     @Test
-    public void invalidateSession() throws ExecutionException {
+    void invalidateSession() throws ExecutionException {
         var sessionId = easyRandom.nextObject(String.class);
         var verifiedSessions = CacheBuilder
                 .newBuilder()

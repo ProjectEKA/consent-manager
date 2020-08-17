@@ -1,11 +1,11 @@
-package in.projecteka.consentmanager.user;
+package clients;
 
-import in.projecteka.consentmanager.clients.OtpServiceClient;
-import in.projecteka.consentmanager.clients.model.OtpAction;
-import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
-import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
-import in.projecteka.consentmanager.clients.model.OtpRequest;
+import in.projecteka.library.clients.OtpServiceClient;
 import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.OtpAction;
+import in.projecteka.library.clients.model.OtpCommunicationData;
+import in.projecteka.library.clients.model.OtpGenerationDetail;
+import in.projecteka.library.clients.model.OtpRequest;
 import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -394,4 +394,8 @@ public class UserService {
     private Mono<User> getDistinctUser(List<User> rows) {
         return rows.size() == 1 ? Mono.just(rows.get(0)) : Mono.empty();
     }
+
+    public Mono<Void> confirmAuthFor(UserAuthConfirmRequest request) {
+        return Mono.empty();
+    }
 }

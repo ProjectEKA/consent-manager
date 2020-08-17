@@ -3,12 +3,12 @@ package in.projecteka.consentmanager.dataflow;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
-import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceCaller;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
+import in.projecteka.library.common.RequestValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +23,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.common.Role.GATEWAY;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationNotificationRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationResponseBuilder;

@@ -1,12 +1,12 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.IdentityServiceClient;
-import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidPasswordException;
 import in.projecteka.consentmanager.user.exception.InvalidRefreshTokenException;
 import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
 import in.projecteka.consentmanager.user.model.GrantType;
+import in.projecteka.library.clients.IdentityServiceClient;
+import in.projecteka.library.clients.model.Session;
 import lombok.AllArgsConstructor;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;

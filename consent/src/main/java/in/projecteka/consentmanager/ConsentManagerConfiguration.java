@@ -6,30 +6,31 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig.DestinationInfo;
-import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.ServiceAuthenticationClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.common.GatewayTokenVerifier;
+import in.projecteka.consentmanager.common.RequestValidator;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
+import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
+import in.projecteka.consentmanager.properties.CacheMethodProperty;
 import in.projecteka.consentmanager.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.properties.IdentityServiceProperties;
-import in.projecteka.consentmanager.properties.OtpServiceProperties;
-import in.projecteka.consentmanager.common.GatewayTokenVerifier;
-import in.projecteka.consentmanager.common.IdentityService;
 import in.projecteka.consentmanager.properties.KeyPairConfig;
-import in.projecteka.consentmanager.common.RequestValidator;
-import in.projecteka.consentmanager.common.ServiceAuthentication;
-import in.projecteka.consentmanager.properties.RedisOptions;
-import in.projecteka.consentmanager.properties.CacheMethodProperty;
+import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.properties.RabbitmqOptions;
-import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
+import in.projecteka.consentmanager.properties.RedisOptions;
 import in.projecteka.consentmanager.user.LockedUsersRepository;
 import in.projecteka.consentmanager.user.TokenService;
 import in.projecteka.consentmanager.user.UserRepository;
 import in.projecteka.consentmanager.user.UserServiceProperties;
 import in.projecteka.library.clients.ClientRegistryClient;
+import in.projecteka.library.clients.IdentityServiceClient;
 import in.projecteka.library.common.CacheHealth;
 import in.projecteka.library.common.CentralRegistry;
+import in.projecteka.library.common.IdentityService;
+import in.projecteka.library.common.ServiceCredential;
 import in.projecteka.library.common.cache.CacheAdapter;
 import in.projecteka.library.common.cache.LoadingCacheAdapter;
 import in.projecteka.library.common.cache.LoadingCacheGenericAdapter;
@@ -208,7 +209,9 @@ public class ConsentManagerConfiguration {
     public IdentityService identityService(IdentityServiceClient identityServiceClient,
                                            IdentityServiceProperties identityServiceProperties,
                                            @Qualifier("accessToken") CacheAdapter<String, String> accessToken) {
-        return new IdentityService(identityServiceClient, identityServiceProperties, accessToken);
+        return new IdentityService(identityServiceClient,
+                new ServiceCredential(identityServiceProperties.getClientId(), identityServiceProperties.getClientSecret()),
+                accessToken);
     }
 
     @Bean

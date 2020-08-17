@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.common.Caller;
 import in.projecteka.consentmanager.user.model.ChangePinRequest;
 import in.projecteka.consentmanager.user.model.CreatePinRequest;
@@ -26,6 +25,7 @@ import in.projecteka.consentmanager.user.model.ValidatePinRequest;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.Error;
 import in.projecteka.library.clients.model.ErrorRepresentation;
+import in.projecteka.library.clients.model.Session;
 import in.projecteka.library.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;

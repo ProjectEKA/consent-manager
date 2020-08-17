@@ -3,9 +3,8 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.NullableConverter;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
-import in.projecteka.consentmanager.clients.model.Session;
-import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
+import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.model.GrantType;
 import in.projecteka.consentmanager.user.model.LogoutRequest;
 import in.projecteka.consentmanager.user.model.OtpPermitRequest;
@@ -25,9 +24,9 @@ import org.mockito.Mock;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import static in.projecteka.consentmanager.clients.TestBuilders.session;
 import static in.projecteka.consentmanager.common.Constants.BLACKLIST;
 import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
-import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.sessionRequest;
 import static in.projecteka.consentmanager.user.model.OtpAttempt.Action.OTP_REQUEST_LOGIN;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -368,7 +367,7 @@ class SessionServiceTest {
         String username = user.getIdentifier();
         OtpPermitRequest otpPermitRequest = new OtpPermitRequest(username, testSession, testOtp);
         when(unverifiedSessions.get(testSession)).thenReturn(Mono.just(username));
-        Session expectedSession = in.projecteka.consentmanager.clients.TestBuilders.session().build();
+        var expectedSession = session().build();
         when(tokenService.tokenForOtpUser(eq(username), eq(testSession), eq(testOtp)))
                 .thenReturn(Mono.just(expectedSession));
         when(lockedUserService.validateLogin(eq(username))).thenReturn(Mono.empty());

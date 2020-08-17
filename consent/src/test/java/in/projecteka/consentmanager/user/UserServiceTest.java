@@ -1,13 +1,9 @@
 package in.projecteka.consentmanager.user;
 
 import in.projecteka.consentmanager.NullableConverter;
-import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.KeyCloakUserCredentialRepresentation;
-import in.projecteka.consentmanager.clients.model.KeyCloakUserRepresentation;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
-import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.consent.model.Notification;
 import in.projecteka.consentmanager.properties.OtpServiceProperties;
@@ -28,8 +24,12 @@ import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.UpdateUserRequest;
 import in.projecteka.consentmanager.user.model.User;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
+import in.projecteka.library.clients.IdentityServiceClient;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.ErrorCode;
+import in.projecteka.library.clients.model.KeyCloakUserCredentialRepresentation;
+import in.projecteka.library.clients.model.KeyCloakUserRepresentation;
+import in.projecteka.library.clients.model.Session;
 import in.projecteka.library.common.DbOperationError;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -58,9 +58,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.clients.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.requester;
-import static in.projecteka.consentmanager.user.TestBuilders.session;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.updatePasswordRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
@@ -74,6 +74,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static reactor.core.publisher.Mono.just;
 
 class UserServiceTest {
 
@@ -152,7 +153,7 @@ class UserServiceTest {
         var signUpSession = new SignUpSession(sessionId);
         when(otpServiceClient.send(otpRequestArgumentCaptor.capture())).thenReturn(Mono.empty());
         when(signupService.cacheAndSendSession(sessionCaptor.capture(), eq("+91-9788888")))
-                .thenReturn(Mono.just(signUpSession));
+                .thenReturn(just(signUpSession));
         when(otpAttemptService.validateOTPRequest(userSignUpEnquiry.getIdentifierType(), userSignUpEnquiry.getIdentifier(), OtpAttempt.Action.OTP_REQUEST_REGISTRATION)).thenReturn(Mono.empty());
 
         Mono<SignUpSession> signUp = userService.sendOtp(userSignUpEnquiry);
@@ -181,8 +182,8 @@ class UserServiceTest {
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
         when(signupService.generateToken(sessionId))
-                .thenReturn(Mono.just(new Token(token)));
-        when(signupService.getMobileNumber(eq(sessionId))).thenReturn(Mono.just(mobileNumber));
+                .thenReturn(just(new Token(token)));
+        when(signupService.getMobileNumber(eq(sessionId))).thenReturn(just(mobileNumber));
         when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
         when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
         StepVerifier.create(userService.verifyOtpForRegistration(otpVerification))
@@ -242,9 +243,9 @@ class UserServiceTest {
         var sessionIdWithAction = SendOtpAction.RECOVER_PASSWORD.toString() + sessionId;
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
-        when(signupService.generateToken(new HashMap<>(), sessionIdWithAction)).thenReturn(Mono.just(new Token(token)));
-        when(signupService.getUserName(eq(sessionIdWithAction))).thenReturn(Mono.just(user.getIdentifier()));
-        when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));
+        when(signupService.generateToken(new HashMap<>(), sessionIdWithAction)).thenReturn(just(new Token(token)));
+        when(signupService.getUserName(eq(sessionIdWithAction))).thenReturn(just(user.getIdentifier()));
+        when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(just(user));
         when(lockedUserService.validateLogin(eq(user.getIdentifier()))).thenReturn(Mono.empty());
         when(lockedUserService.removeLockedUser(eq(user.getIdentifier()))).thenReturn(Mono.empty());
         StepVerifier.create(userService.verifyOtpForForgetPassword(otpVerification))
@@ -292,8 +293,8 @@ class UserServiceTest {
                 .build();
         var sessionId = string();
         var mobileNumber = string();
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
-        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
+        when(tokenService.tokenForAdmin()).thenReturn(just(new Session()));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(just(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
@@ -312,8 +313,8 @@ class UserServiceTest {
                 .build();
         var sessionId = string();
         var user = user().identifier(signUpRequest.getUsername()).build();
-        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(string()));
-        when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.just(user));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(just(string()));
+        when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(just(user));
         when(userRepository.save(any())).thenReturn(Mono.empty());
 
         var publisher = userService.create(signUpRequest, sessionId);
@@ -337,8 +338,8 @@ class UserServiceTest {
                 .build();
         var sessionId = string();
         var mobileNumber = string();
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(new Session()));
-        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
+        when(tokenService.tokenForAdmin()).thenReturn(just(new Session()));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(just(mobileNumber));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
@@ -361,10 +362,10 @@ class UserServiceTest {
         var sessionId = string();
         var tokenForAdmin = session().build();
 
-        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(just(mobileNumber));
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
+        when(tokenService.tokenForAdmin()).thenReturn(just(tokenForAdmin));
         when(identityServiceClient.createUser(any(), any()))
                 .thenReturn(Mono.error(ClientError.networkServiceCallFailed()));
         when(userRepository.delete(identifier)).thenReturn(Mono.empty());
@@ -389,10 +390,10 @@ class UserServiceTest {
         var sessionId = string();
         var tokenForAdmin = session().build();
 
-        when(signupService.getMobileNumber(sessionId)).thenReturn(Mono.just(mobileNumber));
+        when(signupService.getMobileNumber(sessionId)).thenReturn(just(mobileNumber));
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.error(new DbOperationError()));
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
+        when(tokenService.tokenForAdmin()).thenReturn(just(tokenForAdmin));
         when(identityServiceClient.createUser(any(), any())).thenReturn(Mono.empty());
         when(userRepository.delete(identifier)).thenReturn(Mono.empty());
 
@@ -414,12 +415,12 @@ class UserServiceTest {
         var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
         var newSession = session().build();
 
-        when(signupService.getUserName(sessionId)).thenReturn(Mono.just(userName));
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
-        when(identityServiceClient.getUser(userName, token)).thenReturn(Mono.just(userRepresentation));
+        when(signupService.getUserName(sessionId)).thenReturn(just(userName));
+        when(tokenService.tokenForAdmin()).thenReturn(just(tokenForAdmin));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(just(userRepresentation));
         when(identityServiceClient.updateUser(token, userRepresentation.getId(), request.getPassword()))
                 .thenReturn(Mono.empty());
-        when(tokenService.tokenForUser(userName, request.getPassword())).thenReturn(Mono.just(newSession));
+        when(tokenService.tokenForUser(userName, request.getPassword())).thenReturn(just(newSession));
 
         var updatedSession = userService.update(request, sessionId);
 
@@ -447,9 +448,9 @@ class UserServiceTest {
         var request = UpdateUserRequest.builder().password("Test@3142").build();
         var sessionId = string();
         var newSession = session().build();
-        when(signupService.getUserName(sessionId)).thenReturn(Mono.just(userName));
+        when(signupService.getUserName(sessionId)).thenReturn(just(userName));
         when(tokenService.tokenForAdmin()).thenReturn(Mono.error(ClientError.failedToUpdateUser()));
-        when(tokenService.tokenForUser(userName, request.getPassword())).thenReturn(Mono.just(newSession));
+        when(tokenService.tokenForUser(userName, request.getPassword())).thenReturn(just(newSession));
 
         var updatedSession = userService.update(request, sessionId);
 
@@ -469,12 +470,12 @@ class UserServiceTest {
         Session tokenForAdmin = session().build();
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
         var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
-        when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(Mono.just(oldSession));
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
-        when(identityServiceClient.getUser(userName, token)).thenReturn(Mono.just(userRepresentation));
+        when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(just(oldSession));
+        when(tokenService.tokenForAdmin()).thenReturn(just(tokenForAdmin));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(just(userRepresentation));
         when(identityServiceClient.updateUser(token, userRepresentation.getId(), request.getNewPassword()))
                 .thenReturn(Mono.empty());
-        when(tokenService.tokenForUser(userName, request.getNewPassword())).thenReturn(Mono.just(newSession));
+        when(tokenService.tokenForUser(userName, request.getNewPassword())).thenReturn(just(newSession));
         when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
         when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
@@ -497,7 +498,7 @@ class UserServiceTest {
         var request = updatePasswordRequest().build();
         when(tokenService.tokenForUser(userName, request.getOldPassword()))
                 .thenReturn(Mono.error(ClientError.unAuthorizedRequest("Invalid Old Password")));
-        when(lockedUserService.createOrUpdateLockedUser(userName)).thenReturn(Mono.just(2));
+        when(lockedUserService.createOrUpdateLockedUser(userName)).thenReturn(just(2));
 
         var updatedPasswordSession = userService.updatePassword(request, userName);
 
@@ -517,12 +518,12 @@ class UserServiceTest {
         var tokenForAdmin = session().build();
         var token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
         var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
-        when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(Mono.just(oldSession));
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
-        when(identityServiceClient.getUser(userName, token)).thenReturn(Mono.just(userRepresentation));
+        when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(just(oldSession));
+        when(tokenService.tokenForAdmin()).thenReturn(just(tokenForAdmin));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(just(userRepresentation));
         when(identityServiceClient.updateUser(token, userRepresentation.getId(), request.getNewPassword()))
                 .thenReturn(Mono.error(ClientError.failedToUpdateUser()));
-        when(tokenService.tokenForUser(userName, request.getNewPassword())).thenReturn(Mono.just(newSession));
+        when(tokenService.tokenForUser(userName, request.getNewPassword())).thenReturn(just(newSession));
         when(lockedUserService.validateLogin(userName)).thenReturn(Mono.empty());
         when(lockedUserService.removeLockedUser(userName)).thenReturn(Mono.empty());
 
@@ -545,13 +546,13 @@ class UserServiceTest {
         Session tokenForAdmin = session().build();
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
         var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
-        var userCreds = Mono.just(KeyCloakUserCredentialRepresentation
+        var userCreds = just(KeyCloakUserCredentialRepresentation
                 .builder()
                 .id("credid")
                 .type("password")
                 .build());
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
-        when(identityServiceClient.getUser(userName, token)).thenReturn(Mono.just(userRepresentation));
+        when(tokenService.tokenForAdmin()).thenReturn(just(tokenForAdmin));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(just(userRepresentation));
         when(identityServiceClient.getCredentials(userRepresentation.getId(), token)).thenReturn(userCreds);
 
         var loginModeResponse = userService.getLoginMode(userName);
@@ -570,8 +571,8 @@ class UserServiceTest {
         Session tokenForAdmin = session().build();
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
         var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
-        when(identityServiceClient.getUser(userName, token)).thenReturn(Mono.just(userRepresentation));
+        when(tokenService.tokenForAdmin()).thenReturn(just(tokenForAdmin));
+        when(identityServiceClient.getUser(userName, token)).thenReturn(just(userRepresentation));
         when(identityServiceClient.getCredentials(userRepresentation.getId(), token)).thenReturn(Mono.empty());
 
         var loginModeResponse = userService.getLoginMode(userName);
@@ -589,7 +590,7 @@ class UserServiceTest {
         String userName = "user@ncg";
         Session tokenForAdmin = session().build();
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
-        when(tokenService.tokenForAdmin()).thenReturn(Mono.just(tokenForAdmin));
+        when(tokenService.tokenForAdmin()).thenReturn(just(tokenForAdmin));
         when(identityServiceClient.getUser(userName, token)).thenReturn(Mono.empty());
 
         var loginModeResponse = userService.getLoginMode(userName);
@@ -685,9 +686,9 @@ class UserServiceTest {
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
         when(signupService.generateToken(new HashMap<>(), sessionId))
-                .thenReturn(Mono.just(new Token(token)));
-        when(signupService.getUserName(eq(sessionIdWithAction))).thenReturn(Mono.just(user.getIdentifier()));
-        when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));
+                .thenReturn(just(new Token(token)));
+        when(signupService.getUserName(eq(sessionIdWithAction))).thenReturn(just(user.getIdentifier()));
+        when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(just(user));
         when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
         when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
         when(otpServiceClient.send(consentManagerArgumentCaptor.capture())).thenReturn(Mono.empty());
@@ -742,7 +743,7 @@ class UserServiceTest {
         var requester = requester().type(HIU).build();
         var requestId = UUID.randomUUID();
         var user = user().build();
-        when(userRepository.userWith(any())).thenReturn(Mono.just(user));
+        when(userRepository.userWith(any())).thenReturn(just(user));
         when(userServiceClient.sendPatientResponseToGateWay(patientResponse.capture(),
                 eq("X-HIU-ID"),
                 eq(requester.getId())))
@@ -768,9 +769,9 @@ class UserServiceTest {
         ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
-        when(signupService.generateToken(any(), eq(sessionIdWithAction))).thenReturn(Mono.just(new Token(token)));
-        when(signupService.getUserName(eq(sessionIdWithAction))).thenReturn(Mono.just(user.getIdentifier()));
-        when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(Mono.just(user));
+        when(signupService.generateToken(any(), eq(sessionIdWithAction))).thenReturn(just(new Token(token)));
+        when(signupService.getUserName(eq(sessionIdWithAction))).thenReturn(just(user.getIdentifier()));
+        when(userRepository.userWith(eq(user.getIdentifier()))).thenReturn(just(user));
         when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
         when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
 

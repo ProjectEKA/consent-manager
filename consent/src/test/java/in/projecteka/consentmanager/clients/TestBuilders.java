@@ -1,16 +1,16 @@
 package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequest;
-import in.projecteka.consentmanager.clients.model.KeycloakUser;
-import in.projecteka.consentmanager.clients.model.Session;
 import in.projecteka.consentmanager.clients.model.User;
-import in.projecteka.consentmanager.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
+import in.projecteka.consentmanager.properties.IdentityServiceProperties;
 import in.projecteka.library.clients.model.Address;
 import in.projecteka.library.clients.model.Coding;
 import in.projecteka.library.clients.model.Identifier;
+import in.projecteka.library.clients.model.KeycloakUser;
 import in.projecteka.library.clients.model.Provider.ProviderBuilder;
+import in.projecteka.library.clients.model.Session;
 import in.projecteka.library.clients.model.Telecom;
 import in.projecteka.library.clients.model.Type;
 import org.jeasy.random.EasyRandom;
@@ -66,6 +66,7 @@ public class TestBuilders {
     public static IdentityServiceProperties.IdentityServicePropertiesBuilder keycloakProperties() {
         return easyRandom.nextObject(IdentityServiceProperties.IdentityServicePropertiesBuilder.class);
     }
+
 
     public static Session.SessionBuilder session() {
         return easyRandom.nextObject(Session.SessionBuilder.class);

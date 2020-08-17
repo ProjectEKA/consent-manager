@@ -3,13 +3,13 @@ package in.projecteka.consentmanager.user;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.properties.RedisOptions;
-import in.projecteka.consentmanager.consent.ConsentServiceProperties;
+import in.projecteka.library.clients.IdentityServiceClient;
 import in.projecteka.library.common.cache.CacheAdapter;
 import in.projecteka.library.common.cache.LoadingCacheAdapter;
 import in.projecteka.library.common.cache.RedisCacheAdapter;
@@ -61,7 +61,7 @@ public class UserConfiguration {
     @Bean
     public IdentityServiceClient keycloakClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                 IdentityServiceProperties identityServiceProperties) {
-        return new IdentityServiceClient(builder, identityServiceProperties);
+        return new IdentityServiceClient(builder, identityServiceProperties.getBaseUrl());
     }
 
     @Bean

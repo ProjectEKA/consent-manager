@@ -6,9 +6,8 @@ import in.projecteka.consentmanager.clients.model.OtpAction;
 import in.projecteka.consentmanager.clients.model.OtpCommunicationData;
 import in.projecteka.consentmanager.clients.model.OtpGenerationDetail;
 import in.projecteka.consentmanager.clients.model.OtpRequest;
-import in.projecteka.consentmanager.clients.model.Session;
-import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
+import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.user.exception.InvalidPasswordException;
 import in.projecteka.consentmanager.user.exception.InvalidRefreshTokenException;
 import in.projecteka.consentmanager.user.exception.InvalidUserNameException;
@@ -20,6 +19,7 @@ import in.projecteka.consentmanager.user.model.OtpVerificationRequest;
 import in.projecteka.consentmanager.user.model.OtpVerificationResponse;
 import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.clients.model.Session;
 import in.projecteka.library.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +35,7 @@ import static in.projecteka.consentmanager.common.Constants.BLACKLIST_FORMAT;
 import static in.projecteka.library.clients.model.ClientError.invalidRefreshToken;
 import static in.projecteka.library.clients.model.ClientError.invalidUserNameOrPassword;
 import static in.projecteka.library.clients.model.ErrorCode.OTP_INVALID;
+import static reactor.core.publisher.Mono.defer;
 import static reactor.core.publisher.Mono.empty;
 import static reactor.core.publisher.Mono.error;
 
@@ -55,7 +56,7 @@ public class SessionService {
 
     public Mono<Session> forNew(SessionRequest request) {
         return credentialsNotEmpty(request)
-                .switchIfEmpty(Mono.defer(() -> lockedUserService.validateLogin(request.getUsername())
+                .switchIfEmpty(defer(() -> lockedUserService.validateLogin(request.getUsername())
                         .then(request.getGrantType() == GrantType.PASSWORD
                               ? tokenService.tokenForUser(request.getUsername(), request.getPassword())
                               : tokenService.tokenForRefreshToken(request.getUsername(), request.getRefreshToken()))))
@@ -105,7 +106,7 @@ public class SessionService {
                 .flatMap(requestBody ->
                         otpAttemptService.validateOTPRequest(requestBody.getCommunication().getMode(), requestBody.getCommunication().getValue(), OtpAttempt.Action.OTP_REQUEST_LOGIN, otpVerificationRequest.getUsername())
                                 .then(otpServiceClient.send(requestBody)
-                                        .then(Mono.defer(() -> unverifiedSessions.put(sessionId, otpVerificationRequest.getUsername())))
+                                        .then(defer(() -> unverifiedSessions.put(sessionId, otpVerificationRequest.getUsername())))
                                         .thenReturn(requestBody.getCommunication().getValue())))
                 .map(mobileNumber -> OtpVerificationResponse.builder()
                         .sessionId(sessionId)

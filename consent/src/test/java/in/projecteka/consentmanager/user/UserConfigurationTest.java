@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.clients.IdentityServiceClient;
 import in.projecteka.consentmanager.clients.OtpServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
+import in.projecteka.consentmanager.properties.OtpServiceProperties;
+import in.projecteka.library.clients.IdentityServiceClient;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 

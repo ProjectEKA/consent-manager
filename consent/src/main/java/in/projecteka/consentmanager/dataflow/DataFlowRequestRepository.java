@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.dataflow;
 
-import in.projecteka.consentmanager.common.DbOperation;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestStatus;
 import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
+import in.projecteka.library.common.DbOperation;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;

@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.link.discovery;
 
-import in.projecteka.consentmanager.common.DbOperation;
 import in.projecteka.consentmanager.common.DbOperationError;
+import in.projecteka.library.common.DbOperation;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
 import org.slf4j.Logger;

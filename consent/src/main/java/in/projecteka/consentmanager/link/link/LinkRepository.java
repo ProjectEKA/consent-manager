@@ -2,12 +2,12 @@ package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
-import in.projecteka.consentmanager.common.DbOperation;
 import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.link.link.model.AuthzHipAction;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
+import in.projecteka.library.common.DbOperation;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;

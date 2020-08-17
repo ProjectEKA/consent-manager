@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.link;
 
-import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.Error;
 import in.projecteka.library.clients.model.ErrorCode;
 import in.projecteka.library.clients.model.ErrorRepresentation;
+import in.projecteka.library.common.DbOperationError;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler;

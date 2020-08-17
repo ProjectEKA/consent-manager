@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
+import in.projecteka.library.common.DbOperationError;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;

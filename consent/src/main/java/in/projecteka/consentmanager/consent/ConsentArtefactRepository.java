@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.consent.model.ConsentArtefact;
 import in.projecteka.consentmanager.consent.model.ConsentExpiry;
 import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
@@ -11,6 +10,7 @@ import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentati
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.Query;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
+import in.projecteka.library.common.DbOperationError;
 import io.vertx.core.AsyncResult;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;

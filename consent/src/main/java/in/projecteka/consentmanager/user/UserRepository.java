@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.user.model.DateOfBirth;
 import in.projecteka.consentmanager.user.model.Gender;
 import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.library.common.DbOperationError;
 import io.vertx.core.json.JsonArray;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;

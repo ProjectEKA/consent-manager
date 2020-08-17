@@ -1,10 +1,10 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.common.DbOperationError;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
+import in.projecteka.library.common.DbOperationError;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;

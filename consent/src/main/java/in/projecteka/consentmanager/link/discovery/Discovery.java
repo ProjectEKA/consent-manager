@@ -37,10 +37,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static in.projecteka.consentmanager.common.CustomScheduler.scheduleThis;
 import static in.projecteka.library.clients.model.ClientError.gatewayTimeOut;
 import static in.projecteka.library.clients.model.ClientError.invalidResponseFromHIP;
 import static in.projecteka.library.clients.model.ClientError.requestAlreadyExists;
+import static in.projecteka.library.common.CustomScheduler.scheduleThis;
 import static in.projecteka.library.common.Serializer.from;
 import static in.projecteka.library.common.Serializer.tryTo;
 

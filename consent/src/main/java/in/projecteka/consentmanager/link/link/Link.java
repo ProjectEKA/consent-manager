@@ -37,12 +37,12 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.ErrorMap.toCmError;
-import static in.projecteka.consentmanager.common.CustomScheduler.scheduleThis;
 import static in.projecteka.consentmanager.link.Constants.HIP_INITIATED_ACTION_LINK;
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 import static in.projecteka.consentmanager.link.link.model.AcknowledgementStatus.SUCCESS;
 import static in.projecteka.library.clients.model.ClientError.invalidResponseFromHIP;
 import static in.projecteka.library.clients.model.ErrorCode.TRANSACTION_ID_NOT_FOUND;
+import static in.projecteka.library.common.CustomScheduler.scheduleThis;
 import static in.projecteka.library.common.Serializer.from;
 import static in.projecteka.library.common.Serializer.tryTo;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;

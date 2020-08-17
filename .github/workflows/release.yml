@@ -27,7 +27,9 @@ jobs:
         env:
           CONTAINER_REPO_NAME: consent-manager
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        run: docker build -t $DOCKER_USERNAME/$CONTAINER_REPO_NAME:$RELEASE_VERSION .
+        run: |
+          cd consent
+          docker build -t $DOCKER_USERNAME/$CONTAINER_REPO_NAME:$RELEASE_VERSION .
       - name: Push Docker Container to Registry
         env:
           CONTAINER_REPO_NAME: consent-manager

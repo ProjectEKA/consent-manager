@@ -1,1 +1,5 @@
-rootProject.name = 'consentmanager'
+rootProject.name = 'consent-manager'
+
+include 'commons'
+include 'consent'
+

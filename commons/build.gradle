@@ -1,0 +1,48 @@
+plugins {
+    id 'jacoco'
+}
+
+bootJar {
+    enabled(false)
+}
+
+jar {
+    enabled(true)
+}
+
+testClasses {
+    enabled(true)
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+    implementation 'javax.validation:validation-api:2.0.1.Final'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'org.mockito:mockito-inline:2.13.0'
+    compileOnly 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    implementation 'org.jeasy:easy-random-core:4.2.0'
+    implementation 'com.google.guava:guava:29.0-jre'
+    implementation 'io.lettuce:lettuce-core:5.3.3.RELEASE'
+    implementation 'net.logstash.logback:logstash-logback-encoder:6.4'
+    implementation 'org.springframework.data:spring-data-redis'
+    testImplementation 'org.apache.commons:commons-lang3:3.11'
+    implementation 'io.vertx:vertx-pg-client:3.9.2'
+    implementation 'com.nimbusds:nimbus-jose-jwt:8.20'
+}
+
+jacocoTestReport {
+    additionalSourceDirs.from = files(sourceSets.main.allJava.srcDirs)
+    reports {
+        html.enabled true
+        xml.enabled true
+        csv.enabled false
+        html.destination file("build/reports/jacoco/html")
+    }
+    executionData.from = files('build/jacoco/test.exec')
+}

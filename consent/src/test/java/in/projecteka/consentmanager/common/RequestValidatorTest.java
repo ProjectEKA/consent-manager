@@ -2,9 +2,9 @@ package in.projecteka.consentmanager.common;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
-import in.projecteka.consentmanager.common.cache.CacheAdapter;
-import in.projecteka.consentmanager.common.cache.LoadingCacheGenericAdapter;
 import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.common.cache.CacheAdapter;
+import in.projecteka.library.common.cache.LoadingCacheGenericAdapter;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

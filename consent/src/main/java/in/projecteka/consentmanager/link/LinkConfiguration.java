@@ -9,9 +9,6 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
-import in.projecteka.consentmanager.common.cache.CacheAdapter;
-import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
-import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import in.projecteka.consentmanager.common.cache.RedisOptions;
 import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.DiscoveryRepository;
@@ -21,6 +18,9 @@ import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.link.link.LinkRepository;
 import in.projecteka.consentmanager.link.link.LinkTokenVerifier;
 import in.projecteka.library.common.CentralRegistry;
+import in.projecteka.library.common.cache.CacheAdapter;
+import in.projecteka.library.common.cache.LoadingCacheAdapter;
+import in.projecteka.library.common.cache.RedisCacheAdapter;
 import io.vertx.pgclient.PgPool;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -128,5 +128,4 @@ public class LinkConfiguration {
             RedisOptions redisOptions) {
         return new RedisCacheAdapter(stringReactiveRedisOperations, 5, redisOptions.getRetry());
     }
-    
 }

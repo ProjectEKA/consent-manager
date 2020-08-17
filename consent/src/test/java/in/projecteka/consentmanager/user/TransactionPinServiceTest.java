@@ -1,9 +1,9 @@
 package in.projecteka.consentmanager.user;
 
-import in.projecteka.consentmanager.common.cache.CacheAdapter;
 import in.projecteka.consentmanager.user.model.Token;
 import in.projecteka.consentmanager.user.model.TransactionPin;
 import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.library.common.cache.CacheAdapter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;

@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.consent;
 
+import in.projecteka.consentmanager.consent.model.request.ConsentRequestStatus;
 import in.projecteka.consentmanager.consent.model.FetchRequest;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
@@ -26,6 +27,9 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.validation.Valid;
+
+import static in.projecteka.consentmanager.consent.Constants.CONSENT_REQUESTS_STATUS;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
 import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
 
@@ -112,6 +116,20 @@ public class ConsentArtefactsController {
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(validatedRequest -> consentManager.updateConsentNotification(acknowledgment)
                         .then(validator.put(acknowledgment.getRequestId().toString(), acknowledgment.getTimestamp())));
+    }
+
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @PostMapping(value = CONSENT_REQUESTS_STATUS)
+    public Mono<Void> status(@Valid @RequestBody ConsentRequestStatus consentRequestStatus) {
+        return Mono.just(consentRequestStatus)
+                .filterWhen(req -> validator
+                        .validate(consentRequestStatus.getRequestId().toString(), consentRequestStatus.getTimestamp()))
+                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .doOnSuccess(validatedRequest -> Mono.defer(() -> {
+                    validator.put(consentRequestStatus.getRequestId().toString(), consentRequestStatus.getTimestamp());
+                    return consentManager.getStatus(consentRequestStatus);
+                }).subscribe())
+                .then();
     }
 
     private int getPageSize(int limit) {

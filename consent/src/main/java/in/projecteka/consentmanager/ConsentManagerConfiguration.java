@@ -16,7 +16,7 @@ import in.projecteka.consentmanager.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.common.GatewayTokenVerifier;
 import in.projecteka.consentmanager.common.IdentityService;
-import in.projecteka.consentmanager.common.KeyPairConfig;
+import in.projecteka.consentmanager.properties.KeyPairConfig;
 import in.projecteka.consentmanager.common.RequestValidator;
 import in.projecteka.consentmanager.common.ServiceAuthentication;
 import in.projecteka.consentmanager.properties.RedisOptions;

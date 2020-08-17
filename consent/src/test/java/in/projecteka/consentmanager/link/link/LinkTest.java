@@ -66,7 +66,7 @@ class LinkTest {
     private LinkTokenVerifier linkTokenVerifier;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         initMocks(this);
         LinkServiceProperties linkServiceProperties = new LinkServiceProperties("http://tmc.gov.in/ncg-gateway",
                 1000);
@@ -79,7 +79,7 @@ class LinkTest {
     }
 
     @Test
-    public void shouldReturnLinkedCareContext() {
+    void shouldReturnLinkedCareContext() {
         var patientId = "5@ncg.com";
         String hipId = "10000005";
         var patientRepresentation = patientRepresentation().build();
@@ -113,7 +113,7 @@ class LinkTest {
     }
 
     @Test
-    public void confirmLinkCareContexts() {
+    void confirmLinkCareContexts() {
         PatientLinkRequest patientLinkRequest = patientLinkRequest().build();
         String patientId = "patient";
         String hipId = "10000005";

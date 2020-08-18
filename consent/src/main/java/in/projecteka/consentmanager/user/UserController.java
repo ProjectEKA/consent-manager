@@ -79,7 +79,7 @@ public class UserController {
                 .doOnSuccess(validatedRequest -> Mono.defer(() -> {
                     validator.put(request.getRequestId(), request.getTimestamp());
                     return userService.confirmAuthFor(validatedRequest);
-                }).subscribe())
+                }))
                 .then();
     }
 }

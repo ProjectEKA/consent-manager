@@ -11,6 +11,7 @@ import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.User;
+import in.projecteka.consentmanager.user.model.UserAuthConfirmRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
@@ -76,5 +77,9 @@ public class TestBuilders {
 
     public static DateOfBirth.DateOfBirthBuilder dateOfBirth(){
         return easyRandom.nextObject(DateOfBirth.DateOfBirthBuilder.class);
+    }
+
+    public static UserAuthConfirmRequest.UserAuthConfirmRequestBuilder userAuthConfirmRequest() {
+        return easyRandom.nextObject(UserAuthConfirmRequest.UserAuthConfirmRequestBuilder.class);
     }
 }

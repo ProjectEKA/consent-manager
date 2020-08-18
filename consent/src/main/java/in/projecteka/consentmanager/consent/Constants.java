@@ -15,7 +15,7 @@ public class Constants {
     public static final String APP_PATH_GET_CONSENT_REQUESTS = "/consent-requests";
     public static final String APP_PATH_GET_CONSENT_ARTEFACTS_FOR_REQUEST = "/consent-requests/{request-id}/consent-artefacts";
     public static final String GET_CONSENT_CERT = "/certs";
-    public static final String CONSENT_REQUESTS_STATUS = "/consent-requests/status";
+    public static final String CONSENT_REQUESTS_STATUS = CURRENT_VERSION + "/consent-requests/status";
 
     private Constants() {
     }

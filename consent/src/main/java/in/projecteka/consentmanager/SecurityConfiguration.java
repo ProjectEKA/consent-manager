@@ -57,6 +57,7 @@ import static in.projecteka.consentmanager.user.Constants.APP_PATH_RESET_PASSWOR
 import static in.projecteka.consentmanager.user.Constants.APP_PATH_RESET_PIN;
 import static in.projecteka.consentmanager.user.Constants.BASE_PATH_PATIENTS_APIS;
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
+import static in.projecteka.consentmanager.user.Constants.USERS_AUTH_CONFIRM;
 import static in.projecteka.library.clients.model.ClientError.unAuthorized;
 import static in.projecteka.library.common.Role.GATEWAY;
 import static java.util.stream.Collectors.toList;
@@ -85,6 +86,7 @@ public class SecurityConfiguration {
             PATH_HIP_CONSENT_ON_NOTIFY,
             PATH_HIP_ADD_CONTEXTS,
             PATH_HIP_LINK_USER_AUTH_INIT,
+            USERS_AUTH_CONFIRM,
             CONSENT_REQUESTS_STATUS
     };
 
@@ -108,6 +110,7 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HEALTH_INFORMATION_ON_REQUEST, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_CONSENT_ON_NOTIFY, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_ADD_CONTEXTS, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(USERS_AUTH_CONFIRM, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(CONSENT_REQUESTS_STATUS, HttpMethod.POST));
 
         RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve",

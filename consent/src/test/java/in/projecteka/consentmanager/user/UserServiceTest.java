@@ -64,6 +64,7 @@ import static in.projecteka.consentmanager.user.TestBuilders.requester;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.updatePasswordRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
+import static in.projecteka.consentmanager.user.TestBuilders.userAuthConfirmRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
 import static in.projecteka.consentmanager.user.model.Requester.HIU;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -778,5 +779,13 @@ class UserServiceTest {
         StepVerifier.create(userService.verifyOtpForForgotConsentPin(otpVerification))
                 .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
                 .verifyComplete();
+    }
+
+    @Test
+    void shouldReturnMonoEmpty() {
+        Mono<Void> returnResult = userService.confirmAuthFor(userAuthConfirmRequest().build());
+        StepVerifier.create(returnResult)
+                .verifyComplete();
+        assertThat(returnResult).isEqualTo(Mono.empty());
     }
 }

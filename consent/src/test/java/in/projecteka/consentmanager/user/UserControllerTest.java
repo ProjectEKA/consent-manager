@@ -8,10 +8,13 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.user.model.AuthCredentialDetail;
+import in.projecteka.consentmanager.user.model.DemographicDetail;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.RequesterDetail;
 import in.projecteka.consentmanager.user.model.SignUpSession;
 import in.projecteka.consentmanager.user.model.Token;
+import in.projecteka.consentmanager.user.model.UserAuthConfirmRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.library.common.Authenticator;
 import in.projecteka.library.common.Caller;
@@ -20,6 +23,7 @@ import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceCaller;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
@@ -32,12 +36,15 @@ import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
+import static in.projecteka.consentmanager.user.Constants.USERS_AUTH_CONFIRM;
 import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
+import static in.projecteka.consentmanager.user.TestBuilders.userAuthConfirmRequest;
 import static in.projecteka.library.common.Role.GATEWAY;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
@@ -194,6 +201,46 @@ class UserControllerTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .body(BodyInserters.fromValue(patientRequest))
+                .exchange()
+                .expectStatus()
+                .is4xxClientError();
+    }
+
+    @Test
+    void shouldReturnAcceptedForUserAuthConfirmRequest() {
+        var token = string();
+        var userAuthConfirmRequest = userAuthConfirmRequest().build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+
+        when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
+        when(userService.confirmAuthFor(userAuthConfirmRequest)).thenReturn(empty());
+
+        webClient.post()
+                .uri(USERS_AUTH_CONFIRM)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .body(BodyInserters.fromValue(userAuthConfirmRequest))
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+    }
+
+    @Test
+    void shouldThrowTooManyRequestErrorForInvalidAuthConfirmRequest() {
+        var token = string();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+        var userAuthConfirmRequest = userAuthConfirmRequest().build();
+
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
+
+        webClient.post()
+                .uri(USERS_AUTH_CONFIRM)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .bodyValue(userAuthConfirmRequest)
                 .exchange()
                 .expectStatus()
                 .is4xxClientError();

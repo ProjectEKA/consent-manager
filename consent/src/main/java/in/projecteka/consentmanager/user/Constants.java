@@ -27,4 +27,5 @@ public class Constants {
     public static final String APP_PATH_CREATE_USER = "/profile";
     public static final String APP_PATH_INTERNAL_FIND_USER_BY_USERNAME = "/internal/users/{userName}";
     public static final String APP_PATH_RESET_PASSWORD = "/profile/reset-password";
+    public static final String USERS_AUTH_CONFIRM = CURRENT_VERSION + "/users/auth/confirm";
 }

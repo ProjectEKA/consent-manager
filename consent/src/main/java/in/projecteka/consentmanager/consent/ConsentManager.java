@@ -17,6 +17,7 @@ import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.ConsentStatusCallerDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatusDetail;
 import in.projecteka.consentmanager.consent.model.GrantedContext;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
@@ -66,6 +67,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -661,14 +663,20 @@ public class ConsentManager {
     }
 
     public Mono<Void> getStatus(ConsentRequestStatus request) {
+        AtomicReference<String> hiuId = new AtomicReference<>("");
         return getStatus(request.getConsentRequestId())
-                .flatMap(consentStatus -> Mono.just(consentStatus)
-                        .flatMap(cs -> consentStatus.equals(GRANTED) ? fetchConsentArtefactIdList(request.getConsentRequestId()) : Mono.empty())
-                        .flatMap(consentArtefacts -> buildConsentStatusResponse(consentArtefacts, request, consentStatus))
+                .flatMap(consentDetail -> {
+                    if (!consentDetail.getHiuId().isEmpty()) {
+                        hiuId.set(consentDetail.getHiuId());
+                    }
+                    return Mono.just(consentDetail.getStatus());
+                })
+                .flatMap(consentStatus -> (consentStatus.equals(GRANTED) ? fetchConsentArtefactIds(request.getConsentRequestId()).collectList() : Mono.empty())
+                        .flatMap(consentArtefacts -> buildConsentStatusResponse((List<ConsentArtefactReference>) consentArtefacts, request, consentStatus))
                         .switchIfEmpty(buildConsentStatusResponse(null, request, consentStatus)))
                 .onErrorResume(ClientError.class, exception -> buildConsentStatusErrorResponse(request, exception))
-                .then(consentStatusResponse -> sendconsentStatusResponseToGateway(consentStatusResponse, "hiuId"));
-                }
+                .flatMap(consentStatusResponse -> consentManagerClient.sendConsentStatusResponseToGateway(consentStatusResponse, hiuId.get()));
+    }
 
     private Mono<ConsentStatusResponse> buildConsentStatusErrorResponse(ConsentRequestStatus request, ClientError exception) {
         var consentStatusResponse = ConsentStatusResponse.builder()
@@ -697,11 +705,11 @@ public class ConsentManager {
         return Mono.just(consentStatusResponse);
     }
 
-    private Mono<List<ConsentArtefactReference>> fetchConsentArtefactIdList(String consentRequestId) {
-        return Mono.empty();
+    private Flux<ConsentArtefactReference> fetchConsentArtefactIds(String consentRequestId) {
+        return consentArtefactRepository.consentArtefacts(consentRequestId);
     }
 
-    private Mono<ConsentStatus> getStatus(String consentRequestId) {
-        return Mono.just(GRANTED);
+    private Mono<ConsentStatusCallerDetail> getStatus(String consentRequestId) {
+        return consentRequestRepository.getConsentRequestStatusAndCallerDetails(consentRequestId);
     }
 }

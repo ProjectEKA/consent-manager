@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestResult;
+import in.projecteka.consentmanager.consent.model.response.ConsentStatusResponse;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.properties.GatewayServiceProperties;
 import in.projecteka.library.clients.model.ClientError;
@@ -22,6 +23,7 @@ import static java.util.function.Predicate.not;
 public class ConsentManagerClient {
     private static final String CONSENT_REQUEST_INIT_URL_PATH = "/consent-requests/on-init";
     private static final String CONSENT_FETCH_URL_PATH = "/consents/on-fetch";
+    private static final String CONSENT_REQUEST_STATUS_URL_PATH = "/consent-requests/on-status";
     private final WebClient webClient;
     private final String url;
 
@@ -83,6 +85,28 @@ public class ConsentManagerClient {
                                 .header(AUTHORIZATION, token)
                                 .header(HDR_HIU_ID, hiuId)
                                 .bodyValue(consentArtefactResult)
+                                .retrieve()
+                                .onStatus(httpStatus -> httpStatus.value() == 400,
+                                        clientResponse -> Mono.error(ClientError.unprocessableEntity()))
+                                .onStatus(httpStatus -> httpStatus.value() == 401,
+                                        clientResponse -> Mono.error(ClientError.unAuthorized()))
+                                .onStatus(HttpStatus::is5xxServerError,
+                                        clientResponse -> Mono.error(ClientError.networkServiceCallFailed()))
+                                .toBodilessEntity()
+                                .timeout(Duration.ofMillis(gatewayServiceProperties.getRequestTimeout())))
+                .then();
+    }
+
+    public Mono<Void> sendConsentStatusResponseToGateway(ConsentStatusResponse consentStatusResponse, String hiuId) {
+        return serviceAuthentication.authenticate()
+                .flatMap(token ->
+                        webClient
+                                .post()
+                                .uri(gatewayServiceProperties.getBaseUrl() + CONSENT_REQUEST_STATUS_URL_PATH)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header(AUTHORIZATION, token)
+                                .header(HDR_HIU_ID, hiuId)
+                                .bodyValue(consentStatusResponse)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 400,
                                         clientResponse -> Mono.error(ClientError.unprocessableEntity()))

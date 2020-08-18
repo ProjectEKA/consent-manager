@@ -200,7 +200,7 @@
     
     ```bash
     cd consent-manager
-    GATEWAY_CLIENTSECRET=${GATEWAY_CLIENTSECRET} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew bootRunLocal
+    GATEWAY_CLIENTSECRET=${GATEWAY_CLIENTSECRET} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew :consent:bootRunLocal
     ```
 
 ### Hip-Service

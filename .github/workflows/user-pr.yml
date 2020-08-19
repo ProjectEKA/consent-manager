@@ -22,3 +22,23 @@ jobs:
         run: ./gradlew :user:jacocoTestReport
       - name: Sonarcube Analysis
         run: ./gradlew :user:sonarqube
+      - name: Generate artefact
+        run: ./gradlew :user:bootJar
+      - name: Docker Registry
+        env:
+          DOCKER_REGISTRY_URL: docker.io
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY_URL
+      - name: Build docker image
+        env:
+          CONTAINER_REPO_NAME: user-service
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: |
+          cd user
+          docker build -t $DOCKER_USERNAME/$CONTAINER_REPO_NAME:$RELEASE_VERSION .
+      - name: Push Docker Container to Registry
+        env:
+          CONTAINER_REPO_NAME: user-service
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: docker push $DOCKER_USERNAME/$CONTAINER_REPO_NAME:$RELEASE_VERSION

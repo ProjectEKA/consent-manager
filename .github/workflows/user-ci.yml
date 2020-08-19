@@ -35,7 +35,7 @@ jobs:
         run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY_URL
       - name: Build docker image
         env:
-          CONTAINER_REPO_NAME: consent-manager
+          CONTAINER_REPO_NAME: user-service
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         run: |
           cd user

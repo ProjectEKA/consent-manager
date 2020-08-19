@@ -27,13 +27,13 @@ jobs:
         run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY_URL
       - name: Build docker image
         env:
-          CONTAINER_REPO_NAME: consent-manager
+          CONTAINER_REPO_NAME: user-service
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         run: |
           cd user
           docker build -t $DOCKER_USERNAME/$CONTAINER_REPO_NAME:$RELEASE_VERSION .
       - name: Push Docker Container to Registry
         env:
-          CONTAINER_REPO_NAME: consent-manager
+          CONTAINER_REPO_NAME: user-service
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         run: docker push $DOCKER_USERNAME/$CONTAINER_REPO_NAME:$RELEASE_VERSION

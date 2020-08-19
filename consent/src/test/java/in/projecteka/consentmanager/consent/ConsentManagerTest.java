@@ -14,6 +14,7 @@ import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.ConsentStatusCallerDetail;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIType;
@@ -24,6 +25,7 @@ import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.response.ConsentStatusResponse;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.Provider;
 import in.projecteka.library.common.CentralRegistry;
@@ -50,9 +52,11 @@ import java.util.UUID;
 import static in.projecteka.consentmanager.consent.TestBuilders.artefactLightRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.certResponse;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefact;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactReference;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestStatus;
 import static in.projecteka.consentmanager.consent.TestBuilders.hipConsentArtefactRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.hipConsentNotificationAcknowledgement;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
@@ -111,6 +115,9 @@ class ConsentManagerTest {
 
     @Captor
     private ArgumentCaptor<ConsentArtefactsMessage> consentArtefactsMessageArgumentCaptor;
+
+    @Captor
+    private ArgumentCaptor<ConsentStatusResponse> consentStatusResponseArgumentCaptor;
 
     @BeforeEach
     public void setUp() throws JOSEException {
@@ -484,5 +491,24 @@ class ConsentManagerTest {
                     assertThat(response.getKeys().size()).isEqualTo(1);
                 })
                 .verifyComplete();
+    }
+
+    @Test
+    void shouldRespondToGatewayIfConsentStatusIsGranted() {
+        var consentRequestStatus = consentRequestStatus().build();
+        var hiuId = string();
+        var consentArtefactReference = consentArtefactReference().id(string()).build();
+        var consentCallerDetails = ConsentStatusCallerDetail.builder().status(GRANTED).hiuId(hiuId).build();
+        when(repository.getConsentRequestStatusAndCallerDetails(consentRequestStatus.getConsentRequestId()))
+                .thenReturn(Mono.just(consentCallerDetails));
+        when(consentArtefactRepository.consentArtefacts(consentRequestStatus.getConsentRequestId()))
+                .thenReturn(Flux.just(consentArtefactReference));
+        when(consentManagerClient.sendConsentStatusResponseToGateway(consentStatusResponseArgumentCaptor.capture(), eq(hiuId)))
+                .thenReturn(Mono.empty());
+
+        var consentStatusProducer = consentManager.getStatus(consentRequestStatus);
+        StepVerifier.create(consentStatusProducer)
+                .verifyComplete();
+        assertThat(consentArtefactReference.getId()).isNotNull();
     }
 }

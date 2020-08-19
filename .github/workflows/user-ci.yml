@@ -1,9 +1,13 @@
-name: Consent Service Release Actions
+name: User Service Master Actions
 
 on:
   push:
-    tags:
-      - '*'
+    branches:
+      - master
+    paths:
+      - 'user/**'
+    paths-ignore:
+      - 'docs/**'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,11 +18,17 @@ jobs:
         with:
           java-version: 11
       - name: Build and unit tests
-        run: ./gradlew clean :consent:test
+        run: ./gradlew clean :user:test
+      - name: Code coverage
+        run: ./gradlew :user:jacocoTestReport
+      - name: Code analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :user:sonarqube
       - name: Generate artefact
-        run: ./gradlew :consent:bootJar
+        run: ./gradlew :user:bootJar
       - name: Set env
-        run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
+        run: echo ::set-env name=RELEASE_VERSION::$(echo $GITHUB_SHA | head -c7)
       - name: Docker Registry
         env:
           DOCKER_REGISTRY_URL: docker.io
@@ -30,10 +40,10 @@ jobs:
           CONTAINER_REPO_NAME: consent-manager
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         run: |
-          cd consent
+          cd user
           docker build -t $DOCKER_USERNAME/$CONTAINER_REPO_NAME:$RELEASE_VERSION .
       - name: Push Docker Container to Registry
         env:
-          CONTAINER_REPO_NAME: consent-manager
+          CONTAINER_REPO_NAME: user-service
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         run: docker push $DOCKER_USERNAME/$CONTAINER_REPO_NAME:$RELEASE_VERSION

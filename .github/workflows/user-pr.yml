@@ -1,11 +1,11 @@
-name: Consent Service Pull Request Actions
+name: User Service Pull Request Actions
 
 on:
   pull_request:
     branches:
       - master
     paths:
-      - 'consent/**'
+      - 'user/**'
     paths-ignore:
       - 'docs/**'
 
@@ -19,8 +19,8 @@ jobs:
         with:
           java-version: 11
       - name: Build and unit tests
-        run: ./gradlew clean :consent:test --info
+        run: ./gradlew clean :user:test --info
       - name: Code coverage
-        run: ./gradlew :consent:jacocoTestReport
+        run: ./gradlew :user:jacocoTestReport
       - name: Sonarcube Analysis
-        run: ./gradlew :consent:sonarqube
+        run: ./gradlew :user:sonarqube

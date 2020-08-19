@@ -1,9 +1,13 @@
-name: GitHub Actions
+name: Consent Service Master Actions
 
 on:
   push:
     branches:
       - master
+    paths:
+      - 'consent/**'
+    paths-ignore:
+      - 'docs/**'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,13 +18,13 @@ jobs:
         with:
           java-version: 11
       - name: Build and unit tests
-        run: ./gradlew clean test
+        run: ./gradlew clean :consent:test
       - name: Code coverage
-        run: ./gradlew jacocoTestReport
+        run: ./gradlew :consent:jacocoTestReport
       - name: Code analysis
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew sonarqube
+        run: ./gradlew :consent:sonarqube
       - name: Generate artefact
         run: ./gradlew :consent:bootJar
       - name: Set env

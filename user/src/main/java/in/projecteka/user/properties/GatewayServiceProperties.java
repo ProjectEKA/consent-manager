@@ -1,11 +1,11 @@
-package in.projecteka.user;
+package in.projecteka.user.properties;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
 
-@ConfigurationProperties(prefix = "user.gatewayservice")
+@ConfigurationProperties(prefix = "user.gateway-service")
 @Getter
 @AllArgsConstructor
 @ConstructorBinding

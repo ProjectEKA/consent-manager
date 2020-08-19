@@ -36,6 +36,8 @@ import in.projecteka.user.model.UpdatePasswordRequest;
 import in.projecteka.user.model.UpdateUserRequest;
 import in.projecteka.user.model.User;
 import in.projecteka.user.model.UserSignUpEnquiry;
+import in.projecteka.user.properties.OtpServiceProperties;
+import in.projecteka.user.properties.UserServiceProperties;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

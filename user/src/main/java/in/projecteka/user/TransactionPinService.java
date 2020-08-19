@@ -4,6 +4,7 @@ import in.projecteka.user.model.Token;
 import in.projecteka.user.model.TransactionPin;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.cache.CacheAdapter;
+import in.projecteka.user.properties.UserServiceProperties;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.AllArgsConstructor;

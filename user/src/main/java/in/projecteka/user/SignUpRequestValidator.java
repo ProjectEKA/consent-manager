@@ -36,6 +36,7 @@ public class SignUpRequestValidator {
     private SignUpRequestValidator() {
     }
 
+    private static final String VALID_CHARACTERS = "[a-zA-Z@0-9.\\-]";
     private static final LocalDate TODAY = LocalDate.now();
     private static final String VALID_NAME_CHARS = "[a-zA-Z ]";
     private static final List<IdentifierType> UniqueIdentifiers = List.of(IdentifierType.ABPMJAYID);
@@ -88,7 +89,7 @@ public class SignUpRequestValidator {
         }
 
         List<IdentifierType> validatedIdentifierTypes = identifierValidated.stream()
-                .map(identifier -> identifier.getType())
+                .map(Identifier::getType)
                 .distinct()
                 .collect(Collectors.toList());
         for (IdentifierType identifierType : validatedIdentifierTypes) {
@@ -131,15 +132,14 @@ public class SignUpRequestValidator {
             PatientName.builder().last("");
         }
 
-        return allowed(VALID_NAME_CHARS, "name", name);
+        return allowed(name);
     }
 
     private static Validation<String, String> validateUserName(String username, String userIdSuffix) {
-        final String VALID_USERNAME_CHARS = "[a-zA-Z@0-9.\\-]";
         if (Strings.isNullOrEmpty(username)) {
             return Validation.invalid("username can't be empty");
         }
-        return allowed(VALID_USERNAME_CHARS, "username", username)
+        return allowed(username)
                 .combine(endsWithProvider(username, userIdSuffix))
                 .combine(lengthLimitFor(username.replace(userIdSuffix, "")))
                 .ap((validCharacters, validEndsWith, validLength) -> username)
@@ -160,41 +160,37 @@ public class SignUpRequestValidator {
         return Validation.valid(username);
     }
 
-    private static Validation<String, PatientName> allowed(String characters, String fieldName, PatientName name) {
+    private static Validation<String, PatientName> allowed(PatientName name) {
         if (name.createFullName().length() > 99) {
             return Validation.invalid(format("%s should be between %d and %d characters", "name", 1, 99));
         }
 
         return CharSeq.of(name.createFullName())
-                .replaceAll(characters, "")
+                .replaceAll(SignUpRequestValidator.VALID_NAME_CHARS, "")
                 .transform(seq -> seq.isEmpty()
                                   ? Validation.valid(name)
                                   : Validation.invalid(format("%s contains invalid characters: ' %s '",
-                                          fieldName,
+                                          "name",
                                           seq.distinct().sorted())));
     }
 
-    private static Validation<String, String> allowed(String characters, String fieldName, String value) {
+    private static Validation<String, String> allowed(String value) {
         return CharSeq.of(value)
-                .replaceAll(characters, "")
+                .replaceAll(VALID_CHARACTERS, "")
                 .transform(seq -> seq.isEmpty()
                                   ? Validation.valid(value)
                                   : Validation.invalid(format("%s contains invalid characters: ' %s '",
-                                          fieldName,
+                                          "username",
                                           seq.distinct().sorted())));
     }
 
     private static Validation<String, DateOfBirth> validateDateOfBirth(DateOfBirth date) {
 
-        if (date.getDate() != null) {
-            if (date.getDate() > 31 && date.getDate() < 1) {
-                return Validation.invalid("Date cannot be more than 31");
-            }
+        if (date.getDate() != null && date.getDate() > 31 && date.getDate() < 1) {
+            return Validation.invalid("Date cannot be more than 31");
         }
-        if (date.getMonth() != null) {
-            if (date.getMonth() > 12 && date.getMonth() < 1) {
-                return Validation.invalid("Month cannot be more than 12");
-            }
+        if (date.getMonth() != null && date.getMonth() > 12 && date.getMonth() < 1) {
+            return Validation.invalid("Month cannot be more than 12");
         }
         return date.getYear() == null || ((date.getYear() <= (TODAY.getYear())) && (date.getYear() >= TODAY.getYear() - 120))
                ? Validation.valid(date)

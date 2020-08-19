@@ -1,4 +1,4 @@
-package in.projecteka.user;
+package in.projecteka.user.properties;
 
 public enum ReadFrom {
     UPSTREAM,

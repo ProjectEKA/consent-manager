@@ -1,4 +1,4 @@
-package in.projecteka.user;
+package in.projecteka.user.properties;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@ConfigurationProperties(prefix = "user.otpservice")
+@ConfigurationProperties(prefix = "user.otp-service")
 @AllArgsConstructor
 @ConstructorBinding
 @Getter

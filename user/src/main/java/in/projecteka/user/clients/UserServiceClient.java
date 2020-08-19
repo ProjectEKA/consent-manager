@@ -1,9 +1,8 @@
 package in.projecteka.user.clients;
 
-
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.ServiceAuthentication;
-import in.projecteka.user.GatewayServiceProperties;
+import in.projecteka.user.properties.GatewayServiceProperties;
 import in.projecteka.user.model.PatientResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;

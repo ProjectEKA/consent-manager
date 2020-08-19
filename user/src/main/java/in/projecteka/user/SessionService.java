@@ -19,6 +19,7 @@ import in.projecteka.user.model.OtpPermitRequest;
 import in.projecteka.user.model.OtpVerificationRequest;
 import in.projecteka.user.model.OtpVerificationResponse;
 import in.projecteka.user.model.SessionRequest;
+import in.projecteka.user.properties.OtpServiceProperties;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

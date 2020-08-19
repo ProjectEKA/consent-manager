@@ -2,6 +2,7 @@ package in.projecteka.user;
 
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.user.model.OtpAttempt;
+import in.projecteka.user.properties.UserServiceProperties;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 

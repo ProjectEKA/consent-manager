@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager;
 
 import in.projecteka.consentmanager.properties.ClientRegistryProperties;
+import in.projecteka.consentmanager.properties.DbOptions;
 import in.projecteka.consentmanager.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.properties.LinkServiceProperties;

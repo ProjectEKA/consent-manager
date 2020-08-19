@@ -6,6 +6,7 @@ import in.projecteka.user.exception.InvalidPasswordException;
 import in.projecteka.user.exception.InvalidRefreshTokenException;
 import in.projecteka.user.exception.InvalidUserNameException;
 import in.projecteka.user.model.GrantType;
+import in.projecteka.user.properties.IdentityServiceProperties;
 import lombok.AllArgsConstructor;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;

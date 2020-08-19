@@ -5,6 +5,7 @@ import in.projecteka.user.model.SendOtpAction;
 import in.projecteka.user.model.SignUpSession;
 import in.projecteka.user.model.Token;
 import in.projecteka.library.common.cache.CacheAdapter;
+import in.projecteka.user.properties.JWTProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;

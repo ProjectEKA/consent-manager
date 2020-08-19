@@ -1,4 +1,4 @@
-package in.projecteka.user;
+package in.projecteka.user.properties;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,13 +6,12 @@ import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
 
-@ConfigurationProperties(prefix = "consentmanager.userservice")
+@ConfigurationProperties(prefix = "user")
 @Getter
 @AllArgsConstructor
 @ConstructorBinding
 @Builder
 public class UserServiceProperties {
-    private final String url;
     private final int transactionPinDigitSize;
     private final int transactionPinTokenValidity;
     private final int userCreationTokenValidity;

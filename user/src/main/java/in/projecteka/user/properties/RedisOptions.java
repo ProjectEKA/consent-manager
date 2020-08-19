@@ -1,4 +1,4 @@
-package in.projecteka.user;
+package in.projecteka.user.properties;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
 
-@ConditionalOnProperty(value = "user.cacheMethod", havingValue = "redis")
+@ConditionalOnProperty(value = "user.cache-method", havingValue = "redis")
 @ConfigurationProperties(prefix = "user.redis")
 @Getter
 @AllArgsConstructor

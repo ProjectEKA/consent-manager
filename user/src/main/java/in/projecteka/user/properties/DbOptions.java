@@ -1,4 +1,4 @@
-package in.projecteka.consentmanager;
+package in.projecteka.user.properties;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
 
 @ConstructorBinding
-@ConfigurationProperties("consentmanager.db")
+@ConfigurationProperties("user.db")
 @Getter
 @AllArgsConstructor
 public class DbOptions {
@@ -20,5 +20,4 @@ public class DbOptions {
     public in.projecteka.library.common.DbOptions toHeartBeat() {
         return new in.projecteka.library.common.DbOptions(host, port);
     }
-
 }

@@ -42,16 +42,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.slf4j.Logger;
 import org.springframework.web.reactive.function.client.ClientRequest;
-import org.springframework.web.reactive.function.client.ExchangeFunction;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -69,6 +65,7 @@ import static in.projecteka.user.model.LoginMode.CREDENTIAL;
 import static in.projecteka.user.model.OtpAttempt.Action.OTP_REQUEST_REGISTRATION;
 import static in.projecteka.user.model.Requester.HIU;
 import static in.projecteka.user.model.SendOtpAction.RECOVER_CM_ID;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -77,9 +74,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static reactor.core.publisher.Flux.fromIterable;
 import static reactor.core.publisher.Mono.just;
 
-class UserServiceTests {
+class UserServiceTest {
 
     @Captor
     private ArgumentCaptor<OtpRequest> otpRequestArgumentCaptor;
@@ -115,12 +113,6 @@ class UserServiceTests {
     private ArgumentCaptor<ClientRequest> captor;
 
     @Mock
-    private ExchangeFunction exchangeFunction;
-
-    @Mock
-    private Logger logger;
-
-    @Mock
     private UserServiceClient userServiceClient;
 
     @Captor
@@ -131,7 +123,7 @@ class UserServiceTests {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
-        var otpServiceProperties = new OtpServiceProperties("", Collections.singletonList("MOBILE"), 5);
+        var otpServiceProperties = new OtpServiceProperties("", singletonList("MOBILE"), 5);
         userService = new UserService(
                 userRepository,
                 otpServiceProperties,
@@ -178,7 +170,6 @@ class UserServiceTests {
         var otp = string();
         var token = string();
         var mobileNumber = "+91-8888888888";
-
         ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
@@ -330,9 +321,9 @@ class UserServiceTests {
     void shouldCreateUserWhenYOBIsNull() {
         var signUpRequest = coreSignUpRequest()
                 .name(PatientName.builder()
-                        .first("apoorva")
-                        .middle("g")
-                        .last("a")
+                        .first(string())
+                        .middle(string())
+                        .last(string())
                         .build())
                 .dateOfBirth(null)
                 .build();
@@ -361,7 +352,6 @@ class UserServiceTests {
         var identifier = user.getIdentifier();
         var sessionId = string();
         var tokenForAdmin = session().build();
-
         when(signupService.getMobileNumber(sessionId)).thenReturn(just(mobileNumber));
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.empty());
@@ -389,7 +379,6 @@ class UserServiceTests {
         var identifier = user.getIdentifier();
         var sessionId = string();
         var tokenForAdmin = session().build();
-
         when(signupService.getMobileNumber(sessionId)).thenReturn(just(mobileNumber));
         when(userRepository.userWith(signUpRequest.getUsername())).thenReturn(Mono.empty());
         when(userRepository.save(any())).thenReturn(Mono.error(new DbOperationError()));
@@ -412,9 +401,8 @@ class UserServiceTests {
         var sessionId = string();
         var tokenForAdmin = session().build();
         var token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
-        var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
+        var userRepresentation = KeyCloakUserRepresentation.builder().id(string()).build();
         var newSession = session().build();
-
         when(signupService.getUserName(sessionId)).thenReturn(just(userName));
         when(tokenService.tokenForAdmin()).thenReturn(just(tokenForAdmin));
         when(identityServiceClient.getUser(userName, token)).thenReturn(just(userRepresentation));
@@ -469,7 +457,7 @@ class UserServiceTests {
         Session newSession = session().build();
         Session tokenForAdmin = session().build();
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
-        var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
+        var userRepresentation = KeyCloakUserRepresentation.builder().id(string()).build();
         when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(just(oldSession));
         when(tokenService.tokenForAdmin()).thenReturn(just(tokenForAdmin));
         when(identityServiceClient.getUser(userName, token)).thenReturn(just(userRepresentation));
@@ -517,7 +505,7 @@ class UserServiceTests {
         var newSession = session().build();
         var tokenForAdmin = session().build();
         var token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
-        var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
+        var userRepresentation = KeyCloakUserRepresentation.builder().id(string()).build();
         when(tokenService.tokenForUser(userName, request.getOldPassword())).thenReturn(just(oldSession));
         when(tokenService.tokenForAdmin()).thenReturn(just(tokenForAdmin));
         when(identityServiceClient.getUser(userName, token)).thenReturn(just(userRepresentation));
@@ -545,7 +533,7 @@ class UserServiceTests {
         String userName = "user@ncg";
         Session tokenForAdmin = session().build();
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
-        var userRepresentation = KeyCloakUserRepresentation.builder().id("keycloakuserid").build();
+        var userRepresentation = KeyCloakUserRepresentation.builder().id(string()).build();
         var userCreds = just(KeyCloakUserCredentialRepresentation
                 .builder()
                 .id("credid")
@@ -592,7 +580,6 @@ class UserServiceTests {
         String token = String.format("Bearer %s", tokenForAdmin.getAccessToken());
         when(tokenService.tokenForAdmin()).thenReturn(just(tokenForAdmin));
         when(identityServiceClient.getUser(userName, token)).thenReturn(Mono.empty());
-
         var loginModeResponse = userService.getLoginMode(userName);
 
         StepVerifier.create(loginModeResponse)
@@ -605,19 +592,27 @@ class UserServiceTests {
 
     @Test
     void shouldReturnCMIdForSingleMatchingRecordForInitiateRecoverCMId() {
-        PatientName name = PatientName.builder().first("abc").middle(null).last(null).build();
+        PatientName name = PatientName.builder().first(string()).middle(null).last(null).build();
         Gender gender = Gender.F;
         DateOfBirth dateOfBirth = DateOfBirth.builder().year(1999).build();
         String verifiedIdentifierValue = "+91-8888888888";
-        String unverifiedIdentifierValue = "P1234ABCD";
-        var verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(MOBILE, verifiedIdentifierValue)));
-        var unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(ABPMJAYID, unverifiedIdentifierValue)));
+        String unverifiedIdentifierValue = string();
+        var verifiedIdentifiers = new ArrayList<>(singletonList(new Identifier(MOBILE, verifiedIdentifierValue)));
+        var unverifiedIdentifiers = new ArrayList<>(singletonList(new Identifier(ABPMJAYID, unverifiedIdentifierValue)));
         String cmId = "abc@ncg";
         var request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
-        var unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type", "ABPMJAYID").put("value", unverifiedIdentifierValue));
-        var recoverCmIdRows = new ArrayList<>(Collections.singletonList(User.builder().identifier(cmId).phone(verifiedIdentifierValue).name(name).dateOfBirth(dateOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build()));
-
-        when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(Flux.fromIterable(recoverCmIdRows));
+        var unverifiedIdentifiersResponse = new JsonArray()
+                .add(new JsonObject()
+                        .put("type", "ABPMJAYID")
+                        .put("value", unverifiedIdentifierValue));
+        var recoverCmIdRows = new ArrayList<>(singletonList(User.builder()
+                .identifier(cmId)
+                .phone(verifiedIdentifierValue)
+                .name(name)
+                .dateOfBirth(dateOfBirth)
+                .unverifiedIdentifiers(unverifiedIdentifiersResponse)
+                .build()));
+        when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(fromIterable(recoverCmIdRows));
 
         StepVerifier.create(userService.getPatientByDetails(request))
                 .assertNext(response -> {
@@ -632,20 +627,31 @@ class UserServiceTests {
 
     @Test
     void shouldReturnEmptyMonoForMultipleMatchingRecordsForInitiateRecoverCMId() {
-        PatientName name = PatientName.builder().first("abc").middle("").last(null).build();
+        PatientName name = PatientName.builder().first(string()).middle(string()).last(null).build();
         Gender gender = Gender.F;
         DateOfBirth dateOfBirth = DateOfBirth.builder().year(1999).build();
         String verifiedIdentifierValue = "+91-8888888888";
-        String unverifiedIdentifierValue = "P1234ABCD";
-        var verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(MOBILE, verifiedIdentifierValue)));
-        var unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(ABPMJAYID, unverifiedIdentifierValue)));
+        String unverifiedIdentifier = string();
+        var verifiedIdentifiers = new ArrayList<>(singletonList(new Identifier(MOBILE, verifiedIdentifierValue)));
+        var unverifiedIdentifiers = new ArrayList<>(singletonList(new Identifier(ABPMJAYID, unverifiedIdentifier)));
         String cmId = "abc@ncg";
-        var request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
-        JsonArray unverifiedIdentifiersResponse = new JsonArray().add(new JsonObject().put("type", "ABPMJAYID").put("value", unverifiedIdentifierValue));
-        User recoverCmIdRow = User.builder().identifier(cmId).name(name).dateOfBirth(dateOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        var request = new InitiateCmIdRecoveryRequest(name,
+                gender,
+                dateOfBirth,
+                verifiedIdentifiers,
+                unverifiedIdentifiers);
+        var unverifiedIdentifiersResponse = new JsonArray()
+                .add(new JsonObject()
+                        .put("type", string())
+                        .put("value", unverifiedIdentifier));
+        var recoverCmIdRow = User.builder()
+                .identifier(cmId)
+                .name(name)
+                .dateOfBirth(dateOfBirth)
+                .unverifiedIdentifiers(unverifiedIdentifiersResponse)
+                .build();
         var recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow, recoverCmIdRow));
-
-        when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(Flux.fromIterable(recoverCmIdRows));
+        when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(fromIterable(recoverCmIdRows));
 
         StepVerifier.create(userService.getPatientByDetails(request))
                 .verifyComplete();
@@ -654,23 +660,26 @@ class UserServiceTests {
 
     @Test
     void shouldThrowAnErrorWhenNoMatchingRecordFoundAndPMJAYIdIsNullInRecordsForInitiateRecoverCMId() {
-        PatientName name = PatientName.builder().first("abc").middle("").last(null).build();
+        PatientName name = PatientName.builder().first(string()).middle(string()).last(null).build();
         Gender gender = Gender.F;
         DateOfBirth dateOfBirth = DateOfBirth.builder().year(1999).build();
         String verifiedIdentifierValue = "+91-8888888888";
-        String unverifiedIdentifierValue = "P1234ABCD";
-        ArrayList<Identifier> verifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(MOBILE, verifiedIdentifierValue)));
-        ArrayList<Identifier> unverifiedIdentifiers = new ArrayList<>(Collections.singletonList(new Identifier(ABPMJAYID, unverifiedIdentifierValue)));
+        String unverifiedIdentifier = string();
+        var verifiedIdentifiers = new ArrayList<>(singletonList(new Identifier(MOBILE, verifiedIdentifierValue)));
+        var unverifiedIdentifiers = new ArrayList<>(singletonList(new Identifier(ABPMJAYID, unverifiedIdentifier)));
         String cmId = "abc@ncg";
-        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth, verifiedIdentifiers, unverifiedIdentifiers);
-        JsonArray unverifiedIdentifiersResponse = null;
-        User recoverCmIdRow = User.builder().identifier(cmId).name(name).dateOfBirth(dateOfBirth).unverifiedIdentifiers(unverifiedIdentifiersResponse).build();
+        InitiateCmIdRecoveryRequest request = new InitiateCmIdRecoveryRequest(name, gender, dateOfBirth,
+                verifiedIdentifiers,
+                unverifiedIdentifiers);
+        User recoverCmIdRow = User.builder()
+                .identifier(cmId)
+                .name(name)
+                .dateOfBirth(dateOfBirth)
+                .build();
         ArrayList<User> recoverCmIdRows = new ArrayList<>(List.of(recoverCmIdRow));
+        when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(fromIterable(recoverCmIdRows));
 
-        when(userRepository.getUserBy(gender, verifiedIdentifierValue)).thenReturn(Flux.fromIterable(recoverCmIdRows));
-
-        StepVerifier.create(userService.getPatientByDetails(request))
-                .verifyComplete();
+        StepVerifier.create(userService.getPatientByDetails(request)).verifyComplete();
         verify(userRepository, times(1)).getUserBy(gender, verifiedIdentifierValue);
     }
 
@@ -692,6 +701,7 @@ class UserServiceTests {
         when(otpAttemptService.validateOTPSubmission(argument.capture())).thenReturn(Mono.empty());
         when(otpAttemptService.removeMatchingAttempts(argument.capture())).thenReturn(Mono.empty());
         when(otpServiceClient.send(consentManagerArgumentCaptor.capture())).thenReturn(Mono.empty());
+
         StepVerifier.create(userService.verifyOtpForRecoverCmId(otpVerification))
                 .assertNext(response -> assertThat(response.getCmId()).isEqualTo(user.getIdentifier()))
                 .verifyComplete();
@@ -725,7 +735,6 @@ class UserServiceTests {
                 eq("X-HIU-ID"),
                 eq(requester.getId())))
                 .thenReturn(Mono.empty());
-
         var patientProducer = userService.user(userName, requester, requestId);
 
         StepVerifier.create(patientProducer)
@@ -748,7 +757,6 @@ class UserServiceTests {
                 eq("X-HIU-ID"),
                 eq(requester.getId())))
                 .thenReturn(Mono.empty());
-
         var patientProducer = userService.user(userName, requester, requestId);
 
         StepVerifier.create(patientProducer)

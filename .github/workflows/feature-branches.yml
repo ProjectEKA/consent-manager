@@ -6,8 +6,6 @@ on:
       - master
     paths:
       - 'consent/**'
-    paths-ignore:
-      - 'docs/**'
 
 jobs:
   build:

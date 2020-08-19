@@ -6,8 +6,6 @@ on:
       - master
     paths:
       - 'user/**'
-    paths-ignore:
-      - 'docs/**'
 
 jobs:
   build:

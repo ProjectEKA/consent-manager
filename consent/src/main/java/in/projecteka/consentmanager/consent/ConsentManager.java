@@ -679,6 +679,7 @@ public class ConsentManager {
     }
 
     private Mono<ConsentStatusResponse> buildConsentStatusErrorResponse(ConsentRequestStatus request, ClientError exception) {
+        logger.error(exception.getError().getError().getMessage(), exception);
         var consentStatusResponse = ConsentStatusResponse.builder()
                 .requestId(UUID.randomUUID())
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC))

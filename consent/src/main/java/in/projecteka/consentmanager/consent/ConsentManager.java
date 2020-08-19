@@ -710,6 +710,7 @@ public class ConsentManager {
     }
 
     private Mono<ConsentStatusCallerDetail> getStatus(String consentRequestId) {
-        return consentRequestRepository.getConsentRequestStatusAndCallerDetails(consentRequestId);
+        return consentRequestRepository.getConsentRequestStatusAndCallerDetails(consentRequestId)
+                .switchIfEmpty(Mono.error(ClientError.consentRequestNotFound()));
     }
 }

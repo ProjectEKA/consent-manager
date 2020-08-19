@@ -20,7 +20,10 @@ public class OtpAttemptService {
     private final OtpAttemptRepository otpAttemptRepository;
     private final UserServiceProperties userServiceProperties;
 
-    public Mono<Void> validateOTPRequest(String identifierType, String identifierValue, OtpAttempt.Action action, String cmId) {
+    public Mono<Void> validateOTPRequest(String identifierType,
+                                         String identifierValue,
+                                         OtpAttempt.Action action,
+                                         String cmId) {
         OtpAttempt.OtpAttemptBuilder builder = OtpAttempt.builder()
                 .identifierType(identifierType)
                 .identifierValue(identifierValue)

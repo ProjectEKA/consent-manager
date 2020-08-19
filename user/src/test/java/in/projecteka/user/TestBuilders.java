@@ -4,6 +4,7 @@ import in.projecteka.library.clients.model.Session;
 import in.projecteka.user.model.CoreSignUpRequest;
 import in.projecteka.user.model.DateOfBirth;
 import in.projecteka.user.model.LockedUser;
+import in.projecteka.user.model.OtpAttempt;
 import in.projecteka.user.model.PatientName;
 import in.projecteka.user.model.PatientRequest;
 import in.projecteka.user.model.PatientResponse;
@@ -81,5 +82,11 @@ public class TestBuilders {
 
     public static Session.SessionBuilder session() {
         return easyRandom.nextObject(Session.SessionBuilder.class);
+    }
+
+    public static OtpAttempt.OtpAttemptBuilder otpAttempt() {
+        return easyRandom.nextObject(OtpAttempt.OtpAttemptBuilder.class)
+                .identifierType("mobile")
+                .identifierValue("+91-6666666666");
     }
 }

@@ -58,15 +58,12 @@ dependencies {
 }
 
 jacocoTestReport {
-//    additionalSourceDirs.from = files(sourceSets.main.allJava.srcDirs)
-    getAdditionalSourceDirs().setFrom(files(sourceSets.main.allSource.srcDirs))
-    getSourceDirectories().setFrom(files(sourceSets.main.allSource.srcDirs))
-    getClassDirectories().setFrom(files(sourceSets.main.output))
+    additionalSourceDirs.from = files(sourceSets.main.allJava.srcDirs)
     reports {
         html.enabled true
         xml.enabled true
         csv.enabled false
-//        html.destination file("build/reports/jacoco/html")
+        html.destination file("build/reports/jacoco/html")
     }
-//    executionData.from = files('build/jacoco/test.exec')
+    executionData.from = files('build/jacoco/test.exec')
 }

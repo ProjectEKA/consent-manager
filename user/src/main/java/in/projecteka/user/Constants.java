@@ -6,7 +6,7 @@ class Constants {
     public static final String PATH_FIND_PATIENT = "v0.5" + "/patients/find";
     public static final String APP_PATH_CREATE_PIN = "/pin";
     public static final String APP_PATH_GET_PROFILE = "/me";
-    public static final String APP_PATH_GET_PROFILE_LOGINMODE = "/profile/loginmode";
+    public static final String APP_PATH_GET_PROFILE_LOGIN_MODE = "/profile/loginmode";
     public static final String APP_PATH_VERIFY_PIN = "/verify-pin";
     public static final String APP_PATH_GENERATE_OTP = "/generateotp";
     public static final String APP_PATH_VERIFY_OTP = "/verifyotp";
@@ -26,4 +26,8 @@ class Constants {
     public static final String APP_PATH_CREATE_USER = "/profile";
     public static final String APP_PATH_INTERNAL_FIND_USER_BY_USERNAME = "/internal/users/{userName}";
     public static final String APP_PATH_RESET_PASSWORD = "/profile/reset-password";
+
+    private Constants() {
+
+    }
 }

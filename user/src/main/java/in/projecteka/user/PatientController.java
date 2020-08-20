@@ -116,7 +116,7 @@ public class PatientController {
                 .flatMap(profileService::profileFor);
     }
 
-    @GetMapping(Constants.APP_PATH_GET_PROFILE_LOGINMODE)
+    @GetMapping(Constants.APP_PATH_GET_PROFILE_LOGIN_MODE)
     public Mono<LoginModeResponse> fetchLoginMode(@RequestParam String userName) {
         return userService.getLoginMode(userName);
     }

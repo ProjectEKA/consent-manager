@@ -499,6 +499,7 @@ class ConsentManagerTest {
         var hiuId = string();
         var consentArtefactReference = consentArtefactReference().id(string()).build();
         var consentCallerDetails = ConsentStatusCallerDetail.builder().status(GRANTED).hiuId(hiuId).build();
+
         when(repository.getConsentRequestStatusAndCallerDetails(consentRequestStatus.getConsentRequestId()))
                 .thenReturn(Mono.just(consentCallerDetails));
         when(consentArtefactRepository.consentArtefacts(consentRequestStatus.getConsentRequestId()))
@@ -509,6 +510,45 @@ class ConsentManagerTest {
         var consentStatusProducer = consentManager.getStatus(consentRequestStatus);
         StepVerifier.create(consentStatusProducer)
                 .verifyComplete();
-        assertThat(consentArtefactReference.getId()).isNotNull();
+
+        assertThat(consentStatusResponseArgumentCaptor.getValue().getConsentRequest().getConsentArtefacts()).isNotNull();
+        assertThat(consentStatusResponseArgumentCaptor.getValue().getError()).isNull();
+    }
+
+    @Test
+    void shouldRespondToGatewayIfConsentStatusIsOtherThanGranted() {
+        var consentRequestStatus = consentRequestStatus().build();
+        var hiuId = string();
+        var consentCallerDetails = ConsentStatusCallerDetail.builder().status(DENIED).hiuId(hiuId).build();
+
+        when(repository.getConsentRequestStatusAndCallerDetails(consentRequestStatus.getConsentRequestId()))
+                .thenReturn(Mono.just(consentCallerDetails));
+        when(consentManagerClient.sendConsentStatusResponseToGateway(consentStatusResponseArgumentCaptor.capture(), eq(hiuId)))
+                .thenReturn(Mono.empty());
+
+        var consentStatusProducer = consentManager.getStatus(consentRequestStatus);
+        StepVerifier.create(consentStatusProducer)
+                .verifyComplete();
+
+        assertThat(consentStatusResponseArgumentCaptor.getValue().getConsentRequest().getConsentArtefacts()).isNull();
+        assertThat(consentStatusResponseArgumentCaptor.getValue().getError()).isNull();
+    }
+
+    @Test
+    void shouldRespondToGatewayInCaseOfInvalidConsentRequestId() {
+        var consentRequestStatus = consentRequestStatus().build();
+        var hiuId = "";
+
+        when(repository.getConsentRequestStatusAndCallerDetails(consentRequestStatus.getConsentRequestId()))
+                .thenReturn(Mono.empty());
+        when(consentManagerClient.sendConsentStatusResponseToGateway(consentStatusResponseArgumentCaptor.capture(), eq(hiuId)))
+                .thenReturn(Mono.empty());
+
+        var consentStatusProducer = consentManager.getStatus(consentRequestStatus);
+        StepVerifier.create(consentStatusProducer)
+                .verifyComplete();
+
+        assertThat(consentStatusResponseArgumentCaptor.getValue().getConsentRequest()).isNull();
+        assertThat(consentStatusResponseArgumentCaptor.getValue().getError()).isNotNull();
     }
 }

@@ -56,16 +56,12 @@ public class SecurityConfiguration {
     private static final List<Map.Entry<String, HttpMethod>> TEMP_TOKEN_URLS = new ArrayList<>();
     private static final List<RequestMatcher> PIN_VERIFICATION_MATCHERS = new ArrayList<>();
     private static final String[] GATEWAY_APIS = new String[]{
-            PATH_FIND_PATIENT,
-//            PATH_HIP_LINK_USER_AUTH_INIT,
-//            USERS_AUTH_CONFIRM
+            PATH_FIND_PATIENT
     };
 
     static {
 
         SERVICE_ONLY_URLS.add(Map.entry(PATH_FIND_PATIENT, HttpMethod.POST));
-//        SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_ADD_CONTEXTS, HttpMethod.POST));
-//        SERVICE_ONLY_URLS.add(Map.entry(USERS_AUTH_CONFIRM, HttpMethod.POST));
         RequestMatcher changePinMatcher = new RequestMatcher("/patients/change-pin",
                 HttpMethod.POST,
                 SCOPE_CHANGE_PIN);

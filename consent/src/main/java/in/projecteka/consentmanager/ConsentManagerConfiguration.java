@@ -241,7 +241,7 @@ public class ConsentManagerConfiguration {
         return keyPair.getPrivate();
     }
 
-    @Bean("centralRegistryJWKSet")
+    @Bean("gatewayJWKSet")
     public JWKSet jwkSet(GatewayServiceProperties gatewayServiceProperties)
             throws IOException, ParseException {
         return JWKSet.load(new URL(gatewayServiceProperties.getJwkUrl()));
@@ -254,7 +254,7 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public GatewayTokenVerifier centralRegistryTokenVerifier(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
+    public GatewayTokenVerifier gatewayTokenVerifier(@Qualifier("gatewayJWKSet") JWKSet jwkSet) {
         return new GatewayTokenVerifier(jwkSet);
     }
 

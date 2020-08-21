@@ -61,6 +61,7 @@ import reactor.netty.resources.ConnectionProvider;
 import java.io.IOException;
 import java.net.URL;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
@@ -426,5 +427,11 @@ public class UserConfiguration {
                 RedisSerializationContext.newSerializationContext(new StringRedisSerializer());
         RedisSerializationContext<String, LocalDateTime> context = builder.value(serializer).build();
         return new ReactiveRedisTemplate<>(factory, context);
+    }
+
+    @Bean
+    public PinVerificationTokenService pinVerificationTokenService(@Qualifier("keySigningPublicKey") PublicKey key,
+                                                                   CacheAdapter<String, String> usedTokens) {
+        return new PinVerificationTokenService(key, usedTokens);
     }
 }

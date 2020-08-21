@@ -128,12 +128,12 @@ public class SecurityConfiguration {
     public SecurityContextRepository contextRepository(
             SignUpService signupService,
             Authenticator authenticator,
-//            PinVerificationTokenService pinVerificationTokenService,
+            PinVerificationTokenService pinVerificationTokenService,
             GatewayTokenVerifier gatewayTokenVerifier,
             @Value("${user.authorization.header}") String authorizationHeader) {
         return new SecurityContextRepository(signupService,
                 authenticator,
-//                pinVerificationTokenService,
+                pinVerificationTokenService,
                 gatewayTokenVerifier,
                 authorizationHeader);
     }
@@ -151,7 +151,7 @@ public class SecurityConfiguration {
     private static class SecurityContextRepository implements ServerSecurityContextRepository {
         private final SignUpService signupService;
         private final Authenticator identityServiceClient;
-//        private final PinVerificationTokenService pinVerificationTokenService;
+        private final PinVerificationTokenService pinVerificationTokenService;
         private final GatewayTokenVerifier gatewayTokenVerifier;
         private final String authorizationHeader;
 
@@ -206,13 +206,12 @@ public class SecurityConfiguration {
         private Mono<org.springframework.security.core.context.SecurityContext> validatePinVerificationRequest(
                 String token,
                 String validScope) {
-//            return pinVerificationTokenService.validateToken(token, validScope)
-//                    .map(caller -> new UsernamePasswordAuthenticationToken(
-//                            caller,
-//                            token,
-//                            new ArrayList<>()))
-//                    .map(SecurityContextImpl::new);
-            return Mono.empty();
+            return pinVerificationTokenService.validateToken(token, validScope)
+                    .map(caller -> new UsernamePasswordAuthenticationToken(
+                            caller,
+                            token,
+                            new ArrayList<>()))
+                    .map(SecurityContextImpl::new);
         }
 
         private boolean isAllowedList(String url) {

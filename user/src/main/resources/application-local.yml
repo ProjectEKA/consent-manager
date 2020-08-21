@@ -1,0 +1,60 @@
+server:
+  port: 7000
+user:
+  name: PHR-App
+  transactionPinDigitSize: 4
+  transactionPinTokenValidity: 2
+  userCreationTokenValidity: 5
+  userIdSuffix: "@ncg"
+  maxOtpAttempts: 2
+  maxOtpAttemptsPeriodInMin: 1
+  otpAttemptsBlockPeriodInMin: 1
+  maxIncorrectPinAttempts: 5
+  otpInvalidAttemptsBlockPeriodInMin: 1
+  otpMaxInvalidAttempts: 3
+  gateway-service:
+    baseUrl: http://localhost:8000/v0.5
+    requestTimeout: 5000
+    clientSecret: ${GATEWAY_CLIENT_SECRET}
+    clientId: ncg
+    jwkUrl: http://localhost:8000/v0.5/certs
+  locked-user-service:
+    maximumInvalidAttempts: 5
+    coolOfPeriod: 8
+  otp-service:
+    url: http://localhost:5000
+    identifiers:
+      - MOBILE
+    expiryInMinutes: 5
+  jwt:
+    secret: secret_salt
+  authorization:
+    header: Authorization
+  keycloak:
+    baseUrl: http://localhost:9001/auth
+    clientId: consent-manager
+    clientSecret: ${KEYCLOAK_CLIENTSECRET}
+    userName: consent-service-admin-user
+    password: welcome
+    jwkUrl: http://localhost:9001/auth/realms/consent-manager/protocol/openid-connect/certs
+    issuer: http://localhost:9001/auth/realms/consent-manager
+  db:
+    host: localhost
+    port: 5432
+    schema: consent_manager
+    user: postgres
+    password: password
+    poolSize: 5
+  cache-method: guava
+  listeners:
+    maximumRetries: 10
+    # In milliseconds
+    retryInterval: 1000
+keystore:
+  file-path: "consent-manager-local-keystore.p12"
+  password: password
+  store-type: PKCS12
+  alias: test-pin-verification
+spring:
+  main:
+    lazy-initialization: true

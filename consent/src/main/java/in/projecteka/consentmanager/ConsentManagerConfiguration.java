@@ -10,6 +10,7 @@ import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.properties.CacheMethodProperty;
 import in.projecteka.consentmanager.properties.ClientRegistryProperties;
+import in.projecteka.consentmanager.properties.DbOptions;
 import in.projecteka.consentmanager.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.properties.IdentityServiceProperties;
 import in.projecteka.consentmanager.properties.KeyPairConfig;

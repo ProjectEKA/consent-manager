@@ -36,9 +36,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static in.projecteka.consentmanager.Constants.PATH_HEARTBEAT;
-import static in.projecteka.consentmanager.Constants.SCOPE_CHANGE_PIN;
-import static in.projecteka.consentmanager.Constants.SCOPE_CONSENT_APPROVE;
-import static in.projecteka.consentmanager.Constants.SCOPE_CONSENT_REVOKE;
 import static in.projecteka.consentmanager.consent.Constants.GET_CONSENT_CERT;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
@@ -58,6 +55,9 @@ import static in.projecteka.consentmanager.user.Constants.BASE_PATH_PATIENTS_API
 import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
 import static in.projecteka.consentmanager.user.Constants.USERS_AUTH_CONFIRM;
 import static in.projecteka.library.clients.model.ClientError.unAuthorized;
+import static in.projecteka.library.common.Constants.SCOPE_CHANGE_PIN;
+import static in.projecteka.library.common.Constants.SCOPE_CONSENT_APPROVE;
+import static in.projecteka.library.common.Constants.SCOPE_CONSENT_REVOKE;
 import static in.projecteka.library.common.Role.GATEWAY;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;

@@ -9,6 +9,7 @@ import in.projecteka.library.clients.IdentityServiceClient;
 import in.projecteka.library.clients.OtpServiceClient;
 import in.projecteka.library.clients.ServiceAuthenticationClient;
 import in.projecteka.library.common.GatewayTokenVerifier;
+import in.projecteka.library.common.GlobalExceptionHandler;
 import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceAuthentication;
 import in.projecteka.library.common.ServiceCredential;
@@ -35,8 +36,12 @@ import io.vertx.sqlclient.PoolOptions;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.web.ResourceProperties;
+import org.springframework.boot.web.reactive.error.ErrorAttributes;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.ReactiveRedisClusterConnection;
 import org.springframework.data.redis.connection.ReactiveRedisConnection;
@@ -51,6 +56,7 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -452,5 +458,19 @@ public class UserConfiguration {
     public JWKSet gatewayJWKSet(GatewayServiceProperties gatewayServiceProperties)
             throws IOException, ParseException {
         return JWKSet.load(new URL(gatewayServiceProperties.getJwkUrl()));
+    }
+
+    @Bean
+    // This exception handler needs to be given highest priority compared to DefaultErrorWebExceptionHandler, hence order = -2.
+    @Order(-2)
+    public GlobalExceptionHandler clientErrorExceptionHandler(ErrorAttributes errorAttributes,
+                                                              ResourceProperties resourceProperties,
+                                                              ApplicationContext applicationContext,
+                                                              ServerCodecConfigurer serverCodecConfigurer) {
+
+        GlobalExceptionHandler clientErrorExceptionHandler = new GlobalExceptionHandler(errorAttributes,
+                resourceProperties, applicationContext);
+        clientErrorExceptionHandler.setMessageWriters(serverCodecConfigurer.getWriters());
+        return clientErrorExceptionHandler;
     }
 }

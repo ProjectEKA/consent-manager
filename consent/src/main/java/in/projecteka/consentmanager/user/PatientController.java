@@ -28,6 +28,7 @@ import in.projecteka.library.clients.model.Session;
 import in.projecteka.library.common.Caller;
 import in.projecteka.library.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -58,6 +59,7 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 @RestController
 @RequestMapping(Constants.BASE_PATH_PATIENTS_APIS)
 @AllArgsConstructor
+@ConditionalOnExpression("${consentmanager.usersrvice.enabled:true}")
 public class PatientController {
     private final ProfileService profileService;
     private final TransactionPinService transactionPinService;
@@ -137,12 +139,12 @@ public class PatientController {
                              @RequestHeader(name = "Authorization") String token) {
         var signUpRequests = SignUpRequestValidator.validate(request, userService.getUserIdSuffix());
         return signUpRequests.isValid()
-               ? Mono.justOrEmpty(signupService.sessionFrom(token))
-                       .flatMap(sessionId -> userService.create(signUpRequests.get(), sessionId)
-                               .then(signupService.removeOf(sessionId)))
-               : Mono.error(new ClientError(BAD_REQUEST,
-                       new ErrorRepresentation(new Error(INVALID_REQUESTER,
-                               signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));
+                ? Mono.justOrEmpty(signupService.sessionFrom(token))
+                .flatMap(sessionId -> userService.create(signUpRequests.get(), sessionId)
+                        .then(signupService.removeOf(sessionId)))
+                : Mono.error(new ClientError(BAD_REQUEST,
+                new ErrorRepresentation(new Error(INVALID_REQUESTER,
+                        signUpRequests.getError().reduce((left, right) -> format("%s, %s", left, right))))));
     }
 
     @PostMapping(Constants.APP_PATH_GENERATE_OTP)
@@ -210,8 +212,8 @@ public class PatientController {
                     .filter(identifier -> identifier.getType() == IdentifierType.MOBILE)
                     .collect(Collectors.toList());
             var verifiedIdentifier = mobileIdentifiers.isEmpty()
-                                     ? profile.getVerifiedIdentifiers().get(0)
-                                     : mobileIdentifiers.get(0);
+                    ? profile.getVerifiedIdentifiers().get(0)
+                    : mobileIdentifiers.get(0);
 
             return Mono.just(UserSignUpEnquiry.builder()
                     .identifier(verifiedIdentifier.getValue())
@@ -227,23 +229,23 @@ public class PatientController {
                                 @RequestHeader(name = "Authorization") String token) {
         var updateUserRequests = SignUpRequestValidator.validatePassword(request.getPassword());
         return updateUserRequests.isValid()
-               ? Mono.justOrEmpty(signupService.sessionFrom(token))
-                       .flatMap(sessionId -> userService.update(request, sessionId)
-                               .zipWith(Mono.just(sessionId))
-                               .flatMap(tuple -> signupService.removeOf(tuple.getT2()).thenReturn(tuple.getT1())))
-               : Mono.error(invalidRequester(updateUserRequests.getError()));
+                ? Mono.justOrEmpty(signupService.sessionFrom(token))
+                .flatMap(sessionId -> userService.update(request, sessionId)
+                        .zipWith(Mono.just(sessionId))
+                        .flatMap(tuple -> signupService.removeOf(tuple.getT2()).thenReturn(tuple.getT1())))
+                : Mono.error(invalidRequester(updateUserRequests.getError()));
     }
 
     @PutMapping(Constants.APP_PATH_UPDATE_PROFILE_PASSWORD)
     public Mono<Session> updatePassword(@RequestBody UpdatePasswordRequest request) {
         var updatePasswordRequest = SignUpRequestValidator.validatePassword(request.getNewPassword());
         return updatePasswordRequest.isValid()
-               ? ReactiveSecurityContextHolder.getContext()
-                       .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
-                       .map(Caller::getUsername)
-                       .flatMap(lockedUserService::validateLogin)
-                       .flatMap(userName -> Mono.defer(() -> userService.updatePassword(request, userName)))
-               : Mono.error(invalidRequester(updatePasswordRequest.getError()));
+                ? ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> (Caller) securityContext.getAuthentication().getPrincipal())
+                .map(Caller::getUsername)
+                .flatMap(lockedUserService::validateLogin)
+                .flatMap(userName -> Mono.defer(() -> userService.updatePassword(request, userName)))
+                : Mono.error(invalidRequester(updatePasswordRequest.getError()));
     }
 
     @PostMapping(Constants.APP_PATH_CHANGE_PIN)
@@ -288,10 +290,10 @@ public class PatientController {
         Predicate<InitiateCmIdRecoveryRequest> isInvalidUnverifiedIdentifierMapped = req ->
                 isInvalidIdentifierMapped(req.getUnverifiedIdentifiers(), IdentifierGroup.UNVERIFIED_IDENTIFIER);
         return areMandatoryFieldsNull
-                       .or(isInvalidVerifiedIdentifierMapped)
-                       .or(isInvalidUnverifiedIdentifierMapped).test(request)
-               ? Mono.empty()
-               : Mono.just(request);
+                .or(isInvalidVerifiedIdentifierMapped)
+                .or(isInvalidUnverifiedIdentifierMapped).test(request)
+                ? Mono.empty()
+                : Mono.just(request);
     }
 
     @PostMapping(Constants.APP_PATH_PROFILE_RECOVERY_CONFIRM)

@@ -7,7 +7,6 @@ import com.google.common.cache.LoadingCache;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig.DestinationInfo;
 import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.properties.CacheMethodProperty;
 import in.projecteka.consentmanager.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.properties.DbOptions;
@@ -28,6 +27,7 @@ import in.projecteka.library.clients.ServiceAuthenticationClient;
 import in.projecteka.library.common.CacheHealth;
 import in.projecteka.library.common.CentralRegistry;
 import in.projecteka.library.common.GatewayTokenVerifier;
+import in.projecteka.library.common.GlobalExceptionHandler;
 import in.projecteka.library.common.IdentityService;
 import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceAuthentication;
@@ -185,12 +185,12 @@ public class ConsentManagerConfiguration {
     @Bean
     // This exception handler needs to be given highest priority compared to DefaultErrorWebExceptionHandler, hence order = -2.
     @Order(-2)
-    public ClientErrorExceptionHandler clientErrorExceptionHandler(ErrorAttributes errorAttributes,
-                                                                   ResourceProperties resourceProperties,
-                                                                   ApplicationContext applicationContext,
-                                                                   ServerCodecConfigurer serverCodecConfigurer) {
+    public GlobalExceptionHandler clientErrorExceptionHandler(ErrorAttributes errorAttributes,
+                                                              ResourceProperties resourceProperties,
+                                                              ApplicationContext applicationContext,
+                                                              ServerCodecConfigurer serverCodecConfigurer) {
 
-        ClientErrorExceptionHandler clientErrorExceptionHandler = new ClientErrorExceptionHandler(errorAttributes,
+        GlobalExceptionHandler clientErrorExceptionHandler = new GlobalExceptionHandler(errorAttributes,
                 resourceProperties, applicationContext);
         clientErrorExceptionHandler.setMessageWriters(serverCodecConfigurer.getWriters());
         return clientErrorExceptionHandler;

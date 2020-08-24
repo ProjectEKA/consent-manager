@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.RequestValidator;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +26,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 
 @RestController
 @AllArgsConstructor
+@ConditionalOnExpression("${consentmanager.usersrvice.enabled:true}")
 public class UserController {
     private final UserService userService;
     private final RequestValidator validator;
@@ -43,8 +45,8 @@ public class UserController {
                         validator.validate(patientRequest.getRequestId().toString(), patientRequest.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(validatedRequest -> userService.user(patientRequest.getQuery().getPatient().getId(),
-                                             patientRequest.getQuery().getRequester(),
-                                             patientRequest.getRequestId())
+                        patientRequest.getQuery().getRequester(),
+                        patientRequest.getRequestId())
                         .then(validator.put(patientRequest.getRequestId().toString(), patientRequest.getTimestamp())));
     }
 

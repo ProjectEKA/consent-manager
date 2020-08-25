@@ -163,12 +163,12 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public LockedUsersRepository lockedUsersRepository(DbOptions dbOptions) {
-        return new LockedUsersRepository(pgPool(dbOptions));
+    public LockedUsersRepository lockedUsersRepository(@Qualifier("readWriteClient") PgPool pgPool) {
+        return new LockedUsersRepository(pgPool);
     }
 
-    @Bean
-    public PgPool pgPool(DbOptions dbOptions) {
+    @Bean("readWriteClient")
+    public PgPool readWriteClient(DbOptions dbOptions) {
         PgConnectOptions connectOptions = new PgConnectOptions()
                 .setPort(dbOptions.getPort())
                 .setHost(dbOptions.getHost())
@@ -176,8 +176,21 @@ public class ConsentManagerConfiguration {
                 .setUser(dbOptions.getUser())
                 .setPassword(dbOptions.getPassword());
 
-        PoolOptions poolOptions = new PoolOptions()
-                .setMaxSize(dbOptions.getPoolSize());
+        PoolOptions poolOptions = new PoolOptions().setMaxSize(dbOptions.getPoolSize());
+
+        return PgPool.pool(connectOptions, poolOptions);
+    }
+
+    @Bean("readOnlyClient")
+    public PgPool readOnlyClient(DbOptions dbOptions) {
+        PgConnectOptions connectOptions = new PgConnectOptions()
+                .setPort(dbOptions.getReplica().getPort())
+                .setHost(dbOptions.getReplica().getHost())
+                .setDatabase(dbOptions.getSchema())
+                .setUser(dbOptions.getReplica().getUser())
+                .setPassword(dbOptions.getReplica().getPassword());
+
+        PoolOptions poolOptions = new PoolOptions().setMaxSize(dbOptions.getReplica().getPoolSize());
 
         return PgPool.pool(connectOptions, poolOptions);
     }
@@ -343,7 +356,6 @@ public class ConsentManagerConfiguration {
         RedisSerializationContext<String, String> context = builder.value(serializer).build();
         return new ReactiveRedisTemplate<>(factory, context);
     }
-
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"cacheForReplayAttack"})

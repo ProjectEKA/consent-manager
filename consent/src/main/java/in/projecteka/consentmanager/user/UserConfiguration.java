@@ -54,7 +54,7 @@ public class UserConfiguration {
     }
 
     @Bean
-    public UserRepository userRepository(PgPool pgPool) {
+    public UserRepository userRepository(@Qualifier("readWriteClient") PgPool pgPool) {
         return new UserRepository(pgPool);
     }
 
@@ -145,7 +145,7 @@ public class UserConfiguration {
     }
 
     @Bean
-    public TransactionPinRepository transactionPinRepository(PgPool dbClient) {
+    public TransactionPinRepository transactionPinRepository(@Qualifier("readWriteClient") PgPool dbClient) {
         return new TransactionPinRepository(dbClient);
     }
 
@@ -172,5 +172,16 @@ public class UserConfiguration {
     @Bean
     public ProfileService profileService(UserService userService, TransactionPinService transactionPinService) {
         return new ProfileService(userService, transactionPinService);
+    }
+
+    @Bean
+    public OtpAttemptRepository otpAttemptRepository(@Qualifier("readWriteClient") PgPool readWriteClient) {
+        return new OtpAttemptRepository(readWriteClient);
+    }
+
+    @Bean
+    public OtpAttemptService otpAttemptService(OtpAttemptRepository otpAttemptRepository,
+                                               UserServiceProperties userServiceProperties) {
+        return new OtpAttemptService(otpAttemptRepository, userServiceProperties);
     }
 }

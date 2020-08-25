@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.user;
 import in.projecteka.consentmanager.user.model.OtpAttempt;
 import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -55,8 +54,8 @@ public class OtpAttemptService {
 
     public <T> Mono<T> handleInvalidOTPError(ClientError error, OtpAttempt attempt) {
         Mono<T> invalidOTPError = Mono.error(error);
-        if (error.getErrorCode().equals(OTP_INVALID)) {
-            return saveOTPAttempt(attempt.toBuilder().attemptStatus(FAILURE).build()).then(invalidOTPError);
+        if (error.getErrorCode().equals(ErrorCode.OTP_INVALID)) {
+            return saveOTPAttempt(attempt.toBuilder().attemptStatus(OtpAttempt.AttemptStatus.FAILURE).build()).then(invalidOTPError);
         }
         return invalidOTPError;
     }

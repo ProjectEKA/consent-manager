@@ -6,6 +6,13 @@ import com.google.common.cache.LoadingCache;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
 import in.projecteka.consentmanager.clients.UserServiceClient;
+import in.projecteka.consentmanager.clients.properties.GatewayServiceProperties;
+import in.projecteka.consentmanager.clients.properties.LinkServiceProperties;
+import in.projecteka.consentmanager.common.CentralRegistry;
+import in.projecteka.consentmanager.common.ServiceAuthentication;
+import in.projecteka.consentmanager.common.cache.CacheAdapter;
+import in.projecteka.consentmanager.common.cache.LoadingCacheAdapter;
+import in.projecteka.consentmanager.common.cache.RedisCacheAdapter;
 import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.DiscoveryRepository;
 import in.projecteka.consentmanager.link.hiplink.UserAuthInitAction;
@@ -36,12 +43,12 @@ import java.util.concurrent.TimeUnit;
 public class LinkConfiguration {
 
     @Bean
-    public DiscoveryRepository discoveryRepository(PgPool pgPool) {
+    public DiscoveryRepository discoveryRepository(@Qualifier("readWriteClient") PgPool pgPool) {
         return new DiscoveryRepository(pgPool);
     }
 
     @Bean
-    public LinkRepository linkRepository(PgPool pgPool) {
+    public LinkRepository linkRepository(@Qualifier("readWriteClient") PgPool pgPool) {
         return new LinkRepository(pgPool);
     }
 

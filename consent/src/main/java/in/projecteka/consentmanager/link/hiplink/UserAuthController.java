@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import static in.projecteka.consentmanager.link.Constants.PATH_HIP_LINK_USER_AUTH_INIT;
@@ -18,6 +19,7 @@ import static reactor.core.publisher.Mono.empty;
 import static reactor.core.publisher.Mono.just;
 
 @AllArgsConstructor
+@RestController
 public class UserAuthController {
     private final UserAuthentication userAuthentication;
     private final RequestValidator validator;

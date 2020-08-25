@@ -141,7 +141,7 @@ class LinkUserJourneyTest {
     private Authenticator authenticator;
 
     @SuppressWarnings("unused")
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     private JWKSet centralRegistryJWKSet;
 
     @SuppressWarnings("unused")

@@ -116,7 +116,7 @@ class ConsentRequestUserJourneyTest {
     private CentralRegistry centralRegistry;
 
     @SuppressWarnings("unused")
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     private JWKSet centralRegistryJWKSet;
 
     @SuppressWarnings("unused")

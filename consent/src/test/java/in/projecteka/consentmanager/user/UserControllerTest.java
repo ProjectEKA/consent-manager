@@ -80,7 +80,7 @@ class UserControllerTest {
     private WebTestClient webClient;
 
     @SuppressWarnings("unused")
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     private JWKSet centralRegistryJWKSet;
 
     @SuppressWarnings("unused")

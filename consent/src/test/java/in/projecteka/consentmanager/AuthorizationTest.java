@@ -55,7 +55,7 @@ public class AuthorizationTest {
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 
     @SuppressWarnings("unused")
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     private JWKSet centralRegistryJWKSet;
 
     @SuppressWarnings("unused")

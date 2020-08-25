@@ -64,7 +64,6 @@ import static in.projecteka.consentmanager.user.TestBuilders.requester;
 import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.consentmanager.user.TestBuilders.updatePasswordRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.user;
-import static in.projecteka.consentmanager.user.TestBuilders.userAuthConfirmRequest;
 import static in.projecteka.consentmanager.user.TestBuilders.userSignUpEnquiry;
 import static in.projecteka.consentmanager.user.model.Requester.HIU;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -683,7 +682,7 @@ class UserServiceTest {
         var user = new EasyRandom().nextObject(User.class);
         var sessionIdWithAction = SendOtpAction.RECOVER_CM_ID.toString() + sessionId;
         ArgumentCaptor<OtpAttempt> argument = ArgumentCaptor.forClass(OtpAttempt.class);
-        ArgumentCaptor<Notification> consentManagerArgumentCaptor = ArgumentCaptor.forClass(Notification.class);
+        ArgumentCaptor<Notification<?>> consentManagerArgumentCaptor = ArgumentCaptor.forClass(Notification.class);
         OtpVerification otpVerification = new OtpVerification(sessionId, otp);
         when(otpServiceClient.verify(eq(sessionId), eq(otp))).thenReturn(Mono.empty());
         when(signupService.generateToken(new HashMap<>(), sessionId))
@@ -779,13 +778,5 @@ class UserServiceTest {
         StepVerifier.create(userService.verifyOtpForForgotConsentPin(otpVerification))
                 .assertNext(response -> assertThat(response.getTemporaryToken()).isEqualTo(token))
                 .verifyComplete();
-    }
-
-    @Test
-    void shouldReturnMonoEmpty() {
-        Mono<Void> returnResult = userService.confirmAuthFor(userAuthConfirmRequest().build());
-        StepVerifier.create(returnResult)
-                .verifyComplete();
-        assertThat(returnResult).isEqualTo(Mono.empty());
     }
 }

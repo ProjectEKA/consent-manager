@@ -56,16 +56,12 @@ public class SecurityConfiguration {
     private static final List<Map.Entry<String, HttpMethod>> TEMP_TOKEN_URLS = new ArrayList<>();
     private static final List<RequestMatcher> PIN_VERIFICATION_MATCHERS = new ArrayList<>();
     private static final String[] GATEWAY_APIS = new String[]{
-            PATH_FIND_PATIENT,
-//            PATH_HIP_LINK_USER_AUTH_INIT,
-//            USERS_AUTH_CONFIRM
+            PATH_FIND_PATIENT
     };
 
     static {
 
         SERVICE_ONLY_URLS.add(Map.entry(PATH_FIND_PATIENT, HttpMethod.POST));
-//        SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_ADD_CONTEXTS, HttpMethod.POST));
-//        SERVICE_ONLY_URLS.add(Map.entry(USERS_AUTH_CONFIRM, HttpMethod.POST));
         RequestMatcher changePinMatcher = new RequestMatcher("/patients/change-pin",
                 HttpMethod.POST,
                 SCOPE_CHANGE_PIN);
@@ -128,12 +124,12 @@ public class SecurityConfiguration {
     public SecurityContextRepository contextRepository(
             SignUpService signupService,
             Authenticator authenticator,
-//            PinVerificationTokenService pinVerificationTokenService,
+            PinVerificationTokenService pinVerificationTokenService,
             GatewayTokenVerifier gatewayTokenVerifier,
             @Value("${user.authorization.header}") String authorizationHeader) {
         return new SecurityContextRepository(signupService,
                 authenticator,
-//                pinVerificationTokenService,
+                pinVerificationTokenService,
                 gatewayTokenVerifier,
                 authorizationHeader);
     }
@@ -151,7 +147,7 @@ public class SecurityConfiguration {
     private static class SecurityContextRepository implements ServerSecurityContextRepository {
         private final SignUpService signupService;
         private final Authenticator identityServiceClient;
-//        private final PinVerificationTokenService pinVerificationTokenService;
+        private final PinVerificationTokenService pinVerificationTokenService;
         private final GatewayTokenVerifier gatewayTokenVerifier;
         private final String authorizationHeader;
 
@@ -206,13 +202,12 @@ public class SecurityConfiguration {
         private Mono<org.springframework.security.core.context.SecurityContext> validatePinVerificationRequest(
                 String token,
                 String validScope) {
-//            return pinVerificationTokenService.validateToken(token, validScope)
-//                    .map(caller -> new UsernamePasswordAuthenticationToken(
-//                            caller,
-//                            token,
-//                            new ArrayList<>()))
-//                    .map(SecurityContextImpl::new);
-            return Mono.empty();
+            return pinVerificationTokenService.validateToken(token, validScope)
+                    .map(caller -> new UsernamePasswordAuthenticationToken(
+                            caller,
+                            token,
+                            new ArrayList<>()))
+                    .map(SecurityContextImpl::new);
         }
 
         private boolean isAllowedList(String url) {

@@ -3,7 +3,7 @@ package in.projecteka.user;
 
 class Constants {
     public static final String BASE_PATH_PATIENTS_APIS = "/patients";
-    public static final String PATH_FIND_PATIENT = "v0.5" + "/patients/find";
+    public static final String PATH_FIND_PATIENT = "/v0.5/patients/find";
     public static final String APP_PATH_CREATE_PIN = "/pin";
     public static final String APP_PATH_GET_PROFILE = "/me";
     public static final String APP_PATH_GET_PROFILE_LOGIN_MODE = "/profile/loginmode";

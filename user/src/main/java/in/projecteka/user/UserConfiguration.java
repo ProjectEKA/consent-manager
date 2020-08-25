@@ -9,6 +9,7 @@ import in.projecteka.library.clients.IdentityServiceClient;
 import in.projecteka.library.clients.OtpServiceClient;
 import in.projecteka.library.clients.ServiceAuthenticationClient;
 import in.projecteka.library.common.GatewayTokenVerifier;
+import in.projecteka.library.common.GlobalExceptionHandler;
 import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceAuthentication;
 import in.projecteka.library.common.ServiceCredential;
@@ -32,10 +33,15 @@ import io.lettuce.core.SocketOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.web.ResourceProperties;
+import org.springframework.boot.web.reactive.error.ErrorAttributes;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.ReactiveRedisClusterConnection;
 import org.springframework.data.redis.connection.ReactiveRedisConnection;
@@ -50,6 +56,7 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -60,7 +67,9 @@ import reactor.netty.resources.ConnectionProvider;
 
 import java.io.IOException;
 import java.net.URL;
+import java.security.KeyPair;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
@@ -330,17 +339,6 @@ public class UserConfiguration {
         return new RedisCacheAdapter(stringReactiveRedisOperations, 5, redisOptions.getRetry());
     }
 
-    @Bean("keySigningPrivateKey")
-    public PrivateKey keyPair(KeyPairConfig keyPairConfig) {
-        return keyPairConfig.createPinVerificationKeyPair().getPrivate();
-    }
-
-    @Bean("centralRegistryJWKSet")
-    public JWKSet jwkSet(GatewayServiceProperties gatewayServiceProperties)
-            throws IOException, ParseException {
-        return JWKSet.load(new URL(gatewayServiceProperties.getJwkUrl()));
-    }
-
     @Bean("identityServiceJWKSet")
     public JWKSet identityServiceJWKSet(IdentityServiceProperties identityServiceProperties)
             throws IOException, ParseException {
@@ -348,7 +346,7 @@ public class UserConfiguration {
     }
 
     @Bean
-    public GatewayTokenVerifier centralRegistryTokenVerifier(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
+    public GatewayTokenVerifier gatewayTokenVerifier(@Qualifier("gatewayJWKSet") JWKSet jwkSet) {
         return new GatewayTokenVerifier(jwkSet);
     }
 
@@ -426,5 +424,47 @@ public class UserConfiguration {
                 RedisSerializationContext.newSerializationContext(new StringRedisSerializer());
         RedisSerializationContext<String, LocalDateTime> context = builder.value(serializer).build();
         return new ReactiveRedisTemplate<>(factory, context);
+    }
+
+    @SneakyThrows
+    @Bean("pinSigning")
+    public KeyPair keyPair(KeyPairConfig keyPairConfig) {
+        return keyPairConfig.createPinVerificationKeyPair();
+    }
+
+    @Bean("keySigningPublicKey")
+    public PublicKey publicKey(@Qualifier("pinSigning") KeyPair keyPair) {
+        return keyPair.getPublic();
+    }
+
+    @Bean("keySigningPrivateKey")
+    public PrivateKey privateKey(@Qualifier("pinSigning") KeyPair keyPair) {
+        return keyPair.getPrivate();
+    }
+
+    @Bean
+    public PinVerificationTokenService pinVerificationTokenService(@Qualifier("keySigningPublicKey") PublicKey key,
+                                                                   CacheAdapter<String, String> usedTokens) {
+        return new PinVerificationTokenService(key, usedTokens);
+    }
+
+    @Bean("gatewayJWKSet")
+    public JWKSet gatewayJWKSet(GatewayServiceProperties gatewayServiceProperties)
+            throws IOException, ParseException {
+        return JWKSet.load(new URL(gatewayServiceProperties.getJwkUrl()));
+    }
+
+    @Bean
+    // This exception handler needs to be given highest priority compared to DefaultErrorWebExceptionHandler, hence order = -2.
+    @Order(-2)
+    public GlobalExceptionHandler clientErrorExceptionHandler(ErrorAttributes errorAttributes,
+                                                              ResourceProperties resourceProperties,
+                                                              ApplicationContext applicationContext,
+                                                              ServerCodecConfigurer serverCodecConfigurer) {
+
+        GlobalExceptionHandler clientErrorExceptionHandler = new GlobalExceptionHandler(errorAttributes,
+                resourceProperties, applicationContext);
+        clientErrorExceptionHandler.setMessageWriters(serverCodecConfigurer.getWriters());
+        return clientErrorExceptionHandler;
     }
 }

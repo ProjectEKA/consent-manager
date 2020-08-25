@@ -51,7 +51,7 @@ user:
     # In milliseconds
     retryInterval: 1000
 keystore:
-  file-path: "consent-manager-local-keystore.p12"
+  file-path: "user-local-keystore.p12"
   password: password
   store-type: PKCS12
   alias: test-pin-verification

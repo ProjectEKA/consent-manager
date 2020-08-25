@@ -1,19 +1,10 @@
-package in.projecteka.consentmanager;
+package in.projecteka.user;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
-import in.projecteka.consentmanager.consent.ConsentArtefactsController;
-import in.projecteka.consentmanager.consent.ConsentNotificationPublisher;
-import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
-import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
-import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.consent.PinVerificationTokenService;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.dataflow.DataFlowRequester;
-import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
 import in.projecteka.library.common.GatewayTokenVerifier;
 import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceCaller;
+import in.projecteka.user.properties.UserServiceProperties;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,15 +16,12 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
-import java.util.UUID;
 
-import static in.projecteka.consentmanager.common.TestBuilders.string;
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
-import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
-import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
 import static in.projecteka.library.common.Role.GATEWAY;
+import static in.projecteka.user.Constants.PATH_FIND_PATIENT;
+import static in.projecteka.user.TestBuilders.patientRequest;
+import static in.projecteka.user.TestBuilders.string;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -55,37 +43,13 @@ class SecurityConfigurationTest {
     GatewayTokenVerifier gatewayTokenVerifier;
 
     @MockBean
-    private DestinationsConfig destinationsConfig;
-
-    @MockBean
-    private ConsentArtefactsController consentArtefactsController;
-
-    @MockBean
-    private ConsentNotificationPublisher postConsentApproval;
-
-    @MockBean
-    private HipConsentNotificationListener hipConsentNotificationListener;
-
-    @MockBean
-    private HiuConsentNotificationListener hiuConsentNotificationListener;
-
-    @MockBean
-    private ConsentArtefactNotifier consentArtefactNotifier;
-
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
-
-    @MockBean
-    private ConsentRequestNotificationListener consentRequestNotificationListener;
-
-    @MockBean
     private PinVerificationTokenService pinVerificationTokenService;
 
     @MockBean
     private RequestValidator validator;
 
     @MockBean
-    private DataFlowRequester dataFlowRequester;
+    private UserServiceProperties userServiceProperties;
 
     @Autowired
     WebTestClient webTestClient;
@@ -134,31 +98,6 @@ class SecurityConfigurationTest {
                 .contentType(APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .bodyValue(patientRequest)
-                .exchange()
-                .expectStatus()
-                .isAccepted();
-    }
-
-    @Test
-    void return202AcceptedForHealthInfoNotify() {
-        var token = string();
-        var username = string();
-        var healthInfoNotification = HealthInfoNotificationRequest.builder()
-                .requestId(UUID.randomUUID())
-                .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
-                .build();
-        var caller = ServiceCaller.builder().clientId(username).roles(List.of(GATEWAY)).build();
-        when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
-        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
-        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
-        when(dataFlowRequester.notifyHealthInformationStatus(any())).thenReturn(Mono.empty());
-
-        webTestClient
-                .post()
-                .uri(PATH_HEALTH_INFORMATION_NOTIFY)
-                .contentType(APPLICATION_JSON)
-                .header(AUTHORIZATION, token)
-                .bodyValue(healthInfoNotification)
                 .exchange()
                 .expectStatus()
                 .isAccepted();

@@ -98,7 +98,7 @@ class DiscoveryUserJourneyTest {
     private WebTestClient webTestClient;
 
     @SuppressWarnings("unused")
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     private JWKSet centralRegistryJWKSet;
 
     @SuppressWarnings("unused")

@@ -131,7 +131,7 @@ class ConsentArtefactUserJourneyTest {
     private ConsentManagerClient consentManagerClient;
 
     @SuppressWarnings("unused")
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     private JWKSet centralRegistryJWKSet;
 
     @SuppressWarnings("unused")

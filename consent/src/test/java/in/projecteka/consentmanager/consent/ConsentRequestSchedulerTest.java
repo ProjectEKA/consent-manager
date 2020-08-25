@@ -34,7 +34,7 @@ class ConsentRequestSchedulerTest {
     private ConsentRequestScheduler consentRequestScheduler;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         initMocks(this);
         consentRequestScheduler = new ConsentRequestScheduler(consentRequestRepository,
                 consentServiceProperties,
@@ -42,7 +42,7 @@ class ConsentRequestSchedulerTest {
     }
 
     @Test
-    public void processConsentRequestsWhenNoneOfTheRequestAreInRequestedState() {
+    void processConsentRequestsWhenNoneOfTheRequestAreInRequestedState() {
         when(consentRequestRepository.getConsentsByStatus(ConsentStatus.REQUESTED)).thenReturn(Flux.empty());
 
         consentRequestScheduler.processExpiredConsentRequests();
@@ -51,7 +51,7 @@ class ConsentRequestSchedulerTest {
     }
 
     @Test
-    public void processConsentRequestsWhenRequestIsNotExpired() {
+    void processConsentRequestsWhenRequestIsNotExpired() {
         ConsentRequestDetail consentRequestDetail =
                 consentRequestDetail().status(ConsentStatus.REQUESTED).createdAt(LocalDateTime.now()).build();
         when(consentRequestRepository.getConsentsByStatus(ConsentStatus.REQUESTED)).thenReturn(Flux.just(consentRequestDetail));
@@ -60,11 +60,10 @@ class ConsentRequestSchedulerTest {
         consentRequestScheduler.processExpiredConsentRequests();
 
         verify(consentRequestRepository, times(1)).getConsentsByStatus(ConsentStatus.REQUESTED);
-        verify(consentServiceProperties, times(1)).getConsentRequestExpiry();
     }
 
     @Test
-    public void processConsentRequestsWhenRequestIsExpired() {
+    void processConsentRequestsWhenRequestIsExpired() {
         LocalDateTime createdAt = LocalDateTime.now(ZoneOffset.UTC).minus(Duration.ofHours(2));
         var consentRequestDetail =
                 consentRequestDetail().status(ConsentStatus.REQUESTED).createdAt(createdAt).build();
@@ -85,7 +84,6 @@ class ConsentRequestSchedulerTest {
         consentRequestScheduler.processExpiredConsentRequests();
 
         verify(consentRequestRepository, times(1)).getConsentsByStatus(ConsentStatus.REQUESTED);
-        verify(consentServiceProperties, times(1)).getConsentRequestExpiry();
         verify(consentRequestRepository, times(1))
                 .updateStatus(consentRequestDetail.getRequestId(), ConsentStatus.EXPIRED);
         verify(consentNotificationPublisher, times(1)).publish(consentArtefactsMessage);

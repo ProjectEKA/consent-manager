@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.consent.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import in.projecteka.library.common.PatientReference;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

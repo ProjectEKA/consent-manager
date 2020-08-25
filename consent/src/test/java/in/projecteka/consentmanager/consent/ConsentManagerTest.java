@@ -20,7 +20,6 @@ import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIType;
 import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.ListResult;
-import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
@@ -29,6 +28,7 @@ import in.projecteka.consentmanager.consent.model.response.ConsentStatusResponse
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.Provider;
 import in.projecteka.library.common.CentralRegistry;
+import in.projecteka.library.common.PatientReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -120,7 +120,7 @@ class ConsentManagerTest {
     private ArgumentCaptor<ConsentStatusResponse> consentStatusResponseArgumentCaptor;
 
     @BeforeEach
-    public void setUp() throws JOSEException {
+    void setUp() throws JOSEException {
         initMocks(this);
         RSAKeyGenerator rsKG = new RSAKeyGenerator(2048);
         keyPair = rsKG.generate().toKeyPair();
@@ -142,7 +142,7 @@ class ConsentManagerTest {
     }
 
     @Test
-    public void getConsents() throws ParseException {
+    void getConsents() throws ParseException {
         ConsentRepresentation consentRepresentation = consentRepresentation().build();
         consentRepresentation.setStatus(ConsentStatus.GRANTED);
         String consentRequestId = consentRepresentation.getConsentRequestId();
@@ -169,7 +169,7 @@ class ConsentManagerTest {
     }
 
     @Test
-    public void getConsent() throws ParseException {
+    void getConsent() throws ParseException {
         ConsentRepresentation consentRepresentation = consentRepresentation().build();
         consentRepresentation.setStatus(ConsentStatus.GRANTED);
         String consentRequestId = consentRepresentation.getConsentRequestId();
@@ -194,7 +194,7 @@ class ConsentManagerTest {
     }
 
     @Test
-    public void getConsentArtefactLight() throws ParseException {
+    void getConsentArtefactLight() throws ParseException {
         ConsentRepresentation consentRepresentation = consentRepresentation().build();
         consentRepresentation.setStatus(ConsentStatus.GRANTED);
         String patientId = consentRepresentation.getConsentDetail().getPatient().getId();
@@ -225,7 +225,7 @@ class ConsentManagerTest {
     }
 
     @Test
-    public void askForConsent() {
+    void askForConsent() {
         var requestId = UUID.randomUUID();
         HIPReference hip1 = HIPReference.builder().id("hip1").build();
         HIUReference hiu1 = HIUReference.builder().id("hiu1").build();
@@ -257,7 +257,7 @@ class ConsentManagerTest {
     }
 
     @Test
-    public void askForConsentWithoutValidHIU() {
+    void askForConsentWithoutValidHIU() {
         var requestId = UUID.randomUUID();
         HIPReference hip1 = HIPReference.builder().id("hip1").build();
         HIUReference hiu1 = HIUReference.builder().id("hiu1").build();
@@ -290,7 +290,7 @@ class ConsentManagerTest {
     }
 
     @Test
-    public void revokeAndBroadCastConsent() {
+    void revokeAndBroadCastConsent() {
         ConsentRepresentation consentRepresentation = consentRepresentation().build();
         consentRepresentation.setStatus(GRANTED);
         ConsentRequestDetail consentRequestDetail = consentRequestDetail().build();

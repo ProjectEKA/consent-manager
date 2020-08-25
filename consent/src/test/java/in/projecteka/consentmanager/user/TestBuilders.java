@@ -11,7 +11,7 @@ import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.consentmanager.user.model.SignUpRequest;
 import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
 import in.projecteka.consentmanager.user.model.User;
-import in.projecteka.consentmanager.user.model.UserAuthConfirmRequest;
+import in.projecteka.consentmanager.link.hiplink.model.request.UserAuthConfirmRequest;
 import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;

@@ -25,7 +25,6 @@ import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentati
 import in.projecteka.consentmanager.consent.model.HIType;
 import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.ListResult;
-import in.projecteka.consentmanager.consent.model.PatientReference;
 import in.projecteka.consentmanager.consent.model.QueryRepresentation;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.ConsentArtefactReference;
@@ -46,6 +45,7 @@ import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.Error;
 import in.projecteka.library.clients.model.ErrorRepresentation;
 import in.projecteka.library.common.CentralRegistry;
+import in.projecteka.library.common.PatientReference;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;

@@ -16,6 +16,7 @@ consentmanager:
     maximumInvalidAttempts: 5
     coolOfPeriod: 8
   userservice:
+    enabled: false
     url: http://localhost:9000
     transactionPinDigitSize: 4
     transactionPinTokenValidity: 2

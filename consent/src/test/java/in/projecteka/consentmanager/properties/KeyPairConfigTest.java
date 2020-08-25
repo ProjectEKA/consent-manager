@@ -23,7 +23,7 @@ class KeyPairConfigTest {
     @Autowired
     private KeyPairConfig keyPairConfig;
 
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     private JWKSet centralRegistryJWKSet;
 
     @MockBean(name = "identityServiceJWKSet")

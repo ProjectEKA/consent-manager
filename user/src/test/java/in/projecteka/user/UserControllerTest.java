@@ -1,32 +1,26 @@
-package in.projecteka.consentmanager.user;
+package in.projecteka.user;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.consent.ConceptValidator;
-import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
-import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
-import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.user.model.OtpVerification;
-import in.projecteka.consentmanager.user.model.RequesterDetail;
-import in.projecteka.consentmanager.user.model.SignUpSession;
-import in.projecteka.consentmanager.user.model.Token;
-import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.library.common.Authenticator;
 import in.projecteka.library.common.Caller;
 import in.projecteka.library.common.GatewayTokenVerifier;
 import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceCaller;
+import in.projecteka.user.clients.UserServiceClient;
+import in.projecteka.user.model.OtpVerification;
+import in.projecteka.user.model.SignUpSession;
+import in.projecteka.user.model.Token;
+import in.projecteka.user.model.UserSignUpEnquiry;
+import in.projecteka.user.properties.UserServiceProperties;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
@@ -34,11 +28,11 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
-import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
-import static in.projecteka.consentmanager.user.TestBuilders.string;
-import static in.projecteka.consentmanager.user.TestBuilders.user;
 import static in.projecteka.library.common.Role.GATEWAY;
+import static in.projecteka.user.Constants.PATH_FIND_PATIENT;
+import static in.projecteka.user.TestBuilders.patientRequest;
+import static in.projecteka.user.TestBuilders.string;
+import static in.projecteka.user.TestBuilders.user;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -49,29 +43,13 @@ import static reactor.core.publisher.Mono.empty;
 import static reactor.core.publisher.Mono.just;
 
 @SuppressWarnings("ALL")
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
 class UserControllerTest {
 
     @MockBean
     private UserService userService;
-
-    @MockBean
-    private DestinationsConfig destinationsConfig;
-
-    @MockBean
-    private HiuConsentNotificationListener hiuConsentNotificationListener;
-
-    @MockBean
-    private HipConsentNotificationListener hipConsentNotificationListener;
-
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
-
-    @SuppressWarnings("unused")
-    @MockBean
-    private ConsentRequestNotificationListener consentRequestNotificationListener;
 
     @MockBean
     private SignUpService signupService;
@@ -93,13 +71,6 @@ class UserControllerTest {
     @MockBean
     private Authenticator authenticator;
 
-    @SuppressWarnings("unused")
-    @MockBean
-    private ConceptValidator conceptValidator;
-
-    @MockBean
-    private RequesterDetail requester;
-
     @MockBean
     private UserRepository userRepository;
 
@@ -108,6 +79,9 @@ class UserControllerTest {
 
     @MockBean
     private RequestValidator validator;
+
+    @MockBean
+    private UserServiceProperties userServiceProperties;
 
     @Test
     void shouldReturnTemporarySessionIfOtpRequestIsSuccessful() {

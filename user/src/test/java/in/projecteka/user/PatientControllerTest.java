@@ -1,47 +1,42 @@
-package in.projecteka.consentmanager.user;
+package in.projecteka.user;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.nimbusds.jose.jwk.JWKSet;
-import in.projecteka.consentmanager.DestinationsConfig;
-import in.projecteka.consentmanager.consent.ConceptValidator;
-import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
-import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
-import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.user.model.ChangePinRequest;
-import in.projecteka.consentmanager.user.model.CoreSignUpRequest;
-import in.projecteka.consentmanager.user.model.DateOfBirth;
-import in.projecteka.consentmanager.user.model.Gender;
-import in.projecteka.consentmanager.user.model.GenerateOtpRequest;
-import in.projecteka.consentmanager.user.model.GenerateOtpResponse;
-import in.projecteka.consentmanager.user.model.Identifier;
-import in.projecteka.consentmanager.user.model.IdentifierType;
-import in.projecteka.consentmanager.user.model.InitiateCmIdRecoveryRequest;
-import in.projecteka.consentmanager.user.model.LoginMode;
-import in.projecteka.consentmanager.user.model.LoginModeResponse;
-import in.projecteka.consentmanager.user.model.OtpAttempt;
-import in.projecteka.consentmanager.user.model.OtpMediumType;
-import in.projecteka.consentmanager.user.model.OtpVerification;
-import in.projecteka.consentmanager.user.model.PatientName;
-import in.projecteka.consentmanager.user.model.Profile;
-import in.projecteka.consentmanager.user.model.RecoverCmIdResponse;
-import in.projecteka.consentmanager.user.model.SendOtpAction;
-import in.projecteka.consentmanager.user.model.SignUpSession;
-import in.projecteka.consentmanager.user.model.Token;
-import in.projecteka.consentmanager.user.model.UpdatePasswordRequest;
-import in.projecteka.consentmanager.user.model.UpdateUserRequest;
-import in.projecteka.consentmanager.user.model.User;
-import in.projecteka.consentmanager.user.model.UserSignUpEnquiry;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.Session;
 import in.projecteka.library.common.Authenticator;
 import in.projecteka.library.common.Caller;
+import in.projecteka.user.model.ChangePinRequest;
+import in.projecteka.user.model.CoreSignUpRequest;
+import in.projecteka.user.model.DateOfBirth;
+import in.projecteka.user.model.Gender;
+import in.projecteka.user.model.GenerateOtpRequest;
+import in.projecteka.user.model.GenerateOtpResponse;
+import in.projecteka.user.model.Identifier;
+import in.projecteka.user.model.IdentifierType;
+import in.projecteka.user.model.InitiateCmIdRecoveryRequest;
+import in.projecteka.user.model.LoginMode;
+import in.projecteka.user.model.LoginModeResponse;
+import in.projecteka.user.model.OtpAttempt;
+import in.projecteka.user.model.OtpMediumType;
+import in.projecteka.user.model.OtpVerification;
+import in.projecteka.user.model.PatientName;
+import in.projecteka.user.model.Profile;
+import in.projecteka.user.model.RecoverCmIdResponse;
+import in.projecteka.user.model.SendOtpAction;
+import in.projecteka.user.model.SignUpSession;
+import in.projecteka.user.model.Token;
+import in.projecteka.user.model.UpdatePasswordRequest;
+import in.projecteka.user.model.UpdateUserRequest;
+import in.projecteka.user.model.User;
+import in.projecteka.user.model.UserSignUpEnquiry;
+import in.projecteka.user.properties.UserServiceProperties;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
@@ -49,7 +44,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
@@ -60,11 +55,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
-import static in.projecteka.consentmanager.user.TestBuilders.coreSignUpRequest;
-import static in.projecteka.consentmanager.user.TestBuilders.dateOfBirth;
-import static in.projecteka.consentmanager.user.TestBuilders.patientName;
-import static in.projecteka.consentmanager.user.TestBuilders.string;
+import static in.projecteka.user.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.user.TestBuilders.coreSignUpRequest;
+import static in.projecteka.user.TestBuilders.dateOfBirth;
+import static in.projecteka.user.TestBuilders.patientName;
+import static in.projecteka.user.TestBuilders.string;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -76,7 +71,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @SuppressWarnings("unused")
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
 class PatientControllerTest {
@@ -100,22 +95,6 @@ class PatientControllerTest {
     private ProfileService profileService;
 
     @MockBean
-    private DestinationsConfig destinationsConfig;
-
-    @MockBean
-    private HiuConsentNotificationListener hiuConsentNotificationListener;
-
-    @MockBean
-    private HipConsentNotificationListener hipConsentNotificationListener;
-
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
-
-    @SuppressWarnings("unused")
-    @MockBean
-    private ConsentRequestNotificationListener consentRequestNotificationListener;
-
-    @MockBean
     private SignUpService signupService;
 
     @Autowired
@@ -131,10 +110,6 @@ class PatientControllerTest {
 
     @MockBean
     private Authenticator authenticator;
-
-    @SuppressWarnings("unused")
-    @MockBean
-    private ConceptValidator conceptValidator;
 
     @Test
     void createUser() {

@@ -46,9 +46,11 @@ import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
@@ -67,6 +69,7 @@ import static in.projecteka.consentmanager.link.Constants.APP_PATH_LINK_INIT;
 import static in.projecteka.consentmanager.link.Constants.HIP_INITIATED_ACTION_LINK;
 import static in.projecteka.consentmanager.link.Constants.PATH_HIP_ADD_CONTEXTS;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
+import static in.projecteka.consentmanager.link.Constants.USERS_AUTH_CONFIRM;
 import static in.projecteka.consentmanager.link.link.TestBuilders.linkHipAction;
 import static in.projecteka.consentmanager.link.link.TestBuilders.linkRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
@@ -76,6 +79,7 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReq
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientRepresentation;
 import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
+import static in.projecteka.consentmanager.user.TestBuilders.userAuthConfirmRequest;
 import static in.projecteka.library.common.Role.GATEWAY;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
@@ -87,6 +91,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static reactor.core.publisher.Mono.empty;
 import static reactor.core.publisher.Mono.just;
@@ -136,7 +141,7 @@ class LinkUserJourneyTest {
     private Authenticator authenticator;
 
     @SuppressWarnings("unused")
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     private JWKSet centralRegistryJWKSet;
 
     @SuppressWarnings("unused")
@@ -517,7 +522,6 @@ class LinkUserJourneyTest {
         clientRegistryServer.setDispatcher(dispatcher);
         gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(just(TRUE));
-
         when(linkTokenVerifier.getHipIdFromToken(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction.getHipId()));
         when(linkTokenVerifier.validateSession(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction));
         when(linkTokenVerifier.validateHipAction(hipAction, HIP_INITIATED_ACTION_LINK)).thenReturn(Mono.just(hipAction));
@@ -551,6 +555,43 @@ class LinkUserJourneyTest {
                                     "consentmanager.gatewayservice.baseUrl=" + gatewayServer.url("")));
             values.applyTo(applicationContext);
         }
+    }
+
+    @Test
+    void shouldReturnAcceptedForUserAuthConfirmRequest() {
+        var token = in.projecteka.consentmanager.user.TestBuilders.string();
+        var userAuthConfirmRequest = userAuthConfirmRequest().build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+        when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
+
+        webTestClient.post()
+                .uri(USERS_AUTH_CONFIRM)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .body(BodyInserters.fromValue(userAuthConfirmRequest))
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+    }
+
+    @Test
+    void shouldThrowTooManyRequestErrorForInvalidAuthConfirmRequest() {
+        var token = in.projecteka.consentmanager.user.TestBuilders.string();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
+        var userAuthConfirmRequest = userAuthConfirmRequest().build();
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
+
+        webTestClient.post()
+                .uri(USERS_AUTH_CONFIRM)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(AUTHORIZATION, token)
+                .bodyValue(userAuthConfirmRequest)
+                .exchange()
+                .expectStatus()
+                .is4xxClientError();
     }
 
     final Dispatcher dispatcher = new Dispatcher() {

@@ -1,12 +1,17 @@
 package in.projecteka.user;
 
-import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.user.properties.LockedServiceProperties;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+
+import static in.projecteka.library.clients.model.ClientError.userBlocked;
+import static java.time.LocalDateTime.now;
+import static java.time.ZoneOffset.UTC;
+import static reactor.core.publisher.Mono.defer;
+import static reactor.core.publisher.Mono.error;
+import static reactor.core.publisher.Mono.just;
 
 @AllArgsConstructor
 public class LockedUserService {
@@ -18,7 +23,7 @@ public class LockedUserService {
                 .filter(lockedUser -> lockedUser.getInvalidAttempts() >= lockedServiceProperties.getMaximumInvalidAttempts())
                 .flatMap(lockedUser -> {
                     var isBlocked = isBeforeMinutes(lockedUser.getDateModified(), lockedServiceProperties.getCoolOfPeriod());
-                    return isBlocked ? Mono.error(ClientError.userBlocked()) : removeLockedUser(cmId);
+                    return isBlocked ? error(userBlocked()) : removeLockedUser(cmId);
                 }).thenReturn(cmId);
     }
 
@@ -31,16 +36,16 @@ public class LockedUserService {
                 .flatMap(lockedUser -> {
                     var remainingTries = lockedServiceProperties.getMaximumInvalidAttempts() - lockedUser.getInvalidAttempts();
                     return isBeforeMinutes(lockedUser.getDateCreated(), lockedServiceProperties.getCoolOfPeriod())
-                            ? Mono.just(remainingTries - 1)
-                            : removeLockedUser(cmId).thenReturn(lockedServiceProperties.getMaximumInvalidAttempts() - 1);
+                           ? just(remainingTries - 1)
+                           : removeLockedUser(cmId).thenReturn(lockedServiceProperties.getMaximumInvalidAttempts() - 1);
                 })
-                .flatMap(remainingTries -> lockedUsersRepository.upsert(cmId).thenReturn(remainingTries))
-                .switchIfEmpty(Mono.defer(() -> lockedUsersRepository.upsert(cmId).thenReturn(lockedServiceProperties.getMaximumInvalidAttempts() - 1)));
+                .flatMap(remainingTries -> lockedUsersRepository.upsert(cmId)
+                        .thenReturn(remainingTries))
+                .switchIfEmpty(defer(() -> lockedUsersRepository.upsert(cmId)
+                        .thenReturn(lockedServiceProperties.getMaximumInvalidAttempts() - 1)));
     }
 
     private boolean isBeforeMinutes(LocalDateTime timeToCheck, int minutesToCheckWith) {
-        return timeToCheck
-                .plusMinutes(minutesToCheckWith)
-                .isAfter(LocalDateTime.now(ZoneOffset.UTC));
+        return timeToCheck.plusMinutes(minutesToCheckWith).isAfter(now(UTC));
     }
 }

@@ -17,7 +17,7 @@ consentmanager:
     coolOfPeriod: 8
   userservice:
     enabled: false
-    url: http://localhost:9000
+    url: http://localhost:7000
     transactionPinDigitSize: 4
     transactionPinTokenValidity: 2
     userCreationTokenValidity: 5

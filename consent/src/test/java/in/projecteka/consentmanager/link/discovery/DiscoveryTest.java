@@ -2,13 +2,13 @@ package in.projecteka.consentmanager.link.discovery;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
-import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifierType;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.CareContext;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.properties.LinkServiceProperties;
+import in.projecteka.library.clients.UserServiceClient;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.ErrorCode;
 import in.projecteka.library.clients.model.Identifier;

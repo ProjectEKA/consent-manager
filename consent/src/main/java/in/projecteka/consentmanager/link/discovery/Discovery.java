@@ -1,8 +1,6 @@
 package in.projecteka.consentmanager.link.discovery;
 
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
-import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
@@ -10,6 +8,7 @@ import in.projecteka.consentmanager.link.discovery.model.patient.response.Discov
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.properties.LinkServiceProperties;
 import in.projecteka.library.clients.ErrorMap;
+import in.projecteka.library.clients.UserServiceClient;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.Error;
 import in.projecteka.library.clients.model.ErrorCode;
@@ -17,6 +16,7 @@ import in.projecteka.library.clients.model.ErrorRepresentation;
 import in.projecteka.library.clients.model.Identifier;
 import in.projecteka.library.clients.model.Provider;
 import in.projecteka.library.clients.model.RespError;
+import in.projecteka.library.clients.model.User;
 import in.projecteka.library.common.CentralRegistry;
 import in.projecteka.library.common.DelayTimeoutException;
 import in.projecteka.library.common.cache.CacheAdapter;

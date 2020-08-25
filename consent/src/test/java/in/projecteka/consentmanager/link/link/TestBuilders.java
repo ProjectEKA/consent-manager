@@ -5,12 +5,12 @@ import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
-import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.link.hiplink.model.request.UserAuthConfirmRequest;
 import in.projecteka.consentmanager.link.link.model.AuthzHipAction;
 import in.projecteka.consentmanager.link.link.model.LinkRequest;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
+import in.projecteka.library.clients.model.User;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {

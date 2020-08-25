@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
-import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.Content;
 import in.projecteka.consentmanager.consent.model.GrantedContext;
@@ -10,6 +9,7 @@ import in.projecteka.consentmanager.consent.model.HIType;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.policies.NhsPolicyCheck;
 import in.projecteka.library.clients.OtpServiceClient;
+import in.projecteka.library.clients.UserServiceClient;
 import in.projecteka.library.clients.model.Action;
 import in.projecteka.library.clients.model.Communication;
 import in.projecteka.library.clients.model.CommunicationType;

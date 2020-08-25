@@ -117,7 +117,7 @@ class SecurityConfigurationTest {
                 .expectStatus()
                 .isForbidden();
     }
-    
+
     @Test
     void return202AcceptedForHealthInfoNotify() {
         var token = string();

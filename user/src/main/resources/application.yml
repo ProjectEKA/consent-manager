@@ -60,7 +60,7 @@ user:
     # In milliseconds
     retryInterval: ${LISTENERS_RETRY_INTERVAL}
 keystore:
-  file-path: ${KEYSTORE_PATH:consent-manager-keystore.p12}
+  file-path: ${KEYSTORE_PATH:user-keystore.p12}
   password: ${KEYSTORE_PASSWORD}
   store-type: ${KEY_STORE_TYPE:PKCS12}
   alias: ${PIN_VERIFICATION_KEYPAIR_ALIAS:cm-pin-verification}

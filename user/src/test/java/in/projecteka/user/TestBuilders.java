@@ -1,5 +1,8 @@
 package in.projecteka.user;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import in.projecteka.library.clients.model.Session;
 import in.projecteka.user.model.CoreSignUpRequest;
 import in.projecteka.user.model.DateOfBirth;
@@ -11,9 +14,11 @@ import in.projecteka.user.model.PatientResponse;
 import in.projecteka.user.model.RequesterDetail;
 import in.projecteka.user.model.SessionRequest;
 import in.projecteka.user.model.SignUpRequest;
+import in.projecteka.user.model.TransactionPin;
 import in.projecteka.user.model.UpdatePasswordRequest;
 import in.projecteka.user.model.User;
 import in.projecteka.user.model.UserSignUpEnquiry;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 import org.jeasy.random.FieldPredicates;
@@ -21,6 +26,22 @@ import org.jeasy.random.FieldPredicates;
 public class TestBuilders {
 
     private static final EasyRandom easyRandom = new EasyRandom();
+
+    public static String string() {
+        return easyRandom.nextObject(String.class);
+    }
+
+    public static String string(int size) {
+        return RandomStringUtils.randomNumeric(size).strip();
+    }
+
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+    public static TransactionPin.TransactionPinBuilder transactionPin() {
+        return easyRandom.nextObject(TransactionPin.TransactionPinBuilder.class);
+    }
 
     public static SignUpRequest.SignUpRequestBuilder signUpRequest() {
         EasyRandomParameters excludeUnverifiedIdentifiers = new EasyRandomParameters()
@@ -34,10 +55,6 @@ public class TestBuilders {
                 .excludeField(FieldPredicates.named("unverifiedIdentifiers"));
         EasyRandom easyRandom = new EasyRandom(excludeUnverifiedIdentifiers);
         return easyRandom.nextObject(CoreSignUpRequest.CoreSignUpRequestBuilder.class);
-    }
-
-    public static String string() {
-        return easyRandom.nextObject(String.class);
     }
 
     public static UserSignUpEnquiry.UserSignUpEnquiryBuilder userSignUpEnquiry() {

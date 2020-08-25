@@ -339,12 +339,6 @@ public class UserConfiguration {
         return new RedisCacheAdapter(stringReactiveRedisOperations, 5, redisOptions.getRetry());
     }
 
-    @Bean("centralRegistryJWKSet")
-    public JWKSet jwkSet(GatewayServiceProperties gatewayServiceProperties)
-            throws IOException, ParseException {
-        return JWKSet.load(new URL(gatewayServiceProperties.getJwkUrl()));
-    }
-
     @Bean("identityServiceJWKSet")
     public JWKSet identityServiceJWKSet(IdentityServiceProperties identityServiceProperties)
             throws IOException, ParseException {

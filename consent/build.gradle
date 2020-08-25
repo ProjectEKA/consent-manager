@@ -10,6 +10,7 @@ sonarqube {
         property "sonar.host.url", "https://sonarcloud.io"
         property "sonar.login", "dd5db84dbf8f6dbd393291c26fe038ab54f00072"
 
+        property 'sonar.exclusions', 'src/test/java/in/projecteka/consentmanager/**.java'
         property 'sonar.coverage.jacoco.xmlReportPaths', 'build/reports/jacoco/test/jacocoTestReport.xml'
     }
 }
@@ -37,7 +38,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-    implementation 'org.jeasy:easy-random-core:4.2.0'
+    testImplementation 'org.jeasy:easy-random-core:4.2.0'
     testImplementation "com.squareup.okhttp3:okhttp:4.8.1"
     testImplementation "com.squareup.okhttp3:mockwebserver:4.8.1"
     implementation 'com.google.guava:guava:29.0-jre'

@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.consent.model;
 
+import in.projecteka.library.common.PatientReference;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

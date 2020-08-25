@@ -1,0 +1,68 @@
+server:
+  port: 8000
+  shutdown: graceful
+user:
+  name: ${CONSENT_APP_NAME:PHR-App}
+  transactionPinDigitSize: ${TRANSACTION_PIN_DIGIT_SIZE}
+  transactionPinTokenValidity: ${TRANSACTION_PIN_TOKEN_VALIDITY}
+  userCreationTokenValidity: ${USER_CREATION_TOKEN_VALIDITY}
+  userIdSuffix: ${USER_ID_SUFFIX}
+  maxOtpAttempts: ${MAX_OTP_ATTEMPTS}
+  maxOtpAttemptsPeriodInMin: ${MAX_OTP_ATTEMPTS_PERIOD_IN_MIN}
+  otpAttemptsBlockPeriodInMin: ${OTP_ATTEMPTS_BLOCK_PERIOD_IN_MIN}
+  maxIncorrectPinAttempts: 5
+  otpInvalidAttemptsBlockPeriodInMin: ${OTP_INVALID_ATTEMPT_BLOCK_PERIOD_IN_MIN}
+  otpMaxInvalidAttempts: ${MAX_INVALID_OTP_ATTEMPTS}
+  gateway-service:
+    baseUrl: ${GATEWAY_BASE_URL}
+    requestTimeout: ${GATEWAY_REQUEST_TIMEOUT}
+    clientSecret: ${GATEWAY_CLIENT_SECRET}
+    clientId: ${GATEWAY_CLIENT_ID}
+    jwkUrl: ${GATEWAY_JWK_URL}
+  locked-user-service:
+    maximumInvalidAttempts: ${MAXIMUM_INVALID_ATTEMPTS}
+    coolOfPeriod: ${COOL_OF_PERIOD}
+  otp-service:
+    url: ${OTP_SERVICE_URL}
+    identifiers:
+      - MOBILE
+    expiryInMinutes: ${OTP_EXPIRY_IN_MINUTES}
+  jwt:
+    secret: ${JWT_SECRET}
+  authorization:
+    header: ${AUTHORIZATION_HEADER:Authorization}
+  keycloak:
+    baseUrl: ${KEY_CLOAK_URL}
+    clientId: ${KEY_CLOAK_CONSENT_CLIENT_ID}
+    clientSecret: ${KEY_CLOAK_CONSENT_CLIENT_SECRET}
+    userName: ${KEY_CLOAK_CONSENT_USER_NAME}
+    password: ${KEY_CLOAK_CONSENT_PASSWORD}
+    jwkUrl:  ${KEY_CLOAK_JWK_URL}
+    issuer: ${KEY_CLOAK_TOKEN_ISSUER}
+  db:
+    host: ${POSTGRES_HOST:localhost}
+    port: ${POSTGRES_PORT:5432}
+    schema: ${USER_DB_NAME:user-service}
+    user: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:password}
+    poolSize: ${DB_CONNECTION_POOL_SIZE:5}
+  cacheMethod: ${CACHE_METHOD:guava}
+  redis:
+    #Will not be used if cacheMethod is guava
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:password}
+    keep-alive-enabled: ${KEEP_ALIVE_ENABLED:false}
+    read-from: ${READ_FROM:UPSTREAM}
+    retry: ${REDIS_RETRY:0}
+  listeners:
+    maximumRetries: ${LISTENERS_MAXIMUM_RETRIES}
+    # In milliseconds
+    retryInterval: ${LISTENERS_RETRY_INTERVAL}
+keystore:
+  file-path: ${KEYSTORE_PATH:user-keystore.p12}
+  password: ${KEYSTORE_PASSWORD}
+  store-type: ${KEY_STORE_TYPE:PKCS12}
+  alias: ${PIN_VERIFICATION_KEYPAIR_ALIAS:cm-pin-verification}
+webclient:
+  keepAlive: ${CM_KEEP_ALIVE:true}

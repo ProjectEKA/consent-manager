@@ -8,6 +8,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version "${springBoot}"
     id 'io.spring.dependency-management' version "${dependencyManagement}"
+    id 'com.avast.gradle.docker-compose' version '0.7.1'
 }
 
 allprojects {
@@ -36,6 +37,16 @@ project(':consent') {
     }
 }
 
+project(':user') {
+    dependencies {
+        implementation project(':commons')
+    }
+}
+
 bootJar {
     enabled = false
+}
+
+dockerCompose {
+    useComposeFiles = ['haproxy/docker-compose.yml']
 }

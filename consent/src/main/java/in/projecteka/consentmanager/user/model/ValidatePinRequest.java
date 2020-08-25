@@ -3,20 +3,20 @@ package in.projecteka.consentmanager.user.model;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import java.util.UUID;
 
-import static in.projecteka.consentmanager.Constants.SCOPE_CONSENT_APPROVE;
-import static in.projecteka.consentmanager.Constants.SCOPE_CONSENT_REVOKE;
-import static in.projecteka.consentmanager.Constants.SCOPE_CHANGE_PIN;
+import static in.projecteka.library.common.Constants.SCOPE_CHANGE_PIN;
+import static in.projecteka.library.common.Constants.SCOPE_CONSENT_APPROVE;
+import static in.projecteka.library.common.Constants.SCOPE_CONSENT_REVOKE;
 
 @AllArgsConstructor
 @Getter
 public class ValidatePinRequest {
-    private UUID requestId;
+    private final UUID requestId;
     private final String pin;
     @Valid
     @NotBlank

@@ -13,7 +13,6 @@ import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.Caller;
 import in.projecteka.library.common.RequestValidator;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,8 +24,12 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
+import static in.projecteka.consentmanager.link.Constants.APP_PATH_LINK_INIT;
+import static in.projecteka.consentmanager.link.Constants.PATH_HIP_ADD_CONTEXTS;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
+import static org.springframework.http.HttpStatus.ACCEPTED;
+import static reactor.core.publisher.Mono.just;
 
 @RestController
 @AllArgsConstructor
@@ -49,7 +52,7 @@ public class LinkController {
 
     @PostMapping(PATH_LINK_ON_INIT)
     public Mono<Void> onLinkCareContexts(@RequestBody PatientLinkReferenceResult result) {
-        return Mono.just(result)
+        return just(result)
                 .filterWhen(res -> validator.validate(result.getRequestId().toString(), result.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(res -> validator.put(result.getRequestId().toString(), result.getTimestamp())
@@ -82,14 +85,14 @@ public class LinkController {
      */
     @PostMapping(PATH_LINK_ON_CONFIRM)
     public Mono<Void> onConfirmLink(@RequestBody @Valid LinkConfirmationResult result) {
-        return Mono.just(result)
+        return just(result)
                 .filterWhen(req -> validator.validate(result.getRequestId().toString(), result.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(discard -> link.onConfirmLink(result)
                         .then(validator.put(result.getRequestId().toString(), result.getTimestamp())));
     }
 
-    @PostMapping(Constants.APP_PATH_LINK_INIT)
+    @PostMapping(APP_PATH_LINK_INIT)
     public Mono<PatientLinkReferenceResponse> linkPatientCareContexts(
             @RequestBody PatientLinkReferenceRequest patientLinkReferenceRequest) {
         return ReactiveSecurityContextHolder.getContext()
@@ -97,10 +100,10 @@ public class LinkController {
                 .flatMap(caller -> link.patientCareContexts(caller.getUsername(), patientLinkReferenceRequest));
     }
 
-    @PostMapping(Constants.PATH_HIP_ADD_CONTEXTS)
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @PostMapping(PATH_HIP_ADD_CONTEXTS)
+    @ResponseStatus(ACCEPTED)
     public Mono<Void> linkCareContexts(@RequestBody LinkRequest linkRequest) {
-        return Mono.just(linkRequest)
+        return just(linkRequest)
                 .filterWhen(req ->
                         validator.validate(linkRequest.getRequestId().toString(), linkRequest.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))

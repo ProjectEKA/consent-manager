@@ -203,6 +203,33 @@
     GATEWAY_CLIENTSECRET=${GATEWAY_CLIENTSECRET} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew :consent:bootRunLocal
     ```
 
+### User-Service
+
+1. Follow the steps from 1 to 4 in consent-manager if not already
+2. Run through command line
+    
+    ```bash
+   cd consent-manager
+   GATEWAY_CLIENTSECRET=${GATEWAY_CLIENTSECRET} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew :user:bootRunLocal
+    ```
+
+### Reverse-Proxy
+
+1. Since there are two services to form a consent-manager application, we need proxy to route the request. 
+2. Hence, haproxy is part of the project to route the request between consent and user service.
+3. Run the following command 
+
+    ```bash
+    cd consent-manager
+    ./gradlew composeUp
+   ```
+4. In case if you want to bring down,
+
+    ```bash
+    ./gradlew composeDown
+   ```
+5. In order to access consent manager, you can use http://localhost:8081
+
 ### Hip-Service
 
 1. Clone [hip-service](https://github.com/ProjectEKA/hip-service)

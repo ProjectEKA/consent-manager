@@ -25,6 +25,7 @@ consentmanager:
     clientId: ${GATEWAY_CLIENT_ID}
     jwkUrl: ${CENTRAL_REGISTRY_JWK_URL}
   userservice:
+    enabled: ${USER_SERVICE_ENABLED:true}
     url: ${User_Service_Url}
     transactionPinDigitSize: ${TRANSACTION_PIN_DIGIT_SIZE}
     transactionPinTokenValidity: ${TRANSACTION_PIN_TOKEN_VALIDITY}

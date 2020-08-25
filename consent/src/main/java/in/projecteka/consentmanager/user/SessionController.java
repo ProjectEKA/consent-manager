@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.user.model.SessionRequest;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.Session;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @AllArgsConstructor
+@ConditionalOnExpression("${consentmanager.userservice.enabled:true}")
 public class SessionController {
     private final SessionService sessionService;
 

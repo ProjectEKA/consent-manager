@@ -45,7 +45,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient(timeout = "60000")
 class SecurityConfigurationTest {
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     JWKSet centralRegistryJWKSet;
 
     @MockBean(name = "identityServiceJWKSet")

@@ -59,7 +59,7 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 @RestController
 @RequestMapping(Constants.BASE_PATH_PATIENTS_APIS)
 @AllArgsConstructor
-@ConditionalOnExpression("${consentmanager.usersrvice.enabled:true}")
+@ConditionalOnExpression("${consentmanager.userservice.enabled:true}")
 public class PatientController {
     private final ProfileService profileService;
     private final TransactionPinService transactionPinService;

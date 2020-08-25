@@ -26,7 +26,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 
 @RestController
 @AllArgsConstructor
-@ConditionalOnExpression("${consentmanager.usersrvice.enabled:true}")
+@ConditionalOnExpression("${consentmanager.userservice.enabled:true}")
 public class UserController {
     private final UserService userService;
     private final RequestValidator validator;

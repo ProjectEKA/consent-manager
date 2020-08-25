@@ -4,7 +4,6 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import in.projecteka.consentmanager.consent.PinVerificationTokenService;
-import in.projecteka.consentmanager.user.SignUpService;
 import in.projecteka.library.common.Authenticator;
 import in.projecteka.library.common.GatewayTokenVerifier;
 import in.projecteka.library.common.cache.CacheAdapter;
@@ -49,11 +48,6 @@ import static in.projecteka.consentmanager.link.Constants.PATH_HIP_LINK_USER_AUT
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.link.Constants.USERS_AUTH_CONFIRM;
-import static in.projecteka.consentmanager.user.Constants.APP_PATH_CREATE_USER;
-import static in.projecteka.consentmanager.user.Constants.APP_PATH_RESET_PASSWORD;
-import static in.projecteka.consentmanager.user.Constants.APP_PATH_RESET_PIN;
-import static in.projecteka.consentmanager.user.Constants.BASE_PATH_PATIENTS_APIS;
-import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
 import static in.projecteka.library.clients.model.ClientError.unAuthorized;
 import static in.projecteka.library.common.Constants.SCOPE_CHANGE_PIN;
 import static in.projecteka.library.common.Constants.SCOPE_CONSENT_APPROVE;
@@ -70,13 +64,11 @@ import static reactor.core.publisher.Mono.error;
 public class SecurityConfiguration {
 
     private static final List<Map.Entry<String, HttpMethod>> SERVICE_ONLY_URLS = new ArrayList<>();
-    private static final List<Map.Entry<String, HttpMethod>> TEMP_TOKEN_URLS = new ArrayList<>();
     private static final List<RequestMatcher> PIN_VERIFICATION_MATCHERS = new ArrayList<>();
     private static final String[] GATEWAY_APIS = new String[]{
             PATH_CARE_CONTEXTS_ON_DISCOVER,
             PATH_CONSENT_REQUESTS_INIT,
             PATH_CONSENTS_FETCH,
-            PATH_FIND_PATIENT,
             PATH_LINK_ON_INIT,
             PATH_LINK_ON_CONFIRM,
             PATH_HEALTH_INFORMATION_ON_REQUEST,
@@ -101,7 +93,6 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry(PATH_CARE_CONTEXTS_ON_DISCOVER, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_LINK_ON_INIT, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_LINK_ON_CONFIRM, HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry(PATH_FIND_PATIENT, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_CONSENTS_FETCH, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HEALTH_INFORMATION_REQUEST, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HEALTH_INFORMATION_NOTIFY, HttpMethod.POST));
@@ -122,10 +113,6 @@ public class SecurityConfiguration {
         PIN_VERIFICATION_MATCHERS.add(approveMatcher);
         PIN_VERIFICATION_MATCHERS.add(revokeMatcher);
         PIN_VERIFICATION_MATCHERS.add(changePinMatcher);
-
-        TEMP_TOKEN_URLS.add(Map.entry(BASE_PATH_PATIENTS_APIS + APP_PATH_CREATE_USER, HttpMethod.POST));
-        TEMP_TOKEN_URLS.add(Map.entry(BASE_PATH_PATIENTS_APIS + APP_PATH_RESET_PASSWORD, HttpMethod.PUT));
-        TEMP_TOKEN_URLS.add(Map.entry(BASE_PATH_PATIENTS_APIS + APP_PATH_RESET_PIN, HttpMethod.PUT));
     }
 
     private static final String[] ALLOWED_LIST_URLS = new String[]{"/**.json",
@@ -185,13 +172,11 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityContextRepository contextRepository(
-            SignUpService signupService,
             Authenticator authenticator,
             PinVerificationTokenService pinVerificationTokenService,
             GatewayTokenVerifier gatewayTokenVerifier,
             @Value("${consentmanager.authorization.header}") String authorizationHeader) {
-        return new SecurityContextRepository(signupService,
-                authenticator,
+        return new SecurityContextRepository(authenticator,
                 pinVerificationTokenService,
                 gatewayTokenVerifier,
                 authorizationHeader);
@@ -208,7 +193,6 @@ public class SecurityConfiguration {
 
     @AllArgsConstructor
     private static class SecurityContextRepository implements ServerSecurityContextRepository {
-        private final SignUpService signupService;
         private final Authenticator identityServiceClient;
         private final PinVerificationTokenService pinVerificationTokenService;
         private final GatewayTokenVerifier gatewayTokenVerifier;
@@ -235,9 +219,6 @@ public class SecurityConfiguration {
             var token = exchange.getRequest().getHeaders().getFirst(authorizationHeader);
             if (isEmpty(token)) {
                 return error(unAuthorized());
-            }
-            if (isPostOTPVerificationRequest(requestPath, requestMethod)) {
-                return checkSignUp(token).switchIfEmpty(error(unAuthorized()));
             }
             if (isPinVerificationRequest(requestPath, requestMethod)) {
                 Optional<String> validScope = getScope(requestPath, requestMethod);
@@ -311,23 +292,6 @@ public class SecurityConfiguration {
 
         private boolean isEmpty(String authToken) {
             return authToken == null || authToken.trim().equals("");
-        }
-
-        private Mono<SecurityContext> checkSignUp(String authToken) {
-            return Mono.just(authToken)
-                    .filterWhen(signupService::validateToken)
-                    .flatMap(token -> Mono.just(new UsernamePasswordAuthenticationToken(
-                            token,
-                            token,
-                            new ArrayList<>()))
-                            .map(SecurityContextImpl::new));
-        }
-
-        private boolean isPostOTPVerificationRequest(String url, HttpMethod httpMethod) {
-            var antPathMatcher = new AntPathMatcher();
-            return TEMP_TOKEN_URLS.stream()
-                    .anyMatch(pattern ->
-                            antPathMatcher.match(pattern.getKey(), url) && pattern.getValue().equals(httpMethod));
         }
     }
 

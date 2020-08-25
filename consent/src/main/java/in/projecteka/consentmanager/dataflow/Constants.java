@@ -9,4 +9,8 @@ public class Constants {
     public static final String PATH_HEALTH_HIP_INFORMATION_REQUEST = "/health-information/hip/request";
     //GATEWAY URL PATHs
     public static final String PATH_DATA_FLOW_CM_ON_REQUEST = "/health-information/cm/on-request";
+
+    private Constants() {
+
+    }
 }

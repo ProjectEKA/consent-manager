@@ -9,10 +9,10 @@ import in.projecteka.consentmanager.link.discovery.model.patient.response.CareCo
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.properties.LinkServiceProperties;
-import in.projecteka.consentmanager.user.model.PatientName;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.ErrorCode;
 import in.projecteka.library.clients.model.Identifier;
+import in.projecteka.library.clients.model.PatientName;
 import in.projecteka.library.clients.model.RespError;
 import in.projecteka.library.common.CentralRegistry;
 import in.projecteka.library.common.cache.CacheAdapter;

@@ -2,7 +2,7 @@ package in.projecteka.consentmanager.clients;
 
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.properties.GatewayServiceProperties;
-import in.projecteka.consentmanager.user.model.PatientName;
+import in.projecteka.library.clients.model.PatientName;
 import in.projecteka.library.common.ServiceAuthentication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,8 +48,6 @@ class UserServiceClientTest {
         userServiceClient = new UserServiceClient(webClientBuilder.build(),
                 "http://user-service/",
                 () -> Mono.just(token),
-                serviceProperties,
-                serviceAuthentication,
                 AUTHORIZATION);
     }
 

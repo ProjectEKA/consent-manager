@@ -1,7 +1,7 @@
 package in.projecteka.consentmanager.clients.model;
 
-import in.projecteka.consentmanager.user.model.DateOfBirth;
-import in.projecteka.consentmanager.user.model.PatientName;
+import in.projecteka.library.clients.model.DateOfBirth;
+import in.projecteka.library.clients.model.PatientName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

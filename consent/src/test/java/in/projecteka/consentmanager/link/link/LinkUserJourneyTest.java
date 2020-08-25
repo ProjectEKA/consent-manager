@@ -79,7 +79,7 @@ import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReq
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientRepresentation;
 import static in.projecteka.consentmanager.link.link.TestBuilders.string;
 import static in.projecteka.consentmanager.link.link.TestBuilders.user;
-import static in.projecteka.consentmanager.user.TestBuilders.userAuthConfirmRequest;
+import static in.projecteka.consentmanager.link.link.TestBuilders.userAuthConfirmRequest;
 import static in.projecteka.library.common.Role.GATEWAY;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
@@ -559,7 +559,7 @@ class LinkUserJourneyTest {
 
     @Test
     void shouldReturnAcceptedForUserAuthConfirmRequest() {
-        var token = in.projecteka.consentmanager.user.TestBuilders.string();
+        var token = string();
         var userAuthConfirmRequest = userAuthConfirmRequest().build();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
         when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
@@ -578,7 +578,7 @@ class LinkUserJourneyTest {
 
     @Test
     void shouldThrowTooManyRequestErrorForInvalidAuthConfirmRequest() {
-        var token = in.projecteka.consentmanager.user.TestBuilders.string();
+        var token = string();
         var caller = ServiceCaller.builder().clientId("Client_ID").roles(List.of(GATEWAY)).build();
         var userAuthConfirmRequest = userAuthConfirmRequest().build();
         when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());

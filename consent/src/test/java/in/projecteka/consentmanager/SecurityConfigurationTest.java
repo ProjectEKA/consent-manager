@@ -31,8 +31,7 @@ import java.util.UUID;
 
 import static in.projecteka.consentmanager.common.TestBuilders.string;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
-import static in.projecteka.consentmanager.user.Constants.PATH_FIND_PATIENT;
-import static in.projecteka.consentmanager.user.TestBuilders.patientRequest;
+import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
 import static in.projecteka.library.common.Role.GATEWAY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -94,7 +93,7 @@ class SecurityConfigurationTest {
     void return401UnAuthorized() {
         webTestClient
                 .post()
-                .uri(PATH_FIND_PATIENT)
+                .uri(PATH_HEALTH_INFORMATION_REQUEST)
                 .contentType(APPLICATION_JSON)
                 .bodyValue("{}")
                 .exchange()
@@ -110,7 +109,7 @@ class SecurityConfigurationTest {
 
         webTestClient
                 .post()
-                .uri(PATH_FIND_PATIENT)
+                .uri(PATH_HEALTH_INFORMATION_REQUEST)
                 .contentType(APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .bodyValue("{}")
@@ -118,27 +117,7 @@ class SecurityConfigurationTest {
                 .expectStatus()
                 .isForbidden();
     }
-
-    @Test
-    void return202Accepted() {
-        var token = string();
-        var caller = ServiceCaller.builder().roles(List.of(GATEWAY)).build();
-        var patientRequest = patientRequest().build();
-        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
-        when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
-        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
-
-        webTestClient
-                .post()
-                .uri(PATH_FIND_PATIENT)
-                .contentType(APPLICATION_JSON)
-                .header(AUTHORIZATION, token)
-                .bodyValue(patientRequest)
-                .exchange()
-                .expectStatus()
-                .isAccepted();
-    }
-
+    
     @Test
     void return202AcceptedForHealthInfoNotify() {
         var token = string();

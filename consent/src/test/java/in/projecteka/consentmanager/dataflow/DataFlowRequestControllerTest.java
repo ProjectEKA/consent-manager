@@ -23,11 +23,11 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static in.projecteka.consentmanager.common.TestBuilders.gatewayDataFlowRequest;
+import static in.projecteka.consentmanager.common.TestBuilders.string;
 import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
-import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationNotificationRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationResponseBuilder;
-import static in.projecteka.consentmanager.user.TestBuilders.string;
 import static in.projecteka.library.common.Role.GATEWAY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;

@@ -3,7 +3,7 @@ package in.projecteka.consentmanager.common;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import in.projecteka.consentmanager.user.model.TransactionPin;
+import in.projecteka.consentmanager.dataflow.model.GatewayDataFlowRequest;
 import in.projecteka.library.clients.model.Notification;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.jeasy.random.EasyRandom;
@@ -25,15 +25,15 @@ public class TestBuilders {
         return RandomStringUtils.randomNumeric(size).strip();
     }
 
-    public static TransactionPin.TransactionPinBuilder transactionPin() {
-        return easyRandom.nextObject(TransactionPin.TransactionPinBuilder.class);
-    }
-
     public static LocalDateTime localDateTime() {
         return easyRandom.nextObject(LocalDateTime.class);
     }
 
     public static Notification.NotificationBuilder notificationMessage() {
         return easyRandom.nextObject(Notification.NotificationBuilder.class);
+    }
+
+    public static GatewayDataFlowRequest.GatewayDataFlowRequestBuilder gatewayDataFlowRequest() {
+        return easyRandom.nextObject(GatewayDataFlowRequest.GatewayDataFlowRequestBuilder.class);
     }
 }

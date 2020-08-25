@@ -200,6 +200,7 @@ class ConsentManagerTest {
         HIPConsentArtefactRepresentation hipConsentArtefactRepresentation = hipConsentArtefactRepresentation().build();
         ConsentArtefactLightRepresentation artefactLightRepresentation = artefactLightRepresentation().build();
         artefactLightRepresentation.getConsentDetail().setHiu(consentArtefactRepresentation.getConsentDetail().getHiu());
+        artefactLightRepresentation.getConsentDetail().setHip(consentArtefactRepresentation.getConsentDetail().getHip());
         artefactLightRepresentation.getConsentDetail().setPermission(consentArtefactRepresentation.getConsentDetail().getPermission());
         artefactLightRepresentation.setSignature(hipConsentArtefactRepresentation.getSignature());
         artefactLightRepresentation.setStatus(consentArtefactRepresentation.getStatus());

@@ -11,5 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ConsentArtefact {
     private HIUReference hiu;
+    private HIPReference hip;
     private ConsentPermission permission;
 }

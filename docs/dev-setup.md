@@ -111,6 +111,7 @@
         - 10000005 with role `HIU` and `HIP`
         - gateway with a role `gateway`
         - ncg with a role 'CM'
+    5. To be able to manipulate bridge & hip/hiu services entries, you need to add admin role to gateway client and create admin-user in `Central-Registry` realm.
         
     ### How to add a client
 
@@ -140,6 +141,32 @@
     3. Click on `Service Account Roles` tab
     4. On the `Available Roles` you should see the roles you just created, select the role you want to assign, and then click `Add Selected`
     5. Repeat the same steps for all the clients.
+    
+    ### How to add admin role to the gateway client
+    
+    1. Click on `Clients`
+    2. Go to the `gateway` client
+    3. Click on `Roles` tab
+    4. Click on `Add Role`
+    5. Enter Role Name as `admin`
+    6. Click `Save`
+    
+    ### How to create admin-user
+    
+    1. Click on `Users`
+    2. Click on `Add user`
+    3. Enter Username as `admin-user`
+    4. Click `Save`
+    5. Click on `Credentials` tab
+    6. Set Temporary check to `OFF`
+    7. Enter Password and Password Confirmation as `welcome`
+    8. Click on `Set Password`
+    9. Click on `Role Mappings` tab
+    10. Click on `Client Roles - Select a client` search box
+    11. Type `gateway` and click enter
+    12. On the `Available Roles` you should see `admin` role, select that to assign, and then click `Add Selected`
+    13. Type `realm-management` and click enter
+    14. On the `Available Roles` you should see `manage-clients` and `manage-users` roles, select those to assign, and then click `Add Selected`
         
 5. Setup RabbitMQ
 

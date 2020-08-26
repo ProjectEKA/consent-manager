@@ -9,6 +9,7 @@ import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.Query;
+import in.projecteka.consentmanager.consent.model.request.ConsentArtefactReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.library.common.DbOperationError;
 import io.vertx.core.AsyncResult;
@@ -147,6 +148,23 @@ public class ConsentArtefactRepository {
                                 StreamSupport.stream(handler.result().spliterator(), false)
                                         .map(row -> row.getString(CONSENT_ARTEFACT_ID))
                                         .forEach(fluxSink::next);
+                                fluxSink.complete();
+                            }
+                        }));
+    }
+
+    public Flux<ConsentArtefactReference> consentArtefacts(String consentRequestId) {
+        return Flux.create(fluxSink -> dbClient.preparedQuery(SELECT_CONSENT_IDS_FROM_CONSENT_ARTEFACT)
+                .execute(Tuple.of(consentRequestId),
+                        handler -> {
+                            if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
+                                fluxSink.error(new Exception("Failed to get consent id from consent request Id"));
+                            } else {
+                                StreamSupport.stream(handler.result().spliterator(), false)
+                                        .map(row -> row.getString(CONSENT_ARTEFACT_ID))
+                                        .forEach(consentArtefactId -> fluxSink.next(ConsentArtefactReference.builder()
+                                                .id(consentArtefactId).build()));
                                 fluxSink.complete();
                             }
                         }));

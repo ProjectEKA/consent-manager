@@ -2,6 +2,7 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.ConsentStatusCallerDetail;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.library.common.DbOperationError;
@@ -40,6 +41,8 @@ public class ConsentRequestRepository {
             "(request_id, patient_id, status, details) VALUES ($1, $2, $3, $4)";
     private static final String UPDATE_CONSENT_REQUEST_STATUS_QUERY = "UPDATE consent_request SET status=$1, " +
             "date_modified=$2 WHERE request_id=$3";
+    private static final String SELECT_CONSENT_REQUEST_STATUS_DETAILS = "SELECT status, details " +
+            "FROM consent_request WHERE request_id=$1";
     private static final String FAILED_TO_SAVE_CONSENT_REQUEST = "Failed to save consent request";
     private static final String UNKNOWN_ERROR_OCCURRED = "Unknown error occurred";
     private static final String FAILED_TO_GET_CONSENT_REQUESTS_BY_STATUS = "Failed to get consent requests by status";
@@ -191,6 +194,35 @@ public class ConsentRequestRepository {
                                 results.forEach(row -> fluxSink.next(mapToConsentRequestDetail(row)));
                             }
                             fluxSink.complete();
+                        }));
+    }
+
+    public Mono<ConsentStatusCallerDetail> getConsentRequestStatusAndCallerDetails (String requestId) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CONSENT_REQUEST_STATUS_DETAILS)
+                .execute(Tuple.of(requestId),
+                        handler -> {
+                            if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
+                                monoSink.error(new DbOperationError());
+                                return;
+                            }
+                            var iterator = handler.result().iterator();
+                            if (!iterator.hasNext()) {
+                                monoSink.success();
+                                return;
+                            }
+                            var row = iterator.next();
+                            try {
+                                RequestedDetail details = to(row.getValue("details").toString(), RequestedDetail.class);
+                                var consentRequestDetails = ConsentStatusCallerDetail.builder()
+                                        .status(getConsentStatus(row.getString("status")))
+                                        .hiuId(details.getHIUId())
+                                        .build();
+                                monoSink.success(consentRequestDetails);
+                            } catch (Exception exc) {
+                                logger.error(exc.getMessage(), exc);
+                                monoSink.success();
+                            }
                         }));
     }
 }

@@ -23,8 +23,6 @@ public class DataFlowRequestRepository {
 
     private static final String INSERT_TO_DATA_FLOW_REQUEST = "INSERT INTO data_flow_request (transaction_id, " +
             "consent_artefact_id, data_flow_request) VALUES ($1, $2, $3)";
-    private static final String SELECT_HIP_ID_FROM_CONSENT_ARTEFACT = "SELECT consent_artefact -> 'hip' ->> 'id' as " +
-            "hip_id FROM consent_artefact WHERE consent_artefact_id=$1";
     private static final String INSERT_TO_HEALTH_INFO_NOTIFICATION = "INSERT INTO health_info_notification " +
             "(transaction_id, notification_request, request_id) VALUES ($1, $2, $3)";
     private static final String SELECT_TRANSACTION_ID = "SELECT transaction_id FROM health_info_notification WHERE " +
@@ -51,27 +49,6 @@ public class DataFlowRequestRepository {
                             }
                             monoSink.success();
                         }));
-    }
-
-    // TODO: it should not be here. Never read consent artefact table in data flow component.
-    // make an API call.
-    public Mono<String> getHipIdFor(String consentId) {
-        return Mono.create(monoSink ->
-                dbClient.preparedQuery(SELECT_HIP_ID_FROM_CONSENT_ARTEFACT)
-                        .execute(Tuple.of(consentId),
-                                handler -> {
-                                    if (handler.failed()) {
-                                        logger.error(handler.cause().getMessage(), handler.cause());
-                                        monoSink.error(new DbOperationError());
-                                        return;
-                                    }
-                                    var iterator = handler.result().iterator();
-                                    if (!iterator.hasNext()) {
-                                        monoSink.error(unknownErrorOccurred());
-                                        return;
-                                    }
-                                    monoSink.success(iterator.next().getString(0));
-                                }));
     }
 
     public Mono<Void> saveHealthNotificationRequest(HealthInfoNotificationRequest notificationRequest) {

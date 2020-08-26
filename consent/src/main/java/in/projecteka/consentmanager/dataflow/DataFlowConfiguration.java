@@ -27,14 +27,22 @@ public class DataFlowConfiguration {
 
     @Bean
     public DataFlowBroadcastListener dataFlowBroadcastListener(
+            @Qualifier("customBuilder") WebClient.Builder builder,
+            DataFlowConsentManagerProperties dataFlowConsentManagerProperties,
+            IdentityService identityService,
+            GatewayServiceProperties gatewayServiceProperties,
+            ServiceAuthentication serviceAuthentication,
             MessageListenerContainerFactory messageListenerContainerFactory,
             Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-            DataRequestNotifier dataRequestNotifier,
-            DataFlowRequestRepository dataFlowRequestRepository) {
+            DataRequestNotifier dataRequestNotifier) {
         return new DataFlowBroadcastListener(messageListenerContainerFactory,
                 jackson2JsonMessageConverter,
                 dataRequestNotifier,
-                dataFlowRequestRepository);
+                new ConsentManagerClient(builder,
+                        dataFlowConsentManagerProperties.getUrl(),
+                        identityService::authenticate,
+                        gatewayServiceProperties,
+                        serviceAuthentication));
     }
 
     @Bean

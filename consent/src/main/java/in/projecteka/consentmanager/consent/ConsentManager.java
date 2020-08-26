@@ -533,6 +533,7 @@ public class ConsentManager {
                                                     ConsentArtefactRepresentation consentArtefact) {
         ConsentArtefactLight consentArtefactLight = ConsentArtefactLight.builder()
                 .hiu(consentArtefact.getConsentDetail().getHiu())
+                .hip(consentArtefact.getConsentDetail().getHip())
                 .permission(consentArtefact.getConsentDetail().getPermission())
                 .build();
         return ConsentArtefactLightRepresentation.builder()

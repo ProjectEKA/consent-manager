@@ -1,0 +1,40 @@
+server:
+  port: 8090
+dataflow:
+  gatewayservice:
+    baseUrl: ${GATEWAY_BASE_URL}
+    requestTimeout: ${GATEWAY_REQUEST_TIMEOUT}
+    clientSecret: ${GATEWAY_CLIENT_SECRET}
+    clientId: ${GATEWAY_CLIENT_ID}
+    jwkUrl: ${CENTRAL_REGISTRY_JWK_URL}
+  consentmanager:
+    url: ${CONSENT_MANAGER_URL}
+  db:
+    host: ${POSTGRES_HOST}
+    port: ${POSTGRES_PORT:5432}
+    schema: ${DATAFLOW_DB_NAME}
+    user: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    poolSize: 5
+  keycloak:
+    baseUrl: ${KEY_CLOAK_URL}
+    clientId: ${KEY_CLOAK_CONSENT_CLIENT_ID}
+    clientSecret: ${KEY_CLOAK_CONSENT_CLIENT_SECRET}
+    jwkUrl:  ${KEY_CLOAK_JWK_URL}
+  #Valid values are guava(for local), redis
+  cacheMethod: ${CACHE_METHOD:guava}
+  redis:
+    #Will not be used if cacheMethod is guava
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:password}
+    keep-alive-enabled: ${KEEP_ALIVE_ENABLED:false}
+    read-from: ${READ_FROM:UPSTREAM}
+    retry: ${REDIS_RETRY:0}
+spring:
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+

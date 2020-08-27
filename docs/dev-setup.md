@@ -76,17 +76,21 @@
     docker pull projecteka/gateway-db-initializer
     docker pull projecteka/cm-db-initializer
     docker pull projecteka/hiu-db-initializer
+    docker pull projecteka/user-db-initializer
     docker-compose -f docker-compose-infra-lite.yml up -d
      
     docker logs $(docker ps -aqf "name=^cm-db-setup$")
     docker logs $(docker ps -aqf "name=^hiu-db-setup$")
     docker logs $(docker ps -aqf "name=^keycloak-setup$")
+   docker logs $(docker ps -aqf "name=^user-db-setup$")
         # if you see any errors, run the docker-compose again
    
     docker exec -it $(docker ps -aqf "name=^postgres$") /bin/bash
     psql -U postgres consent_manager
     \d # should list all the tables
     \c health_information_user
+    \d # should list all the tables
+    \c user_service
     \d # should list all the tables
     exit # twice
     ```
@@ -192,21 +196,25 @@
 
 ### Consent-Manager
 
+It's a mono-repo contains, consent and user services, there are following common things across services.
+
 1. Clone [Consent-Manager](https://github.com/ProjectEKA/consent-manager)
 2. You need to get client secret from keycloak 
 3. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients](http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients) of `consent-manager` under `credentials` tab, and use it for **KEYCLOAK_CLIENTSECRET** (client under *consent-manager* realm)
 4. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `ncg` under `credentials` tab, and use it for **GATEWAY_CLIENTSECRET** (client under *central-registry* realm)
-5. Run through command line
+
+#### consent
+
+1. Run through command line
     
     ```bash
     cd consent-manager
     GATEWAY_CLIENTSECRET=${GATEWAY_CLIENTSECRET} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew :consent:bootRunLocal
     ```
 
-### User-Service
+#### User-Service
 
-1. Follow the steps from 1 to 4 in consent-manager if not already
-2. Run through command line
+1. Run through command line
     
     ```bash
    cd consent-manager

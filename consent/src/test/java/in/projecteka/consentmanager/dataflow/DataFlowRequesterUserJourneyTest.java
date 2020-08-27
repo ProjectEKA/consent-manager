@@ -327,8 +327,10 @@ class DataFlowRequesterUserJourneyTest {
     void shouldSendDataRequestToHip() {
         DataRequest dataRequest = dataRequest().build();
         String hipId = string();
-        when(dataFlowRequestRepository.getHipIdFor(dataRequest.getHiRequest().getConsent().getId()))
-                .thenReturn(Mono.just(hipId));
+        String consentId = string();
+        ConsentArtefactRepresentation caRep = ConsentArtefactRepresentation.builder().build();
+
+        when(consentManagerClient.getConsentArtefact(consentId)).thenReturn(Mono.just(caRep));
         when(dataRequestNotifier.notifyHip(dataRequest, hipId)).thenReturn(Mono.empty());
 
         dataFlowBroadcastListener.configureAndSendDataRequestFor(dataRequest);

@@ -4,34 +4,40 @@ import in.projecteka.dataflow.model.DataFlowRequestMessage;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.core.AmqpTemplate;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
+import reactor.rabbitmq.OutboundMessage;
+import reactor.rabbitmq.RabbitFlux;
+import reactor.rabbitmq.Sender;
+import reactor.rabbitmq.SenderOptions;
 
-import static in.projecteka.dataflow.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
+import java.util.List;
+
+import static in.projecteka.library.common.Serializer.from;
 
 @AllArgsConstructor
 @Slf4j
 public class PostDataFlowRequestApproval {
-    private final AmqpTemplate amqpTemplate;
-    private final DestinationsConfig destinationsConfig;
+    private final SenderOptions senderOptions;
+    private final DestinationInfo destinationInfo;
 
     @SneakyThrows
-    public Mono<Void> broadcastDataFlowRequest(
+    public void broadcastDataFlowRequest(
             String transactionId,
             in.projecteka.dataflow.model.DataFlowRequest dataFlowRequest) {
-        DestinationsConfig.DestinationInfo destinationInfo =
-                destinationsConfig.getQueues().get(HIP_DATA_FLOW_REQUEST_QUEUE);
-
-        return Mono.create(monoSink -> {
-            amqpTemplate.convertAndSend(
-                    destinationInfo.getExchange(),
-                    destinationInfo.getRoutingKey(),
-                    DataFlowRequestMessage.builder()
+        try (Sender sender = RabbitFlux.createSender(senderOptions)) {
+            Flux<OutboundMessage> outboundFlux =
+                    Flux.fromIterable(List.of(DataFlowRequestMessage.builder()
                             .transactionId(transactionId)
                             .dataFlowRequest(dataFlowRequest)
-                            .build());
-            log.info("Broadcasting data flow request with transaction id : " + transactionId);
-            monoSink.success();
-        });
+                            .build()))
+                            .map(message -> {
+                                String exchange = destinationInfo.getExchange();
+                                String routingKey = destinationInfo.getRoutingKey();
+                                return new OutboundMessage(exchange, routingKey, from(message).getBytes());
+                            });
+            sender.send(outboundFlux)
+                    .doOnError(e -> log.error("Send failed", e))
+                    .subscribe();
+        }
     }
 }

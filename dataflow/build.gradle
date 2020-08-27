@@ -28,7 +28,6 @@ bootJar {
 bootRunLocal.finalizedBy bootRun
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-amqp'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.data:spring-data-redis'
@@ -46,6 +45,7 @@ dependencies {
     testImplementation 'org.jeasy:easy-random-core:4.2.0'
     implementation 'com.nimbusds:nimbus-jose-jwt:8.20'
     implementation 'io.lettuce:lettuce-core:5.3.3.RELEASE'
+    implementation "io.projectreactor.rabbitmq:reactor-rabbitmq:1.4.3.RELEASE"
 
     implementation project(':commons')
 }

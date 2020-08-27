@@ -37,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -90,8 +91,7 @@ class DataFlowRequesterTest {
         when(dataFlowRequestRepository.addDataFlowRequest(anyString(),
                 any(DataFlowRequest.class)))
                 .thenReturn(Mono.create(MonoSink::success));
-        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(),
-                any(DataFlowRequest.class))).thenReturn(Mono.empty());
+        doNothing().when(postDataFlowRequestApproval).broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class));
 
         StepVerifier.create(dataFlowRequester.requestHealthData(request))
                 .expectNextMatches(Objects::nonNull)
@@ -105,8 +105,7 @@ class DataFlowRequesterTest {
 
         when(consentManagerClient.getConsentArtefact(request.getConsent().getId()))
                 .thenReturn(Mono.just(consentArtefactRepresentation));
-        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(),
-                any(DataFlowRequest.class))).thenReturn(Mono.empty());
+        doNothing().when(postDataFlowRequestApproval).broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class));
 
         StepVerifier.create(dataFlowRequester.requestHealthData(request))
                 .expectErrorMatches(e -> (e instanceof ClientError) && ((ClientError) e).getHttpStatus().is4xxClientError())
@@ -158,7 +157,7 @@ class DataFlowRequesterTest {
         StepVerifier.create(dataFlowRequester.updateDataflowRequestStatus(healthInformationResponse))
                 .verifyComplete();
         List<ILoggingEvent> logsList = listAppender.list;
-        assertEquals("DataFlowRequest failed for request id requestId",logsList.get(0).getFormattedMessage());
+        assertEquals("DataFlowRequest failed for request id requestId", logsList.get(0).getFormattedMessage());
     }
 
     @Test
@@ -183,17 +182,17 @@ class DataFlowRequesterTest {
                 .thenReturn(Mono.empty());
         when(dataFlowRequestClient.sendHealthInformationResponseToGateway(dataFlowRequestResultCaptor.capture(), eq(hiuId)))
                 .thenReturn(Mono.empty());
-        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(),any())).thenReturn(Mono.empty());
+        doNothing().when(postDataFlowRequestApproval).broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class));
 
         var producer = dataFlowRequester.requestHealthDataInfo(dataFlowRequest);
 
         StepVerifier.create(producer)
                 .verifyComplete();
 
-        verify(postDataFlowRequestApproval,times(1)).broadcastDataFlowRequest(any(),any());
-        verify(consentManagerClient,times(1)).getConsentArtefact(eq(dataFlowRequest.getHiRequest().getConsent().getId()));
-        verify(dataFlowRequestRepository,times(1)).addDataFlowRequest(any(),any());
-        verify(dataFlowRequestClient,times(1)).sendHealthInformationResponseToGateway(any(),anyString());
+        verify(postDataFlowRequestApproval, times(1)).broadcastDataFlowRequest(any(), any());
+        verify(consentManagerClient, times(1)).getConsentArtefact(eq(dataFlowRequest.getHiRequest().getConsent().getId()));
+        verify(dataFlowRequestRepository, times(1)).addDataFlowRequest(any(), any());
+        verify(dataFlowRequestClient, times(1)).sendHealthInformationResponseToGateway(any(), anyString());
         assertThat(dataFlowRequestResultCaptor.getValue().getHiRequest()).isNotNull();
         assertThat(dataFlowRequestResultCaptor.getValue().getError()).isNull();
     }

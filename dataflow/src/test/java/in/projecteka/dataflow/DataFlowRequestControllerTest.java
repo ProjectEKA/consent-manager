@@ -43,10 +43,6 @@ import static reactor.core.publisher.Mono.just;
 @AutoConfigureWebTestClient
 class DataFlowRequestControllerTest {
 
-    @SuppressWarnings("unused")
-    @MockBean
-    private DestinationsConfig destinationsConfig;
-
     @Autowired
     private WebTestClient webTestClient;
 
@@ -196,7 +192,7 @@ class DataFlowRequestControllerTest {
         webTestClient
                 .post()
                 .uri(PATH_HEALTH_INFORMATION_ON_REQUEST)
-                .header(HttpHeaders.AUTHORIZATION,token)
+                .header(HttpHeaders.AUTHORIZATION, token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(healthInformationResponse))
                 .exchange()
@@ -216,7 +212,7 @@ class DataFlowRequestControllerTest {
         webTestClient
                 .post()
                 .uri(PATH_HEALTH_INFORMATION_ON_REQUEST)
-                .header(HttpHeaders.AUTHORIZATION,token)
+                .header(HttpHeaders.AUTHORIZATION, token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(healthInformationResponse))
                 .exchange()

@@ -3,12 +3,14 @@ package in.projecteka.dataflow;
 import in.projecteka.dataflow.model.DataFlowRequestMessage;
 import in.projecteka.dataflow.model.hip.DataRequest;
 import in.projecteka.dataflow.model.hip.HiRequest;
+import in.projecteka.library.common.Serializer;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.AmqpRejectAndDontRequeueException;
-import org.springframework.amqp.core.MessageListener;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import reactor.core.publisher.Mono;
+import reactor.rabbitmq.RabbitFlux;
+import reactor.rabbitmq.Receiver;
+import reactor.rabbitmq.ReceiverOptions;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
@@ -20,47 +22,39 @@ import static in.projecteka.dataflow.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
 @AllArgsConstructor
 public class DataFlowBroadcastListener {
     private static final Logger logger = LoggerFactory.getLogger(DataFlowBroadcastListener.class);
-    private final MessageListenerContainerFactory messageListenerContainerFactory;
-    private final Jackson2JsonMessageConverter converter;
+    private final ReceiverOptions receiverOptions;
     private final DataRequestNotifier dataRequestNotifier;
     private final ConsentManagerClient consentManagerClient;
 
     @PostConstruct
     public void subscribe() {
-
-        var mlc = messageListenerContainerFactory.createMessageListenerContainer(HIP_DATA_FLOW_REQUEST_QUEUE);
-
-        MessageListener messageListener = message -> {
-            try {
-                DataFlowRequestMessage dataFlowRequestMessage =
-                        (DataFlowRequestMessage) converter.fromMessage(message);
-                logger.info("Received message for Request id : {}", dataFlowRequestMessage
-                        .getTransactionId());
-                var dataFlowRequest = dataFlowRequestMessage.getDataFlowRequest();
-                DataRequest dataRequest = DataRequest.builder()
-                        .transactionId(UUID.fromString(dataFlowRequestMessage.getTransactionId()))
-                        .requestId(UUID.randomUUID())
-                        .timestamp(LocalDateTime.now(ZoneOffset.UTC))
-                        .hiRequest(HiRequest.builder()
-                                .consent(dataFlowRequest.getConsent())
-                                .dataPushUrl(dataFlowRequest.getDataPushUrl())
-                                .dateRange(dataFlowRequest.getDateRange())
-                                .keyMaterial(dataFlowRequest.getKeyMaterial())
-                                .build())
-                        .build();
-                configureAndSendDataRequestFor(dataRequest);
-            } catch (Exception e) {
-                throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
-            }
-        };
-        mlc.setupMessageListener(messageListener);
-        mlc.start();
+        try (Receiver receiver = RabbitFlux.createReceiver(receiverOptions)) {
+            receiver.consumeAutoAck(HIP_DATA_FLOW_REQUEST_QUEUE)
+                    .map(delivery -> Serializer.to(delivery.getBody(), DataFlowRequestMessage.class))
+                    .flatMap(message -> {
+                        logger.info("Received message for Request id : {}", message
+                                .getTransactionId());
+                        var dataFlowRequest = message.getDataFlowRequest();
+                        DataRequest dataRequest = DataRequest.builder()
+                                .transactionId(UUID.fromString(message.getTransactionId()))
+                                .requestId(UUID.randomUUID())
+                                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
+                                .hiRequest(HiRequest.builder()
+                                        .consent(dataFlowRequest.getConsent())
+                                        .dataPushUrl(dataFlowRequest.getDataPushUrl())
+                                        .dateRange(dataFlowRequest.getDateRange())
+                                        .keyMaterial(dataFlowRequest.getKeyMaterial())
+                                        .build())
+                                .build();
+                        return configureAndSendDataRequestFor(dataRequest);
+                    })
+                    .subscribe();
+        }
     }
 
-    public void configureAndSendDataRequestFor(DataRequest dataFlowRequest) {
-        consentManagerClient.getConsentArtefact(dataFlowRequest.getHiRequest().getConsent().getId())
-                .flatMap(caRep -> dataRequestNotifier.notifyHip(
-                        dataFlowRequest, caRep.getConsentDetail().getHip().getId())
-                ).block();
+    public Mono<?> configureAndSendDataRequestFor(DataRequest dataFlowRequest) {
+        return consentManagerClient.getConsentArtefact(dataFlowRequest.getHiRequest().getConsent().getId())
+                .flatMap(caRep -> dataRequestNotifier.notifyHip(dataFlowRequest,
+                        caRep.getConsentDetail().getHip().getId()));
     }
 }

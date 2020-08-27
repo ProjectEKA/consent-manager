@@ -7,11 +7,12 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.nimbusds.jose.jwk.JWKSet;
-import in.projecteka.dataflow.DestinationsConfig.DestinationInfo;
+import com.rabbitmq.client.ConnectionFactory;
 import in.projecteka.dataflow.properties.DataFlowConsentManagerProperties;
 import in.projecteka.dataflow.properties.DbOptions;
 import in.projecteka.dataflow.properties.GatewayServiceProperties;
 import in.projecteka.dataflow.properties.IdentityServiceProperties;
+import in.projecteka.dataflow.properties.RabbitmqProperties;
 import in.projecteka.dataflow.properties.RedisOptions;
 import in.projecteka.library.clients.IdentityServiceClient;
 import in.projecteka.library.clients.ServiceAuthenticationClient;
@@ -31,9 +32,6 @@ import io.lettuce.core.SocketOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
-import org.springframework.amqp.core.AmqpTemplate;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
@@ -57,12 +55,14 @@ import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.scheduler.Schedulers;
+import reactor.rabbitmq.ReceiverOptions;
+import reactor.rabbitmq.SenderOptions;
 
 import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import static in.projecteka.dataflow.Constants.EXCHANGE;
@@ -166,17 +166,8 @@ public class DataFlowConfiguration {
     }
 
     @Bean
-    public DestinationsConfig destinationsConfig() {
-        HashMap<String, DestinationInfo> queues = new HashMap<>();
-        queues.put(HIP_DATA_FLOW_REQUEST_QUEUE,
-                new DestinationInfo(EXCHANGE, HIP_DATA_FLOW_REQUEST_QUEUE));
-        return new DestinationsConfig(queues);
-    }
-
-    @Bean
-    public in.projecteka.dataflow.PostDataFlowRequestApproval postDataFlowRequestApproval(AmqpTemplate amqpTemplate,
-                                                                                          DestinationsConfig destinationsConfig) {
-        return new in.projecteka.dataflow.PostDataFlowRequestApproval(amqpTemplate, destinationsConfig);
+    public in.projecteka.dataflow.PostDataFlowRequestApproval postDataFlowRequestApproval() {
+        return new in.projecteka.dataflow.PostDataFlowRequestApproval(null, new DestinationInfo(EXCHANGE, HIP_DATA_FLOW_REQUEST_QUEUE));
     }
 
     @Bean
@@ -186,35 +177,59 @@ public class DataFlowConfiguration {
     }
 
     @Bean
-    public Jackson2JsonMessageConverter converter() {
-        var objectMapper = new ObjectMapper()
+    public ObjectMapper converter() {
+        return new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return new Jackson2JsonMessageConverter(objectMapper);
     }
 
     @Bean
-    public MessageListenerContainerFactory messageListenerContainerFactory(
-            ConnectionFactory connectionFactory,
-            Jackson2JsonMessageConverter jackson2JsonMessageConverter) {
-        return new MessageListenerContainerFactory(connectionFactory, jackson2JsonMessageConverter);
+    public ReceiverOptions receiverOptions(ConnectionFactory connectionFactory) {
+        return new ReceiverOptions()
+                .connectionFactory(connectionFactory)
+                .connectionSubscriptionScheduler(Schedulers.boundedElastic());
     }
 
     @Bean
-    public DataFlowBroadcastListener dataFlowBroadcastListener(
-            @Qualifier("customBuilder") WebClient.Builder builder,
-            DataFlowConsentManagerProperties dataFlowConsentManagerProperties,
-            IdentityService identityService,
-            MessageListenerContainerFactory messageListenerContainerFactory,
-            Jackson2JsonMessageConverter jackson2JsonMessageConverter,
-            DataRequestNotifier dataRequestNotifier) {
-        return new DataFlowBroadcastListener(messageListenerContainerFactory,
-                jackson2JsonMessageConverter,
-                dataRequestNotifier,
-                new ConsentManagerClient(builder,
-                        dataFlowConsentManagerProperties.getUrl(),
-                        identityService::authenticate));
+    public ConnectionFactory connectionFactory(RabbitmqProperties rabbitmqProperties) {
+        ConnectionFactory connectionFactory = new ConnectionFactory();
+        connectionFactory.setHost(rabbitmqProperties.getHost());
+        connectionFactory.setPort(rabbitmqProperties.getPort());
+        connectionFactory.setUsername(rabbitmqProperties.getUsername());
+        connectionFactory.setPassword(rabbitmqProperties.getPassword());
+        return connectionFactory;
     }
+
+    @Bean
+    public SenderOptions senderOptions(ConnectionFactory connectionFactory) {
+        connectionFactory.useNio();
+        return new SenderOptions()
+                .connectionFactory(connectionFactory)
+                .resourceManagementScheduler(Schedulers.boundedElastic());
+    }
+
+//    @Bean
+//    public MessageListenerContainerFactory messageListenerContainerFactory(
+//            ConnectionFactory connectionFactory,
+//            Jackson2JsonMessageConverter jackson2JsonMessageConverter) {
+//        return new MessageListenerContainerFactory(connectionFactory, jackson2JsonMessageConverter);
+//    }
+
+//    @Bean
+//    public DataFlowBroadcastListener dataFlowBroadcastListener(
+//            @Qualifier("customBuilder") WebClient.Builder builder,
+//            DataFlowConsentManagerProperties dataFlowConsentManagerProperties,
+//            IdentityService identityService,
+//            MessageListenerContainerFactory messageListenerContainerFactory,
+//            Jackson2JsonMessageConverter jackson2JsonMessageConverter,
+//            DataRequestNotifier dataRequestNotifier) {
+//        return new DataFlowBroadcastListener(messageListenerContainerFactory,
+//                jackson2JsonMessageConverter,
+//                dataRequestNotifier,
+//                new ConsentManagerClient(builder,
+//                        dataFlowConsentManagerProperties.getUrl(),
+//                        identityService::authenticate));
+//    }
 
     @Bean
     public DataFlowRequestClient dataFlowRequestClient(@Qualifier("customBuilder") WebClient.Builder builder,

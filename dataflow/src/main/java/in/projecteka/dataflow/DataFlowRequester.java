@@ -118,7 +118,7 @@ public class DataFlowRequester {
     }
 
     private Mono<Void> notifyHIP(String transactionId, DataFlowRequest dataFlowRequest) {
-        return postDataFlowrequestApproval.broadcastDataFlowRequest(transactionId, dataFlowRequest);
+        return Mono.fromRunnable(() -> postDataFlowrequestApproval.broadcastDataFlowRequest(transactionId, dataFlowRequest));
     }
 
     private Mono<DataFlowRequest> saveNotificationRequest(

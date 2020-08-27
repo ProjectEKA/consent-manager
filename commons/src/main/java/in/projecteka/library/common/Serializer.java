@@ -39,6 +39,11 @@ public final class Serializer {
         return mapper.readValue(value.getBytes(), type);
     }
 
+    @SneakyThrows
+    public static <T> T to(byte[] value, Class<T> type) {
+        return mapper.readValue(value, type);
+    }
+
     public static <T> Optional<T> tryTo(String value, Class<T> type) {
         try {
             logger.debug("String to be parsed: {}", value);

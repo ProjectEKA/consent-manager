@@ -1,5 +1,5 @@
 server:
-  port: 8090
+  port: 8000
 dataflow:
   gatewayservice:
     baseUrl: ${GATEWAY_BASE_URL}

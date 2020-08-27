@@ -1,5 +1,5 @@
 server:
-  port: 8010
+  port: 8090
 dataflow:
   gatewayservice:
     baseUrl: http://localhost:8004/v0.5

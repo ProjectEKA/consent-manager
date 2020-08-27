@@ -16,6 +16,7 @@ import in.projecteka.dataflow.properties.RedisOptions;
 import in.projecteka.library.clients.IdentityServiceClient;
 import in.projecteka.library.clients.ServiceAuthenticationClient;
 import in.projecteka.library.common.GatewayTokenVerifier;
+import in.projecteka.library.common.GlobalExceptionHandler;
 import in.projecteka.library.common.IdentityService;
 import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceAuthentication;
@@ -35,8 +36,12 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.web.ResourceProperties;
+import org.springframework.boot.web.reactive.error.ErrorAttributes;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
@@ -47,6 +52,7 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.http.client.reactive.ClientHttpConnector;
+import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
@@ -301,5 +307,19 @@ public class DataFlowConfiguration {
                                               ServiceAuthentication serviceAuthentication,
                                               GatewayServiceProperties gatewayServiceProperties) {
         return new DataRequestNotifier(builder.build(), serviceAuthentication::authenticate, gatewayServiceProperties);
+    }
+
+    @Bean
+    // This exception handler needs to be given highest priority compared to DefaultErrorWebExceptionHandler, hence order = -2.
+    @Order(-2)
+    public GlobalExceptionHandler clientErrorExceptionHandler(ErrorAttributes errorAttributes,
+                                                              ResourceProperties resourceProperties,
+                                                              ApplicationContext applicationContext,
+                                                              ServerCodecConfigurer serverCodecConfigurer) {
+
+        GlobalExceptionHandler clientErrorExceptionHandler = new GlobalExceptionHandler(errorAttributes,
+                resourceProperties, applicationContext);
+        clientErrorExceptionHandler.setMessageWriters(serverCodecConfigurer.getWriters());
+        return clientErrorExceptionHandler;
     }
 }

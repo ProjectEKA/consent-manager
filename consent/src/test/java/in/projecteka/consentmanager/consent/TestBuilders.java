@@ -6,7 +6,9 @@ import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.FetchRequest;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
+import in.projecteka.consentmanager.consent.model.request.ConsentArtefactReference;
 import in.projecteka.consentmanager.consent.model.request.ConsentRequest;
+import in.projecteka.consentmanager.consent.model.request.ConsentRequestStatus;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestResult;
@@ -57,6 +59,14 @@ public class TestBuilders {
 
     public static CertResponse.CertResponseBuilder certResponse() {
         return easyRandom.nextObject(CertResponse.CertResponseBuilder.class);
+    }
+
+    public static ConsentRequestStatus.ConsentRequestStatusBuilder consentRequestStatus() {
+        return easyRandom.nextObject(ConsentRequestStatus.ConsentRequestStatusBuilder.class);
+    }
+
+    public static ConsentArtefactReference.ConsentArtefactReferenceBuilder consentArtefactReference() {
+        return easyRandom.nextObject(ConsentArtefactReference.ConsentArtefactReferenceBuilder.class);
     }
 
     public static String string() {

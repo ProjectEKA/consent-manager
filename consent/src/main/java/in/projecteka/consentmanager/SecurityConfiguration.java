@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static in.projecteka.consentmanager.Constants.PATH_HEARTBEAT;
+import static in.projecteka.consentmanager.consent.Constants.CONSENT_REQUESTS_STATUS;
 import static in.projecteka.consentmanager.consent.Constants.GET_CONSENT_CERT;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
@@ -85,7 +86,8 @@ public class SecurityConfiguration {
             PATH_HIP_CONSENT_ON_NOTIFY,
             PATH_HIP_ADD_CONTEXTS,
             PATH_HIP_LINK_USER_AUTH_INIT,
-            USERS_AUTH_CONFIRM
+            USERS_AUTH_CONFIRM,
+            CONSENT_REQUESTS_STATUS
     };
 
     static {
@@ -109,6 +111,8 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_CONSENT_ON_NOTIFY, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_ADD_CONTEXTS, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(USERS_AUTH_CONFIRM, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(CONSENT_REQUESTS_STATUS, HttpMethod.POST));
+
         RequestMatcher approveMatcher = new RequestMatcher("/consent-requests/**/approve",
                 HttpMethod.POST,
                 SCOPE_CONSENT_APPROVE);

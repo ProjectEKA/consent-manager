@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.dataflow;
 
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
+import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.DataRequestNotifier;
 import in.projecteka.consentmanager.dataflow.model.DataFlowRequestMessage;
 import in.projecteka.consentmanager.dataflow.model.hip.DataRequest;
@@ -25,7 +26,7 @@ public class DataFlowBroadcastListener {
     private final MessageListenerContainerFactory messageListenerContainerFactory;
     private final Jackson2JsonMessageConverter converter;
     private final DataRequestNotifier dataRequestNotifier;
-    private final DataFlowRequestRepository dataFlowRequestRepository;
+    private final ConsentManagerClient consentManagerClient;
 
     @PostConstruct
     public void subscribe() {
@@ -60,8 +61,9 @@ public class DataFlowBroadcastListener {
     }
 
     public void configureAndSendDataRequestFor(DataRequest dataFlowRequest) {
-        dataFlowRequestRepository.getHipIdFor(dataFlowRequest.getHiRequest().getConsent().getId())
-                .flatMap(hipId -> dataRequestNotifier.notifyHip(dataFlowRequest, hipId))
-                .block();
+        consentManagerClient.getConsentArtefact(dataFlowRequest.getHiRequest().getConsent().getId())
+                .flatMap(caRep -> dataRequestNotifier.notifyHip(
+                        dataFlowRequest, caRep.getConsentDetail().getHip().getId())
+                ).block();
     }
 }

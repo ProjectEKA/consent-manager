@@ -6,20 +6,25 @@ skinparam maxMessageSize 200
 
 LAYOUT_TOP_DOWN
 
-Container(consent_manager_client, "consent_manager CLIENT", "Andriod", "Used by patients, for signing up with consent_manager, linking HIP identifiers, granting/managing consent, see history of access, view health info")
+Container(consent_manager_client, "consent_manager CLIENT", "Android", "Used by patients, for signing up with consent_manager, linking HIP identifiers, granting/managing consent, see history of access, view health info")
 
 System_Boundary(c1, "consent_manager") {
-    Container(consent_manager_auth, "AUTH Server", "Java, Spring Webflux, Spring Security, Netty, Postgres", "Manages patient profile information and authenticate them")
-    Container(consent_manager_core, "CORE", "Java, Spring Webflux, Spring Security, Netty, Postgres, RabbitMQ", "Fiduciary that manages patient consents, information flow between HIP and HIU")
+    Container(consent_manager_proxy, "Proxy/BFF", "Java, Spring Webflux, Spring Security, Netty, Postgres, RabbitMQ, Redis", "Exposes all the domain services to the outside world")
+    Container(consent_manager_consent, "Consent/Link Service", "Java, Spring Webflux, Spring Security, Netty, Postgres, RabbitMQ, Redis", "Handles all the consent and link related workflows")
+    Container(consent_manager_user, "User Service", "Java, Spring Webflux, Spring Security, Netty, Postgres, RabbitMQ, Redis", "Handles all the user details (login, profile, etc)")
+    Container(consent_manager_data_flow, "Data Flow Service", "Java, Spring Webflux, Spring Security, Netty, Postgres, RabbitMQ, Redis", "Handles all the data flow requests")
 }
 
-System_Boundary(c2, "HIP") {
-    Container(hip, "HIP", "ASP.net core, .net core, Postgres", "Shared Library, handling the common workflow/interactions, while providing extension means for plugging HIP specific Health Information System")
+System_Boundary(c2, "gateway") {
+    Container(gateway_core, "CORE", "Java, Spring Webflux, Spring Security, Netty, Postgres", "Orchestrator/Router routes the request to the respective entity based on routing key")
 }
 
-System_Boundary(c3, "HIU") {
-    Container(hiu_auth, "AUTH Server", "Java, Spring Webflux, Spring Security, Netty, Postgres", "Authenticate doctors")
-    Container(hiu_server, "HIU SERVER", "Java, Spring Webflux, Netty, Postgres", "System that manages doctor requests and fetches information from consent_manager")
+System_Boundary(c3, "HIP-Bridge") {
+    Container(hip, "HIP-Bridge", "ASP.net core, .net core, Postgres", "Handling linking, consent artefact lifecycle, secure data transfer, extensible according to HIP's EMR interactions")
+}
+
+System_Boundary(c4, "HIU-Bridge") {
+    Container(hiu_server, "HIU SERVER", "Java, Spring Webflux, Netty, Postgres, RabbitMQ, Redis", "System that manages doctor/patient requests and fetches information from hospital")
     Container(hiu_client, "HIU CLIENT", "React", "SPA application for HIU users")
 }
 
@@ -27,17 +32,20 @@ System_Ext(registry, "Central Registry", "Key Registry for HIPs, consent_manager
 System_Ext(firebase, "Firebase", "Push notification to patient about new consents")
 System_Ext(sms_service, "SMS sender", "sending OTP to the patient for verification")
 
-Rel_Down(consent_manager_client, consent_manager_auth, "Uses to create profile/authenticate", "HTTPS")
-Rel_Down(consent_manager_client, consent_manager_core, "Uses to discover HIPs/manage consents", "HTTPS")
-Rel_L(consent_manager_core, hip, "Fetches encrypted data from", "HTTPS")
-Rel(hip, consent_manager_core, "Send index to", "HTTPS")
-Rel_L(hiu_server, consent_manager_core, "Get encrypted data from", "HTTPS")
+Rel_Down(consent_manager_client, consent_manager_proxy, "Uses to discover HIPs/manage consents", "HTTPS")
+Rel_L(consent_manager_proxy, gateway_core, "Fetches encrypted data from", "HTTPS")
+Rel(gateway_core, hip, "Gets/Returns discovery, consent artefact, data requests in/out via", "HTTPS")
+Rel(hip, gateway_core, "Pushes encrypted data/index", "HTTPS")
+Rel_L(hiu_server, gateway_core, "Consent requests, data requests against a CM goes via", "HTTPS")
+Rel_U(hip, hiu_server, " ", "HTTPS")
+Rel_L(gateway_core, hiu_server, " ", "HTTPS")
 Rel_L(hiu_client, hiu_server, "Get encrypted/decrypted data from", "HTTPS")
-Rel_L(hiu_client, hiu_auth, "Uses to authenticate", "HTTPS")
-Rel_D(hip, registry, "Authenticates itself to communicate to consent_manager", "HTTPS")
-Rel_D(consent_manager_core, registry, "Authenticates itself to communicate to HIP", "HTTPS")
-Rel_D(consent_manager_core, firebase, "sends push notification through", "HTTPS")
-Rel_D(consent_manager_core, sms_service, "sends sms through", "HTTPS")
+Rel_D(consent_manager_proxy, registry, "Get facilities(hospitals, labs, etc) information", "HTTPS")
+Rel_L(consent_manager_proxy, consent_manager_user, "Routes requests related to users information (profile, pin, sessions, etc)", "HTTP")
+Rel_D(consent_manager_proxy, consent_manager_consent, "Routes requests related to discovery, link, consent", "HTTP")
+Rel_U(consent_manager_proxy, consent_manager_data_flow, "Routes requests related to data flow", "HTTP")
+Rel_D(consent_manager_proxy, firebase, "sends push notification through", "HTTPS")
+Rel_D(consent_manager_proxy, sms_service, "sends sms through", "HTTPS")
 Rel_U(firebase, consent_manager_client, "sends push notification to", "HTTPS")
 Rel_U(sms_service, consent_manager_client, "sends sms to", "HTTPS")
 

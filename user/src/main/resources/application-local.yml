@@ -41,7 +41,7 @@ user:
   db:
     host: localhost
     port: 5432
-    schema: consent_manager
+    schema: user_service
     user: postgres
     password: password
     poolSize: 5

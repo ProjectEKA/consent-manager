@@ -7,6 +7,7 @@ import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceCaller;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +24,7 @@ import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORM
 
 @RestController
 @AllArgsConstructor
+@ConditionalOnExpression("${consentmanager.dataflow.enabled:true}")
 public class DataFlowRequestController {
     private final DataFlowRequester dataFlowRequester;
     private final RequestValidator validator;

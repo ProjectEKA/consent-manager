@@ -11,7 +11,7 @@ task bootRunLocal {
 
 sonarqube {
     properties {
-        property "sonar.projectKey", "projecteka_user_service"
+        property "sonar.projectKey", "projecteka_data_flow_service"
         property "sonar.organization", "projecteka"
         property "sonar.host.url", "https://sonarcloud.io"
         property "sonar.login", "dd5db84dbf8f6dbd393291c26fe038ab54f00072"

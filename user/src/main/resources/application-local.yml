@@ -15,7 +15,7 @@ user:
   gateway-service:
     baseUrl: http://localhost:8000/v0.5
     requestTimeout: 5000
-    clientSecret: ${GATEWAY_CLIENT_SECRET}
+    clientSecret: ${GATEWAY_CLIENTSECRET}
     clientId: ncg
     jwkUrl: http://localhost:8000/v0.5/certs
   locked-user-service:
@@ -45,7 +45,6 @@ user:
     user: postgres
     password: password
     poolSize: 5
-  cache-method: guava
   listeners:
     maximumRetries: 10
     # In milliseconds
@@ -55,6 +54,3 @@ keystore:
   password: password
   store-type: PKCS12
   alias: test-pin-verification
-spring:
-  main:
-    lazy-initialization: true

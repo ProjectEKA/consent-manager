@@ -72,7 +72,7 @@ import static in.projecteka.library.common.Constants.DEFAULT_CACHE_VALUE;
 @Configuration
 public class DataFlowConfiguration {
 
-    @ConditionalOnProperty(value = "dataflow.cache-method", havingValue = "guava", matchIfMissing = true)
+    @ConditionalOnProperty(value = "dataflow.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"accessToken"})
     public CacheAdapter<String, String> createLoadingCacheAdapterForAccessToken() {
         return new LoadingCacheAdapter(stringStringLoadingCache(5));
@@ -89,7 +89,7 @@ public class DataFlowConfiguration {
                 });
     }
 
-    @ConditionalOnProperty(value = "dataflow.cache-method", havingValue = "redis")
+    @ConditionalOnProperty(value = "dataflow.cacheMethod", havingValue = "redis")
     @Bean({"accessToken"})
     public CacheAdapter<String, String> accessTokenCache(
             ReactiveRedisOperations<String, String> stringReactiveRedisOperations,
@@ -97,7 +97,7 @@ public class DataFlowConfiguration {
         return new RedisCacheAdapter(stringReactiveRedisOperations, 5, redisOptions.getRetry());
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @ConditionalOnProperty(value = "dataflow.cacheMethod", havingValue = "guava", matchIfMissing = true)
     @Bean({"cacheForReplayAttack"})
     public CacheAdapter<String, LocalDateTime> stringLocalDateTimeCacheAdapter() {
         return new LoadingCacheGenericAdapter<>(stringLocalDateTimeLoadingCache(10), DEFAULT_CACHE_VALUE);
@@ -114,7 +114,7 @@ public class DataFlowConfiguration {
                 });
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @ConditionalOnProperty(value = "dataflow.cacheMethod", havingValue = "redis")
     @Bean({"cacheForReplayAttack"})
     public CacheAdapter<String, LocalDateTime> createRedisCacheAdapterForReplayAttack(
             ReactiveRedisOperations<String, LocalDateTime> localDateTimeOps,
@@ -122,7 +122,7 @@ public class DataFlowConfiguration {
         return new RedisGenericAdapter<>(localDateTimeOps, 10, redisOptions.getRetry());
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @ConditionalOnProperty(value = "dataflow.cacheMethod", havingValue = "redis")
     @Bean("Lettuce")
     ReactiveRedisConnectionFactory redisConnection(RedisOptions redisOptions) {
         var socketOptions = SocketOptions.builder().keepAlive(redisOptions.isKeepAliveEnabled()).build();
@@ -135,7 +135,7 @@ public class DataFlowConfiguration {
         return new LettuceConnectionFactory(configuration, clientConfiguration);
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @ConditionalOnProperty(value = "dataflow.cacheMethod", havingValue = "redis")
     @Bean
     ReactiveRedisOperations<String, LocalDateTime> redisOperations(
             @Qualifier("Lettuce") ReactiveRedisConnectionFactory factory) {

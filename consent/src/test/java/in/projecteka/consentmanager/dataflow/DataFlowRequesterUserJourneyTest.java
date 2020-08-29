@@ -11,23 +11,15 @@ import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.dataflow.model.AccessPeriod;
 import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
-import in.projecteka.consentmanager.dataflow.model.ConsentPermission;
 import in.projecteka.consentmanager.dataflow.model.ConsentStatus;
-import in.projecteka.consentmanager.dataflow.model.DataFlowRequest;
-import in.projecteka.consentmanager.dataflow.model.DataFlowRequestResponse;
-import in.projecteka.consentmanager.dataflow.model.DateRange;
 import in.projecteka.consentmanager.dataflow.model.HIUReference;
 import in.projecteka.consentmanager.dataflow.model.hip.DataRequest;
-import in.projecteka.library.clients.model.Error;
-import in.projecteka.library.clients.model.ErrorCode;
-import in.projecteka.library.clients.model.ErrorRepresentation;
 import in.projecteka.library.common.CentralRegistry;
 import in.projecteka.library.common.GatewayTokenVerifier;
 import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceCaller;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,23 +35,20 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoSink;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static com.google.common.net.HttpHeaders.AUTHORIZATION;
-import static in.projecteka.library.common.Role.GATEWAY;
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
-import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.string;
 import static in.projecteka.consentmanager.dataflow.Utils.toDate;
 import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
+import static in.projecteka.library.common.Role.GATEWAY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -140,187 +129,6 @@ class DataFlowRequesterUserJourneyTest {
         consentManagerServer.shutdown();
         identityServer.shutdown();
         gatewayServer.shutdown();
-    }
-
-    @Test
-    void shouldAcknowledgeDataFlowRequest() throws IOException {
-        String token = string();
-        var hiuId = "10000005";
-        var dataFlowRequest = dataFlowRequest().dateRange(DateRange.builder()
-                .from(toDate("2020-01-16T08:47:48"))
-                .to(toDate("2020-01-20T08:47:48"))
-                .build()).build();
-        ConsentArtefactRepresentation consentArtefactRepresentation =
-                consentArtefactRepresentation().status(ConsentStatus.GRANTED).build();
-        consentArtefactRepresentation.getConsentDetail().getPermission().
-                setDateRange(AccessPeriod.builder()
-                        .fromDate(toDate("2020-01-15T08:47:48"))
-                        .toDate(toDate("2020-01-29T08:47:48"))
-                        .build());
-        consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
-        LocalDateTime consentExpiryDate = LocalDateTime.now().plusSeconds(9000000);
-        consentArtefactRepresentation.getConsentDetail().getPermission().setDataEraseAt(consentExpiryDate);
-        var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
-        consentManagerServer.enqueue(
-                new MockResponse()
-                        .setHeader("Content-Type", "application/json")
-                        .setBody(consentArtefactRepresentationJson));
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
-        when(validator.put(anyString(), any())).thenReturn(Mono.empty());
-        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
-        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
-                .thenReturn(Mono.empty());
-        when(dataFlowRequestRepository.addDataFlowRequest(anyString(), any(DataFlowRequest.class)))
-                .thenReturn(Mono.create(MonoSink::success));
-
-        webTestClient
-                .post()
-                .uri("/health-information/request")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(dataFlowRequest)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody(DataFlowRequestResponse.class)
-                .value(DataFlowRequestResponse::getTransactionId, Matchers.notNullValue());
-    }
-
-    @Test
-    void shouldThrowConsentArtefactExpired() throws IOException {
-        String token = string();
-        var session = "{\"accessToken\": \"eyJhbGc\", \"refreshToken\": \"eyJhbGc\"}";
-        var hiuId = "10000005";
-        var dataFlowRequest = dataFlowRequest()
-                .dateRange(DateRange.builder()
-                        .from(toDate("2020-01-14T08:47:48"))
-                        .to(toDate("2020-01-20T08:47:48")).build())
-                .build();
-
-        var consentArtefactRepresentation = consentArtefactRepresentation().build();
-        consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
-        ConsentPermission permission = consentArtefactRepresentation
-                .getConsentDetail()
-                .getPermission();
-        permission.setDateRange(AccessPeriod.builder().fromDate(toDate("2020-01-14T08:47:48")).toDate(toDate("2020" +
-                "-01-20T08:47:48")).build());
-        permission.setDataEraseAt(toDate("2020-01-15T08:47:48"));
-        var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
-        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_ARTEFACT_EXPIRED,
-                "Consent artefact expired"));
-        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
-        consentManagerServer.enqueue(
-                new MockResponse()
-                        .setHeader("Content-Type", "application/json")
-                        .setBody(consentArtefactRepresentationJson));
-        identityServer.enqueue(new MockResponse()
-                .setHeader("Content-Type", "application/json")
-                .setBody(session));
-        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
-        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
-                .thenReturn(Mono.empty());
-
-        webTestClient
-                .post()
-                .uri("/health-information/request")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(dataFlowRequest)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus()
-                .isEqualTo(410)
-                .expectBody()
-                .json(errorResponseJson);
-    }
-
-    @Test
-    void shouldThrowInvalidDateRange() throws IOException {
-        String token = string();
-        var hiuId = "10000005";
-        var dataFlowRequest = dataFlowRequest()
-                .dateRange(DateRange.builder()
-                        .from(toDate("2020-01-14T08:47:48"))
-                        .to(toDate("2020-01-20T08:47:48")).build())
-                .build();
-        var consentArtefactRepresentation = consentArtefactRepresentation().build();
-        consentArtefactRepresentation.getConsentDetail().getPermission().
-                setDateRange(AccessPeriod.builder()
-                        .fromDate(toDate("2020-01-15T08:47:48"))
-                        .toDate(toDate("2020-01-29T08:47:48"))
-                        .build());
-        consentArtefactRepresentation.setStatus(ConsentStatus.GRANTED);
-        consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
-        LocalDateTime consentExpiryDate = LocalDateTime.now().plusMinutes(1);
-        consentArtefactRepresentation.getConsentDetail().getPermission().setDataEraseAt(consentExpiryDate);
-        var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
-        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.INVALID_DATE_RANGE, "Date Range given is " +
-                "invalid"));
-        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
-        consentManagerServer.enqueue(
-                new MockResponse()
-                        .setHeader("Content-Type", "application/json")
-                        .setBody(consentArtefactRepresentationJson));
-        var user = "{\"preferred_username\": \"service-account-10000005\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-
-        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
-        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
-                .thenReturn(Mono.empty());
-
-        webTestClient
-                .post()
-                .uri("/health-information/request")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(dataFlowRequest)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus()
-                .isBadRequest()
-                .expectBody()
-                .json(errorResponseJson);
-    }
-
-    @Test
-    void shouldThrowConsentNotGranted() throws IOException {
-        String token = string();
-        var hiuId = "10000005";
-        var dataFlowRequest = dataFlowRequest()
-                .dateRange(DateRange.builder()
-                        .from(toDate("2020-01-14T08:47:48"))
-                        .to(toDate("2020-01-20T08:47:48")).build())
-                .build();
-        var consentArtefactRepresentation = consentArtefactRepresentation().status(ConsentStatus.REVOKED).build();
-        consentArtefactRepresentation.getConsentDetail().setHiu(HIUReference.builder().id(hiuId).name("MAX").build());
-        LocalDateTime consentExpiryDate = LocalDateTime.now().plusSeconds(9000000);
-        consentArtefactRepresentation.getConsentDetail().getPermission().setDataEraseAt(consentExpiryDate);
-        var consentArtefactRepresentationJson = OBJECT_MAPPER.writeValueAsString(consentArtefactRepresentation);
-        var errorResponse = new ErrorRepresentation(new Error(ErrorCode.CONSENT_NOT_GRANTED, "Not a granted consent."));
-        var errorResponseJson = OBJECT_MAPPER.writeValueAsString(errorResponse);
-        consentManagerServer.enqueue(
-                new MockResponse()
-                        .setHeader("Content-Type", "application/json")
-                        .setBody(consentArtefactRepresentationJson));
-        var user = "{\"preferred_username\": \"service-account-10000005\"}";
-        identityServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(user));
-        when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(new ServiceCaller(hiuId, List.of())));
-        when(postDataFlowRequestApproval.broadcastDataFlowRequest(anyString(), any(DataFlowRequest.class)))
-                .thenReturn(Mono.empty());
-
-        webTestClient
-                .post()
-                .uri("/health-information/request")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(dataFlowRequest)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus()
-                .isEqualTo(412)
-                .expectBody()
-                .json(errorResponseJson);
     }
 
     @Test

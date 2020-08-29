@@ -51,6 +51,7 @@ consentmanager:
     password: password
     poolSize: 5
   dataflow:
+    enabled: false
     consentmanager:
       url: http://localhost:9000
   linkservice:

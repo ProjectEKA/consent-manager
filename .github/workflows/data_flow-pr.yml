@@ -1,0 +1,24 @@
+name: Data Flow Service Pull Request Actions
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'dataflow/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Build and unit tests
+        run: ./gradlew clean :dataflow:test --info
+      - name: Code coverage
+        run: ./gradlew :dataflow:jacocoTestReport
+      - name: Sonarcube Analysis
+        run: ./gradlew :dataflow:sonarqube

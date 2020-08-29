@@ -65,6 +65,7 @@ consentmanager:
     password: ${POSTGRES_PASSWORD}
     poolSize: 5
   dataflow:
+    enabled: ${DATAFLOW_SERVICE_ENABLED:true}
     consentmanager:
       url: ${CONSENT_MANAGER_URL}
   linkservice:

@@ -12,7 +12,7 @@ dataflow:
   db:
     host: localhost
     port: 5432
-    schema: consent_manager
+    schema: dataflow_service
     user: postgres
     password: password
     poolSize: 5

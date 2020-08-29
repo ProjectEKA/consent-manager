@@ -1,0 +1,16 @@
+server:
+  port: 8000
+spring:
+  rabbitmq:
+    host: test
+    port: 8908
+    username: unknown
+    password: unknown
+dataflow:
+  db:
+    host: localhost
+    port: 5432
+    schema: consent_manager_test
+    user: dummy
+    password: dummy_pwd
+    poolSize: 5

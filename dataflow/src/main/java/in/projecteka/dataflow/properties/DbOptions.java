@@ -1,4 +1,4 @@
-package in.projecteka.user.properties;
+package in.projecteka.dataflow.properties;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
 
 @ConstructorBinding
-@ConfigurationProperties("user.db")
+@ConfigurationProperties("dataflow.db")
 @Getter
 @AllArgsConstructor
 public class DbOptions {

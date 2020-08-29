@@ -1,14 +1,11 @@
-package in.projecteka.consentmanager.dataflow;
+package in.projecteka.dataflow;
 
-import in.projecteka.consentmanager.dataflow.model.GatewayDataFlowRequest;
-import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
-import in.projecteka.consentmanager.dataflow.model.HealthInformationResponse;
-import in.projecteka.library.clients.model.ClientError;
+import in.projecteka.dataflow.model.GatewayDataFlowRequest;
+import in.projecteka.dataflow.model.HealthInfoNotificationRequest;
+import in.projecteka.dataflow.model.HealthInformationResponse;
 import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceCaller;
 import lombok.AllArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,38 +15,43 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
+import static in.projecteka.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
+import static in.projecteka.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
+import static in.projecteka.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
+import static in.projecteka.library.clients.model.ClientError.tooManyRequests;
+import static org.springframework.http.HttpStatus.ACCEPTED;
+import static reactor.core.publisher.Mono.defer;
+import static reactor.core.publisher.Mono.error;
+import static reactor.core.publisher.Mono.just;
 
 @RestController
 @AllArgsConstructor
-@ConditionalOnExpression("${consentmanager.dataflow.enabled:true}")
 public class DataFlowRequestController {
     private final DataFlowRequester dataFlowRequester;
     private final RequestValidator validator;
 
     @PostMapping(PATH_HEALTH_INFORMATION_REQUEST)
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(ACCEPTED)
     public Mono<Void> requestHealthInformationV1(@Valid @RequestBody GatewayDataFlowRequest dataFlowRequest) {
-        return Mono.just(dataFlowRequest)
+        return just(dataFlowRequest)
                 .filterWhen(req -> validator.validate(req.getRequestId().toString(), req.getTimestamp()))
-                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .switchIfEmpty(error(tooManyRequests()))
                 .flatMap(req -> ReactiveSecurityContextHolder.getContext()
                         .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
-                        .doOnSuccess(requester -> Mono.defer(() ->
+                        .doOnSuccess(requester -> defer(() ->
                                 validator.put(req.getRequestId().toString(), req.getTimestamp())
-                                        .then(dataFlowRequester.requestHealthDataInfo(dataFlowRequest))).subscribe())
+                                        .then(dataFlowRequester.requestHealthDataInfo(dataFlowRequest)))
+                                .subscribe())
                         .then());
     }
 
     @PostMapping(PATH_HEALTH_INFORMATION_ON_REQUEST)
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(ACCEPTED)
     public Mono<Void> onRequestHealthInformationV1(
             @RequestBody @Valid HealthInformationResponse healthInformationResponse) {
-        return Mono.just(healthInformationResponse)
+        return just(healthInformationResponse)
                 .filterWhen(res -> validator.validate(res.getRequestId().toString(), res.getTimestamp()))
-                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .switchIfEmpty(error(tooManyRequests()))
                 .flatMap(res -> validator.put(
                         healthInformationResponse.getRequestId().toString(),
                         healthInformationResponse.getTimestamp())
@@ -57,14 +59,14 @@ public class DataFlowRequestController {
     }
 
     @PostMapping(PATH_HEALTH_INFORMATION_NOTIFY)
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(ACCEPTED)
     public Mono<Void> healthInformationNotify(@RequestBody HealthInfoNotificationRequest notificationRequest) {
-        return Mono.just(notificationRequest)
+        return just(notificationRequest)
                 .filterWhen(req -> validator.validate(req.getRequestId().toString(), req.getTimestamp()))
-                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .switchIfEmpty(error(tooManyRequests()))
                 .flatMap(req -> ReactiveSecurityContextHolder.getContext()
                         .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
-                        .doOnSuccess(requester -> Mono.defer(() ->
+                        .doOnSuccess(requester -> defer(() ->
                                 validator.put(req.getRequestId().toString(), req.getTimestamp())
                                         .then(dataFlowRequester.notifyHealthInformationStatus(notificationRequest)))
                                 .subscribe())

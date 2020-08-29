@@ -43,6 +43,12 @@ project(':user') {
     }
 }
 
+project(':dataflow') {
+    dependencies {
+        implementation project(':commons')
+    }
+}
+
 bootJar {
     enabled = false
 }

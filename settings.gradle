@@ -3,4 +3,5 @@ rootProject.name = 'consent-manager'
 include 'commons'
 include 'consent'
 include 'user'
+include 'dataflow'
 

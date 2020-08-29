@@ -1,6 +1,5 @@
 package in.projecteka.library.common;
 
-import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
@@ -8,6 +7,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+import static in.projecteka.library.clients.model.ClientError.tooManyRequests;
 import static reactor.core.publisher.Mono.defer;
 import static reactor.core.publisher.Mono.just;
 
@@ -25,7 +25,7 @@ public class RequestValidator {
 
     public Mono<Boolean> validate(String requestId, LocalDateTime timestamp) {
         return isRequestIdPresent(keyFor(requestId))
-                .flatMap(result -> Mono.error(ClientError.tooManyRequests()))
+                .flatMap(result -> Mono.error(tooManyRequests()))
                 .then(defer(() -> just(isRequestIdValidInGivenTimestamp(timestamp))));
     }
 

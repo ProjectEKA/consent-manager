@@ -153,7 +153,8 @@ public class ConsentManagerConfiguration {
         return new ServiceAuthentication(serviceAuthenticationClient,
                 new ServiceCredential(gatewayServiceProperties.getClientId(),
                         gatewayServiceProperties.getClientSecret()),
-                accessToken);
+                accessToken,
+                "consent-manager");
     }
 
     @Bean

@@ -268,7 +268,8 @@ public class UserConfiguration {
             @Qualifier("accessToken") CacheAdapter<String, String> accessTokenCache) {
         return new ServiceAuthentication(serviceAuthenticationClient,
                 new ServiceCredential(gatewayServiceProperties.getClientId(), gatewayServiceProperties.getClientSecret()),
-                accessTokenCache);
+                accessTokenCache,
+                "user");
     }
 
     @Bean

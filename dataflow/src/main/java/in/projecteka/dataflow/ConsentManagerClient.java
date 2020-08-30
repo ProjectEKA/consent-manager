@@ -2,16 +2,21 @@ package in.projecteka.dataflow;
 
 import in.projecteka.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.library.clients.model.ClientError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.Properties;
 import java.util.function.Supplier;
 
 import static java.lang.String.format;
 import static java.util.function.Predicate.not;
+import static reactor.core.publisher.Mono.error;
 
 public class ConsentManagerClient {
+    private static final Logger logger = LoggerFactory.getLogger(ConsentManagerClient.class);
     private final WebClient webClient;
     private final String url;
 
@@ -32,7 +37,9 @@ public class ConsentManagerClient {
                         .header("Authorization", token)
                         .retrieve()
                         .onStatus(not(HttpStatus::is2xxSuccessful),
-                                clientResponse -> Mono.error(ClientError.consentArtefactNotFound()))
+                                clientResponse -> clientResponse.bodyToMono(Properties.class)
+                                        .doOnNext(properties -> logger.error("Error: {}", properties))
+                                        .then(error(ClientError.consentArtefactNotFound())))
                         .bodyToMono(ConsentArtefactRepresentation.class));
     }
 }

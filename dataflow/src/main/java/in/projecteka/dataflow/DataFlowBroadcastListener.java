@@ -28,6 +28,7 @@ public class DataFlowBroadcastListener {
     @PostConstruct
     public void subscribe() {
 
+        logger.info("Listener initiated");
         var mlc = messageListenerContainerFactory.createMessageListenerContainer(HIP_DATA_FLOW_REQUEST_QUEUE);
 
         MessageListener messageListener = message -> {
@@ -50,6 +51,7 @@ public class DataFlowBroadcastListener {
                         .build();
                 configureAndSendDataRequestFor(dataRequest);
             } catch (Exception e) {
+                logger.error("Error happened while sending {}", e.getMessage(), e);
                 throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
             }
         };
@@ -60,7 +62,7 @@ public class DataFlowBroadcastListener {
     public void configureAndSendDataRequestFor(DataRequest dataFlowRequest) {
         consentManagerClient.getConsentArtefact(dataFlowRequest.getHiRequest().getConsent().getId())
                 .flatMap(caRep -> dataRequestNotifier.notifyHip(
-                        dataFlowRequest, caRep.getConsentDetail().getHip().getId())
-                ).block();
+                        dataFlowRequest, caRep.getConsentDetail().getHip().getId()))
+                .block();
     }
 }

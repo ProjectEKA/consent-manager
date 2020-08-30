@@ -10,7 +10,7 @@
     ],
     "name": "Max Health Care",
     "active": true,
-    "type": [
+    "orgType": [
       {
         "coding": [
           {

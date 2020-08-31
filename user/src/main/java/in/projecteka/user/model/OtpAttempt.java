@@ -33,7 +33,7 @@ public class OtpAttempt {
         OTP_SUBMIT_RECOVER_PASSWORD,
         OTP_SUBMIT_LOGIN,
         OTP_SUBMIT_FORGOT_CONSENT_PIN,
-        OTP_SUBMIT_RECOVER_CM_ID;
+        OTP_SUBMIT_RECOVER_CM_ID
     }
 
     public enum AttemptStatus {

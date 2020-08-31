@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.clients;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestResult;
 import in.projecteka.consentmanager.consent.model.response.ConsentStatusResponse;
-import in.projecteka.consentmanager.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.properties.GatewayServiceProperties;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.ServiceAuthentication;
@@ -16,12 +15,9 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Properties;
-import java.util.function.Supplier;
 
 import static com.google.common.net.HttpHeaders.AUTHORIZATION;
 import static in.projecteka.consentmanager.Constants.HDR_HIU_ID;
-import static java.lang.String.format;
-import static java.util.function.Predicate.not;
 
 public class ConsentManagerClient {
     private static final Logger logger = LoggerFactory.getLogger(ConsentManagerClient.class);
@@ -29,34 +25,18 @@ public class ConsentManagerClient {
     private static final String CONSENT_FETCH_URL_PATH = "/consents/on-fetch";
     private static final String CONSENT_REQUEST_STATUS_URL_PATH = "/consent-requests/on-status";
     private final WebClient webClient;
-    private final String url;
 
     public ConsentManagerClient(WebClient.Builder webClient,
-                                String url, Supplier<Mono<String>> tokenGenerator,
+                                String url,
                                 GatewayServiceProperties gatewayServiceProperties,
                                 ServiceAuthentication serviceAuthentication) {
         this.webClient = webClient.build();
-        this.url = url;
-        this.tokenGenerator = tokenGenerator;
         this.gatewayServiceProperties = gatewayServiceProperties;
         this.serviceAuthentication = serviceAuthentication;
     }
 
-    private final Supplier<Mono<String>> tokenGenerator;
     private final GatewayServiceProperties gatewayServiceProperties;
     private final ServiceAuthentication serviceAuthentication;
-
-    public Mono<ConsentArtefactRepresentation> getConsentArtefact(String consentArtefactId) {
-        return tokenGenerator.get()
-                .flatMap(token -> webClient
-                        .get()
-                        .uri(format("%s/internal/consents/%s", url, consentArtefactId))
-                        .header("Authorization", token)
-                        .retrieve()
-                        .onStatus(not(HttpStatus::is2xxSuccessful),
-                                clientResponse -> Mono.error(ClientError.consentArtefactNotFound()))
-                        .bodyToMono(ConsentArtefactRepresentation.class));
-    }
 
     public Mono<Void> sendInitResponseToGateway(ConsentRequestResult consentRequestResult, String hiuId) {
         return serviceAuthentication.authenticate()

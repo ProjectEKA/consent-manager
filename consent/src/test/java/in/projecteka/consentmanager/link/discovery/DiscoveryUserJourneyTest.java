@@ -5,16 +5,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
-import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.library.clients.UserServiceClient;
 import in.projecteka.library.clients.model.Error;
 import in.projecteka.library.clients.model.ErrorCode;
 import in.projecteka.library.clients.model.ErrorRepresentation;
@@ -84,10 +83,6 @@ class DiscoveryUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private HipConsentNotificationListener hipConsentNotificationListener;
-
-    @SuppressWarnings("unused")
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @SuppressWarnings("unused")
     @MockBean

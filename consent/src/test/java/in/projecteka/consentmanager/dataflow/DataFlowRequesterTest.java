@@ -26,9 +26,9 @@ import reactor.test.StepVerifier;
 import java.util.List;
 import java.util.Objects;
 
+import static in.projecteka.consentmanager.common.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.dataFlowRequest;
-import static in.projecteka.consentmanager.dataflow.TestBuilders.gatewayDataFlowRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationNotificationRequest;
 import static in.projecteka.consentmanager.dataflow.TestBuilders.healthInformationResponseBuilder;
 import static in.projecteka.consentmanager.dataflow.Utils.toDate;

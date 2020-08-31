@@ -1,5 +1,6 @@
-package in.projecteka.consentmanager.user.model;
+package in.projecteka.consentmanager.link.hiplink.model.request;
 
+import in.projecteka.library.clients.model.Gender;
 import lombok.Data;
 
 @Data

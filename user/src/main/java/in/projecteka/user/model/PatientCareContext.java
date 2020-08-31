@@ -6,6 +6,6 @@ import lombok.Builder;
 @Builder
 @AllArgsConstructor
 public class PatientCareContext {
-    private String patientReference;
-    private String careContextReference;
+    private final String patientReference;
+    private final String careContextReference;
 }

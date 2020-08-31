@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.link.hiplink.model.request;
 
-import in.projecteka.consentmanager.user.model.AuthCredentialDetail;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

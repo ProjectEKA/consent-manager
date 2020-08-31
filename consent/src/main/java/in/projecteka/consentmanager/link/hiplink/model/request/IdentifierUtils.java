@@ -1,17 +1,13 @@
-package in.projecteka.consentmanager.user;
-
-import in.projecteka.consentmanager.user.model.Identifier;
-import in.projecteka.consentmanager.user.model.IdentifierGroup;
-import in.projecteka.consentmanager.user.model.IdentifierType;
+package in.projecteka.consentmanager.link.hiplink.model.request;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import static in.projecteka.consentmanager.user.model.IdentifierGroup.UNVERIFIED_IDENTIFIER;
-import static in.projecteka.consentmanager.user.model.IdentifierGroup.VERIFIED_IDENTIFIER;
-import static in.projecteka.consentmanager.user.model.IdentifierType.ABPMJAYID;
-import static in.projecteka.consentmanager.user.model.IdentifierType.MOBILE;
+import static in.projecteka.consentmanager.link.hiplink.model.request.IdentifierGroup.UNVERIFIED_IDENTIFIER;
+import static in.projecteka.consentmanager.link.hiplink.model.request.IdentifierGroup.VERIFIED_IDENTIFIER;
+import static in.projecteka.consentmanager.link.hiplink.model.request.IdentifierType.ABPMJAYID;
+import static in.projecteka.consentmanager.link.hiplink.model.request.IdentifierType.MOBILE;
+import static java.util.stream.Collectors.toList;
 
 public class IdentifierUtils {
 
@@ -31,7 +27,7 @@ public class IdentifierUtils {
     public static String getIdentifierValue(List<Identifier> identifiers, IdentifierType type) {
         return identifiers.stream()
                 .filter(identifier -> isIdentifierType(identifier, type))
-                .collect(Collectors.toList())
+                .collect(toList())
                 .get(0)
                 .getValue();
     }

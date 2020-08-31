@@ -10,5 +10,5 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @AllArgsConstructor
 @ConstructorBinding
 public class NHSProperties {
-    private String hiuId;
+    private final String hiuId;
 }

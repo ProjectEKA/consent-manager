@@ -18,7 +18,6 @@ public class OtpAttemptRepository {
 
     private final static Logger logger = LoggerFactory.getLogger(OtpAttemptRepository.class);
 
-
     private static final String INSERT_OTP_ATTEMPT = "INSERT INTO " +
             "otp_attempt (session_id ,cm_id, identifier_type, identifier_value, status, action) VALUES ($1,$2,$3,$4,$5,$6)";
 

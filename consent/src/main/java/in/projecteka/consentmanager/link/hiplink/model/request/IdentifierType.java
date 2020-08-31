@@ -1,6 +1,4 @@
-package in.projecteka.consentmanager.user.model;
-
-import in.projecteka.consentmanager.user.IdentifierUtils;
+package in.projecteka.consentmanager.link.hiplink.model.request;
 
 public enum IdentifierType {
     MOBILE {

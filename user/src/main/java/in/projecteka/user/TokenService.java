@@ -12,9 +12,12 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Mono;
 
+import static reactor.core.publisher.Mono.error;
+
 @AllArgsConstructor
 public class TokenService {
 
+    public static final String USERNAME = "username";
     private final IdentityServiceProperties keyCloakProperties;
     private final IdentityServiceClient identityServiceClient;
     private final UserRepository userRepository;
@@ -27,15 +30,15 @@ public class TokenService {
     public Mono<Session> tokenForUser(String userName, String password) {
         return identityServiceClient.getToken(loginRequestWith(userName, password))
                 .onErrorResume(error -> userRepository.userWith(userName)
-                        .switchIfEmpty(Mono.error(new InvalidUserNameException()))
-                        .flatMap(user -> Mono.error(new InvalidPasswordException())));
+                        .switchIfEmpty(error(new InvalidUserNameException()))
+                        .flatMap(user -> error(new InvalidPasswordException())));
     }
 
     public Mono<Session> tokenForRefreshToken(String userName, String refreshToken) {
         return identityServiceClient.getToken(loginRequestWithRefreshToken(userName, refreshToken))
                 .onErrorResume(error -> userRepository.userWith(userName)
-                        .switchIfEmpty(Mono.error(new InvalidUserNameException()))
-                        .flatMap(user -> Mono.error(new InvalidRefreshTokenException())));
+                        .switchIfEmpty(error(new InvalidUserNameException()))
+                        .flatMap(user -> error(new InvalidRefreshTokenException())));
     }
 
     public Mono<Session> tokenForOtpUser(String username, String sessionId, String otp) {
@@ -44,7 +47,7 @@ public class TokenService {
 
     private MultiValueMap<String, String> loginRequestForOtp(String username, String sessionId, String otp) {
         LinkedMultiValueMap<String, String> formData = loginRequestCommon();
-        formData.add("username", username);
+        formData.add(USERNAME, username);
         formData.add("session_id", sessionId);
         formData.add("otp", otp);
         return formData;
@@ -52,14 +55,14 @@ public class TokenService {
 
     private MultiValueMap<String, String> loginRequestWith(String username, String password) {
         LinkedMultiValueMap<String, String> formData = loginRequestCommon();
-        formData.add("username", username);
+        formData.add(USERNAME, username);
         formData.add("password", password);
         return formData;
     }
 
     private MultiValueMap<String, String> loginRequestWithRefreshToken(String username, String refreshToken) {
         LinkedMultiValueMap<String, String> formData = loginRequestCommon();
-        formData.add("username", username);
+        formData.add(USERNAME, username);
         formData.add("refresh_token", refreshToken);
         formData.set("grant_type", GrantType.REFRESH_TOKEN.getValue());
         return formData;

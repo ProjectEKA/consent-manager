@@ -1,15 +1,14 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.library.clients.model.Address;
 import in.projecteka.library.clients.model.Coding;
 import in.projecteka.library.clients.model.Identifier;
 import in.projecteka.library.clients.model.Provider.ProviderBuilder;
-import in.projecteka.library.clients.model.Session;
 import in.projecteka.library.clients.model.Telecom;
 import in.projecteka.library.clients.model.Type;
+import in.projecteka.library.clients.model.User;
 import org.jeasy.random.EasyRandom;
 
 import java.sql.Timestamp;
@@ -57,10 +56,6 @@ public class TestBuilders {
 
     public static Identifier.IdentifierBuilder identifier() {
         return easyRandom.nextObject(Identifier.IdentifierBuilder.class);
-    }
-
-    public static Session.SessionBuilder session() {
-        return easyRandom.nextObject(Session.SessionBuilder.class);
     }
 
     public static String string() {

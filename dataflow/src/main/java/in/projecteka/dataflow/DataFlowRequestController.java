@@ -3,8 +3,10 @@ package in.projecteka.dataflow;
 import in.projecteka.dataflow.model.GatewayDataFlowRequest;
 import in.projecteka.dataflow.model.HealthInfoNotificationRequest;
 import in.projecteka.dataflow.model.HealthInformationResponse;
+import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceCaller;
+import in.projecteka.library.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,20 +31,22 @@ import static reactor.core.publisher.Mono.just;
 public class DataFlowRequestController {
     private final DataFlowRequester dataFlowRequester;
     private final RequestValidator validator;
+    private final CacheAdapter<String, String> usedTokens;
 
     @PostMapping(PATH_HEALTH_INFORMATION_REQUEST)
     @ResponseStatus(ACCEPTED)
     public Mono<Void> requestHealthInformationV1(@Valid @RequestBody GatewayDataFlowRequest dataFlowRequest) {
-        return just(dataFlowRequest)
-                .filterWhen(req -> validator.validate(req.getRequestId().toString(), req.getTimestamp()))
-                .switchIfEmpty(error(tooManyRequests()))
-                .flatMap(req -> ReactiveSecurityContextHolder.getContext()
-                        .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
-                        .doOnSuccess(requester -> defer(() ->
-                                validator.put(req.getRequestId().toString(), req.getTimestamp())
-                                        .then(dataFlowRequester.requestHealthDataInfo(dataFlowRequest)))
-                                .subscribe())
-                        .then());
+        return usedTokens.get(dataFlowRequest.getHiRequest().getConsent().getId())
+                .flatMap(status -> status.equals("NOTIFIED") ? just(dataFlowRequest)
+                        .filterWhen(req -> validator.validate(req.getRequestId().toString(), req.getTimestamp()))
+                        .switchIfEmpty(error(tooManyRequests()))
+                        .flatMap(req -> ReactiveSecurityContextHolder.getContext()
+                                .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
+                                .doOnSuccess(requester -> defer(() ->
+                                        validator.put(req.getRequestId().toString(), req.getTimestamp())
+                                                .then(dataFlowRequester.requestHealthDataInfo(dataFlowRequest)))
+                                        .subscribe())
+                                .then()) : Mono.error(ClientError.invalidRequester("Invalid dataflow request")));
     }
 
     @PostMapping(PATH_HEALTH_INFORMATION_ON_REQUEST)

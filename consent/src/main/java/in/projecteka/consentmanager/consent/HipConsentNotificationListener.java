@@ -5,12 +5,14 @@ import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
+import in.projecteka.library.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.cache.Cache;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
@@ -19,8 +21,7 @@ import java.time.ZoneOffset;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.*;
 
 @AllArgsConstructor
 public class HipConsentNotificationListener {
@@ -29,6 +30,7 @@ public class HipConsentNotificationListener {
     private final Jackson2JsonMessageConverter converter;
     private final ConsentArtefactNotifier consentArtefactNotifier;
     private final ConsentArtefactRepository consentArtefactRepository;
+    private final CacheAdapter<String, String> cache;
 
     @PostConstruct
     public void subscribe() {
@@ -63,6 +65,9 @@ public class HipConsentNotificationListener {
                                 consentArtefact.getConsentId(),
                                 ConsentNotificationStatus.SENT,
                                 ConsentNotificationReceiver.HIP));
+            }
+            if(consentArtefact.getStatus() == GRANTED) {
+                cache.put(consentArtefact.getConsentId(), "NOTIFYING");
             }
             return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId);
         } catch (Exception e) {

@@ -1,8 +1,5 @@
 package in.projecteka.dataflow;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import in.projecteka.dataflow.model.ConsentArtefactRepresentation;
 import in.projecteka.dataflow.model.DataFlowRequest;
 import in.projecteka.dataflow.model.GatewayDataFlowRequest;
@@ -16,10 +13,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class TestBuilders {
-
-    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private static final EasyRandom easyRandom = new EasyRandom();
 

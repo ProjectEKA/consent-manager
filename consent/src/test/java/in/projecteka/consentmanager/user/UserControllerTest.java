@@ -7,7 +7,6 @@ import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.user.model.OtpVerification;
 import in.projecteka.consentmanager.user.model.RequesterDetail;
 import in.projecteka.consentmanager.user.model.SignUpSession;
@@ -65,9 +64,6 @@ class UserControllerTest {
 
     @MockBean
     private HipConsentNotificationListener hipConsentNotificationListener;
-
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @SuppressWarnings("unused")
     @MockBean

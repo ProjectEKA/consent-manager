@@ -10,7 +10,6 @@ import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
@@ -84,10 +83,6 @@ class DiscoveryUserJourneyTest {
     @SuppressWarnings("unused")
     @MockBean
     private HipConsentNotificationListener hipConsentNotificationListener;
-
-    @SuppressWarnings("unused")
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @SuppressWarnings("unused")
     @MockBean

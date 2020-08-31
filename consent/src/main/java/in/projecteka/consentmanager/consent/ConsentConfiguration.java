@@ -102,11 +102,9 @@ public class ConsentConfiguration {
     @Bean
     public ConsentManagerClient consentManagerClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                      ServiceAuthentication serviceAuthentication,
-                                                     IdentityService identityService,
                                                      GatewayServiceProperties gatewayServiceProperties) {
         return new ConsentManagerClient(builder,
                 gatewayServiceProperties.getBaseUrl(),
-                identityService::authenticate,
                 gatewayServiceProperties,
                 serviceAuthentication);
     }

@@ -41,9 +41,6 @@ import static in.projecteka.consentmanager.consent.Constants.GET_CONSENT_CERT;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
 import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
 import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 import static in.projecteka.consentmanager.link.Constants.PATH_HIP_ADD_CONTEXTS;
 import static in.projecteka.consentmanager.link.Constants.PATH_HIP_LINK_USER_AUTH_INIT;
@@ -80,9 +77,6 @@ public class SecurityConfiguration {
             PATH_FIND_PATIENT,
             PATH_LINK_ON_INIT,
             PATH_LINK_ON_CONFIRM,
-            PATH_HEALTH_INFORMATION_ON_REQUEST,
-            PATH_HEALTH_INFORMATION_REQUEST,
-            PATH_HEALTH_INFORMATION_NOTIFY,
             PATH_HIP_CONSENT_ON_NOTIFY,
             PATH_HIP_ADD_CONTEXTS,
             PATH_HIP_LINK_USER_AUTH_INIT,
@@ -105,9 +99,6 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry(PATH_LINK_ON_CONFIRM, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_FIND_PATIENT, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_CONSENTS_FETCH, HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry(PATH_HEALTH_INFORMATION_REQUEST, HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry(PATH_HEALTH_INFORMATION_NOTIFY, HttpMethod.POST));
-        SERVICE_ONLY_URLS.add(Map.entry(PATH_HEALTH_INFORMATION_ON_REQUEST, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_CONSENT_ON_NOTIFY, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_ADD_CONTEXTS, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(USERS_AUTH_CONFIRM, HttpMethod.POST));

@@ -1,19 +1,19 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequest;
 import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
-import in.projecteka.consentmanager.properties.IdentityServiceProperties;
 import in.projecteka.library.clients.model.Address;
 import in.projecteka.library.clients.model.Coding;
 import in.projecteka.library.clients.model.Identifier;
-import in.projecteka.library.clients.model.KeycloakUser;
 import in.projecteka.library.clients.model.Provider.ProviderBuilder;
 import in.projecteka.library.clients.model.Session;
 import in.projecteka.library.clients.model.Telecom;
 import in.projecteka.library.clients.model.Type;
 import org.jeasy.random.EasyRandom;
+
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class TestBuilders {
 
@@ -59,15 +59,6 @@ public class TestBuilders {
         return easyRandom.nextObject(Identifier.IdentifierBuilder.class);
     }
 
-    public static KeycloakUser.KeycloakUserBuilder keycloakCreateUser() {
-        return easyRandom.nextObject(KeycloakUser.KeycloakUserBuilder.class);
-    }
-
-    public static IdentityServiceProperties.IdentityServicePropertiesBuilder keycloakProperties() {
-        return easyRandom.nextObject(IdentityServiceProperties.IdentityServicePropertiesBuilder.class);
-    }
-
-
     public static Session.SessionBuilder session() {
         return easyRandom.nextObject(Session.SessionBuilder.class);
     }
@@ -76,15 +67,7 @@ public class TestBuilders {
         return easyRandom.nextObject(String.class);
     }
 
-    public static in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder patientLinkReferenceRequest() {
-        return easyRandom.nextObject(in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder.class);
-    }
-
-    public static in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder patientLinkReferenceRequestForHIP() {
-        return easyRandom.nextObject(in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder.class);
-    }
-
-    public static KeyCloakUserPasswordChangeRequest.KeyCloakUserPasswordChangeRequestBuilder keyCloakUserPasswordChangeRequest() {
-        return easyRandom.nextObject(KeyCloakUserPasswordChangeRequest.KeyCloakUserPasswordChangeRequestBuilder.class);
+    public static LocalDateTime toDateWithMilliSeconds(String dateExpiryAt) {
+        return new Timestamp(Long.parseLong(dateExpiryAt)).toLocalDateTime();
     }
 }

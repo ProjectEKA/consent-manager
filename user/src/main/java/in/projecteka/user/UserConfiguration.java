@@ -268,7 +268,8 @@ public class UserConfiguration {
             @Qualifier("accessToken") CacheAdapter<String, String> accessTokenCache) {
         return new ServiceAuthentication(serviceAuthenticationClient,
                 new ServiceCredential(gatewayServiceProperties.getClientId(), gatewayServiceProperties.getClientSecret()),
-                accessTokenCache);
+                accessTokenCache,
+                "user");
     }
 
     @Bean
@@ -356,13 +357,13 @@ public class UserConfiguration {
         return new RequestValidator(cacheForReplayAttack);
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @ConditionalOnProperty(value = "user.cache-method", havingValue = "guava", matchIfMissing = true)
     @Bean({"cacheForReplayAttack"})
     public CacheAdapter<String, LocalDateTime> stringLocalDateTimeCacheAdapter() {
         return new LoadingCacheGenericAdapter<>(stringLocalDateTimeLoadingCache(), DEFAULT_CACHE_VALUE);
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @ConditionalOnProperty(value = "user.cache-method", havingValue = "redis")
     @Bean({"cacheForReplayAttack"})
     public CacheAdapter<String, LocalDateTime> createRedisCacheAdapterForReplayAttack(
             ReactiveRedisOperations<String, LocalDateTime> localDateTimeOps,
@@ -370,7 +371,7 @@ public class UserConfiguration {
         return new RedisGenericAdapter<>(localDateTimeOps, 10, redisOptions.getRetry());
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @ConditionalOnProperty(value = "user.cache-method", havingValue = "redis")
     @Bean("Lettuce")
     ReactiveRedisConnectionFactory redisConnection(RedisOptions redisOptions) {
         var socketOptions = SocketOptions.builder().keepAlive(redisOptions.isKeepAliveEnabled()).build();
@@ -383,7 +384,7 @@ public class UserConfiguration {
         return new LettuceConnectionFactory(configuration, clientConfiguration);
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @ConditionalOnProperty(value = "user.cache-method", havingValue = "guava", matchIfMissing = true)
     @Bean("Lettuce")
     ReactiveRedisConnectionFactory dummyRedisConnection() {
         return new ReactiveRedisConnectionFactory() {
@@ -415,7 +416,7 @@ public class UserConfiguration {
                 });
     }
 
-    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @ConditionalOnProperty(value = "user.cache-method", havingValue = "redis")
     @Bean
     ReactiveRedisOperations<String, LocalDateTime> redisOperations(
             @Qualifier("Lettuce") ReactiveRedisConnectionFactory factory) {

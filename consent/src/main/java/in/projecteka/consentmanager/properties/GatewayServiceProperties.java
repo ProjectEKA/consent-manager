@@ -15,4 +15,5 @@ public class GatewayServiceProperties {
     private final String clientSecret;
     private final String clientId;
     private final String jwkUrl;
+    private final int accessTokenExpiryInMinutes;
 }

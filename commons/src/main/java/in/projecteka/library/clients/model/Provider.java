@@ -20,7 +20,7 @@ public class Provider {
     private String resourceType;
     @JsonAlias("identifier")
     private List<Identifier> identifiers;
-    @JsonAlias("type")
+    @JsonAlias("orgType")
     private List<Type> types;
     @JsonAlias("telecom")
     private List<Telecom> telecoms;

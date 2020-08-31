@@ -12,6 +12,7 @@ import io.vertx.pgclient.PgPool;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -26,6 +27,7 @@ public class DataFlowConfiguration {
     }
 
     @Bean
+    @ConditionalOnExpression("${consentmanager.dataflow.enabled:true}")
     public DataFlowBroadcastListener dataFlowBroadcastListener(
             @Qualifier("customBuilder") WebClient.Builder builder,
             DataFlowConsentManagerProperties dataFlowConsentManagerProperties,

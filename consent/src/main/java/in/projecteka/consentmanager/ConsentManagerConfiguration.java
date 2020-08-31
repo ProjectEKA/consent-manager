@@ -125,8 +125,10 @@ public class ConsentManagerConfiguration {
     @Bean({"accessToken"})
     public CacheAdapter<String, String> createRedisCacheAdapter(
             ReactiveRedisOperations<String, String> stringReactiveRedisOperations,
-            RedisOptions redisOptions) {
-        return new RedisCacheAdapter(stringReactiveRedisOperations, 5,
+            RedisOptions redisOptions,
+            GatewayServiceProperties gatewayServiceProperties) {
+        return new RedisCacheAdapter(stringReactiveRedisOperations,
+                gatewayServiceProperties.getAccessTokenExpiryInMinutes(),
                 redisOptions.getRetry());
     }
 
@@ -150,7 +152,8 @@ public class ConsentManagerConfiguration {
         return new ServiceAuthentication(serviceAuthenticationClient,
                 new ServiceCredential(gatewayServiceProperties.getClientId(),
                         gatewayServiceProperties.getClientSecret()),
-                accessToken);
+                accessToken,
+                "consent-manager");
     }
 
     @Bean

@@ -77,12 +77,14 @@
     docker pull projecteka/cm-db-initializer
     docker pull projecteka/hiu-db-initializer
     docker pull projecteka/user-db-initializer
+    docker pull projecteka/dataflow-db-initializer
     docker-compose -f docker-compose-infra-lite.yml up -d
      
     docker logs $(docker ps -aqf "name=^cm-db-setup$")
     docker logs $(docker ps -aqf "name=^hiu-db-setup$")
     docker logs $(docker ps -aqf "name=^keycloak-setup$")
    docker logs $(docker ps -aqf "name=^user-db-setup$")
+   docker logs $(docker ps -aqf "name=^dataflow-db-setup$")
         # if you see any errors, run the docker-compose again
    
     docker exec -it $(docker ps -aqf "name=^postgres$") /bin/bash
@@ -91,6 +93,8 @@
     \c health_information_user
     \d # should list all the tables
     \c user_service
+    \d # should list all the tables
+    \c dataflow_service
     \d # should list all the tables
     exit # twice
     ```
@@ -223,14 +227,15 @@
 
 ### Consent-Manager
 
-It's a mono-repo contains, consent and user services, there are following common things across services.
+It's a mono-repo contains, consent, data flow, and user services, there are following common things across services.
+Those are exposed through HAProxy.
 
 1. Clone [Consent-Manager](https://github.com/ProjectEKA/consent-manager)
 2. You need to get client secret from keycloak 
 3. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients](http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients) of `consent-manager` under `credentials` tab, and use it for **KEYCLOAK_CLIENTSECRET** (client under *consent-manager* realm)
 4. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `ncg` under `credentials` tab, and use it for **GATEWAY_CLIENTSECRET** (client under *central-registry* realm)
 
-#### consent
+#### Consent
 
 1. Run through command line
     
@@ -246,6 +251,14 @@ It's a mono-repo contains, consent and user services, there are following common
     ```bash
    cd consent-manager
    GATEWAY_CLIENTSECRET=${GATEWAY_CLIENTSECRET} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew :user:bootRunLocal
+    ```
+#### DataFlow Service
+
+1. Run through command line
+    
+    ```bash
+   cd consent-manager
+   GATEWAY_CLIENTSECRET=${GATEWAY_CLIENTSECRET} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew :dataflow:bootRunLocal
     ```
 
 ### Reverse-Proxy

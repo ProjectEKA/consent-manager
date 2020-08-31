@@ -87,6 +87,14 @@ services:
     depends_on:
       - monitor-db-setup
 
+  dataflow-db-setup:
+    image: projecteka/dataflow-db-initializer
+    container_name: dataflow-db-setup
+    environment:
+      - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/dataflow_service -Djdbc.username=postgres -Djdbc.password=password'
+    depends_on:
+      - user-db-setup
+
   orthanc:
     image: jodogne/orthanc-plugins
     container_name: orthanc-plugins

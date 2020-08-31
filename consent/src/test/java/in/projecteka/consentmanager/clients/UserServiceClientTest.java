@@ -43,7 +43,7 @@ class UserServiceClientTest {
     void init() {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        var serviceProperties = new GatewayServiceProperties("http://example.com", 1000, "", "", "");
+        var serviceProperties = new GatewayServiceProperties("http://example.com", 1000, "", "", "", 10);
         token = string();
         userServiceClient = new UserServiceClient(webClientBuilder.build(),
                 "http://user-service/",
@@ -68,7 +68,8 @@ class UserServiceClientTest {
                         .body(patientResponseBody).build()));
 
         StepVerifier.create(userServiceClient.userOf("1"))
-                .assertNext(response -> assertThat(response.getName().createFullName()).isEqualTo(user.getName().createFullName()))
+                .assertNext(response ->
+                        assertThat(response.getName().createFullName()).isEqualTo(user.getName().createFullName()))
                 .verifyComplete();
 
         assertThat(captor.getValue().url().toString()).hasToString("http://user-service/internal/users/1/");

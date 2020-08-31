@@ -24,6 +24,7 @@ consentmanager:
     clientSecret: ${GATEWAY_CLIENT_SECRET}
     clientId: ${GATEWAY_CLIENT_ID}
     jwkUrl: ${CENTRAL_REGISTRY_JWK_URL}
+    access-token-expiry-in-minutes: ${TOKEN_EXPIRY:10}
   userservice:
     enabled: ${USER_SERVICE_ENABLED:true}
     url: ${User_Service_Url}
@@ -55,7 +56,7 @@ consentmanager:
     clientSecret: ${KEY_CLOAK_CONSENT_CLIENT_SECRET}
     userName: ${KEY_CLOAK_CONSENT_USER_NAME}
     password: ${KEY_CLOAK_CONSENT_PASSWORD}
-    jwkUrl:  ${KEY_CLOAK_JWK_URL}
+    jwkUrl: ${KEY_CLOAK_JWK_URL}
     issuer: ${KEY_CLOAK_TOKEN_ISSUER}
   db:
     host: ${POSTGRES_HOST}

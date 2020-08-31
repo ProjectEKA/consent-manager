@@ -18,7 +18,6 @@ import in.projecteka.consentmanager.consent.model.response.ConsentApprovalRespon
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestsRepresentation;
 import in.projecteka.consentmanager.consent.model.response.RequestCreatedRepresentation;
 import in.projecteka.consentmanager.consent.policies.NhsPolicyCheck;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.library.clients.model.Provider;
 import in.projecteka.library.common.Authenticator;
 import in.projecteka.library.common.Caller;
@@ -90,9 +89,6 @@ class ConsentRequestUserJourneyTest {
 
     @MockBean
     private HiuConsentNotificationListener hiuConsentNotificationListener;
-
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @MockBean
     private ConsentRequestRepository repository;

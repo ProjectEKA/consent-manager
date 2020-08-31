@@ -10,7 +10,6 @@ import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactResponse;
 import in.projecteka.consentmanager.consent.model.response.ConsentStatusResponse;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.library.clients.model.Error;
 import in.projecteka.library.clients.model.ErrorCode;
 import in.projecteka.library.clients.model.ErrorRepresentation;
@@ -49,6 +48,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.clients.TestBuilders.toDateWithMilliSeconds;
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactReference;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
@@ -61,7 +61,6 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
-import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
 import static in.projecteka.library.clients.model.ErrorCode.CONSENT_ARTEFACT_FORBIDDEN;
 import static in.projecteka.library.clients.model.ErrorCode.CONSENT_NOT_GRANTED;
 import static in.projecteka.library.common.Role.GATEWAY;
@@ -103,10 +102,6 @@ class ConsentArtefactUserJourneyTest {
 
     @MockBean
     private HipConsentNotificationListener hipConsentNotificationListener;
-
-    @SuppressWarnings("unused")
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @SuppressWarnings("unused")
     @MockBean

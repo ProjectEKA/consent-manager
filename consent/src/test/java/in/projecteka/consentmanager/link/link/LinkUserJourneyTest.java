@@ -10,7 +10,6 @@ import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.link.link.model.Hip;
@@ -129,9 +128,6 @@ class LinkUserJourneyTest {
 
     @MockBean
     private HipConsentNotificationListener hipConsentNotificationListener;
-
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @SuppressWarnings("unused")
     @MockBean

@@ -2,7 +2,6 @@ package in.projecteka.consentmanager;
 
 import in.projecteka.consentmanager.consent.ConsentServiceProperties;
 import in.projecteka.consentmanager.consent.NHSProperties;
-import in.projecteka.consentmanager.dataflow.DataFlowConsentManagerProperties;
 import in.projecteka.consentmanager.properties.CacheMethodProperty;
 import in.projecteka.consentmanager.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.properties.DbOptions;
@@ -28,7 +27,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableAsync
 @EnableConfigurationProperties({ClientRegistryProperties.class,
                                 DbOptions.class,
-                                DataFlowConsentManagerProperties.class,
                                 OtpServiceProperties.class,
                                 IdentityServiceProperties.class,
                                 LinkServiceProperties.class,

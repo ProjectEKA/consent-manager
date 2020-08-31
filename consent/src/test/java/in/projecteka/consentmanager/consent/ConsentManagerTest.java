@@ -41,7 +41,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.security.KeyPair;
-import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -49,6 +48,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.clients.TestBuilders.toDateWithMilliSeconds;
 import static in.projecteka.consentmanager.consent.TestBuilders.artefactLightRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.certResponse;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefact;
@@ -65,7 +65,6 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
-import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -142,7 +141,7 @@ class ConsentManagerTest {
     }
 
     @Test
-    void getConsents() throws ParseException {
+    void getConsents() {
         ConsentRepresentation consentRepresentation = consentRepresentation().build();
         consentRepresentation.setStatus(ConsentStatus.GRANTED);
         String consentRequestId = consentRepresentation.getConsentRequestId();
@@ -169,7 +168,7 @@ class ConsentManagerTest {
     }
 
     @Test
-    void getConsent() throws ParseException {
+    void getConsent() {
         ConsentRepresentation consentRepresentation = consentRepresentation().build();
         consentRepresentation.setStatus(ConsentStatus.GRANTED);
         String consentRequestId = consentRepresentation.getConsentRequestId();
@@ -194,7 +193,7 @@ class ConsentManagerTest {
     }
 
     @Test
-    void getConsentArtefactLight() throws ParseException {
+    void getConsentArtefactLight() {
         ConsentRepresentation consentRepresentation = consentRepresentation().build();
         consentRepresentation.setStatus(ConsentStatus.GRANTED);
         String patientId = consentRepresentation.getConsentDetail().getPatient().getId();

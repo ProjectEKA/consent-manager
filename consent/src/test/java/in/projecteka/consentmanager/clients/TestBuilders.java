@@ -1,6 +1,5 @@
 package in.projecteka.consentmanager.clients;
 
-import in.projecteka.consentmanager.clients.model.KeyCloakUserPasswordChangeRequest;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.library.clients.model.Address;
@@ -11,6 +10,9 @@ import in.projecteka.library.clients.model.Telecom;
 import in.projecteka.library.clients.model.Type;
 import in.projecteka.library.clients.model.User;
 import org.jeasy.random.EasyRandom;
+
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class TestBuilders {
 
@@ -60,15 +62,7 @@ public class TestBuilders {
         return easyRandom.nextObject(String.class);
     }
 
-    public static in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder patientLinkReferenceRequest() {
-        return easyRandom.nextObject(in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder.class);
-    }
-
-    public static in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder patientLinkReferenceRequestForHIP() {
-        return easyRandom.nextObject(in.projecteka.consentmanager.clients.model.PatientLinkReferenceRequest.PatientLinkReferenceRequestBuilder.class);
-    }
-
-    public static KeyCloakUserPasswordChangeRequest.KeyCloakUserPasswordChangeRequestBuilder keyCloakUserPasswordChangeRequest() {
-        return easyRandom.nextObject(KeyCloakUserPasswordChangeRequest.KeyCloakUserPasswordChangeRequestBuilder.class);
+    public static LocalDateTime toDateWithMilliSeconds(String dateExpiryAt) {
+        return new Timestamp(Long.parseLong(dateExpiryAt)).toLocalDateTime();
     }
 }

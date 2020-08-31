@@ -3,14 +3,12 @@ package in.projecteka.consentmanager;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.consent.ConsentArtefactsController;
+import in.projecteka.consentmanager.consent.ConsentManager;
 import in.projecteka.consentmanager.consent.ConsentNotificationPublisher;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.consent.PinVerificationTokenService;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
-import in.projecteka.consentmanager.dataflow.DataFlowRequester;
-import in.projecteka.consentmanager.dataflow.model.HealthInfoNotificationRequest;
 import in.projecteka.library.common.GatewayTokenVerifier;
 import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceCaller;
@@ -25,13 +23,13 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.common.TestBuilders.string;
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
-import static in.projecteka.consentmanager.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
+import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
+import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
+import static in.projecteka.consentmanager.consent.TestBuilders.fetchRequest;
 import static in.projecteka.library.common.Role.GATEWAY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -39,6 +37,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static reactor.core.publisher.Mono.empty;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -72,9 +71,6 @@ class SecurityConfigurationTest {
     private ConsentArtefactNotifier consentArtefactNotifier;
 
     @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
-
-    @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 
     @MockBean
@@ -83,17 +79,17 @@ class SecurityConfigurationTest {
     @MockBean
     private RequestValidator validator;
 
-    @MockBean
-    private DataFlowRequester dataFlowRequester;
-
     @Autowired
     WebTestClient webTestClient;
+
+    @MockBean
+    ConsentManager consentManager;
 
     @Test
     void return401UnAuthorized() {
         webTestClient
                 .post()
-                .uri(PATH_HEALTH_INFORMATION_REQUEST)
+                .uri(PATH_CONSENT_REQUESTS_INIT)
                 .contentType(APPLICATION_JSON)
                 .bodyValue("{}")
                 .exchange()
@@ -109,7 +105,7 @@ class SecurityConfigurationTest {
 
         webTestClient
                 .post()
-                .uri(PATH_HEALTH_INFORMATION_REQUEST)
+                .uri(PATH_CONSENT_REQUESTS_INIT)
                 .contentType(APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .bodyValue("{}")
@@ -119,25 +115,20 @@ class SecurityConfigurationTest {
     }
 
     @Test
-    void return202AcceptedForHealthInfoNotify() {
+    void return202Accepted() {
         var token = string();
-        var username = string();
-        var healthInfoNotification = HealthInfoNotificationRequest.builder()
-                .requestId(UUID.randomUUID())
-                .timestamp(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2))
-                .build();
-        var caller = ServiceCaller.builder().clientId(username).roles(List.of(GATEWAY)).build();
-        when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(Mono.empty());
+        var caller = ServiceCaller.builder().roles(List.of(GATEWAY)).build();
         when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(Mono.just(Boolean.TRUE));
+        when(validator.put(anyString(), any(LocalDateTime.class))).thenReturn(empty());
         when(gatewayTokenVerifier.verify(token)).thenReturn(Mono.just(caller));
-        when(dataFlowRequester.notifyHealthInformationStatus(any())).thenReturn(Mono.empty());
+        when(consentManager.getConsent(any(), any(UUID.class))).thenReturn(empty());
 
         webTestClient
                 .post()
-                .uri(PATH_HEALTH_INFORMATION_NOTIFY)
+                .uri(PATH_CONSENTS_FETCH)
                 .contentType(APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
-                .bodyValue(healthInfoNotification)
+                .bodyValue(fetchRequest().build())
                 .exchange()
                 .expectStatus()
                 .isAccepted();

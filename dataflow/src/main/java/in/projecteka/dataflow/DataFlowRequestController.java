@@ -31,22 +31,20 @@ import static reactor.core.publisher.Mono.just;
 public class DataFlowRequestController {
     private final DataFlowRequester dataFlowRequester;
     private final RequestValidator validator;
-    private final CacheAdapter<String, String> usedTokens;
 
     @PostMapping(PATH_HEALTH_INFORMATION_REQUEST)
     @ResponseStatus(ACCEPTED)
     public Mono<Void> requestHealthInformationV1(@Valid @RequestBody GatewayDataFlowRequest dataFlowRequest) {
-        return usedTokens.get(dataFlowRequest.getHiRequest().getConsent().getId())
-                .flatMap(status -> status.equals("NOTIFIED") ? just(dataFlowRequest)
-                        .filterWhen(req -> validator.validate(req.getRequestId().toString(), req.getTimestamp()))
-                        .switchIfEmpty(error(tooManyRequests()))
-                        .flatMap(req -> ReactiveSecurityContextHolder.getContext()
-                                .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
-                                .doOnSuccess(requester -> defer(() ->
-                                        validator.put(req.getRequestId().toString(), req.getTimestamp())
-                                                .then(dataFlowRequester.requestHealthDataInfo(dataFlowRequest)))
-                                        .subscribe())
-                                .then()) : Mono.error(ClientError.invalidRequester("Invalid dataflow request")));
+        return just(dataFlowRequest)
+                .filterWhen(req -> validator.validate(req.getRequestId().toString(), req.getTimestamp()))
+                .switchIfEmpty(error(tooManyRequests()))
+                .flatMap(req -> ReactiveSecurityContextHolder.getContext()
+                        .map(securityContext -> (ServiceCaller) securityContext.getAuthentication().getPrincipal())
+                        .doOnSuccess(requester -> defer(() ->
+                                validator.put(req.getRequestId().toString(), req.getTimestamp())
+                                        .then(dataFlowRequester.requestHealthDataInfo(dataFlowRequest)))
+                                .subscribe())
+                        .then());
     }
 
     @PostMapping(PATH_HEALTH_INFORMATION_ON_REQUEST)

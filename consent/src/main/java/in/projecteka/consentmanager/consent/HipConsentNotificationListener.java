@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
-import org.springframework.cache.Cache;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
@@ -22,6 +21,7 @@ import java.util.UUID;
 
 import static in.projecteka.consentmanager.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.*;
+import static in.projecteka.consentmanager.consent.model.HipConsentArtefactNotificationStatus.*;
 
 @AllArgsConstructor
 public class HipConsentNotificationListener {
@@ -67,7 +67,7 @@ public class HipConsentNotificationListener {
                                 ConsentNotificationReceiver.HIP));
             }
             if(consentArtefact.getStatus() == GRANTED) {
-                cache.put(consentArtefact.getConsentId(), "NOTIFYING");
+                cache.put(consentArtefact.getConsentId(), NOTIFYING.toString());
             }
             return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId);
         } catch (Exception e) {

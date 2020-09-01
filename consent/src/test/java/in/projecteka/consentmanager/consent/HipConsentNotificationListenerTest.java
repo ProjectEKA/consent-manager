@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPReference;
+import in.projecteka.library.common.cache.CacheAdapter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -21,6 +22,7 @@ import reactor.core.publisher.Mono;
 
 import static in.projecteka.consentmanager.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -46,6 +48,9 @@ class HipConsentNotificationListenerTest {
 
     HipConsentNotificationListener hipConsentNotificationListener;
 
+    @Mock
+    private CacheAdapter<String, String> cache;
+
     @BeforeEach
     void init() {
         MockitoAnnotations.initMocks(this);
@@ -53,7 +58,8 @@ class HipConsentNotificationListenerTest {
                 messageListenerContainerFactory,
                 converter,
                 consentArtefactNotifier,
-                consentArtefactRepository);
+                consentArtefactRepository,
+                cache);
     }
 
     @Test

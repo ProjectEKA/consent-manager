@@ -3,12 +3,14 @@ package in.projecteka.dataflow;
 import in.projecteka.dataflow.model.DataFlowRequestMessage;
 import in.projecteka.dataflow.model.hip.DataRequest;
 import in.projecteka.dataflow.model.hip.HiRequest;
+import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
@@ -16,6 +18,7 @@ import java.time.ZoneOffset;
 import java.util.UUID;
 
 import static in.projecteka.dataflow.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
+import static in.projecteka.dataflow.model.HipConsentArtefactNotificationStatus.*;
 
 @AllArgsConstructor
 public class DataFlowBroadcastListener {
@@ -60,9 +63,14 @@ public class DataFlowBroadcastListener {
     }
 
     public void configureAndSendDataRequestFor(DataRequest dataFlowRequest) {
-        consentManagerClient.getConsentArtefact(dataFlowRequest.getHiRequest().getConsent().getId())
-                .flatMap(caRep -> dataRequestNotifier.notifyHip(
-                        dataFlowRequest, caRep.getConsentDetail().getHip().getId()))
+        String consentId = dataFlowRequest.getHiRequest().getConsent().getId();
+        consentManagerClient.getConsentArtefact(consentId)
+                .flatMap(caRep ->
+                        consentManagerClient.getConsentArtefactStatus(consentId)
+                                .flatMap(status -> status.getStatus().equals(NOTIFIED.toString()) ?
+                                        dataRequestNotifier.notifyHip(
+                                                dataFlowRequest, caRep.getConsentDetail().getHip().getId()) :
+                                        Mono.error(ClientError.consentNotGranted())))
                 .block();
     }
 }

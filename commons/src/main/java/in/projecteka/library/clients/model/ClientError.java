@@ -43,6 +43,7 @@ import static in.projecteka.library.clients.model.ErrorCode.USERNAME_OR_PASSWORD
 import static in.projecteka.library.clients.model.ErrorCode.USER_ALREADY_EXISTS;
 import static in.projecteka.library.clients.model.ErrorCode.USER_NOT_FOUND;
 import static in.projecteka.library.clients.model.ErrorCode.USER_TEMPORARILY_BLOCKED;
+import static in.projecteka.library.clients.model.ErrorCode.CONSENT_ARTEFACT_YET_TO_REACH_HIP;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
@@ -284,6 +285,11 @@ public class ClientError extends Throwable {
     public static ClientError consentNotGranted() {
         return new ClientError(PRECONDITION_FAILED,
                 new ErrorRepresentation(new Error(CONSENT_NOT_GRANTED, "Not a granted consent.")));
+    }
+
+    public static ClientError consentArtefactsYetToReachHIP() {
+        return new ClientError(PRECONDITION_FAILED,
+                new ErrorRepresentation(new Error(CONSENT_ARTEFACT_YET_TO_REACH_HIP, "Consent Artefacts didn't reach HIP")));
     }
 
     public static ClientError invalidAccessToken() {

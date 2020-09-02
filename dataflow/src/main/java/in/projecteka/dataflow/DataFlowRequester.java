@@ -1,6 +1,7 @@
 package in.projecteka.dataflow;
 
 import in.projecteka.dataflow.model.ConsentArtefactRepresentation;
+import in.projecteka.dataflow.model.ConsentArtefactsStatusResponse;
 import in.projecteka.dataflow.model.ConsentStatus;
 import in.projecteka.dataflow.model.DataFlowRequest;
 import in.projecteka.dataflow.model.DataFlowRequestResponse;

@@ -1,8 +1,9 @@
 package in.projecteka.consentmanager.consent;
 
-import in.projecteka.consentmanager.consent.model.request.ConsentRequestStatus;
+import in.projecteka.consentmanager.consent.model.ConsentArtefactsStatusResponse;
 import in.projecteka.consentmanager.consent.model.FetchRequest;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
+import in.projecteka.consentmanager.consent.model.request.ConsentRequestStatus;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactResponse;
@@ -32,6 +33,7 @@ import javax.validation.Valid;
 import static in.projecteka.consentmanager.consent.Constants.CONSENT_REQUESTS_STATUS;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
 import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
+import static in.projecteka.consentmanager.consent.model.HipConsentArtefactNotificationStatus.NOTIFIED;
 
 @RestController
 @AllArgsConstructor
@@ -42,6 +44,7 @@ public class ConsentArtefactsController {
     private final CacheAdapter<String, String> usedTokens;
     private final ConsentServiceProperties serviceProperties;
     private final RequestValidator validator;
+    private final CacheAdapter<String, String> hipConsentArtefactStatus;
 
     @GetMapping(value = Constants.APP_PATH_GET_CONSENT)
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(@PathVariable(value = "consentId") String consentId) {
@@ -114,8 +117,19 @@ public class ConsentArtefactsController {
                 .filterWhen(req ->
                         validator.validate(acknowledgment.getRequestId().toString(), acknowledgment.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
-                .flatMap(validatedRequest -> consentManager.updateConsentNotification(acknowledgment)
-                        .then(validator.put(acknowledgment.getRequestId().toString(), acknowledgment.getTimestamp())));
+                .flatMap(validatedRequest ->
+                        hipConsentArtefactStatus.exists(acknowledgment.getAcknowledgement().getConsentId())
+                                .flatMap(exists -> exists ? hipConsentArtefactStatus.put(acknowledgment.getAcknowledgement().getConsentId(), NOTIFIED.toString()) :
+                                        consentManager.updateConsentNotification(acknowledgment)
+                                                .then(validator.put(acknowledgment.getRequestId().toString(), acknowledgment.getTimestamp()))));
+    }
+
+    @GetMapping(value = Constants.APP_PATH_INTERNAL_GET_CONSENT_ARTEFACT_STATUS)
+    public Mono<ConsentArtefactsStatusResponse> consentArtefactsStatus(@PathVariable String consentId) {
+        return hipConsentArtefactStatus.exists(consentId)
+                .flatMap(exists -> exists ? hipConsentArtefactStatus.get(consentId)
+                        .flatMap(status -> Mono.just(ConsentArtefactsStatusResponse.builder().status(status).build()))
+                        : Mono.error(ClientError.invalidRequester()));
     }
 
     @ResponseStatus(HttpStatus.ACCEPTED)

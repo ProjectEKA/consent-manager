@@ -1,6 +1,7 @@
 package in.projecteka.dataflow;
 
 import in.projecteka.dataflow.model.ConsentArtefactRepresentation;
+import in.projecteka.dataflow.model.ConsentArtefactsStatusResponse;
 import in.projecteka.library.clients.model.ClientError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,5 +42,19 @@ public class ConsentManagerClient {
                                         .doOnNext(properties -> logger.error("Error: {}", properties))
                                         .then(error(ClientError.consentArtefactNotFound())))
                         .bodyToMono(ConsentArtefactRepresentation.class));
+    }
+
+    public Mono<ConsentArtefactsStatusResponse> getConsentArtefactStatus(String consentId) {
+        return tokenGenerator.get()
+                .flatMap(token -> webClient
+                        .get()
+                        .uri(format("%s/internal/consent-artefacts/status/%s", url, consentId))
+                        .header("Authorization", token)
+                        .retrieve()
+                        .onStatus(HttpStatus::isError,
+                                clientResponse -> clientResponse.bodyToMono(Properties.class)
+                                        .doOnNext(properties -> logger.error("Error: {}", properties))
+                                        .then(error(ClientError.consentArtefactNotFound())))
+                        .bodyToMono(ConsentArtefactsStatusResponse.class));
     }
 }

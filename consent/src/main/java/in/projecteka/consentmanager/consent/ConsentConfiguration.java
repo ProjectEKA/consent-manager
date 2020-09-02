@@ -172,12 +172,12 @@ public class ConsentConfiguration {
             Jackson2JsonMessageConverter jackson2JsonMessageConverter,
             ConsentArtefactNotifier consentArtefactNotifier,
             ConsentArtefactRepository consentArtefactRepository,
-            CacheAdapter<String, String> usedTokens) {
+            CacheAdapter<String, String> hipConsentArtefactStatus) {
         return new HipConsentNotificationListener(
                 messageListenerContainerFactory,
                 jackson2JsonMessageConverter,
                 consentArtefactNotifier,
-                consentArtefactRepository, usedTokens);
+                consentArtefactRepository, hipConsentArtefactStatus);
     }
 
     @Bean

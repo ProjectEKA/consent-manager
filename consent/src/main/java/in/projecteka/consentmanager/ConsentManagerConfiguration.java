@@ -391,7 +391,7 @@ public class ConsentManagerConfiguration {
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
-    @Bean({"blockListedTokens", "usedTokens"})
+    @Bean({"blockListedTokens", "usedTokens", "hipConsentArtefactStatus"})
     public CacheAdapter<String, String> createLoadingCacheAdapter() {
         return new LoadingCacheAdapter(createSessionCache(5));
     }
@@ -414,7 +414,7 @@ public class ConsentManagerConfiguration {
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
-    @Bean({"blockListedTokens", "usedTokens"})
+    @Bean({"blockListedTokens", "usedTokens", "hipConsentArtefactStatus"})
     public CacheAdapter<String, String> redisStringCache(
             ReactiveRedisOperations<String, String> stringReactiveRedisOperations,
             RedisOptions redisOptions) {

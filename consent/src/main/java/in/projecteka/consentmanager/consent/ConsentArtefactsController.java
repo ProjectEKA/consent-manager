@@ -42,6 +42,7 @@ public class ConsentArtefactsController {
     private final CacheAdapter<String, String> usedTokens;
     private final ConsentServiceProperties serviceProperties;
     private final RequestValidator validator;
+    private final CacheAdapter<String, String> hipConsentArtefactStatus;
 
     @GetMapping(value = Constants.APP_PATH_GET_CONSENT)
     public Mono<ConsentArtefactRepresentation> getConsentArtefact(@PathVariable(value = "consentId") String consentId) {
@@ -115,16 +116,16 @@ public class ConsentArtefactsController {
                         validator.validate(acknowledgment.getRequestId().toString(), acknowledgment.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(validatedRequest ->
-                        usedTokens.exists(acknowledgment.getAcknowledgement().getConsentId())
-                                .flatMap(exists -> exists ? usedTokens.put(acknowledgment.getAcknowledgement().getConsentId(), NOTIFIED.toString()) :
+                        hipConsentArtefactStatus.exists(acknowledgment.getAcknowledgement().getConsentId())
+                                .flatMap(exists -> exists ? hipConsentArtefactStatus.put(acknowledgment.getAcknowledgement().getConsentId(), NOTIFIED.toString()) :
                                         consentManager.updateConsentNotification(acknowledgment)
                                                 .then(validator.put(acknowledgment.getRequestId().toString(), acknowledgment.getTimestamp()))));
     }
 
     @GetMapping(value = Constants.APP_PATH_INTERNAL_GET_CONSENT_ARTEFACT_STATUS)
     public Mono<ConsentArtefactsStatusResponse> consentArtefactsStatus(@PathVariable String consentId) {
-        return usedTokens.exists(consentId)
-                .flatMap(exists -> exists ? usedTokens.get(consentId)
+        return hipConsentArtefactStatus.exists(consentId)
+                .flatMap(exists -> exists ? hipConsentArtefactStatus.get(consentId)
                         .flatMap(status -> Mono.just(ConsentArtefactsStatusResponse.builder().status(status).build()))
                         : Mono.error(ClientError.invalidRequester()));
     }

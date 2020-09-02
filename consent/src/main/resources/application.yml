@@ -26,21 +26,7 @@ consentmanager:
     jwkUrl: ${CENTRAL_REGISTRY_JWK_URL}
     access-token-expiry-in-minutes: ${TOKEN_EXPIRY:10}
   userservice:
-    enabled: ${USER_SERVICE_ENABLED:true}
     url: ${User_Service_Url}
-    transactionPinDigitSize: ${TRANSACTION_PIN_DIGIT_SIZE}
-    transactionPinTokenValidity: ${TRANSACTION_PIN_TOKEN_VALIDITY}
-    userCreationTokenValidity: ${USER_CREATION_TOKEN_VALIDITY}
-    userIdSuffix: ${USER_ID_SUFFIX}
-    maxOtpAttempts: ${MAX_OTP_ATTEMPTS}
-    maxOtpAttemptsPeriodInMin: ${MAX_OTP_ATTEMPTS_PERIOD_IN_MIN}
-    otpAttemptsBlockPeriodInMin: ${OTP_ATTEMPTS_BLOCK_PERIOD_IN_MIN}
-    maxIncorrectPinAttempts: 5
-    otpInvalidAttemptsBlockPeriodInMin: ${OTP_INVALID_ATTEMPT_BLOCK_PERIOD_IN_MIN}
-    otpMaxInvalidAttempts: ${MAX_INVALID_OTP_ATTEMPTS}
-  lockeduserservice:
-    maximumInvalidAttempts: ${MAXIMUM_INVALID_ATTEMPTS}
-    coolOfPeriod: ${COOL_OF_PERIOD}
   otpservice:
     url: ${Otp_Service_Url}
     identifiers:
@@ -65,10 +51,6 @@ consentmanager:
     user: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
     poolSize: 5
-  dataflow:
-    enabled: ${DATAFLOW_SERVICE_ENABLED:true}
-    consentmanager:
-      url: ${CONSENT_MANAGER_URL}
   linkservice:
     url: ${LINK_SERVICE_URL}
     txnTimeout: ${LINK_TRANSACTION_TIMEOUT}

@@ -30,7 +30,9 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
-import static in.projecteka.consentmanager.consent.Constants.*;
+import static in.projecteka.consentmanager.consent.Constants.CONSENT_REQUESTS_STATUS;
+import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
+import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
 import static in.projecteka.consentmanager.consent.model.HipConsentArtefactNotificationStatus.NOTIFIED;
 
 @RestController

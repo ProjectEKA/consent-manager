@@ -7,3 +7,4 @@ create database gateway;
 create database monitor;
 create database central_registry;
 create database user_service;
+create database dataflow_service;

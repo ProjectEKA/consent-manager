@@ -70,7 +70,7 @@ public class DataFlowBroadcastListener {
                                 .flatMap(status -> status.getStatus().equals(NOTIFIED.toString()) ?
                                         dataRequestNotifier.notifyHip(
                                                 dataFlowRequest, caRep.getConsentDetail().getHip().getId()) :
-                                        Mono.error(ClientError.consentNotGranted())))
+                                        Mono.error(ClientError.consentArtefactsYetToReachHIP())))
                 .block();
     }
 }

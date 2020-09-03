@@ -8,6 +8,7 @@ import in.projecteka.consentmanager.properties.GatewayServiceProperties;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.ServiceAuthentication;
 import lombok.AllArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 
 import static in.projecteka.consentmanager.Constants.HDR_HIP_ID;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
@@ -32,6 +34,7 @@ public class LinkServiceClient {
                 .uri(getLinkEnquiryUrl())
                 .header(AUTHORIZATION, authorization)
                 .header(HDR_HIP_ID, hipId)
+                .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                 .body(Mono.just(patientLinkReferenceRequest), PatientLinkReferenceRequest.class)
                 .retrieve()
                 .onStatus(httpStatus -> httpStatus.value() == 401,
@@ -52,6 +55,7 @@ public class LinkServiceClient {
                                 .uri(getLinkConfirmationUrl())
                                 .header(AUTHORIZATION, authToken)
                                 .header(HDR_HIP_ID, hipId)
+                                .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                                 .bodyValue(confirmationRequest)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,
@@ -75,6 +79,7 @@ public class LinkServiceClient {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header(AUTHORIZATION, token)
                                 .header(HDR_HIP_ID, hipId)
+                                .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                                 .bodyValue(linkResponse)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == HttpStatus.BAD_REQUEST.value(),

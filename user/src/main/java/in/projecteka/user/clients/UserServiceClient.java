@@ -5,12 +5,14 @@ import in.projecteka.library.common.ServiceAuthentication;
 import in.projecteka.user.properties.GatewayServiceProperties;
 import in.projecteka.user.model.PatientResponse;
 import lombok.AllArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static reactor.core.publisher.Mono.error;
@@ -35,6 +37,7 @@ public class UserServiceClient {
                                 .contentType(APPLICATION_JSON)
                                 .header(AUTHORIZATION, authToken)
                                 .header(routingKey, requesterId)
+                                .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                                 .bodyValue(patientResponse)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,

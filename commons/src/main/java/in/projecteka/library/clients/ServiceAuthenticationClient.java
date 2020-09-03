@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Properties;
 
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 public class ServiceAuthenticationClient {
@@ -29,6 +31,7 @@ public class ServiceAuthenticationClient {
                 .uri("/sessions")
                 .contentType(APPLICATION_JSON)
                 .accept(APPLICATION_JSON)
+                .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                 .body(BodyInserters.fromValue(requestWith(clientId, clientSecret)))
                 .retrieve()
                 .onStatus(HttpStatus::isError, clientResponse -> clientResponse.bodyToMono(Properties.class)

@@ -41,6 +41,7 @@ import in.projecteka.user.properties.UserServiceProperties;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
@@ -57,6 +58,7 @@ import static in.projecteka.library.clients.model.ClientError.failedToFetchUserC
 import static in.projecteka.library.clients.model.ClientError.from;
 import static in.projecteka.library.clients.model.ClientError.userAlreadyExists;
 import static in.projecteka.library.clients.model.ClientError.userNotFound;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 import static in.projecteka.user.IdentifierUtils.getIdentifierValue;
 import static in.projecteka.user.model.IdentifierType.MOBILE;
 import static in.projecteka.user.model.LoginMode.CREDENTIAL;
@@ -118,6 +120,11 @@ public class UserService {
                 .flatMap(patientResponse -> userServiceClient.sendPatientResponseToGateWay(patientResponse,
                         routingKey,
                         requesterId))
+                .subscriberContext(ctx -> {
+                    Optional<String> correlationId = Optional.ofNullable(MDC.get(CORRELATION_ID));
+                    return correlationId.map(id -> ctx.put(CORRELATION_ID, id))
+                            .orElseGet(() -> ctx.put(CORRELATION_ID, UUID.randomUUID().toString()));
+                })
                 .subscribe();
     }
 

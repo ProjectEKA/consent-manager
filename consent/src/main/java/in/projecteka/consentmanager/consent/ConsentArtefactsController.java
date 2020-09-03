@@ -16,6 +16,7 @@ import in.projecteka.library.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,10 +31,14 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import static in.projecteka.consentmanager.consent.Constants.CONSENT_REQUESTS_STATUS;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
 import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
 import static in.projecteka.consentmanager.consent.model.HipConsentArtefactNotificationStatus.NOTIFIED;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 
 @RestController
 @AllArgsConstructor
@@ -106,6 +111,10 @@ public class ConsentArtefactsController {
                         .doOnSuccess(requester -> Mono.defer(() -> {
                             validator.put(fetchRequest.getRequestId().toString(), fetchRequest.getTimestamp());
                             return consentManager.getConsent(fetchRequest.getConsentId(), fetchRequest.getRequestId());
+                        }).subscriberContext(ctx -> {
+                            Optional<String> correlationId = Optional.ofNullable(MDC.get(CORRELATION_ID));
+                            return correlationId.map(id -> ctx.put(CORRELATION_ID, id))
+                                    .orElseGet(() -> ctx.put(CORRELATION_ID, UUID.randomUUID().toString()));
                         }).subscribe())
                         .then());
     }
@@ -142,6 +151,10 @@ public class ConsentArtefactsController {
                 .doOnSuccess(validatedRequest -> Mono.defer(() -> {
                     validator.put(consentRequestStatus.getRequestId().toString(), consentRequestStatus.getTimestamp());
                     return consentManager.getStatus(consentRequestStatus);
+                }).subscriberContext(ctx -> {
+                    Optional<String> correlationId = Optional.ofNullable(MDC.get(CORRELATION_ID));
+                    return correlationId.map(id -> ctx.put(CORRELATION_ID, id))
+                            .orElseGet(() -> ctx.put(CORRELATION_ID, UUID.randomUUID().toString()));
                 }).subscribe())
                 .then();
     }

@@ -2,15 +2,18 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
+import in.projecteka.library.common.TraceableMessage;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.amqp.core.AmqpTemplate;
 import reactor.core.publisher.Mono;
 
 import static in.projecteka.consentmanager.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 
 @AllArgsConstructor
 public class ConsentNotificationPublisher {
@@ -52,6 +55,10 @@ public class ConsentNotificationPublisher {
     }
 
     private void sendMessage(Object message, String exchange, String routingKey) {
-        amqpTemplate.convertAndSend(exchange, routingKey, message);
+        TraceableMessage traceableMessage = TraceableMessage.builder()
+                .correlationId(MDC.get(CORRELATION_ID))
+                .message(message)
+                .build();
+        amqpTemplate.convertAndSend(exchange, routingKey, traceableMessage);
     }
 }

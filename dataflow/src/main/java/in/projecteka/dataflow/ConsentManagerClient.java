@@ -5,6 +5,7 @@ import in.projecteka.dataflow.model.ConsentArtefactsStatusResponse;
 import in.projecteka.library.clients.model.ClientError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -12,6 +13,7 @@ import reactor.core.publisher.Mono;
 import java.util.Properties;
 import java.util.function.Supplier;
 
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 import static java.lang.String.format;
 import static java.util.function.Predicate.not;
 import static reactor.core.publisher.Mono.error;
@@ -36,6 +38,7 @@ public class ConsentManagerClient {
                         .get()
                         .uri(format("%s/internal/consents/%s", url, consentArtefactId))
                         .header("Authorization", token)
+                        .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                         .retrieve()
                         .onStatus(not(HttpStatus::is2xxSuccessful),
                                 clientResponse -> clientResponse.bodyToMono(Properties.class)
@@ -50,6 +53,7 @@ public class ConsentManagerClient {
                         .get()
                         .uri(format("%s/internal/consent-artefacts/status/%s", url, consentId))
                         .header("Authorization", token)
+                        .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                         .retrieve()
                         .onStatus(HttpStatus::isError,
                                 clientResponse -> clientResponse.bodyToMono(Properties.class)

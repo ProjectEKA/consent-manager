@@ -50,6 +50,7 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -66,6 +67,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -83,6 +85,7 @@ import static in.projecteka.library.clients.model.ErrorCode.INVALID_PURPOSE;
 import static in.projecteka.library.clients.model.ErrorCode.INVALID_STATE;
 import static in.projecteka.library.clients.model.ErrorCode.UNABLE_TO_PARSE_KEY;
 import static in.projecteka.library.clients.model.ErrorCode.USER_NOT_FOUND;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -175,7 +178,12 @@ public class ConsentManager {
 
         return consentRequestRepository.insert(requestedDetail, requestId)
                 .doOnSuccess(s -> Mono.defer(() -> consentManagerClient
-                        .sendInitResponseToGateway(consentRequestResult, requestedDetail.getHiu().getId())).subscribe());
+                        .sendInitResponseToGateway(consentRequestResult, requestedDetail.getHiu().getId()))
+                        .subscriberContext(ctx -> {
+                            Optional<String> correlationId = Optional.ofNullable(MDC.get(CORRELATION_ID));
+                            return correlationId.map(id -> ctx.put(CORRELATION_ID, id))
+                                    .orElseGet(() -> ctx.put(CORRELATION_ID, UUID.randomUUID().toString()));
+                        }).subscribe());
     }
 
     private Mono<Boolean> validateRequest(UUID requestId) {

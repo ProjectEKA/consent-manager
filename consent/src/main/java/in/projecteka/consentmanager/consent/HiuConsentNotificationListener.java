@@ -1,15 +1,19 @@
 package in.projecteka.consentmanager.consent;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
-import in.projecteka.consentmanager.properties.ListenerProperties;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import in.projecteka.consentmanager.consent.model.request.ConsentArtefactReference;
 import in.projecteka.consentmanager.consent.model.request.ConsentNotifier;
 import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
+import in.projecteka.consentmanager.properties.ListenerProperties;
+import in.projecteka.library.common.TraceableMessage;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Message;
@@ -21,11 +25,13 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.Constants.PARKING_EXCHANGE;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 
 @AllArgsConstructor
 public class HiuConsentNotificationListener {
@@ -51,10 +57,15 @@ public class HiuConsentNotificationListener {
                             message);
                     return;
                 }
-                var consentArtefactsMessage = (ConsentArtefactsMessage) converter.fromMessage(message);
+                TraceableMessage traceableMessage = (TraceableMessage) converter.fromMessage(message);
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.registerModule(new JavaTimeModule());
+                ConsentArtefactsMessage consentArtefactsMessage = mapper.convertValue(traceableMessage.getMessage(),
+                        ConsentArtefactsMessage.class);
+                MDC.put(CORRELATION_ID, traceableMessage.getCorrelationId());
                 logger.info("Received message for Request id : {}", consentArtefactsMessage.getConsentRequestId());
-
                 notifyHiu(consentArtefactsMessage);
+                MDC.clear();
             } catch (Exception e) {
                 throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
             }
@@ -78,7 +89,12 @@ public class HiuConsentNotificationListener {
     private void notifyHiu(ConsentArtefactsMessage consentArtefactsMessage) {
         HIUNotificationRequest hiuNotificationRequest = hiuNotificationRequest(consentArtefactsMessage);
         String hiuId = consentArtefactsMessage.getHiuId();
-        consentArtefactNotifier.sendConsentArtifactToHIU(hiuNotificationRequest, hiuId).block();
+        consentArtefactNotifier.sendConsentArtifactToHIU(hiuNotificationRequest, hiuId)
+                .subscriberContext(ctx -> {
+                    Optional<String> correlationId = Optional.ofNullable(MDC.get(CORRELATION_ID));
+                    return correlationId.map(id -> ctx.put(CORRELATION_ID, id))
+                            .orElseGet(() -> ctx.put(CORRELATION_ID, UUID.randomUUID().toString()));
+                }).block();
     }
 
     private HIUNotificationRequest hiuNotificationRequest(ConsentArtefactsMessage consentArtefactsMessage) {

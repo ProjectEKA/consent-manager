@@ -8,6 +8,7 @@ import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.ServiceAuthentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -18,6 +19,7 @@ import java.util.Properties;
 
 import static com.google.common.net.HttpHeaders.AUTHORIZATION;
 import static in.projecteka.consentmanager.Constants.HDR_HIU_ID;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 
 public class ConsentManagerClient {
     private static final Logger logger = LoggerFactory.getLogger(ConsentManagerClient.class);
@@ -46,6 +48,7 @@ public class ConsentManagerClient {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header(AUTHORIZATION, token)
                                 .header(HDR_HIU_ID, hiuId)
+                                .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                                 .bodyValue(consentRequestResult)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 400,
@@ -68,6 +71,7 @@ public class ConsentManagerClient {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header(AUTHORIZATION, token)
                                 .header(HDR_HIU_ID, hiuId)
+                                .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                                 .bodyValue(consentArtefactResult)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 400,
@@ -90,6 +94,7 @@ public class ConsentManagerClient {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header(AUTHORIZATION, token)
                                 .header(HDR_HIU_ID, hiuId)
+                                .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                                 .bodyValue(consentStatusResponse)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == HttpStatus.BAD_REQUEST.value(),

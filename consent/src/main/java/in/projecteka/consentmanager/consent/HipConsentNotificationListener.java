@@ -1,14 +1,18 @@
 package in.projecteka.consentmanager.consent;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
 import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
+import in.projecteka.library.common.TraceableMessage;
 import in.projecteka.library.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -17,6 +21,7 @@ import reactor.core.publisher.Mono;
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Optional;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
@@ -24,6 +29,7 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
 import static in.projecteka.consentmanager.consent.model.HipConsentArtefactNotificationStatus.NOTIFYING;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 
 @AllArgsConstructor
 public class HipConsentNotificationListener {
@@ -40,12 +46,23 @@ public class HipConsentNotificationListener {
 
         MessageListener messageListener = message -> {
             try {
-                HIPConsentArtefactRepresentation consentArtefact =
-                        (HIPConsentArtefactRepresentation) converter.fromMessage(message);
+                TraceableMessage traceableMessage = (TraceableMessage) converter.fromMessage(message);
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.registerModule(new JavaTimeModule());
+                HIPConsentArtefactRepresentation consentArtefact = mapper.convertValue(traceableMessage.getMessage()
+                        , HIPConsentArtefactRepresentation.class);
+                MDC.put(CORRELATION_ID, traceableMessage.getCorrelationId());
                 logger.info("Received notify consent to hip for consent artefact: {}",
                         consentArtefact.getConsentId());
 
-                sendConsentArtefactToHIP(consentArtefact).block();
+                sendConsentArtefactToHIP(consentArtefact)
+                        .subscriberContext(ctx -> {
+                            Optional<String> correlationId = Optional.ofNullable(MDC.get(CORRELATION_ID));
+                            return correlationId.map(id -> ctx.put(CORRELATION_ID, id))
+                                    .orElseGet(() -> ctx.put(CORRELATION_ID, UUID.randomUUID().toString()));
+                        })
+                        .block();
+                MDC.clear();
             } catch (Exception e) {
                 throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
             }

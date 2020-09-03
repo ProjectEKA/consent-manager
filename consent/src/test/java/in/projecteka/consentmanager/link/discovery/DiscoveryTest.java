@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.response.CareContext;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.consentmanager.link.link.LinkRepository;
 import in.projecteka.consentmanager.properties.LinkServiceProperties;
 import in.projecteka.library.clients.UserServiceClient;
 import in.projecteka.library.clients.model.ClientError;
@@ -24,6 +25,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.clients.TestBuilders.address;
@@ -32,6 +34,7 @@ import static in.projecteka.consentmanager.clients.TestBuilders.patientInRespons
 import static in.projecteka.consentmanager.clients.TestBuilders.provider;
 import static in.projecteka.consentmanager.clients.TestBuilders.telecom;
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.careContextRepresentation;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResponse;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.discoveryResult;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patient;
@@ -70,6 +73,9 @@ class DiscoveryTest {
     @Mock
     CacheAdapter<String, String> discoveryResults;
 
+    @Mock
+    LinkRepository linkRepository;
+
     private Discovery discovery;
 
     @BeforeEach
@@ -81,7 +87,8 @@ class DiscoveryTest {
                 discoveryRepository,
                 centralRegistry,
                 linkServiceProperties,
-                discoveryResults);
+                discoveryResults,
+                linkRepository);
     }
 
     @Test
@@ -166,12 +173,15 @@ class DiscoveryTest {
                 .resp(gatewayResponse)
                 .build();
         String discoveryResultInCache = OBJECT_MAPPER.writeValueAsString(discoveryResult);
+        var linkedCareContexts = careContextRepresentation().build();
         when(discoveryRepository.getIfPresent(requestId)).thenReturn(Mono.empty());
         when(userServiceClient.userOf(eq(patientId))).thenReturn(Mono.just(user));
         when(discoveryServiceClient.requestPatientFor(any(), eq(hipId)))
                 .thenReturn(Mono.just(true));
         when(discoveryResults.get(requestId.toString())).thenReturn(Mono.just(discoveryResultInCache));
         when(discoveryRepository.insert(hipId, patientId, transactionId, requestId)).thenReturn(Mono.empty());
+        when(linkRepository.getCareContextsForAUserId(user.getIdentifier()))
+                .thenReturn(Mono.just(List.of(linkedCareContexts)));
         var discoveryResponse = discoveryResponse()
                 .patient(patientInResponse)
                 .transactionId(transactionId)

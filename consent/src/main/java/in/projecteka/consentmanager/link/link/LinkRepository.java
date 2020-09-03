@@ -1,5 +1,6 @@
 package in.projecteka.consentmanager.link.link;
 
+import in.projecteka.consentmanager.clients.model.CareContextRepresentation;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.link.link.model.AuthzHipAction;
@@ -51,6 +52,8 @@ public class LinkRepository {
             "WHERE session_id = $1 AND expiry > timezone('utc'::text, now())";
     private static final String UPDATE_HIP_ACTION_COUNTER = "UPDATE authz_hip_actions SET current_counter = current_counter + 1 " +
             "WHERE session_id=$1";
+    private static final String SELECT_CARE_CONTEXTS_FOR_A_USER = "SELECT patient FROM link WHERE " +
+            "consent_manager_user_id=$1";
 
     private final PgPool dbClient;
 
@@ -195,6 +198,27 @@ public class LinkRepository {
                                 return;
                             }
                             monoSink.success();
+                        }));
+    }
+
+    public Mono<List<CareContextRepresentation>> getCareContextsForAUserId(String userId) {
+        return Mono.create(monoSink -> dbClient.preparedQuery(SELECT_CARE_CONTEXTS_FOR_A_USER)
+                .execute(Tuple.of(userId),
+                        handler -> {
+                            if (handler.failed()) {
+                                logger.error(handler.cause().getMessage(), handler.cause());
+                                monoSink.error(new DbOperationError());
+                                return;
+                            }
+                            RowSet<Row> results = handler.result();
+                            List<CareContextRepresentation> careContextsForAUser = new ArrayList<>();
+                            for (Row row : results) {
+                                PatientRepresentation patientRepresentation = to(
+                                        row.getValue("patient").toString(),
+                                        PatientRepresentation.class);
+                                careContextsForAUser.addAll(patientRepresentation.getCareContexts());
+                            }
+                            monoSink.success(careContextsForAUser);
                         }));
     }
 }

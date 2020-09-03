@@ -1,8 +1,9 @@
 package in.projecteka.consentmanager.link.discovery;
 
-import in.projecteka.consentmanager.clients.model.User;
+import in.projecteka.consentmanager.clients.model.CareContextRepresentation;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
+import in.projecteka.library.clients.model.User;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
@@ -32,5 +33,9 @@ public class TestBuilders {
 
     public static in.projecteka.consentmanager.link.discovery.model.patient.response.Patient.PatientBuilder patient() {
         return easyRandom.nextObject(in.projecteka.consentmanager.link.discovery.model.patient.response.Patient.PatientBuilder.class);
+    }
+
+    public static CareContextRepresentation.CareContextRepresentationBuilder careContextRepresentation() {
+        return easyRandom.nextObject(CareContextRepresentation.CareContextRepresentationBuilder.class);
     }
 }

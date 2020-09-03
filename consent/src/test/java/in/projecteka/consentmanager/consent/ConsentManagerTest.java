@@ -4,8 +4,6 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
-import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.clients.model.User;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactResult;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
 import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
@@ -14,6 +12,7 @@ import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.ConsentStatusCallerDetail;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPReference;
 import in.projecteka.consentmanager.consent.model.HIType;
@@ -23,8 +22,11 @@ import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
+import in.projecteka.library.clients.UserServiceClient;
+import in.projecteka.consentmanager.consent.model.response.ConsentStatusResponse;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.Provider;
+import in.projecteka.library.clients.model.User;
 import in.projecteka.library.common.CentralRegistry;
 import in.projecteka.library.common.PatientReference;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +41,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.security.KeyPair;
-import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -47,12 +48,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import static in.projecteka.consentmanager.clients.TestBuilders.toDateWithMilliSeconds;
 import static in.projecteka.consentmanager.consent.TestBuilders.artefactLightRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.certResponse;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefact;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactReference;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestStatus;
 import static in.projecteka.consentmanager.consent.TestBuilders.hipConsentArtefactRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.hipConsentNotificationAcknowledgement;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
@@ -61,7 +65,6 @@ import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REQUESTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
-import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -112,6 +115,9 @@ class ConsentManagerTest {
     @Captor
     private ArgumentCaptor<ConsentArtefactsMessage> consentArtefactsMessageArgumentCaptor;
 
+    @Captor
+    private ArgumentCaptor<ConsentStatusResponse> consentStatusResponseArgumentCaptor;
+
     @BeforeEach
     void setUp() throws JOSEException {
         initMocks(this);
@@ -135,7 +141,7 @@ class ConsentManagerTest {
     }
 
     @Test
-    void getConsents() throws ParseException {
+    void getConsents() {
         ConsentRepresentation consentRepresentation = consentRepresentation().build();
         consentRepresentation.setStatus(ConsentStatus.GRANTED);
         String consentRequestId = consentRepresentation.getConsentRequestId();
@@ -162,7 +168,7 @@ class ConsentManagerTest {
     }
 
     @Test
-    void getConsent() throws ParseException {
+    void getConsent() {
         ConsentRepresentation consentRepresentation = consentRepresentation().build();
         consentRepresentation.setStatus(ConsentStatus.GRANTED);
         String consentRequestId = consentRepresentation.getConsentRequestId();
@@ -187,7 +193,7 @@ class ConsentManagerTest {
     }
 
     @Test
-    void getConsentArtefactLight() throws ParseException {
+    void getConsentArtefactLight() {
         ConsentRepresentation consentRepresentation = consentRepresentation().build();
         consentRepresentation.setStatus(ConsentStatus.GRANTED);
         String patientId = consentRepresentation.getConsentDetail().getPatient().getId();
@@ -200,6 +206,7 @@ class ConsentManagerTest {
         HIPConsentArtefactRepresentation hipConsentArtefactRepresentation = hipConsentArtefactRepresentation().build();
         ConsentArtefactLightRepresentation artefactLightRepresentation = artefactLightRepresentation().build();
         artefactLightRepresentation.getConsentDetail().setHiu(consentArtefactRepresentation.getConsentDetail().getHiu());
+        artefactLightRepresentation.getConsentDetail().setHip(consentArtefactRepresentation.getConsentDetail().getHip());
         artefactLightRepresentation.getConsentDetail().setPermission(consentArtefactRepresentation.getConsentDetail().getPermission());
         artefactLightRepresentation.setSignature(hipConsentArtefactRepresentation.getSignature());
         artefactLightRepresentation.setStatus(consentArtefactRepresentation.getStatus());
@@ -484,5 +491,64 @@ class ConsentManagerTest {
                     assertThat(response.getKeys().size()).isEqualTo(1);
                 })
                 .verifyComplete();
+    }
+
+    @Test
+    void shouldRespondToGatewayIfConsentStatusIsGranted() {
+        var consentRequestStatus = consentRequestStatus().build();
+        var hiuId = string();
+        var consentArtefactReference = consentArtefactReference().id(string()).build();
+        var consentCallerDetails = ConsentStatusCallerDetail.builder().status(GRANTED).hiuId(hiuId).build();
+
+        when(repository.getConsentRequestStatusAndCallerDetails(consentRequestStatus.getConsentRequestId()))
+                .thenReturn(Mono.just(consentCallerDetails));
+        when(consentArtefactRepository.consentArtefacts(consentRequestStatus.getConsentRequestId()))
+                .thenReturn(Flux.just(consentArtefactReference));
+        when(consentManagerClient.sendConsentStatusResponseToGateway(consentStatusResponseArgumentCaptor.capture(), eq(hiuId)))
+                .thenReturn(Mono.empty());
+
+        var consentStatusProducer = consentManager.getStatus(consentRequestStatus);
+        StepVerifier.create(consentStatusProducer)
+                .verifyComplete();
+
+        assertThat(consentStatusResponseArgumentCaptor.getValue().getConsentRequest().getConsentArtefacts()).isNotNull();
+        assertThat(consentStatusResponseArgumentCaptor.getValue().getError()).isNull();
+    }
+
+    @Test
+    void shouldRespondToGatewayIfConsentStatusIsOtherThanGranted() {
+        var consentRequestStatus = consentRequestStatus().build();
+        var hiuId = string();
+        var consentCallerDetails = ConsentStatusCallerDetail.builder().status(DENIED).hiuId(hiuId).build();
+
+        when(repository.getConsentRequestStatusAndCallerDetails(consentRequestStatus.getConsentRequestId()))
+                .thenReturn(Mono.just(consentCallerDetails));
+        when(consentManagerClient.sendConsentStatusResponseToGateway(consentStatusResponseArgumentCaptor.capture(), eq(hiuId)))
+                .thenReturn(Mono.empty());
+
+        var consentStatusProducer = consentManager.getStatus(consentRequestStatus);
+        StepVerifier.create(consentStatusProducer)
+                .verifyComplete();
+
+        assertThat(consentStatusResponseArgumentCaptor.getValue().getConsentRequest().getConsentArtefacts()).isNull();
+        assertThat(consentStatusResponseArgumentCaptor.getValue().getError()).isNull();
+    }
+
+    @Test
+    void shouldRespondToGatewayInCaseOfInvalidConsentRequestId() {
+        var consentRequestStatus = consentRequestStatus().build();
+        var hiuId = "";
+
+        when(repository.getConsentRequestStatusAndCallerDetails(consentRequestStatus.getConsentRequestId()))
+                .thenReturn(Mono.empty());
+        when(consentManagerClient.sendConsentStatusResponseToGateway(consentStatusResponseArgumentCaptor.capture(), eq(hiuId)))
+                .thenReturn(Mono.empty());
+
+        var consentStatusProducer = consentManager.getStatus(consentRequestStatus);
+        StepVerifier.create(consentStatusProducer)
+                .verifyComplete();
+
+        assertThat(consentStatusResponseArgumentCaptor.getValue().getConsentRequest()).isNull();
+        assertThat(consentStatusResponseArgumentCaptor.getValue().getError()).isNotNull();
     }
 }

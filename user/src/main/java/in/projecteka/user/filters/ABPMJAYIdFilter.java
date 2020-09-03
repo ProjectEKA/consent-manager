@@ -8,20 +8,22 @@ import io.vertx.core.json.JsonArray;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static java.util.stream.Collectors.toList;
 
 public class ABPMJAYIdFilter implements FilterStrategy<List<Identifier>> {
     @Override
     public Mono<List<User>> filter(List<User> users, List<Identifier> identifiers) {
         if (IdentifierUtils.isIdentifierTypePresent(identifiers, IdentifierType.ABPMJAYID)) {
             String abpmjayId = IdentifierUtils.getIdentifierValue(identifiers, IdentifierType.ABPMJAYID);
-            users = users.stream().filter(row -> isMatchingABPMJAYId(row.getUnverifiedIdentifiers(), abpmjayId)).collect(Collectors.toList());
+            users = users.stream().filter(row -> isMatchingABPMJAYId(row.getUnverifiedIdentifiers(), abpmjayId))
+                    .collect(toList());
         }
-        return users.size() == 0 ? Mono.empty() : Mono.just(users);
+        return users.isEmpty() ? Mono.empty() : Mono.just(users);
     }
 
-    private boolean isMatchingABPMJAYId(JsonArray unverifiedIdentifiers, String ABPMJAYId) {
+    private boolean isMatchingABPMJAYId(JsonArray unverifiedIdentifiers, String abpmjayid) {
         if (unverifiedIdentifiers == null || unverifiedIdentifiers.isEmpty()) {
             return false;
         }
@@ -29,6 +31,6 @@ public class ABPMJAYIdFilter implements FilterStrategy<List<Identifier>> {
                 .mapToObj(unverifiedIdentifiers::getJsonObject)
                 .anyMatch(identifier ->
                         identifier.getValue("type").equals(IdentifierType.ABPMJAYID.name())
-                                && identifier.getValue("value").equals(ABPMJAYId));
+                                && identifier.getValue("value").equals(abpmjayid));
     }
 }

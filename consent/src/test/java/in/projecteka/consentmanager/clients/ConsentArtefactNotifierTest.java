@@ -43,7 +43,7 @@ class ConsentArtefactNotifierTest {
         MockitoAnnotations.initMocks(this);
         WebClient.Builder webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
         var token = string();
-        var serviceProperties = new GatewayServiceProperties("http://example.com", 1000, "", "", "");
+        var serviceProperties = new GatewayServiceProperties("http://example.com", 1000, "", "", "", 10);
 
         consentArtefactNotifier = new ConsentArtefactNotifier(webClientBuilder,
                 () -> Mono.just(token),
@@ -102,7 +102,7 @@ class ConsentArtefactNotifierTest {
                 .header("Content-Type", "application/json")
                 .build()));
         var webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        var serviceProperties = new GatewayServiceProperties("http://example.com", 2000, "", "", "");
+        var serviceProperties = new GatewayServiceProperties("http://example.com", 2000, "", "", "", 10);
         var dataRequestNotifier = new ConsentArtefactNotifier(webClientBuilder,
                 () -> Mono.just(token),
                 serviceProperties);
@@ -122,7 +122,7 @@ class ConsentArtefactNotifierTest {
                         .header("Content-Type", "application/json")
                         .build()));
         var webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        var serviceProperties = new GatewayServiceProperties("http://example.com", 2000, "", "", "");
+        var serviceProperties = new GatewayServiceProperties("http://example.com", 2000, "", "", "", 10);
         ConsentArtefactNotifier dataRequestNotifier = new ConsentArtefactNotifier(webClientBuilder,
                 () -> Mono.just(token),
                 serviceProperties);
@@ -144,7 +144,7 @@ class ConsentArtefactNotifierTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build()));
         var webClientBuilder = WebClient.builder().exchangeFunction(exchangeFunction);
-        var serviceProperties = new GatewayServiceProperties("http://example.com", 2000, "", "", "");
+        var serviceProperties = new GatewayServiceProperties("http://example.com", 2000, "", "", "", 10);
         var dataRequestNotifier = new ConsentArtefactNotifier(webClientBuilder,
                 () -> Mono.just(token),
                 serviceProperties);

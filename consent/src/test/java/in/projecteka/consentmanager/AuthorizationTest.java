@@ -7,7 +7,6 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.consent.ConsentNotificationPublisher;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -47,15 +46,12 @@ public class AuthorizationTest {
     @MockBean
     private HipConsentNotificationListener hipConsentNotificationListener;
 
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
-
     @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 
     @SuppressWarnings("unused")
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     private JWKSet centralRegistryJWKSet;
 
     @SuppressWarnings("unused")

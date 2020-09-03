@@ -3,7 +3,6 @@ package in.projecteka.consentmanager.consent;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.consent.model.HIType;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,15 +44,12 @@ public class ConceptValidatorTest {
     @MockBean
     private HipConsentNotificationListener hipConsentNotificationListener;
 
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
-
     @SuppressWarnings("unused")
     @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 
     @SuppressWarnings("unused")
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     private JWKSet centralRegistryJWKSet;
 
     @SuppressWarnings("unused")

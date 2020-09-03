@@ -2,7 +2,7 @@ server:
   port: 8000
   shutdown: graceful
 user:
-  name: ${CONSENT_SERVICE_NAME:PHR-App}
+  name: ${CONSENT_APP_NAME:PHR-App}
   transactionPinDigitSize: ${TRANSACTION_PIN_DIGIT_SIZE}
   transactionPinTokenValidity: ${TRANSACTION_PIN_TOKEN_VALIDITY}
   userCreationTokenValidity: ${USER_CREATION_TOKEN_VALIDITY}
@@ -18,7 +18,7 @@ user:
     requestTimeout: ${GATEWAY_REQUEST_TIMEOUT}
     clientSecret: ${GATEWAY_CLIENT_SECRET}
     clientId: ${GATEWAY_CLIENT_ID}
-    jwkUrl: ${CENTRAL_REGISTRY_JWK_URL}
+    jwkUrl: ${GATEWAY_JWK_URL}
   locked-user-service:
     maximumInvalidAttempts: ${MAXIMUM_INVALID_ATTEMPTS}
     coolOfPeriod: ${COOL_OF_PERIOD}
@@ -40,12 +40,12 @@ user:
     jwkUrl:  ${KEY_CLOAK_JWK_URL}
     issuer: ${KEY_CLOAK_TOKEN_ISSUER}
   db:
-    host: ${POSTGRES_HOST}
+    host: ${POSTGRES_HOST:localhost}
     port: ${POSTGRES_PORT:5432}
-    schema: ${CONSENT_MANAGER_DB_NAME}
-    user: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
-    poolSize: 5
+    schema: ${USER_DB_NAME:user-service}
+    user: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:password}
+    poolSize: ${DB_CONNECTION_POOL_SIZE:5}
   cacheMethod: ${CACHE_METHOD:guava}
   redis:
     #Will not be used if cacheMethod is guava
@@ -60,7 +60,7 @@ user:
     # In milliseconds
     retryInterval: ${LISTENERS_RETRY_INTERVAL}
 keystore:
-  file-path: ${KEYSTORE_PATH:consent-manager-keystore.p12}
+  file-path: ${KEYSTORE_PATH:user-keystore.p12}
   password: ${KEYSTORE_PASSWORD}
   store-type: ${KEY_STORE_TYPE:PKCS12}
   alias: ${PIN_VERIFICATION_KEYPAIR_ALIAS:cm-pin-verification}

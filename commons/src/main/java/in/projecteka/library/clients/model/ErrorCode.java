@@ -56,6 +56,7 @@ public enum ErrorCode {
     USER_NOT_FOUND(1414),
     UNABLE_TO_PARSE_KEY(1514),
     INVALID_DISCOVERY(1438),
+    CONSENT_ARTEFACT_YET_TO_REACH_HIP(1439),
     USER_TEMPORARILY_BLOCKED(1423); /*please resume codes from the line above, we will put the codes in order later
     and in ranges*/
 

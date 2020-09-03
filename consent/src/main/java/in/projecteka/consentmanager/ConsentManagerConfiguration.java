@@ -6,8 +6,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig.DestinationInfo;
-import in.projecteka.consentmanager.clients.UserServiceClient;
-import in.projecteka.consentmanager.link.ClientErrorExceptionHandler;
 import in.projecteka.consentmanager.properties.CacheMethodProperty;
 import in.projecteka.consentmanager.properties.ClientRegistryProperties;
 import in.projecteka.consentmanager.properties.DbOptions;
@@ -17,17 +15,16 @@ import in.projecteka.consentmanager.properties.KeyPairConfig;
 import in.projecteka.consentmanager.properties.OtpServiceProperties;
 import in.projecteka.consentmanager.properties.RabbitmqOptions;
 import in.projecteka.consentmanager.properties.RedisOptions;
-import in.projecteka.consentmanager.user.LockedUsersRepository;
-import in.projecteka.consentmanager.user.TokenService;
-import in.projecteka.consentmanager.user.UserRepository;
-import in.projecteka.consentmanager.user.UserServiceProperties;
+import in.projecteka.consentmanager.properties.UserServiceProperties;
 import in.projecteka.library.clients.ClientRegistryClient;
 import in.projecteka.library.clients.IdentityServiceClient;
 import in.projecteka.library.clients.OtpServiceClient;
 import in.projecteka.library.clients.ServiceAuthenticationClient;
+import in.projecteka.library.clients.UserServiceClient;
 import in.projecteka.library.common.CacheHealth;
 import in.projecteka.library.common.CentralRegistry;
 import in.projecteka.library.common.GatewayTokenVerifier;
+import in.projecteka.library.common.GlobalExceptionHandler;
 import in.projecteka.library.common.IdentityService;
 import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceAuthentication;
@@ -128,8 +125,10 @@ public class ConsentManagerConfiguration {
     @Bean({"accessToken"})
     public CacheAdapter<String, String> createRedisCacheAdapter(
             ReactiveRedisOperations<String, String> stringReactiveRedisOperations,
-            RedisOptions redisOptions) {
-        return new RedisCacheAdapter(stringReactiveRedisOperations, 5,
+            RedisOptions redisOptions,
+            GatewayServiceProperties gatewayServiceProperties) {
+        return new RedisCacheAdapter(stringReactiveRedisOperations,
+                gatewayServiceProperties.getAccessTokenExpiryInMinutes(),
                 redisOptions.getRetry());
     }
 
@@ -153,18 +152,14 @@ public class ConsentManagerConfiguration {
         return new ServiceAuthentication(serviceAuthenticationClient,
                 new ServiceCredential(gatewayServiceProperties.getClientId(),
                         gatewayServiceProperties.getClientSecret()),
-                accessToken);
+                accessToken,
+                "consent-manager");
     }
 
     @Bean
     public ClientRegistryClient clientRegistryClient(@Qualifier("customBuilder") WebClient.Builder builder,
                                                      ClientRegistryProperties clientRegistryProperties) {
         return new ClientRegistryClient(builder, clientRegistryProperties.getUrl());
-    }
-
-    @Bean
-    public LockedUsersRepository lockedUsersRepository(DbOptions dbOptions) {
-        return new LockedUsersRepository(pgPool(dbOptions));
     }
 
     @Bean
@@ -185,12 +180,12 @@ public class ConsentManagerConfiguration {
     @Bean
     // This exception handler needs to be given highest priority compared to DefaultErrorWebExceptionHandler, hence order = -2.
     @Order(-2)
-    public ClientErrorExceptionHandler clientErrorExceptionHandler(ErrorAttributes errorAttributes,
-                                                                   ResourceProperties resourceProperties,
-                                                                   ApplicationContext applicationContext,
-                                                                   ServerCodecConfigurer serverCodecConfigurer) {
+    public GlobalExceptionHandler clientErrorExceptionHandler(ErrorAttributes errorAttributes,
+                                                              ResourceProperties resourceProperties,
+                                                              ApplicationContext applicationContext,
+                                                              ServerCodecConfigurer serverCodecConfigurer) {
 
-        ClientErrorExceptionHandler clientErrorExceptionHandler = new ClientErrorExceptionHandler(errorAttributes,
+        GlobalExceptionHandler clientErrorExceptionHandler = new GlobalExceptionHandler(errorAttributes,
                 resourceProperties, applicationContext);
         clientErrorExceptionHandler.setMessageWriters(serverCodecConfigurer.getWriters());
         return clientErrorExceptionHandler;
@@ -220,9 +215,9 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public TokenService tokenService(IdentityServiceProperties identityServiceProperties,
-                                     IdentityServiceClient identityServiceClient, UserRepository userRepository) {
-        return new TokenService(identityServiceProperties, identityServiceClient, userRepository);
+    public IdentityServiceClient keycloakClient(@Qualifier("customBuilder") WebClient.Builder builder,
+                                                IdentityServiceProperties identityServiceProperties) {
+        return new IdentityServiceClient(builder, identityServiceProperties.getBaseUrl());
     }
 
     @SneakyThrows
@@ -241,7 +236,7 @@ public class ConsentManagerConfiguration {
         return keyPair.getPrivate();
     }
 
-    @Bean("centralRegistryJWKSet")
+    @Bean("gatewayJWKSet")
     public JWKSet jwkSet(GatewayServiceProperties gatewayServiceProperties)
             throws IOException, ParseException {
         return JWKSet.load(new URL(gatewayServiceProperties.getJwkUrl()));
@@ -254,7 +249,7 @@ public class ConsentManagerConfiguration {
     }
 
     @Bean
-    public GatewayTokenVerifier centralRegistryTokenVerifier(@Qualifier("centralRegistryJWKSet") JWKSet jwkSet) {
+    public GatewayTokenVerifier gatewayTokenVerifier(@Qualifier("gatewayJWKSet") JWKSet jwkSet) {
         return new GatewayTokenVerifier(jwkSet);
     }
 
@@ -305,14 +300,10 @@ public class ConsentManagerConfiguration {
             @Qualifier("customBuilder") WebClient.Builder builder,
             UserServiceProperties userServiceProperties,
             IdentityService identityService,
-            GatewayServiceProperties gatewayServiceProperties,
-            ServiceAuthentication serviceAuthentication,
             @Value("${consentmanager.authorization.header}") String authorizationHeader) {
         return new UserServiceClient(builder.build(),
                 userServiceProperties.getUrl(),
                 identityService::authenticate,
-                gatewayServiceProperties,
-                serviceAuthentication,
                 authorizationHeader);
     }
 
@@ -397,5 +388,45 @@ public class ConsentManagerConfiguration {
     public CacheHealth cacheHealth(@Qualifier("Lettuce") ReactiveRedisConnectionFactory redisConnectionFactory,
                                    CacheMethodProperty cacheMethodProperty) {
         return new CacheHealth(cacheMethodProperty.toHeartBeat(), redisConnectionFactory);
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @Bean({"blockListedTokens", "usedTokens", "hipConsentArtefactStatus"})
+    public CacheAdapter<String, String> createLoadingCacheAdapter() {
+        return new LoadingCacheAdapter(createSessionCache(5));
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
+    @Bean({"dayCache"})
+    public CacheAdapter<String, String> createDayLoadingCacheAdapter() {
+        return new LoadingCacheAdapter(createSessionCache(24 * 60));
+    }
+
+    public LoadingCache<String, String> createSessionCache(int duration) {
+        return CacheBuilder
+                .newBuilder()
+                .expireAfterWrite(duration, TimeUnit.MINUTES)
+                .build(new CacheLoader<String, String>() {
+                    public String load(String key) {
+                        return "";
+                    }
+                });
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"blockListedTokens", "usedTokens", "hipConsentArtefactStatus"})
+    public CacheAdapter<String, String> redisStringCache(
+            ReactiveRedisOperations<String, String> stringReactiveRedisOperations,
+            RedisOptions redisOptions) {
+        return new RedisCacheAdapter(stringReactiveRedisOperations, 5, redisOptions.getRetry());
+    }
+
+    @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "redis")
+    @Bean({"dayCache"})
+    public CacheAdapter<String, String> createDayRedisCacheAdapter(
+            ReactiveRedisOperations<String, String> stringReactiveRedisOperations,
+            RedisOptions redisOptions) {
+        return new RedisCacheAdapter(stringReactiveRedisOperations, 24 * 60,
+                redisOptions.getRetry());
     }
 }

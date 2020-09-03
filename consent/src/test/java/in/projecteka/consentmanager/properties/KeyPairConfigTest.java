@@ -4,7 +4,6 @@ import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,7 @@ class KeyPairConfigTest {
     @Autowired
     private KeyPairConfig keyPairConfig;
 
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     private JWKSet centralRegistryJWKSet;
 
     @MockBean(name = "identityServiceJWKSet")
@@ -34,9 +33,6 @@ class KeyPairConfigTest {
 
     @MockBean
     private HipConsentNotificationListener hipConsentNotificationListener;
-
-    @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
 
     @SuppressWarnings("unused")
     @MockBean

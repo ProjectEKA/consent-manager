@@ -2,7 +2,6 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
-import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.consent.model.CMReference;
 import in.projecteka.consentmanager.consent.model.CertDetails;
 import in.projecteka.consentmanager.consent.model.CertResponse;
@@ -17,6 +16,8 @@ import in.projecteka.consentmanager.consent.model.ConsentRepresentation;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
 import in.projecteka.consentmanager.consent.model.ConsentRequestDetail;
 import in.projecteka.consentmanager.consent.model.ConsentStatus;
+import in.projecteka.consentmanager.consent.model.ConsentStatusCallerDetail;
+import in.projecteka.consentmanager.consent.model.ConsentStatusDetail;
 import in.projecteka.consentmanager.consent.model.GrantedContext;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
@@ -25,6 +26,8 @@ import in.projecteka.consentmanager.consent.model.HIUReference;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.QueryRepresentation;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
+import in.projecteka.consentmanager.consent.model.request.ConsentArtefactReference;
+import in.projecteka.consentmanager.consent.model.request.ConsentRequestStatus;
 import in.projecteka.consentmanager.consent.model.request.GrantedConsent;
 import in.projecteka.consentmanager.consent.model.request.RequestedDetail;
 import in.projecteka.consentmanager.consent.model.response.ConsentApprovalResponse;
@@ -34,8 +37,10 @@ import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepres
 import in.projecteka.consentmanager.consent.model.response.ConsentReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestId;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestResult;
+import in.projecteka.consentmanager.consent.model.response.ConsentStatusResponse;
 import in.projecteka.consentmanager.consent.model.response.HIPCosentNotificationAcknowledgment;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.library.clients.UserServiceClient;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.Error;
 import in.projecteka.library.clients.model.ErrorRepresentation;
@@ -62,6 +67,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -527,6 +533,7 @@ public class ConsentManager {
                                                     ConsentArtefactRepresentation consentArtefact) {
         ConsentArtefactLight consentArtefactLight = ConsentArtefactLight.builder()
                 .hiu(consentArtefact.getConsentDetail().getHiu())
+                .hip(consentArtefact.getConsentDetail().getHip())
                 .permission(consentArtefact.getConsentDetail().getPermission())
                 .build();
         return ConsentArtefactLightRepresentation.builder()
@@ -654,5 +661,58 @@ public class ConsentManager {
                 acknowledgment.getAcknowledgement().getConsentId(),
                 ConsentNotificationStatus.ACKNOWLEDGED,
                 ConsentNotificationReceiver.HIP);
+    }
+
+    public Mono<Void> getStatus(ConsentRequestStatus request) {
+        AtomicReference<String> hiuId = new AtomicReference<>("");
+        return getStatus(request.getConsentRequestId())
+                .flatMap(consentDetail -> {
+                    if (!consentDetail.getHiuId().isEmpty()) {
+                        hiuId.set(consentDetail.getHiuId());
+                    }
+                    return Mono.just(consentDetail.getStatus());
+                })
+                .flatMap(consentStatus -> (consentStatus.equals(GRANTED) ? fetchConsentArtefactIds(request.getConsentRequestId()).collectList() : Mono.empty())
+                        .flatMap(consentArtefacts -> buildConsentStatusResponse((List<ConsentArtefactReference>) consentArtefacts, request, consentStatus))
+                        .switchIfEmpty(buildConsentStatusResponse(null, request, consentStatus)))
+                .onErrorResume(ClientError.class, exception -> buildConsentStatusErrorResponse(request, exception))
+                .flatMap(consentStatusResponse -> consentManagerClient.sendConsentStatusResponseToGateway(consentStatusResponse, hiuId.get()));
+    }
+
+    private Mono<ConsentStatusResponse> buildConsentStatusErrorResponse(ConsentRequestStatus request, ClientError exception) {
+        logger.error(exception.getError().getError().getMessage(), exception);
+        var consentStatusResponse = ConsentStatusResponse.builder()
+                .requestId(UUID.randomUUID())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
+                .error(ClientError.from(exception))
+                .resp(GatewayResponse.builder().requestId(request.getRequestId().toString()).build())
+                .build();
+        return Mono.just(consentStatusResponse);
+    }
+
+    private Mono<ConsentStatusResponse> buildConsentStatusResponse(List<ConsentArtefactReference> consentArtefactIds,
+                                                  ConsentRequestStatus request,
+                                                  ConsentStatus consentStatus) {
+        var consentStatusDetail = ConsentStatusDetail.builder()
+                .id(request.getConsentRequestId())
+                .status(consentStatus)
+                .consentArtefacts(consentArtefactIds)
+                .build();
+        var consentStatusResponse = ConsentStatusResponse.builder()
+                .requestId(UUID.randomUUID())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
+                .consentRequest(consentStatusDetail)
+                .resp(GatewayResponse.builder().requestId(request.getRequestId().toString()).build())
+                .build();
+        return Mono.just(consentStatusResponse);
+    }
+
+    private Flux<ConsentArtefactReference> fetchConsentArtefactIds(String consentRequestId) {
+        return consentArtefactRepository.consentArtefacts(consentRequestId);
+    }
+
+    private Mono<ConsentStatusCallerDetail> getStatus(String consentRequestId) {
+        return consentRequestRepository.getConsentRequestStatusAndCallerDetails(consentRequestId)
+                .switchIfEmpty(Mono.error(ClientError.consentRequestNotFound()));
     }
 }

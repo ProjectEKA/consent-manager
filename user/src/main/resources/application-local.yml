@@ -15,7 +15,7 @@ user:
   gateway-service:
     baseUrl: http://localhost:8000/v0.5
     requestTimeout: 5000
-    clientSecret: ${GATEWAY_CLIENT_SECRET}
+    clientSecret: ${GATEWAY_CLIENTSECRET}
     clientId: ncg
     jwkUrl: http://localhost:8000/v0.5/certs
   locked-user-service:
@@ -41,20 +41,16 @@ user:
   db:
     host: localhost
     port: 5432
-    schema: consent_manager
+    schema: user_service
     user: postgres
     password: password
     poolSize: 5
-  cache-method: guava
   listeners:
     maximumRetries: 10
     # In milliseconds
     retryInterval: 1000
 keystore:
-  file-path: "consent-manager-local-keystore.p12"
+  file-path: "user-local-keystore.p12"
   password: password
   store-type: PKCS12
   alias: test-pin-verification
-spring:
-  main:
-    lazy-initialization: true

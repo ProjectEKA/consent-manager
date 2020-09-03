@@ -12,21 +12,8 @@ consentmanager:
     consentRequestExpiryCronExpr: '0 0 0/12 ? * *'
   clientregistry:
     url: http://localhost:8080
-  lockeduserservice:
-    maximumInvalidAttempts: 5
-    coolOfPeriod: 8
   userservice:
-    url: http://localhost:9000
-    transactionPinDigitSize: 4
-    transactionPinTokenValidity: 2
-    userCreationTokenValidity: 5
-    userIdSuffix: "@ncg"
-    maxOtpAttempts: 2
-    maxOtpAttemptsPeriodInMin: 1
-    otpAttemptsBlockPeriodInMin: 1
-    maxIncorrectPinAttempts: 5
-    otpInvalidAttemptsBlockPeriodInMin: 1
-    otpMaxInvalidAttempts: 3
+    url: http://localhost:7000
   otpservice:
     url: http://localhost:5000
     identifiers:
@@ -49,9 +36,6 @@ consentmanager:
     user: postgres
     password: password
     poolSize: 5
-  dataflow:
-    consentmanager:
-      url: http://localhost:9000
   linkservice:
     url: http://localhost:9000
     txnTimeout: 5000
@@ -85,5 +69,3 @@ spring:
     port: 5672
     username: guest
     password: guest
-  main:
-    lazy-initialization: true

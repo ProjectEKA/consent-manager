@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.link.discovery.model.patient.request;
 
-import in.projecteka.consentmanager.clients.model.Gender;
+import in.projecteka.library.clients.model.Gender;
 import lombok.Builder;
 import lombok.Value;
 

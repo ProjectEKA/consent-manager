@@ -1,0 +1,29 @@
+server:
+  port: 8090
+dataflow:
+  gatewayservice:
+    baseUrl: http://localhost:8000/v0.5
+    requestTimeout: 5000
+    clientId: ncg
+    clientSecret: ${GATEWAY_CLIENTSECRET}
+    jwkUrl: http://localhost:8000/v0.5/certs
+  consentmanager:
+    url: http://localhost:9000
+  db:
+    host: localhost
+    port: 5432
+    schema: dataflow_service
+    user: postgres
+    password: password
+    poolSize: 5
+  keycloak:
+    baseUrl: http://localhost:9001/auth
+    clientId: consent-manager
+    clientSecret: ${KEYCLOAK_CLIENTSECRET}
+    jwkUrl: http://localhost:9001/auth/realms/consent-manager/protocol/openid-connect/certs
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest

@@ -4,11 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.ConsentManagerClient;
+import in.projecteka.consentmanager.consent.model.ConsentStatusCallerDetail;
 import in.projecteka.consentmanager.consent.model.ListResult;
 import in.projecteka.consentmanager.consent.model.RevokeRequest;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactResponse;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
+import in.projecteka.consentmanager.consent.model.response.ConsentStatusResponse;
 import in.projecteka.library.clients.model.Error;
 import in.projecteka.library.clients.model.ErrorCode;
 import in.projecteka.library.clients.model.ErrorRepresentation;
@@ -37,6 +38,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -46,16 +48,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static in.projecteka.consentmanager.clients.TestBuilders.toDateWithMilliSeconds;
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactReference;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentArtefactRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresentation;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
+import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestStatus;
 import static in.projecteka.consentmanager.consent.TestBuilders.fetchRequest;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
+import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.REVOKED;
-import static in.projecteka.consentmanager.dataflow.Utils.toDateWithMilliSeconds;
 import static in.projecteka.library.clients.model.ErrorCode.CONSENT_ARTEFACT_FORBIDDEN;
 import static in.projecteka.library.clients.model.ErrorCode.CONSENT_NOT_GRANTED;
 import static in.projecteka.library.common.Role.GATEWAY;
@@ -100,10 +105,6 @@ class ConsentArtefactUserJourneyTest {
 
     @SuppressWarnings("unused")
     @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
-
-    @SuppressWarnings("unused")
-    @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
 
     @MockBean
@@ -125,7 +126,7 @@ class ConsentArtefactUserJourneyTest {
     private ConsentManagerClient consentManagerClient;
 
     @SuppressWarnings("unused")
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     private JWKSet centralRegistryJWKSet;
 
     @SuppressWarnings("unused")
@@ -378,6 +379,89 @@ class ConsentArtefactUserJourneyTest {
                 .contentType(APPLICATION_JSON)
                 .header("Authorization", token)
                 .bodyValue(fetchRequest)
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+    }
+
+    @Test
+    void shouldCallGatewayIfConsentRequestStatusIsGranted() {
+        var token = string();
+        var consentRequestStatus = consentRequestStatus().build();
+        var hiuId = string();
+        var consentArtefactReference = consentArtefactReference().id(string()).build();
+        var consentCallerDetails = ConsentStatusCallerDetail.builder().status(GRANTED).hiuId(hiuId).build();
+
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(of(GATEWAY)).build();
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(just(TRUE));
+        when(repository.getConsentRequestStatusAndCallerDetails(consentRequestStatus.getConsentRequestId()))
+                .thenReturn(Mono.just(consentCallerDetails));
+        when(consentArtefactRepository.consentArtefacts(consentRequestStatus.getConsentRequestId()))
+                .thenReturn(Flux.just(consentArtefactReference));
+        when(consentManagerClient.sendConsentStatusResponseToGateway(any(ConsentStatusResponse.class), eq(hiuId)))
+                .thenReturn(Mono.empty());
+
+
+        webTestClient.post()
+                .uri(Constants.CONSENT_REQUESTS_STATUS)
+                .contentType(APPLICATION_JSON)
+                .header("Authorization", token)
+                .bodyValue(consentRequestStatus)
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+    }
+
+    @Test
+    void shouldCallGatewayIfConsentRequestStatusIsOtherThanGranted() {
+        var token = string();
+        var consentRequestStatus = consentRequestStatus().build();
+        var hiuId = string();
+        var consentCallerDetails = ConsentStatusCallerDetail.builder().status(DENIED).hiuId(hiuId).build();
+
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(of(GATEWAY)).build();
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(just(TRUE));
+        when(repository.getConsentRequestStatusAndCallerDetails(consentRequestStatus.getConsentRequestId()))
+                .thenReturn(Mono.just(consentCallerDetails));
+        when(consentManagerClient.sendConsentStatusResponseToGateway(any(ConsentStatusResponse.class), eq(hiuId)))
+                .thenReturn(Mono.empty());
+
+
+        webTestClient.post()
+                .uri(Constants.CONSENT_REQUESTS_STATUS)
+                .contentType(APPLICATION_JSON)
+                .header("Authorization", token)
+                .bodyValue(consentRequestStatus)
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+    }
+
+    @Test
+    void shouldCallGatewayIfConsentRequestIdIsInvalid() {
+        var token = string();
+        var consentRequestStatus = consentRequestStatus().build();
+        var hiuId = "";
+
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(of(GATEWAY)).build();
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
+        when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(just(TRUE));
+        when(repository.getConsentRequestStatusAndCallerDetails(consentRequestStatus.getConsentRequestId()))
+                .thenReturn(Mono.empty());
+        when(consentManagerClient.sendConsentStatusResponseToGateway(any(ConsentStatusResponse.class), eq(hiuId)))
+                .thenReturn(Mono.empty());
+
+
+        webTestClient.post()
+                .uri(Constants.CONSENT_REQUESTS_STATUS)
+                .contentType(APPLICATION_JSON)
+                .header("Authorization", token)
+                .bodyValue(consentRequestStatus)
                 .exchange()
                 .expectStatus()
                 .isAccepted();

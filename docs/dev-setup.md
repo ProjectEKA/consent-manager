@@ -76,17 +76,25 @@
     docker pull projecteka/gateway-db-initializer
     docker pull projecteka/cm-db-initializer
     docker pull projecteka/hiu-db-initializer
+    docker pull projecteka/user-db-initializer
+    docker pull projecteka/dataflow-db-initializer
     docker-compose -f docker-compose-infra-lite.yml up -d
      
     docker logs $(docker ps -aqf "name=^cm-db-setup$")
     docker logs $(docker ps -aqf "name=^hiu-db-setup$")
     docker logs $(docker ps -aqf "name=^keycloak-setup$")
+   docker logs $(docker ps -aqf "name=^user-db-setup$")
+   docker logs $(docker ps -aqf "name=^dataflow-db-setup$")
         # if you see any errors, run the docker-compose again
    
     docker exec -it $(docker ps -aqf "name=^postgres$") /bin/bash
     psql -U postgres consent_manager
     \d # should list all the tables
     \c health_information_user
+    \d # should list all the tables
+    \c user_service
+    \d # should list all the tables
+    \c dataflow_service
     \d # should list all the tables
     exit # twice
     ```
@@ -111,6 +119,7 @@
         - 10000005 with role `HIU` and `HIP`
         - gateway with a role `gateway`
         - ncg with a role 'CM'
+    5. To be able to manipulate bridge & hip/hiu services entries, you need to add admin role to gateway client and create admin-user in `Central-Registry` realm.
         
     ### How to add a client
 
@@ -140,6 +149,32 @@
     3. Click on `Service Account Roles` tab
     4. On the `Available Roles` you should see the roles you just created, select the role you want to assign, and then click `Add Selected`
     5. Repeat the same steps for all the clients.
+    
+    ### How to add admin role to the gateway client
+    
+    1. Click on `Clients`
+    2. Go to the `gateway` client
+    3. Click on `Roles` tab
+    4. Click on `Add Role`
+    5. Enter Role Name as `admin`
+    6. Click `Save`
+    
+    ### How to create admin-user
+    
+    1. Click on `Users`
+    2. Click on `Add user`
+    3. Enter Username as `admin-user`
+    4. Click `Save`
+    5. Click on `Credentials` tab
+    6. Set Temporary check to `OFF`
+    7. Enter Password and Password Confirmation as `welcome`
+    8. Click on `Set Password`
+    9. Click on `Role Mappings` tab
+    10. Click on `Client Roles - Select a client` search box
+    11. Type `gateway` and click enter
+    12. On the `Available Roles` you should see `admin` role, select that to assign, and then click `Add Selected`
+    13. Type `realm-management` and click enter
+    14. On the `Available Roles` you should see `manage-clients` and `manage-users` roles, select those to assign, and then click `Add Selected`
         
 5. Setup RabbitMQ
 
@@ -192,25 +227,38 @@
 
 ### Consent-Manager
 
+It's a mono-repo contains, consent, data flow, and user services, there are following common things across services.
+Those are exposed through HAProxy.
+
 1. Clone [Consent-Manager](https://github.com/ProjectEKA/consent-manager)
 2. You need to get client secret from keycloak 
 3. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients](http://localhost:9001/auth/admin/master/console/#/realms/consent-manager/clients) of `consent-manager` under `credentials` tab, and use it for **KEYCLOAK_CLIENTSECRET** (client under *consent-manager* realm)
 4. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `ncg` under `credentials` tab, and use it for **GATEWAY_CLIENTSECRET** (client under *central-registry* realm)
-5. Run through command line
+
+#### Consent
+
+1. Run through command line
     
     ```bash
     cd consent-manager
     GATEWAY_CLIENTSECRET=${GATEWAY_CLIENTSECRET} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew :consent:bootRunLocal
     ```
 
-### User-Service
+#### User-Service
 
-1. Follow the steps from 1 to 4 in consent-manager if not already
-2. Run through command line
+1. Run through command line
     
     ```bash
    cd consent-manager
    GATEWAY_CLIENTSECRET=${GATEWAY_CLIENTSECRET} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew :user:bootRunLocal
+    ```
+#### DataFlow Service
+
+1. Run through command line
+    
+    ```bash
+   cd consent-manager
+   GATEWAY_CLIENTSECRET=${GATEWAY_CLIENTSECRET} KEYCLOAK_CLIENTSECRET=${KEYCLOAK_CLIENTSECRET} ./gradlew :dataflow:bootRunLocal
     ```
 
 ### Reverse-Proxy

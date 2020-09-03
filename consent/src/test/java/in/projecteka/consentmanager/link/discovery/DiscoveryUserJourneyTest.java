@@ -5,16 +5,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.nimbusds.jose.jwk.JWKSet;
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
-import in.projecteka.consentmanager.clients.UserServiceClient;
 import in.projecteka.consentmanager.consent.ConceptValidator;
 import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
-import in.projecteka.consentmanager.dataflow.DataFlowBroadcastListener;
 import in.projecteka.consentmanager.link.Constants;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.consentmanager.link.link.LinkRepository;
+import in.projecteka.library.clients.UserServiceClient;
 import in.projecteka.library.clients.model.Error;
 import in.projecteka.library.clients.model.ErrorCode;
 import in.projecteka.library.clients.model.ErrorRepresentation;
@@ -58,8 +58,10 @@ import java.util.stream.Stream;
 
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.careContextRepresentation;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.patient;
 import static in.projecteka.consentmanager.link.discovery.TestBuilders.string;
+import static in.projecteka.consentmanager.link.discovery.TestBuilders.user;
 import static in.projecteka.library.common.Role.GATEWAY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -87,10 +89,6 @@ class DiscoveryUserJourneyTest {
 
     @SuppressWarnings("unused")
     @MockBean
-    private DataFlowBroadcastListener dataFlowBroadcastListener;
-
-    @SuppressWarnings("unused")
-    @MockBean
     private ConsentRequestNotificationListener consentRequestNotificationListener;
     private static final MockWebServer providerServer = new MockWebServer();
 
@@ -98,7 +96,7 @@ class DiscoveryUserJourneyTest {
     private WebTestClient webTestClient;
 
     @SuppressWarnings("unused")
-    @MockBean(name = "centralRegistryJWKSet")
+    @MockBean(name = "gatewayJWKSet")
     private JWKSet centralRegistryJWKSet;
 
     @SuppressWarnings("unused")
@@ -134,6 +132,9 @@ class DiscoveryUserJourneyTest {
 
     @MockBean
     private GatewayTokenVerifier gatewayTokenVerifier;
+
+    @MockBean
+    private LinkRepository linkRepository;
 
     @BeforeEach
     void setUp() {
@@ -232,7 +233,7 @@ class DiscoveryUserJourneyTest {
                 "}";
         String userId = "test-user-id";
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userId, false)));
-        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
+        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
         when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
@@ -274,13 +275,18 @@ class DiscoveryUserJourneyTest {
                 "    ]\n" +
                 "  }\n" +
                 "}";
+        var linkedCareContexts = careContextRepresentation().build();
         String userId = "test-user-id";
+        var user = user().build();
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userId, false)));
-        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
+        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(user));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
         when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
         when(discoveryResults.get(any())).thenReturn(Mono.just(patientResponse));
+        when(linkRepository.getCareContextsForAUserId(user.getIdentifier()))
+                .thenReturn(Mono.just(List.of(linkedCareContexts)));
+
         webTestClient.post()
                 .uri(Constants.APP_PATH_CARE_CONTEXTS_DISCOVER)
                 .accept(MediaType.APPLICATION_JSON)
@@ -314,7 +320,7 @@ class DiscoveryUserJourneyTest {
                 "}";
         String userId = "test-user-id";
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userId, false)));
-        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
+        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
         when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));
@@ -351,7 +357,7 @@ class DiscoveryUserJourneyTest {
                 "}";
         String userId = "test-user-id";
         when(authenticator.verify(token)).thenReturn(Mono.just(new Caller(userId, false)));
-        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(TestBuilders.user().build()));
+        when(userServiceClient.userOf(userId)).thenReturn(Mono.just(user().build()));
         when(discoveryRepository.getIfPresent(any())).thenReturn(Mono.empty());
         when(discoveryRepository.insert(anyString(), anyString(), any(), any())).thenReturn(Mono.empty());
         when(discoveryServiceClient.requestPatientFor(any(), eq("12345"))).thenReturn(Mono.just(true));

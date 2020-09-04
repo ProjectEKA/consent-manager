@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.consent.model.ConsentNotificationStatus;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefact;
 import in.projecteka.consentmanager.consent.model.HIPConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.HIPReference;
+import in.projecteka.library.common.TraceableMessage;
 import in.projecteka.library.common.cache.CacheAdapter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,9 +21,10 @@ import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 import static in.projecteka.consentmanager.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
-import static in.projecteka.consentmanager.consent.model.ConsentStatus.GRANTED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -77,10 +79,13 @@ class HipConsentNotificationListenerTest {
                         .build())
                 .consentId(consentId)
                 .build();
+        TraceableMessage traceableMessage = TraceableMessage.builder()
+                .correlationId(UUID.randomUUID().toString())
+                .message(hipConsentArtefactRepresentation).build();
         when(messageListenerContainerFactory
                 .createMessageListenerContainer(HIP_CONSENT_NOTIFICATION_QUEUE)).thenReturn(messageListenerContainer);
         doNothing().when(messageListenerContainer).setupMessageListener(messageListenerCaptor.capture());
-        when(converter.fromMessage(any())).thenReturn(hipConsentArtefactRepresentation);
+        when(converter.fromMessage(any())).thenReturn(traceableMessage);
         when(consentArtefactNotifier.sendConsentArtefactToHIP(any(), anyString())).thenReturn(Mono.empty());
         when(consentArtefactRepository.saveConsentNotification(consentId, ConsentNotificationStatus.SENT, ConsentNotificationReceiver.HIP)).thenReturn(Mono.empty());
         when(mockMessage.getMessageProperties()).thenReturn(mockMessageProperties);

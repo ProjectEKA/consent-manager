@@ -3,11 +3,10 @@ package in.projecteka.dataflow;
 import in.projecteka.dataflow.model.GatewayDataFlowRequest;
 import in.projecteka.dataflow.model.HealthInfoNotificationRequest;
 import in.projecteka.dataflow.model.HealthInformationResponse;
-import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.RequestValidator;
 import in.projecteka.library.common.ServiceCaller;
-import in.projecteka.library.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,11 +15,14 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
+import java.util.Optional;
+import java.util.UUID;
 
 import static in.projecteka.dataflow.Constants.PATH_HEALTH_INFORMATION_NOTIFY;
 import static in.projecteka.dataflow.Constants.PATH_HEALTH_INFORMATION_ON_REQUEST;
 import static in.projecteka.dataflow.Constants.PATH_HEALTH_INFORMATION_REQUEST;
 import static in.projecteka.library.clients.model.ClientError.tooManyRequests;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 import static org.springframework.http.HttpStatus.ACCEPTED;
 import static reactor.core.publisher.Mono.defer;
 import static reactor.core.publisher.Mono.error;
@@ -43,7 +45,11 @@ public class DataFlowRequestController {
                         .doOnSuccess(requester -> defer(() ->
                                 validator.put(req.getRequestId().toString(), req.getTimestamp())
                                         .then(dataFlowRequester.requestHealthDataInfo(dataFlowRequest)))
-                                .subscribe())
+                                .subscriberContext(ctx -> {
+                                    Optional<String> correlationId = Optional.ofNullable(MDC.get(CORRELATION_ID));
+                                    return correlationId.map(id -> ctx.put(CORRELATION_ID, id))
+                                            .orElseGet(() -> ctx.put(CORRELATION_ID, UUID.randomUUID().toString()));
+                                }).subscribe())
                         .then());
     }
 
@@ -71,7 +77,11 @@ public class DataFlowRequestController {
                         .doOnSuccess(requester -> defer(() ->
                                 validator.put(req.getRequestId().toString(), req.getTimestamp())
                                         .then(dataFlowRequester.notifyHealthInformationStatus(notificationRequest)))
-                                .subscribe())
+                                .subscriberContext(ctx -> {
+                                    Optional<String> correlationId = Optional.ofNullable(MDC.get(CORRELATION_ID));
+                                    return correlationId.map(id -> ctx.put(CORRELATION_ID, id))
+                                            .orElseGet(() -> ctx.put(CORRELATION_ID, UUID.randomUUID().toString()));
+                                }).subscribe())
                         .then());
     }
 }

@@ -4,6 +4,7 @@ import in.projecteka.dataflow.model.DataFlowRequestResult;
 import in.projecteka.dataflow.properties.GatewayServiceProperties;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.ServiceAuthentication;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -13,6 +14,7 @@ import java.time.Duration;
 
 import static in.projecteka.dataflow.Constants.HDR_HIU_ID;
 import static in.projecteka.dataflow.Constants.PATH_DATA_FLOW_CM_ON_REQUEST;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 public class DataFlowRequestClient {
@@ -38,6 +40,7 @@ public class DataFlowRequestClient {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header(AUTHORIZATION, authToken)
                                 .header(HDR_HIU_ID, hiuId)
+                                .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                                 .bodyValue(dataFlowRequest)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 400,

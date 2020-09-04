@@ -2,8 +2,9 @@ package in.projecteka.consentmanager.consent;
 
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.ConsentArtefactNotifier;
-import in.projecteka.consentmanager.properties.ListenerProperties;
 import in.projecteka.consentmanager.consent.model.ConsentArtefactsMessage;
+import in.projecteka.consentmanager.properties.ListenerProperties;
+import in.projecteka.library.common.TraceableMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -20,6 +21,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static in.projecteka.consentmanager.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
@@ -76,10 +78,13 @@ class HiuConsentNotificationListenerTest {
                 .hiuId("HIU_ID")
                 .consentArtefacts(List.of())
                 .build();
+        TraceableMessage traceableMessage = TraceableMessage.builder()
+                .correlationId(UUID.randomUUID().toString())
+                .message(consentArtefactMessage).build();
         when(messageListenerContainerFactory
                 .createMessageListenerContainer(HIU_CONSENT_NOTIFICATION_QUEUE)).thenReturn(messageListenerContainer);
         doNothing().when(messageListenerContainer).setupMessageListener(messageListenerCaptor.capture());
-        when(converter.fromMessage(any())).thenReturn(consentArtefactMessage);
+        when(converter.fromMessage(any())).thenReturn(traceableMessage);
         when(consentArtefactNotifier.sendConsentArtifactToHIU(any(), anyString())).thenReturn(Mono.empty());
         when(mockMessage.getMessageProperties()).thenReturn(mockMessageProperties);
         when(mockMessageProperties.getXDeathHeader()).thenReturn(null);
@@ -107,10 +112,13 @@ class HiuConsentNotificationListenerTest {
                 .hiuId("HIU_ID")
                 .consentArtefacts(List.of())
                 .build();
+        TraceableMessage traceableMessage = TraceableMessage.builder()
+                .correlationId(UUID.randomUUID().toString())
+                .message(consentArtefactMessage).build();
         when(messageListenerContainerFactory
                 .createMessageListenerContainer(HIU_CONSENT_NOTIFICATION_QUEUE)).thenReturn(messageListenerContainer);
         doNothing().when(messageListenerContainer).setupMessageListener(messageListenerCaptor.capture());
-        when(converter.fromMessage(any())).thenReturn(consentArtefactMessage);
+        when(converter.fromMessage(any())).thenReturn(traceableMessage);
         when(consentArtefactNotifier.sendConsentArtifactToHIU(any(), anyString())).thenReturn(Mono.empty());
         when(mockMessage.getMessageProperties()).thenReturn(mockMessageProperties);
         when(mockMessageProperties.getXDeathHeader()).thenReturn(null);

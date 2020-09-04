@@ -4,6 +4,7 @@ import in.projecteka.consentmanager.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
 import in.projecteka.library.clients.model.ClientError;
 import lombok.AllArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -13,6 +14,7 @@ import java.time.Duration;
 import java.util.function.Supplier;
 
 import static in.projecteka.consentmanager.Constants.HDR_HIP_ID;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
@@ -32,6 +34,7 @@ public class DiscoveryServiceClient {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header(AUTHORIZATION, token)
                                 .header(HDR_HIP_ID, hipId)
+                                .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                                 .bodyValue(request)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,

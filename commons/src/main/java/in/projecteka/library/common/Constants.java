@@ -10,6 +10,8 @@ public class Constants {
     public static final String SCOPE_CONSENT_APPROVE = "consentrequest.approve";
     public static final String SCOPE_CONSENT_REVOKE = "consent.revoke";
     public static final String SCOPE_CHANGE_PIN = "profile.changepin";
+    public static final String CORRELATION_ID = "CORRELATION-ID";
+
 
     //APIs
     public static final String CURRENT_VERSION = "/" + API_VERSION;

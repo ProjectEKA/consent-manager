@@ -13,6 +13,7 @@ import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.Caller;
 import in.projecteka.library.common.RequestValidator;
 import lombok.AllArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,10 +25,14 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import static in.projecteka.consentmanager.link.Constants.APP_PATH_LINK_INIT;
 import static in.projecteka.consentmanager.link.Constants.PATH_HIP_ADD_CONTEXTS;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 import static org.springframework.http.HttpStatus.ACCEPTED;
 import static reactor.core.publisher.Mono.just;
 
@@ -111,6 +116,10 @@ public class LinkController {
                     validator.put(
                             linkRequest.getRequestId().toString(), linkRequest.getTimestamp());
                     return link.addCareContexts(linkRequest);
+                }).subscriberContext(ctx -> {
+                    Optional<String> correlationId = Optional.ofNullable(MDC.get(CORRELATION_ID));
+                    return correlationId.map(id -> ctx.put(CORRELATION_ID, id))
+                            .orElseGet(() -> ctx.put(CORRELATION_ID, UUID.randomUUID().toString()));
                 }).subscribe())
                 .then();
     }

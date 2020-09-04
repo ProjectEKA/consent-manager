@@ -2,7 +2,9 @@
     <variable name="LOG_LOCATION" value="${LOG_LOCATION:-logs/app.log}"/>
     <springProfile name="!local">
         <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
-            <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeMdcKeyName>CORRELATION-ID</includeMdcKeyName>
+            </encoder>
         </appender>
         <root level="info">
             <appender-ref ref="console"/>
@@ -13,7 +15,7 @@
         <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
             <layout class="ch.qos.logback.classic.PatternLayout">
                 <Pattern>
-                    %black(%d{ISO8601}) %highlight(%-5level) [%blue(%t)] %yellow(%C{1.}): %msg%n%throwable
+                    %black(%d{ISO8601}) %highlight(%-5level) [%blue(%t)] %yellow(%C{1.}) %cyan([%X{CORRELATION-ID}]): %msg%n%throwable
                 </Pattern>
             </layout>
         </appender>
@@ -26,7 +28,9 @@
         <appender name="file-appender"
                   class="ch.qos.logback.core.rolling.RollingFileAppender">
             <file>${LOG_LOCATION}</file>
-            <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeMdcKeyName>CORRELATION-ID</includeMdcKeyName>
+            </encoder>
             <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
                 rollover daily and when the file reaches 10 MegaBytes
                 <fileNamePattern>logs/logs.%d{yyyy-MM-dd}.%i.log

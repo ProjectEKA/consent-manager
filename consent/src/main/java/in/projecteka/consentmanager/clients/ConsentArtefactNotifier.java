@@ -4,6 +4,7 @@ import in.projecteka.consentmanager.properties.GatewayServiceProperties;
 import in.projecteka.consentmanager.consent.model.request.HIPNotificationRequest;
 import in.projecteka.consentmanager.consent.model.request.HIUNotificationRequest;
 import in.projecteka.library.clients.model.ClientError;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -13,6 +14,7 @@ import java.util.function.Supplier;
 
 import static in.projecteka.consentmanager.Constants.HDR_HIP_ID;
 import static in.projecteka.consentmanager.Constants.HDR_HIU_ID;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static reactor.core.publisher.Mono.error;
@@ -48,6 +50,7 @@ public class ConsentArtefactNotifier {
                                 .uri(gatewayServiceProperties.getBaseUrl() + HIU_CONSENT_NOTIFICATION_URL_PATH)
                                 .header(AUTHORIZATION, token)
                                 .header(HDR_HIU_ID, hiuId)
+                                .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                                 .bodyValue(body)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,
@@ -68,6 +71,7 @@ public class ConsentArtefactNotifier {
                                 .contentType(APPLICATION_JSON)
                                 .header(AUTHORIZATION, token)
                                 .header(HDR_HIP_ID, hipId)
+                                .header(CORRELATION_ID, MDC.get(CORRELATION_ID))
                                 .bodyValue(body)
                                 .retrieve()
                                 .onStatus(httpStatus -> httpStatus.value() == 401,

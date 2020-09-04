@@ -1,5 +1,7 @@
 package in.projecteka.consentmanager.consent;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import in.projecteka.consentmanager.MessageListenerContainerFactory;
 import in.projecteka.consentmanager.clients.PatientServiceClient;
 import in.projecteka.consentmanager.consent.model.ConsentRequest;
@@ -14,9 +16,11 @@ import in.projecteka.library.clients.model.Action;
 import in.projecteka.library.clients.model.Communication;
 import in.projecteka.library.clients.model.CommunicationType;
 import in.projecteka.library.clients.model.Notification;
+import in.projecteka.library.common.TraceableMessage;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -26,9 +30,12 @@ import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static in.projecteka.consentmanager.Constants.CONSENT_REQUEST_QUEUE;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 
 @AllArgsConstructor
 public class ConsentRequestNotificationListener {
@@ -47,9 +54,14 @@ public class ConsentRequestNotificationListener {
         var mlc = messageListenerContainerFactory.createMessageListenerContainer(CONSENT_REQUEST_QUEUE);
         MessageListener messageListener = message -> {
             try {
-                ConsentRequest consentRequest = (ConsentRequest) converter.fromMessage(message);
+                TraceableMessage traceableMessage = (TraceableMessage) converter.fromMessage(message);
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.registerModule(new JavaTimeModule());
+                ConsentRequest consentRequest = mapper.convertValue(traceableMessage.getMessage(), ConsentRequest.class);
+                MDC.put(CORRELATION_ID, traceableMessage.getCorrelationId());
                 logger.info("Received message for Request id : {}", consentRequest.getId());
                 processConsentRequest(consentRequest);
+                MDC.clear();
             } catch (Exception e) {
                 throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
             }
@@ -65,10 +77,20 @@ public class ConsentRequestNotificationListener {
     private void processConsentRequest(ConsentRequest consentRequest) {
         try {
             if (isAutoApproveConsentRequest(consentRequest)) {
-                autoApproveFor(consentRequest).subscribe();
+                autoApproveFor(consentRequest)
+                        .subscriberContext(ctx -> {
+                            Optional<String> correlationId = Optional.ofNullable(MDC.get(CORRELATION_ID));
+                            return correlationId.map(id -> ctx.put(CORRELATION_ID, id))
+                                    .orElseGet(() -> ctx.put(CORRELATION_ID, UUID.randomUUID().toString()));
+                        }).subscribe();
                 return;
             }
-            createNotificationMessage(consentRequest).flatMap(this::notifyUserWith).block();
+            createNotificationMessage(consentRequest).flatMap(this::notifyUserWith)
+                    .subscriberContext(ctx -> {
+                        Optional<String> correlationId = Optional.ofNullable(MDC.get(CORRELATION_ID));
+                        return correlationId.map(id -> ctx.put(CORRELATION_ID, id))
+                                .orElseGet(() -> ctx.put(CORRELATION_ID, UUID.randomUUID().toString()));
+                    }).block();
         } catch (Exception exception) {
             logger.error(exception.getMessage());
         }

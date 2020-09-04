@@ -83,13 +83,15 @@ public class LinkConfiguration {
                                DiscoveryServiceClient discoveryServiceClient,
                                UserServiceClient userServiceClient,
                                LinkServiceProperties linkServiceProperties,
-                               @Qualifier("linkResults") CacheAdapter<String, String> linkResults) {
+                               @Qualifier("linkResults") CacheAdapter<String, String> linkResults,
+                               LinkRepository linkRepository) {
         return new Discovery(userServiceClient,
                 discoveryServiceClient,
                 discoveryRepository,
                 centralRegistry,
                 linkServiceProperties,
-                linkResults);
+                linkResults,
+                linkRepository);
     }
 
     @Bean

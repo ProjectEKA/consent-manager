@@ -1,11 +1,14 @@
 package in.projecteka.consentmanager.link.discovery;
 
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
+import in.projecteka.consentmanager.clients.model.CareContextRepresentation;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifier;
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientRequest;
+import in.projecteka.consentmanager.link.discovery.model.patient.response.CareContext;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResponse;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
+import in.projecteka.consentmanager.link.link.LinkRepository;
 import in.projecteka.consentmanager.properties.LinkServiceProperties;
 import in.projecteka.library.clients.ErrorMap;
 import in.projecteka.library.clients.UserServiceClient;
@@ -28,7 +31,6 @@ import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
@@ -43,6 +45,10 @@ import static in.projecteka.library.clients.model.ClientError.requestAlreadyExis
 import static in.projecteka.library.common.CustomScheduler.scheduleThis;
 import static in.projecteka.library.common.Serializer.from;
 import static in.projecteka.library.common.Serializer.tryTo;
+import static java.time.Duration.ofMillis;
+import static reactor.core.publisher.Mono.defer;
+import static reactor.core.publisher.Mono.error;
+import static reactor.core.publisher.Mono.just;
 
 @AllArgsConstructor
 public class Discovery {
@@ -54,6 +60,7 @@ public class Discovery {
     private final CentralRegistry centralRegistry;
     private final LinkServiceProperties serviceProperties;
     private final CacheAdapter<String, String> discoveryResults;
+    private final LinkRepository linkRepository;
 
     public Flux<ProviderRepresentation> providersFrom(String name) {
         return centralRegistry.providersOf(name)
@@ -72,38 +79,70 @@ public class Discovery {
                                                 String providerId,
                                                 UUID transactionId,
                                                 UUID requestId) {
-
-        return Mono.just(requestId)
+        return just(requestId)
                 .filterWhen(this::validateRequest)
-                .switchIfEmpty(Mono.error(requestAlreadyExists()))
+                .switchIfEmpty(error(requestAlreadyExists()))
                 .flatMap(val -> userWith(userName))
                 .flatMap(user -> scheduleThis(discoveryServiceClient.requestPatientFor(
                         requestFor(user, transactionId, unverifiedIdentifiers, requestId),
                         providerId))
-                        .timeout(Duration.ofMillis(getExpectedFlowResponseDuration()))
-                        .responseFrom(discard -> Mono.defer(() -> discoveryResults.get(requestId.toString()))))
-                .onErrorResume(DelayTimeoutException.class, discard -> Mono.error(gatewayTimeOut()))
-                .flatMap(response -> tryTo(response, DiscoveryResult.class).map(Mono::just).orElse(Mono.error(invalidResponseFromHIP())))
-                .switchIfEmpty(Mono.error(invalidResponseFromHIP()))
-                .flatMap(discoveryResult -> {
-                    if (discoveryResult.getError() != null) {
-                        logger.error("[Discovery] Patient care-contexts discovery resulted in error {}", discoveryResult.getError());
-                        return Mono.error(new ClientError(HttpStatus.NOT_FOUND, cmErrorRepresentation(discoveryResult.getError())));
+                        .timeout(ofMillis(getExpectedFlowResponseDuration()))
+                        .responseFrom(discard -> defer(() -> discoveryResults.get(requestId.toString())
+                                .zipWith(just(user.getIdentifier())))))
+                .onErrorResume(DelayTimeoutException.class, discard -> error(gatewayTimeOut()))
+                .flatMap(response -> tryTo(response.getT1(), DiscoveryResult.class)
+                        .map(result -> just(result).zipWith(just(response.getT2())))
+                        .orElse(error(invalidResponseFromHIP())))
+                .switchIfEmpty(error(invalidResponseFromHIP()))
+                .flatMap(discoveryResultUserIdTuple -> {
+                    if (discoveryResultUserIdTuple.getT1().getError() != null) {
+                        logger.error("[Discovery] Patient care-contexts discovery resulted in error {}",
+                                discoveryResultUserIdTuple.getT1().getError());
+                        return error(new ClientError(HttpStatus.NOT_FOUND,
+                                cmErrorRepresentation(discoveryResultUserIdTuple.getT1().getError())));
                     }
-                    if (discoveryResult.getPatient() == null) {
+                    if (discoveryResultUserIdTuple.getT1().getPatient() == null) {
                         logger.error("[Discovery] Patient care-contexts discovery should have returned in " +
                                 "Patient reference with care context details or error caused." +
-                                "Gateway requestId {}", discoveryResult.getRequestId());
-                        return Mono.error(invalidResponseFromHIP());
+                                "Gateway requestId {}", discoveryResultUserIdTuple.getT1().getRequestId());
+                        return error(invalidResponseFromHIP());
                     }
-                    return Mono.just(DiscoveryResponse.builder()
-                            .patient(discoveryResult.getPatient())
-                            .transactionId(transactionId)
-                            .build());
+                    return ignoreLinkedCareContexts(discoveryResultUserIdTuple.getT2(),
+                            discoveryResultUserIdTuple.getT1().getPatient().getCareContexts())
+                            .flatMap(nonLinkedCareContexts -> {
+                                var patientResult = discoveryResultUserIdTuple.getT1().getPatient();
+                                var patient = in.projecteka.consentmanager.link.discovery.model.patient.response.Patient.builder()
+                                        .referenceNumber(patientResult.getReferenceNumber())
+                                        .display(patientResult.getDisplay())
+                                        .careContexts(nonLinkedCareContexts)
+                                        .matchedBy(patientResult.getMatchedBy())
+                                        .build();
+                                var discoveryResponse = DiscoveryResponse.builder()
+                                        .patient(patient)
+                                        .transactionId(transactionId)
+                                        .build();
+                                return just(discoveryResponse);
+                            });
                 })
                 .doOnSuccess(r -> discoveryRepository
                         .insert(providerId, userName, transactionId, requestId)
                         .subscribe());
+    }
+
+    private Mono<List<CareContext>> ignoreLinkedCareContexts(String userId, List<CareContext> careContexts) {
+        return linkRepository.getCareContextsForAUserId(userId)
+                .flatMap(linkedCareContexts -> {
+                    List<CareContext> filteredCareContexts = careContexts.stream().filter(careContext -> !filter(linkedCareContexts, careContext))
+                            .collect(Collectors.toList());
+                    return just(filteredCareContexts);
+                });
+    }
+
+    private boolean filter(List<CareContextRepresentation> linkedCareContexts, CareContext careContext) {
+        return linkedCareContexts.stream()
+                .anyMatch(linkedCareContext ->
+                        linkedCareContext.getReferenceNumber().equals(careContext.getReferenceNumber())
+                                && linkedCareContext.getDisplay().equals(careContext.getDisplay()));
     }
 
     private ErrorRepresentation cmErrorRepresentation(RespError respError) {
@@ -144,7 +183,7 @@ public class Discovery {
         }
         logger.error("[Discovery] Received a discovery response from Gateway without original request Id mentioned.{}",
                 discoveryResult.getRequestId());
-        return Mono.error(ClientError.unprocessableEntity());
+        return error(ClientError.unprocessableEntity());
     }
 
     private String getDiscoveryError(DiscoveryResult discoveryResult) {
@@ -161,7 +200,7 @@ public class Discovery {
 
         return discoveryResults
                 .put(requestId, from(errorDiscovery))
-                .then(Mono.error(ClientError.invalidDiscovery(errorMessage)));
+                .then(error(ClientError.invalidDiscovery(errorMessage)));
     }
 
     private boolean hasEmptyCareContextReferences(DiscoveryResult discoveryResult) {
@@ -178,7 +217,7 @@ public class Discovery {
     private Mono<Boolean> validateRequest(UUID requestId) {
         return discoveryRepository.getIfPresent(requestId)
                 .map(Objects::isNull)
-                .switchIfEmpty(Mono.just(true));
+                .switchIfEmpty(just(true));
     }
 
     private Mono<User> userWith(String patientId) {

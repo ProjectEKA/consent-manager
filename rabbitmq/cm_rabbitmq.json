@@ -1,0 +1,73 @@
+{
+  "exchanges" : [
+    {
+      "name": "",
+      "type": "direct",
+      "arguments": {}
+    },
+    {
+      "name": "exchange",
+      "type": "direct",
+      "arguments": {}
+    },
+    {
+      "name": "cm-dead-letter-exchange",
+      "type": "topic",
+      "arguments": {}
+    },
+    {
+      "name": "parking.exchange",
+      "type": "topic",
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "cm-dead-letter-queue",
+      "routing_key": "#",
+      "exchange":"cm-dead-letter-exchange",
+      "arguments": {
+        "x-dead-letter-exchange": "exchange",
+        "x-message-ttl": 1000
+      }
+    },
+    {
+      "name": "parking.queue",
+      "routing_key": "#",
+      "exchange":"parking.exchange",
+      "arguments": {}
+    },
+    {
+      "name": "hip-data-flow-request-queue",
+      "routing_key": "hip-data-flow-request-queue",
+      "exchange":"exchange",
+      "arguments": {
+        "x-dead-letter-exchange": "cm-dead-letter-exchange"
+      }
+    },
+    {
+      "name": "hip-consent-notification-queue",
+      "routing_key": "hip-consent-notification-queue",
+      "exchange":"exchange",
+      "arguments": {
+        "x-dead-letter-exchange": "cm-dead-letter-exchange"
+      }
+    },
+    {
+      "name": "hiu-consent-notification-queue",
+      "routing_key": "hiu-consent-notification-queue",
+      "exchange":"exchange",
+      "arguments": {
+        "x-dead-letter-exchange": "cm-dead-letter-exchange"
+      }
+    },
+    {
+      "name": "consent-request-queue",
+      "routing_key": "consent-request-queue",
+      "exchange":"exchange",
+      "arguments": {
+        "x-dead-letter-exchange": "cm-dead-letter-exchange"
+      }
+    }
+  ]
+}

@@ -28,7 +28,9 @@
         <appender name="file-appender"
                   class="ch.qos.logback.core.rolling.RollingFileAppender">
             <file>${LOG_LOCATION}</file>
-            <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeMdcKeyName>CORRELATION-ID</includeMdcKeyName>
+            </encoder>
             <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
                 rollover daily and when the file reaches 10 MegaBytes
                 <fileNamePattern>logs/logs.%d{yyyy-MM-dd}.%i.log

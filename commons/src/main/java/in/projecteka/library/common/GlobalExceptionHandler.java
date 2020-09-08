@@ -21,6 +21,7 @@ import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
 
@@ -48,6 +49,10 @@ public class GlobalExceptionHandler extends AbstractErrorWebExceptionHandler {
         // Default error response
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
         BodyInserter<Object, ReactiveHttpOutputMessage> bodyInserter = BodyInserters.fromValue(errorPropertiesMap);
+
+        if(error instanceof ResponseStatusException) {
+            status = ((ResponseStatusException) error).getStatus();
+        }
 
         if (error instanceof ClientError) {
             status = ((ClientError) error).getHttpStatus();

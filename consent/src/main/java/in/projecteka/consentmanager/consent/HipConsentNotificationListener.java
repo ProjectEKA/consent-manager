@@ -85,10 +85,12 @@ public class HipConsentNotificationListener {
                                 ConsentNotificationStatus.SENT,
                                 ConsentNotificationReceiver.HIP));
             }
-            if(consentArtefact.getStatus() == GRANTED) {
-                cache.put(consentArtefact.getConsentId(), NOTIFYING.toString());
+            var artefactPublisher = Mono.defer(() -> consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId));
+            if (consentArtefact.getStatus() == GRANTED) {
+                return cache.put(consentArtefact.getConsentId(), NOTIFYING.toString())
+                        .then(artefactPublisher);
             }
-            return consentArtefactNotifier.sendConsentArtefactToHIP(notificationRequest, hipId);
+            return artefactPublisher;
         } catch (Exception e) {
             logger.error(e.getMessage());
             return Mono.empty();

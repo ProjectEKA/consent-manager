@@ -128,9 +128,10 @@ public class ConsentArtefactsController {
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(validatedRequest ->
                         hipConsentArtefactStatus.exists(acknowledgment.getAcknowledgement().getConsentId())
-                                .flatMap(exists -> exists ? hipConsentArtefactStatus.put(acknowledgment.getAcknowledgement().getConsentId(), NOTIFIED.toString()) :
-                                        consentManager.updateConsentNotification(acknowledgment)
-                                                .then(validator.put(acknowledgment.getRequestId().toString(), acknowledgment.getTimestamp()))));
+                                .switchIfEmpty(Mono.just(false)))
+                .flatMap(exists -> exists ? hipConsentArtefactStatus.put(acknowledgment.getAcknowledgement().getConsentId(), NOTIFIED.toString()) :
+                        consentManager.updateConsentNotification(acknowledgment)
+                                .then(validator.put(acknowledgment.getRequestId().toString(), acknowledgment.getTimestamp())));
     }
 
     @GetMapping(value = Constants.APP_PATH_INTERNAL_GET_CONSENT_ARTEFACT_STATUS)

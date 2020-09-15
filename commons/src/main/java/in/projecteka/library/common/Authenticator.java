@@ -46,7 +46,6 @@ public class Authenticator {
     }
 
     public Mono<Caller> verify(String token) {
-        logger.debug("Authenticating {}", token);
         var parts = token.split(" ");
         if (parts.length != 2) {
             return Mono.empty();

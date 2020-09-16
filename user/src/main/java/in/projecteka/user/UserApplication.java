@@ -24,6 +24,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
         RedisOptions.class,
         DbOptions.class,
         UserServiceProperties.class,
+        WebClientOptions.class,
         KeyPairConfig.class
 })
 public class UserApplication {

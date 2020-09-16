@@ -39,6 +39,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
                                 NHSProperties.class,
                                 KeyPairConfig.class,
                                 CacheMethodProperty.class,
+                                WebClientOptions.class,
                                 LinkTokenCacheProperties.class
 })
 public class ConsentManagerApplication {

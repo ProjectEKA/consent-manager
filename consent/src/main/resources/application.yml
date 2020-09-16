@@ -90,4 +90,8 @@ keystore:
     store-type: PKCS12
     alias: ${PIN_VERIFICATION_KEYPAIR_ALIAS:cm-pin-verification}
 webclient:
-  keepAlive: ${CM_KEEP_ALIVE:true}
+  use-connection-pool: ${USE_HTTP_CONNECTION_POOL:true}
+  connection-pool:
+    poolSize: ${HTTP_CONNECTION_POOL_SIZE:500}
+    maxLifeTime: ${HTTP_CONNECTION_MAX_LIFETIME:10}
+    maxIdleTimeout: ${HTTP_CONNECTION_MAX_IDLETIME:5}

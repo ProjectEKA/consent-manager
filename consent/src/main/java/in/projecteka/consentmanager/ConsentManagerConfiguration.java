@@ -79,6 +79,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.text.ParseException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -270,14 +271,30 @@ public class ConsentManagerConfiguration {
                 cacheHealth);
     }
 
-    @Bean
-    @ConditionalOnProperty(value = "webclient.keepalive", havingValue = "false")
+    @Bean("consentHttpConnector")
+    @ConditionalOnProperty(value = "webclient.use-connection-pool", havingValue = "false")
     public ClientHttpConnector clientHttpConnector() {
         return new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.newConnection()));
     }
 
+    @Bean("consentHttpConnector")
+    @ConditionalOnProperty(value = "webclient.use-connection-pool", havingValue = "true")
+    public ClientHttpConnector pooledClientHttpConnector(WebClientOptions webClientOptions) {
+        return new ReactorClientHttpConnector(
+                HttpClient.create(
+                        ConnectionProvider.builder("cm-http-connection-pool")
+                                .maxConnections(webClientOptions.getPoolSize())
+                                .maxLifeTime(Duration.ofMinutes(webClientOptions.getMaxLifeTime()))
+                                .maxIdleTime(Duration.ofMinutes(webClientOptions.getMaxIdleTimeout()))
+                                .build()
+                )
+        );
+    }
+
     @Bean("customBuilder")
-    public WebClient.Builder webClient(final ClientHttpConnector clientHttpConnector, ObjectMapper objectMapper) {
+    public WebClient.Builder webClient(
+            @Qualifier("consentHttpConnector") final ClientHttpConnector clientHttpConnector,
+            ObjectMapper objectMapper) {
         return WebClient
                 .builder()
                 .exchangeStrategies(exchangeStrategies(objectMapper))

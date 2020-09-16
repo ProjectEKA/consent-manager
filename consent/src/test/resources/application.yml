@@ -48,3 +48,6 @@ keystore:
   pin-verification-keypair:
     store-type: PKCS12
     alias: test-pin-verification
+webclient:
+  maxInMemorySize: ${MAX_IN_MEMORY_SIZE:1000}
+  use-connection-pool: ${USE_HTTP_CONNECTION_POOL:false}

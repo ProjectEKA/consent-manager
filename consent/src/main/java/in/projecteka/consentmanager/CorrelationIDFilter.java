@@ -40,6 +40,7 @@ public class CorrelationIDFilter implements WebFilter {
                     }
                     Context contextTmp = context.put(CORRELATION_ID, correlationId);
                     exchange.getAttributes().put(CORRELATION_ID, correlationId);
+                    exchange.getResponse().getHeaders().add(CORRELATION_ID, correlationId);
                     return contextTmp;
                 });
     }

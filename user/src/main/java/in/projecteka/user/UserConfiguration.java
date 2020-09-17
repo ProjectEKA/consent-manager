@@ -71,6 +71,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.text.ParseException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
@@ -236,14 +237,30 @@ public class UserConfiguration {
         return PgPool.pool(connectOptions, poolOptions);
     }
 
-    @Bean
-    @ConditionalOnProperty(value = "webclient.keepalive", havingValue = "false")
+    @Bean("userHttpConnector")
+    @ConditionalOnProperty(value = "webclient.use-connection-pool", havingValue = "false")
     public ClientHttpConnector clientHttpConnector() {
         return new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.newConnection()));
     }
 
+    @Bean("userHttpConnector")
+    @ConditionalOnProperty(value = "webclient.use-connection-pool", havingValue = "true")
+    public ClientHttpConnector pooledClientHttpConnector(WebClientOptions webClientOptions) {
+        return new ReactorClientHttpConnector(
+                HttpClient.create(
+                        ConnectionProvider.builder("user-http-connection-pool")
+                                .maxConnections(webClientOptions.getPoolSize())
+                                .maxLifeTime(Duration.ofMinutes(webClientOptions.getMaxLifeTime()))
+                                .maxIdleTime(Duration.ofMinutes(webClientOptions.getMaxIdleTimeout()))
+                                .build()
+                )
+        );
+    }
+
     @Bean("customBuilder")
-    public WebClient.Builder webClient(final ClientHttpConnector clientHttpConnector, ObjectMapper objectMapper) {
+    public WebClient.Builder webClient(
+            @Qualifier("userHttpConnector") final ClientHttpConnector clientHttpConnector,
+            ObjectMapper objectMapper) {
         return WebClient
                 .builder()
                 .exchangeStrategies(exchangeStrategies(objectMapper))

@@ -141,8 +141,7 @@ public class Discovery {
     private boolean filter(List<CareContextRepresentation> linkedCareContexts, CareContext careContext) {
         return linkedCareContexts.stream()
                 .anyMatch(linkedCareContext ->
-                        linkedCareContext.getReferenceNumber().equals(careContext.getReferenceNumber())
-                                && linkedCareContext.getDisplay().equals(careContext.getDisplay()));
+                        linkedCareContext.getReferenceNumber().equals(careContext.getReferenceNumber()));
     }
 
     private ErrorRepresentation cmErrorRepresentation(RespError respError) {

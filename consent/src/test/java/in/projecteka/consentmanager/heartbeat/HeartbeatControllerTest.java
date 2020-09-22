@@ -21,6 +21,7 @@ import reactor.core.publisher.Mono;
 import static in.projecteka.consentmanager.Constants.PATH_HEARTBEAT;
 import static in.projecteka.consentmanager.Constants.SERVICE_DOWN;
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
+import static in.projecteka.library.common.Constants.PATH_READINESS;
 import static in.projecteka.library.common.heartbeat.model.Status.DOWN;
 import static in.projecteka.library.common.heartbeat.model.Status.UP;
 import static java.time.LocalDateTime.now;
@@ -57,12 +58,21 @@ class HeartbeatControllerTest {
         when(heartbeat.getStatus()).thenReturn(Mono.just(heartbeatResponse));
 
         webTestClient.get()
-                .uri(PATH_HEARTBEAT)
+                .uri(PATH_READINESS)
                 .exchange()
                 .expectStatus()
                 .isOk()
                 .expectBody()
                 .json(heartbeatResponseJson);
+    }
+
+    @Test
+    void shouldGiveCMStatusAsUpForLiveliness() throws JsonProcessingException {
+        webTestClient.get()
+                .uri(PATH_HEARTBEAT)
+                .exchange()
+                .expectStatus()
+                .isOk();
     }
 
     @Test
@@ -76,7 +86,7 @@ class HeartbeatControllerTest {
         when(heartbeat.getStatus()).thenReturn(Mono.just(heartbeatResponse));
 
         webTestClient.get()
-                .uri(PATH_HEARTBEAT)
+                .uri(PATH_READINESS)
                 .exchange()
                 .expectStatus()
                 .is5xxServerError()

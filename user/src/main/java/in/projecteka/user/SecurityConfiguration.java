@@ -35,6 +35,7 @@ import java.util.Optional;
 
 import static in.projecteka.library.clients.model.ClientError.unAuthorized;
 import static in.projecteka.library.common.Constants.PATH_HEARTBEAT;
+import static in.projecteka.library.common.Constants.PATH_READINESS;
 import static in.projecteka.library.common.Constants.SCOPE_CHANGE_PIN;
 import static in.projecteka.library.common.Role.GATEWAY;
 import static in.projecteka.user.Constants.APP_PATH_CREATE_USER;
@@ -80,7 +81,8 @@ public class SecurityConfiguration {
                                                                    "/otpsession/verify",
                                                                    "/otpsession/permit",
                                                                    "/sessions",
-                                                                   PATH_HEARTBEAT};
+                                                                   PATH_HEARTBEAT,
+                                                                   PATH_READINESS};
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(

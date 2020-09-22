@@ -50,6 +50,7 @@ import static in.projecteka.library.clients.model.ClientError.unAuthorized;
 import static in.projecteka.library.common.Constants.SCOPE_CHANGE_PIN;
 import static in.projecteka.library.common.Constants.SCOPE_CONSENT_APPROVE;
 import static in.projecteka.library.common.Constants.SCOPE_CONSENT_REVOKE;
+import static in.projecteka.library.common.Constants.PATH_READINESS;
 import static in.projecteka.library.common.Role.GATEWAY;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;
@@ -123,6 +124,7 @@ public class SecurityConfiguration {
                                                                    "/otpsession/permit",
                                                                    "/sessions",
                                                                    PATH_HEARTBEAT,
+                                                                   PATH_READINESS,
                                                                    "/**.html",
                                                                    "/**.js",
                                                                    "/**.yaml",

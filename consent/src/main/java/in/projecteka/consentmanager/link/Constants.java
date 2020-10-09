@@ -16,7 +16,6 @@ public class Constants {
     public static final String PATH_LINK_ON_CONFIRM = CURRENT_VERSION + "/links/link/on-confirm";
     public static final String PATH_HIP_ADD_CONTEXTS = CURRENT_VERSION + "/links/link/add-contexts";
 
-    public static final String HIP_INITIATED_ACTION_LINK = "LINK";
     public static final String LINK_INITIATOR_CM = "CM";
     public static final String LINK_INITIATOR_HIP = "HIP";
 

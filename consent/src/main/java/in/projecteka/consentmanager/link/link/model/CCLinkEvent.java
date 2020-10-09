@@ -13,7 +13,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class NewCCLinkEvent implements Serializable {
+public class CCLinkEvent implements Serializable {
     private String hipId;
     private String healthNumber;
     private LocalDateTime timestamp;

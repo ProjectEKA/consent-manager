@@ -15,7 +15,7 @@ import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
 import in.projecteka.consentmanager.link.link.model.LinkRequest;
 import in.projecteka.consentmanager.link.link.model.LinkResponse;
-import in.projecteka.consentmanager.link.link.model.NewCCLinkEvent;
+import in.projecteka.consentmanager.link.link.model.CCLinkEvent;
 import in.projecteka.consentmanager.link.link.model.PatientCareContext;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
@@ -45,7 +45,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static in.projecteka.consentmanager.link.Constants.HIP_INITIATED_ACTION_LINK;
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 import static in.projecteka.consentmanager.link.link.model.AcknowledgementStatus.SUCCESS;
 import static in.projecteka.library.clients.ErrorMap.toCmError;
@@ -225,9 +224,9 @@ public class Link {
                 .getHipIdFromToken(linkRequest.getLink().getAccessToken())
                 .flatMap(hipId ->
                         linkTokenVerifier.validateSession(linkRequest.getLink().getAccessToken())
-                                .flatMap(hipAction -> linkTokenVerifier.validateHipAction(hipAction, HIP_INITIATED_ACTION_LINK))
+                                .flatMap(linkTokenVerifier::validateHipAction)
                                 .flatMap(hipAction -> linkRepository.insertToLink(
-                                        hipAction.getHipId(),
+                                        hipAction.getRequesterId(),
                                         hipAction.getPatientId(),
                                         hipAction.getSessionId(),
                                         linkRequest.getLink().getPatient(),
@@ -270,7 +269,7 @@ public class Link {
                         .careContextReference(cc.getReferenceNumber())
                         .patientReference(patient.getReferenceNumber())
                         .build()).collect(Collectors.toList());
-        NewCCLinkEvent linkEvent = NewCCLinkEvent.builder()
+        CCLinkEvent linkEvent = CCLinkEvent.builder()
                 .hipId(hipId)
                 .healthNumber(healthNumber)
                 .timestamp(LocalDateTime.now())

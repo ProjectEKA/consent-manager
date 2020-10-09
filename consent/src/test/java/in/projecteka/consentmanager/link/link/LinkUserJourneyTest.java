@@ -65,7 +65,6 @@ import static in.projecteka.consentmanager.clients.TestBuilders.provider;
 import static in.projecteka.consentmanager.common.TestBuilders.OBJECT_MAPPER;
 import static in.projecteka.consentmanager.link.Constants.APP_PATH_CONFIRM_LINK;
 import static in.projecteka.consentmanager.link.Constants.APP_PATH_LINK_INIT;
-import static in.projecteka.consentmanager.link.Constants.HIP_INITIATED_ACTION_LINK;
 import static in.projecteka.consentmanager.link.Constants.PATH_HIP_ADD_CONTEXTS;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.userauth.Constants.PATH_USER_AUTH_CONFIRM;
@@ -518,10 +517,10 @@ class LinkUserJourneyTest {
         clientRegistryServer.setDispatcher(dispatcher);
         gatewayServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody("{}"));
         when(validator.validate(anyString(), any(LocalDateTime.class))).thenReturn(just(TRUE));
-        when(linkTokenVerifier.getHipIdFromToken(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction.getHipId()));
+        when(linkTokenVerifier.getHipIdFromToken(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction.getRequesterId()));
         when(linkTokenVerifier.validateSession(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction));
-        when(linkTokenVerifier.validateHipAction(hipAction, HIP_INITIATED_ACTION_LINK)).thenReturn(Mono.just(hipAction));
-        when(linkRepository.insertToLink(eq(hipAction.getHipId()), eq(hipAction.getPatientId()), eq(hipAction.getSessionId()),
+        when(linkTokenVerifier.validateHipAction(hipAction)).thenReturn(Mono.just(hipAction));
+        when(linkRepository.insertToLink(eq(hipAction.getRequesterId()), eq(hipAction.getPatientId()), eq(hipAction.getSessionId()),
                 any(PatientRepresentation.class), eq(Constants.LINK_INITIATOR_HIP))).thenReturn(Mono.empty());
         when(linkRepository.incrementHipActionCounter(hipAction.getSessionId())).thenReturn(Mono.empty());
         when(linkServiceClient.sendLinkResponseToGateway(any(), anyString())).thenReturn(Mono.empty());

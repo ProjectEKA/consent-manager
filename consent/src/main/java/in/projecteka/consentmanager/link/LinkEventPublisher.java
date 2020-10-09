@@ -2,7 +2,7 @@ package in.projecteka.consentmanager.link;
 
 import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.library.common.TraceableMessage;
-import in.projecteka.consentmanager.link.link.model.NewCCLinkEvent;
+import in.projecteka.consentmanager.link.link.model.CCLinkEvent;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,20 +21,16 @@ public class LinkEventPublisher {
 
     private static final Logger logger = LoggerFactory.getLogger(LinkEventPublisher.class);
 
-    public Mono<Void> publish(NewCCLinkEvent message) {
+    public Mono<Void> publish(CCLinkEvent message) {
         return Mono.create(monoSink -> {
             broadcastLinkEvent(message);
             monoSink.success();
         });
     }
 
-    private void broadcastLinkEvent(NewCCLinkEvent message) {
+    private void broadcastLinkEvent(CCLinkEvent message) {
         DestinationsConfig.DestinationInfo destinationInfo = destinationsConfig.getQueues()
                 .get(HIP_LINK_QUEUE);
-        sendMessage(message, destinationInfo.getExchange(), destinationInfo.getRoutingKey());
-    }
-
-    private void sendMessage(NewCCLinkEvent message, String exchange, String routingKey) {
         TraceableMessage traceableMessage = TraceableMessage.builder()
                 .correlationId(MDC.get(CORRELATION_ID))
                 .message(message)
@@ -43,10 +39,11 @@ public class LinkEventPublisher {
                         "exchange: {} , routing key: {} , " +
                         "correlation id: {}, " +
                         "patient: {}, hip: {}",
-                    exchange, routingKey,
-                    traceableMessage.getCorrelationId(),
-                    message.getHealthNumber(), message.getHipId());
-        amqpTemplate.convertAndSend(exchange, routingKey, traceableMessage);
+                        destinationInfo.getExchange(), destinationInfo.getRoutingKey(),
+                        traceableMessage.getCorrelationId(),
+                        message.getHealthNumber(), message.getHipId());
+        amqpTemplate.convertAndSend(destinationInfo.getExchange(),
+                destinationInfo.getRoutingKey(), traceableMessage);
         logger.info("Raised LINK Event: correlation Id: {}",  traceableMessage.getCorrelationId());
     }
 }

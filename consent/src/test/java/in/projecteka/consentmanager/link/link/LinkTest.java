@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.link.Constants;
+import in.projecteka.consentmanager.link.LinkEventPublisher;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.LinkResponse;
 import in.projecteka.consentmanager.link.link.model.Links;
@@ -65,6 +66,9 @@ class LinkTest {
     @Mock
     private LinkTokenVerifier linkTokenVerifier;
 
+    @Mock
+    private LinkEventPublisher linkEventPublisher;
+
     @BeforeEach
     void setUp() {
         initMocks(this);
@@ -75,7 +79,8 @@ class LinkTest {
                 serviceAuthentication,
                 linkServiceProperties,
                 linkResults,
-                linkTokenVerifier));
+                linkTokenVerifier,
+                linkEventPublisher));
     }
 
     @Test

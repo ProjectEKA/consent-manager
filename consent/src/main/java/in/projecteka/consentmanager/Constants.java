@@ -13,6 +13,7 @@ public class Constants {
     public static final String HIP_CONSENT_NOTIFICATION_QUEUE = "hip-consent-notification-queue";
     public static final String HIU_CONSENT_NOTIFICATION_QUEUE = "hiu-consent-notification-queue";
     public static final String HIP_DATA_FLOW_REQUEST_QUEUE = "hip-data-flow-request-queue";
+    public static final String HIP_LINK_QUEUE = "cm-hip-link-queue";
     public static final String PARKING_EXCHANGE = "parking.exchange";
     public static final String EXCHANGE = "exchange";
 

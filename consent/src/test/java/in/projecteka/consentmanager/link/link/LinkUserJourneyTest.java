@@ -11,7 +11,6 @@ import in.projecteka.consentmanager.consent.ConsentRequestNotificationListener;
 import in.projecteka.consentmanager.consent.HipConsentNotificationListener;
 import in.projecteka.consentmanager.consent.HiuConsentNotificationListener;
 import in.projecteka.consentmanager.link.Constants;
-import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
@@ -19,6 +18,7 @@ import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import in.projecteka.library.clients.model.Error;
 import in.projecteka.library.clients.model.ErrorCode;
 import in.projecteka.library.clients.model.ErrorRepresentation;
+import in.projecteka.library.clients.model.GatewayResponse;
 import in.projecteka.library.clients.model.RespError;
 import in.projecteka.library.common.Authenticator;
 import in.projecteka.library.common.Caller;
@@ -68,7 +68,7 @@ import static in.projecteka.consentmanager.link.Constants.APP_PATH_LINK_INIT;
 import static in.projecteka.consentmanager.link.Constants.HIP_INITIATED_ACTION_LINK;
 import static in.projecteka.consentmanager.link.Constants.PATH_HIP_ADD_CONTEXTS;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
-import static in.projecteka.consentmanager.link.Constants.USERS_AUTH_CONFIRM;
+import static in.projecteka.consentmanager.userauth.Constants.PATH_USER_AUTH_CONFIRM;
 import static in.projecteka.consentmanager.link.link.TestBuilders.linkHipAction;
 import static in.projecteka.consentmanager.link.link.TestBuilders.linkRequest;
 import static in.projecteka.consentmanager.link.link.TestBuilders.patientLinkReferenceRequest;
@@ -563,7 +563,7 @@ class LinkUserJourneyTest {
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
 
         webTestClient.post()
-                .uri(USERS_AUTH_CONFIRM)
+                .uri(PATH_USER_AUTH_CONFIRM)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .body(BodyInserters.fromValue(userAuthConfirmRequest))
@@ -581,7 +581,7 @@ class LinkUserJourneyTest {
         when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
 
         webTestClient.post()
-                .uri(USERS_AUTH_CONFIRM)
+                .uri(PATH_USER_AUTH_CONFIRM)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION, token)
                 .bodyValue(userAuthConfirmRequest)

@@ -1,25 +1,31 @@
-package in.projecteka.consentmanager.consent.model;
+package in.projecteka.consentmanager.userauth.model;
 
 import in.projecteka.library.clients.model.GatewayResponse;
 import in.projecteka.library.clients.model.RespError;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.List;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Data
 @Builder
-public class ConsentArtefactResult {
-    private UUID requestId;
+@AllArgsConstructor
+@Data
+public class FetchAuthModesResponse {
+    private String requestId;
     private LocalDateTime timestamp;
-    private Consent consent;
+    private AuthResponse auth;
     private RespError error;
     @NotNull
     private GatewayResponse resp;
+
+    @Builder
+    @AllArgsConstructor
+    @Data
+    public static class AuthResponse{
+        private AuthPurpose purpose;
+        private List<AuthMode> modes;
+    }
 }

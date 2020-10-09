@@ -61,10 +61,10 @@ public class UserAuthController {
     public Mono<Void> fetchAuthModes(@RequestBody FetchAuthModesRequest request){
         logger.info("Invoked User Auth Fetch Modes API. Request Id {}", request.getRequestId());
         return just(request)
-                .filterWhen(req -> validator.validate(request.getRequestId().toString(), request.getTimestamp()))
+                .filterWhen(req -> validator.validate(request.getRequestId(), request.getTimestamp()))
                 .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
                 .flatMap(r -> {
-                    validator.put(request.getRequestId().toString(), request.getTimestamp());
+                    validator.put(request.getRequestId(), request.getTimestamp());
                     return userAuthentication.fetchAuthModes(request);
                 });
     }

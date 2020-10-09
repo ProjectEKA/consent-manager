@@ -47,6 +47,6 @@ public class LinkEventPublisher {
                     traceableMessage.getCorrelationId(),
                     message.getHealthNumber(), message.getHipId());
         amqpTemplate.convertAndSend(exchange, routingKey, traceableMessage);
-        logger.info("Raised LINK Event: correlation Id:",  traceableMessage.getCorrelationId());
+        logger.info("Raised LINK Event: correlation Id: {}",  traceableMessage.getCorrelationId());
     }
 }

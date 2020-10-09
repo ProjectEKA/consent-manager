@@ -80,7 +80,8 @@ public class UserAuthentication {
     }
 
     public Mono<Void> authConfirm(UserAuthConfirmRequest request) {
-        //TODO
+        //To-do
+        logger.info("Confirming authentication {}", request);
         return Mono.empty();
     }
 }

@@ -7,6 +7,7 @@ import in.projecteka.consentmanager.link.link.model.AuthzHipAction;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.Links;
 import in.projecteka.consentmanager.link.link.model.PatientLinks;
+import in.projecteka.consentmanager.userauth.model.RequesterType;
 import in.projecteka.library.common.DbOperation;
 import in.projecteka.library.common.DbOperationError;
 import io.vertx.core.json.JsonObject;
@@ -47,7 +48,7 @@ public class LinkRepository {
             "'referenceNumber' = $1";
     private static final String SELECT_LINK_REFRENCE = "SELECT patient_link_reference FROM link_reference WHERE " +
             "request_id=$1";
-    private static final String SELECT_HIP_AUTHZ_ACTION = "SELECT session_id, hip_id, patient_id, purpose, expiry, repeat, current_counter " +
+    private static final String SELECT_HIP_AUTHZ_ACTION = "SELECT session_id, requester_id, patient_id, purpose, expiry, repeat, current_counter, requester_type " +
             "FROM authz_hip_actions " +
             "WHERE session_id = $1 AND expiry > timezone('utc'::text, now())";
     private static final String UPDATE_HIP_ACTION_COUNTER = "UPDATE authz_hip_actions SET current_counter = current_counter + 1 " +
@@ -177,12 +178,13 @@ public class LinkRepository {
                             Row result = iterator.next();
                             var hipAction = AuthzHipAction.builder()
                                     .sessionId(result.getString("session_id"))
-                                    .hipId(result.getString("hip_id"))
+                                    .requesterId(result.getString("requester_id"))
                                     .patientId(result.getString("patient_id"))
                                     .expiry(result.getLocalDateTime("expiry"))
                                     .purpose(result.getString("purpose"))
                                     .repeat(result.getInteger("repeat"))
                                     .currentCounter(result.getInteger("current_counter"))
+                                    .requesterType(RequesterType.valueOf(result.getString("requester_type")))
                                     .build();
                             monoSink.success(hipAction);
                         }));

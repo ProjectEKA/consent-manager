@@ -6,6 +6,7 @@ import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
 import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.link.Constants;
+import in.projecteka.consentmanager.link.LinkEventPublisher;
 import in.projecteka.consentmanager.link.link.model.Hip;
 import in.projecteka.consentmanager.link.link.model.LinkResponse;
 import in.projecteka.consentmanager.link.link.model.Links;
@@ -26,7 +27,6 @@ import reactor.test.StepVerifier;
 
 import java.util.ArrayList;
 
-import static in.projecteka.consentmanager.link.Constants.HIP_INITIATED_ACTION_LINK;
 import static in.projecteka.consentmanager.link.link.LinkTokenVerifier.ERROR_INVALID_TOKEN_NO_HIP_ID;
 import static in.projecteka.consentmanager.link.link.LinkTokenVerifier.ERROR_INVALID_TOKEN_REQUIRED_ATTRIBUTES_NOT_PRESENT;
 import static in.projecteka.consentmanager.link.link.LinkTokenVerifier.ERROR_TOKEN_IS_INVALID_OR_EXPIRED;
@@ -65,6 +65,9 @@ class LinkTest {
     @Mock
     private LinkTokenVerifier linkTokenVerifier;
 
+    @Mock
+    private LinkEventPublisher linkEventPublisher;
+
     @BeforeEach
     void setUp() {
         initMocks(this);
@@ -75,7 +78,8 @@ class LinkTest {
                 serviceAuthentication,
                 linkServiceProperties,
                 linkResults,
-                linkTokenVerifier));
+                linkTokenVerifier,
+                linkEventPublisher));
     }
 
     @Test
@@ -163,16 +167,16 @@ class LinkTest {
     void shouldCallGatewayAfterAddingCareContexts() {
         var linkRequest = linkRequest().build();
         var hipAction = linkHipAction().build();
-        when(linkTokenVerifier.getHipIdFromToken(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction.getHipId()));
+        when(linkTokenVerifier.getHipIdFromToken(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction.getRequesterId()));
         when(linkTokenVerifier.validateSession(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction));
-        when(linkTokenVerifier.validateHipAction(hipAction, HIP_INITIATED_ACTION_LINK)).thenReturn(Mono.just(hipAction));
-        when(linkRepository.insertToLink(eq(hipAction.getHipId()), eq(hipAction.getPatientId()),
+        when(linkTokenVerifier.validateHipAction(hipAction)).thenReturn(Mono.just(hipAction));
+        when(linkRepository.insertToLink(eq(hipAction.getRequesterId()), eq(hipAction.getPatientId()),
                 eq(hipAction.getSessionId()),
                 any(PatientRepresentation.class),
                 eq(Constants.LINK_INITIATOR_HIP))).thenReturn(Mono.empty());
         when(linkRepository.incrementHipActionCounter(hipAction.getSessionId())).thenReturn(Mono.empty());
         when(linkServiceClient.sendLinkResponseToGateway(linkResponseArgumentCaptor.capture(),
-                eq(hipAction.getHipId()))).thenReturn(Mono.empty());
+                eq(hipAction.getRequesterId()))).thenReturn(Mono.empty());
 
         var producer = link.addCareContexts(linkRequest);
         StepVerifier.create(producer)
@@ -180,13 +184,13 @@ class LinkTest {
 
         verify(linkTokenVerifier).validateSession(linkRequest.getLink().getAccessToken());
         verify(linkRepository).insertToLink(
-                eq(hipAction.getHipId()),
+                eq(hipAction.getRequesterId()),
                 eq(hipAction.getPatientId()),
                 eq(hipAction.getSessionId()),
                 any(PatientRepresentation.class),
                 eq(Constants.LINK_INITIATOR_HIP));
         verify(linkServiceClient).sendLinkResponseToGateway(linkResponseArgumentCaptor.capture(),
-                eq(hipAction.getHipId()));
+                eq(hipAction.getRequesterId()));
         verify(linkRepository).incrementHipActionCounter(eq(hipAction.getSessionId()));
         assertThat(linkResponseArgumentCaptor.getValue().getAcknowledgement()).isNotNull();
         assertThat(linkResponseArgumentCaptor.getValue().getError()).isNull();
@@ -196,10 +200,10 @@ class LinkTest {
     void shouldCallGatewayWithErrorMessageWhenHIPIdIsInvalid() {
         var linkRequest = linkRequest().build();
         var hipAction = linkHipAction().build();
-        when(linkTokenVerifier.getHipIdFromToken(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction.getHipId()));
+        when(linkTokenVerifier.getHipIdFromToken(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction.getRequesterId()));
         when(linkTokenVerifier.validateSession(linkRequest.getLink().getAccessToken())).thenReturn(Mono.error(ClientError.invalidToken(ERROR_TOKEN_IS_INVALID_OR_EXPIRED)));
         when(linkServiceClient.sendLinkResponseToGateway(linkResponseArgumentCaptor.capture(),
-                eq(hipAction.getHipId()))).thenReturn(Mono.empty());
+                eq(hipAction.getRequesterId()))).thenReturn(Mono.empty());
 
         var producer = link.addCareContexts(linkRequest);
         StepVerifier.create(producer)
@@ -207,7 +211,7 @@ class LinkTest {
 
         verify(linkTokenVerifier).validateSession(linkRequest.getLink().getAccessToken());
         verify(linkServiceClient).sendLinkResponseToGateway(linkResponseArgumentCaptor.capture(),
-                eq(hipAction.getHipId()));
+                eq(hipAction.getRequesterId()));
         assertThat(linkResponseArgumentCaptor.getValue().getError()).isNotNull();
         assertThat(linkResponseArgumentCaptor.getValue().getAcknowledgement()).isNull();
     }
@@ -216,16 +220,16 @@ class LinkTest {
     void shouldThrowErrorMessageWhenTokenIsInvalid() {
         var linkRequest = linkRequest().build();
         var hipAction = linkHipAction().build();
-        when(linkTokenVerifier.getHipIdFromToken(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction.getHipId()));
+        when(linkTokenVerifier.getHipIdFromToken(linkRequest.getLink().getAccessToken())).thenReturn(Mono.just(hipAction.getRequesterId()));
         when(linkTokenVerifier.validateSession(linkRequest.getLink().getAccessToken())).thenReturn(Mono.error(ClientError.invalidToken(ERROR_INVALID_TOKEN_REQUIRED_ATTRIBUTES_NOT_PRESENT)));
         when(linkServiceClient.sendLinkResponseToGateway(linkResponseArgumentCaptor.capture(),
-                eq(hipAction.getHipId()))).thenReturn(Mono.empty());
+                eq(hipAction.getRequesterId()))).thenReturn(Mono.empty());
 
         var producer = link.addCareContexts(linkRequest);
         StepVerifier.create(producer).verifyComplete();
         verify(linkTokenVerifier).validateSession(linkRequest.getLink().getAccessToken());
         verify(linkServiceClient).sendLinkResponseToGateway(linkResponseArgumentCaptor.capture(),
-                eq(hipAction.getHipId()));
+                eq(hipAction.getRequesterId()));
         assertThat(linkResponseArgumentCaptor.getValue().getError()).isNotNull();
         assertThat(linkResponseArgumentCaptor.getValue().getAcknowledgement()).isNull();
     }

@@ -1,6 +1,7 @@
 package in.projecteka.consentmanager.link.link;
 
 import in.projecteka.consentmanager.link.link.model.AuthzHipAction;
+import in.projecteka.consentmanager.userauth.model.AuthPurpose;
 import in.projecteka.library.clients.model.ClientError;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.security.PublicKey;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -42,24 +44,21 @@ public class LinkTokenVerifier {
     public Mono<AuthzHipAction> validateSession(String accessToken) {
         Optional<String> optionalSessionId = sessionIdFrom(accessToken);
         if (optionalSessionId.isEmpty()) {
-            logger.error(ERROR_INVALID_TOKEN_REQUIRED_ATTRIBUTES_NOT_PRESENT);
-            return Mono.error(ClientError.invalidToken(ERROR_INVALID_TOKEN_REQUIRED_ATTRIBUTES_NOT_PRESENT));
+            return logAndThrowError(ERROR_INVALID_TOKEN_REQUIRED_ATTRIBUTES_NOT_PRESENT);
         }
-        String sessionId = optionalSessionId.get();
-        return linkRepository.getAuthzHipAction(sessionId)
+        return linkRepository.getAuthzHipAction(optionalSessionId.get())
                 .switchIfEmpty(logAndThrowError(ERROR_TOKEN_IS_INVALID_OR_EXPIRED));
     }
 
-    public Mono<AuthzHipAction> validateHipAction(AuthzHipAction authHipAction, String purpose) {
+    public Mono<AuthzHipAction> validateHipAction(AuthzHipAction authHipAction) {
         if ((authHipAction.getCurrentCounter() + 1) > authHipAction.getRepeat()) {
-            logger.error(ERROR_NUMBER_OF_REPEAT_ACTION_EXCEEDED);//TODO
-            return Mono.error(ClientError.invalidToken(ERROR_NUMBER_OF_REPEAT_ACTION_EXCEEDED));
-        }
-        if (!authHipAction.getPurpose().toUpperCase().equals(purpose)) {
-            logger.error(ERROR_INVALID_TOKEN_FOR_PURPOSE);//TODO
-            return Mono.error(ClientError.invalidToken(ERROR_INVALID_TOKEN_FOR_PURPOSE));
+            return logAndThrowError(ERROR_NUMBER_OF_REPEAT_ACTION_EXCEEDED);
         }
 
+        if (!Arrays.asList(AuthPurpose.LINK, AuthPurpose.KYC_AND_LINK)
+                .contains(AuthPurpose.valueOf(authHipAction.getPurpose()))) {
+            return logAndThrowError(ERROR_INVALID_TOKEN_FOR_PURPOSE);
+        }
         return Mono.just(authHipAction);
 
     }

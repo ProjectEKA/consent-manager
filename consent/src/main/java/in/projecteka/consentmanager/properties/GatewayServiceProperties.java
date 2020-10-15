@@ -16,4 +16,13 @@ public class GatewayServiceProperties {
     private final String clientId;
     private final String jwkUrl;
     private final int accessTokenExpiryInMinutes;
+
+
+    public String getBaseUrlWithoutEndSlash() {
+        String trimmed = baseUrl.trim();
+        if (trimmed.endsWith("/")) {
+            return trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed;
+    }
 }

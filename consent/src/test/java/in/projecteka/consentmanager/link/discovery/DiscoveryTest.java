@@ -6,12 +6,12 @@ import in.projecteka.consentmanager.link.discovery.model.patient.request.Patient
 import in.projecteka.consentmanager.link.discovery.model.patient.request.PatientIdentifierType;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.CareContext;
 import in.projecteka.consentmanager.link.discovery.model.patient.response.DiscoveryResult;
-import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
 import in.projecteka.consentmanager.link.link.LinkRepository;
 import in.projecteka.consentmanager.properties.LinkServiceProperties;
 import in.projecteka.library.clients.UserServiceClient;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.ErrorCode;
+import in.projecteka.library.clients.model.GatewayResponse;
 import in.projecteka.library.clients.model.Identifier;
 import in.projecteka.library.clients.model.PatientName;
 import in.projecteka.library.clients.model.RespError;

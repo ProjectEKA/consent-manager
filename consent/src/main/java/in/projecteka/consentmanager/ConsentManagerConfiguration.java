@@ -89,6 +89,7 @@ import static in.projecteka.consentmanager.Constants.DEFAULT_CACHE_VALUE;
 import static in.projecteka.consentmanager.Constants.EXCHANGE;
 import static in.projecteka.consentmanager.Constants.HIP_CONSENT_NOTIFICATION_QUEUE;
 import static in.projecteka.consentmanager.Constants.HIP_DATA_FLOW_REQUEST_QUEUE;
+import static in.projecteka.consentmanager.Constants.HIP_LINK_QUEUE;
 import static in.projecteka.consentmanager.Constants.HIU_CONSENT_NOTIFICATION_QUEUE;
 
 @Configuration
@@ -203,6 +204,8 @@ public class ConsentManagerConfiguration {
                 new DestinationInfo(EXCHANGE, HIP_CONSENT_NOTIFICATION_QUEUE));
         queues.put(HIP_DATA_FLOW_REQUEST_QUEUE,
                 new DestinationInfo(EXCHANGE, HIP_DATA_FLOW_REQUEST_QUEUE));
+        queues.put(HIP_LINK_QUEUE,
+                new DestinationInfo(EXCHANGE, HIP_LINK_QUEUE));
         return new DestinationsConfig(queues);
     }
 

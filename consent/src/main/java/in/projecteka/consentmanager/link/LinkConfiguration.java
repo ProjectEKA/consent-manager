@@ -3,12 +3,14 @@ package in.projecteka.consentmanager.link;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import in.projecteka.consentmanager.DestinationsConfig;
 import in.projecteka.consentmanager.clients.DiscoveryServiceClient;
 import in.projecteka.consentmanager.clients.LinkServiceClient;
+import in.projecteka.consentmanager.clients.UserAuthServiceClient;
 import in.projecteka.consentmanager.link.discovery.Discovery;
 import in.projecteka.consentmanager.link.discovery.DiscoveryRepository;
-import in.projecteka.consentmanager.link.hiplink.UserAuthInitAction;
-import in.projecteka.consentmanager.link.hiplink.UserAuthentication;
+import in.projecteka.consentmanager.userauth.UserAuthInitAction;
+import in.projecteka.consentmanager.userauth.UserAuthentication;
 import in.projecteka.consentmanager.link.link.Link;
 import in.projecteka.consentmanager.link.link.LinkRepository;
 import in.projecteka.consentmanager.link.link.LinkTokenVerifier;
@@ -22,6 +24,7 @@ import in.projecteka.library.common.cache.CacheAdapter;
 import in.projecteka.library.common.cache.LoadingCacheAdapter;
 import in.projecteka.library.common.cache.RedisCacheAdapter;
 import io.vertx.pgclient.PgPool;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -58,14 +61,16 @@ public class LinkConfiguration {
                      LinkServiceProperties serviceProperties,
                      @Qualifier("linkResults") CacheAdapter<String, String> linkResults,
                      ServiceAuthentication serviceAuthentication,
-                     LinkTokenVerifier linkTokenVerifier) {
+                     LinkTokenVerifier linkTokenVerifier,
+                     LinkEventPublisher linkEventPublisher) {
         return new Link(
                 new LinkServiceClient(builder.build(), serviceAuthentication, gatewayServiceProperties),
                 linkRepository,
                 serviceAuthentication,
                 serviceProperties,
                 linkResults,
-                linkTokenVerifier);
+                linkTokenVerifier,
+                linkEventPublisher);
     }
 
     @Bean
@@ -100,10 +105,8 @@ public class LinkConfiguration {
     }
 
     @Bean
-    public UserAuthentication userAuthentication(
-            UserAuthInitAction initAction
-    ) {
-        return new UserAuthentication(initAction);
+    public UserAuthentication userAuthentication(UserAuthInitAction initAction, UserAuthServiceClient serviceClient) {
+        return new UserAuthentication(initAction, serviceClient);
     }
 
     @ConditionalOnProperty(value = "consentmanager.cacheMethod", havingValue = "guava", matchIfMissing = true)
@@ -129,5 +132,19 @@ public class LinkConfiguration {
             ReactiveRedisOperations<String, String> stringReactiveRedisOperations,
             RedisOptions redisOptions) {
         return new RedisCacheAdapter(stringReactiveRedisOperations, 5, redisOptions.getRetry());
+    }
+
+    @Bean
+    public LinkEventPublisher linkEventPublisher(AmqpTemplate amqpTemplate,
+                                                 DestinationsConfig destinationsConfig) {
+        return new LinkEventPublisher(amqpTemplate, destinationsConfig);
+    }
+
+    @Bean
+    public  UserAuthServiceClient userAuthServiceClient(
+            @Qualifier("customBuilder") WebClient.Builder builder,
+            ServiceAuthentication serviceAuthentication,
+            GatewayServiceProperties gatewayServiceProperties) {
+        return new UserAuthServiceClient(builder.build(), serviceAuthentication, gatewayServiceProperties);
     }
 }

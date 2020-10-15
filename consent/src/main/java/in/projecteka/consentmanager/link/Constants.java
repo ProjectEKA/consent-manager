@@ -14,11 +14,8 @@ public class Constants {
     public static final String PATH_CARE_CONTEXTS_ON_DISCOVER = CURRENT_VERSION + "/care-contexts/on-discover";
     public static final String PATH_LINK_ON_INIT = CURRENT_VERSION + "/links/link/on-init";
     public static final String PATH_LINK_ON_CONFIRM = CURRENT_VERSION + "/links/link/on-confirm";
-    public static final String PATH_HIP_LINK_USER_AUTH_INIT = CURRENT_VERSION + "/users/auth/init";
     public static final String PATH_HIP_ADD_CONTEXTS = CURRENT_VERSION + "/links/link/add-contexts";
-    public static final String USERS_AUTH_CONFIRM = CURRENT_VERSION + "/users/auth/confirm";
 
-    public static final String HIP_INITIATED_ACTION_LINK = "LINK";
     public static final String LINK_INITIATOR_CM = "CM";
     public static final String LINK_INITIATOR_HIP = "HIP";
 

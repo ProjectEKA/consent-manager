@@ -1,12 +1,12 @@
-package in.projecteka.consentmanager.link.hiplink.model.request;
+package in.projecteka.consentmanager.userauth.model;
 
 import java.util.List;
 import java.util.Map;
 
-import static in.projecteka.consentmanager.link.hiplink.model.request.IdentifierGroup.UNVERIFIED_IDENTIFIER;
-import static in.projecteka.consentmanager.link.hiplink.model.request.IdentifierGroup.VERIFIED_IDENTIFIER;
-import static in.projecteka.consentmanager.link.hiplink.model.request.IdentifierType.ABPMJAYID;
-import static in.projecteka.consentmanager.link.hiplink.model.request.IdentifierType.MOBILE;
+import static in.projecteka.consentmanager.userauth.model.IdentifierGroup.UNVERIFIED_IDENTIFIER;
+import static in.projecteka.consentmanager.userauth.model.IdentifierGroup.VERIFIED_IDENTIFIER;
+import static in.projecteka.consentmanager.userauth.model.IdentifierType.ABPMJAYID;
+import static in.projecteka.consentmanager.userauth.model.IdentifierType.MOBILE;
 import static java.util.stream.Collectors.toList;
 
 public class IdentifierUtils {

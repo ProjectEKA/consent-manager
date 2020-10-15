@@ -1,12 +1,13 @@
-package in.projecteka.consentmanager.link.hiplink;
+package in.projecteka.consentmanager.userauth;
 
-import in.projecteka.consentmanager.link.hiplink.model.request.AuthInitRequest;
+import in.projecteka.consentmanager.userauth.model.AuthInitRequest;
 import reactor.core.publisher.Mono;
 
 public class UserAuthInitAction implements HIPLinkInitAction {
 
     @Override
     public Mono<Void> execute(AuthInitRequest request) {
+        //To-do
         return Mono.empty();
     }
 }

@@ -40,18 +40,19 @@ import static in.projecteka.consentmanager.consent.Constants.GET_CONSENT_CERT;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENT_REQUESTS_INIT;
 import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
+import static in.projecteka.consentmanager.consent.Constants.PATH_HIU_CONSENT_ON_NOTIFY;
 import static in.projecteka.consentmanager.link.Constants.PATH_CARE_CONTEXTS_ON_DISCOVER;
 import static in.projecteka.consentmanager.link.Constants.PATH_HIP_ADD_CONTEXTS;
-import static in.projecteka.consentmanager.userauth.Constants.PATH_USER_AUTH_INIT;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_CONFIRM;
 import static in.projecteka.consentmanager.link.Constants.PATH_LINK_ON_INIT;
 import static in.projecteka.consentmanager.userauth.Constants.PATH_USER_AUTH_CONFIRM;
+import static in.projecteka.consentmanager.userauth.Constants.PATH_USER_AUTH_INIT;
 import static in.projecteka.consentmanager.userauth.Constants.PATH_USER_FETCH_AUTH_MODES;
 import static in.projecteka.library.clients.model.ClientError.unAuthorized;
+import static in.projecteka.library.common.Constants.PATH_READINESS;
 import static in.projecteka.library.common.Constants.SCOPE_CHANGE_PIN;
 import static in.projecteka.library.common.Constants.SCOPE_CONSENT_APPROVE;
 import static in.projecteka.library.common.Constants.SCOPE_CONSENT_REVOKE;
-import static in.projecteka.library.common.Constants.PATH_READINESS;
 import static in.projecteka.library.common.Role.GATEWAY;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;
@@ -72,6 +73,7 @@ public class SecurityConfiguration {
             PATH_LINK_ON_INIT,
             PATH_LINK_ON_CONFIRM,
             PATH_HIP_CONSENT_ON_NOTIFY,
+            PATH_HIU_CONSENT_ON_NOTIFY,
             PATH_HIP_ADD_CONTEXTS,
             PATH_USER_AUTH_INIT,
             PATH_USER_AUTH_CONFIRM,
@@ -94,6 +96,7 @@ public class SecurityConfiguration {
         SERVICE_ONLY_URLS.add(Map.entry(PATH_LINK_ON_CONFIRM, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_CONSENTS_FETCH, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_CONSENT_ON_NOTIFY, HttpMethod.POST));
+        SERVICE_ONLY_URLS.add(Map.entry(PATH_HIU_CONSENT_ON_NOTIFY, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_HIP_ADD_CONTEXTS, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(PATH_USER_AUTH_CONFIRM, HttpMethod.POST));
         SERVICE_ONLY_URLS.add(Map.entry(CONSENT_REQUESTS_STATUS, HttpMethod.POST));

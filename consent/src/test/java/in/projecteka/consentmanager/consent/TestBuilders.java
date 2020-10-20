@@ -12,7 +12,8 @@ import in.projecteka.consentmanager.consent.model.request.ConsentRequestStatus;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestResult;
-import in.projecteka.consentmanager.consent.model.response.HIPCosentNotificationAcknowledgment;
+import in.projecteka.consentmanager.consent.model.response.HIPConsentNotificationAcknowledgment;
+import in.projecteka.consentmanager.consent.model.response.HIUConsentNotificationAcknowledgment;
 import org.jeasy.random.EasyRandom;
 
 public class TestBuilders {
@@ -49,12 +50,17 @@ public class TestBuilders {
     public static ConsentRequest.ConsentRequestBuilder consentRequest() {
         return easyRandom.nextObject(ConsentRequest.ConsentRequestBuilder.class);
     }
+
     public static FetchRequest.FetchRequestBuilder fetchRequest() {
         return easyRandom.nextObject(FetchRequest.FetchRequestBuilder.class);
     }
 
-    public static HIPCosentNotificationAcknowledgment.HIPCosentNotificationAcknowledgmentBuilder hipConsentNotificationAcknowledgement() {
-        return easyRandom.nextObject(HIPCosentNotificationAcknowledgment.HIPCosentNotificationAcknowledgmentBuilder.class);
+    public static HIPConsentNotificationAcknowledgment.HIPConsentNotificationAcknowledgmentBuilder hipConsentNotificationAcknowledgement() {
+        return easyRandom.nextObject(HIPConsentNotificationAcknowledgment.HIPConsentNotificationAcknowledgmentBuilder.class);
+    }
+
+    public static HIUConsentNotificationAcknowledgment.HIUConsentNotificationAcknowledgmentBuilder hiuConsentNotificationAcknowledgement() {
+        return easyRandom.nextObject(HIUConsentNotificationAcknowledgment.HIUConsentNotificationAcknowledgmentBuilder.class);
     }
 
     public static CertResponse.CertResponseBuilder certResponse() {

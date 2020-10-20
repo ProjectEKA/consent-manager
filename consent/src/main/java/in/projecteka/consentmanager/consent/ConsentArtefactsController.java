@@ -7,7 +7,8 @@ import in.projecteka.consentmanager.consent.model.request.ConsentRequestStatus;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactLightRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactRepresentation;
 import in.projecteka.consentmanager.consent.model.response.ConsentArtefactResponse;
-import in.projecteka.consentmanager.consent.model.response.HIPCosentNotificationAcknowledgment;
+import in.projecteka.consentmanager.consent.model.response.HIPConsentNotificationAcknowledgment;
+import in.projecteka.consentmanager.consent.model.response.HIUConsentNotificationAcknowledgment;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.common.Caller;
 import in.projecteka.library.common.RequestValidator;
@@ -30,13 +31,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
-
 import java.util.Optional;
 import java.util.UUID;
 
 import static in.projecteka.consentmanager.consent.Constants.CONSENT_REQUESTS_STATUS;
 import static in.projecteka.consentmanager.consent.Constants.PATH_CONSENTS_FETCH;
 import static in.projecteka.consentmanager.consent.Constants.PATH_HIP_CONSENT_ON_NOTIFY;
+import static in.projecteka.consentmanager.consent.Constants.PATH_HIU_CONSENT_ON_NOTIFY;
 import static in.projecteka.consentmanager.consent.model.HipConsentArtefactNotificationStatus.NOTIFIED;
 import static in.projecteka.library.common.Constants.CORRELATION_ID;
 
@@ -121,7 +122,7 @@ public class ConsentArtefactsController {
 
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PostMapping(value = PATH_HIP_CONSENT_ON_NOTIFY)
-    public Mono<Void> hipOnNotify(@RequestBody HIPCosentNotificationAcknowledgment acknowledgment) {
+    public Mono<Void> hipOnNotify(@RequestBody HIPConsentNotificationAcknowledgment acknowledgment) {
         return Mono.just(acknowledgment)
                 .filterWhen(req ->
                         validator.validate(acknowledgment.getRequestId().toString(), acknowledgment.getTimestamp()))
@@ -132,6 +133,17 @@ public class ConsentArtefactsController {
                 .flatMap(exists -> exists ? hipConsentArtefactStatus.put(acknowledgment.getAcknowledgement().getConsentId(), NOTIFIED.toString()) :
                         consentManager.updateConsentNotification(acknowledgment)
                                 .then(validator.put(acknowledgment.getRequestId().toString(), acknowledgment.getTimestamp())));
+    }
+
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @PostMapping(value = PATH_HIU_CONSENT_ON_NOTIFY)
+    public Mono<Void> hiuOnNotify(@RequestBody HIUConsentNotificationAcknowledgment acknowledgment) {
+        return Mono.just(acknowledgment)
+                .filterWhen(req ->
+                        validator.validate(acknowledgment.getRequestId().toString(), acknowledgment.getTimestamp()))
+                .switchIfEmpty(Mono.error(ClientError.tooManyRequests()))
+                .doOnSuccess(discard -> logger.info("Successfully notified from hiu for consent with request id {}", acknowledgment.getRequestId()))
+                .then();
     }
 
     @GetMapping(value = Constants.APP_PATH_INTERNAL_GET_CONSENT_ARTEFACT_STATUS)

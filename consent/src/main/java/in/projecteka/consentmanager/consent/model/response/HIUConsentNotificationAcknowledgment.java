@@ -7,15 +7,16 @@ import lombok.Builder;
 import lombok.Value;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @AllArgsConstructor
 @Builder
 @Value
-public class HIPCosentNotificationAcknowledgment {
+public class HIUConsentNotificationAcknowledgment {
     UUID requestId;
     LocalDateTime timestamp;
-    ConsentNotificationResponse acknowledgement;
+    List<ConsentNotificationResponse> acknowledgement;
     RespError error;
     GatewayResponse resp;
 
@@ -25,7 +26,7 @@ public class HIPCosentNotificationAcknowledgment {
         String consentId;
     }
 
-    enum  Status {
+    enum Status {
         OK
     }
 }

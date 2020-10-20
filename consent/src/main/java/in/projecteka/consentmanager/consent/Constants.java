@@ -6,6 +6,7 @@ public class Constants {
     public static final String PATH_CONSENT_REQUESTS_INIT = CURRENT_VERSION + "/consent-requests/init";
     public static final String PATH_CONSENTS_FETCH = CURRENT_VERSION + "/consents/fetch";
     public static final String PATH_HIP_CONSENT_ON_NOTIFY = CURRENT_VERSION + "/consents/hip/on-notify";
+    public static final String PATH_HIU_CONSENT_ON_NOTIFY = CURRENT_VERSION + "/consents/hiu/on-notify";
     public static final String APP_PATH_GET_CONSENT_ARTEFACTS = "/consent-artefacts";
     public static final String APP_PATH_REVOKE_CONSENTS = "/consents/revoke";
     public static final String APP_PATH_INTERNAL_GET_CONSENT = "/internal/consents/{consentId}";

@@ -278,6 +278,15 @@ Those are exposed through HAProxy.
    ```
 5. In order to access consent manager, you can use http://localhost:8081
 
+### Data Notification Subscription
+1. Clone [Data-Notification-Subscription](https://github.com/ProjectEKA/data-notification-subscription)
+2. Copy the client-secret [http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients](http://localhost:9001/auth/admin/master/console/#/realms/central-registry/clients) of `10000011` under `credentials` tab, and use it for **CLIENT_SECRET** (client under *central-registry* realm)
+3. Run through command line
+    
+    ```bash
+    cd data-notification-subscription
+    GATEWAY_CLIENTSECRET=${GATEWAY_CLIENTSECRET} ./gradlew bootRunLocal
+
 ### Hip-Service
 
 1. Clone [hip-service](https://github.com/ProjectEKA/hip-service)

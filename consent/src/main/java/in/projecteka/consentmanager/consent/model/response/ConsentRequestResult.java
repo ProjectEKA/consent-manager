@@ -1,6 +1,6 @@
 package in.projecteka.consentmanager.consent.model.response;
 
-import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.library.clients.model.GatewayResponse;
 import in.projecteka.library.clients.model.RespError;
 import lombok.Builder;
 import lombok.Data;

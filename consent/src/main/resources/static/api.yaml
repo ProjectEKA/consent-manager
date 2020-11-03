@@ -2214,7 +2214,7 @@ components:
       properties:
         communicationMedium:
           type: string
-          enum: ['M0BILE', 'EMAIL']
+          enum: ['MOBILE', 'EMAIL']
         communicationHint:
           type: string
         communicationExpiry:

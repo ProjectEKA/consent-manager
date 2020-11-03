@@ -56,6 +56,7 @@ import static in.projecteka.consentmanager.consent.TestBuilders.consentRepresent
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestDetail;
 import static in.projecteka.consentmanager.consent.TestBuilders.consentRequestStatus;
 import static in.projecteka.consentmanager.consent.TestBuilders.fetchRequest;
+import static in.projecteka.consentmanager.consent.TestBuilders.hiuConsentNotificationAcknowledgement;
 import static in.projecteka.consentmanager.consent.TestBuilders.string;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.DENIED;
 import static in.projecteka.consentmanager.consent.model.ConsentStatus.EXPIRED;
@@ -462,6 +463,27 @@ class ConsentArtefactUserJourneyTest {
                 .contentType(APPLICATION_JSON)
                 .header("Authorization", token)
                 .bodyValue(consentRequestStatus)
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+    }
+
+    @Test
+    void shouldNotifyHiu() {
+        String token = string();
+        var acknowledgment = hiuConsentNotificationAcknowledgement().build();
+        var caller = ServiceCaller.builder().clientId("Client_ID").roles(of(GATEWAY)).build();
+
+        when(gatewayTokenVerifier.verify(token)).thenReturn(just(caller));
+        when(serviceAuthentication.authenticate()).thenReturn(Mono.just(string()));
+        when(validator.validate(anyString(), any())).thenReturn(just(TRUE));
+
+
+        webTestClient.post()
+                .uri(Constants.PATH_HIU_CONSENT_ON_NOTIFY)
+                .contentType(APPLICATION_JSON)
+                .header("Authorization",token)
+                .bodyValue(acknowledgment)
                 .exchange()
                 .expectStatus()
                 .isAccepted();

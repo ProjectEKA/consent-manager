@@ -38,12 +38,12 @@ import in.projecteka.consentmanager.consent.model.response.ConsentReference;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestId;
 import in.projecteka.consentmanager.consent.model.response.ConsentRequestResult;
 import in.projecteka.consentmanager.consent.model.response.ConsentStatusResponse;
-import in.projecteka.consentmanager.consent.model.response.HIPCosentNotificationAcknowledgment;
-import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.consentmanager.consent.model.response.HIPConsentNotificationAcknowledgment;
 import in.projecteka.library.clients.UserServiceClient;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.Error;
 import in.projecteka.library.clients.model.ErrorRepresentation;
+import in.projecteka.library.clients.model.GatewayResponse;
 import in.projecteka.library.common.CentralRegistry;
 import in.projecteka.library.common.PatientReference;
 import lombok.AllArgsConstructor;
@@ -660,7 +660,7 @@ public class ConsentManager {
                : consentArtefactRepository.getAllConsentArtefacts(username, limit, offset, status);
     }
 
-    public Mono<Void> updateConsentNotification(HIPCosentNotificationAcknowledgment acknowledgment) {
+    public Mono<Void> updateConsentNotification(HIPConsentNotificationAcknowledgment acknowledgment) {
         if (acknowledgment.getError() != null) {
             logger.error("Error in HIP Consent Notification Acknowledgment for requestId {}", acknowledgment.getResp().getRequestId());
             return Mono.empty();

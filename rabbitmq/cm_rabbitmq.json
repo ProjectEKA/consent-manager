@@ -68,6 +68,14 @@
       "arguments": {
         "x-dead-letter-exchange": "cm-dead-letter-exchange"
       }
+    },
+    {
+      "name": "cm-hip-link-queue",
+      "routing_key": "cm-hip-link-queue",
+      "exchange": "exchange",
+      "arguments": {
+        "x-dead-letter-exchange": "cm-dead-letter-exchange"
+      }
     }
   ]
 }

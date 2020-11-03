@@ -6,14 +6,17 @@ import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResponse;
 import in.projecteka.consentmanager.clients.model.PatientLinkReferenceResult;
 import in.projecteka.consentmanager.clients.model.PatientLinkRequest;
 import in.projecteka.consentmanager.clients.model.PatientLinkResponse;
+import in.projecteka.consentmanager.clients.model.PatientRepresentation;
 import in.projecteka.consentmanager.link.Constants;
-import in.projecteka.consentmanager.link.discovery.model.patient.response.GatewayResponse;
+import in.projecteka.consentmanager.link.LinkEventPublisher;
 import in.projecteka.consentmanager.link.link.model.Acknowledgement;
 import in.projecteka.consentmanager.link.link.model.AuthzHipAction;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationRequest;
 import in.projecteka.consentmanager.link.link.model.LinkConfirmationResult;
 import in.projecteka.consentmanager.link.link.model.LinkRequest;
 import in.projecteka.consentmanager.link.link.model.LinkResponse;
+import in.projecteka.consentmanager.link.link.model.CCLinkEvent;
+import in.projecteka.consentmanager.link.link.model.PatientCareContext;
 import in.projecteka.consentmanager.link.link.model.PatientLinkReferenceRequest;
 import in.projecteka.consentmanager.link.link.model.PatientLinksResponse;
 import in.projecteka.consentmanager.link.link.model.TokenConfirmation;
@@ -21,6 +24,7 @@ import in.projecteka.consentmanager.properties.LinkServiceProperties;
 import in.projecteka.library.clients.model.ClientError;
 import in.projecteka.library.clients.model.Error;
 import in.projecteka.library.clients.model.ErrorRepresentation;
+import in.projecteka.library.clients.model.GatewayResponse;
 import in.projecteka.library.clients.model.RespError;
 import in.projecteka.library.common.DelayTimeoutException;
 import in.projecteka.library.common.ServiceAuthentication;
@@ -28,36 +32,44 @@ import in.projecteka.library.common.cache.CacheAdapter;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-import static in.projecteka.consentmanager.link.Constants.HIP_INITIATED_ACTION_LINK;
 import static in.projecteka.consentmanager.link.link.Transformer.toHIPPatient;
 import static in.projecteka.consentmanager.link.link.model.AcknowledgementStatus.SUCCESS;
 import static in.projecteka.library.clients.ErrorMap.toCmError;
 import static in.projecteka.library.clients.model.ClientError.invalidResponseFromHIP;
 import static in.projecteka.library.clients.model.ErrorCode.TRANSACTION_ID_NOT_FOUND;
+import static in.projecteka.library.common.Constants.CORRELATION_ID;
 import static in.projecteka.library.common.CustomScheduler.scheduleThis;
 import static in.projecteka.library.common.Serializer.from;
 import static in.projecteka.library.common.Serializer.tryTo;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static reactor.core.publisher.Mono.defer;
 import static reactor.core.publisher.Mono.empty;
 import static reactor.core.publisher.Mono.error;
 
 @AllArgsConstructor
 public class Link {
     private static final Logger logger = LoggerFactory.getLogger(Link.class);
+    private static final String THREAD_HIP_LINK_QUEUE = "thread-hip-link-queue";
     private final LinkServiceClient linkServiceClient;
     private final LinkRepository linkRepository;
     private final ServiceAuthentication serviceAuthentication;
     private final LinkServiceProperties serviceProperties;
     private final CacheAdapter<String, String> linkResults;
     private final LinkTokenVerifier linkTokenVerifier;
+    private final LinkEventPublisher linkEventPublisher;
 
     public Mono<PatientLinkReferenceResponse> patientCareContexts(
             String patientId,
@@ -167,7 +179,13 @@ public class Link {
                             patientLinkRequest.getLinkRefNumber(),
                             confirmationResult.getPatient(),
                             Constants.LINK_INITIATOR_CM)
-                            .thenReturn(PatientLinkResponse.builder()
+                            .doOnSuccess(requester -> defer(() -> broadcastNewLink(hipId, patientId, confirmationResult.getPatient()))
+                                    .subscriberContext(ctx -> {
+                                        Optional<String> correlationId = Optional.ofNullable(MDC.get(CORRELATION_ID));
+                                        return correlationId.map(id -> ctx.put(CORRELATION_ID, id))
+                                                .orElseGet(() -> ctx.put(CORRELATION_ID, UUID.randomUUID().toString()));
+                                    }).subscribeOn(Schedulers.newSingle(THREAD_HIP_LINK_QUEUE)).subscribe()
+                            ).thenReturn(PatientLinkResponse.builder()
                                     .patient(confirmationResult.getPatient())
                                     .build());
                 });
@@ -206,9 +224,9 @@ public class Link {
                 .getHipIdFromToken(linkRequest.getLink().getAccessToken())
                 .flatMap(hipId ->
                         linkTokenVerifier.validateSession(linkRequest.getLink().getAccessToken())
-                                .flatMap(hipAction -> linkTokenVerifier.validateHipAction(hipAction, HIP_INITIATED_ACTION_LINK))
+                                .flatMap(linkTokenVerifier::validateHipAction)
                                 .flatMap(hipAction -> linkRepository.insertToLink(
-                                        hipAction.getHipId(),
+                                        hipAction.getRequesterId(),
                                         hipAction.getPatientId(),
                                         hipAction.getSessionId(),
                                         linkRequest.getLink().getPatient(),
@@ -242,5 +260,21 @@ public class Link {
                 .acknowledgement(acknowledgement)
                 .resp(GatewayResponse.builder().requestId(linkRequest.getRequestId().toString()).build())
                 .build();
+    }
+
+    private Mono<Void> broadcastNewLink(String hipId, String healthNumber, PatientRepresentation patient) {
+        logger.info("Broadcasting linkage to queue");
+        List<PatientCareContext> patientCareContexts = patient.getCareContexts().stream().map(cc ->
+                PatientCareContext.builder()
+                        .careContextReference(cc.getReferenceNumber())
+                        .patientReference(patient.getReferenceNumber())
+                        .build()).collect(Collectors.toList());
+        CCLinkEvent linkEvent = CCLinkEvent.builder()
+                .hipId(hipId)
+                .healthNumber(healthNumber)
+                .timestamp(LocalDateTime.now())
+                .careContexts(patientCareContexts)
+                .build();
+        return linkEventPublisher.publish(linkEvent);
     }
 }

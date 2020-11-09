@@ -78,13 +78,15 @@
     docker pull projecteka/hiu-db-initializer
     docker pull projecteka/user-db-initializer
     docker pull projecteka/dataflow-db-initializer
+    docker pull projecteka/data-notification-db-initializer
     docker-compose -f docker-compose-infra-lite.yml up -d
      
     docker logs $(docker ps -aqf "name=^cm-db-setup$")
     docker logs $(docker ps -aqf "name=^hiu-db-setup$")
     docker logs $(docker ps -aqf "name=^keycloak-setup$")
-   docker logs $(docker ps -aqf "name=^user-db-setup$")
-   docker logs $(docker ps -aqf "name=^dataflow-db-setup$")
+    docker logs $(docker ps -aqf "name=^user-db-setup$")
+    docker logs $(docker ps -aqf "name=^dataflow-db-setup$")
+    docker logs $(docker ps -aqf "name=^data-notification-db-setup$")
         # if you see any errors, run the docker-compose again
    
     docker exec -it $(docker ps -aqf "name=^postgres$") /bin/bash
@@ -95,6 +97,8 @@
     \c user_service
     \d # should list all the tables
     \c dataflow_service
+    \d # should list all the tables
+    \c data_notification_subscription;
     \d # should list all the tables
     exit # twice
     ```

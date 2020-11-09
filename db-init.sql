@@ -8,3 +8,4 @@ create database monitor;
 create database central_registry;
 create database user_service;
 create database dataflow_service;
+create database data_notification_subscription;

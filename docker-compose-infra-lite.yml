@@ -95,6 +95,14 @@ services:
     depends_on:
       - user-db-setup
 
+  data-notification-db-setup:
+    image: projecteka/data-notification-db-initializer
+    container_name: data-notification-db-setup
+    environment:
+      - 'JAVA_TOOL_OPTIONS=-Djdbc.url=jdbc:postgresql://postgres:5432/data_notification_subscription; -Djdbc.username=postgres -Djdbc.password=password'
+    depends_on:
+      - user-db-setup
+
   orthanc:
     image: jodogne/orthanc-plugins
     container_name: orthanc-plugins

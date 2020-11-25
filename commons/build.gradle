@@ -22,7 +22,7 @@ dependencies {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
     testImplementation 'io.projectreactor:reactor-test'
-    testImplementation 'org.mockito:mockito-inline:3.5.6'
+    testImplementation 'org.mockito:mockito-inline:3.6.28'
     compileOnly 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

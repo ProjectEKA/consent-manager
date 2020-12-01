@@ -26,10 +26,7 @@
       "name": "cm-dead-letter-queue",
       "routing_key": "#",
       "exchange":"cm-dead-letter-exchange",
-      "arguments": {
-        "x-dead-letter-exchange": "exchange",
-        "x-message-ttl": 1000
-      }
+      "arguments": {}
     },
     {
       "name": "parking.queue",

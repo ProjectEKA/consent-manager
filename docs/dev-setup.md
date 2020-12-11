@@ -102,13 +102,28 @@
     \d # should list all the tables
     exit # twice
     ```
-4. In order to have route table for bridges and CM, clone the gateway repository, and run the following commands.
+   
+4. On gateway-db-initializer repo, bridge_service table has been restructured on Dec 11, 2020. Post this date, when you run the commands specified in step 3, you should be able to see both bridge_service_old and bridge_service tables.
 
-    ```bash
-    brew install postgresql # only if you don't have psql in your machine
-    chmod +x db-init-local.sh
-    ./db-init-local.sh
-    ```
+    1. In order to have route table for bridges and CM, run the following commands.
+    
+        ```bash
+        docker cp path-to-file-on-host/db-init-local.sh postgres:/tmp/db-init-local.sh (db-init-local.sh can be found on gateway repository)
+        docker exec -it postgres bash
+        cd tmp
+        chmod +x db-init-local.sh
+        ./db-init-local.sh
+        ```
+   
+    2. In order to migrate the data from bridge_service_old to bridge_service, run the following commands (Only applicable for existing installations, prior to Dec 11, 2020).
+    
+        ```bash
+        docker cp path-to-file-on-host/flatten_bridge_service.sh postgres:/tmp/flatten_bridge_service.sh (flatten_bridge_service.sh can be found on gateway repository)
+        docker exec -it postgres bash
+        cd tmp
+        chmod +x flatten_bridge_service.sh
+        ./flatten_bridge_service.sh
+        ```
    
 **Note:** In case, you want to run Kibana, elastic, use *docker-compose-backend.yml*
 

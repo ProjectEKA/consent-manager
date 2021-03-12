@@ -51,6 +51,14 @@
       }
     },
     {
+      "name": "app-push-notification-queue",
+      "routing_key": "app-push-notification-queue",
+      "exchange":"exchange",
+      "arguments": {
+        "x-dead-letter-exchange": "cm-dead-letter-exchange"
+      }
+    },
+    {
       "name": "hiu-consent-notification-queue",
       "routing_key": "hiu-consent-notification-queue",
       "exchange":"exchange",

@@ -32,7 +32,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.data:spring-data-redis'
-    implementation 'com.google.guava:guava:29.0-jre'
+    implementation 'com.google.guava:guava:30.1.1-jre'
     implementation 'javax.validation:validation-api:2.0.1.Final'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

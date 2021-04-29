@@ -1,0 +1,44 @@
+version: 2
+updates:
+- package-ecosystem: gradle
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "23:30"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: com.nimbusds:nimbus-jose-jwt
+    versions:
+    - 9.4.2
+    - "9.5"
+    - "9.7"
+    - "9.8"
+    - 9.8.1
+  - dependency-name: io.lettuce:lettuce-core
+    versions:
+    - 6.0.2.RELEASE
+    - 6.0.3.RELEASE
+    - 6.1.0.RELEASE
+  - dependency-name: com.avast.gradle.docker-compose
+    versions:
+    - 0.14.0
+    - 0.14.1
+    - 0.14.2
+  - dependency-name: org.mockito:mockito-inline
+    versions:
+    - 3.7.7
+    - 3.8.0
+  - dependency-name: io.vertx:vertx-pg-client
+    versions:
+    - 4.0.0
+    - 4.0.1
+    - 4.0.2
+  - dependency-name: com.google.guava:guava
+    versions:
+    - 30.1-jre
+  - dependency-name: com.squareup.okhttp3:mockwebserver
+    versions:
+    - 4.9.0
+  - dependency-name: com.squareup.okhttp3:okhttp
+    versions:
+    - 4.9.0

@@ -15,6 +15,11 @@ services:
       DB_PASSWORD: password
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     ports:
       - "9001:8080"
 
@@ -46,6 +51,7 @@ services:
     command: "sh -c 'dockerize -wait http://keycloak:8080 -timeout 240s && java -jar /app.jar'"
     depends_on:
       - keycloak
+    restart: on-failure
 
   cm-db-setup:
     image: projecteka/cm-db-initializer
